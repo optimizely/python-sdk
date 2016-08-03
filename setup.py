@@ -23,7 +23,7 @@ setup(
     description="A Python SDK for Optimizely's server-side testing product, which is currently in private beta.",
     author='Optimizely',
     author_email='server-side-testing@optimizely.com',
-    url='https://github.com/optimizely/optimizely-testing-sdk-python',
+    url='https://github.com/optimizely/python-sdk',
     license=open('LICENSE').read(),
     classifiers=[
       'Development Status :: 3 - Alpha',
