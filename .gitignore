@@ -1,0 +1,12 @@
+*.pyc
+MANIFEST
+.idea/*
+.virtualenv/*
+.py3virtualenv/*
+
+# Output of building package
+*.egg-info
+dist
+
+# Output of running coverage locally
+.coverage

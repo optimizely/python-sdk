@@ -1,0 +1,4 @@
+include LICENSE
+include CHANGELOG
+include requirements/*
+recursive-exclude tests *
