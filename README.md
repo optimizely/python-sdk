@@ -1,6 +1,4 @@
 #Optimizely Python SDK 
-[![Build Status](https://travis-ci.com/optimizely/optimizely-testing-sdk-python.svg?token=xoLe5GgfDMgLPXDntAq3&branch=master)](https://travis-ci.com/optimizely/optimizely-testing-sdk-python)
-[![Coverage Status](https://coveralls.io/repos/github/optimizely/optimizely-testing-sdk-python/badge.svg?branch=master&t=YTzJg8)](https://coveralls.io/github/optimizely/optimizely-testing-sdk-python?branch=master)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-extra-configurations-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0) 
 
 This Python SDK is an interface to the Optimizely testing framework allowing you to setup and manage your Custom experiments.
