@@ -142,7 +142,7 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
-    # filter out experiments that are not running or that do not include the user in audience conditions
+    # Filter out experiments that are not running or that do not include the user in audience conditions
     valid_experiments = []
     for experiment_id in experiment_ids:
       experiment_key = self.config.get_experiment_key(experiment_id)
