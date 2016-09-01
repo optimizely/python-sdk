@@ -1,0 +1,8 @@
+## 0.1.2
+- Updated requirements package.
+
+## 0.1.1
+- Introduce option to skip JSON schema validation.
+
+## 0.1.0
+- Beta release of the Python SDK for server-side testing.
