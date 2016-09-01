@@ -284,18 +284,26 @@ class EventBuilderV2(EventBuilderV1):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
-  def _get_decision_ticket(self, user_id, experiment_key):
+  def _get_decision_ticket(self, user_id, experiment_id):
     """ Get the decision ticket based on the user and experiment.
 
     Args:
       user_id: ID for user.
-      experiment_key: Experiment for which the decision ticket needs to be constructed.
+      experiment_id: Experiment for which the decision ticket needs to be constructed.
 
     Returns:
       Dict representing the variation the user will see for the provided experiment.
     """
 
-    experiment_id = self.config.get_experiment_id(experiment_key)
+    variation_id = self.bucketer.bucket(experiment_id, user_id)
+    if variation_id:
+      return {
+        self.params[self.EventParams.EXPERIMENT_ID]: experiment_id,
+        self.params[self.EventParams.VARIATION_ID]: variation_id,
+        self.params[self.EventParams.IS_LAYER_HOLDBACK]: False
+      }
+
+    return None
 
   def _add_required_params_for_impression(self, experiment_key, variation_id):
     """ Add parameters that are required for the impression event to register.
@@ -315,8 +323,19 @@ class EventBuilderV2(EventBuilderV1):
       self.params[self.EventParams.IS_LAYER_HOLDBACK]: False
     }
 
-  def _add_required_params_for_conversion(self):
-    """ Add parameters that are required for the conversion event to register. """
+  def _add_required_params_for_conversion(self, event_key, user_id, event_value, valid_experiments):
+    """ Add parameters that are required for the conversion event to register.
+
+    Args:
+      event_key: Key representing the event which needs to be recorded.
+      user_id: ID for user.
+      event_value: Value associated with the event. Can be used to represent revenue in cents.
+      valid_experiments: List of tuples representing valid experiments for the event.
+    """
+
+    self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
+    self.params[self.EventParams.USER_FEATURES] = []
+
 
   def create_impression_event(self, experiment_key, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
@@ -343,10 +362,11 @@ class EventBuilderV2(EventBuilderV1):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
-      event_key: Goal key representing the event which needs to be recorded.
+      event_key: Key representing the event which needs to be recorded.
       user_id: ID for user.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
       valid_experiments: List of tuples representing valid experiments for the event.
+      attributes: Dict representing user attributes and values.
 
     Returns:
       Event object encapsulating the conversion event.
@@ -354,7 +374,7 @@ class EventBuilderV2(EventBuilderV1):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_required_params_for_conversion()
+    self._add_required_params_for_conversion(event_key, user_id, event_value, valid_experiments)
     return Event(self.CONVERSION_ENDPOINT,
                  self.params,
                  http_verb='POST',
