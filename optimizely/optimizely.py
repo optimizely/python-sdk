@@ -34,7 +34,7 @@ class Optimizely(object):
 
     self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
     self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
+    self.event_builder = event_builder.EventBuilderV1(self.config, self.bucketer)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.
