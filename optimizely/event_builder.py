@@ -170,10 +170,10 @@ class EventBuilderV1(object):
     """
 
     for experiment in valid_experiments:
-        variation_id = self.bucketer.bucket(experiment[1], user_id)
-        if variation_id:
-          self.params[self.EXPERIMENT_PARAM_FORMAT.format(experiment_prefix=self.EventParams.EXPERIMENT_PREFIX,
-                                                          experiment_id=experiment[0])] = variation_id
+      variation_id = self.bucketer.bucket(experiment[1], user_id)
+      if variation_id:
+        self.params[self.EXPERIMENT_PARAM_FORMAT.format(experiment_prefix=self.EventParams.EXPERIMENT_PREFIX,
+                                                        experiment_id=experiment[0])] = variation_id
 
   def _add_conversion_goal(self, event_key, event_value):
     """ Add conversion goal information to the event.
@@ -284,27 +284,6 @@ class EventBuilderV2(EventBuilderV1):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
-  def _get_decision_ticket(self, user_id, experiment_id):
-    """ Get the decision ticket based on the user and experiment.
-
-    Args:
-      user_id: ID for user.
-      experiment_id: Experiment for which the decision ticket needs to be constructed.
-
-    Returns:
-      Dict representing the variation the user will see for the provided experiment.
-    """
-
-    variation_id = self.bucketer.bucket(experiment_id, user_id)
-    if variation_id:
-      return {
-        self.params[self.EventParams.EXPERIMENT_ID]: experiment_id,
-        self.params[self.EventParams.VARIATION_ID]: variation_id,
-        self.params[self.EventParams.IS_LAYER_HOLDBACK]: False
-      }
-
-    return None
-
   def _add_required_params_for_impression(self, experiment_key, variation_id):
     """ Add parameters that are required for the impression event to register.
 
@@ -335,7 +314,32 @@ class EventBuilderV2(EventBuilderV1):
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
     self.params[self.EventParams.USER_FEATURES] = []
+    self.params[self.EventParams.EVENT_FEATURES] = []
+    self.params[self.EventParams.EVENT_VALUE] = []
 
+    if event_value:
+      self.params[self.EventParams.EVENT_VALUE] = [{
+        'name': 'revenue',
+        'value': event_value
+      }]
+
+    self.params[self.EventParams.LAYER_STATES] = []
+    for experiment in valid_experiments:
+      variation_id = self.bucketer.bucket(experiment[1], user_id)
+      if variation_id:
+        self.params[self.EventParams.LAYER_STATES].append({
+          # TODO(ali): Implement this
+          self.params[self.EventParams.LAYER_ID]: None,
+          self.params[self.EventParams.ACTION_TRIGGERED]: True,
+          self.params[self.EventParams.DECISION]: {
+            self.params[self.EventParams.EXPERIMENT_ID]: experiment[1],
+            self.params[self.EventParams.VARIATION_ID]: variation_id,
+            self.params[self.EventParams.IS_LAYER_HOLDBACK]: False
+          }
+        })
+
+    self.params[self.EventParams.EVENT_ID] = self.config.get_goal_id(event_key)
+    self.params[self.EventParams.EVENT_NAME] = event_key
 
   def create_impression_event(self, experiment_key, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
