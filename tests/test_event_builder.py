@@ -62,7 +62,7 @@ class EventBuilderV1Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user', None)
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
 
   def test_create_impression_event__with_attributes(self):
     """ Test that create_impression_event creates Event object
@@ -82,7 +82,7 @@ class EventBuilderV1Test(base.BaseTest):
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user',
                                                              {'test_attribute': 'test_value'})
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
 
   def test_create_conversion_event__with_attributes(self):
     """ Test that create_conversion_event creates Event object
@@ -103,7 +103,7 @@ class EventBuilderV1Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, None,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
 
   def test_create_conversion_event__with_attributes_no_match(self):
     """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
@@ -119,7 +119,7 @@ class EventBuilderV1Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
 
   def test_create_conversion_event__with_event_value(self):
     """ Test that create_conversion_event creates Event object
@@ -141,7 +141,7 @@ class EventBuilderV1Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, 4200,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
 
 
 class EventBuilderV2Test(base.BaseTest):
@@ -171,7 +171,6 @@ class EventBuilderV2Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user', None)
-    print event_obj.get_params()
     self.assertEqual(expected_params, event_obj.get_params())
 
   def test_create_impression_event__with_attributes(self):
@@ -253,7 +252,7 @@ class EventBuilderV2Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
 
   def test_create_conversion_event__with_event_value(self):
     """ Test that create_conversion_event creates Event object
@@ -290,4 +289,4 @@ class EventBuilderV2Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, 4200,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_params, event_obj.get_params())
