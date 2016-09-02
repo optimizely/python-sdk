@@ -261,7 +261,7 @@ class EventBuilderV2(EventBuilderV1):
     SOURCE_SDK_TYPE = 'clientEngine'
     SOURCE_SDK_VERSION = 'clientVersion'
     ACTION_TRIGGERED = 'actionTriggered'
-    IS_GLOBAL_HOLDBACK = 'isLayerHoldback'
+    IS_GLOBAL_HOLDBACK = 'isGlobalHoldback'
     IS_LAYER_HOLDBACK = 'isLayerHoldback'
     
   def _add_attributes(self, attributes):
@@ -295,11 +295,11 @@ class EventBuilderV2(EventBuilderV1):
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
     self.params[self.EventParams.USER_FEATURES] = []
     # TODO(ali): Implement this
-    self.params[self.EventParams.LAYER_ID] = None
+    self.params[self.EventParams.LAYER_ID] = ''
     self.params[self.EventParams.DECISION] = {
-      self.params[self.EventParams.EXPERIMENT_ID]: self.config.get_experiment_id(experiment_key),
-      self.params[self.EventParams.VARIATION_ID]: variation_id,
-      self.params[self.EventParams.IS_LAYER_HOLDBACK]: False
+      self.EventParams.EXPERIMENT_ID: self.config.get_experiment_id(experiment_key),
+      self.EventParams.VARIATION_ID: variation_id,
+      self.EventParams.IS_LAYER_HOLDBACK: False
     }
 
   def _add_required_params_for_conversion(self, event_key, user_id, event_value, valid_experiments):
@@ -329,12 +329,12 @@ class EventBuilderV2(EventBuilderV1):
       if variation_id:
         self.params[self.EventParams.LAYER_STATES].append({
           # TODO(ali): Implement this
-          self.params[self.EventParams.LAYER_ID]: None,
-          self.params[self.EventParams.ACTION_TRIGGERED]: True,
-          self.params[self.EventParams.DECISION]: {
-            self.params[self.EventParams.EXPERIMENT_ID]: experiment[1],
-            self.params[self.EventParams.VARIATION_ID]: variation_id,
-            self.params[self.EventParams.IS_LAYER_HOLDBACK]: False
+          self.EventParams.LAYER_ID: '',
+          self.EventParams.ACTION_TRIGGERED: True,
+          self.EventParams.DECISION: {
+            self.EventParams.EXPERIMENT_ID: experiment[0],
+            self.EventParams.VARIATION_ID: variation_id,
+            self.EventParams.IS_LAYER_HOLDBACK: False
           }
         })
 
