@@ -1,4 +1,6 @@
 import time
+from abc import abstractmethod
+from abc import abstractproperty
 
 from . import version
 
@@ -9,75 +11,21 @@ class Event(object):
   def __init__(self, url, params, http_verb=None, headers=None):
     self.url = url
     self.params = params
-    self.http_verb = http_verb
+    self.http_verb = http_verb or 'GET'
     self.headers = headers
 
-  def get_url(self):
-    """ Get URL for sending impression/conversion event.
 
-    Returns:
-      URL for the event API.
-    """
-
-    return self.url
-
-  def get_params(self):
-    """ Get params to be sent along to the event endpoint.
-
-    Returns:
-      Dict of params representing the impression/conversion event.
-    """
-
-    return self.params
-
-  def get_http_verb(self):
-    """ Get HTTP verb for the endpoint.
-
-    Returns:
-      Request method.
-    """
-
-    return self.http_verb or 'GET'
-
-  def get_headers(self):
-    """ Get headers to be set in the request to the event endpoint.
-
-    Returns:
-      Dict representing headers.
-    """
-
-    return self.headers
-
-
-class EventBuilderV1(object):
-  """ Class which encapsulates methods to build events for tracking impressions and conversions. """
-
-  # Attribute mapping format
-  ATTRIBUTE_PARAM_FORMAT = '{segment_prefix}{segment_id}'
-
-  # Experiment mapping format
-  EXPERIMENT_PARAM_FORMAT = '{experiment_prefix}{experiment_id}'
-
-  # Event API format
-  OFFLINE_API_PATH = 'https://{project_id}.log.optimizely.com/event'
-
-
-  class EventParams(object):
-    ACCOUNT_ID = 'd'
-    PROJECT_ID = 'a'
-    EXPERIMENT_PREFIX = 'x'
-    GOAL_ID = 'g'
-    GOAL_NAME = 'n'
-    END_USER_ID = 'u'
-    EVENT_VALUE = 'v'
-    SEGMENT_PREFIX = 's'
-    SOURCE = 'src'
-    TIME = 'time'
+class BaseEventBuilder(object):
+  """ Base class which encapsulates methods to build events for tracking impressions and conversions. """
 
   def __init__(self, config, bucketer):
     self.config = config
     self.bucketer = bucketer
     self.params = {}
+
+  @abstractproperty
+  class EventParams(object):
+    pass
 
   def _add_project_id(self):
     """ Add project ID to the event. """
@@ -93,6 +41,65 @@ class EventBuilderV1(object):
     """ Add user ID to the event. """
 
     self.params[self.EventParams.END_USER_ID] = user_id
+
+  @abstractmethod
+  def _add_attributes(self, attributes):
+    """ Add attribute(s) information to the event.
+
+    Args:
+      attributes: Dict representing user attributes and values which need to be recorded.
+    """
+    pass
+
+  @abstractmethod
+  def _add_source(self):
+    """ Add source information to the event. """
+    pass
+
+  @abstractmethod
+  def _add_time(self):
+    """ Add time information to the event. """
+    pass
+
+  def _add_common_params(self, user_id, attributes):
+    """ Add params which are used same in both conversion and impression events.
+
+    Args:
+      user_id: ID for user.
+      attributes: Dict representing user attributes and values which need to be recorded.
+    """
+
+    self._add_project_id()
+    self._add_account_id()
+    self._add_user_id(user_id)
+    self._add_attributes(attributes)
+    self._add_source()
+    self._add_time()
+
+
+class EventBuilderV1(BaseEventBuilder):
+  """ Class which encapsulates methods to build events for tracking
+  impressions and conversions using the old endpoint. """
+
+  # Attribute mapping format
+  ATTRIBUTE_PARAM_FORMAT = '{segment_prefix}{segment_id}'
+  # Experiment mapping format
+  EXPERIMENT_PARAM_FORMAT = '{experiment_prefix}{experiment_id}'
+  # Event API format
+  OFFLINE_API_PATH = 'https://{project_id}.log.optimizely.com/event'
+
+
+  class EventParams(object):
+    ACCOUNT_ID = 'd'
+    PROJECT_ID = 'a'
+    EXPERIMENT_PREFIX = 'x'
+    GOAL_ID = 'g'
+    GOAL_NAME = 'n'
+    END_USER_ID = 'u'
+    EVENT_VALUE = 'v'
+    SEGMENT_PREFIX = 's'
+    SOURCE = 'src'
+    TIME = 'time'
 
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
@@ -122,21 +129,6 @@ class EventBuilderV1(object):
     """ Add time information to the event. """
 
     self.params[self.EventParams.TIME] = int(time.time())
-
-  def _add_common_params(self, user_id, attributes):
-    """ Add params which are used same in both conversion and impression events.
-
-    Args:
-      user_id: ID for user.
-      attributes: Dict representing user attributes and values which need to be recorded.
-    """
-
-    self._add_project_id()
-    self._add_account_id()
-    self._add_user_id(user_id)
-    self._add_attributes(attributes)
-    self._add_source()
-    self._add_time()
 
   def _add_impression_goal(self, experiment_key):
     """ Add impression goal information to the event.
@@ -235,13 +227,15 @@ class EventBuilderV1(object):
                  self.params)
 
 
-class EventBuilderV2(EventBuilderV1):
+class EventBuilderV2(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking 
   impressions and conversions using the new endpoints. """
 
   IMPRESSION_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
   CONVERSION_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
-
+  HTTP_VERB = 'POST'
+  HTTP_HEADERS = {'Content-Type': 'application/json'}
+  EVENT_VALUE_METRIC = 'revenue'
 
   class EventParams(object):
     ACCOUNT_ID = 'accountId'
@@ -252,7 +246,7 @@ class EventBuilderV2(EventBuilderV1):
     END_USER_ID = 'visitorId'
     EVENT_ID = 'eventEntityId'
     EVENT_NAME = 'eventName'
-    EVENT_VALUE = 'eventMetrics'
+    EVENT_METRICS = 'eventMetrics'
     EVENT_FEATURES = 'eventFeatures'
     USER_FEATURES = 'userFeatures'
     DECISION = 'decision'
@@ -263,7 +257,7 @@ class EventBuilderV2(EventBuilderV1):
     ACTION_TRIGGERED = 'actionTriggered'
     IS_GLOBAL_HOLDBACK = 'isGlobalHoldback'
     IS_LAYER_HOLDBACK = 'isLayerHoldback'
-    
+
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
 
@@ -315,11 +309,11 @@ class EventBuilderV2(EventBuilderV1):
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
     self.params[self.EventParams.USER_FEATURES] = []
     self.params[self.EventParams.EVENT_FEATURES] = []
-    self.params[self.EventParams.EVENT_VALUE] = []
+    self.params[self.EventParams.EVENT_METRICS] = []
 
     if event_value:
-      self.params[self.EventParams.EVENT_VALUE] = [{
-        'name': 'revenue',
+      self.params[self.EventParams.EVENT_METRICS] = [{
+        'name': self.EVENT_VALUE_METRIC,
         'value': event_value
       }]
 
@@ -359,8 +353,8 @@ class EventBuilderV2(EventBuilderV1):
     self._add_required_params_for_impression(experiment_key, variation_id)
     return Event(self.IMPRESSION_ENDPOINT,
                  self.params,
-                 http_verb='POST',
-                 headers={'Content-Type': 'application/json'})
+                 http_verb=self.HTTP_VERB,
+                 headers=self.HTTP_HEADERS)
 
   def create_conversion_event(self, event_key, user_id, attributes, event_value, valid_experiments):
     """ Create conversion Event to be sent to the logging endpoint.
@@ -381,5 +375,5 @@ class EventBuilderV2(EventBuilderV1):
     self._add_required_params_for_conversion(event_key, user_id, event_value, valid_experiments)
     return Event(self.CONVERSION_ENDPOINT,
                  self.params,
-                 http_verb='POST',
-                 headers={'Content-Type': 'application/json'})
+                 http_verb=self.HTTP_VERB,
+                 headers=self.HTTP_HEADERS)
