@@ -34,7 +34,7 @@ class Optimizely(object):
 
     self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
     self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
+    self.event_builder = event_builder.EventBuilderV1(self.config, self.bucketer)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.
@@ -116,9 +116,9 @@ class Optimizely(object):
     impression_event = self.event_builder.create_impression_event(experiment_key, variation_id, user_id, attributes)
     self.logger.log(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".' % (user_id, experiment_key))
     self.logger.log(enums.LogLevels.DEBUG,
-                    'Dispatching impression event to URL %s with params %s.' % (impression_event.get_url(),
-                                                                                impression_event.get_params()))
-    self.event_dispatcher.dispatch_event(impression_event.get_url(), impression_event.get_params())
+                    'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
+                                                                                impression_event.params))
+    self.event_dispatcher.dispatch_event(impression_event.url, impression_event.params)
 
     return self.config.get_variation_key_from_id(experiment_key, variation_id)
 
@@ -157,9 +157,9 @@ class Optimizely(object):
                                                                     valid_experiments)
       self.logger.log(enums.LogLevels.INFO, 'Tracking event "%s" for user "%s".' % (event_key, user_id))
       self.logger.log(enums.LogLevels.DEBUG,
-                      'Dispatching conversion event to URL %s with params %s.' % (conversion_event.get_url(),
-                                                                                  conversion_event.get_params()))
-      self.event_dispatcher.dispatch_event(conversion_event.get_url(), conversion_event.get_params())
+                      'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
+                                                                                  conversion_event.params))
+      self.event_dispatcher.dispatch_event(conversion_event.url, conversion_event.params)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where visitor will be bucketed.
