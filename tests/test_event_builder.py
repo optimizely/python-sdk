@@ -31,6 +31,14 @@ class EventBuilderV1Test(base.BaseTest):
     base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
 
+  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
+    """ Helper method to validate properties of the event object. """
+
+    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_verb, event_obj.http_verb)
+    self.assertEqual(expected_headers, event_obj.headers)
+
   def test_create_impression_event(self):
     """ Test that create_impression_event creates Event object with right params. """
 
@@ -46,10 +54,9 @@ class EventBuilderV1Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user', None)
-    self.assertEqual(event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'), event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual('GET', event_obj.http_verb)
-    self.assertIsNone(event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
 
   def test_create_impression_event__with_attributes(self):
     """ Test that create_impression_event creates Event object
@@ -69,10 +76,9 @@ class EventBuilderV1Test(base.BaseTest):
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user',
                                                              {'test_attribute': 'test_value'})
-    self.assertEqual(event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'), event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual('GET', event_obj.http_verb)
-    self.assertIsNone(event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
 
   def test_create_conversion_event__with_attributes(self):
     """ Test that create_conversion_event creates Event object
@@ -93,10 +99,9 @@ class EventBuilderV1Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, None,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'), event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual('GET', event_obj.http_verb)
-    self.assertIsNone(event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
 
   def test_create_conversion_event__with_attributes_no_match(self):
     """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
@@ -112,10 +117,9 @@ class EventBuilderV1Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self.assertEqual(event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'), event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual('GET', event_obj.http_verb)
-    self.assertIsNone(event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
 
   def test_create_conversion_event__with_event_value(self):
     """ Test that create_conversion_event creates Event object
@@ -137,10 +141,9 @@ class EventBuilderV1Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, 4200,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'), event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual('GET', event_obj.http_verb)
-    self.assertIsNone(event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
 
 
 class EventBuilderV2Test(base.BaseTest):
@@ -148,6 +151,14 @@ class EventBuilderV2Test(base.BaseTest):
   def setUp(self):
     base.BaseTest.setUp(self)
     self.event_builder = event_builder.EventBuilderV2(self.optimizely.config, self.optimizely.bucketer)
+
+  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
+    """ Helper method to validate properties of the event object. """
+
+    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_verb, event_obj.http_verb)
+    self.assertEqual(expected_headers, event_obj.headers)
 
   def test_create_impression_event(self):
     """ Test that create_impression_event creates Event object with right params. """
@@ -170,10 +181,11 @@ class EventBuilderV2Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user', None)
-    self.assertEqual(event_builder.EventBuilderV2.IMPRESSION_ENDPOINT, event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_VERB, event_obj.http_verb)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_HEADERS, event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilderV2.HTTP_VERB,
+                                event_builder.EventBuilderV2.HTTP_HEADERS)
 
   def test_create_impression_event__with_attributes(self):
     """ Test that create_impression_event creates Event object
@@ -198,10 +210,11 @@ class EventBuilderV2Test(base.BaseTest):
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user',
                                                              {'test_attribute': 'test_value'})
-    self.assertEqual(event_builder.EventBuilderV2.IMPRESSION_ENDPOINT, event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_VERB, event_obj.http_verb)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_HEADERS, event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilderV2.HTTP_VERB,
+                                event_builder.EventBuilderV2.HTTP_HEADERS)
 
   def test_create_conversion_event__with_attributes(self):
     """ Test that create_conversion_event creates Event object
@@ -235,10 +248,11 @@ class EventBuilderV2Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, None,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(event_builder.EventBuilderV2.CONVERSION_ENDPOINT, event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_VERB, event_obj.http_verb)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_HEADERS, event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilderV2.HTTP_VERB,
+                                event_builder.EventBuilderV2.HTTP_HEADERS)
 
   def test_create_conversion_event__with_attributes_no_match(self):
     """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
@@ -260,10 +274,11 @@ class EventBuilderV2Test(base.BaseTest):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self.assertEqual(event_builder.EventBuilderV2.CONVERSION_ENDPOINT, event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_VERB, event_obj.http_verb)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_HEADERS, event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilderV2.HTTP_VERB,
+                                event_builder.EventBuilderV2.HTTP_HEADERS)
 
   def test_create_conversion_event__with_event_value(self):
     """ Test that create_conversion_event creates Event object
@@ -300,7 +315,8 @@ class EventBuilderV2Test(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
                                                              {'test_attribute': 'test_value'}, 4200,
                                                              [('111127', 'test_experiment')])
-    self.assertEqual(event_builder.EventBuilderV2.CONVERSION_ENDPOINT, event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_VERB, event_obj.http_verb)
-    self.assertEqual(event_builder.EventBuilderV2.HTTP_HEADERS, event_obj.headers)
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilderV2.HTTP_VERB,
+                                event_builder.EventBuilderV2.HTTP_HEADERS)
