@@ -18,3 +18,4 @@ class Errors(object):
   INVALID_EVENT_KEY_ERROR = 'Provided event is not in datafile.'
   INVALID_GROUP_ID_ERROR = 'Provided group is not in datafile.'
   INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
+  UNSUPPORTED_CONFIG_VERSION = 'Datafile provided has unsupported version.'

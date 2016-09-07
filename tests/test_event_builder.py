@@ -2,6 +2,7 @@ import mock
 import unittest
 
 from optimizely import event_builder
+from optimizely import project_config
 from optimizely import version
 from . import base
 
@@ -23,6 +24,31 @@ class EventTest(unittest.TestCase):
     self.assertEqual(params, event_obj.params)
     self.assertEqual(http_verb, event_obj.http_verb)
     self.assertEqual(headers, event_obj.headers)
+
+
+class EventBuilderTest(base.BaseTest):
+
+  def test_get_event_builder__with_v1_datafile(self):
+    """ Test that appropriate event builder is returned when datafile is of v1 version. """
+
+    event_builder_obj = event_builder.get_event_builder(self.optimizely.config, self.optimizely.bucketer)
+    self.assertIsInstance(event_builder_obj, event_builder.EventBuilderV1)
+
+  def test_get_event_builder__with_v2_datafile(self):
+    """ Test that appropriate event builder is returned when datafile is of v2 version. """
+
+    with mock.patch('optimizely.project_config.ProjectConfig.get_version',
+                    return_value=project_config.V2_CONFIG_VERSION):
+      event_builder_obj = event_builder.get_event_builder(self.optimizely.config, self.optimizely.bucketer)
+
+    self.assertIsInstance(event_builder_obj, event_builder.EventBuilderV2)
+
+  def test_get_event_builder__invalid_datafile_version(self):
+    """ Test that get_event_builder raises exception for unsupported datafile version. """
+
+    with mock.patch('optimizely.project_config.ProjectConfig.get_version', return_value='unsupported_version'):
+      self.assertRaisesRegexp(Exception, 'Datafile provided has unsupported version.',
+                              event_builder.get_event_builder, self.optimizely.config, self.optimizely.bucketer)
 
 
 class EventBuilderV1Test(base.BaseTest):
