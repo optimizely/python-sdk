@@ -118,6 +118,11 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_variation_key_map, self.project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, self.project_config.variation_id_map)
 
+  def test_get_version(self):
+    """ Test that JSON version is retrieved correctly when using get_version. """
+
+    self.assertEqual('1', self.project_config.get_version())
+
   def test_get_account_id(self):
     """ Test that account ID is retrieved correctly when using get_account_id. """
 

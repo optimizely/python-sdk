@@ -5,7 +5,8 @@ from .helpers import enums
 from . import exceptions
 
 REVENUE_GOAL_KEY = 'Total Revenue'
-
+V1_CONFIG_VERSION = '1'
+V2_CONFIG_VERSION = '2'
 
 class ProjectConfig(object):
   """ Representation of the Optimizely project config. """
@@ -22,6 +23,7 @@ class ProjectConfig(object):
     config = json.loads(datafile)
     self.logger = logger
     self.error_handler = error_handler
+    self.version = config.get('version')
     self.account_id = config.get('accountId')
     self.project_id = config.get('projectId')
     self.revision = config.get('revision')
@@ -91,6 +93,15 @@ class ProjectConfig(object):
         condition_helper.loads(audience_map[audience_id]['conditions'])
 
     return audience_map
+
+  def get_version(self):
+    """ Get version of the datafile.
+
+    Returns:
+      Version of the datafile.
+    """
+
+    return self.version
 
   def get_account_id(self):
     """ Get account ID from the config.

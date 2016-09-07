@@ -2,7 +2,9 @@ import time
 from abc import abstractmethod
 from abc import abstractproperty
 
+from . import project_config
 from . import version
+from .helpers import enums
 
 
 class Event(object):
@@ -377,3 +379,26 @@ class EventBuilderV2(BaseEventBuilder):
                  self.params,
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
+
+
+def get_event_builder(config, bucketer):
+  """ Helper method to get appropriate EventBuilder class based on the version of the datafile.
+
+  Args:
+    config: Object representing the project's configuration.
+    bucketer: Object representing the bucketer.
+
+  Returns:
+    Event builder based on the version of the datafile.
+
+  Raises:
+    Exception if provided datafile has unsupported version.
+  """
+
+  config_version = config.get_version()
+  if config_version == project_config.V1_CONFIG_VERSION:
+    return EventBuilderV1(config, bucketer)
+  if config_version == project_config.V2_CONFIG_VERSION:
+    return EventBuilderV2(config, bucketer)
+
+  raise Exception(enums.Errors.UNSUPPORTED_CONFIG_VERSION)
