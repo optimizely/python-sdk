@@ -126,7 +126,7 @@ class Optimizely(object):
     """ Send conversion event to Optimizely.
 
     Args:
-      event_key: Goal key representing the event which needs to be recorded.
+      event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
       attributes: Dict representing visitor attributes and values which need to be recorded.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
@@ -137,7 +137,7 @@ class Optimizely(object):
       self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
       return
 
-    experiment_ids = self.config.get_experiment_ids_for_goal(event_key)
+    experiment_ids = self.config.get_experiment_ids_for_event(event_key)
     if not experiment_ids:
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
