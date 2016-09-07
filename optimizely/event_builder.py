@@ -114,7 +114,7 @@ class EventBuilderV1(BaseEventBuilder):
       return
 
     for attribute_key in list(attributes.keys()):
-      attribute_value = attributes[attribute_key]
+      attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
         segment_id = self.config.get_segment_id(attribute_key)
@@ -266,8 +266,24 @@ class EventBuilderV2(BaseEventBuilder):
     Args:
       attributes: Dict representing user attributes and values which need to be recorded.
     """
-    # TODO(ali): Implement this
-    pass
+
+    self.params[self.EventParams.USER_FEATURES] = []
+    if not attributes:
+      return
+
+    for attribute_key in list(attributes.keys()):
+      attribute_value = attributes.get(attribute_key)
+      # Omit falsy attribute values
+      if attribute_value:
+        attribute_id = self.config.get_attribute_id(attribute_key)
+        if attribute_id:
+          self.params[self.EventParams.USER_FEATURES].append({
+            'id': attribute_id,
+            'name': attribute_key,
+            'type': 'custom',
+            'value': attribute_value,
+            'shouldIndex': True
+          })
 
   def _add_source(self):
     """ Add source information to the event. """
@@ -289,7 +305,6 @@ class EventBuilderV2(BaseEventBuilder):
     """
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
-    self.params[self.EventParams.USER_FEATURES] = []
     # TODO(ali): Implement this
     self.params[self.EventParams.LAYER_ID] = ''
     self.params[self.EventParams.DECISION] = {
@@ -309,7 +324,6 @@ class EventBuilderV2(BaseEventBuilder):
     """
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
-    self.params[self.EventParams.USER_FEATURES] = []
     self.params[self.EventParams.EVENT_FEATURES] = []
     self.params[self.EventParams.EVENT_METRICS] = []
 
