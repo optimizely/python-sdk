@@ -211,7 +211,7 @@ class EventBuilderV1(BaseEventBuilder):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
-      event_key: Goal key representing the event which needs to be recorded.
+      event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
       valid_experiments: List of tuples representing valid experiments for the event.
