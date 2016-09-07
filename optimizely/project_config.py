@@ -391,10 +391,10 @@ class ProjectConfig(object):
     """ Get attribute ID for the provided attribute key.
 
     Args:
-      attribute_key: Attribute key for which segment ID is to be determined.
+      attribute_key: Attribute key for which attribute ID is to be determined.
 
     Returns:
-      Attribute ID corresponding to the provided attribute key.
+      Attribute ID corresponding to the provided attribute key. None if attribute key is invalid.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)
@@ -413,7 +413,7 @@ class ProjectConfig(object):
       attribute_key: Attribute key for which segment ID is to be determined.
 
     Returns:
-      Segment ID corresponding to the provided attribute key.
+      Segment ID corresponding to the provided attribute key. None if attribute key is invalid.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)
