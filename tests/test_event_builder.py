@@ -229,7 +229,13 @@ class EventBuilderV2Test(base.BaseTest):
       },
       'timestamp': 42123,
       'isGlobalHoldback': False,
-      'userFeatures': [],
+      'userFeatures': [{
+        'id': '111094',
+        'name': 'test_attribute',
+        'type': 'custom',
+        'value': 'test_value',
+        'shouldIndex': True
+      }],
       'clientEngine': 'python-sdk',
       'clientVersion': version.__version__
     }
@@ -266,7 +272,13 @@ class EventBuilderV2Test(base.BaseTest):
       ],
       'timestamp': 42123,
       'isGlobalHoldback': False,
-      'userFeatures': [],
+      'userFeatures': [{
+        'id': '111094',
+        'name': 'test_attribute',
+        'type': 'custom',
+        'value': 'test_value',
+        'shouldIndex': True
+      }],
       'clientEngine': 'python-sdk',
       'clientVersion': version.__version__
     }
@@ -333,7 +345,13 @@ class EventBuilderV2Test(base.BaseTest):
       ],
       'timestamp': 42123,
       'isGlobalHoldback': False,
-      'userFeatures': [],
+      'userFeatures': [{
+        'id': '111094',
+        'name': 'test_attribute',
+        'type': 'custom',
+        'value': 'test_value',
+        'shouldIndex': True
+      }],
       'clientEngine': 'python-sdk',
       'clientVersion': version.__version__
     }

@@ -387,6 +387,25 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidGoalException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return []
 
+  def get_attribute_id(self, attribute_key):
+    """ Get attribute ID for the provided attribute key.
+
+    Args:
+      attribute_key: Attribute key for which attribute ID is to be determined.
+
+    Returns:
+      Attribute ID corresponding to the provided attribute key. None if attribute key is invalid.
+    """
+
+    attribute = self.attribute_key_map.get(attribute_key)
+
+    if attribute:
+      return attribute.get('id')
+
+    self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
+    self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
+    return None
+
   def get_segment_id(self, attribute_key):
     """ Get segment ID for the provided attribute key.
 
@@ -394,7 +413,7 @@ class ProjectConfig(object):
       attribute_key: Attribute key for which segment ID is to be determined.
 
     Returns:
-      Segment ID corresponding to the provided attribute key.
+      Segment ID corresponding to the provided attribute key. None if attribute key is invalid.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)
