@@ -172,15 +172,15 @@ class EventBuilderV1(BaseEventBuilder):
     """ Add conversion goal information to the event.
 
     Args:
-      event_key: Goal key representing the event which needs to be recorded.
+      event_key: Event key representing the event which needs to be recorded.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
     """
 
-    goal_id = self.config.get_goal_id(event_key)
-    event_ids = goal_id
+    event_id = self.config.get_event_id(event_key)
+    event_ids = event_id
 
     if event_value:
-      event_ids = '{goal_id},{revenue_goal_id}'.format(goal_id=goal_id,
+      event_ids = '{goal_id},{revenue_goal_id}'.format(goal_id=event_id,
                                                        revenue_goal_id=self.config.get_revenue_goal_id())
       self.params[self.EventParams.EVENT_VALUE] = event_value
 
@@ -211,7 +211,7 @@ class EventBuilderV1(BaseEventBuilder):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
-      event_key: Goal key representing the event which needs to be recorded.
+      event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
       valid_experiments: List of tuples representing valid experiments for the event.
@@ -346,7 +346,7 @@ class EventBuilderV2(BaseEventBuilder):
           }
         })
 
-    self.params[self.EventParams.EVENT_ID] = self.config.get_goal_id(event_key)
+    self.params[self.EventParams.EVENT_ID] = self.config.get_event_id(event_key)
     self.params[self.EventParams.EVENT_NAME] = event_key
 
   def create_impression_event(self, experiment_key, variation_id, user_id, attributes):

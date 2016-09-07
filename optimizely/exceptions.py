@@ -8,7 +8,7 @@ class InvalidExperimentException(Exception):
   pass
 
 
-class InvalidGoalException(Exception):
+class InvalidEventException(Exception):
   """ Raised when provided event key is invalid. """
   pass
 

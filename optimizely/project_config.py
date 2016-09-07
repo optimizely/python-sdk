@@ -327,37 +327,24 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
-  def get_goal_id(self, goal_key):
-    """ Get goal ID for the provided goal key.
+  def get_event_id(self, event_key):
+    """ Get event ID for the provided event key.
 
     Args:
-      goal_key: Goal key for which ID is to be determined.
+      event_key: Event key for which ID is to be determined.
 
     Returns:
-      Goal ID corresponding to the provided goal key.
+      Event ID corresponding to the provided event key.
     """
 
-    goal = self.event_key_map.get(goal_key)
+    event = self.event_key_map.get(event_key)
 
-    if goal:
-      return goal.get('id')
+    if event:
+      return event.get('id')
 
-    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % goal_key)
-    self.error_handler.handle_error(exceptions.InvalidGoalException(enums.Errors.INVALID_EVENT_KEY_ERROR))
+    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
+    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return None
-
-  def get_goal_keys(self):
-    """ Get list of all goal keys in the project except 'Total Revenue'.
-
-    Returns:
-      List of all goal keys except 'Total Revenue'.
-    """
-
-    goal_keys = list(self.event_key_map.keys())
-    if REVENUE_GOAL_KEY in goal_keys:
-      goal_keys.remove(REVENUE_GOAL_KEY)
-
-    return goal_keys
 
   def get_revenue_goal_id(self):
     """ Get ID of the revenue goal for the project.
@@ -366,25 +353,25 @@ class ProjectConfig(object):
       Revenue goal ID.
     """
 
-    return self.get_goal_id(REVENUE_GOAL_KEY)
+    return self.get_event_id(REVENUE_GOAL_KEY)
 
-  def get_experiment_ids_for_goal(self, goal_key):
-    """ Get experiment IDs for the provided goal key.
+  def get_experiment_ids_for_event(self, event_key):
+    """ Get experiment IDs for the provided event key.
 
     Args:
-      goal_key: Goal key for which experiment IDs are to be retrieved.
+      event_key: Goal key for which experiment IDs are to be retrieved.
 
     Returns:
-      List of all experiment IDs for the goal.
+      List of all experiment IDs for the event.
     """
 
-    goal = self.event_key_map.get(goal_key)
+    event = self.event_key_map.get(event_key)
 
-    if goal:
-      return goal.get('experimentIds', [])
+    if event:
+      return event.get('experimentIds', [])
 
-    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % goal_key)
-    self.error_handler.handle_error(exceptions.InvalidGoalException(enums.Errors.INVALID_EVENT_KEY_ERROR))
+    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
+    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return []
 
   def get_attribute_id(self, attribute_key):

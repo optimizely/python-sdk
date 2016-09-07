@@ -256,36 +256,31 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_variation_id(self.config_dict['experiments'][0]['key'], 'invalid_key'))
 
-  def test_get_goal_id__valid_key(self):
-    """ Test that goal ID is retrieved correctly for valid goal key. """
+  def test_get_event_id__valid_key(self):
+    """ Test that event ID is retrieved correctly for valid event key. """
 
-    self.assertEqual(self.config_dict['events'][0]['id'], self.project_config.get_goal_id('test_event'))
+    self.assertEqual(self.config_dict['events'][0]['id'], self.project_config.get_event_id('test_event'))
 
-  def test_get_goal_id__invalid_key(self):
-    """ Test that None is returned when provided goal key is invalid. """
+  def test_get_event_id__invalid_key(self):
+    """ Test that None is returned when provided event key is invalid. """
 
-    self.assertIsNone(self.project_config.get_goal_id('invalid_key'))
-
-  def test_get_goal_keys(self):
-    """ Test that list of all goal keys is retrieved as expected. """
-
-    self.assertEqual([self.config_dict['events'][0]['key']], self.project_config.get_goal_keys())
+    self.assertIsNone(self.project_config.get_event_id('invalid_key'))
 
   def test_get_revenue_goal_id(self):
     """ Test that revenue goal ID can be retrieved as expected. """
 
     self.assertEqual(self.config_dict['events'][1]['id'], self.project_config.get_revenue_goal_id())
 
-  def test_get_experiment_ids_for_goal__valid_key(self):
-    """ Test that experiment IDs are retrieved as expected for valid goal key. """
+  def test_get_experiment_ids_for_event__valid_key(self):
+    """ Test that experiment IDs are retrieved as expected for valid event key. """
 
     self.assertEqual(self.config_dict['events'][0]['experimentIds'],
-                     self.project_config.get_experiment_ids_for_goal('test_event'))
+                     self.project_config.get_experiment_ids_for_event('test_event'))
 
-  def test_get_experiment_ids_for_goal__invalid_key(self):
-    """ Test that empty list is returned when provided goal key is invalid. """
+  def test_get_experiment_ids_for_event__invalid_key(self):
+    """ Test that empty list is returned when provided event key is invalid. """
 
-    self.assertEqual([], self.project_config.get_experiment_ids_for_goal('invalid_key'))
+    self.assertEqual([], self.project_config.get_experiment_ids_for_event('invalid_key'))
 
   def test_get_attribute_id__valid_key(self):
     """ Test that attribute ID is retrieved correctly for valid attribute key. """
@@ -415,19 +410,19 @@ class ConfigLoggingTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation key "invalid_key" is not in datafile.')
 
-  def test_get_goal_id__invalid_key(self):
-    """ Test that message is logged when provided goal key is invalid. """
+  def test_get_event_id__invalid_key(self):
+    """ Test that message is logged when provided event key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_goal_id('invalid_key')
+      self.project_config.get_event_id('invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Event "invalid_key" is not in datafile.')
 
-  def test_get_experiment_ids_for_goal__invalid_key(self):
-    """ Test that message is logged when provided goal key is invalid. """
+  def test_get_experiment_ids_for_event__invalid_key(self):
+    """ Test that message is logged when provided event key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_ids_for_goal('invalid_key')
+      self.project_config.get_experiment_ids_for_event('invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Event "invalid_key" is not in datafile.')
 
@@ -526,19 +521,19 @@ class ConfigExceptionTest(base.BaseTest):
                             enums.Errors.INVALID_VARIATION_ERROR,
                             self.project_config.get_variation_id, 'test_experiment', 'invalid_key')
 
-  def test_get_goal_id__invalid_key(self):
-    """ Test that exception is raised when provided goal key is invalid. """
+  def test_get_event_id__invalid_key(self):
+    """ Test that exception is raised when provided event key is invalid. """
 
-    self.assertRaisesRegexp(exceptions.InvalidGoalException,
+    self.assertRaisesRegexp(exceptions.InvalidEventException,
                             enums.Errors.INVALID_EVENT_KEY_ERROR,
-                            self.project_config.get_goal_id, 'invalid_key')
+                            self.project_config.get_event_id, 'invalid_key')
 
-  def test_get_experiment_ids_for_goal__invalid_key(self):
-    """ Test that exception is raised when provided goal key is invalid. """
+  def test_get_experiment_ids_for_event__invalid_key(self):
+    """ Test that exception is raised when provided event key is invalid. """
 
-    self.assertRaisesRegexp(exceptions.InvalidGoalException,
+    self.assertRaisesRegexp(exceptions.InvalidEventException,
                             enums.Errors.INVALID_EVENT_KEY_ERROR,
-                            self.project_config.get_experiment_ids_for_goal, 'invalid_key')
+                            self.project_config.get_experiment_ids_for_event, 'invalid_key')
 
   def test_get_attribute_id__invalid_key(self):
     """ Test that exception is raised when provided attribute key is invalid. """
