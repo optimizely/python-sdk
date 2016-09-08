@@ -206,6 +206,25 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
+  def get_layer_id_for_experiment(self, experiment_key):
+    """ Get layer ID for the provided experiment key.
+
+    Args:
+      experiment_key: Experiment key for which layer ID is to be determined.
+
+    Returns:
+      Layer ID corresponding to the provided experiment key.
+    """
+
+    experiment = self.experiment_key_map.get(experiment_key)
+
+    if experiment:
+      return experiment.get('layerId')
+
+    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
+    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    return None
+
   def get_experiment_status(self, experiment_key):
     """ Get experiment status for the provided experiment key.
 

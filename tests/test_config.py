@@ -10,7 +10,7 @@ from optimizely.helpers import enums
 from . import base
 
 
-class ConfigTest(base.BaseTest):
+class ConfigTest(base.BaseTestV1):
 
   def test_init(self):
     """ Test that on creating object, properties are initiated correctly. """
@@ -179,6 +179,16 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_experiment_id('invalid_key'))
 
+  def test_get_layer_id_for_experiment__valid_key(self):
+    """ Test that None is returned when provided experiment key is valid. """
+
+    self.assertIsNone(self.project_config.get_layer_id_for_experiment('test_experiment'))
+
+  def test_get_layer_id_for_experiment__invalid_key(self):
+    """ Test that None is returned when provided experiment key is valid. """
+
+    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
+
   def test_get_experiment_status__valid_key(self):
     """ Test that experiment status is retrieved correctly for valid experiment key. """
 
@@ -323,9 +333,22 @@ class ConfigTest(base.BaseTest):
                                                                  'invalid_key'))
 
 
-class ConfigLoggingTest(base.BaseTest):
+class ConfigTestV2(base.BaseTestV2):
+
+  def test_get_layer_id_for_experiment__valid_key(self):
+    """ Test that layer ID is returned when provided experiment key is valid. """
+
+    self.assertEqual('111182', self.project_config.get_layer_id_for_experiment('test_experiment'))
+
+  def test_get_layer_id_for_experiment__invalid_key(self):
+    """ Test that None is returned when provided experiment key is valid. """
+
+    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
+
+
+class ConfigLoggingTest(base.BaseTestV1):
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
     self.project_config = self.optimizely.config
@@ -443,10 +466,10 @@ class ConfigLoggingTest(base.BaseTest):
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
 
 
-class ConfigExceptionTest(base.BaseTest):
+class ConfigExceptionTest(base.BaseTestV1):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             error_handler=error_handler.RaiseExceptionErrorHandler)
     self.project_config = self.optimizely.config

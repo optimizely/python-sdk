@@ -12,10 +12,10 @@ from optimizely.lib import pymmh3
 from . import base
 
 
-class BucketerTest(base.BaseTest):
+class BucketerTest(base.BaseTestV1):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.bucketer = bucketer.Bucketer(self.project_config)
 
   def test_bucket(self):
@@ -127,9 +127,9 @@ class BucketerTest(base.BaseTest):
       self.assertEqual(mmh3.hash(random_value), pymmh3.hash(random_value))
 
 
-class BucketerWithLoggingTest(base.BaseTest):
+class BucketerWithLoggingTest(base.BaseTestV1):
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
     self.bucketer = bucketer.Bucketer(self.optimizely.config)
