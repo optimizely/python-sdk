@@ -185,7 +185,7 @@ class ConfigTest(base.BaseTestV1):
     self.assertIsNone(self.project_config.get_layer_id_for_experiment('test_experiment'))
 
   def test_get_layer_id_for_experiment__invalid_key(self):
-    """ Test that None is returned when provided experiment key is valid. """
+    """ Test that None is returned when provided experiment key is invalid. """
 
     self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
 
@@ -341,7 +341,7 @@ class ConfigTestV2(base.BaseTestV2):
     self.assertEqual('111182', self.project_config.get_layer_id_for_experiment('test_experiment'))
 
   def test_get_layer_id_for_experiment__invalid_key(self):
-    """ Test that None is returned when provided experiment key is valid. """
+    """ Test that None is returned when provided experiment key is invalid. """
 
     self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
 
