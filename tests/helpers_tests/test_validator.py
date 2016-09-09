@@ -8,7 +8,7 @@ from optimizely.helpers import validator
 from tests import base
 
 
-class ValidatorTest(base.BaseTest):
+class ValidatorTest(base.BaseTestV1):
 
   def test_is_datafile_valid__returns_true(self):
     """ Test that valid datafile returns True. """

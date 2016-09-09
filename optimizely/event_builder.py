@@ -303,8 +303,7 @@ class EventBuilderV2(BaseEventBuilder):
     """
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
-    # TODO(ali): Implement this
-    self.params[self.EventParams.LAYER_ID] = ''
+    self.params[self.EventParams.LAYER_ID] = self.config.get_layer_id_for_experiment(experiment_key)
     self.params[self.EventParams.DECISION] = {
       self.EventParams.EXPERIMENT_ID: self.config.get_experiment_id(experiment_key),
       self.EventParams.VARIATION_ID: variation_id,
@@ -336,8 +335,7 @@ class EventBuilderV2(BaseEventBuilder):
       variation_id = self.bucketer.bucket(experiment[1], user_id)
       if variation_id:
         self.params[self.EventParams.LAYER_STATES].append({
-          # TODO(ali): Implement this
-          self.EventParams.LAYER_ID: '',
+          self.EventParams.LAYER_ID: self.config.get_layer_id_for_experiment(experiment[1]),
           self.EventParams.ACTION_TRIGGERED: True,
           self.EventParams.DECISION: {
             self.EventParams.EXPERIMENT_ID: experiment[0],

@@ -4,7 +4,7 @@ from tests import base
 from optimizely.helpers import audience
 
 
-class AudienceTest(base.BaseTest):
+class AudienceTest(base.BaseTestV1):
 
   def test_is_match__audience_condition_matches(self):
     """ Test that is_match returns True when audience conditions are met. """

@@ -10,7 +10,7 @@ from optimizely.helpers import enums
 from . import base
 
 
-class OptimizelyTest(base.BaseTest):
+class OptimizelyTest(base.BaseTestV1):
 
   def test_init__invalid_datafile__raises(self):
     """ Test that invalid datafile raises Exception on init. """
@@ -291,10 +291,10 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual('test_message', self.optimizely.error_handler.handle_error('test_message'))
 
 
-class OptimizelyWithExceptionTest(base.BaseTest):
+class OptimizelyWithExceptionTest(base.BaseTestV1):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             error_handler=error_handler.RaiseExceptionErrorHandler)
 
@@ -317,10 +317,10 @@ class OptimizelyWithExceptionTest(base.BaseTest):
                             self.optimizely.get_variation, 'test_experiment', 'test_user', attributes='invalid')
 
 
-class OptimizelyWithLoggingTest(base.BaseTest):
+class OptimizelyWithLoggingTest(base.BaseTestV1):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict), logger=logger.SimpleLogger())
     self.project_config = self.optimizely.config
 

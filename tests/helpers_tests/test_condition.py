@@ -5,10 +5,10 @@ from optimizely.helpers import condition as condition_helper
 from tests import base
 
 
-class ConditionEvaluatorTests(base.BaseTest):
+class ConditionEvaluatorTests(base.BaseTestV1):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.condition_structure, self.condition_list = condition_helper.loads(
       self.config_dict['audiences'][0]['conditions']
     )
@@ -98,7 +98,7 @@ class ConditionEvaluatorTests(base.BaseTest):
     self.assertFalse(self.condition_evaluator.evaluate(condition_structure))
 
 
-class ConditionDecoderTests(base.BaseTest):
+class ConditionDecoderTests(base.BaseTestV1):
 
   def test_loads(self):
     """ Test that loads correctly sets condition structure and list. """
