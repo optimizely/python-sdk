@@ -2,6 +2,7 @@ import mock
 import json
 import unittest
 
+from optimizely import event_builder
 from optimizely import event_dispatcher
 
 
@@ -17,9 +18,10 @@ class EventDispatcherTest(unittest.TestCase):
       'g': '111028',
       'u': 'oeutest_user'
     }
+    event = event_builder.Event(url, params)
 
     with mock.patch('requests.get') as mock_request_get:
-      event_dispatcher.EventDispatcher.dispatch_event(url, params)
+      event_dispatcher.EventDispatcher.dispatch_event(event)
 
     mock_request_get.assert_called_once_with(url, params=params, timeout=event_dispatcher.REQUEST_TIMEOUT)
 
@@ -33,9 +35,10 @@ class EventDispatcherTest(unittest.TestCase):
       'eventEntityId': '111028',
       'visitorId': 'oeutest_user'
     }
+    event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
     with mock.patch('requests.post') as mock_request_post:
-      event_dispatcher.EventDispatcher.dispatch_event(url, params, 'POST', {'Content-Type': 'application/json'})
+      event_dispatcher.EventDispatcher.dispatch_event(event)
 
     mock_request_post.assert_called_once_with(url, data=json.dumps(params),
                                               headers={'Content-Type': 'application/json'},

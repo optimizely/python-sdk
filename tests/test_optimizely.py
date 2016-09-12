@@ -12,6 +12,14 @@ from . import base
 
 class OptimizelyTest(base.BaseTestV1):
 
+  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
+    """ Helper method to validate properties of the event object. """
+
+    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_verb, event_obj.http_verb)
+    self.assertEqual(expected_headers, event_obj.headers)
+
   def test_init__invalid_datafile__raises(self):
     """ Test that invalid datafile raises Exception on init. """
 
@@ -82,7 +90,9 @@ class OptimizelyTest(base.BaseTestV1):
     }
     mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment', None)
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params, 'GET', None)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
@@ -109,7 +119,9 @@ class OptimizelyTest(base.BaseTestV1):
     mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
                                                 {'test_attribute': 'test_value'})
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params, 'GET', None)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_activate__with_attributes__no_audience_match(self):
     """ Test that activate returns None when audience conditions do not match. """
@@ -171,7 +183,9 @@ class OptimizelyTest(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params, 'GET', None)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
@@ -215,7 +229,9 @@ class OptimizelyTest(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params, 'GET', None)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_track__experiment_not_running(self):
     """ Test that track does not call dispatch_event when experiment is not running. """
@@ -293,6 +309,14 @@ class OptimizelyTest(base.BaseTestV1):
 
 class OptimizelyV2Test(base.BaseTestV2):
 
+  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
+    """ Helper method to validate properties of the event object. """
+
+    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_verb, event_obj.http_verb)
+    self.assertEqual(expected_headers, event_obj.headers)
+
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
 
@@ -320,8 +344,9 @@ class OptimizelyV2Test(base.BaseTestV2):
     }
     mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment', None)
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://p13nlog.dz.optimizely.com/log/decision',
-                                                expected_params, 'POST', {'Content-Type': 'application/json'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
@@ -359,8 +384,9 @@ class OptimizelyV2Test(base.BaseTestV2):
     mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
                                                 {'test_attribute': 'test_value'})
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://p13nlog.dz.optimizely.com/log/decision',
-                                                expected_params, 'POST', {'Content-Type': 'application/json'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__no_audience_match(self):
     """ Test that activate returns None when audience conditions do not match. """
@@ -412,7 +438,7 @@ class OptimizelyV2Test(base.BaseTestV2):
 
     expected_params = {
       'visitorId': 'test_user',
-      'clientVersion': '0.1.1',
+      'clientVersion': version.__version__,
       'clientEngine': 'python-sdk',
       'userFeatures': [{
         'shouldIndex': True,
@@ -440,8 +466,9 @@ class OptimizelyV2Test(base.BaseTestV2):
       'accountId': '12001'
     }
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://p13nlog.dz.optimizely.com/log/event',
-                                                expected_params, 'POST', {'Content-Type': 'application/json'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
@@ -474,7 +501,7 @@ class OptimizelyV2Test(base.BaseTestV2):
 
     expected_params = {
       'visitorId': 'test_user',
-      'clientVersion': '0.1.1',
+      'clientVersion': version.__version__,
       'clientEngine': 'python-sdk',
       'userFeatures': [{
         'shouldIndex': True,
@@ -505,8 +532,9 @@ class OptimizelyV2Test(base.BaseTestV2):
       'accountId': '12001'
     }
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://p13nlog.dz.optimizely.com/log/event',
-                                                expected_params, 'POST', {'Content-Type': 'application/json'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__experiment_not_running(self):
     """ Test that track does not call dispatch_event when experiment is not running. """

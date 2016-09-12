@@ -118,8 +118,7 @@ class Optimizely(object):
     self.logger.log(enums.LogLevels.DEBUG,
                     'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
                                                                                 impression_event.params))
-    self.event_dispatcher.dispatch_event(impression_event.url, impression_event.params,
-                                         impression_event.http_verb, impression_event.headers)
+    self.event_dispatcher.dispatch_event(impression_event)
 
     return self.config.get_variation_key_from_id(experiment_key, variation_id)
 
@@ -160,8 +159,7 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.DEBUG,
                       'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
                                                                                   conversion_event.params))
-      self.event_dispatcher.dispatch_event(conversion_event.url, conversion_event.params,
-                                           conversion_event.http_verb, conversion_event.headers)
+      self.event_dispatcher.dispatch_event(conversion_event)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where visitor will be bucketed.
