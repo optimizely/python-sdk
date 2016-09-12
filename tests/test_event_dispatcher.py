@@ -1,4 +1,5 @@
 import mock
+import json
 import unittest
 
 from optimizely import event_dispatcher
@@ -6,7 +7,7 @@ from optimizely import event_dispatcher
 
 class EventDispatcherTest(unittest.TestCase):
 
-  def test_dispatch_event(self):
+  def test_dispatch_event__get_request(self):
     """ Test that dispatch event fires off requests call with provided URL and params. """
 
     url = 'https://www.optimizely.com'
@@ -21,3 +22,21 @@ class EventDispatcherTest(unittest.TestCase):
       event_dispatcher.EventDispatcher.dispatch_event(url, params)
 
     mock_request_get.assert_called_once_with(url, params=params, timeout=event_dispatcher.REQUEST_TIMEOUT)
+
+  def test_dispatch_event__post_request(self):
+    """ Test that dispatch event fires off requests call with provided URL, params, HTTP verb and headers. """
+
+    url = 'https://www.optimizely.com'
+    params = {
+      'accountId': '111001',
+      'eventName': 'test_event',
+      'eventEntityId': '111028',
+      'visitorId': 'oeutest_user'
+    }
+
+    with mock.patch('requests.post') as mock_request_post:
+      event_dispatcher.EventDispatcher.dispatch_event(url, params, 'POST', {'Content-Type': 'application/json'})
+
+    mock_request_post.assert_called_once_with(url, data=json.dumps(params),
+                                              headers={'Content-Type': 'application/json'},
+                                              timeout=event_dispatcher.REQUEST_TIMEOUT)
