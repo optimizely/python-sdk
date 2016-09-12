@@ -408,17 +408,22 @@ class OptimizelyV2Test(base.BaseTestV2):
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_activate__experiment_not_running(self):
-    """ Test that activate returns None when experiment is not Running. """
+    """ Test that activate returns None and does not dispatch event when experiment is not Running. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
-                   return_value=False) as mock_is_experiment_running:
+                   return_value=False) as mock_is_experiment_running, \
+        mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket,\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
+
     mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    self.assertEqual(0, mock_bucket.call_count)
+    self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_activate__bucketer_returns_none(self):
-    """ Test that activate returns None when user is in no variation. """
+    """ Test that activate returns None and does not dispatch event when user is in no variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
         mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None) as mock_bucket,\
