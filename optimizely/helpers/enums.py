@@ -1,6 +1,11 @@
 import logging
 
 
+class HTTPVerbs(object):
+  GET = 'GET'
+  POST = 'POST'
+
+
 class LogLevels(object):
   NOTSET = logging.NOTSET
   DEBUG = logging.DEBUG

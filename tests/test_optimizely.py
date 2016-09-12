@@ -12,6 +12,14 @@ from . import base
 
 class OptimizelyTest(base.BaseTestV1):
 
+  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
+    """ Helper method to validate properties of the event object. """
+
+    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_verb, event_obj.http_verb)
+    self.assertEqual(expected_headers, event_obj.headers)
+
   def test_init__invalid_datafile__raises(self):
     """ Test that invalid datafile raises Exception on init. """
 
@@ -82,7 +90,9 @@ class OptimizelyTest(base.BaseTestV1):
     }
     mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment', None)
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
@@ -109,7 +119,9 @@ class OptimizelyTest(base.BaseTestV1):
     mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
                                                 {'test_attribute': 'test_value'})
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_activate__with_attributes__no_audience_match(self):
     """ Test that activate returns None when audience conditions do not match. """
@@ -171,7 +183,9 @@ class OptimizelyTest(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
@@ -215,7 +229,9 @@ class OptimizelyTest(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     mock_bucket.assert_called_once_with('test_experiment', 'test_user')
-    mock_dispatch_event.assert_called_once_with('https://111001.log.optimizely.com/event', expected_params)
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
 
   def test_track__experiment_not_running(self):
     """ Test that track does not call dispatch_event when experiment is not running. """
@@ -289,6 +305,253 @@ class OptimizelyTest(base.BaseTestV1):
 
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict), error_handler=CustomExceptionHandler)
     self.assertEqual('test_message', self.optimizely.error_handler.handle_error('test_message'))
+
+
+class OptimizelyV2Test(base.BaseTestV2):
+
+  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
+    """ Helper method to validate properties of the event object. """
+
+    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_params, event_obj.params)
+    self.assertEqual(expected_verb, event_obj.http_verb)
+    self.assertEqual(expected_headers, event_obj.headers)
+
+  def test_activate(self):
+    """ Test that activate calls dispatch_event with right params and returns expected variation. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'accountId': '12001',
+      'projectId': '111001',
+      'layerId': '111182',
+      'decision': {
+        'variationId': '111129',
+        'isLayerHoldback': False,
+        'experimentId': '111127'
+      },
+      'userFeatures': [],
+      'isGlobalHoldback': False,
+      'timestamp': 42000,
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk'
+    }
+    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment', None)
+    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_activate__with_attributes__audience_match(self):
+    """ Test that activate calls dispatch_event with right params and returns expected
+    variation when attributes are provided and audience conditions are met. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
+                                                             {'test_attribute': 'test_value'}))
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'accountId': '12001',
+      'projectId': '111001',
+      'layerId': '111182',
+      'decision': {
+        'variationId': '111129',
+        'isLayerHoldback': False,
+        'experimentId': '111127'
+      },
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'isGlobalHoldback': False,
+      'timestamp': 42000,
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk'
+    }
+    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
+                                                {'test_attribute': 'test_value'})
+    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_activate__with_attributes__no_audience_match(self):
+    """ Test that activate returns None when audience conditions do not match. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
+      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
+                                                 attributes={'test_attribute': 'test_value'}))
+    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
+                                                {'test_attribute': 'test_value'})
+
+  def test_activate__with_attributes__invalid_attributes(self):
+    """ Test that activate returns None and does not bucket or dispatch event when attributes are invalid. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket,\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user', attributes='invalid'))
+
+    self.assertEqual(0, mock_bucket.call_count)
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_activate__experiment_not_running(self):
+    """ Test that activate returns None and does not dispatch event when experiment is not Running. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
+        mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                   return_value=False) as mock_is_experiment_running, \
+        mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket,\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
+                                                 attributes={'test_attribute': 'test_value'}))
+
+    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    self.assertEqual(0, mock_bucket.call_count)
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_activate__bucketer_returns_none(self):
+    """ Test that activate returns None and does not dispatch event when user is in no variation. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
+        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None) as mock_bucket,\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
+                                                 attributes={'test_attribute': 'test_value'}))
+    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_track__with_attributes(self):
+    """ Test that track calls dispatch_event with right params when attributes are provided. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk',
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'projectId': '111001',
+      'isGlobalHoldback': False,
+      'eventEntityId': '111095',
+      'eventName': 'test_event',
+      'eventFeatures': [],
+      'eventMetrics': [],
+      'timestamp': 42000,
+      'layerStates': [{
+        'decision': {
+          'variationId': '111128',
+          'isLayerHoldback': False,
+          'experimentId': '111127'
+        },
+        'actionTriggered': True,
+        'layerId': '111182'
+      }],
+      'accountId': '12001'
+    }
+    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_track__with_attributes__no_audience_match(self):
+    """ Test that track does not call dispatch_event when audience conditions do not match. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
+
+    self.assertEqual(0, mock_bucket.call_count)
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_track__with_attributes__invalid_attributes(self):
+    """ Test that track does not bucket or dispatch event if attributes are invalid. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket,\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes='invalid')
+
+    self.assertEqual(0, mock_bucket.call_count)
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_track__with_event_value(self):
+    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk',
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'projectId': '111001',
+      'isGlobalHoldback': False,
+      'eventEntityId': '111095',
+      'eventName': 'test_event',
+      'eventFeatures': [],
+      'eventMetrics': [{
+        'name': 'revenue',
+        'value': 4200
+      }],
+      'timestamp': 42000,
+      'layerStates': [{
+        'decision': {
+          'variationId': '111128',
+          'isLayerHoldback': False,
+          'experimentId': '111127'
+        },
+        'actionTriggered': True,
+        'layerId': '111182'
+      }],
+      'accountId': '12001'
+    }
+    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_track__experiment_not_running(self):
+    """ Test that track does not call dispatch_event when experiment is not running. """
+
+    with mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                    return_value=False) as mock_is_experiment_running,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user')
+
+    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    self.assertEqual(0, mock_dispatch_event.call_count)
 
 
 class OptimizelyWithExceptionTest(base.BaseTestV1):

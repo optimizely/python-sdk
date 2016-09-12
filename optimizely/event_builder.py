@@ -113,7 +113,8 @@ class EventBuilderV1(BaseEventBuilder):
     if not attributes:
       return
 
-    for attribute_key, attribute_value in attributes.iteritems():
+    for attribute_key in attributes.keys():
+      attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
         segment_id = self.config.get_segment_id(attribute_key)
@@ -270,7 +271,8 @@ class EventBuilderV2(BaseEventBuilder):
     if not attributes:
       return
 
-    for attribute_key, attribute_value in attributes.iteritems():
+    for attribute_key in attributes.keys():
+      attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
         attribute_id = self.config.get_attribute_id(attribute_key)
