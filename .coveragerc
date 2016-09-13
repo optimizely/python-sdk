@@ -1,0 +1,3 @@
+[run]
+omit =
+  optimizely/lib/pymmh3*
