@@ -121,15 +121,6 @@ class ProjectConfig(object):
 
     return self.project_id
 
-  def get_experiment_keys(self):
-    """ Get list of all experiment keys in the project.
-
-    Returns:
-      List of all experiment keys.
-    """
-
-    return list(self.experiment_key_map.keys())
-
   def get_experiment_group_id(self, experiment_key):
     """ Get group ID for the provided experiment key.
 
