@@ -128,12 +128,6 @@ class ConfigTest(base.BaseTest):
 
     self.assertEqual(self.config_dict['projectId'], self.project_config.get_project_id())
 
-  def test_get_experiment_keys(self):
-    """ Test that list of all experiment keys is retrieved as expected. """
-
-    self.assertEqual(['group_exp_1', 'group_exp_2', 'test_experiment'],
-                     sorted(self.project_config.get_experiment_keys()))
-
   def test_get_experiment_group_id__valid_key(self):
     """ Test that experiment group ID is retrieved correctly for valid experiment key. """
 
