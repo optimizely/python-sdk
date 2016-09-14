@@ -30,7 +30,8 @@ class ProjectConfig(object):
     self.groups = config.get('groups', [])
     self.experiments = config.get('experiments', [])
     self.events = config.get('events', [])
-    self.attributes = config.get('dimensions', [])
+    self.attributes = config.get('dimensions', []) \
+      if self.version == V1_CONFIG_VERSION else config.get('attributes', [])
     self.audiences = config.get('audiences', [])
 
     # Utility maps for quick lookup

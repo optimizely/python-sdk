@@ -223,15 +223,14 @@ class BaseTestV2(unittest.TestCase):
         }]
       }],
       'accountId': '12001',
-      'dimensions': [{
+      'attributes': [{
         'key': 'test_attribute',
-        'id': '111094',
-        'segmentId': '11133'
+        'id': '111094'
       }],
       'audiences': [{
         'name': 'Test attribute users',
         'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_dimension", "value": "test_value"}]]]',
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
       }],
       'projectId': '111001'
