@@ -10,7 +10,7 @@ from optimizely.helpers import enums
 from . import base
 
 
-class OptimizelyTest(base.BaseTestV1):
+class OptimizelyV1Test(base.BaseTestV1):
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
@@ -316,6 +316,14 @@ class OptimizelyV2Test(base.BaseTestV2):
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
+
+  def test_init__invalid_datafile__raises(self):
+    """ Test that invalid datafile raises Exception on init. """
+
+    with self.assertRaises(Exception) as cm:
+      optimizely.Optimizely('invalid_datafile')
+
+    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
