@@ -230,7 +230,7 @@ class BaseTestV2(unittest.TestCase):
       'audiences': [{
         'name': 'Test attribute users',
         'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_dimension", "value": "test_value"}]]]',
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
       }],
       'projectId': '111001'
