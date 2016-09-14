@@ -223,10 +223,9 @@ class BaseTestV2(unittest.TestCase):
         }]
       }],
       'accountId': '12001',
-      'dimensions': [{
+      'attributes': [{
         'key': 'test_attribute',
-        'id': '111094',
-        'segmentId': '11133'
+        'id': '111094'
       }],
       'audiences': [{
         'name': 'Test attribute users',
