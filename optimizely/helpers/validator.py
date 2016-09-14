@@ -1,6 +1,7 @@
 import json
 import jsonschema
 
+from optimizely import project_config
 from . import constants
 
 
@@ -14,8 +15,12 @@ def is_datafile_valid(datafile):
     Boolean depending upon whether datafile is valid or not.
   """
 
+  datafile_json = json.loads(datafile)
+  datafile_version = datafile_json.get('version')
+  json_schema = constants.JSON_SCHEMA_V1 if datafile_version == project_config.V1_CONFIG_VERSION else
+
   try:
-    jsonschema.Draft4Validator(constants.JSON_SCHEMA).validate(json.loads(datafile))
+    jsonschema.Draft4Validator(constants.JSON_SCHEMA).validate(datafile_json)
   except:
     return False
 
