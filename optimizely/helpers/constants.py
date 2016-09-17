@@ -408,6 +408,9 @@ JSON_SCHEMA_V2 = {
           "id": {
             "type": "string"
           },
+          "layerId": {
+            "type": "string"
+          },
           "key": {
             "type": "string"
           },
@@ -462,6 +465,7 @@ JSON_SCHEMA_V2 = {
         },
         "required": [
           "id",
+          "layerId",
           "key",
           "status",
           "variations",
