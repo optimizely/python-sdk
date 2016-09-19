@@ -274,10 +274,10 @@ class EventBuilderV2(BaseEventBuilder):
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
-        attribute_id = self.config.get_attribute_id(attribute_key)
-        if attribute_id:
+        attribute = self.config.get_attribute(attribute_key)
+        if attribute:
           self.params[self.EventParams.USER_FEATURES].append({
-            'id': attribute_id,
+            'id': attribute.id,
             'name': attribute_key,
             'type': 'custom',
             'value': attribute_value,
@@ -345,7 +345,7 @@ class EventBuilderV2(BaseEventBuilder):
           }
         })
 
-    self.params[self.EventParams.EVENT_ID] = self.config.get_event_id(event_key)
+    self.params[self.EventParams.EVENT_ID] = self.config.get_event(event_key).id
     self.params[self.EventParams.EVENT_NAME] = event_key
 
   def create_impression_event(self, experiment_key, variation_id, user_id, attributes):

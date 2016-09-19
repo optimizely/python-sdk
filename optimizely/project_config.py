@@ -13,7 +13,8 @@ Experiment = namedtuple('Experiment',
                         ['id', 'key', 'status', 'groupId', 'layerId', 'audienceIds', 'variations', 'trafficAllocation'])
 Event = namedtuple('Event', ['id', 'key', 'experimentIds'])
 Audience = namedtuple('Audience', ['id', 'name', 'conditions'])
-Attribute = namedtuple('Attribute', ['id', 'key', 'segmentId'])
+AttributeV1 = namedtuple('Attribute', ['id', 'key', 'segmentId'])
+AttributeV2 = namedtuple('Attribute', ['id', 'key'])
 
 
 class ProjectConfig(object):
@@ -47,7 +48,8 @@ class ProjectConfig(object):
     self.experiment_key_map = self._generate_key_map(self.experiments, 'key')
     self.experiment_id_map = self._generate_key_map(self.experiments, 'id')
     self.event_key_map = self._generate_key_map_named_tuple(self.events, 'key', Event)
-    self.attribute_key_map = self._generate_key_map_named_tuple(self.attributes, 'key', Attribute)
+    self.attribute_key_map = self._generate_key_map_named_tuple(self.attributes, 'key', AttributeV1) \
+      if self.version == V1_CONFIG_VERSION else self._generate_key_map_named_tuple(self.attributes, 'key', AttributeV2)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id')
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():

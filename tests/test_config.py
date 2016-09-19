@@ -47,7 +47,7 @@ class ConfigTest(base.BaseTestV1):
       'Total Revenue': project_config.Event(id='111096', key='Total Revenue', experimentIds=['111127'])
     }
     expected_attribute_key_map = {
-      'test_attribute': project_config.Attribute(id='111094', key='test_attribute', segmentId='11133')
+      'test_attribute': project_config.AttributeV1(id='111094', key='test_attribute', segmentId='11133')
     }
     expected_audience_id_map = {
       '11154': self.config_dict['audiences'][0]
@@ -289,33 +289,13 @@ class ConfigTest(base.BaseTestV1):
     self.assertEqual(project_config.Event(id='111096', key='Total Revenue', experimentIds=['111127']),
                      self.project_config.get_revenue_goal())
 
-  def test_get_attribute_id__valid_key(self):
-    """ Test that attribute ID is retrieved correctly for valid attribute key. """
-
-    self.assertEqual(self.config_dict['dimensions'][0]['id'],
-                     self.project_config.get_attribute_id('test_attribute'))
-
-  def test_get_attribute_id__invalid_key(self):
-    """ Test that None is returned when provided attribute key is invalid. """
-
-    self.assertIsNone(self.project_config.get_attribute_id('invalid_key'))
-
-  def test_get_segment_id__valid_key(self):
-    """ Test that segment ID is retrieved correctly for valid attribute key. """
-
-    self.assertEqual(self.config_dict['dimensions'][0]['segmentId'],
-                     self.project_config.get_segment_id('test_attribute'))
-
-  def test_get_segment_id__invalid_key(self):
-=======
   def test_get_attribute__valid_key(self):
     """ Test that attribute is retrieved correctly for valid attribute key. """
 
-    self.assertEqual(project_config.Attribute(id='111094', key='test_attribute', segmentId='11133'),
+    self.assertEqual(project_config.AttributeV1(id='111094', key='test_attribute', segmentId='11133'),
                      self.project_config.get_attribute('test_attribute'))
 
   def test_get_attribute__invalid_key(self):
->>>>>>> 025ded7... introducing named tuples for some entities
     """ Test that None is returned when provided attribute key is invalid. """
 
     self.assertIsNone(self.project_config.get_attribute('invalid_key'))
@@ -539,7 +519,7 @@ class ConfigExceptionTest(base.BaseTestV1):
 
     self.assertRaisesRegexp(exceptions.InvalidEventException,
                             enums.Errors.INVALID_EVENT_KEY_ERROR,
-                            self.project_config.get_experiment_ids_for_event, 'invalid_key')
+                            self.project_config.get_event, 'invalid_key')
 
   def test_get_attribute__invalid_key(self):
     """ Test that exception is raised when provided attribute key is invalid. """
