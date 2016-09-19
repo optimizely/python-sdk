@@ -53,6 +53,7 @@ class BaseEventBuilder(object):
     """
     pass
 
+  @abstractmethod
   def _add_source(self):
     """ Add source information to the event. """
     pass
