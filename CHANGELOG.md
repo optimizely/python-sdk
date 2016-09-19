@@ -1,8 +1,13 @@
+## 0.1.3
+- Added support for v2 endpoint and datafile.
+- Updated dispatch_event to consume an Event object instead of url and params. The Event object comprises of four properties: url (string representing URL to dispatch event to), params (dict representing the params to be set for the event), http_verb (one of 'GET' or 'POST') and headers (header values to be sent along). 
+- Fixed issue with tracking events for experiments in groups.
+
 ## 0.1.2
-- Updated requirements package.
+- Updated requirements file.
 
 ## 0.1.1
-- Introduce option to skip JSON schema validation.
+- Introduced option to skip JSON schema validation.
 
 ## 0.1.0
 - Beta release of the Python SDK for server-side testing.

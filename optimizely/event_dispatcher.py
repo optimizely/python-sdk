@@ -1,5 +1,7 @@
+import json
 import requests
 
+from .helpers import enums
 
 REQUEST_TIMEOUT = 10
 
@@ -7,12 +9,13 @@ REQUEST_TIMEOUT = 10
 class EventDispatcher(object):
 
   @staticmethod
-  def dispatch_event(url, params):
+  def dispatch_event(event):
     """ Dispatch the event being represented by the Event object.
 
     Args:
-      url: URL to send impression/conversion event to.
-      params: Params to be sent to the impression/conversion event.
+      event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
-
-    requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
+    if event.http_verb == enums.HTTPVerbs.GET:
+      requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT)
+    elif event.http_verb == enums.HTTPVerbs.POST:
+      requests.post(event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT)

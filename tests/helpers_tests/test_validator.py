@@ -8,7 +8,7 @@ from optimizely.helpers import validator
 from tests import base
 
 
-class ValidatorTest(base.BaseTest):
+class ValidatorTest(base.BaseTestV1):
 
   def test_is_datafile_valid__returns_true(self):
     """ Test that valid datafile returns True. """
@@ -75,3 +75,19 @@ class ValidatorTest(base.BaseTest):
     self.assertFalse(validator.are_attributes_valid('key:value'))
     self.assertFalse(validator.are_attributes_valid(['key', 'value']))
     self.assertFalse(validator.are_attributes_valid(42))
+
+
+class DatafileV2ValidationTests(base.BaseTestV2):
+
+  def test_is_datafile_valid__returns_true(self):
+    """ Test that valid datafile returns True. """
+
+    self.assertTrue(validator.is_datafile_valid(json.dumps(self.config_dict)))
+
+  def test_is_datafile_valid__returns_false(self):
+    """ Test that invalid datafile returns False. """
+
+    self.assertFalse(validator.is_datafile_valid(json.dumps({
+      'invalid_key': 'invalid_value'
+    })))
+

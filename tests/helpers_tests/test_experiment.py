@@ -4,7 +4,7 @@ from tests import base
 from optimizely.helpers import experiment
 
 
-class ExperimentTest(base.BaseTest):
+class ExperimentTest(base.BaseTestV1):
 
   def test_is_experiment_running__status_running(self):
     """ Test that is_experiment_running returns True when experiment has Running status. """

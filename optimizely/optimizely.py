@@ -34,7 +34,7 @@ class Optimizely(object):
 
     self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
     self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
+    self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.
@@ -116,9 +116,9 @@ class Optimizely(object):
     impression_event = self.event_builder.create_impression_event(experiment_key, variation_id, user_id, attributes)
     self.logger.log(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".' % (user_id, experiment_key))
     self.logger.log(enums.LogLevels.DEBUG,
-                    'Dispatching impression event to URL %s with params %s.' % (impression_event.get_url(),
-                                                                                impression_event.get_params()))
-    self.event_dispatcher.dispatch_event(impression_event.get_url(), impression_event.get_params())
+                    'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
+                                                                                impression_event.params))
+    self.event_dispatcher.dispatch_event(impression_event)
 
     return self.config.get_variation_key_from_id(experiment_key, variation_id)
 
@@ -126,7 +126,7 @@ class Optimizely(object):
     """ Send conversion event to Optimizely.
 
     Args:
-      event_key: Goal key representing the event which needs to be recorded.
+      event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
       attributes: Dict representing visitor attributes and values which need to be recorded.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
@@ -137,7 +137,7 @@ class Optimizely(object):
       self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
       return
 
-    experiment_ids = self.config.get_experiment_ids_for_goal(event_key)
+    experiment_ids = self.config.get_experiment_ids_for_event(event_key)
     if not experiment_ids:
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
@@ -157,9 +157,9 @@ class Optimizely(object):
                                                                     valid_experiments)
       self.logger.log(enums.LogLevels.INFO, 'Tracking event "%s" for user "%s".' % (event_key, user_id))
       self.logger.log(enums.LogLevels.DEBUG,
-                      'Dispatching conversion event to URL %s with params %s.' % (conversion_event.get_url(),
-                                                                                  conversion_event.get_params()))
-      self.event_dispatcher.dispatch_event(conversion_event.get_url(), conversion_event.get_params())
+                      'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
+                                                                                  conversion_event.params))
+      self.event_dispatcher.dispatch_event(conversion_event)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where visitor will be bucketed.

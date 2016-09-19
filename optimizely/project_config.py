@@ -5,7 +5,8 @@ from .helpers import enums
 from . import exceptions
 
 REVENUE_GOAL_KEY = 'Total Revenue'
-
+V1_CONFIG_VERSION = '1'
+V2_CONFIG_VERSION = '2'
 
 class ProjectConfig(object):
   """ Representation of the Optimizely project config. """
@@ -22,13 +23,15 @@ class ProjectConfig(object):
     config = json.loads(datafile)
     self.logger = logger
     self.error_handler = error_handler
+    self.version = config.get('version')
     self.account_id = config.get('accountId')
     self.project_id = config.get('projectId')
     self.revision = config.get('revision')
     self.groups = config.get('groups', [])
     self.experiments = config.get('experiments', [])
     self.events = config.get('events', [])
-    self.attributes = config.get('dimensions', [])
+    self.attributes = config.get('dimensions', []) \
+      if self.version == V1_CONFIG_VERSION else config.get('attributes', [])
     self.audiences = config.get('audiences', [])
 
     # Utility maps for quick lookup
@@ -40,13 +43,15 @@ class ProjectConfig(object):
     self.audience_id_map = self._generate_key_map(self.audiences, 'id')
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
-      experiments_in_group_map = self._generate_key_map(group['experiments'], 'key')
-      for experiment in experiments_in_group_map.values():
+      experiments_in_group_key_map = self._generate_key_map(group['experiments'], 'key')
+      experiments_in_group_id_map = self._generate_key_map(group['experiments'], 'id')
+      for experiment in experiments_in_group_key_map.values():
         experiment.update({
           'groupId': group['id'],
           'groupPolicy': group['policy']
         })
-      self.experiment_key_map.update(experiments_in_group_map)
+      self.experiment_key_map.update(experiments_in_group_key_map)
+      self.experiment_id_map.update(experiments_in_group_id_map)
     self.variation_key_map = {}
     self.variation_id_map = {}
     for experiment_key in self.experiment_key_map.keys():
@@ -91,6 +96,15 @@ class ProjectConfig(object):
         condition_helper.loads(audience_map[audience_id]['conditions'])
 
     return audience_map
+
+  def get_version(self):
+    """ Get version of the datafile.
+
+    Returns:
+      Version of the datafile.
+    """
+
+    return self.version
 
   def get_account_id(self):
     """ Get account ID from the config.
@@ -183,6 +197,25 @@ class ProjectConfig(object):
       return experiment.get('key')
 
     self.logger.log(enums.LogLevels.ERROR, 'Experiment ID "%s" is not in datafile.' % experiment_id)
+    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    return None
+
+  def get_layer_id_for_experiment(self, experiment_key):
+    """ Get layer ID for the provided experiment key.
+
+    Args:
+      experiment_key: Experiment key for which layer ID is to be determined.
+
+    Returns:
+      Layer ID corresponding to the provided experiment key.
+    """
+
+    experiment = self.experiment_key_map.get(experiment_key)
+
+    if experiment:
+      return experiment.get('layerId')
+
+    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
@@ -307,37 +340,24 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
-  def get_goal_id(self, goal_key):
-    """ Get goal ID for the provided goal key.
+  def get_event_id(self, event_key):
+    """ Get event ID for the provided event key.
 
     Args:
-      goal_key: Goal key for which ID is to be determined.
+      event_key: Event key for which ID is to be determined.
 
     Returns:
-      Goal ID corresponding to the provided goal key.
+      Event ID corresponding to the provided event key.
     """
 
-    goal = self.event_key_map.get(goal_key)
+    event = self.event_key_map.get(event_key)
 
-    if goal:
-      return goal.get('id')
+    if event:
+      return event.get('id')
 
-    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % goal_key)
-    self.error_handler.handle_error(exceptions.InvalidGoalException(enums.Errors.INVALID_EVENT_KEY_ERROR))
+    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
+    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return None
-
-  def get_goal_keys(self):
-    """ Get list of all goal keys in the project except 'Total Revenue'.
-
-    Returns:
-      List of all goal keys except 'Total Revenue'.
-    """
-
-    goal_keys = list(self.event_key_map.keys())
-    if REVENUE_GOAL_KEY in goal_keys:
-      goal_keys.remove(REVENUE_GOAL_KEY)
-
-    return goal_keys
 
   def get_revenue_goal_id(self):
     """ Get ID of the revenue goal for the project.
@@ -346,26 +366,45 @@ class ProjectConfig(object):
       Revenue goal ID.
     """
 
-    return self.get_goal_id(REVENUE_GOAL_KEY)
+    return self.get_event_id(REVENUE_GOAL_KEY)
 
-  def get_experiment_ids_for_goal(self, goal_key):
-    """ Get experiment IDs for the provided goal key.
+  def get_experiment_ids_for_event(self, event_key):
+    """ Get experiment IDs for the provided event key.
 
     Args:
-      goal_key: Goal key for which experiment IDs are to be retrieved.
+      event_key: Goal key for which experiment IDs are to be retrieved.
 
     Returns:
-      List of all experiment IDs for the goal.
+      List of all experiment IDs for the event.
     """
 
-    goal = self.event_key_map.get(goal_key)
+    event = self.event_key_map.get(event_key)
 
-    if goal:
-      return goal.get('experimentIds', [])
+    if event:
+      return event.get('experimentIds', [])
 
-    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % goal_key)
-    self.error_handler.handle_error(exceptions.InvalidGoalException(enums.Errors.INVALID_EVENT_KEY_ERROR))
+    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
+    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return []
+
+  def get_attribute_id(self, attribute_key):
+    """ Get attribute ID for the provided attribute key.
+
+    Args:
+      attribute_key: Attribute key for which attribute ID is to be determined.
+
+    Returns:
+      Attribute ID corresponding to the provided attribute key. None if attribute key is invalid.
+    """
+
+    attribute = self.attribute_key_map.get(attribute_key)
+
+    if attribute:
+      return attribute.get('id')
+
+    self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
+    self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
+    return None
 
   def get_segment_id(self, attribute_key):
     """ Get segment ID for the provided attribute key.
@@ -374,7 +413,7 @@ class ProjectConfig(object):
       attribute_key: Attribute key for which segment ID is to be determined.
 
     Returns:
-      Segment ID corresponding to the provided attribute key.
+      Segment ID corresponding to the provided attribute key. None if attribute key is invalid.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)

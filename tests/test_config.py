@@ -10,7 +10,7 @@ from optimizely.helpers import enums
 from . import base
 
 
-class ConfigTest(base.BaseTest):
+class ConfigTest(base.BaseTestV1):
 
   def test_init(self):
     """ Test that on creating object, properties are initiated correctly. """
@@ -32,6 +32,15 @@ class ConfigTest(base.BaseTest):
     expected_experiment_key_map['group_exp_1']['groupPolicy'] = 'random'
     expected_experiment_key_map['group_exp_2']['groupId'] = '19228'
     expected_experiment_key_map['group_exp_2']['groupPolicy'] = 'random'
+    expected_experiment_id_map = {
+      '111127': self.config_dict['experiments'][0],
+      '32222': self.config_dict['groups'][0]['experiments'][0],
+      '32223': self.config_dict['groups'][0]['experiments'][1]
+    }
+    expected_experiment_id_map['32222']['groupId'] = '19228'
+    expected_experiment_id_map['32222']['groupPolicy'] = 'random'
+    expected_experiment_id_map['32223']['groupId'] = '19228'
+    expected_experiment_id_map['32223']['groupPolicy'] = 'random'
     expected_event_key_map = {
       'test_event': self.config_dict['events'][0],
       'Total Revenue': self.config_dict['events'][1]
@@ -110,13 +119,20 @@ class ConfigTest(base.BaseTest):
         }
       }
     }
+
     self.assertEqual(expected_group_id_map, self.project_config.group_id_map)
     self.assertEqual(expected_experiment_key_map, self.project_config.experiment_key_map)
+    self.assertEqual(expected_experiment_id_map, self.project_config.experiment_id_map)
     self.assertEqual(expected_event_key_map, self.project_config.event_key_map)
     self.assertEqual(expected_attribute_key_map, self.project_config.attribute_key_map)
     self.assertEqual(expected_audience_id_map, self.project_config.audience_id_map)
     self.assertEqual(expected_variation_key_map, self.project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, self.project_config.variation_id_map)
+
+  def test_get_version(self):
+    """ Test that JSON version is retrieved correctly when using get_version. """
+
+    self.assertEqual('1', self.project_config.get_version())
 
   def test_get_account_id(self):
     """ Test that account ID is retrieved correctly when using get_account_id. """
@@ -167,6 +183,16 @@ class ConfigTest(base.BaseTest):
     """ Test that None is returned when provided experiment key is invalid. """
 
     self.assertIsNone(self.project_config.get_experiment_id('invalid_key'))
+
+  def test_get_layer_id_for_experiment__valid_key(self):
+    """ Test that None is returned when provided experiment key is valid. """
+
+    self.assertIsNone(self.project_config.get_layer_id_for_experiment('test_experiment'))
+
+  def test_get_layer_id_for_experiment__invalid_key(self):
+    """ Test that None is returned when provided experiment key is invalid. """
+
+    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
 
   def test_get_experiment_status__valid_key(self):
     """ Test that experiment status is retrieved correctly for valid experiment key. """
@@ -245,36 +271,42 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_variation_id(self.config_dict['experiments'][0]['key'], 'invalid_key'))
 
-  def test_get_goal_id__valid_key(self):
-    """ Test that goal ID is retrieved correctly for valid goal key. """
+  def test_get_event_id__valid_key(self):
+    """ Test that event ID is retrieved correctly for valid event key. """
 
-    self.assertEqual(self.config_dict['events'][0]['id'], self.project_config.get_goal_id('test_event'))
+    self.assertEqual(self.config_dict['events'][0]['id'], self.project_config.get_event_id('test_event'))
 
-  def test_get_goal_id__invalid_key(self):
-    """ Test that None is returned when provided goal key is invalid. """
+  def test_get_event_id__invalid_key(self):
+    """ Test that None is returned when provided event key is invalid. """
 
-    self.assertIsNone(self.project_config.get_goal_id('invalid_key'))
-
-  def test_get_goal_keys(self):
-    """ Test that list of all goal keys is retrieved as expected. """
-
-    self.assertEqual([self.config_dict['events'][0]['key']], self.project_config.get_goal_keys())
+    self.assertIsNone(self.project_config.get_event_id('invalid_key'))
 
   def test_get_revenue_goal_id(self):
     """ Test that revenue goal ID can be retrieved as expected. """
 
     self.assertEqual(self.config_dict['events'][1]['id'], self.project_config.get_revenue_goal_id())
 
-  def test_get_experiment_ids_for_goal__valid_key(self):
-    """ Test that experiment IDs are retrieved as expected for valid goal key. """
+  def test_get_experiment_ids_for_event__valid_key(self):
+    """ Test that experiment IDs are retrieved as expected for valid event key. """
 
     self.assertEqual(self.config_dict['events'][0]['experimentIds'],
-                     self.project_config.get_experiment_ids_for_goal('test_event'))
+                     self.project_config.get_experiment_ids_for_event('test_event'))
 
-  def test_get_experiment_ids_for_goal__invalid_key(self):
-    """ Test that empty list is returned when provided goal key is invalid. """
+  def test_get_experiment_ids_for_event__invalid_key(self):
+    """ Test that empty list is returned when provided event key is invalid. """
 
-    self.assertEqual([], self.project_config.get_experiment_ids_for_goal('invalid_key'))
+    self.assertEqual([], self.project_config.get_experiment_ids_for_event('invalid_key'))
+
+  def test_get_attribute_id__valid_key(self):
+    """ Test that attribute ID is retrieved correctly for valid attribute key. """
+
+    self.assertEqual(self.config_dict['dimensions'][0]['id'],
+                     self.project_config.get_attribute_id('test_attribute'))
+
+  def test_get_attribute_id__invalid_key(self):
+    """ Test that None is returned when provided attribute key is invalid. """
+
+    self.assertIsNone(self.project_config.get_attribute_id('invalid_key'))
 
   def test_get_segment_id__valid_key(self):
     """ Test that segment ID is retrieved correctly for valid attribute key. """
@@ -297,7 +329,6 @@ class ConfigTest(base.BaseTest):
                      self.project_config.get_traffic_allocation(self.project_config.group_id_map,
                                                                 '19228'))
 
-
   def test_get_traffic_allocation__invalid_key(self):
     """ Test that None is returned when provided experiment key or group ID is invalid. """
 
@@ -307,9 +338,22 @@ class ConfigTest(base.BaseTest):
                                                                  'invalid_key'))
 
 
-class ConfigLoggingTest(base.BaseTest):
+class ConfigTestV2(base.BaseTestV2):
+
+  def test_get_layer_id_for_experiment__valid_key(self):
+    """ Test that layer ID is returned when provided experiment key is valid. """
+
+    self.assertEqual('111182', self.project_config.get_layer_id_for_experiment('test_experiment'))
+
+  def test_get_layer_id_for_experiment__invalid_key(self):
+    """ Test that None is returned when provided experiment key is invalid. """
+
+    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
+
+
+class ConfigLoggingTest(base.BaseTestV1):
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
     self.project_config = self.optimizely.config
@@ -394,21 +438,29 @@ class ConfigLoggingTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation key "invalid_key" is not in datafile.')
 
-  def test_get_goal_id__invalid_key(self):
-    """ Test that message is logged when provided goal key is invalid. """
+  def test_get_event_id__invalid_key(self):
+    """ Test that message is logged when provided event key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_goal_id('invalid_key')
+      self.project_config.get_event_id('invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Event "invalid_key" is not in datafile.')
 
-  def test_get_experiment_ids_for_goal__invalid_key(self):
-    """ Test that message is logged when provided goal key is invalid. """
+  def test_get_experiment_ids_for_event__invalid_key(self):
+    """ Test that message is logged when provided event key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_ids_for_goal('invalid_key')
+      self.project_config.get_experiment_ids_for_event('invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Event "invalid_key" is not in datafile.')
+
+  def test_get_attribute_id__invalid_key(self):
+    """ Test that message is logged when provided attribute key is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_attribute_id('invalid_key')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
 
   def test_get_segment_id__invalid_key(self):
     """ Test that message is logged when provided attribute key is invalid. """
@@ -419,10 +471,10 @@ class ConfigLoggingTest(base.BaseTest):
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
 
 
-class ConfigExceptionTest(base.BaseTest):
+class ConfigExceptionTest(base.BaseTestV1):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTestV1.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             error_handler=error_handler.RaiseExceptionErrorHandler)
     self.project_config = self.optimizely.config
@@ -497,19 +549,26 @@ class ConfigExceptionTest(base.BaseTest):
                             enums.Errors.INVALID_VARIATION_ERROR,
                             self.project_config.get_variation_id, 'test_experiment', 'invalid_key')
 
-  def test_get_goal_id__invalid_key(self):
-    """ Test that exception is raised when provided goal key is invalid. """
+  def test_get_event_id__invalid_key(self):
+    """ Test that exception is raised when provided event key is invalid. """
 
-    self.assertRaisesRegexp(exceptions.InvalidGoalException,
+    self.assertRaisesRegexp(exceptions.InvalidEventException,
                             enums.Errors.INVALID_EVENT_KEY_ERROR,
-                            self.project_config.get_goal_id, 'invalid_key')
+                            self.project_config.get_event_id, 'invalid_key')
 
-  def test_get_experiment_ids_for_goal__invalid_key(self):
-    """ Test that exception is raised when provided goal key is invalid. """
+  def test_get_experiment_ids_for_event__invalid_key(self):
+    """ Test that exception is raised when provided event key is invalid. """
 
-    self.assertRaisesRegexp(exceptions.InvalidGoalException,
+    self.assertRaisesRegexp(exceptions.InvalidEventException,
                             enums.Errors.INVALID_EVENT_KEY_ERROR,
-                            self.project_config.get_experiment_ids_for_goal, 'invalid_key')
+                            self.project_config.get_experiment_ids_for_event, 'invalid_key')
+
+  def test_get_attribute_id__invalid_key(self):
+    """ Test that exception is raised when provided attribute key is invalid. """
+
+    self.assertRaisesRegexp(exceptions.InvalidAttributeException,
+                            enums.Errors.INVALID_ATTRIBUTE_ERROR,
+                            self.project_config.get_attribute_id, 'invalid_key')
 
   def test_get_segment_id__invalid_key(self):
     """ Test that exception is raised when provided attribute key is invalid. """
