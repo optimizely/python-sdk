@@ -43,13 +43,15 @@ class ProjectConfig(object):
     self.audience_id_map = self._generate_key_map(self.audiences, 'id')
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
-      experiments_in_group_map = self._generate_key_map(group['experiments'], 'key')
-      for experiment in experiments_in_group_map.values():
+      experiments_in_group_key_map = self._generate_key_map(group['experiments'], 'key')
+      experiments_in_group_id_map = self._generate_key_map(group['experiments'], 'id')
+      for experiment in experiments_in_group_key_map.values():
         experiment.update({
           'groupId': group['id'],
           'groupPolicy': group['policy']
         })
-      self.experiment_key_map.update(experiments_in_group_map)
+      self.experiment_key_map.update(experiments_in_group_key_map)
+      self.experiment_id_map.update(experiments_in_group_id_map)
     self.variation_key_map = {}
     self.variation_id_map = {}
     for experiment_key in self.experiment_key_map.keys():
