@@ -32,6 +32,11 @@ class ConfigTest(base.BaseTestV1):
     expected_experiment_key_map['group_exp_1']['groupPolicy'] = 'random'
     expected_experiment_key_map['group_exp_2']['groupId'] = '19228'
     expected_experiment_key_map['group_exp_2']['groupPolicy'] = 'random'
+    expected_experiment_id_map = {
+      'test_experiment': self.config_dict['experiments'][0],
+      'group_exp_1': self.config_dict['groups'][0]['experiments'][0],
+      'group_exp_2': self.config_dict['groups'][0]['experiments'][1]
+    }
     expected_event_key_map = {
       'test_event': self.config_dict['events'][0],
       'Total Revenue': self.config_dict['events'][1]
@@ -112,6 +117,7 @@ class ConfigTest(base.BaseTestV1):
     }
     self.assertEqual(expected_group_id_map, self.project_config.group_id_map)
     self.assertEqual(expected_experiment_key_map, self.project_config.experiment_key_map)
+    self.assertEqual(expected_experiment_id_map, self.project_config.experiment_key_map)
     self.assertEqual(expected_event_key_map, self.project_config.event_key_map)
     self.assertEqual(expected_attribute_key_map, self.project_config.attribute_key_map)
     self.assertEqual(expected_audience_id_map, self.project_config.audience_id_map)
