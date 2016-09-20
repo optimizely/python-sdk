@@ -137,14 +137,14 @@ class Optimizely(object):
       self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
       return
 
-    experiment_ids = self.config.get_experiment_ids_for_event(event_key)
-    if not experiment_ids:
+    event = self.config.get_event(event_key)
+    if not event.experimentIds:
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
     # Filter out experiments that are not running or that do not include the user in audience conditions
     valid_experiments = []
-    for experiment_id in experiment_ids:
+    for experiment_id in event.experimentIds:
       experiment_key = self.config.get_experiment_key(experiment_id)
       if not self._validate_preconditions(experiment_key, user_id, attributes):
         self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for experiment "%s".' % (user_id, experiment_key))

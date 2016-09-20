@@ -117,10 +117,10 @@ class EventBuilderV1(BaseEventBuilder):
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
-        segment_id = self.config.get_segment_id(attribute_key)
-        if segment_id:
+        attribute = self.config.get_attribute(attribute_key)
+        if attribute:
           self.params[self.ATTRIBUTE_PARAM_FORMAT.format(
-            segment_prefix=self.EventParams.SEGMENT_PREFIX, segment_id=segment_id)] = attribute_value
+            segment_prefix=self.EventParams.SEGMENT_PREFIX, segment_id=attribute.segmentId)] = attribute_value
 
   def _add_source(self):
     """ Add source information to the event. """
@@ -177,12 +177,12 @@ class EventBuilderV1(BaseEventBuilder):
       event_value: Value associated with the event. Can be used to represent revenue in cents.
     """
 
-    event_id = self.config.get_event_id(event_key)
-    event_ids = event_id
+    event = self.config.get_event(event_key)
+    event_ids = event.id
 
     if event_value:
-      event_ids = '{goal_id},{revenue_goal_id}'.format(goal_id=event_id,
-                                                       revenue_goal_id=self.config.get_revenue_goal_id())
+      event_ids = '{goal_id},{revenue_goal_id}'.format(goal_id=event.id,
+                                                       revenue_goal_id=self.config.get_revenue_goal().id)
       self.params[self.EventParams.EVENT_VALUE] = event_value
 
     self.params[self.EventParams.GOAL_ID] = event_ids
@@ -275,10 +275,10 @@ class EventBuilderV2(BaseEventBuilder):
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
-        attribute_id = self.config.get_attribute_id(attribute_key)
-        if attribute_id:
+        attribute = self.config.get_attribute(attribute_key)
+        if attribute:
           self.params[self.EventParams.USER_FEATURES].append({
-            'id': attribute_id,
+            'id': attribute.id,
             'name': attribute_key,
             'type': 'custom',
             'value': attribute_value,
@@ -346,7 +346,7 @@ class EventBuilderV2(BaseEventBuilder):
           }
         })
 
-    self.params[self.EventParams.EVENT_ID] = self.config.get_event_id(event_key)
+    self.params[self.EventParams.EVENT_ID] = self.config.get_event(event_key).id
     self.params[self.EventParams.EVENT_NAME] = event_key
 
   def create_impression_event(self, experiment_key, variation_id, user_id, attributes):

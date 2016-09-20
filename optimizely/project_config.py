@@ -1,4 +1,5 @@
 import json
+from collections import namedtuple
 
 from .helpers import condition as condition_helper
 from .helpers import enums
@@ -7,6 +8,11 @@ from . import exceptions
 REVENUE_GOAL_KEY = 'Total Revenue'
 V1_CONFIG_VERSION = '1'
 V2_CONFIG_VERSION = '2'
+
+Event = namedtuple('Event', ['id', 'key', 'experimentIds'])
+AttributeV1 = namedtuple('Attribute', ['id', 'key', 'segmentId'])
+AttributeV2 = namedtuple('Attribute', ['id', 'key'])
+
 
 class ProjectConfig(object):
   """ Representation of the Optimizely project config. """
@@ -38,8 +44,9 @@ class ProjectConfig(object):
     self.group_id_map = self._generate_key_map(self.groups, 'id')
     self.experiment_key_map = self._generate_key_map(self.experiments, 'key')
     self.experiment_id_map = self._generate_key_map(self.experiments, 'id')
-    self.event_key_map = self._generate_key_map(self.events, 'key')
-    self.attribute_key_map = self._generate_key_map(self.attributes, 'key')
+    self.event_key_map = self._generate_key_map_named_tuple(self.events, 'key', Event)
+    self.attribute_key_map = self._generate_key_map_named_tuple(self.attributes, 'key', AttributeV1) \
+      if self.version == V1_CONFIG_VERSION else self._generate_key_map_named_tuple(self.attributes, 'key', AttributeV2)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id')
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
@@ -77,6 +84,25 @@ class ProjectConfig(object):
     key_map = {}
     for obj in list:
       key_map[obj[key]] = obj
+
+    return key_map
+
+  @staticmethod
+  def _generate_key_map_named_tuple(list, key, named_tuple):
+    """ Helper method to generate map from key to dict in list of dicts.
+
+    Args:
+      list: List consisting of dict.
+      key: Key in each dict which will be key in the map.
+
+    Returns:
+      Map mapping key to dict.
+    """
+
+    key_map = {}
+
+    for obj in list:
+      key_map[obj[key]] = named_tuple(**obj)
 
     return key_map
 
@@ -340,86 +366,48 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
-  def get_event_id(self, event_key):
-    """ Get event ID for the provided event key.
+  def get_event(self, event_key):
+    """ Get event for the provided event key.
 
     Args:
-      event_key: Event key for which ID is to be determined.
+      event_key: Event key for which event is to be determined.
 
     Returns:
-      Event ID corresponding to the provided event key.
+      Event corresponding to the provided event key.
     """
 
     event = self.event_key_map.get(event_key)
 
     if event:
-      return event.get('id')
+      return event
 
     self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
     self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return None
 
-  def get_revenue_goal_id(self):
-    """ Get ID of the revenue goal for the project.
+  def get_revenue_goal(self):
+    """ Get the revenue goal for the project.
 
     Returns:
-      Revenue goal ID.
+      Revenue goal.
     """
 
-    return self.get_event_id(REVENUE_GOAL_KEY)
+    return self.get_event(REVENUE_GOAL_KEY)
 
-  def get_experiment_ids_for_event(self, event_key):
-    """ Get experiment IDs for the provided event key.
-
-    Args:
-      event_key: Goal key for which experiment IDs are to be retrieved.
-
-    Returns:
-      List of all experiment IDs for the event.
-    """
-
-    event = self.event_key_map.get(event_key)
-
-    if event:
-      return event.get('experimentIds', [])
-
-    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
-    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
-    return []
-
-  def get_attribute_id(self, attribute_key):
-    """ Get attribute ID for the provided attribute key.
+  def get_attribute(self, attribute_key):
+    """ Get attribute for the provided attribute key.
 
     Args:
-      attribute_key: Attribute key for which attribute ID is to be determined.
+      attribute_key: Attribute key for which attribute is to be fetched.
 
     Returns:
-      Attribute ID corresponding to the provided attribute key. None if attribute key is invalid.
+      Attribute corresponding to the provided attribute key.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)
 
     if attribute:
-      return attribute.get('id')
-
-    self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
-    self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
-    return None
-
-  def get_segment_id(self, attribute_key):
-    """ Get segment ID for the provided attribute key.
-
-    Args:
-      attribute_key: Attribute key for which segment ID is to be determined.
-
-    Returns:
-      Segment ID corresponding to the provided attribute key. None if attribute key is invalid.
-    """
-
-    attribute = self.attribute_key_map.get(attribute_key)
-
-    if attribute:
-      return attribute.get('segmentId')
+      return attribute
 
     self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
     self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
