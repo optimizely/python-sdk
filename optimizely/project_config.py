@@ -9,10 +9,7 @@ REVENUE_GOAL_KEY = 'Total Revenue'
 V1_CONFIG_VERSION = '1'
 V2_CONFIG_VERSION = '2'
 
-Experiment = namedtuple('Experiment',
-                        ['id', 'key', 'status', 'groupId', 'layerId', 'audienceIds', 'variations', 'trafficAllocation'])
 Event = namedtuple('Event', ['id', 'key', 'experimentIds'])
-Audience = namedtuple('Audience', ['id', 'name', 'conditions'])
 AttributeV1 = namedtuple('Attribute', ['id', 'key', 'segmentId'])
 AttributeV2 = namedtuple('Attribute', ['id', 'key'])
 
