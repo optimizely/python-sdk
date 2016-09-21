@@ -4,9 +4,9 @@ from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
-from .helpers import audience
+from .helpers import audience as audience_helper
 from .helpers import enums
-from .helpers import experiment
+from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 
@@ -59,11 +59,11 @@ class Optimizely(object):
     if not validator.is_error_handler_valid(self.error_handler):
       raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
 
-  def _validate_preconditions(self, experiment_key, user_id, attributes):
+  def _validate_preconditions(self, experiment, user_id, attributes):
     """ Helper method to validate all pre-conditions before we go ahead to bucket user.
 
     Args:
-      experiment_key: Key representing the experiment.
+      experiment: Object representing the experiment.
       user_id: ID for user.
       attributes: Dict representing user attributes.
 
@@ -76,14 +76,14 @@ class Optimizely(object):
       self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
       return False
 
-    if not experiment.is_experiment_running(self.config, experiment_key):
-      self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment_key)
+    if not experiment_helper.is_experiment_running(experiment):
+      self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment.key)
       return False
 
-    if not audience.is_user_in_experiment(self.config, experiment_key, attributes):
+    if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
       self.logger.log(
         enums.LogLevels.INFO,
-        'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment_key)
+        'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment.key)
       )
       return False
 
@@ -102,7 +102,12 @@ class Optimizely(object):
       None if user is not in experiment or if experiment is not Running.
     """
 
-    if not self._validate_preconditions(experiment_key, user_id, attributes):
+    experiment = self.config.get_experiment_from_key(experiment_key)
+    if not experiment:
+      self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
+      return None
+
+    if not self._validate_preconditions(experiment, user_id, attributes):
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
       return None
 
@@ -145,11 +150,11 @@ class Optimizely(object):
     # Filter out experiments that are not running or that do not include the user in audience conditions
     valid_experiments = []
     for experiment_id in event.experimentIds:
-      experiment_key = self.config.get_experiment_key(experiment_id)
-      if not self._validate_preconditions(experiment_key, user_id, attributes):
-        self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for experiment "%s".' % (user_id, experiment_key))
+      experiment = self.config.get_experiment_from_id(experiment_id)
+      if not self._validate_preconditions(experiment, user_id, attributes):
+        self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for experiment "%s".' % (user_id, experiment.key))
         continue
-      valid_experiments.append((experiment_id, experiment_key))
+      valid_experiments.append(experiment)
 
     # Create and dispatch conversion event if there are valid experiments
     if valid_experiments:
@@ -162,10 +167,10 @@ class Optimizely(object):
       self.event_dispatcher.dispatch_event(conversion_event)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
-    """ Gets variation where visitor will be bucketed.
+    """ Gets variation where user will be bucketed.
 
     Args:
-      experiment_key: Experiment for which visitor variation needs to be determined.
+      experiment_key: Experiment for which user variation needs to be determined.
       user_id: ID for user.
       attributes: Dict representing user attributes.
 
@@ -174,7 +179,11 @@ class Optimizely(object):
       None if user is not in experiment or if experiment is not Running.
     """
 
-    if not self._validate_preconditions(experiment_key, user_id, attributes):
+    experiment = self.config.get_experiment_from_key(experiment_key)
+    if not experiment:
       return None
-    variation_id = self.bucketer.bucket(experiment_key, user_id)
+
+    if not self._validate_preconditions(experiment, user_id, attributes):
+      return None
+    variation_id = self.bucketer.bucket(experiment, user_id)
     return self.config.get_variation_key_from_id(experiment_key, variation_id)

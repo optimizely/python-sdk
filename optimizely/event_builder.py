@@ -178,6 +178,10 @@ class EventBuilderV1(BaseEventBuilder):
     """
 
     event = self.config.get_event(event_key)
+
+    if not event:
+      return
+
     event_ids = event.id
 
     if event_value:
@@ -304,10 +308,14 @@ class EventBuilderV2(BaseEventBuilder):
       variation_id: ID for variation which would be presented to user.
     """
 
+    experiment = self.config.get_experiment_from_key(experiment_key)
+    if not experiment:
+      return
+
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
-    self.params[self.EventParams.LAYER_ID] = self.config.get_layer_id_for_experiment(experiment_key)
+    self.params[self.EventParams.LAYER_ID] = experiment.layerId
     self.params[self.EventParams.DECISION] = {
-      self.EventParams.EXPERIMENT_ID: self.config.get_experiment_id(experiment_key),
+      self.EventParams.EXPERIMENT_ID: experiment.id,
       self.EventParams.VARIATION_ID: variation_id,
       self.EventParams.IS_LAYER_HOLDBACK: False
     }
@@ -334,13 +342,13 @@ class EventBuilderV2(BaseEventBuilder):
 
     self.params[self.EventParams.LAYER_STATES] = []
     for experiment in valid_experiments:
-      variation_id = self.bucketer.bucket(experiment[1], user_id)
+      variation_id = self.bucketer.bucket(experiment, user_id)
       if variation_id:
         self.params[self.EventParams.LAYER_STATES].append({
-          self.EventParams.LAYER_ID: self.config.get_layer_id_for_experiment(experiment[1]),
+          self.EventParams.LAYER_ID: experiment.layerId,
           self.EventParams.ACTION_TRIGGERED: True,
           self.EventParams.DECISION: {
-            self.EventParams.EXPERIMENT_ID: experiment[0],
+            self.EventParams.EXPERIMENT_ID: experiment.id,
             self.EventParams.VARIATION_ID: variation_id,
             self.EventParams.IS_LAYER_HOLDBACK: False
           }
