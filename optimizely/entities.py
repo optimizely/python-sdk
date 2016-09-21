@@ -1,4 +1,10 @@
-class Attribute(object):
+class BaseEntity(object):
+
+  def __eq__(self, other):
+    return self.__dict__ == other.__dict__
+
+
+class Attribute(BaseEntity):
 
   def __init__(self, id, key, segmentId=None):
     self.id = id
@@ -6,7 +12,7 @@ class Attribute(object):
     self.segmentId = segmentId
 
 
-class Event(object):
+class Event(BaseEntity):
 
   def __init__(self, id, key, experimentIds):
     self.id = id
@@ -14,7 +20,7 @@ class Event(object):
     self.experimentIds = experimentIds
 
 
-class Experiment(object):
+class Experiment(BaseEntity):
 
   def __init__(self, id, key, status, audienceIds, variations, forcedVariations,
                trafficAllocation, layerId=None, groupId=None, groupPolicy=None):

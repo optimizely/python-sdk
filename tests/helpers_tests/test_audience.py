@@ -37,12 +37,9 @@ class AudienceTest(base.BaseTestV1):
       'location': 'San Francisco'
     }
 
-    with mock.patch('optimizely.project_config.ProjectConfig.get_audience_ids_for_experiment',
-                    return_value=[]) as mock_get_audience_ids:
-      self.assertTrue(audience.is_user_in_experiment(self.project_config,
-                                                     self.project_config.get_experiment_from_key('test_experiment'),
-                                                     user_attributes))
-    mock_get_audience_ids.assert_called_once_with('test_experiment')
+    self.assertTrue(audience.is_user_in_experiment(self.project_config,
+                                                   self.project_config.get_experiment_from_key('test_experiment'),
+                                                   user_attributes))
 
   def test_is_user_in_experiment__audience_conditions_are_met(self):
     """ Test that is_user_in_experiment returns True when audience conditions are met. """

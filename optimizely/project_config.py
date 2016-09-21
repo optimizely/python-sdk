@@ -46,8 +46,10 @@ class ProjectConfig(object):
     for group in self.group_id_map.values():
       experiments_in_group_key_map = self._generate_key_map_entity(group['experiments'], 'key', entities.Experiment)
       for experiment in experiments_in_group_key_map.values():
-        experiment.groupId = group['id'],
-        experiment.groupPolicy = group['policy']
+        experiment.__dict__.update({
+          'groupId': group.get('id'),
+          'groupPolicy': group.get('policy')
+        })
       self.experiment_key_map.update(experiments_in_group_key_map)
 
     self.experiment_id_map = {}

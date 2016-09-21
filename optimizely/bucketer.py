@@ -91,7 +91,6 @@ class Bucketer(object):
     if not experiment:
       return None
 
-    print experiment
     # Check if user is white-listed for a variation
     forced_variations = experiment.forcedVariations
     if forced_variations and user_id in forced_variations:
@@ -104,29 +103,27 @@ class Bucketer(object):
 
     # Determine if experiment is in a mutually exclusive group
     if experiment.groupPolicy in GROUP_POLICIES:
-      group_id = experiment.groupId
-
-      group_traffic_allocations = self.config.get_traffic_allocation(self.config.group_id_map, group_id)
+      group_traffic_allocations = self.config.get_traffic_allocation(self.config.group_id_map, experiment.groupId)
 
       if not group_traffic_allocations:
-        self.config.logger.log(enums.LogLevels.ERROR, 'Group ID "%s" is not in datafile.' % group_id)
+        self.config.logger.log(enums.LogLevels.ERROR, 'Group ID "%s" is not in datafile.' % experiment.groupId)
         self.config.error_handler.handle_error(
           exceptions.InvalidExperimentException(enums.Errors.INVALID_GROUP_ID_ERROR)
         )
         return None
 
-      user_experiment_id = self._find_bucket(user_id, group_id, group_traffic_allocations)
+      user_experiment_id = self._find_bucket(user_id, experiment.groupId, group_traffic_allocations)
       if not user_experiment_id:
         self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no experiment.' % user_id)
         return None
 
       if user_experiment_id != experiment.id:
         self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is not in experiment "%s" of group %s.' %
-                               (user_id, experiment.key, group_id))
+                               (user_id, experiment.key, experiment.groupId))
         return None
 
       self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in experiment %s of group %s.' %
-                             (user_id, experiment.key, group_id))
+                             (user_id, experiment.key, experiment.groupId))
 
     # Bucket user if not in white-list and in group (if any)
     variation_id = self._find_bucket(user_id, experiment.id, experiment.trafficAllocation)

@@ -1,3 +1,4 @@
+import copy
 import json
 import mock
 
@@ -6,7 +7,6 @@ from optimizely import error_handler
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
-from optimizely import project_config
 from optimizely.helpers import enums
 
 from . import base
@@ -23,32 +23,75 @@ class ConfigTest(base.BaseTestV1):
     self.assertEqual(self.config_dict['experiments'], self.project_config.experiments)
     self.assertEqual(self.config_dict['events'], self.project_config.events)
     expected_group_id_map = {
-      '19228': self.config_dict['groups'][0]
+      '19228': copy.deepcopy(self.config_dict['groups'][0])
     }
     expected_experiment_key_map = {
-      'test_experiment': self.config_dict['experiments'][0],
-      'group_exp_1': self.config_dict['groups'][0]['experiments'][0],
-      'group_exp_2': self.config_dict['groups'][0]['experiments'][1]
+      'test_experiment': entities.Experiment(
+        '111127', 'test_experiment', 'Running', ['11154'], [{
+          'key': 'control',
+          'id': '111128'
+        }, {
+          'key': 'variation',
+          'id': '111129'
+        }], {
+            'user_1': 'control',
+            'user_2': 'control'
+        }, [{
+          'entityId': '111128',
+          'endOfRange': 4000
+        }, {
+          'entityId': '111129',
+          'endOfRange': 9000
+        }]
+      ),
+      'group_exp_1': entities.Experiment(
+        '32222', 'group_exp_1', 'Running', [], [{
+          'key': 'group_exp_1_control',
+          'id': '28901'
+        }, {
+          'key': 'group_exp_1_variation',
+          'id': '28902'
+        }], {
+            'user_1': 'group_exp_1_control',
+            'user_2': 'group_exp_1_control'
+        }, [{
+          'entityId': '28901',
+          'endOfRange': 3000
+        }, {
+          'entityId': '28902',
+          'endOfRange': 9000
+        }], groupId='19228', groupPolicy='random'
+      ),
+      'group_exp_2': entities.Experiment(
+        '32223', 'group_exp_2', 'Running', [], [{
+          'key': 'group_exp_2_control',
+          'id': '28905'
+        }, {
+          'key': 'group_exp_2_variation',
+          'id': '28906'
+        }], {
+            'user_1': 'group_exp_1_control',
+            'user_2': 'group_exp_1_control'
+        }, [{
+          'entityId': '28905',
+          'endOfRange': 8000
+        }, {
+          'entityId': '28906',
+          'endOfRange': 10000
+        }], groupId='19228', groupPolicy='random'
+      ),
     }
-    expected_experiment_key_map['group_exp_1']['groupId'] = '19228'
-    expected_experiment_key_map['group_exp_1']['groupPolicy'] = 'random'
-    expected_experiment_key_map['group_exp_2']['groupId'] = '19228'
-    expected_experiment_key_map['group_exp_2']['groupPolicy'] = 'random'
     expected_experiment_id_map = {
-      '111127': self.config_dict['experiments'][0],
-      '32222': self.config_dict['groups'][0]['experiments'][0],
-      '32223': self.config_dict['groups'][0]['experiments'][1]
+      '111127': expected_experiment_key_map.get('test_experiment'),
+      '32222': expected_experiment_key_map.get('group_exp_1'),
+      '32223': expected_experiment_key_map.get('group_exp_2')
     }
-    expected_experiment_id_map['32222']['groupId'] = '19228'
-    expected_experiment_id_map['32222']['groupPolicy'] = 'random'
-    expected_experiment_id_map['32223']['groupId'] = '19228'
-    expected_experiment_id_map['32223']['groupPolicy'] = 'random'
     expected_event_key_map = {
-      'test_event': project_config.Event(id='111095', key='test_event', experimentIds=['111127']),
-      'Total Revenue': project_config.Event(id='111096', key='Total Revenue', experimentIds=['111127'])
+      'test_event': entities.Event('111095', 'test_event', ['111127']),
+      'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
     }
     expected_attribute_key_map = {
-      'test_attribute': project_config.AttributeV1(id='111094', key='test_attribute', segmentId='11133')
+      'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
     }
     expected_audience_id_map = {
       '11154': self.config_dict['audiences'][0]
@@ -149,7 +192,24 @@ class ConfigTest(base.BaseTestV1):
   def test_get_experiment_from_key__valid_key(self):
     """ Test that experiment is retrieved correctly for valid experiment key. """
 
-    self.assertEqual('19228', self.project_config.get_experiment_from_key('group_exp_1'))
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId=None, groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_key('group_exp_1'))
 
   def test_get_experiment_from_key__invalid_key(self):
     """ Test that None is returned when provided experiment key is invalid. """
@@ -158,11 +218,30 @@ class ConfigTest(base.BaseTestV1):
 
   def test_get_experiment_from_id__valid_id(self):
     """ Test that experiment is retrieved correctly for valid experiment ID. """
-    pass
+
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId=None, groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_id('32222'))
 
   def test_get_experiment_from_id__invalid_id(self):
     """ Test that None is returned when provided experiment ID is invalid. """
-    pass
+
+    self.assertIsNone(self.project_config.get_experiment_from_id('invalid_id'))
 
   def test_get_audience_object_from_id__valid_id(self):
     """ Test that audience object is retrieved correctly given a valid audience ID. """
@@ -211,8 +290,8 @@ class ConfigTest(base.BaseTestV1):
   def test_get_event__valid_key(self):
     """ Test that event is retrieved correctly for valid event key. """
 
-    self.assertEqual(entities.Event('111095', 'test_event', ['111127']).__dict__,
-                     self.project_config.get_event('test_event').__dict__)
+    self.assertEqual(entities.Event('111095', 'test_event', ['111127']),
+                     self.project_config.get_event('test_event'))
 
   def test_get_event__invalid_key(self):
     """ Test that None is returned when provided goal key is invalid. """
@@ -222,14 +301,14 @@ class ConfigTest(base.BaseTestV1):
   def test_get_revenue_goal(self):
     """ Test that revenue goal can be retrieved as expected. """
 
-    self.assertEqual(entities.Event('111096', 'Total Revenue', ['111127']).__dict__,
-                     self.project_config.get_revenue_goal().__dict__)
+    self.assertEqual(entities.Event('111096', 'Total Revenue', ['111127']),
+                     self.project_config.get_revenue_goal())
 
   def test_get_attribute__valid_key(self):
     """ Test that attribute is retrieved correctly for valid attribute key. """
 
-    self.assertEqual(entities.Attribute('111094', 'test_attribute', segmentId='11133').__dict__,
-                     self.project_config.get_attribute('test_attribute').__dict__)
+    self.assertEqual(entities.Attribute('111094', 'test_attribute', segmentId='11133'),
+                     self.project_config.get_attribute('test_attribute'))
 
   def test_get_attribute__invalid_key(self):
     """ Test that None is returned when provided attribute key is invalid. """
@@ -237,21 +316,71 @@ class ConfigTest(base.BaseTestV1):
     self.assertIsNone(self.project_config.get_attribute('invalid_key'))
 
   def test_get_traffic_allocation__valid_key(self):
-    """ Test that trafficAllocation is retrieved correctly for valid experiment key or group ID. """
+    """ Test that trafficAllocation is retrieved correctly for valid group ID. """
 
     self.assertEqual(self.config_dict['groups'][0]['trafficAllocation'],
                      self.project_config.get_traffic_allocation(self.project_config.group_id_map,
                                                                 '19228'))
 
   def test_get_traffic_allocation__invalid_key(self):
-    """ Test that None is returned when provided experiment key or group ID is invalid. """
+    """ Test that None is returned when provided group ID is invalid. """
 
     self.assertIsNone(self.project_config.get_traffic_allocation(self.project_config.group_id_map,
                                                                  'invalid_key'))
 
 
 class ConfigTestV2(base.BaseTestV2):
-  pass
+
+  def test_get_experiment_from_key__valid_key(self):
+    """ Test that experiment is retrieved correctly for valid experiment key. """
+
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId='111183', groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_key('group_exp_1'))
+
+  def test_get_experiment_from_id__valid_id(self):
+    """ Test that experiment is retrieved correctly for valid experiment ID. """
+
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId='111183', groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_id('32222'))
+
+  def test_get_attribute__valid_key(self):
+    """ Test that attribute is retrieved correctly for valid attribute key. """
+
+    self.assertEqual(entities.Attribute('111094', 'test_attribute', segmentId=None),
+                     self.project_config.get_attribute('test_attribute'))
+
 
 class ConfigLoggingTest(base.BaseTestV1):
   def setUp(self):
