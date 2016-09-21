@@ -132,28 +132,27 @@ class EventBuilderV1(BaseEventBuilder):
 
     self.params[self.EventParams.TIME] = int(time.time())
 
-  def _add_impression_goal(self, experiment_key):
+  def _add_impression_goal(self, experiment):
     """ Add impression goal information to the event.
 
     Args:
-      experiment_key: Experiment which is being activated.
+      experiment: Object representing experiment being activated.
     """
 
     # For tracking impressions, goal ID is set equal to experiment ID of experiment being activated
-    self.params[self.EventParams.GOAL_ID] = self.config.get_experiment_id(experiment_key)
+    self.params[self.EventParams.GOAL_ID] = experiment.id
     self.params[self.EventParams.GOAL_NAME] = 'visitor-event'
 
-  def _add_experiment(self, experiment_key, variation_id):
+  def _add_experiment(self, experiment, variation_id):
     """ Add experiment to variation mapping to the impression event.
 
     Args:
-      experiment_key: Experiment which is being activated.
+      experiment: Object representing experiment being activated.
       variation_id: ID for variation which would be presented to user.
     """
 
-    experiment_id = self.config.get_experiment_id(experiment_key)
     self.params[self.EXPERIMENT_PARAM_FORMAT.format(experiment_prefix=self.EventParams.EXPERIMENT_PREFIX,
-                                                    experiment_id=experiment_id)] = variation_id
+                                                    experiment_id=experiment.id)] = variation_id
 
   def _add_experiment_variation_params(self, user_id, valid_experiments):
     """ Maps experiment and corresponding variation as parameters to be used in the event tracking call.
@@ -164,10 +163,10 @@ class EventBuilderV1(BaseEventBuilder):
     """
 
     for experiment in valid_experiments:
-      variation_id = self.bucketer.bucket(experiment[1], user_id)
+      variation_id = self.bucketer.bucket(experiment, user_id)
       if variation_id:
         self.params[self.EXPERIMENT_PARAM_FORMAT.format(experiment_prefix=self.EventParams.EXPERIMENT_PREFIX,
-                                                        experiment_id=experiment[0])] = variation_id
+                                                        experiment_id=experiment.id)] = variation_id
 
   def _add_conversion_goal(self, event_key, event_value):
     """ Add conversion goal information to the event.
@@ -192,11 +191,11 @@ class EventBuilderV1(BaseEventBuilder):
     self.params[self.EventParams.GOAL_ID] = event_ids
     self.params[self.EventParams.GOAL_NAME] = event_key
 
-  def create_impression_event(self, experiment_key, variation_id, user_id, attributes):
+  def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
 
     Args:
-      experiment_key: Experiment for which impression needs to be recorded.
+      experiment: Object representing experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
@@ -207,8 +206,8 @@ class EventBuilderV1(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_impression_goal(experiment_key)
-    self._add_experiment(experiment_key, variation_id)
+    self._add_impression_goal(experiment)
+    self._add_experiment(experiment, variation_id)
     return Event(self.OFFLINE_API_PATH.format(project_id=self.params[self.EventParams.PROJECT_ID]),
                  self.params)
 
@@ -300,17 +299,13 @@ class EventBuilderV2(BaseEventBuilder):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
-  def _add_required_params_for_impression(self, experiment_key, variation_id):
+  def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
 
     Args:
-      experiment_key: Experiment for which impression needs to be recorded.
+      experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
     """
-
-    experiment = self.config.get_experiment_from_key(experiment_key)
-    if not experiment:
-      return
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
     self.params[self.EventParams.LAYER_ID] = experiment.layerId
@@ -357,11 +352,11 @@ class EventBuilderV2(BaseEventBuilder):
     self.params[self.EventParams.EVENT_ID] = self.config.get_event(event_key).id
     self.params[self.EventParams.EVENT_NAME] = event_key
 
-  def create_impression_event(self, experiment_key, variation_id, user_id, attributes):
+  def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
 
     Args:
-      experiment_key: Experiment for which impression needs to be recorded.
+      experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
@@ -372,7 +367,7 @@ class EventBuilderV2(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_required_params_for_impression(experiment_key, variation_id)
+    self._add_required_params_for_impression(experiment, variation_id)
     return Event(self.IMPRESSION_ENDPOINT,
                  self.params,
                  http_verb=self.HTTP_VERB,

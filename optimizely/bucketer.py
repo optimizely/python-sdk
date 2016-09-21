@@ -88,6 +88,10 @@ class Bucketer(object):
       Variation ID for variation in which the visitor with ID user_id will be put in. None if no variation.
     """
 
+    if not experiment:
+      return None
+
+    print experiment
     # Check if user is white-listed for a variation
     forced_variations = experiment.forcedVariations
     if forced_variations and user_id in forced_variations:

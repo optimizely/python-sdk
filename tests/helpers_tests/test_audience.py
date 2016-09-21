@@ -39,7 +39,9 @@ class AudienceTest(base.BaseTestV1):
 
     with mock.patch('optimizely.project_config.ProjectConfig.get_audience_ids_for_experiment',
                     return_value=[]) as mock_get_audience_ids:
-      self.assertTrue(audience.is_user_in_experiment(self.project_config, 'test_experiment', user_attributes))
+      self.assertTrue(audience.is_user_in_experiment(self.project_config,
+                                                     self.project_config.get_experiment_from_key('test_experiment'),
+                                                     user_attributes))
     mock_get_audience_ids.assert_called_once_with('test_experiment')
 
   def test_is_user_in_experiment__audience_conditions_are_met(self):
@@ -52,7 +54,9 @@ class AudienceTest(base.BaseTestV1):
     }
 
     with mock.patch('optimizely.helpers.audience.is_match', return_value=True) as mock_is_match:
-      self.assertTrue(audience.is_user_in_experiment(self.project_config, 'test_experiment', user_attributes))
+      self.assertTrue(audience.is_user_in_experiment(self.project_config,
+                                                     self.project_config.get_experiment_from_key('test_experiment'),
+                                                     user_attributes))
     mock_is_match.assert_called_once_with(self.optimizely.config.audiences[0], user_attributes)
 
   def test_is_user_in_experiment__audience_conditions_not_met(self):
@@ -65,5 +69,7 @@ class AudienceTest(base.BaseTestV1):
     }
 
     with mock.patch('optimizely.helpers.audience.is_match', return_value=False) as mock_is_match:
-      self.assertFalse(audience.is_user_in_experiment(self.project_config, 'test_experiment', user_attributes))
+      self.assertFalse(audience.is_user_in_experiment(self.project_config,
+                                                      self.project_config.get_experiment_from_key('test_experiment'),
+                                                      user_attributes))
     mock_is_match.assert_called_once_with(self.optimizely.config.audiences[0], user_attributes)

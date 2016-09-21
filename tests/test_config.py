@@ -156,6 +156,14 @@ class ConfigTest(base.BaseTestV1):
 
     self.assertIsNone(self.project_config.get_experiment_from_key('invalid_key'))
 
+  def test_get_experiment_from_id__valid_id(self):
+    """ Test that experiment is retrieved correctly for valid experiment ID. """
+    pass
+
+  def test_get_experiment_from_id__invalid_id(self):
+    """ Test that None is returned when provided experiment ID is invalid. """
+    pass
+
   def test_get_audience_object_from_id__valid_id(self):
     """ Test that audience object is retrieved correctly given a valid audience ID. """
 
@@ -231,9 +239,6 @@ class ConfigTest(base.BaseTestV1):
   def test_get_traffic_allocation__valid_key(self):
     """ Test that trafficAllocation is retrieved correctly for valid experiment key or group ID. """
 
-    self.assertEqual(self.config_dict['experiments'][0]['trafficAllocation'],
-                     self.project_config.get_traffic_allocation(self.project_config.experiment_key_map,
-                                                                'test_experiment'))
     self.assertEqual(self.config_dict['groups'][0]['trafficAllocation'],
                      self.project_config.get_traffic_allocation(self.project_config.group_id_map,
                                                                 '19228'))
@@ -241,24 +246,12 @@ class ConfigTest(base.BaseTestV1):
   def test_get_traffic_allocation__invalid_key(self):
     """ Test that None is returned when provided experiment key or group ID is invalid. """
 
-    self.assertIsNone(self.project_config.get_traffic_allocation(self.project_config.experiment_key_map,
-                                                                 'invalid_key'))
     self.assertIsNone(self.project_config.get_traffic_allocation(self.project_config.group_id_map,
                                                                  'invalid_key'))
 
 
 class ConfigTestV2(base.BaseTestV2):
-
-  def test_get_layer_id_for_experiment__valid_key(self):
-    """ Test that layer ID is returned when provided experiment key is valid. """
-
-    self.assertEqual('111182', self.project_config.get_layer_id_for_experiment('test_experiment'))
-
-  def test_get_layer_id_for_experiment__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
-
+  pass
 
 class ConfigLoggingTest(base.BaseTestV1):
   def setUp(self):
