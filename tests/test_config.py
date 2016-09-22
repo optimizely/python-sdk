@@ -70,8 +70,8 @@ class ConfigTest(base.BaseTestV1):
           'key': 'group_exp_2_variation',
           'id': '28906'
         }], {
-            'user_1': 'group_exp_1_control',
-            'user_2': 'group_exp_1_control'
+            'user_1': 'group_exp_2_control',
+            'user_2': 'group_exp_2_control'
         }, [{
           'entityId': '28905',
           'endOfRange': 8000
