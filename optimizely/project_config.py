@@ -1,17 +1,13 @@
 import json
-from collections import namedtuple
 
 from .helpers import condition as condition_helper
 from .helpers import enums
+from . import entities
 from . import exceptions
 
 REVENUE_GOAL_KEY = 'Total Revenue'
 V1_CONFIG_VERSION = '1'
 V2_CONFIG_VERSION = '2'
-
-Event = namedtuple('Event', ['id', 'key', 'experimentIds'])
-AttributeV1 = namedtuple('Attribute', ['id', 'key', 'segmentId'])
-AttributeV2 = namedtuple('Attribute', ['id', 'key'])
 
 
 class ProjectConfig(object):
@@ -42,31 +38,31 @@ class ProjectConfig(object):
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id')
-    self.experiment_key_map = self._generate_key_map(self.experiments, 'key')
-    self.experiment_id_map = self._generate_key_map(self.experiments, 'id')
-    self.event_key_map = self._generate_key_map_named_tuple(self.events, 'key', Event)
-    self.attribute_key_map = self._generate_key_map_named_tuple(self.attributes, 'key', AttributeV1) \
-      if self.version == V1_CONFIG_VERSION else self._generate_key_map_named_tuple(self.attributes, 'key', AttributeV2)
+    self.experiment_key_map = self._generate_key_map_entity(self.experiments, 'key', entities.Experiment)
+    self.event_key_map = self._generate_key_map_entity(self.events, 'key', entities.Event)
+    self.attribute_key_map = self._generate_key_map_entity(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id')
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
-      experiments_in_group_key_map = self._generate_key_map(group['experiments'], 'key')
-      experiments_in_group_id_map = self._generate_key_map(group['experiments'], 'id')
+      experiments_in_group_key_map = self._generate_key_map_entity(group['experiments'], 'key', entities.Experiment)
       for experiment in experiments_in_group_key_map.values():
-        experiment.update({
-          'groupId': group['id'],
-          'groupPolicy': group['policy']
+        experiment.__dict__.update({
+          'groupId': group.get('id'),
+          'groupPolicy': group.get('policy')
         })
       self.experiment_key_map.update(experiments_in_group_key_map)
-      self.experiment_id_map.update(experiments_in_group_id_map)
+
+    self.experiment_id_map = {}
     self.variation_key_map = {}
     self.variation_id_map = {}
     for experiment_key in self.experiment_key_map.keys():
+      experiment = self.experiment_key_map.get(experiment_key)
+      self.experiment_id_map[experiment.id] = experiment
       self.variation_key_map[experiment_key] = self._generate_key_map(
-        self.experiment_key_map.get(experiment_key)['variations'], 'key'
+        self.experiment_key_map.get(experiment_key).variations, 'key'
       )
       self.variation_id_map[experiment_key] = self._generate_key_map(
-        self.experiment_key_map.get(experiment_key)['variations'], 'id'
+        self.experiment_key_map.get(experiment_key).variations, 'id'
       )
 
   @staticmethod
@@ -88,15 +84,15 @@ class ProjectConfig(object):
     return key_map
 
   @staticmethod
-  def _generate_key_map_named_tuple(list, key, named_tuple):
-    """ Helper method to generate map from key to dict in list of dicts.
+  def _generate_key_map_entity(list, key, named_tuple):
+    """ Helper method to generate map from key to entity object for given list of dicts.
 
     Args:
       list: List consisting of dict.
       key: Key in each dict which will be key in the map.
 
     Returns:
-      Map mapping key to dict.
+      Map mapping key to entity object.
     """
 
     key_map = {}
@@ -150,155 +146,41 @@ class ProjectConfig(object):
 
     return self.project_id
 
-  def get_experiment_group_id(self, experiment_key):
-    """ Get group ID for the provided experiment key.
+  def get_experiment_from_key(self, experiment_key):
+    """ Get experiment for the provided experiment key.
 
     Args:
-      experiment_key: Experiment key for which group ID is to be determined.
+      experiment_key: Experiment key for which experiment is to be determined.
 
     Returns:
-      Group ID corresponding to the provided experiment key.
+      Experiment corresponding to the provided experiment key.
     """
 
     experiment = self.experiment_key_map.get(experiment_key)
 
     if experiment:
-      return experiment.get('groupId')
+      return experiment
 
     self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
-  def get_experiment_group_policy(self, experiment_key):
-    """ Get group policy for the provided experiment key.
+  def get_experiment_from_id(self, experiment_id):
+    """ Get experiment for the provided experiment ID.
 
     Args:
-      experiment_key: Experiment key for which group policy is to be determined.
+      experiment_id: Experiment ID for which experiment is to be determined.
 
     Returns:
-      Group policy corresponding to the provided experiment key.
-    """
-
-    experiment = self.experiment_key_map.get(experiment_key)
-
-    if experiment:
-      return experiment.get('groupPolicy')
-
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
-    return None
-
-  def get_experiment_id(self, experiment_key):
-    """ Get experiment ID for the provided experiment key.
-
-    Args:
-      experiment_key: Experiment key for which ID is to be determined.
-
-    Returns:
-      Experiment ID corresponding to the provided experiment key.
-    """
-
-    experiment = self.experiment_key_map.get(experiment_key)
-
-    if experiment:
-      return experiment.get('id')
-
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
-    return None
-
-  def get_experiment_key(self, experiment_id):
-    """ Get experiment key for the provided experiment ID.
-
-    Args:
-      experiment_id: Experiment ID for which key is to be determined.
-
-    Returns:
-      Experiment key corresponding to the provided experiment ID.
+      Experiment corresponding to the provided experiment ID.
     """
 
     experiment = self.experiment_id_map.get(experiment_id)
 
     if experiment:
-      return experiment.get('key')
+      return experiment
 
     self.logger.log(enums.LogLevels.ERROR, 'Experiment ID "%s" is not in datafile.' % experiment_id)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
-    return None
-
-  def get_layer_id_for_experiment(self, experiment_key):
-    """ Get layer ID for the provided experiment key.
-
-    Args:
-      experiment_key: Experiment key for which layer ID is to be determined.
-
-    Returns:
-      Layer ID corresponding to the provided experiment key.
-    """
-
-    experiment = self.experiment_key_map.get(experiment_key)
-
-    if experiment:
-      return experiment.get('layerId')
-
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
-    return None
-
-  def get_experiment_status(self, experiment_key):
-    """ Get experiment status for the provided experiment key.
-
-    Args:
-      experiment_key: Experiment key for which status is to be determined.
-
-    Returns:
-      Experiment status corresponding to the provided experiment key.
-    """
-
-    experiment = self.experiment_key_map.get(experiment_key)
-
-    if experiment:
-      return experiment.get('status')
-
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
-    return None
-
-  def get_experiment_forced_variations(self, experiment_key):
-    """ Get dict representing forced variations for the experiment.
-
-    Args:
-      experiment_key: Experiment key for which forced variations are to be fetched.
-
-    Returns:
-      Dict representing forced variations for the experiment.
-    """
-
-    experiment = self.experiment_key_map.get(experiment_key)
-
-    if experiment:
-      return experiment.get('forcedVariations', {})
-
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
-    return None
-
-  def get_audience_ids_for_experiment(self, experiment_key):
-    """ Get audience IDs for the experiment.
-
-    Args:
-      experiment_key: Experiment key for which audience IDs are to be determined.
-
-    Returns:
-      Audience IDs corresponding to the experiment.
-    """
-
-    experiment = self.experiment_key_map.get(experiment_key)
-
-    if experiment:
-      return experiment.get('audienceIds', [])
-
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
