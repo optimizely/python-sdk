@@ -5,7 +5,6 @@ except ImportError:
   from .lib import pymmh3 as mmh3
 
 from .helpers import enums
-from . import exceptions
 
 MAX_TRAFFIC_VALUE = 10000
 UNSIGNED_MAX_32_BIT_VALUE = 0xFFFFFFFF
@@ -103,16 +102,12 @@ class Bucketer(object):
 
     # Determine if experiment is in a mutually exclusive group
     if experiment.groupPolicy in GROUP_POLICIES:
-      group_traffic_allocations = self.config.get_traffic_allocation(self.config.group_id_map, experiment.groupId)
+      group = self.config.get_group(experiment.groupId)
 
-      if not group_traffic_allocations:
-        self.config.logger.log(enums.LogLevels.ERROR, 'Group ID "%s" is not in datafile.' % experiment.groupId)
-        self.config.error_handler.handle_error(
-          exceptions.InvalidExperimentException(enums.Errors.INVALID_GROUP_ID_ERROR)
-        )
+      if not group:
         return None
 
-      user_experiment_id = self._find_bucket(user_id, experiment.groupId, group_traffic_allocations)
+      user_experiment_id = self._find_bucket(user_id, experiment.groupId, group.trafficAllocation)
       if not user_experiment_id:
         self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no experiment.' % user_id)
         return None

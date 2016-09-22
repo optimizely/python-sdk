@@ -46,7 +46,6 @@ class BaseTestV1(unittest.TestCase):
       'groups': [{
         'id': '19228',
         'policy': 'random',
-        'holdback': 0,
         'experiments': [{
           'id': '32222',
           'key': 'group_exp_1',
@@ -164,7 +163,6 @@ class BaseTestV2(unittest.TestCase):
       'groups': [{
         'id': '19228',
         'policy': 'random',
-        'holdback': 0,
         'experiments': [{
           'id': '32222',
           'key': 'group_exp_1',

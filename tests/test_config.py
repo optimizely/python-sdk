@@ -23,7 +23,12 @@ class ConfigTest(base.BaseTestV1):
     self.assertEqual(self.config_dict['experiments'], self.project_config.experiments)
     self.assertEqual(self.config_dict['events'], self.project_config.events)
     expected_group_id_map = {
-      '19228': copy.deepcopy(self.config_dict['groups'][0])
+      '19228': entities.Group(
+        self.config_dict['groups'][0]['id'],
+        self.config_dict['groups'][0]['policy'],
+        self.config_dict['groups'][0]['experiments'],
+        self.config_dict['groups'][0]['trafficAllocation']
+      )
     }
     expected_experiment_key_map = {
       'test_experiment': entities.Experiment(
@@ -316,18 +321,20 @@ class ConfigTest(base.BaseTestV1):
 
     self.assertIsNone(self.project_config.get_attribute('invalid_key'))
 
-  def test_get_traffic_allocation__valid_key(self):
-    """ Test that trafficAllocation is retrieved correctly for valid group ID. """
+  def test_get_group__valid_id(self):
+    """ Test that group is retrieved correctly for valid group ID. """
 
-    self.assertEqual(self.config_dict['groups'][0]['trafficAllocation'],
-                     self.project_config.get_traffic_allocation(self.project_config.group_id_map,
-                                                                '19228'))
+    self.assertEqual(entities.Group(self.config_dict['groups'][0]['id'],
+                                    self.config_dict['groups'][0]['policy'],
+                                    self.config_dict['groups'][0]['experiments'],
+                                    self.config_dict['groups'][0]['trafficAllocation']),
+                     self.project_config.get_group('19228'))
 
-  def test_get_traffic_allocation__invalid_key(self):
+
+  def test_get_group__invalid_id(self):
     """ Test that None is returned when provided group ID is invalid. """
 
-    self.assertIsNone(self.project_config.get_traffic_allocation(self.project_config.group_id_map,
-                                                                 'invalid_key'))
+    self.assertIsNone(self.project_config.get_group('42'))
 
 
 class ConfigTestV2(base.BaseTestV2):
@@ -446,6 +453,14 @@ class ConfigLoggingTest(base.BaseTestV1):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
 
+  def test_get_group__invalid_id(self):
+    """ Test that message is logged when provided group ID is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_group('42')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Group ID "42" is not in datafile.')
+
 
 class ConfigExceptionTest(base.BaseTestV1):
 
@@ -503,3 +518,10 @@ class ConfigExceptionTest(base.BaseTestV1):
     self.assertRaisesRegexp(exceptions.InvalidAttributeException,
                             enums.Errors.INVALID_ATTRIBUTE_ERROR,
                             self.project_config.get_attribute, 'invalid_key')
+
+  def test_get_group__invalid_id(self):
+    """ Test that exception is raised when provided group ID is invalid. """
+
+    self.assertRaisesRegexp(exceptions.InvalidGroupException,
+                            enums.Errors.INVALID_GROUP_ID_ERROR,
+                            self.project_config.get_group, '42')

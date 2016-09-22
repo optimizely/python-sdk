@@ -18,6 +18,11 @@ class InvalidEventException(Exception):
   pass
 
 
+class InvalidGroupException(Exception):
+  """ Raised when provided group ID is invalid. """
+  pass
+
+
 class InvalidVariationException(Exception):
   """ Raised when provided variation is invalid. """
   pass
