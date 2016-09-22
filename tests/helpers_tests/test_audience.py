@@ -15,7 +15,7 @@ class AudienceTest(base.BaseTestV1):
       'location': 'San Francisco'
     }
 
-    self.assertTrue(audience.is_match(self.optimizely.config.audiences[0], user_attributes))
+    self.assertTrue(audience.is_match(self.optimizely.config.get_audience('11154'), user_attributes))
 
   def test_is_match__audience_condition_does_not_match(self):
     """ Test that is_match returns False when audience conditions are not met. """
@@ -26,7 +26,7 @@ class AudienceTest(base.BaseTestV1):
       'location': 'San Francisco'
     }
 
-    self.assertFalse(audience.is_match(self.optimizely.config.audiences[0], user_attributes))
+    self.assertFalse(audience.is_match(self.optimizely.config.get_audience('11154'), user_attributes))
 
   def test_is_user_in_experiment__no_audience(self):
     """ Test that is_user_in_experiment returns True when experiment is using no audience. """
@@ -54,7 +54,7 @@ class AudienceTest(base.BaseTestV1):
       self.assertTrue(audience.is_user_in_experiment(self.project_config,
                                                      self.project_config.get_experiment_from_key('test_experiment'),
                                                      user_attributes))
-    mock_is_match.assert_called_once_with(self.optimizely.config.audiences[0], user_attributes)
+    mock_is_match.assert_called_once_with(self.optimizely.config.get_audience('11154'), user_attributes)
 
   def test_is_user_in_experiment__audience_conditions_not_met(self):
     """ Test that is_user_in_experiment returns False when audience conditions are not met. """
@@ -69,4 +69,4 @@ class AudienceTest(base.BaseTestV1):
       self.assertFalse(audience.is_user_in_experiment(self.project_config,
                                                       self.project_config.get_experiment_from_key('test_experiment'),
                                                       user_attributes))
-    mock_is_match.assert_called_once_with(self.optimizely.config.audiences[0], user_attributes)
+    mock_is_match.assert_called_once_with(self.optimizely.config.get_audience('11154'), user_attributes)

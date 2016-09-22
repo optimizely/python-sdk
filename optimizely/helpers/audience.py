@@ -11,8 +11,8 @@ def is_match(audience, attributes):
   Return:
     Boolean representing if user satisfies audience conditions or not.
   """
-  condition_evaluator = condition_helper.ConditionEvaluator(audience.get('conditionList'), attributes)
-  return condition_evaluator.evaluate(audience.get('conditionStructure'))
+  condition_evaluator = condition_helper.ConditionEvaluator(audience.conditionList, attributes)
+  return condition_evaluator.evaluate(audience.conditionStructure)
 
 
 def is_user_in_experiment(config, experiment, attributes):
@@ -37,7 +37,7 @@ def is_user_in_experiment(config, experiment, attributes):
 
   # Return True if conditions for any one audience are met
   for audience_id in experiment.audienceIds:
-    audience = config.get_audience_object_from_id(audience_id)
+    audience = config.get_audience(audience_id)
 
     if is_match(audience, attributes):
       return True

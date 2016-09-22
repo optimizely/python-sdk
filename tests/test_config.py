@@ -94,12 +94,13 @@ class ConfigTest(base.BaseTestV1):
       'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
     }
     expected_audience_id_map = {
-      '11154': self.config_dict['audiences'][0]
+      '11154': entities.Audience(
+        '11154', 'Test attribute users',
+        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_dimension", "value": "test_value"}]]]',
+        conditionStructure=['and', ['or', ['or', 0]]],
+        conditionList=[['test_attribute', 'test_value']]
+      )
     }
-    expected_audience_id_map['11154'].update({
-      'conditionList': [['test_attribute', 'test_value']],
-      'conditionStructure': ['and', ['or', ['or', 0]]]
-    })
     expected_variation_key_map = {
       'test_experiment': {
         'control': {
@@ -243,16 +244,16 @@ class ConfigTest(base.BaseTestV1):
 
     self.assertIsNone(self.project_config.get_experiment_from_id('invalid_id'))
 
-  def test_get_audience_object_from_id__valid_id(self):
+  def test_get_audience__valid_id(self):
     """ Test that audience object is retrieved correctly given a valid audience ID. """
 
     self.assertEqual(self.project_config.audience_id_map['11154'],
-                     self.project_config.get_audience_object_from_id('11154'))
+                     self.project_config.get_audience('11154'))
 
-  def test_get_audience_object_from_id__invalid_id(self):
+  def test_get_audience__invalid_id(self):
     """ Test that None is returned for an invalid audience ID. """
 
-    self.assertIsNone(self.project_config.get_audience_object_from_id('42'))
+    self.assertIsNone(self.project_config.get_audience('42'))
 
   def test_get_variation_key_from_id__valid_experiment_key(self):
     """ Test that variation key is retrieved correctly when valid experiment key and variation ID are provided. """
@@ -397,6 +398,14 @@ class ConfigLoggingTest(base.BaseTestV1):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
 
+  def test_get_audience__invalid_id(self):
+    """ Test that message is logged when provided audience ID is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_audience('42')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Audience ID "42" is not in datafile.')
+
   def test_get_variation_key_from_id__invalid_variation_id(self):
     """ Test that message is logged when provided variation ID is invalid. """
 
@@ -452,6 +461,13 @@ class ConfigExceptionTest(base.BaseTestV1):
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
                             enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
                             self.project_config.get_experiment_from_key, 'invalid_key')
+
+  def test_get_audience__invalid_id(self):
+    """ Test that message is logged when provided audience ID is invalid. """
+
+    self.assertRaisesRegexp(exceptions.InvalidAudienceException,
+                            enums.Errors.INVALID_AUDIENCE_ERROR,
+                            self.project_config.get_audience, '42')
 
   def test_get_variation_key_from_id__invalid_variation_id(self):
     """ Test that exception is raised when provided variation ID is invalid. """
