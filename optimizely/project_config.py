@@ -60,8 +60,9 @@ class ProjectConfig(object):
       self.variation_key_map[experiment.key] = self._generate_key_map_entity(
         experiment.variations, 'key', entities.Variation
       )
+      self.variation_id_map[experiment.key] = {}
       for variation in self.variation_key_map.get(experiment.key).values():
-        self.variation_id_map.get(experiment.key)[variation.id] = variation
+        self.variation_id_map[experiment.key][variation.id] = variation
 
   @staticmethod
   def _generate_key_map(list, key):

@@ -126,7 +126,7 @@ class Bucketer(object):
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
       self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in variation "%s" of experiment %s.' %
                              (user_id, variation.key, experiment.key))
-      return variation_id
+      return variation
 
     self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no variation.' % user_id)
     return None
