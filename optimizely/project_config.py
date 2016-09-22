@@ -55,15 +55,13 @@ class ProjectConfig(object):
     self.experiment_id_map = {}
     self.variation_key_map = {}
     self.variation_id_map = {}
-    for experiment_key in self.experiment_key_map.keys():
-      experiment = self.experiment_key_map.get(experiment_key)
+    for experiment in self.experiment_key_map.values():
       self.experiment_id_map[experiment.id] = experiment
-      self.variation_key_map[experiment_key] = self._generate_key_map(
-        self.experiment_key_map.get(experiment_key).variations, 'key'
+      self.variation_key_map[experiment.key] = self._generate_key_map_entity(
+        experiment.variations, 'key', entities.Variation
       )
-      self.variation_id_map[experiment_key] = self._generate_key_map(
-        self.experiment_key_map.get(experiment_key).variations, 'id'
-      )
+      for variation in self.variation_key_map.get(experiment.key).values():
+        self.variation_id_map.get(experiment.key)[variation.id] = variation
 
   @staticmethod
   def _generate_key_map(list, key):
@@ -224,25 +222,25 @@ class ProjectConfig(object):
     self.logger.log(enums.LogLevels.ERROR, 'Audience ID "%s" is not in datafile.' % audience_id)
     self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE_ERROR)))
 
-  def get_variation_key_from_id(self, experiment_key, variation_id):
-    """ Get variation key given experiment key and variation ID.
+  def get_variation_from_key(self, experiment_key, variation_key):
+    """ Get variation given experiment and variation key.
 
     Args:
-      experiment_key: Key representing parent experiment of variation.
-      variation_id: ID of the variation.
+      experiment: Key representing parent experiment of variation.
+      variation_key: Key representing the variation.
 
     Returns
-      Variation key.
+      Object representing the variation.
     """
 
-    variation_map = self.variation_id_map.get(experiment_key)
+    variation_map = self.variation_key_map.get(experiment_key)
 
     if variation_map:
-      variation_obj = variation_map.get(variation_id)
-      if variation_obj:
-        return variation_obj['key']
+      variation = variation_map.get(variation_key)
+      if variation:
+        return variation
       else:
-        self.logger.log(enums.LogLevels.ERROR, 'Variation ID "%s" is not in datafile.' % variation_id)
+        self.logger.log(enums.LogLevels.ERROR, 'Variation key "%s" is not in datafile.' % variation_key)
         self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION_ERROR))
         return None
 
@@ -250,25 +248,25 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
-  def get_variation_id(self, experiment_key, variation_key):
-    """ Get variation ID given the experiment and variation key.
+  def get_variation_from_id(self, experiment_key, variation_id):
+    """ Get variation given experiment and variation ID.
 
     Args:
-      experiment_key: Parent experiment for the variation.
-      variation_key: Variation for which the ID is to be determined.
+      experiment: Key representing parent experiment of variation.
+      variation_id: ID representing the variation.
 
-    Returns:
-      Variation ID corresponding to the variation.
+    Returns
+      Object representing the variation.
     """
 
-    variation_map = self.variation_key_map.get(experiment_key)
+    variation_map = self.variation_id_map.get(experiment_key)
 
     if variation_map:
-      variation_obj = variation_map.get(variation_key)
-      if variation_obj:
-        return variation_obj['id']
+      variation = variation_map.get(variation_id)
+      if variation:
+        return variation
       else:
-        self.logger.log(enums.LogLevels.ERROR, 'Variation key "%s" is not in datafile.' % variation_key)
+        self.logger.log(enums.LogLevels.ERROR, 'Variation ID "%s" is not in datafile.' % variation_id)
         self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION_ERROR))
         return None
 

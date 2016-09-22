@@ -163,10 +163,10 @@ class EventBuilderV1(BaseEventBuilder):
     """
 
     for experiment in valid_experiments:
-      variation_id = self.bucketer.bucket(experiment, user_id)
-      if variation_id:
+      variation = self.bucketer.bucket(experiment, user_id)
+      if variation:
         self.params[self.EXPERIMENT_PARAM_FORMAT.format(experiment_prefix=self.EventParams.EXPERIMENT_PREFIX,
-                                                        experiment_id=experiment.id)] = variation_id
+                                                        experiment_id=experiment.id)] = variation.id
 
   def _add_conversion_goal(self, event_key, event_value):
     """ Add conversion goal information to the event.
@@ -337,14 +337,14 @@ class EventBuilderV2(BaseEventBuilder):
 
     self.params[self.EventParams.LAYER_STATES] = []
     for experiment in valid_experiments:
-      variation_id = self.bucketer.bucket(experiment, user_id)
-      if variation_id:
+      variation = self.bucketer.bucket(experiment, user_id)
+      if variation:
         self.params[self.EventParams.LAYER_STATES].append({
           self.EventParams.LAYER_ID: experiment.layerId,
           self.EventParams.ACTION_TRIGGERED: True,
           self.EventParams.DECISION: {
             self.EventParams.EXPERIMENT_ID: experiment.id,
-            self.EventParams.VARIATION_ID: variation_id,
+            self.EventParams.VARIATION_ID: variation.id,
             self.EventParams.IS_LAYER_HOLDBACK: False
           }
         })

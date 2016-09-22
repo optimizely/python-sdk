@@ -53,3 +53,10 @@ class Group(BaseEntity):
     self.policy = policy
     self.experiments = experiments
     self.trafficAllocation = trafficAllocation
+
+
+class Variation(BaseEntity):
+
+  def __init__(self, id, key):
+    self.id = id
+    self.key = key
