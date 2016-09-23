@@ -80,6 +80,9 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment.key)
       return False
 
+    if experiment_helper.is_user_in_forced_variation(experiment.forcedVariations, user_id):
+      return True
+
     if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
       self.logger.log(
         enums.LogLevels.INFO,
