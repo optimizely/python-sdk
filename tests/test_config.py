@@ -108,66 +108,30 @@ class ConfigTest(base.BaseTestV1):
     }
     expected_variation_key_map = {
       'test_experiment': {
-        'control': {
-          'key': 'control',
-          'id': '111128'
-        },
-        'variation': {
-          'key': 'variation',
-          'id': '111129'
-        }
+        'control': entities.Variation('111128', 'control'),
+        'variation': entities.Variation('111129', 'variation')
       },
       'group_exp_1': {
-        'group_exp_1_control': {
-          'key': 'group_exp_1_control',
-          'id': '28901'
-        },
-        'group_exp_1_variation': {
-          'key': 'group_exp_1_variation',
-          'id': '28902'
-        }
+        'group_exp_1_control': entities.Variation('28901', 'group_exp_1_control'),
+        'group_exp_1_variation': entities.Variation('28902', 'group_exp_1_variation')
       },
       'group_exp_2': {
-        'group_exp_2_control': {
-          'key': 'group_exp_2_control',
-          'id': '28905'
-        },
-        'group_exp_2_variation': {
-          'key': 'group_exp_2_variation',
-          'id': '28906'
-        }
+        'group_exp_2_control': entities.Variation('28905', 'group_exp_2_control'),
+        'group_exp_2_variation': entities.Variation('28906', 'group_exp_2_variation')
       }
     }
     expected_variation_id_map = {
       'test_experiment': {
-        '111128': {
-          'key': 'control',
-          'id': '111128'
-        },
-        '111129': {
-          'key': 'variation',
-          'id': '111129'
-        }
+        '111128': entities.Variation('111128', 'control'),
+        '111129': entities.Variation('111129', 'variation')
       },
       'group_exp_1': {
-        '28901': {
-          'key': 'group_exp_1_control',
-          'id': '28901'
-        },
-        '28902': {
-          'key': 'group_exp_1_variation',
-          'id': '28902'
-        }
+        '28901': entities.Variation('28901', 'group_exp_1_control'),
+        '28902': entities.Variation('28902', 'group_exp_1_variation')
       },
       'group_exp_2': {
-        '28905': {
-          'key': 'group_exp_2_control',
-          'id': '28905'
-        },
-        '28906': {
-          'key': 'group_exp_2_variation',
-          'id': '28906'
-        }
+        '28905': entities.Variation('28905', 'group_exp_2_control'),
+        '28906': entities.Variation('28906', 'group_exp_2_variation')
       }
     }
 
