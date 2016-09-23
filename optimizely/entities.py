@@ -44,3 +44,12 @@ class Experiment(BaseEntity):
     self.layerId = layerId
     self.groupId = groupId
     self.groupPolicy = groupPolicy
+
+
+class Group(BaseEntity):
+
+  def __init__(self, id, policy, experiments, trafficAllocation):
+    self.id = id
+    self.policy = policy
+    self.experiments = experiments
+    self.trafficAllocation = trafficAllocation

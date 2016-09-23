@@ -37,18 +37,18 @@ class ProjectConfig(object):
     self.audiences = config.get('audiences', [])
 
     # Utility maps for quick lookup
-    self.group_id_map = self._generate_key_map(self.groups, 'id')
+    self.group_id_map = self._generate_key_map_entity(self.groups, 'id', entities.Group)
     self.experiment_key_map = self._generate_key_map_entity(self.experiments, 'key', entities.Experiment)
     self.event_key_map = self._generate_key_map_entity(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map_entity(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map_entity(self.audiences, 'id', entities.Audience)
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
-      experiments_in_group_key_map = self._generate_key_map_entity(group['experiments'], 'key', entities.Experiment)
+      experiments_in_group_key_map = self._generate_key_map_entity(group.experiments, 'key', entities.Experiment)
       for experiment in experiments_in_group_key_map.values():
         experiment.__dict__.update({
-          'groupId': group.get('id'),
-          'groupPolicy': group.get('policy')
+          'groupId': group.id,
+          'groupPolicy': group.policy
         })
       self.experiment_key_map.update(experiments_in_group_key_map)
 
@@ -97,7 +97,6 @@ class ProjectConfig(object):
     """
 
     key_map = {}
-
     for obj in list:
       key_map[obj[key]] = entity_class(**obj)
 
@@ -186,6 +185,25 @@ class ProjectConfig(object):
 
     self.logger.log(enums.LogLevels.ERROR, 'Experiment ID "%s" is not in datafile.' % experiment_id)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    return None
+
+  def get_group(self, group_id):
+    """ Get group for the provided group ID.
+
+    Args:
+      group_id: Group ID for which group is to be determined.
+
+    Returns:
+      Group corresponding to the provided group ID.
+    """
+
+    group = self.group_id_map.get(group_id)
+
+    if group:
+      return group
+
+    self.logger.log(enums.LogLevels.ERROR, 'Group ID "%s" is not in datafile.' % group_id)
+    self.error_handler.handle_error(exceptions.InvalidGroupException(enums.Errors.INVALID_GROUP_ID_ERROR))
     return None
 
   def get_audience(self, audience_id):
@@ -303,22 +321,4 @@ class ProjectConfig(object):
 
     self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
     self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
-    return None
-
-  def get_traffic_allocation(self, entity_key_map, entity_key):
-    """ Given an entity key map and entity key, returns the traffic allocation for that entity.
-
-    Args:
-      entity_key_map: Map representing the entity information.
-      entity_key: Key for whcih traffic allocation is to be retrieved from the map
-
-    Returns:
-      Traffic allocation for the experiment.
-    """
-
-    entity = entity_key_map.get(entity_key)
-
-    if entity:
-      return entity.get('trafficAllocation')
-
     return None
