@@ -111,21 +111,21 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
       return None
 
-    variation_id = self.bucketer.bucket(experiment, user_id)
+    variation = self.bucketer.bucket(experiment, user_id)
 
-    if not variation_id:
+    if not variation:
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
       return None
 
     # Create and dispatch impression event
-    impression_event = self.event_builder.create_impression_event(experiment, variation_id, user_id, attributes)
+    impression_event = self.event_builder.create_impression_event(experiment, variation.id, user_id, attributes)
     self.logger.log(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
     self.logger.log(enums.LogLevels.DEBUG,
                     'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
                                                                                 impression_event.params))
     self.event_dispatcher.dispatch_event(impression_event)
 
-    return self.config.get_variation_key_from_id(experiment.key, variation_id)
+    return variation.key
 
   def track(self, event_key, user_id,  attributes=None, event_value=None):
     """ Send conversion event to Optimizely.
@@ -185,5 +185,10 @@ class Optimizely(object):
 
     if not self._validate_preconditions(experiment, user_id, attributes):
       return None
-    variation_id = self.bucketer.bucket(experiment, user_id)
-    return self.config.get_variation_key_from_id(experiment_key, variation_id)
+    variation = self.bucketer.bucket(experiment, user_id)
+
+    if variation:
+      return variation.key
+
+    return None
+

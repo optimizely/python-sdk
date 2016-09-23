@@ -77,14 +77,14 @@ class Bucketer(object):
     return None
 
   def bucket(self, experiment, user_id):
-    """ For a given experiment and bucketing ID determines ID of variation to be shown to user.
+    """ For a given experiment and bucketing ID determines variation to be shown to user.
 
     Args:
       experiment: Object representing the experiment for which user is to be bucketed.
       user_id: ID for user.
 
     Returns:
-      Variation ID for variation in which the visitor with ID user_id will be put in. None if no variation.
+      Variation in which user with ID user_id will be put in. None if no variation.
     """
 
     if not experiment:
@@ -94,11 +94,11 @@ class Bucketer(object):
     forced_variations = experiment.forcedVariations
     if forced_variations and user_id in forced_variations:
       variation_key = forced_variations.get(user_id)
-      variation_id = self.config.get_variation_id(experiment.key, variation_key)
-      if variation_id:
+      variation = self.config.get_variation_from_key(experiment.key, variation_key)
+      if variation:
         self.config.logger.log(enums.LogLevels.INFO,
                                'User "%s" is forced in variation "%s".' % (user_id, variation_key))
-      return variation_id
+      return variation
 
     # Determine if experiment is in a mutually exclusive group
     if experiment.groupPolicy in GROUP_POLICIES:
@@ -123,10 +123,10 @@ class Bucketer(object):
     # Bucket user if not in white-list and in group (if any)
     variation_id = self._find_bucket(user_id, experiment.id, experiment.trafficAllocation)
     if variation_id:
-      variation_key = self.config.get_variation_key_from_id(experiment.key, variation_id)
+      variation = self.config.get_variation_from_id(experiment.key, variation_id)
       self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in variation "%s" of experiment %s.' %
-                             (user_id, variation_key, experiment.key))
-      return variation_id
+                             (user_id, variation.key, experiment.key))
+      return variation
 
     self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no variation.' % user_id)
     return None

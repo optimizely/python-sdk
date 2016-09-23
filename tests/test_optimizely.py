@@ -73,7 +73,8 @@ class OptimizelyV1Test(base.BaseTestV1):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
@@ -101,7 +102,8 @@ class OptimizelyV1Test(base.BaseTestV1):
     variation when attributes are provided and audience conditions are met. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
@@ -170,7 +172,10 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -194,7 +199,10 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
@@ -215,7 +223,10 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_track__with_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
@@ -253,7 +264,8 @@ class OptimizelyV1Test(base.BaseTestV1):
     """ Test that get variation retrieves expected variation
     when audience conditions are met and experiment is running. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket:
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket:
       self.assertEqual('variation', self.optimizely.get_variation('test_experiment', 'test_user',
                                                                   attributes={'test_attribute': 'test_value'}))
 
@@ -270,7 +282,8 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_get_variation__no_audience_match(self):
     """ Test that get variation returns None when audience conditions are not met. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket:
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket:
       self.assertIsNone(self.optimizely.get_variation('test_experiment', 'test_user',
                                                       attributes={'test_attribute': 'wrong_test_value'}))
 
@@ -279,7 +292,10 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_get_variation__experiment_not_running(self):
     """ Test that get variation returns None when experiment is not running. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111129'
+                    )) as mock_bucket,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running:
       self.assertIsNone(self.optimizely.get_variation('test_experiment', 'test_user',
@@ -333,7 +349,8 @@ class OptimizelyV2Test(base.BaseTestV2):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
@@ -366,7 +383,8 @@ class OptimizelyV2Test(base.BaseTestV2):
     variation when attributes are provided and audience conditions are met. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
@@ -451,7 +469,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -493,7 +514,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
@@ -514,7 +538,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_track__with_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
@@ -606,7 +633,8 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
     """ Test that expected log messages are logged during activate. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129'),\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')),\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
@@ -623,7 +651,8 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
   def test_track(self):
     """ Test that expected log messages are logged during track. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128'),\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id('test_experiment', '111128')),\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
