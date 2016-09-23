@@ -1,3 +1,5 @@
+import sys
+
 from . import bucketer
 from . import event_builder
 from . import exceptions
@@ -167,7 +169,11 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.DEBUG,
                       'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
                                                                                   conversion_event.params))
-      self.event_dispatcher.dispatch_event(conversion_event)
+      try:
+        self.event_dispatcher.dispatch_event(conversion_event)
+      except:
+        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch event. Error %s' % sys.exc_info()[0])
+        self.error_handler.handle_error(enums.Errors.UNABLE_TO_DISPATCH_EVENT.format(sys.exc_info()[0]))
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
