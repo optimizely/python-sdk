@@ -270,12 +270,17 @@ class OptimizelyV1Test(base.BaseTestV1):
 
     with mock.patch('optimizely.helpers.experiment.is_experiment_running',
                     return_value=False) as mock_is_experiment_running,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user')
 
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
 
   def test_track__whitelisted_user_overrides_audience_check(self):
     """ Test that track does not check for user in audience when user is in whitelist. """
@@ -331,6 +336,9 @@ class OptimizelyV1Test(base.BaseTestV1):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111129'
                     )) as mock_bucket,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running:
       self.assertIsNone(self.optimizely.get_variation('test_experiment', 'test_user',
@@ -338,6 +346,8 @@ class OptimizelyV1Test(base.BaseTestV1):
 
     self.assertEqual(0, mock_bucket.call_count)
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    self.assertEqual(0, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
 
   def test_get_variation__whitelisting_overrides_audience_check(self):
     """ Test that in get_variation whitelist overrides audience check if user is in the whitelist. """
