@@ -12,6 +12,16 @@ class Attribute(BaseEntity):
     self.segmentId = segmentId
 
 
+class Audience(BaseEntity):
+
+  def __init__(self, id, name, conditions, conditionStructure=None, conditionList=None):
+    self.id = id
+    self.name = name
+    self.conditions = conditions
+    self.conditionStructure = conditionStructure
+    self.conditionList = conditionList
+
+
 class Event(BaseEntity):
 
   def __init__(self, id, key, experimentIds):

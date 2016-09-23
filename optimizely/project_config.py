@@ -41,7 +41,7 @@ class ProjectConfig(object):
     self.experiment_key_map = self._generate_key_map_entity(self.experiments, 'key', entities.Experiment)
     self.event_key_map = self._generate_key_map_entity(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map_entity(self.attributes, 'key', entities.Attribute)
-    self.audience_id_map = self._generate_key_map(self.audiences, 'id')
+    self.audience_id_map = self._generate_key_map_entity(self.audiences, 'id', entities.Audience)
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
       experiments_in_group_key_map = self._generate_key_map_entity(group['experiments'], 'key', entities.Experiment)
@@ -84,12 +84,13 @@ class ProjectConfig(object):
     return key_map
 
   @staticmethod
-  def _generate_key_map_entity(list, key, named_tuple):
+  def _generate_key_map_entity(list, key, entity_class):
     """ Helper method to generate map from key to entity object for given list of dicts.
 
     Args:
       list: List consisting of dict.
       key: Key in each dict which will be key in the map.
+      entity_class: Class representing the entity.
 
     Returns:
       Map mapping key to entity object.
@@ -98,24 +99,27 @@ class ProjectConfig(object):
     key_map = {}
 
     for obj in list:
-      key_map[obj[key]] = named_tuple(**obj)
+      key_map[obj[key]] = entity_class(**obj)
 
     return key_map
 
   @staticmethod
   def _deserialize_audience(audience_map):
-    """ Helper method to deserialize and populate audience map with the condition list and structure.
+    """ Helper method to de-serialize and populate audience map with the condition list and structure.
 
     Args:
       audience_map: Dict mapping audience ID to audience object.
 
     Returns:
-      Dict additionally consisting of condition list and structure for every audience.
+      Dict additionally consisting of condition list and structure on every audience object.
     """
 
-    for audience_id in audience_map.keys():
-      audience_map[audience_id]['conditionStructure'], audience_map[audience_id]['conditionList'] = \
-        condition_helper.loads(audience_map[audience_id]['conditions'])
+    for audience in audience_map.values():
+      condition_structure, condition_list = condition_helper.loads(audience.conditions)
+      audience.__dict__.update({
+        'conditionStructure': condition_structure,
+        'conditionList': condition_list
+      })
 
     return audience_map
 
@@ -184,7 +188,7 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
-  def get_audience_object_from_id(self, audience_id):
+  def get_audience(self, audience_id):
     """ Get audience object for the provided audience ID.
 
     Args:
@@ -194,7 +198,13 @@ class ProjectConfig(object):
       Dict representing the audience.
     """
 
-    return self.audience_id_map.get(audience_id)
+    audience = self.audience_id_map.get(audience_id)
+
+    if audience:
+      return audience
+
+    self.logger.log(enums.LogLevels.ERROR, 'Audience ID "%s" is not in datafile.' % audience_id)
+    self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE_ERROR)))
 
   def get_variation_key_from_id(self, experiment_key, variation_id):
     """ Get variation key given experiment key and variation ID.

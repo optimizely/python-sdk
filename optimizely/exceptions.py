@@ -3,6 +3,11 @@ class InvalidAttributeException(Exception):
   pass
 
 
+class InvalidAudienceException(Exception):
+  """ Raised when provided audience is invalid. """
+  pass
+
+
 class InvalidExperimentException(Exception):
   """ Raised when provided experiment key is invalid. """
   pass
