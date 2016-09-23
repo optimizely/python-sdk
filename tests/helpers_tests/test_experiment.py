@@ -20,3 +20,19 @@ class ExperimentTest(base.BaseTestV1):
                       '42', 'test_experiment', 'Some Status', [], [], {},[])) as mock_get_experiment:
       self.assertFalse(experiment.is_experiment_running(self.project_config.get_experiment_from_key('test_experiment')))
     mock_get_experiment.assert_called_once_with('test_experiment')
+
+  def test_is_user_in_forced_variation__no_forced_variation_dict(self):
+    """ Test that is_user_in_forced_variation returns False when experiment has no forced variations. """
+
+    self.assertFalse(experiment.is_user_in_forced_variation(None, 'test_user'))
+    self.assertFalse(experiment.is_user_in_forced_variation({}, 'test_user'))
+
+  def test_is_user_in_forced_variation__user_not_in_forced_variation(self):
+    """ Test that is_user_in_forced_variation returns False when user is not in experiment's forced variations. """
+
+    self.assertFalse(experiment.is_user_in_forced_variation({'user_1': 'control'}, 'test_user'))
+
+  def test_is_user_in_forced_variation__user_in_forced_variation(self):
+    """ Test that is_user_in_forced_variation returns True when user is in experiment's forced variations. """
+
+    self.assertTrue(experiment.is_user_in_forced_variation({'user_1': 'control'}, 'user_1'))
