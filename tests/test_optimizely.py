@@ -208,6 +208,16 @@ class OptimizelyV1Test(base.BaseTestV1):
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
 
+  def test_activate__invalid_object(self):
+    """ Test that activate logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Optimizely object is not valid. Failing "activate".')
+
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
@@ -322,6 +332,16 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(1, mock_dispatch_event.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
 
+  def test_track__invalid_object(self):
+    """ Test that track logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      opt_obj.track('test_event', 'test_user')
+
+    mock_logging_error.assert_called_once_with('Optimizely object is not valid. Failing "track".')
+
   def test_get_variation__audience_match_and_experiment_running(self):
     """ Test that get variation retrieves expected variation
     when audience conditions are met and experiment is running. """
@@ -383,6 +403,16 @@ class OptimizelyV1Test(base.BaseTestV1):
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(1, mock_whitelist_check.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_get_variation__invalid_object(self):
+    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Optimizely object is not valid. Failing "get_variation".')
 
   def test_custom_logger(self):
     """ Test creating Optimizely object with a custom logger. """
@@ -563,6 +593,16 @@ class OptimizelyV2Test(base.BaseTestV2):
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
 
+  def test_activate__invalid_object(self):
+    """ Test that activate logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Optimizely object is not valid. Failing "activate".')
+
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
@@ -709,6 +749,26 @@ class OptimizelyV2Test(base.BaseTestV2):
     mock_whitelist_check.assert_called_once_with({'user_1': 'control', 'user_2': 'control'}, 'user_1')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_track__invalid_object(self):
+    """ Test that track logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      opt_obj.track('test_event', 'test_user')
+
+    mock_logging_error.assert_called_once_with('Optimizely object is not valid. Failing "track".')
+
+  def test_get_variation__invalid_object(self):
+    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Optimizely object is not valid. Failing "get_variation".')
 
 
 class OptimizelyWithExceptionTest(base.BaseTestV1):
