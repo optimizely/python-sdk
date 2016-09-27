@@ -135,7 +135,7 @@ class Optimizely(object):
       self.event_dispatcher.dispatch_event(impression_event)
     except:
       error = sys.exc_info()[0]
-      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch event. Error %s' % str(error))
+      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event.')
 
     return variation.key
 
@@ -180,7 +180,7 @@ class Optimizely(object):
         self.event_dispatcher.dispatch_event(conversion_event)
       except:
         error = sys.exc_info()[0]
-        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch event. Error %s' % str(error))
+        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event.')
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
