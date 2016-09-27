@@ -34,7 +34,10 @@ class Optimizely(object):
     self.error_handler = error_handler or noop_error_handler
     self._validate_inputs(datafile, skip_json_validation)
 
-    self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+    try:
+      self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+    except:
+      raise
     self.bucketer = bucketer.Bucketer(self.config)
     self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
 
