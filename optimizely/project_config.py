@@ -22,10 +22,7 @@ class ProjectConfig(object):
       error_handler: Provides a handle_error method to handle exceptions.
     """
 
-    try:
-      config = json.loads(datafile)
-    except:
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+    config = json.loads(datafile)
     self.logger = logger
     self.error_handler = error_handler
     self.version = config.get('version')
@@ -40,14 +37,14 @@ class ProjectConfig(object):
     self.audiences = config.get('audiences', [])
 
     # Utility maps for quick lookup
-    self.group_id_map = self._generate_key_map_entity(self.groups, 'id', entities.Group)
-    self.experiment_key_map = self._generate_key_map_entity(self.experiments, 'key', entities.Experiment)
-    self.event_key_map = self._generate_key_map_entity(self.events, 'key', entities.Event)
-    self.attribute_key_map = self._generate_key_map_entity(self.attributes, 'key', entities.Attribute)
-    self.audience_id_map = self._generate_key_map_entity(self.audiences, 'id', entities.Audience)
+    self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
+    self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
+    self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
+    self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
+    self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
-      experiments_in_group_key_map = self._generate_key_map_entity(group.experiments, 'key', entities.Experiment)
+      experiments_in_group_key_map = self._generate_key_map(group.experiments, 'key', entities.Experiment)
       for experiment in experiments_in_group_key_map.values():
         experiment.__dict__.update({
           'groupId': group.id,
@@ -60,7 +57,7 @@ class ProjectConfig(object):
     self.variation_id_map = {}
     for experiment in self.experiment_key_map.values():
       self.experiment_id_map[experiment.id] = experiment
-      self.variation_key_map[experiment.key] = self._generate_key_map_entity(
+      self.variation_key_map[experiment.key] = self._generate_key_map(
         experiment.variations, 'key', entities.Variation
       )
       self.variation_id_map[experiment.key] = {}
@@ -68,25 +65,7 @@ class ProjectConfig(object):
         self.variation_id_map[experiment.key][variation.id] = variation
 
   @staticmethod
-  def _generate_key_map(list, key):
-    """ Helper method to generate map from key to dict in list of dicts.
-
-    Args:
-      list: List consisting of dict.
-      key: Key in each dict which will be key in the map.
-
-    Returns:
-      Map mapping key to dict.
-    """
-
-    key_map = {}
-    for obj in list:
-      key_map[obj[key]] = obj
-
-    return key_map
-
-  @staticmethod
-  def _generate_key_map_entity(list, key, entity_class):
+  def _generate_key_map(list, key, entity_class):
     """ Helper method to generate map from key to entity object for given list of dicts.
 
     Args:

@@ -37,7 +37,7 @@ class Optimizely(object):
     try:
       self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
     except:
-      raise
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
     self.bucketer = bucketer.Bucketer(self.config)
     self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
 
