@@ -1,3 +1,5 @@
+import logging
+
 from . import bucketer
 from . import event_builder
 from . import exceptions
@@ -27,17 +29,33 @@ class Optimizely(object):
                             By default JSON schema validation will be performed.
     """
 
+    self.is_valid = True
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
-    self._validate_inputs(datafile, skip_json_validation)
+
+    try:
+      self._validate_inputs(datafile, skip_json_validation)
+    except exceptions.InvalidInputException as error:
+      self.is_valid = False
+      logging.error(error.message)
+      return
 
     try:
       self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
     except:
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+      self.is_valid = False
+      self.config = None
+      logging.error(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+      return
+
     self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
+
+    try:
+      self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
+    except:
+      self.is_valid = False
+      logging.error(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.
@@ -51,16 +69,16 @@ class Optimizely(object):
     """
 
     if not skip_json_validation and not validator.is_datafile_valid(datafile):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
 
     if not validator.is_event_dispatcher_valid(self.event_dispatcher):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
 
     if not validator.is_logger_valid(self.logger):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
 
     if not validator.is_error_handler_valid(self.error_handler):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
 
   def _validate_preconditions(self, experiment, user_id, attributes):
     """ Helper method to validate all pre-conditions before we go ahead to bucket user.
@@ -108,6 +126,10 @@ class Optimizely(object):
       None if user is not in experiment or if experiment is not Running.
     """
 
+    if not self.is_valid:
+      logging.error(enums.Errors.INVALID_OBJECT.format('activate'))
+      return
+
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
@@ -145,6 +167,10 @@ class Optimizely(object):
       attributes: Dict representing visitor attributes and values which need to be recorded.
       event_value: Value associated with the event. Can be used to represent revenue in cents.
     """
+
+    if not self.is_valid:
+      logging.error(enums.Errors.INVALID_OBJECT.format('track'))
+      return
 
     if attributes and not validator.are_attributes_valid(attributes):
       self.logger.log(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
@@ -191,6 +217,10 @@ class Optimizely(object):
       None if user is not in experiment or if experiment is not Running.
     """
 
+    if not self.is_valid:
+      logging.error(enums.Errors.INVALID_OBJECT.format('get_variation'))
+      return
+
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:
       return None
@@ -203,4 +233,3 @@ class Optimizely(object):
       return variation.key
 
     return None
-

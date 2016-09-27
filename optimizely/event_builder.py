@@ -417,4 +417,4 @@ def get_event_builder(config, bucketer):
   if config_version == project_config.V2_CONFIG_VERSION:
     return EventBuilderV2(config, bucketer)
 
-  raise exceptions.InvalidInputException(enums.Errors.UNSUPPORTED_CONFIG_VERSION)
+  raise exceptions.InvalidInputException(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)

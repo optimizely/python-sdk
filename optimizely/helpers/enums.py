@@ -23,5 +23,6 @@ class Errors(object):
   INVALID_EXPERIMENT_KEY_ERROR = 'Provided experiment is not in datafile.'
   INVALID_EVENT_KEY_ERROR = 'Provided event is not in datafile.'
   INVALID_GROUP_ID_ERROR = 'Provided group is not in datafile.'
+  INVALID_OBJECT = 'Optimizely object is not valid. Failing "{}".'
   INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
-  UNSUPPORTED_CONFIG_VERSION = 'Datafile provided has unsupported version.'
+  UNSUPPORTED_DATAFILE_VERSION = 'Provided datafile has unsupported version.'
