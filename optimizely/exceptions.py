@@ -23,6 +23,11 @@ class InvalidGroupException(Exception):
   pass
 
 
+class InvalidInputException(Exception):
+  """ Raised when provided datafile, event dispatcher, logger or error handler is invalid. """
+  pass
+
+
 class InvalidVariationException(Exception):
   """ Raised when provided variation is invalid. """
   pass

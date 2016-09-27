@@ -22,7 +22,10 @@ class ProjectConfig(object):
       error_handler: Provides a handle_error method to handle exceptions.
     """
 
-    config = json.loads(datafile)
+    try:
+      config = json.loads(datafile)
+    except:
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
     self.logger = logger
     self.error_handler = error_handler
     self.version = config.get('version')

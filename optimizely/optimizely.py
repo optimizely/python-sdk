@@ -50,16 +50,16 @@ class Optimizely(object):
     """
 
     if not skip_json_validation and not validator.is_datafile_valid(datafile):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
 
     if not validator.is_event_dispatcher_valid(self.event_dispatcher):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
 
     if not validator.is_logger_valid(self.logger):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
 
     if not validator.is_error_handler_valid(self.error_handler):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
 
   def _validate_preconditions(self, experiment, user_id, attributes):
     """ Helper method to validate all pre-conditions before we go ahead to bucket user.
@@ -128,7 +128,11 @@ class Optimizely(object):
     self.logger.log(enums.LogLevels.DEBUG,
                     'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
                                                                                 impression_event.params))
-    self.event_dispatcher.dispatch_event(impression_event)
+    try:
+      self.event_dispatcher.dispatch_event(impression_event)
+    except:
+      error = sys.exc_info()[0]
+      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch event. Error %s' % str(error))
 
     return variation.key
 
@@ -172,8 +176,8 @@ class Optimizely(object):
       try:
         self.event_dispatcher.dispatch_event(conversion_event)
       except:
-        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch event. Error %s' % sys.exc_info()[0])
-        self.error_handler.handle_error(enums.Errors.UNABLE_TO_DISPATCH_EVENT.format(sys.exc_info()[0]))
+        error = sys.exc_info()[0]
+        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch event. Error %s' % str(error))
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.

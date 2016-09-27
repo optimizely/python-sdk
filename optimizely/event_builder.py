@@ -2,6 +2,7 @@ import time
 from abc import abstractmethod
 from abc import abstractproperty
 
+from . import exceptions
 from . import project_config
 from . import version
 from .helpers import enums
@@ -416,4 +417,4 @@ def get_event_builder(config, bucketer):
   if config_version == project_config.V2_CONFIG_VERSION:
     return EventBuilderV2(config, bucketer)
 
-  raise Exception(enums.Errors.UNSUPPORTED_CONFIG_VERSION)
+  raise exceptions.InvalidInputException(enums.Errors.UNSUPPORTED_CONFIG_VERSION)
