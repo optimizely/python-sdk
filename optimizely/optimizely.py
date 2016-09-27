@@ -128,7 +128,7 @@ class Optimizely(object):
 
     if not self.is_valid:
       logging.error(enums.Errors.INVALID_OBJECT.format('activate'))
-      return
+      return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:
@@ -219,7 +219,7 @@ class Optimizely(object):
 
     if not self.is_valid:
       logging.error(enums.Errors.INVALID_OBJECT.format('get_variation'))
-      return
+      return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:

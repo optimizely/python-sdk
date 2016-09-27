@@ -20,46 +20,46 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 
-  def test_init__invalid_datafile__raises(self):
-    """ Test that invalid datafile raises Exception on init. """
+  def test_init__invalid_datafile__logs_error(self):
+    """ Test that invalid datafile logs error on init. """
 
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely('invalid_datafile')
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
-  def test_init__invalid_event_dispatcher__raises(self):
-    """ Test that invalid event_dispatcher raises Exception on init. """
+  def test_init__invalid_event_dispatcher__logs_error(self):
+    """ Test that invalid event_dispatcher logs error on init. """
 
     class InvalidDispatcher(object):
       pass
 
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
 
-    self.assertEqual('Provided "event_dispatcher" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "event_dispatcher" is in an invalid format.')
 
   def test_init__invalid_logger__raises(self):
-    """ Test that invalid logger raises Exception on init. """
+    """ Test that invalid logger logs error on init. """
 
     class InvalidLogger(object):
       pass
 
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps(self.config_dict), logger=InvalidLogger)
 
-    self.assertEqual('Provided "logger" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "logger" is in an invalid format.')
 
   def test_init__invalid_error_handler__raises(self):
-    """ Test that invalid error_handler raises Exception on init. """
+    """ Test that invalid error_handler logs error on init. """
 
     class InvalidErrorHandler(object):
       pass
 
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps(self.config_dict), error_handler=InvalidErrorHandler)
 
-    self.assertEqual('Provided "error_handler" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "error_handler" is in an invalid format.')
 
   def test_skip_json_validation_true(self):
     """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
@@ -70,26 +70,26 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(0, mock_datafile_validation.call_count)
 
   def test_invalid_json_raises_schema_validation_off(self):
-    """ Test that invalid JSON raises exception even if schema validation is turned off. """
+    """ Test that invalid JSON logs error if schema validation is turned off. """
 
     # Not  JSON
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely('invalid_json', skip_json_validation=True)
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
     # JSON, but missing version
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps({'some_field': 'some_value'}), skip_json_validation=True)
 
-    self.assertEqual('Datafile provided has unsupported version.', str(cm.exception))
+    mock_log_error.assert_called_once_with(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
 
     # JSON having valid version, but entities have invalid format
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
                             skip_json_validation=True)
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
@@ -420,10 +420,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_init__invalid_datafile__raises(self):
     """ Test that invalid datafile raises Exception on init. """
 
-    with self.assertRaises(exceptions.InvalidInputException) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely('invalid_datafile')
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """

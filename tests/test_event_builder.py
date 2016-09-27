@@ -2,7 +2,9 @@ import mock
 import unittest
 
 from optimizely import event_builder
+from optimizely import exceptions
 from optimizely import version
+from optimizely.helpers import enums
 from . import base
 
 
@@ -183,7 +185,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     """ Test that get_event_builder raises exception for unsupported datafile version. """
 
     with mock.patch('optimizely.project_config.ProjectConfig.get_version', return_value='unsupported_version'):
-      self.assertRaisesRegexp(Exception, 'Datafile provided has unsupported version.',
+      self.assertRaisesRegexp(exceptions.InvalidInputException, enums.Errors.UNSUPPORTED_DATAFILE_VERSION,
                               event_builder.get_event_builder, self.optimizely.config, self.optimizely.bucketer)
 
   def test_create_impression_event(self):
