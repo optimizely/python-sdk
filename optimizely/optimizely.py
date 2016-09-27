@@ -152,7 +152,7 @@ class Optimizely(object):
       return
 
     event = self.config.get_event(event_key)
-    if not event.experimentIds:
+    if not event:
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
