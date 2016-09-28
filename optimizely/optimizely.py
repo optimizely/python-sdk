@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from . import bucketer
 from . import event_builder
@@ -127,7 +128,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      logging.error(enums.Errors.INVALID_OBJECT.format('activate'))
+      logging.error(enums.Errors.INVALID_DATAFILE.format('activate'))
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
@@ -154,7 +155,8 @@ class Optimizely(object):
     try:
       self.event_dispatcher.dispatch_event(impression_event)
     except:
-      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event.')
+      error = sys.exc_info()[1]
+      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
 
     return variation.key
 
@@ -169,7 +171,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      logging.error(enums.Errors.INVALID_OBJECT.format('track'))
+      logging.error(enums.Errors.INVALID_DATAFILE.format('track'))
       return
 
     if attributes and not validator.are_attributes_valid(attributes):
@@ -202,7 +204,8 @@ class Optimizely(object):
       try:
         self.event_dispatcher.dispatch_event(conversion_event)
       except:
-        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event.')
+        error = sys.exc_info()[1]
+        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: %s' % str(error))
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
@@ -218,7 +221,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      logging.error(enums.Errors.INVALID_OBJECT.format('get_variation'))
+      logging.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)

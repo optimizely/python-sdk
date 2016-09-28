@@ -22,7 +22,7 @@ class Errors(object):
   INVALID_AUDIENCE_ERROR = 'Provided audience is not in datafile.'
   INVALID_EXPERIMENT_KEY_ERROR = 'Provided experiment is not in datafile.'
   INVALID_EVENT_KEY_ERROR = 'Provided event is not in datafile.'
+  INVALID_DATAFILE = 'Datafile has invalid format. Failing "{}".'
   INVALID_GROUP_ID_ERROR = 'Provided group is not in datafile.'
-  INVALID_OBJECT = 'Optimizely object is not valid. Failing "{}".'
   INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
   UNSUPPORTED_DATAFILE_VERSION = 'Provided datafile has unsupported version.'
