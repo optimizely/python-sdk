@@ -39,7 +39,7 @@ class Optimizely(object):
       self._validate_inputs(datafile, skip_json_validation)
     except exceptions.InvalidInputException as error:
       self.is_valid = False
-      logging.error(error.message)
+      logging.error(str(error))
       return
 
     try:
