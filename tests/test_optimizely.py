@@ -833,13 +833,16 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.track('test_event', 'test_user')
 
-    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(3, mock_logging.call_count)
     self.assertEqual(mock.call(enums.LogLevels.INFO,
                      'User "test_user" does not meet conditions to be in experiment "test_experiment".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO,
                      'Not tracking user "test_user" for experiment "test_experiment".'),
                      mock_logging.call_args_list[1])
+    self.assertEqual(mock.call(enums.LogLevels.INFO,
+                     'There are no valid experiments for event "test_event" to track.'),
+                     mock_logging.call_args_list[2])
 
   def test_activate__invalid_attributes(self):
     """ Test that expected log messages are logged during activate when attributes are in invalid format. """
