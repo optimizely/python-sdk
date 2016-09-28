@@ -1,3 +1,6 @@
+import logging
+import sys
+
 from . import bucketer
 from . import event_builder
 from . import exceptions
@@ -27,14 +30,33 @@ class Optimizely(object):
                             By default JSON schema validation will be performed.
     """
 
+    self.is_valid = True
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
-    self._validate_inputs(datafile, skip_json_validation)
 
-    self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+    try:
+      self._validate_inputs(datafile, skip_json_validation)
+    except exceptions.InvalidInputException as error:
+      self.is_valid = False
+      logging.error(str(error))
+      return
+
+    try:
+      self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+    except:
+      self.is_valid = False
+      self.config = None
+      logging.error(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+      return
+
     self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
+
+    try:
+      self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
+    except:
+      self.is_valid = False
+      logging.error(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.
@@ -48,16 +70,16 @@ class Optimizely(object):
     """
 
     if not skip_json_validation and not validator.is_datafile_valid(datafile):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
 
     if not validator.is_event_dispatcher_valid(self.event_dispatcher):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
 
     if not validator.is_logger_valid(self.logger):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
 
     if not validator.is_error_handler_valid(self.error_handler):
-      raise Exception(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
+     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
 
   def _validate_preconditions(self, experiment, user_id, attributes):
     """ Helper method to validate all pre-conditions before we go ahead to bucket user.
@@ -105,6 +127,10 @@ class Optimizely(object):
       None if user is not in experiment or if experiment is not Running.
     """
 
+    if not self.is_valid:
+      logging.error(enums.Errors.INVALID_DATAFILE.format('activate'))
+      return None
+
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
@@ -126,7 +152,11 @@ class Optimizely(object):
     self.logger.log(enums.LogLevels.DEBUG,
                     'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
                                                                                 impression_event.params))
-    self.event_dispatcher.dispatch_event(impression_event)
+    try:
+      self.event_dispatcher.dispatch_event(impression_event)
+    except:
+      error = sys.exc_info()[1]
+      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
 
     return variation.key
 
@@ -140,13 +170,17 @@ class Optimizely(object):
       event_value: Value associated with the event. Can be used to represent revenue in cents.
     """
 
+    if not self.is_valid:
+      logging.error(enums.Errors.INVALID_DATAFILE.format('track'))
+      return
+
     if attributes and not validator.are_attributes_valid(attributes):
       self.logger.log(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
       self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
       return
 
     event = self.config.get_event(event_key)
-    if not event.experimentIds:
+    if not event:
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
@@ -167,7 +201,14 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.DEBUG,
                       'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
                                                                                   conversion_event.params))
-      self.event_dispatcher.dispatch_event(conversion_event)
+      try:
+        self.event_dispatcher.dispatch_event(conversion_event)
+      except:
+        error = sys.exc_info()[1]
+        self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: %s' % str(error))
+
+    else:
+      self.logger.log(enums.LogLevels.INFO, 'There are no valid experiments for event "%s" to track.' % event_key)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
@@ -182,6 +223,10 @@ class Optimizely(object):
       None if user is not in experiment or if experiment is not Running.
     """
 
+    if not self.is_valid:
+      logging.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
+      return None
+
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:
       return None
@@ -194,4 +239,3 @@ class Optimizely(object):
       return variation.key
 
     return None
-

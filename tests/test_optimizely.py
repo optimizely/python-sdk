@@ -20,46 +20,46 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 
-  def test_init__invalid_datafile__raises(self):
-    """ Test that invalid datafile raises Exception on init. """
+  def test_init__invalid_datafile__logs_error(self):
+    """ Test that invalid datafile logs error on init. """
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely('invalid_datafile')
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
-  def test_init__invalid_event_dispatcher__raises(self):
-    """ Test that invalid event_dispatcher raises Exception on init. """
+  def test_init__invalid_event_dispatcher__logs_error(self):
+    """ Test that invalid event_dispatcher logs error on init. """
 
     class InvalidDispatcher(object):
       pass
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
 
-    self.assertEqual('Provided "event_dispatcher" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "event_dispatcher" is in an invalid format.')
 
   def test_init__invalid_logger__raises(self):
-    """ Test that invalid logger raises Exception on init. """
+    """ Test that invalid logger logs error on init. """
 
     class InvalidLogger(object):
       pass
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps(self.config_dict), logger=InvalidLogger)
 
-    self.assertEqual('Provided "logger" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "logger" is in an invalid format.')
 
   def test_init__invalid_error_handler__raises(self):
-    """ Test that invalid error_handler raises Exception on init. """
+    """ Test that invalid error_handler logs error on init. """
 
     class InvalidErrorHandler(object):
       pass
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely(json.dumps(self.config_dict), error_handler=InvalidErrorHandler)
 
-    self.assertEqual('Provided "error_handler" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "error_handler" is in an invalid format.')
 
   def test_skip_json_validation_true(self):
     """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
@@ -68,6 +68,28 @@ class OptimizelyV1Test(base.BaseTestV1):
       optimizely.Optimizely(json.dumps(self.config_dict), skip_json_validation=True)
 
     self.assertEqual(0, mock_datafile_validation.call_count)
+
+  def test_invalid_json_raises_schema_validation_off(self):
+    """ Test that invalid JSON logs error if schema validation is turned off. """
+
+    # Not  JSON
+    with mock.patch('logging.error') as mock_log_error:
+      optimizely.Optimizely('invalid_json', skip_json_validation=True)
+
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+
+    # JSON, but missing version
+    with mock.patch('logging.error') as mock_log_error:
+      optimizely.Optimizely(json.dumps({'some_field': 'some_value'}), skip_json_validation=True)
+
+    mock_log_error.assert_called_once_with(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
+
+    # JSON having valid version, but entities have invalid format
+    with mock.patch('logging.error') as mock_log_error:
+      optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
+                            skip_json_validation=True)
+
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
@@ -186,6 +208,16 @@ class OptimizelyV1Test(base.BaseTestV1):
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
 
+  def test_activate__invalid_object(self):
+    """ Test that activate logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Datafile has invalid format. Failing "activate".')
+
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
@@ -300,6 +332,16 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(1, mock_dispatch_event.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
 
+  def test_track__invalid_object(self):
+    """ Test that track logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      opt_obj.track('test_event', 'test_user')
+
+    mock_logging_error.assert_called_once_with('Datafile has invalid format. Failing "track".')
+
   def test_get_variation__audience_match_and_experiment_running(self):
     """ Test that get variation retrieves expected variation
     when audience conditions are met and experiment is running. """
@@ -362,6 +404,16 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(1, mock_whitelist_check.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
 
+  def test_get_variation__invalid_object(self):
+    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Datafile has invalid format. Failing "get_variation".')
+
   def test_custom_logger(self):
     """ Test creating Optimizely object with a custom logger. """
 
@@ -398,10 +450,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_init__invalid_datafile__raises(self):
     """ Test that invalid datafile raises Exception on init. """
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('logging.error') as mock_log_error:
       optimizely.Optimizely('invalid_datafile')
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_log_error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
@@ -540,6 +592,16 @@ class OptimizelyV2Test(base.BaseTestV2):
                                                  attributes={'test_attribute': 'test_value'}))
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_activate__invalid_object(self):
+    """ Test that activate logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Datafile has invalid format. Failing "activate".')
 
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
@@ -688,6 +750,26 @@ class OptimizelyV2Test(base.BaseTestV2):
     self.assertEqual(1, mock_dispatch_event.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
 
+  def test_track__invalid_object(self):
+    """ Test that track logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      opt_obj.track('test_event', 'test_user')
+
+    mock_logging_error.assert_called_once_with('Datafile has invalid format. Failing "track".')
+
+  def test_get_variation__invalid_object(self):
+    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('logging.error') as mock_logging_error:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_logging_error.assert_called_once_with('Datafile has invalid format. Failing "get_variation".')
+
 
 class OptimizelyWithExceptionTest(base.BaseTestV1):
 
@@ -751,13 +833,16 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.track('test_event', 'test_user')
 
-    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(3, mock_logging.call_count)
     self.assertEqual(mock.call(enums.LogLevels.INFO,
                      'User "test_user" does not meet conditions to be in experiment "test_experiment".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO,
                      'Not tracking user "test_user" for experiment "test_experiment".'),
                      mock_logging.call_args_list[1])
+    self.assertEqual(mock.call(enums.LogLevels.INFO,
+                     'There are no valid experiments for event "test_event" to track.'),
+                     mock_logging.call_args_list[2])
 
   def test_activate__invalid_attributes(self):
     """ Test that expected log messages are logged during activate when attributes are in invalid format. """
@@ -799,6 +884,15 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
     self.assertEqual(mock_logging.call_args_list[1],
                      mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
 
+  def test_activate__dispatch_raises_exception(self):
+    """ Test that activate logs dispatch failure gracefully. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging,\
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event', side_effect=Exception('Failed to send')):
+      self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
+
+    mock_logging.assert_any_call(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: Failed to send')
+
   def test_track__invalid_attributes(self):
     """ Test that expected log messages are logged during track when attributes are in invalid format. """
 
@@ -806,6 +900,15 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
       self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
+
+  def test_track__dispatch_raises_exception(self):
+    """ Test that track logs dispatch failure gracefully. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging,\
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event', side_effect=Exception('Failed to send')):
+      self.optimizely.track('test_event', 'user_1')
+
+    mock_logging.assert_any_call(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: Failed to send')
 
   def test_get_variation__invalid_attributes(self):
     """ Test that expected log messages are logged during get variation when attributes are in invalid format. """
