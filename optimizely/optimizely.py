@@ -1,4 +1,3 @@
-import logging
 import sys
 
 from . import bucketer
@@ -12,6 +11,7 @@ from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
+from .logger import SimpleLogger
 
 
 class Optimizely(object):
@@ -39,7 +39,8 @@ class Optimizely(object):
       self._validate_inputs(datafile, skip_json_validation)
     except exceptions.InvalidInputException as error:
       self.is_valid = False
-      logging.error(str(error))
+      self.logger = SimpleLogger()
+      self.logger.log(enums.LogLevels.ERROR, str(error))
       return
 
     try:
@@ -47,7 +48,8 @@ class Optimizely(object):
     except:
       self.is_valid = False
       self.config = None
-      logging.error(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+      self.logger = SimpleLogger()
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
       return
 
     self.bucketer = bucketer.Bucketer(self.config)
@@ -56,7 +58,8 @@ class Optimizely(object):
       self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
     except:
       self.is_valid = False
-      logging.error(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
+      self.logger = SimpleLogger()
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.
@@ -128,7 +131,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      logging.error(enums.Errors.INVALID_DATAFILE.format('activate'))
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('activate'))
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
@@ -171,7 +174,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      logging.error(enums.Errors.INVALID_DATAFILE.format('track'))
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('track'))
       return
 
     if attributes and not validator.are_attributes_valid(attributes):
@@ -224,7 +227,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      logging.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('get_variation'))
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
