@@ -1,6 +1,7 @@
 import mock
 import json
 import unittest
+from requests import exceptions as request_exception
 
 from optimizely import event_builder
 from optimizely import event_dispatcher
@@ -43,3 +44,25 @@ class EventDispatcherTest(unittest.TestCase):
     mock_request_post.assert_called_once_with(url, data=json.dumps(params),
                                               headers={'Content-Type': 'application/json'},
                                               timeout=event_dispatcher.REQUEST_TIMEOUT)
+
+  def test_dispatch_event__handle_request_exception(self):
+    """ Test that dispatch event handles exceptions and logs error. """
+
+    url = 'https://www.optimizely.com'
+    params = {
+      'accountId': '111001',
+      'eventName': 'test_event',
+      'eventEntityId': '111028',
+      'visitorId': 'oeutest_user'
+    }
+    event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
+
+    with mock.patch('requests.post',
+                    side_effect=request_exception.RequestException('Failed Request')) as mock_request_post,\
+        mock.patch('logging.error') as mock_log_error:
+      event_dispatcher.EventDispatcher.dispatch_event(event)
+
+    mock_request_post.assert_called_once_with(url, data=json.dumps(params),
+                                              headers={'Content-Type': 'application/json'},
+                                              timeout=event_dispatcher.REQUEST_TIMEOUT)
+    mock_log_error.assert_called_once_with('Dispatch event failed. Error: Failed Request')
