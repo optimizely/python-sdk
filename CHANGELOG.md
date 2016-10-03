@@ -1,3 +1,8 @@
+## 1.0.0
+- Introduced support for Full Stack projects in Optimizely X. No breaking changes from previous version.
+- Introduced more graceful exception handling in instantiation and core methods.
+- Updated whitelisting to precede audience matching.
+
 ## 0.1.3
 - Added support for v2 endpoint and datafile.
 - Updated dispatch_event to consume an Event object instead of url and params. The Event object comprises of four properties: url (string representing URL to dispatch event to), params (dict representing the params to be set for the event), http_verb (one of 'GET' or 'POST') and headers (header values to be sent along). 

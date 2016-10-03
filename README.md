@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
 [![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-extra-configurations-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
-This repository houses the Python SDK for Optimizely's server-side testing product, which is currently in private beta.
+This repository houses the Python SDK for Optimizely Full Stack.
 
 ##Getting Started
 
@@ -16,7 +16,7 @@ pip install optimizely-sdk
 ```
 
 ###Using the SDK
-See the Optimizely server-side testing [developer documentation](http://developers.optimizely.com/server/reference/index) to learn how to set up your first custom project and use the SDK. **Please note that you must be a member of the private server-side testing beta to create custom projects and use this SDK.**
+See the Optimizely Full Stack [developer documentation](http://developers.optimizely.com/server/reference/index.html) to learn how to set up your first Python project and use the SDK.
 
 ##Development
 

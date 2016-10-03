@@ -20,46 +20,46 @@ class OptimizelyV1Test(base.BaseTestV1):
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 
-  def test_init__invalid_datafile__raises(self):
-    """ Test that invalid datafile raises Exception on init. """
+  def test_init__invalid_datafile__logs_error(self):
+    """ Test that invalid datafile logs error on init. """
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       optimizely.Optimizely('invalid_datafile')
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
 
-  def test_init__invalid_event_dispatcher__raises(self):
-    """ Test that invalid event_dispatcher raises Exception on init. """
+  def test_init__invalid_event_dispatcher__logs_error(self):
+    """ Test that invalid event_dispatcher logs error on init. """
 
     class InvalidDispatcher(object):
       pass
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
 
-    self.assertEqual('Provided "event_dispatcher" is in an invalid format.', str(cm.exception))
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "event_dispatcher" is in an invalid format.')
 
   def test_init__invalid_logger__raises(self):
-    """ Test that invalid logger raises Exception on init. """
+    """ Test that invalid logger logs error on init. """
 
     class InvalidLogger(object):
       pass
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       optimizely.Optimizely(json.dumps(self.config_dict), logger=InvalidLogger)
 
-    self.assertEqual('Provided "logger" is in an invalid format.', str(cm.exception))
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "logger" is in an invalid format.')
 
   def test_init__invalid_error_handler__raises(self):
-    """ Test that invalid error_handler raises Exception on init. """
+    """ Test that invalid error_handler logs error on init. """
 
     class InvalidErrorHandler(object):
       pass
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       optimizely.Optimizely(json.dumps(self.config_dict), error_handler=InvalidErrorHandler)
 
-    self.assertEqual('Provided "error_handler" is in an invalid format.', str(cm.exception))
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "error_handler" is in an invalid format.')
 
   def test_skip_json_validation_true(self):
     """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
@@ -69,11 +69,34 @@ class OptimizelyV1Test(base.BaseTestV1):
 
     self.assertEqual(0, mock_datafile_validation.call_count)
 
+  def test_invalid_json_raises_schema_validation_off(self):
+    """ Test that invalid JSON logs error if schema validation is turned off. """
+
+    # Not  JSON
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      optimizely.Optimizely('invalid_json', skip_json_validation=True)
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
+
+    # JSON, but missing version
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      optimizely.Optimizely(json.dumps({'some_field': 'some_value'}), skip_json_validation=True)
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
+
+    # JSON having valid version, but entities have invalid format
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
+                            skip_json_validation=True)
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
+
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
@@ -88,8 +111,10 @@ class OptimizelyV1Test(base.BaseTestV1):
       'time': 42,
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
-    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment', None)
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_audience_check.assert_called_once_with(self.project_config,
+                                                self.project_config.get_experiment_from_key('test_experiment'),
+                                                None)
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
                                 expected_params, 'GET', None)
@@ -99,7 +124,8 @@ class OptimizelyV1Test(base.BaseTestV1):
     variation when attributes are provided and audience conditions are met. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
@@ -116,9 +142,10 @@ class OptimizelyV1Test(base.BaseTestV1):
       'time': 42,
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
-    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
+    mock_audience_check.assert_called_once_with(self.project_config,
+                                                self.project_config.get_experiment_from_key('test_experiment'),
                                                 {'test_attribute': 'test_value'})
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
                                 expected_params, 'GET', None)
@@ -129,7 +156,8 @@ class OptimizelyV1Test(base.BaseTestV1):
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
+    mock_audience_check.assert_called_once_with(self.project_config,
+                                                self.project_config.get_experiment_from_key('test_experiment'),
                                                 {'test_attribute': 'test_value'})
 
   def test_activate__with_attributes__invalid_attributes(self):
@@ -145,12 +173,29 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_activate__experiment_not_running(self):
     """ Test that activate returns None when experiment is not Running. """
 
-    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    self.assertEqual(0, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_activate__whitelisting_overrides_audience_check(self):
+    """ Test that during activate whitelist overrides audience check if user is in the whitelist. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                   return_value=True) as mock_is_experiment_running:
+      self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    mock_whitelist_check.assert_called_once_with({'user_1': 'control', 'user_2': 'control'}, 'user_1')
+    self.assertEqual(0, mock_audience_check.call_count)
 
   def test_activate__bucketer_returns_none(self):
     """ Test that activate returns None when user is in no variation. """
@@ -160,13 +205,26 @@ class OptimizelyV1Test(base.BaseTestV1):
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_activate__invalid_object(self):
+    """ Test that activate logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "activate".')
 
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -182,7 +240,7 @@ class OptimizelyV1Test(base.BaseTestV1):
       'time': 42,
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
                                 expected_params, 'GET', None)
@@ -190,7 +248,10 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
@@ -211,7 +272,10 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_track__with_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
@@ -228,7 +292,7 @@ class OptimizelyV1Test(base.BaseTestV1):
       'time': 42,
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
                                 expected_params, 'GET', None)
@@ -238,22 +302,56 @@ class OptimizelyV1Test(base.BaseTestV1):
 
     with mock.patch('optimizely.helpers.experiment.is_experiment_running',
                     return_value=False) as mock_is_experiment_running,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user')
 
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_track__whitelisted_user_overrides_audience_check(self):
+    """ Test that track does not check for user in audience when user is in whitelist. """
+
+    with mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                    return_value=True) as mock_is_experiment_running,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                    return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.audience.is_user_in_experiment',
+                    return_value=False) as mock_audience_check,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'user_1')
+
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    mock_whitelist_check.assert_called_once_with({'user_1': 'control', 'user_2': 'control'}, 'user_1')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_track__invalid_object(self):
+    """ Test that track logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      opt_obj.track('test_event', 'test_user')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "track".')
 
   def test_get_variation__audience_match_and_experiment_running(self):
     """ Test that get variation retrieves expected variation
     when audience conditions are met and experiment is running. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket:
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket:
       self.assertEqual('variation', self.optimizely.get_variation('test_experiment', 'test_user',
                                                                   attributes={'test_attribute': 'test_value'}))
 
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
 
   def test_get_variation__with_attributes__invalid_attributes(self):
     """ Test that get variation returns None and does not bucket when attributes are invalid. """
@@ -266,7 +364,8 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_get_variation__no_audience_match(self):
     """ Test that get variation returns None when audience conditions are not met. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket:
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket:
       self.assertIsNone(self.optimizely.get_variation('test_experiment', 'test_user',
                                                       attributes={'test_attribute': 'wrong_test_value'}))
 
@@ -275,14 +374,45 @@ class OptimizelyV1Test(base.BaseTestV1):
   def test_get_variation__experiment_not_running(self):
     """ Test that get variation returns None when experiment is not running. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111129'
+                    )) as mock_bucket,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running:
       self.assertIsNone(self.optimizely.get_variation('test_experiment', 'test_user',
                                                       attributes={'test_attribute': 'test_value'}))
 
     self.assertEqual(0, mock_bucket.call_count)
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    self.assertEqual(0, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_get_variation__whitelisting_overrides_audience_check(self):
+    """ Test that in get_variation whitelist overrides audience check if user is in the whitelist. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                   return_value=True) as mock_is_experiment_running:
+      self.assertEqual('control', self.optimizely.get_variation('test_experiment', 'user_1'))
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    self.assertEqual(1, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_get_variation__invalid_object(self):
+    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
   def test_custom_logger(self):
     """ Test creating Optimizely object with a custom logger. """
@@ -320,16 +450,17 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_init__invalid_datafile__raises(self):
     """ Test that invalid datafile raises Exception on init. """
 
-    with self.assertRaises(Exception) as cm:
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       optimizely.Optimizely('invalid_datafile')
 
-    self.assertEqual('Provided "datafile" is in an invalid format.', str(cm.exception))
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
@@ -350,8 +481,9 @@ class OptimizelyV2Test(base.BaseTestV2):
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk'
     }
-    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment', None)
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_audience_check.assert_called_once_with(self.project_config,
+                                                self.project_config.get_experiment_from_key('test_experiment'), None)
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -361,7 +493,8 @@ class OptimizelyV2Test(base.BaseTestV2):
     variation when attributes are provided and audience conditions are met. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129') as mock_bucket,\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
@@ -389,9 +522,10 @@ class OptimizelyV2Test(base.BaseTestV2):
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk'
     }
-    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
+    mock_audience_check.assert_called_once_with(self.project_config,
+                                                self.project_config.get_experiment_from_key('test_experiment'),
                                                 {'test_attribute': 'test_value'})
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -402,7 +536,8 @@ class OptimizelyV2Test(base.BaseTestV2):
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_audience_check.assert_called_once_with(self.project_config, 'test_experiment',
+    mock_audience_check.assert_called_once_with(self.project_config,
+                                                self.project_config.get_experiment_from_key('test_experiment'),
                                                 {'test_attribute': 'test_value'})
 
   def test_activate__with_attributes__invalid_attributes(self):
@@ -418,7 +553,9 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_activate__experiment_not_running(self):
     """ Test that activate returns None and does not dispatch event when experiment is not Running. """
 
-    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running, \
         mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket,\
@@ -426,9 +563,24 @@ class OptimizelyV2Test(base.BaseTestV2):
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
 
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    self.assertEqual(0, mock_audience_check.call_count)
+    self.assertEqual(0, mock_whitelist_check.call_count)
     self.assertEqual(0, mock_bucket.call_count)
     self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_activate__whitelisting_overrides_audience_check(self):
+    """ Test that during activate whitelist overrides audience check if user is in the whitelist. """
+
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                   return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                   return_value=True) as mock_is_experiment_running:
+      self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    self.assertEqual(1, mock_whitelist_check.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
 
   def test_activate__bucketer_returns_none(self):
     """ Test that activate returns None and does not dispatch event when user is in no variation. """
@@ -438,13 +590,26 @@ class OptimizelyV2Test(base.BaseTestV2):
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_activate__invalid_object(self):
+    """ Test that activate logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "activate".')
 
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -478,7 +643,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       }],
       'accountId': '12001'
     }
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -486,7 +651,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_track__with_attributes__no_audience_match(self):
     """ Test that track does not call dispatch_event when audience conditions do not match. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
@@ -507,7 +675,10 @@ class OptimizelyV2Test(base.BaseTestV2):
   def test_track__with_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128') as mock_bucket,\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
@@ -544,7 +715,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       }],
       'accountId': '12001'
     }
-    mock_bucket.assert_called_once_with('test_experiment', 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -558,8 +729,46 @@ class OptimizelyV2Test(base.BaseTestV2):
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user')
 
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_track__whitelisted_user_overrides_audience_check(self):
+    """ Test that track does not check for user in audience when user is in whitelist. """
+
+    with mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                    return_value=True) as mock_is_experiment_running,\
+        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
+                    return_value=True) as mock_whitelist_check,\
+        mock.patch('optimizely.helpers.audience.is_user_in_experiment',
+                    return_value=False) as mock_audience_check,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'user_1')
+
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
+    mock_whitelist_check.assert_called_once_with({'user_1': 'control', 'user_2': 'control'}, 'user_1')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_audience_check.call_count)
+
+  def test_track__invalid_object(self):
+    """ Test that track logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      opt_obj.track('test_event', 'test_user')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "track".')
+
+  def test_get_variation__invalid_object(self):
+    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
 
 class OptimizelyWithExceptionTest(base.BaseTestV1):
@@ -599,7 +808,8 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
     """ Test that expected log messages are logged during activate. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True),\
-        mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111129'),\
+        mock.patch('optimizely.bucketer.Bucketer.bucket',
+                   return_value=self.project_config.get_variation_from_id('test_experiment', '111129')),\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
@@ -616,19 +826,23 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
   def test_track(self):
     """ Test that expected log messages are logged during track. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket', return_value='111128'),\
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id('test_experiment', '111128')),\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.track('test_event', 'test_user')
 
-    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(3, mock_logging.call_count)
     self.assertEqual(mock.call(enums.LogLevels.INFO,
                      'User "test_user" does not meet conditions to be in experiment "test_experiment".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO,
                      'Not tracking user "test_user" for experiment "test_experiment".'),
                      mock_logging.call_args_list[1])
+    self.assertEqual(mock.call(enums.LogLevels.INFO,
+                     'There are no valid experiments for event "test_event" to track.'),
+                     mock_logging.call_args_list[2])
 
   def test_activate__invalid_attributes(self):
     """ Test that expected log messages are logged during activate when attributes are in invalid format. """
@@ -655,7 +869,7 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
                      mock.call(enums.LogLevels.INFO, 'Experiment "test_experiment" is not running.'))
     self.assertEqual(mock_logging.call_args_list[1],
                      mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
 
   def test_activate__no_audience_match(self):
     """ Test that expected log messages are logged during activate when audience conditions are not met. """
@@ -670,6 +884,15 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
     self.assertEqual(mock_logging.call_args_list[1],
                      mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
 
+  def test_activate__dispatch_raises_exception(self):
+    """ Test that activate logs dispatch failure gracefully. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging,\
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event', side_effect=Exception('Failed to send')):
+      self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
+
+    mock_logging.assert_any_call(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: Failed to send')
+
   def test_track__invalid_attributes(self):
     """ Test that expected log messages are logged during track when attributes are in invalid format. """
 
@@ -677,6 +900,15 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
       self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
+
+  def test_track__dispatch_raises_exception(self):
+    """ Test that track logs dispatch failure gracefully. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging,\
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event', side_effect=Exception('Failed to send')):
+      self.optimizely.track('test_event', 'user_1')
+
+    mock_logging.assert_any_call(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: Failed to send')
 
   def test_get_variation__invalid_attributes(self):
     """ Test that expected log messages are logged during get variation when attributes are in invalid format. """
@@ -695,7 +927,7 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
       self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
 
     mock_logging.assert_called_once_with(enums.LogLevels.INFO, 'Experiment "test_experiment" is not running.')
-    mock_is_experiment_running.assert_called_once_with(self.project_config, 'test_experiment')
+    mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
 
   def test_get_variation__no_audience_match(self):
     """ Test that expected log messages are logged during get variation when audience conditions are not met. """

@@ -17,10 +17,10 @@ def is_datafile_valid(datafile):
 
   try:
     datafile_json = json.loads(datafile)
+    datafile_version = datafile_json.get('version')
   except:
     return False
 
-  datafile_version = datafile_json.get('version')
   json_schema = None
 
   if datafile_version == project_config.V1_CONFIG_VERSION:

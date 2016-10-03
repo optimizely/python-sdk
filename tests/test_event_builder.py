@@ -2,7 +2,9 @@ import mock
 import unittest
 
 from optimizely import event_builder
+from optimizely import exceptions
 from optimizely import version
+from optimizely.helpers import enums
 from . import base
 
 
@@ -59,7 +61,10 @@ class EventBuilderV1Test(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user', None)
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', None
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
                                 expected_params, 'GET', None)
@@ -80,8 +85,10 @@ class EventBuilderV1Test(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user',
-                                                             {'test_attribute': 'test_value'})
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', {'test_attribute': 'test_value'}
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
                                 expected_params, 'GET', None)
@@ -102,9 +109,10 @@ class EventBuilderV1Test(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
-                                                             {'test_attribute': 'test_value'}, None,
-                                                             [('111127', 'test_experiment')])
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
                                 expected_params, 'GET', None)
@@ -144,9 +152,10 @@ class EventBuilderV1Test(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
-                                                             {'test_attribute': 'test_value'}, 4200,
-                                                             [('111127', 'test_experiment')])
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
                                 expected_params, 'GET', None)
@@ -176,7 +185,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     """ Test that get_event_builder raises exception for unsupported datafile version. """
 
     with mock.patch('optimizely.project_config.ProjectConfig.get_version', return_value='unsupported_version'):
-      self.assertRaisesRegexp(Exception, 'Datafile provided has unsupported version.',
+      self.assertRaisesRegexp(exceptions.InvalidInputException, enums.Errors.UNSUPPORTED_DATAFILE_VERSION,
                               event_builder.get_event_builder, self.optimizely.config, self.optimizely.bucketer)
 
   def test_create_impression_event(self):
@@ -199,7 +208,10 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientVersion': version.__version__
     }
     with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user', None)
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', None
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
                                 expected_params,
@@ -233,8 +245,10 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientVersion': version.__version__
     }
     with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_impression_event('test_experiment', '111129', 'test_user',
-                                                             {'test_attribute': 'test_value'})
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', {'test_attribute': 'test_value'}
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
                                 expected_params,
@@ -276,9 +290,10 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientVersion': version.__version__
     }
     with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
-                                                             {'test_attribute': 'test_value'}, None,
-                                                             [('111127', 'test_experiment')])
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,
@@ -349,9 +364,10 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientVersion': version.__version__
     }
     with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user',
-                                                             {'test_attribute': 'test_value'}, 4200,
-                                                             [('111127', 'test_experiment')])
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,

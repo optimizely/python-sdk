@@ -3,6 +3,11 @@ class InvalidAttributeException(Exception):
   pass
 
 
+class InvalidAudienceException(Exception):
+  """ Raised when provided audience is invalid. """
+  pass
+
+
 class InvalidExperimentException(Exception):
   """ Raised when provided experiment key is invalid. """
   pass
@@ -10,6 +15,16 @@ class InvalidExperimentException(Exception):
 
 class InvalidEventException(Exception):
   """ Raised when provided event key is invalid. """
+  pass
+
+
+class InvalidGroupException(Exception):
+  """ Raised when provided group ID is invalid. """
+  pass
+
+
+class InvalidInputException(Exception):
+  """ Raised when provided datafile, event dispatcher, logger or error handler is invalid. """
   pass
 
 

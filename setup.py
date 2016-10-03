@@ -20,9 +20,9 @@ with open(os.path.join(here, 'requirements', 'test.txt')) as _file:
 setup(
     name='optimizely-sdk',
     version=__version__,
-    description="A Python SDK for Optimizely's server-side testing product, which is currently in private beta.",
+    description="SDK for Optimizely's Full Stack Python project.",
     author='Optimizely',
-    author_email='server-side-testing@optimizely.com',
+    author_email='developers@optimizely.com',
     url='https://github.com/optimizely/python-sdk',
     license=open('LICENSE').read(),
     classifiers=[

@@ -1,11 +1,12 @@
+import copy
 import json
 import mock
 
+from optimizely import entities
 from optimizely import error_handler
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
-from optimizely import project_config
 from optimizely.helpers import enums
 
 from . import base
@@ -22,102 +23,115 @@ class ConfigTest(base.BaseTestV1):
     self.assertEqual(self.config_dict['experiments'], self.project_config.experiments)
     self.assertEqual(self.config_dict['events'], self.project_config.events)
     expected_group_id_map = {
-      '19228': self.config_dict['groups'][0]
+      '19228': entities.Group(
+        self.config_dict['groups'][0]['id'],
+        self.config_dict['groups'][0]['policy'],
+        self.config_dict['groups'][0]['experiments'],
+        self.config_dict['groups'][0]['trafficAllocation']
+      )
     }
     expected_experiment_key_map = {
-      'test_experiment': self.config_dict['experiments'][0],
-      'group_exp_1': self.config_dict['groups'][0]['experiments'][0],
-      'group_exp_2': self.config_dict['groups'][0]['experiments'][1]
-    }
-    expected_experiment_key_map['group_exp_1']['groupId'] = '19228'
-    expected_experiment_key_map['group_exp_1']['groupPolicy'] = 'random'
-    expected_experiment_key_map['group_exp_2']['groupId'] = '19228'
-    expected_experiment_key_map['group_exp_2']['groupPolicy'] = 'random'
-    expected_experiment_id_map = {
-      '111127': self.config_dict['experiments'][0],
-      '32222': self.config_dict['groups'][0]['experiments'][0],
-      '32223': self.config_dict['groups'][0]['experiments'][1]
-    }
-    expected_experiment_id_map['32222']['groupId'] = '19228'
-    expected_experiment_id_map['32222']['groupPolicy'] = 'random'
-    expected_experiment_id_map['32223']['groupId'] = '19228'
-    expected_experiment_id_map['32223']['groupPolicy'] = 'random'
-    expected_event_key_map = {
-      'test_event': project_config.Event(id='111095', key='test_event', experimentIds=['111127']),
-      'Total Revenue': project_config.Event(id='111096', key='Total Revenue', experimentIds=['111127'])
-    }
-    expected_attribute_key_map = {
-      'test_attribute': project_config.AttributeV1(id='111094', key='test_attribute', segmentId='11133')
-    }
-    expected_audience_id_map = {
-      '11154': self.config_dict['audiences'][0]
-    }
-    expected_audience_id_map['11154'].update({
-      'conditionList': [['test_attribute', 'test_value']],
-      'conditionStructure': ['and', ['or', ['or', 0]]]
-    })
-    expected_variation_key_map = {
-      'test_experiment': {
-        'control': {
+      'test_experiment': entities.Experiment(
+        '111127', 'test_experiment', 'Running', ['11154'], [{
           'key': 'control',
           'id': '111128'
-        },
-        'variation': {
+        }, {
           'key': 'variation',
           'id': '111129'
-        }
-      },
-      'group_exp_1': {
-        'group_exp_1_control': {
+        }], {
+            'user_1': 'control',
+            'user_2': 'control'
+        }, [{
+          'entityId': '111128',
+          'endOfRange': 4000
+        }, {
+          'entityId': '111129',
+          'endOfRange': 9000
+        }]
+      ),
+      'group_exp_1': entities.Experiment(
+        '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',
           'id': '28901'
-        },
-        'group_exp_1_variation': {
+        }, {
           'key': 'group_exp_1_variation',
           'id': '28902'
-        }
-      },
-      'group_exp_2': {
-        'group_exp_2_control': {
+        }], {
+            'user_1': 'group_exp_1_control',
+            'user_2': 'group_exp_1_control'
+        }, [{
+          'entityId': '28901',
+          'endOfRange': 3000
+        }, {
+          'entityId': '28902',
+          'endOfRange': 9000
+        }], groupId='19228', groupPolicy='random'
+      ),
+      'group_exp_2': entities.Experiment(
+        '32223', 'group_exp_2', 'Running', [], [{
           'key': 'group_exp_2_control',
           'id': '28905'
-        },
-        'group_exp_2_variation': {
+        }, {
           'key': 'group_exp_2_variation',
           'id': '28906'
-        }
+        }], {
+            'user_1': 'group_exp_2_control',
+            'user_2': 'group_exp_2_control'
+        }, [{
+          'entityId': '28905',
+          'endOfRange': 8000
+        }, {
+          'entityId': '28906',
+          'endOfRange': 10000
+        }], groupId='19228', groupPolicy='random'
+      ),
+    }
+    expected_experiment_id_map = {
+      '111127': expected_experiment_key_map.get('test_experiment'),
+      '32222': expected_experiment_key_map.get('group_exp_1'),
+      '32223': expected_experiment_key_map.get('group_exp_2')
+    }
+    expected_event_key_map = {
+      'test_event': entities.Event('111095', 'test_event', ['111127']),
+      'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
+    }
+    expected_attribute_key_map = {
+      'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
+    }
+    expected_audience_id_map = {
+      '11154': entities.Audience(
+        '11154', 'Test attribute users',
+        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_dimension", "value": "test_value"}]]]',
+        conditionStructure=['and', ['or', ['or', 0]]],
+        conditionList=[['test_attribute', 'test_value']]
+      )
+    }
+    expected_variation_key_map = {
+      'test_experiment': {
+        'control': entities.Variation('111128', 'control'),
+        'variation': entities.Variation('111129', 'variation')
+      },
+      'group_exp_1': {
+        'group_exp_1_control': entities.Variation('28901', 'group_exp_1_control'),
+        'group_exp_1_variation': entities.Variation('28902', 'group_exp_1_variation')
+      },
+      'group_exp_2': {
+        'group_exp_2_control': entities.Variation('28905', 'group_exp_2_control'),
+        'group_exp_2_variation': entities.Variation('28906', 'group_exp_2_variation')
       }
     }
     expected_variation_id_map = {
       'test_experiment': {
-        '111128': {
-          'key': 'control',
-          'id': '111128'
-        },
-        '111129': {
-          'key': 'variation',
-          'id': '111129'
-        }
+        '111128': entities.Variation('111128', 'control'),
+        '111129': entities.Variation('111129', 'variation')
       },
       'group_exp_1': {
-        '28901': {
-          'key': 'group_exp_1_control',
-          'id': '28901'
-        },
-        '28902': {
-          'key': 'group_exp_1_variation',
-          'id': '28902'
-        }
+        '28901': entities.Variation('28901', 'group_exp_1_control'),
+        '28902': entities.Variation('28902', 'group_exp_1_variation')
       },
       'group_exp_2': {
-        '28905': {
-          'key': 'group_exp_2_control',
-          'id': '28905'
-        },
-        '28906': {
-          'key': 'group_exp_2_variation',
-          'id': '28906'
-        }
+        '28905': entities.Variation('28905', 'group_exp_2_control'),
+        '28906': entities.Variation('28906', 'group_exp_2_variation')
       }
     }
 
@@ -145,137 +159,107 @@ class ConfigTest(base.BaseTestV1):
 
     self.assertEqual(self.config_dict['projectId'], self.project_config.get_project_id())
 
-  def test_get_experiment_group_id__valid_key(self):
-    """ Test that experiment group ID is retrieved correctly for valid experiment key. """
+  def test_get_experiment_from_key__valid_key(self):
+    """ Test that experiment is retrieved correctly for valid experiment key. """
 
-    self.assertEqual('19228', self.project_config.get_experiment_group_id('group_exp_1'))
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId=None, groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_key('group_exp_1'))
 
-  def test_get_experiment_group_id__invalid_key(self):
+  def test_get_experiment_from_key__invalid_key(self):
     """ Test that None is returned when provided experiment key is invalid. """
 
-    self.assertIsNone(self.project_config.get_experiment_group_id('invalid_key'))
+    self.assertIsNone(self.project_config.get_experiment_from_key('invalid_key'))
 
-  def test_get_experiment_group_policy__valid_key(self):
-    """ Test that experiment group policy is retrieved correctly for valid experiment key. """
+  def test_get_experiment_from_id__valid_id(self):
+    """ Test that experiment is retrieved correctly for valid experiment ID. """
 
-    self.assertEqual('random', self.project_config.get_experiment_group_policy('group_exp_1'))
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId=None, groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_id('32222'))
 
-  def test_get_experiment_group_policy__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_experiment_group_policy('invalid_key'))
-
-  def test_get_experiment_key__valid_id(self):
-    """ Test that experiment key is retrieved correctly for valid experiment ID. """
-
-    self.assertEqual('test_experiment', self.project_config.get_experiment_key('111127'))
-
-  def test_get_experiment_key__invalid_id(self):
+  def test_get_experiment_from_id__invalid_id(self):
     """ Test that None is returned when provided experiment ID is invalid. """
 
-    self.assertIsNone(self.project_config.get_experiment_key('123456789'))
+    self.assertIsNone(self.project_config.get_experiment_from_id('invalid_id'))
 
-  def test_get_experiment_id__valid_key(self):
-    """ Test that experiment ID is retrieved correctly for valid experiment key. """
-
-    self.assertEqual(self.config_dict['experiments'][0]['id'], self.project_config.get_experiment_id('test_experiment'))
-
-  def test_get_experiment_id__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_experiment_id('invalid_key'))
-
-  def test_get_layer_id_for_experiment__valid_key(self):
-    """ Test that None is returned when provided experiment key is valid. """
-
-    self.assertIsNone(self.project_config.get_layer_id_for_experiment('test_experiment'))
-
-  def test_get_layer_id_for_experiment__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
-
-  def test_get_experiment_status__valid_key(self):
-    """ Test that experiment status is retrieved correctly for valid experiment key. """
-
-    self.assertEqual(self.config_dict['experiments'][0]['status'],
-                     self.project_config.get_experiment_status('test_experiment'))
-
-  def test_get_experiment_status__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_experiment_status('invalid_key'))
-
-  def test_get_experiment_forced_variations__valid_key(self):
-    """ Test that experiment's forced variations are retrieved correctly for valid experiment key. """
-
-    self.assertEqual(self.config_dict['experiments'][0]['forcedVariations'],
-                     self.project_config.get_experiment_forced_variations('test_experiment'))
-
-  def test_get_experiment_forced_variations__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_experiment_forced_variations('invalid_key'))
-
-  def test_get_audience_ids_for_experiment__valid_key(self):
-    """ Test that audience IDs are retrieved correctly for valid experiment key. """
-
-    self.assertEqual(self.config_dict['experiments'][0]['audienceIds'],
-                     self.project_config.get_audience_ids_for_experiment('test_experiment'))
-
-  def test_get_audience_ids_for_experiment__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
-
-    self.assertIsNone(self.project_config.get_audience_ids_for_experiment('invalid_key'))
-
-  def test_get_audience_object_from_id__valid_id(self):
+  def test_get_audience__valid_id(self):
     """ Test that audience object is retrieved correctly given a valid audience ID. """
 
     self.assertEqual(self.project_config.audience_id_map['11154'],
-                     self.project_config.get_audience_object_from_id('11154'))
+                     self.project_config.get_audience('11154'))
 
-  def test_get_audience_object_from_id__invalid_id(self):
+  def test_get_audience__invalid_id(self):
     """ Test that None is returned for an invalid audience ID. """
 
-    self.assertIsNone(self.project_config.get_audience_object_from_id('42'))
+    self.assertIsNone(self.project_config.get_audience('42'))
 
-  def test_get_variation_key_from_id__valid_experiment_key(self):
-    """ Test that variation key is retrieved correctly when valid experiment key and variation ID are provided. """
+  def test_get_variation_from_key__valid_experiment_key(self):
+    """ Test that variation is retrieved correctly when valid experiment key and variation key are provided. """
 
-    self.assertEqual('control',
-                     self.project_config.get_variation_key_from_id(self.config_dict['experiments'][0]['key'], '111128'))
+    self.assertEqual(entities.Variation('111128', 'control'),
+                     self.project_config.get_variation_from_key('test_experiment', 'control'))
 
-  def test_get_variation_key_from_id__invalid_experiment_key(self):
+  def test_get_variation_from_key__invalid_experiment_key(self):
     """ Test that None is returned when provided experiment key is invalid. """
 
-    self.assertIsNone(self.project_config.get_variation_key_from_id('invalid_key', '111128'))
+    self.assertIsNone(self.project_config.get_variation_from_key('invalid_key', 'control'))
 
-  def test_get_variation_key_from_id__invalid_variation_id(self):
+  def test_get_variation_from_key__invalid_variation_key(self):
     """ Test that None is returned when provided variation ID is invalid. """
 
-    self.assertIsNone(self.project_config.get_variation_key_from_id(self.config_dict['experiments'][0]['key'],
-                                                                    'invalid_id'))
+    self.assertIsNone(self.project_config.get_variation_from_key('test_experiment', 'invalid_key'))
 
-  def test_get_variation_id__valid_experiment_key(self):
-    """ Test that variation ID is retrieved correctly when valid experiment key and variation key are provided. """
+  def test_get_variation_from_id__valid_experiment_key(self):
+    """ Test that variation is retrieved correctly when valid experiment key and variation ID are provided. """
 
-    self.assertEqual('111128',
-                     self.project_config.get_variation_id(self.config_dict['experiments'][0]['key'], 'control'))
+    self.assertEqual(entities.Variation('111128', 'control'),
+                     self.project_config.get_variation_from_id('test_experiment', '111128'))
 
-  def test_get_variation_id__invalid_experiment_key(self):
+  def test_get_variation_from_id__invalid_experiment_key(self):
     """ Test that None is returned when provided experiment key is invalid. """
 
-    self.assertIsNone(self.project_config.get_variation_id('invalid_key', 'control'))
+    self.assertIsNone(self.project_config.get_variation_from_id('invalid_key', '111128'))
 
-  def test_get_variation_id__invalid_variation_key(self):
-    """ Test that None is returned when provided variation key is invalid. """
+  def test_get_variation_from_id__invalid_variation_key(self):
+    """ Test that None is returned when provided variation ID is invalid. """
 
-    self.assertIsNone(self.project_config.get_variation_id(self.config_dict['experiments'][0]['key'], 'invalid_key'))
+    self.assertIsNone(self.project_config.get_variation_from_id('test_experiment', '42'))
 
   def test_get_event__valid_key(self):
     """ Test that event is retrieved correctly for valid event key. """
 
-    self.assertEqual(project_config.Event(id='111095', key='test_event', experimentIds=['111127']),
+    self.assertEqual(entities.Event('111095', 'test_event', ['111127']),
                      self.project_config.get_event('test_event'))
 
   def test_get_event__invalid_key(self):
@@ -286,13 +270,13 @@ class ConfigTest(base.BaseTestV1):
   def test_get_revenue_goal(self):
     """ Test that revenue goal can be retrieved as expected. """
 
-    self.assertEqual(project_config.Event(id='111096', key='Total Revenue', experimentIds=['111127']),
+    self.assertEqual(entities.Event('111096', 'Total Revenue', ['111127']),
                      self.project_config.get_revenue_goal())
 
   def test_get_attribute__valid_key(self):
     """ Test that attribute is retrieved correctly for valid attribute key. """
 
-    self.assertEqual(project_config.AttributeV1(id='111094', key='test_attribute', segmentId='11133'),
+    self.assertEqual(entities.Attribute('111094', 'test_attribute', segmentId='11133'),
                      self.project_config.get_attribute('test_attribute'))
 
   def test_get_attribute__invalid_key(self):
@@ -300,36 +284,73 @@ class ConfigTest(base.BaseTestV1):
 
     self.assertIsNone(self.project_config.get_attribute('invalid_key'))
 
-  def test_get_traffic_allocation__valid_key(self):
-    """ Test that trafficAllocation is retrieved correctly for valid experiment key or group ID. """
+  def test_get_group__valid_id(self):
+    """ Test that group is retrieved correctly for valid group ID. """
 
-    self.assertEqual(self.config_dict['experiments'][0]['trafficAllocation'],
-                     self.project_config.get_traffic_allocation(self.project_config.experiment_key_map,
-                                                                'test_experiment'))
-    self.assertEqual(self.config_dict['groups'][0]['trafficAllocation'],
-                     self.project_config.get_traffic_allocation(self.project_config.group_id_map,
-                                                                '19228'))
+    self.assertEqual(entities.Group(self.config_dict['groups'][0]['id'],
+                                    self.config_dict['groups'][0]['policy'],
+                                    self.config_dict['groups'][0]['experiments'],
+                                    self.config_dict['groups'][0]['trafficAllocation']),
+                     self.project_config.get_group('19228'))
 
-  def test_get_traffic_allocation__invalid_key(self):
-    """ Test that None is returned when provided experiment key or group ID is invalid. """
 
-    self.assertIsNone(self.project_config.get_traffic_allocation(self.project_config.experiment_key_map,
-                                                                 'invalid_key'))
-    self.assertIsNone(self.project_config.get_traffic_allocation(self.project_config.group_id_map,
-                                                                 'invalid_key'))
+  def test_get_group__invalid_id(self):
+    """ Test that None is returned when provided group ID is invalid. """
+
+    self.assertIsNone(self.project_config.get_group('42'))
 
 
 class ConfigTestV2(base.BaseTestV2):
 
-  def test_get_layer_id_for_experiment__valid_key(self):
-    """ Test that layer ID is returned when provided experiment key is valid. """
+  def test_get_experiment_from_key__valid_key(self):
+    """ Test that experiment is retrieved correctly for valid experiment key. """
 
-    self.assertEqual('111182', self.project_config.get_layer_id_for_experiment('test_experiment'))
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId='111183', groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_key('group_exp_1'))
 
-  def test_get_layer_id_for_experiment__invalid_key(self):
-    """ Test that None is returned when provided experiment key is invalid. """
+  def test_get_experiment_from_id__valid_id(self):
+    """ Test that experiment is retrieved correctly for valid experiment ID. """
 
-    self.assertIsNone(self.project_config.get_layer_id_for_experiment('invalid_key'))
+    self.assertEqual(entities.Experiment(
+      '32222', 'group_exp_1', 'Running', [], [{
+        'key': 'group_exp_1_control',
+        'id': '28901'
+      }, {
+        'key': 'group_exp_1_variation',
+        'id': '28902'
+      }], {
+        'user_1': 'group_exp_1_control',
+        'user_2': 'group_exp_1_control'
+      }, [{
+        'entityId': '28901',
+        'endOfRange': 3000
+      }, {
+        'entityId': '28902',
+        'endOfRange': 9000
+      }], layerId='111183', groupId='19228', groupPolicy='random'),
+      self.project_config.get_experiment_from_id('32222'))
+
+  def test_get_attribute__valid_key(self):
+    """ Test that attribute is retrieved correctly for valid attribute key. """
+
+    self.assertEqual(entities.Attribute('111094', 'test_attribute', segmentId=None),
+                     self.project_config.get_attribute('test_attribute'))
 
 
 class ConfigLoggingTest(base.BaseTestV1):
@@ -339,85 +360,53 @@ class ConfigLoggingTest(base.BaseTestV1):
                                             logger=logger.SimpleLogger())
     self.project_config = self.optimizely.config
 
-  def test_get_experiment_group_id__invalid_key(self):
+  def test_get_experiment_from_key__invalid_key(self):
     """ Test that message is logged when provided experiment key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_group_id('invalid_key')
+      self.project_config.get_experiment_from_key('invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
 
-  def test_get_experiment_group_policy__invalid_key(self):
+  def test_get_audience__invalid_id(self):
+    """ Test that message is logged when provided audience ID is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_audience('42')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Audience ID "42" is not in datafile.')
+
+  def test_get_variation_from_key__invalid_experiment_key(self):
     """ Test that message is logged when provided experiment key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_group_policy('invalid_key')
+      self.project_config.get_variation_from_key('invalid_key', 'control')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
 
-  def test_get_experiment_id__invalid_key(self):
-    """ Test that message is logged when provided experiment key is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_id('invalid_key')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
-
-  def test_get_experiment_status__invalid_key(self):
-    """ Test that message is logged when provided experiment key is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_status('invalid_key')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
-
-  def test_get_experiment_forced_variations__invalid_key(self):
-    """ Test that message is logged when provided experiment key is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_experiment_forced_variations('invalid_key')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
-
-  def test_get_audience_ids_for_experiment__invalid_key(self):
-    """ Test that message is logged when provided experiment key is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_audience_ids_for_experiment('invalid_key')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
-
-  def test_get_variation_key_from_id__invalid_experiment_key(self):
-    """ Test that message is logged when provided experiment key is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_variation_key_from_id('invalid_key', '111128')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
-
-  def test_get_variation_key_from_id__invalid_variation_id(self):
-    """ Test that message is logged when provided variation ID is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_variation_key_from_id('test_experiment', 'invalid_id')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation ID "invalid_id" is not in datafile.')
-
-  def test_get_variation_id__invalid_experiment_key(self):
-    """ Test that message is logged when provided experiment key is invalid. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_variation_id('invalid_key', 'control')
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
-
-  def test_get_variation_id__invalid_variation_key(self):
+  def test_get_variation_from_key__invalid_variation_key(self):
     """ Test that message is logged when provided variation key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_variation_id('test_experiment', 'invalid_key')
+      self.project_config.get_variation_from_key('test_experiment', 'invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation key "invalid_key" is not in datafile.')
+
+  def test_get_variation_from_id__invalid_experiment_key(self):
+    """ Test that message is logged when provided experiment key is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_variation_from_id('invalid_key', '111128')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
+
+  def test_get_variation_from_id__invalid_variation_id(self):
+    """ Test that message is logged when provided variation ID is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_variation_from_id('test_experiment', '42')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation ID "42" is not in datafile.')
 
   def test_get_event__invalid_key(self):
     """ Test that message is logged when provided event key is invalid. """
@@ -435,6 +424,14 @@ class ConfigLoggingTest(base.BaseTestV1):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
 
+  def test_get_group__invalid_id(self):
+    """ Test that message is logged when provided group ID is invalid. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_group('42')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Group ID "42" is not in datafile.')
+
 
 class ConfigExceptionTest(base.BaseTestV1):
 
@@ -444,75 +441,47 @@ class ConfigExceptionTest(base.BaseTestV1):
                                             error_handler=error_handler.RaiseExceptionErrorHandler)
     self.project_config = self.optimizely.config
 
-  def test_get_experiment_group_id__invalid_key(self):
+  def test_get_experiment_from_key__invalid_key(self):
     """ Test that exception is raised when provided experiment key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
                             enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_experiment_group_id, 'invalid_key')
+                            self.project_config.get_experiment_from_key, 'invalid_key')
 
-  def test_get_experiment_group_policy__invalid_key(self):
+  def test_get_audience__invalid_id(self):
+    """ Test that message is logged when provided audience ID is invalid. """
+
+    self.assertRaisesRegexp(exceptions.InvalidAudienceException,
+                            enums.Errors.INVALID_AUDIENCE_ERROR,
+                            self.project_config.get_audience, '42')
+
+  def test_get_variation_from_key__invalid_experiment_key(self):
     """ Test that exception is raised when provided experiment key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
                             enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_experiment_group_policy, 'invalid_key')
+                            self.project_config.get_variation_from_key, 'invalid_key', 'control')
 
-  def test_get_experiment_id__invalid_key(self):
+  def test_get_variation_from_key__invalid_variation_key(self):
+    """ Test that exception is raised when provided variation key is invalid. """
+
+    self.assertRaisesRegexp(exceptions.InvalidVariationException,
+                            enums.Errors.INVALID_VARIATION_ERROR,
+                            self.project_config.get_variation_from_key, 'test_experiment', 'invalid_key')
+
+  def test_get_variation_from_id__invalid_experiment_key(self):
     """ Test that exception is raised when provided experiment key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
                             enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_experiment_id, 'invalid_key')
+                            self.project_config.get_variation_from_id, 'invalid_key', '111128')
 
-  def test_get_experiment_status__invalid_key(self):
-    """ Test that exception is raised when provided experiment key is invalid. """
-
-    self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_experiment_status, 'invalid_key')
-
-  def test_get_experiment_forced_variations__invalid_key(self):
-    """ Test that exception is raised when provided experiment key is invalid. """
-
-    self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_experiment_forced_variations, 'invalid_key')
-
-  def test_get_audience_ids_for_experiment__invalid_key(self):
-    """ Test that exception is raised when provided experiment key is invalid. """
-
-    self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_audience_ids_for_experiment, 'invalid_key')
-
-  def test_get_variation_key_from_id__invalid_experiment_key(self):
-    """ Test that exception is raised when provided experiment key is invalid. """
-
-    self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_variation_key_from_id, 'invalid_key', '111128')
-
-  def test_get_variation_key_from_id__invalid_variation_id(self):
+  def test_get_variation_from_id__invalid_variation_id(self):
     """ Test that exception is raised when provided variation ID is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidVariationException,
                             enums.Errors.INVALID_VARIATION_ERROR,
-                            self.project_config.get_variation_key_from_id, 'test_experiment', 'invalid_id')
-
-  def test_get_variation_id__invalid_experiment_key(self):
-    """ Test that exception is raised when provided experiment key is invalid. """
-
-    self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
-                            self.project_config.get_variation_id, 'invalid_key', 'control')
-
-  def test_get_variation_id__invalid_variation_key(self):
-    """ Test that exception is raised when provided experiment key is invalid. """
-
-    self.assertRaisesRegexp(exceptions.InvalidVariationException,
-                            enums.Errors.INVALID_VARIATION_ERROR,
-                            self.project_config.get_variation_id, 'test_experiment', 'invalid_key')
+                            self.project_config.get_variation_from_key, 'test_experiment', '42')
 
   def test_get_event__invalid_key(self):
     """ Test that exception is raised when provided event key is invalid. """
@@ -527,3 +496,10 @@ class ConfigExceptionTest(base.BaseTestV1):
     self.assertRaisesRegexp(exceptions.InvalidAttributeException,
                             enums.Errors.INVALID_ATTRIBUTE_ERROR,
                             self.project_config.get_attribute, 'invalid_key')
+
+  def test_get_group__invalid_id(self):
+    """ Test that exception is raised when provided group ID is invalid. """
+
+    self.assertRaisesRegexp(exceptions.InvalidGroupException,
+                            enums.Errors.INVALID_GROUP_ID_ERROR,
+                            self.project_config.get_group, '42')
