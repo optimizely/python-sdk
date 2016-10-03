@@ -33,7 +33,7 @@ class Event(BaseEntity):
 class Experiment(BaseEntity):
 
   def __init__(self, id, key, status, audienceIds, variations, forcedVariations,
-               trafficAllocation, layerId=None, groupId=None, groupPolicy=None):
+               trafficAllocation, layerId=None, groupId=None, groupPolicy=None, percentageIncluded=None):
     self.id = id
     self.key = key
     self.status = status
@@ -44,6 +44,7 @@ class Experiment(BaseEntity):
     self.layerId = layerId
     self.groupId = groupId
     self.groupPolicy = groupPolicy
+    self.percentageIncluded = percentageIncluded
 
 
 class Group(BaseEntity):
