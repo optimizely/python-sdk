@@ -1,4 +1,4 @@
-FROM ruby:2.3.1
+FROM python:2.7.10
 
 MAINTAINER Ali Rizvi <ali@optimizely.com>
 
@@ -6,10 +6,11 @@ MAINTAINER Ali Rizvi <ali@optimizely.com>
 ARG SDK_BRANCH=master
 ENV SDK_BRANCH $SDK_BRANCH
 
-RUN mkdir -p /usr/src/app
-COPY . /usr/src/app
-WORKDIR /usr/src/app
-RUN bundle install
+ENV INSTALL_PATH /usr/src/app
+RUN mkdir -p $INSTALL_PATH
+COPY . $INSTALL_PATH
+WORKDIR $INSTALL_PATH
+RUN pip install -r requirements.txt
 
-EXPOSE 3000
-CMD ["bundle", "exec", "ruby", "./main.rb"]
+EXPOSE  5000
+CMD ["python", "application.py"]
