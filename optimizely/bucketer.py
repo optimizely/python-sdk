@@ -62,7 +62,7 @@ class Bucketer(object):
       traffic_allocations: Traffic allocations representing traffic allotted to experiments or variations.
 
     Returns:
-      Entity ID which may represent experiment or group.
+      Entity ID which may represent experiment or variation.
     """
 
     bucketing_id = BUCKETING_ID_TEMPLATE.format(user_id=user_id, parent_id=parent_id)
