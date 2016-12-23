@@ -250,8 +250,8 @@ class EventBuilderV2(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking 
   impressions and conversions using the new endpoints. """
 
-  IMPRESSION_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
-  CONVERSION_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
+  IMPRESSION_ENDPOINT = 'https://logx.optimizely.com/log/decision'
+  CONVERSION_ENDPOINT = 'https://logx.optimizely.com/log/event'
   HTTP_VERB = 'POST'
   HTTP_HEADERS = {'Content-Type': 'application/json'}
   EVENT_VALUE_METRIC = 'revenue'

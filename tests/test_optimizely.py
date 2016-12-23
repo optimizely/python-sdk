@@ -498,7 +498,7 @@ class OptimizelyV2Test(base.BaseTestV2):
                                                 self.project_config.get_experiment_from_key('test_experiment'), None)
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__audience_match(self):
@@ -540,7 +540,7 @@ class OptimizelyV2Test(base.BaseTestV2):
                                                 {'test_attribute': 'test_value'})
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__no_audience_match(self):
@@ -658,7 +658,7 @@ class OptimizelyV2Test(base.BaseTestV2):
     }
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_attributes__no_audience_match(self):
@@ -730,7 +730,7 @@ class OptimizelyV2Test(base.BaseTestV2):
     }
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__experiment_not_running(self):
