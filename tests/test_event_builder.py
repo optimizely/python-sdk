@@ -76,7 +76,7 @@ class EventBuilderV1Test(base.BaseTestV1):
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', None
+        '111129', 'test_user', None, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
@@ -100,7 +100,7 @@ class EventBuilderV1Test(base.BaseTestV1):
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', {'test_attribute': 'test_value'}
+        '111129', 'test_user', {'test_attribute': 'test_value'}, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
@@ -124,7 +124,7 @@ class EventBuilderV1Test(base.BaseTestV1):
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
-        [self.project_config.get_experiment_from_key('test_experiment')]
+        [self.project_config.get_experiment_from_key('test_experiment')], None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
@@ -143,7 +143,7 @@ class EventBuilderV1Test(base.BaseTestV1):
       'src': 'python-sdk-{version}'.format(version=version.__version__)
     }
     with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
+      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [], None)
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
                                 expected_params, 'GET', None)
@@ -215,7 +215,7 @@ class EventBuilderV1Test(base.BaseTestV1):
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
-        [self.project_config.get_experiment_from_key('test_experiment')]
+        [self.project_config.get_experiment_from_key('test_experiment')], None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
@@ -257,11 +257,13 @@ class EventBuilderV2Test(base.BaseTestV2):
       'projectId': '111001',
       'layerId': '111182',
       'visitorId': 'test_user',
+      'sessionId': None,
       'decision': {
         'experimentId': '111127',
         'variationId': '111129',
         'isLayerHoldback': False
       },
+      'revision': '42',
       'timestamp': 42123,
       'isGlobalHoldback': False,
       'userFeatures': [],
@@ -271,7 +273,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', None
+        '111129', 'test_user', None, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
@@ -286,8 +288,10 @@ class EventBuilderV2Test(base.BaseTestV2):
     expected_params = {
       'accountId': '12001',
       'projectId': '111001',
+      'sessionId': None,
       'layerId': '111182',
       'visitorId': 'test_user',
+      'revision': '42',
       'decision': {
         'experimentId': '111127',
         'variationId': '111129',
@@ -308,7 +312,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', {'test_attribute': 'test_value'}
+        '111129', 'test_user', {'test_attribute': 'test_value'}, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
@@ -324,12 +328,15 @@ class EventBuilderV2Test(base.BaseTestV2):
       'accountId': '12001',
       'projectId': '111001',
       'visitorId': 'test_user',
+      'sessionId': None,
       'eventName': 'test_event',
       'eventEntityId': '111095',
       'eventMetrics': [],
       'eventFeatures': [],
+      'revision': '42',
       'layerStates': [{
           'layerId': '111182',
+          'revision': '42',
           'decision': {
             'experimentId': '111127',
             'variationId': '111129',
@@ -353,7 +360,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
-        [self.project_config.get_experiment_from_key('test_experiment')]
+        [self.project_config.get_experiment_from_key('test_experiment')], None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
@@ -368,6 +375,8 @@ class EventBuilderV2Test(base.BaseTestV2):
       'accountId': '12001',
       'projectId': '111001',
       'visitorId': 'test_user',
+      'sessionId': None,
+      'revision': '42',
       'eventName': 'test_event',
       'eventEntityId': '111095',
       'eventMetrics': [],
@@ -380,7 +389,7 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientVersion': version.__version__
     }
     with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
+      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [], None)
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,
@@ -395,6 +404,7 @@ class EventBuilderV2Test(base.BaseTestV2):
       'accountId': '12001',
       'projectId': '111001',
       'visitorId': 'test_user',
+      'sessionId': None,
       'eventName': 'test_event',
       'eventEntityId': '111095',
       'eventMetrics': [{
@@ -417,6 +427,7 @@ class EventBuilderV2Test(base.BaseTestV2):
       ],
       'layerStates': [{
           'layerId': '111182',
+          'revision': '42',
           'decision': {
             'experimentId': '111127',
             'variationId': '111129',
@@ -426,6 +437,7 @@ class EventBuilderV2Test(base.BaseTestV2):
         }
       ],
       'timestamp': 42123,
+      'revision': '42',
       'isGlobalHoldback': False,
       'userFeatures': [{
         'id': '111094',

@@ -131,13 +131,14 @@ class Optimizely(object):
 
     return True
 
-  def activate(self, experiment_key, user_id, attributes=None):
+  def activate(self, experiment_key, user_id, attributes=None, session_id=None):
     """ Buckets visitor and sends impression event to Optimizely.
 
     Args:
       experiment_key: Experiment which needs to be activated.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
+      session_id: ID to identify the user's current session.
 
     Returns:
       Variation key representing the variation the user will be bucketed in.
@@ -164,7 +165,9 @@ class Optimizely(object):
       return None
 
     # Create and dispatch impression event
-    impression_event = self.event_builder.create_impression_event(experiment, variation.id, user_id, attributes)
+    impression_event = self.event_builder.create_impression_event(
+      experiment, variation.id, user_id, attributes, session_id
+    )
     self.logger.log(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
     self.logger.log(enums.LogLevels.DEBUG,
                     'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
