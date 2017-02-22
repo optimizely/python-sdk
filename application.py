@@ -15,28 +15,31 @@ opt_obj = optimizely.Optimizely(datafile_content, logger=logger.SimpleLogger())
 
 @app.route('/activate', methods=['POST'])
 def activate():
-  experiment_key = request.form.get('experiment_key')
-  user_id = request.form.get('user_id')
-  attributes = request.form.get('attributes')
+  payload = request.get_json()
+  experiment_key = payload.get('experiment_key')
+  user_id = payload.get('user_id')
+  attributes = payload.get('attributes')
   variation = opt_obj.activate(experiment_key, user_id, attributes=attributes)
   return json.dumps({'result': variation}), 200, {'content-type': 'application/json'}
 
 @app.route('/get_variation', methods=['POST'])
 def get_variation():
-  experiment_key = request.form.get('experiment_key')
-  user_id = request.form.get('user_id')
-  attributes = request.form.get('attributes')
+  payload = request.get_json()
+  experiment_key = payload.get('experiment_key')
+  user_id = payload.get('user_id')
+  attributes = payload.get('attributes')
   variation = opt_obj.get_variation(experiment_key, user_id, attributes=attributes)
   return json.dumps({'result': variation}), 200, {'content-type': 'application/json'}
 
 @app.route('/track', methods=['POST'])
 def track():
-  event_key = request.form.get('event_key')
-  user_id = request.form.get('user_id')
-  attributes = request.form.get('attributes')
-  event_value = request.form.get('event_value')
-  opt_obj.track(event_key, user_id, attributes=attributes, event_value=event_value)
-  return json.dumps({'result': ''}), 200, {'content-type': 'application/json'}
+  payload = request.get_json()
+  event_key = payload.get('event_key')
+  user_id = payload.get('user_id')
+  attributes = payload.get('attributes')
+  event_value = payload.get('event_value')
+  result = opt_obj.track(event_key, user_id, attributes=attributes, event_value=event_value)
+  return json.dumps({'result': result}), 200, {'content-type': 'application/json'}
 
 if __name__ == '__main__':
-  app.run()
+  app.run(host='0.0.0.0', port=3000)
