@@ -166,7 +166,7 @@ class EventBuilderV1Test(base.BaseTestV1):
     }
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200},
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
     self._validate_event_object(event_obj,
@@ -353,7 +353,14 @@ class EventBuilderV2Test(base.BaseTestV2):
         'name': 'revenue',
         'value': 4200
       }],
-      'eventFeatures': [],
+      'eventFeatures': [
+        {
+          'id': 'revenue',
+          'type': 'custom',
+          'value': 4200,
+          'shouldIndex': False,
+        }
+      ],
       'layerStates': [{
           'layerId': '111182',
           'decision': {
@@ -378,7 +385,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200},
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
     self._validate_event_object(event_obj,

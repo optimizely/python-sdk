@@ -291,7 +291,7 @@ class OptimizelyV1Test(base.BaseTestV1):
                     )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
 
     expected_params = {
       'd': '12001',
@@ -694,7 +694,7 @@ class OptimizelyV2Test(base.BaseTestV2):
                     )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
 
     expected_params = {
       'visitorId': 'test_user',
@@ -711,7 +711,14 @@ class OptimizelyV2Test(base.BaseTestV2):
       'isGlobalHoldback': False,
       'eventEntityId': '111095',
       'eventName': 'test_event',
-      'eventFeatures': [],
+      'eventFeatures': [
+        {
+          'id': 'revenue',
+          'type': 'custom',
+          'value': 4200,
+          'shouldIndex': False,
+        }
+      ],
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200

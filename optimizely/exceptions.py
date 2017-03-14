@@ -16,6 +16,11 @@ class InvalidAttributeException(Exception):
   pass
 
 
+class InvalidEventTagException(Exception):
+  """ Raised when provided event tag is invalid. """
+  pass
+
+
 class InvalidAudienceException(Exception):
   """ Raised when provided audience is invalid. """
   pass
