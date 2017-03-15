@@ -173,6 +173,54 @@ class EventBuilderV1Test(base.BaseTestV1):
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
                                 expected_params, 'GET', None)
 
+  def test_create_conversion_event__with_invalid_event_value(self):
+    """ Test that create_conversion_event creates Event object
+    with right params when event value is provided. """
+
+    expected_params = {
+      'd': '12001',
+      'a': '111001',
+      'n': 'test_event',
+      'x111127': '111129',
+      'g': '111095',
+      'u': 'test_user',
+      's11133': 'test_value',
+      'time': 42,
+      'src': 'python-sdk-{version}'.format(version=version.__version__)
+    }
+    with mock.patch('time.time', return_value=42):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200'},
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
+
+  def test_create_conversion_event__with_deprecated_event_value(self):
+    """ Test that create_conversion_event creates Event object
+    with right params when event value is provided. """
+
+    expected_params = {
+      'd': '12001',
+      'a': '111001',
+      'n': 'test_event',
+      'x111127': '111129',
+      'g': '111095',
+      'u': 'test_user',
+      's11133': 'test_value',
+      'time': 42,
+      'src': 'python-sdk-{version}'.format(version=version.__version__)
+    }
+    with mock.patch('time.time', return_value=42):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
+                                expected_params, 'GET', None)
+
 
 class EventBuilderV2Test(base.BaseTestV2):
 
@@ -355,6 +403,12 @@ class EventBuilderV2Test(base.BaseTestV2):
       }],
       'eventFeatures': [
         {
+          'id': 'non-revenue',
+          'type': 'custom',
+          'value': 'abc',
+          'shouldIndex': False,
+        },
+        {
           'id': 'revenue',
           'type': 'custom',
           'value': 4200,
@@ -385,7 +439,65 @@ class EventBuilderV2Test(base.BaseTestV2):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200},
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
+        [self.project_config.get_experiment_from_key('test_experiment')]
+      )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilderV2.HTTP_VERB,
+                                event_builder.EventBuilderV2.HTTP_HEADERS)
+
+  def test_create_conversion_event__with_invalid_event_value(self):
+    """ Test that create_conversion_event creates Event object
+    with right params when event value is provided. """
+
+    expected_params = {
+      'accountId': '12001',
+      'projectId': '111001',
+      'visitorId': 'test_user',
+      'eventName': 'test_event',
+      'eventEntityId': '111095',
+      'eventMetrics': [],
+      'eventFeatures': [
+        {
+          'id': 'non-revenue',
+          'type': 'custom',
+          'value': 'abc',
+          'shouldIndex': False,
+        },
+        {
+          'id': 'revenue',
+          'type': 'custom',
+          'value': '4200',
+          'shouldIndex': False,
+        }
+      ],
+      'layerStates': [{
+          'layerId': '111182',
+          'decision': {
+            'experimentId': '111127',
+            'variationId': '111129',
+            'isLayerHoldback': False
+          },
+          'actionTriggered': True,
+        }
+      ],
+      'timestamp': 42123,
+      'isGlobalHoldback': False,
+      'userFeatures': [{
+        'id': '111094',
+        'name': 'test_attribute',
+        'type': 'custom',
+        'value': 'test_value',
+        'shouldIndex': True
+      }],
+      'clientEngine': 'python-sdk',
+      'clientVersion': version.__version__
+    }
+    with mock.patch('time.time', return_value=42.123):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'non-revenue': 'abc'},
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
     self._validate_event_object(event_obj,
