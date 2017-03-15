@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -88,6 +88,18 @@ class ValidatorTest(base.BaseTestV1):
     self.assertFalse(validator.are_attributes_valid('key:value'))
     self.assertFalse(validator.are_attributes_valid(['key', 'value']))
     self.assertFalse(validator.are_attributes_valid(42))
+
+  def test_are_event_tags_valid__returns_true(self):
+    """ Test that valid attributes returns True. """
+
+    self.assertTrue(validator.are_event_tags_valid({'key': 'value', 'revenue': 0}))
+
+  def test_are_event_tags_valid__returns_false(self):
+    """ Test that invalid attributes returns False. """
+
+    self.assertFalse(validator.are_event_tags_valid('key:value'))
+    self.assertFalse(validator.are_event_tags_valid(['key', 'value']))
+    self.assertFalse(validator.are_event_tags_valid(42))
 
 
 class DatafileV2ValidationTests(base.BaseTestV2):

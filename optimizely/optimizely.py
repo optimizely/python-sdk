@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -205,7 +205,7 @@ class Optimizely(object):
         self.logger.log(enums.LogLevels.WARNING,
                         'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
 
-      if not validator.are_attributes_valid(event_tags):
+      if not validator.are_event_tags_valid(event_tags):
         self.logger.log(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
         self.error_handler.handle_error(exceptions.InvalidEventTagException(enums.Errors.INVALID_EVENT_TAG_FORMAT))
         return
