@@ -409,9 +409,9 @@ class EventBuilderV2(BaseEventBuilder):
     Args:
       event_key: Key representing the event which needs to be recorded.
       user_id: ID for user.
+      attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
       valid_experiments: List of tuples representing valid experiments for the event.
-      attributes: Dict representing user attributes and values.
 
     Returns:
       Event object encapsulating the conversion event.

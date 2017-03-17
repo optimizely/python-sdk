@@ -184,7 +184,6 @@ class Optimizely(object):
       event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
       attributes: Dict representing visitor attributes and values which need to be recorded.
-      event_value: Value associated with the event. Can be used to represent revenue in cents.
       event_tags: Dict representing metadata associated with the event.
     """
 

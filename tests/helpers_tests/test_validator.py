@@ -90,12 +90,12 @@ class ValidatorTest(base.BaseTestV1):
     self.assertFalse(validator.are_attributes_valid(42))
 
   def test_are_event_tags_valid__returns_true(self):
-    """ Test that valid attributes returns True. """
+    """ Test that valid event tags returns True. """
 
     self.assertTrue(validator.are_event_tags_valid({'key': 'value', 'revenue': 0}))
 
   def test_are_event_tags_valid__returns_false(self):
-    """ Test that invalid attributes returns False. """
+    """ Test that invalid event tags returns False. """
 
     self.assertFalse(validator.are_event_tags_valid('key:value'))
     self.assertFalse(validator.are_event_tags_valid(['key', 'value']))
