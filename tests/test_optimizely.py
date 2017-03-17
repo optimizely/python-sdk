@@ -541,7 +541,6 @@ class OptimizelyV2Test(base.BaseTestV2):
       'projectId': '111001',
       'layerId': '111182',
       'revision': '42',
-      'sessionId': None,
       'decision': {
         'variationId': '111129',
         'isLayerHoldback': False,
@@ -578,7 +577,6 @@ class OptimizelyV2Test(base.BaseTestV2):
       'projectId': '111001',
       'layerId': '111182',
       'revision': '42',
-      'sessionId': None,
       'decision': {
         'variationId': '111129',
         'isLayerHoldback': False,
@@ -690,7 +688,6 @@ class OptimizelyV2Test(base.BaseTestV2):
 
     expected_params = {
       'visitorId': 'test_user',
-      'sessionId': None,
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk',
       'userFeatures': [{
@@ -763,7 +760,6 @@ class OptimizelyV2Test(base.BaseTestV2):
 
     expected_params = {
       'visitorId': 'test_user',
-      'sessionId': None,
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk',
       'userFeatures': [{

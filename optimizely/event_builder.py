@@ -59,10 +59,6 @@ class BaseEventBuilder(object):
 
     self.params[self.EventParams.END_USER_ID] = user_id
 
-  def _add_session_id(self, session_id):
-    """ Add session ID to the event. """
-    pass
-
   @abstractmethod
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
@@ -86,19 +82,17 @@ class BaseEventBuilder(object):
     """ Add datafile revision information to the event. """
     pass
 
-  def _add_common_params(self, user_id, attributes, session_id):
+  def _add_common_params(self, user_id, attributes):
     """ Add params which are used same in both conversion and impression events.
 
     Args:
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
-      session_id: ID to identify the user's current session.
     """
 
     self._add_project_id()
     self._add_account_id()
     self._add_user_id(user_id)
-    self._add_session_id(session_id)
     self._add_attributes(attributes)
     self._add_source()
     self._add_revision()
@@ -217,7 +211,7 @@ class EventBuilderV1(BaseEventBuilder):
     self.params[self.EventParams.GOAL_ID] = event_ids
     self.params[self.EventParams.GOAL_NAME] = event_key
 
-  def create_impression_event(self, experiment, variation_id, user_id, attributes, session_id):
+  def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
 
     Args:
@@ -225,14 +219,13 @@ class EventBuilderV1(BaseEventBuilder):
       variation_id: ID for variation which would be presented to user.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
-      session_id: ID to identify the user's current session.
 
     Returns:
       Event object encapsulating the impression event.
     """
 
     self.params = {}
-    self._add_common_params(user_id, attributes, session_id)
+    self._add_common_params(user_id, attributes)
     self._add_impression_goal(experiment)
     self._add_experiment(experiment, variation_id)
     return Event(self.OFFLINE_API_PATH.format(project_id=self.params[self.EventParams.PROJECT_ID]),
@@ -247,7 +240,6 @@ class EventBuilderV1(BaseEventBuilder):
       attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
       valid_experiments: List of tuples representing valid experiments for the event.
-      session_id: ID to identify the user's current session.
 
     Returns:
       Event object encapsulating the conversion event.
@@ -256,7 +248,7 @@ class EventBuilderV1(BaseEventBuilder):
     event_value = event_tag_utils.get_revenue_value(event_tags)
 
     self.params = {}
-    self._add_common_params(user_id, attributes, session_id)
+    self._add_common_params(user_id, attributes)
     self._add_conversion_goal(event_key, event_value)
     self._add_experiment_variation_params(user_id, valid_experiments)
     return Event(self.OFFLINE_API_PATH.format(project_id=self.params[self.EventParams.PROJECT_ID]),
@@ -279,7 +271,6 @@ class EventBuilderV2(BaseEventBuilder):
     EXPERIMENT_ID = 'experimentId'
     VARIATION_ID = 'variationId'
     END_USER_ID = 'visitorId'
-    SESSION_ID = 'sessionId'
     EVENT_ID = 'eventEntityId'
     EVENT_NAME = 'eventName'
     EVENT_METRICS = 'eventMetrics'
@@ -334,11 +325,6 @@ class EventBuilderV2(BaseEventBuilder):
     """ Add time information to the event. """
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
-
-  def _add_session_id(self, session_id):
-    """ Add session ID to the event. """
-
-    self.params[self.EventParams.SESSION_ID] = session_id
 
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
@@ -409,7 +395,7 @@ class EventBuilderV2(BaseEventBuilder):
     self.params[self.EventParams.EVENT_ID] = self.config.get_event(event_key).id
     self.params[self.EventParams.EVENT_NAME] = event_key
 
-  def create_impression_event(self, experiment, variation_id, user_id, attributes, session_id):
+  def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
 
     Args:
@@ -417,14 +403,13 @@ class EventBuilderV2(BaseEventBuilder):
       variation_id: ID for variation which would be presented to user.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
-      session_id: ID to identify the user's current session.
 
     Returns:
       Event object encapsulating the impression event.
     """
 
     self.params = {}
-    self._add_common_params(user_id, attributes, session_id)
+    self._add_common_params(user_id, attributes)
     self._add_required_params_for_impression(experiment, variation_id)
     return Event(self.IMPRESSION_ENDPOINT,
                  self.params,
