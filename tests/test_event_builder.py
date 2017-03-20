@@ -395,6 +395,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     """ Test that create_conversion_event creates Event object
     with right params when event value is provided. """
 
+    self.maxDiff = None
     expected_params = {
       'accountId': '12001',
       'projectId': '111001',
