@@ -161,6 +161,9 @@ class BaseTestV2(unittest.TestCase):
           'entityId': '111128',
           'endOfRange': 4000
         }, {
+          'entityId': '',
+          'endOfRange': 5000
+        }, {
           'entityId': '111129',
           'endOfRange': 9000
         }],

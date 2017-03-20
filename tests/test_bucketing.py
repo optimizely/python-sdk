@@ -26,10 +26,10 @@ from optimizely.lib import pymmh3
 from . import base
 
 
-class BucketerTest(base.BaseTestV1):
+class BucketerTest(base.BaseTestV2):
 
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTestV2.setUp(self)
     self.bucketer = bucketer.Bucketer(self.project_config)
 
   def test_bucket(self):
@@ -44,9 +44,17 @@ class BucketerTest(base.BaseTestV1):
                        ))
     mock_generate_bucket_value.assert_called_once_with('test_user111127')
 
-    # Variation 2
+    # Empty entity ID
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     return_value=4242) as mock_generate_bucket_value:
+      self.assertIsNone(self.bucketer.bucket(
+        self.project_config.get_experiment_from_key('test_experiment'), 'test_user'
+      ))
+    mock_generate_bucket_value.assert_called_once_with('test_user111127')
+
+    # Variation 2
+    with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
+                    return_value=5042) as mock_generate_bucket_value:
       self.assertEqual(entities.Variation('111129', 'variation'),
                        self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
                                             'test_user'))

@@ -352,7 +352,8 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientEngine': 'python-sdk',
       'clientVersion': version.__version__
     }
-    with mock.patch('time.time', return_value=42.123):
+    with mock.patch('time.time', return_value=42.123), \
+      mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
         [self.project_config.get_experiment_from_key('test_experiment')]
@@ -439,7 +440,8 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientEngine': 'python-sdk',
       'clientVersion': version.__version__
     }
-    with mock.patch('time.time', return_value=42.123):
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
         [self.project_config.get_experiment_from_key('test_experiment')]
@@ -496,7 +498,8 @@ class EventBuilderV2Test(base.BaseTestV2):
       'clientEngine': 'python-sdk',
       'clientVersion': version.__version__
     }
-    with mock.patch('time.time', return_value=42.123):
+    with mock.patch('time.time', return_value=42.123), \
+      mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'non-revenue': 'abc'},
         [self.project_config.get_experiment_from_key('test_experiment')]
