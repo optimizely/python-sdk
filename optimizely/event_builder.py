@@ -78,6 +78,10 @@ class BaseEventBuilder(object):
     """ Add time information to the event. """
     pass
 
+  def _add_revision(self):
+    """ Add datafile revision information to the event. """
+    pass
+
   def _add_common_params(self, user_id, attributes):
     """ Add params which are used same in both conversion and impression events.
 
@@ -91,6 +95,7 @@ class BaseEventBuilder(object):
     self._add_user_id(user_id)
     self._add_attributes(attributes)
     self._add_source()
+    self._add_revision()
     self._add_time()
 
 
@@ -273,6 +278,7 @@ class EventBuilderV2(BaseEventBuilder):
     USER_FEATURES = 'userFeatures'
     DECISION = 'decision'
     LAYER_STATES = 'layerStates'
+    REVISION = 'revision'
     TIME = 'timestamp'
     SOURCE_SDK_TYPE = 'clientEngine'
     SOURCE_SDK_VERSION = 'clientVersion'
@@ -310,6 +316,10 @@ class EventBuilderV2(BaseEventBuilder):
 
     self.params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
     self.params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
+
+  def _add_revision(self):
+    """ Add datafile revision information to the event. """
+    self.params[self.EventParams.REVISION] = self.config.get_revision()
 
   def _add_time(self):
     """ Add time information to the event. """
@@ -373,6 +383,7 @@ class EventBuilderV2(BaseEventBuilder):
       if variation:
         self.params[self.EventParams.LAYER_STATES].append({
           self.EventParams.LAYER_ID: experiment.layerId,
+          self.EventParams.REVISION: self.config.get_revision(),
           self.EventParams.ACTION_TRIGGERED: True,
           self.EventParams.DECISION: {
             self.EventParams.EXPERIMENT_ID: experiment.id,

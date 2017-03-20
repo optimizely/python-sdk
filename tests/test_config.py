@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -160,6 +160,11 @@ class ConfigTest(base.BaseTestV1):
     """ Test that JSON version is retrieved correctly when using get_version. """
 
     self.assertEqual('1', self.project_config.get_version())
+
+  def test_get_revision(self):
+    """ Test that revision is retrieved correctly when using get_revision. """
+
+    self.assertEqual('42', self.project_config.get_revision())
 
   def test_get_account_id(self):
     """ Test that account ID is retrieved correctly when using get_account_id. """

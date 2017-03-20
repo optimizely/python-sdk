@@ -75,8 +75,7 @@ class EventBuilderV1Test(base.BaseTestV1):
     }
     with mock.patch('time.time', return_value=42):
       event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', None
+        self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
@@ -262,6 +261,7 @@ class EventBuilderV2Test(base.BaseTestV2):
         'variationId': '111129',
         'isLayerHoldback': False
       },
+      'revision': '42',
       'timestamp': 42123,
       'isGlobalHoldback': False,
       'userFeatures': [],
@@ -270,8 +270,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     }
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', None
+        self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
@@ -288,6 +287,7 @@ class EventBuilderV2Test(base.BaseTestV2):
       'projectId': '111001',
       'layerId': '111182',
       'visitorId': 'test_user',
+      'revision': '42',
       'decision': {
         'experimentId': '111127',
         'variationId': '111129',
@@ -328,8 +328,10 @@ class EventBuilderV2Test(base.BaseTestV2):
       'eventEntityId': '111095',
       'eventMetrics': [],
       'eventFeatures': [],
+      'revision': '42',
       'layerStates': [{
           'layerId': '111182',
+          'revision': '42',
           'decision': {
             'experimentId': '111127',
             'variationId': '111129',
@@ -368,6 +370,7 @@ class EventBuilderV2Test(base.BaseTestV2):
       'accountId': '12001',
       'projectId': '111001',
       'visitorId': 'test_user',
+      'revision': '42',
       'eventName': 'test_event',
       'eventEntityId': '111095',
       'eventMetrics': [],
@@ -401,22 +404,20 @@ class EventBuilderV2Test(base.BaseTestV2):
         'name': 'revenue',
         'value': 4200
       }],
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
-        },
-        {
+        }, {
           'id': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
-        }
-      ],
+      }],
       'layerStates': [{
           'layerId': '111182',
+          'revision': '42',
           'decision': {
             'experimentId': '111127',
             'variationId': '111129',
@@ -426,6 +427,7 @@ class EventBuilderV2Test(base.BaseTestV2):
         }
       ],
       'timestamp': 42123,
+      'revision': '42',
       'isGlobalHoldback': False,
       'userFeatures': [{
         'id': '111094',
@@ -458,23 +460,22 @@ class EventBuilderV2Test(base.BaseTestV2):
       'visitorId': 'test_user',
       'eventName': 'test_event',
       'eventEntityId': '111095',
+      'revision': '42',
       'eventMetrics': [],
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
-        },
-        {
+        }, {
           'id': 'revenue',
           'type': 'custom',
           'value': '4200',
           'shouldIndex': False,
-        }
-      ],
+      }],
       'layerStates': [{
           'layerId': '111182',
+          'revision': '42',
           'decision': {
             'experimentId': '111127',
             'variationId': '111129',

@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -124,6 +124,15 @@ class ProjectConfig(object):
     """
 
     return self.version
+
+  def get_revision(self):
+    """ Get revision of the datafile.
+
+    Returns:
+      Revision of the datafile.
+    """
+
+    return self.revision
 
   def get_account_id(self):
     """ Get account ID from the config.
