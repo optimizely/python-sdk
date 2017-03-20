@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,6 +18,11 @@ class InvalidAttributeException(Exception):
 
 class InvalidAudienceException(Exception):
   """ Raised when provided audience is invalid. """
+  pass
+
+
+class InvalidEventTagException(Exception):
+  """ Raised when provided event tag is invalid. """
   pass
 
 
