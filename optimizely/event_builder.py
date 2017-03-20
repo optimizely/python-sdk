@@ -232,6 +232,7 @@ class EventBuilderV1(BaseEventBuilder):
     Args:
       event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
+      attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
       valid_experiments: List of tuples representing valid experiments for the event.
 
@@ -353,7 +354,8 @@ class EventBuilderV2(BaseEventBuilder):
           'value': event_value
         }]
 
-      for event_tag_id, event_tag_value in event_tags.iteritems():
+      for event_tag_id in event_tags.keys():
+        event_tag_value = event_tags.get(event_tag_id)
         if event_tag_value is None:
           continue
 
