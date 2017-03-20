@@ -395,7 +395,6 @@ class EventBuilderV2Test(base.BaseTestV2):
     """ Test that create_conversion_event creates Event object
     with right params when event value is provided. """
 
-    self.maxDiff = None
     expected_params = {
       'accountId': '12001',
       'projectId': '111001',
@@ -447,6 +446,9 @@ class EventBuilderV2Test(base.BaseTestV2):
         'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
+
+    # Sort event features based on ID
+    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('id'))
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,
@@ -505,6 +507,8 @@ class EventBuilderV2Test(base.BaseTestV2):
         'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'non-revenue': 'abc'},
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
+    # Sort event features based on ID
+    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('id'))
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,
