@@ -404,20 +404,17 @@ class EventBuilderV2Test(base.BaseTestV2):
         'name': 'revenue',
         'value': 4200
       }],
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
-        },
-        {
+        }, {
           'id': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
-        }
-      ],
+      }],
       'layerStates': [{
           'layerId': '111182',
           'revision': '42',
@@ -463,23 +460,22 @@ class EventBuilderV2Test(base.BaseTestV2):
       'visitorId': 'test_user',
       'eventName': 'test_event',
       'eventEntityId': '111095',
+      'revision': '42',
       'eventMetrics': [],
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
-        },
-        {
+        }, {
           'id': 'revenue',
           'type': 'custom',
           'value': '4200',
           'shouldIndex': False,
-        }
-      ],
+      }],
       'layerStates': [{
           'layerId': '111182',
+          'revision': '42',
           'decision': {
             'experimentId': '111127',
             'variationId': '111129',

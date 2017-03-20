@@ -762,6 +762,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       'visitorId': 'test_user',
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk',
+      'revision': '42',
       'userFeatures': [{
         'shouldIndex': True,
         'type': 'custom',
@@ -773,26 +774,24 @@ class OptimizelyV2Test(base.BaseTestV2):
       'isGlobalHoldback': False,
       'eventEntityId': '111095',
       'eventName': 'test_event',
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
-        },
-        {
+        }, {
           'id': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
-        },
-      ],
+      }],
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200
       }],
       'timestamp': 42000,
       'layerStates': [{
+        'revision': '42',
         'decision': {
           'variationId': '111128',
           'isLayerHoldback': False,
@@ -834,14 +833,12 @@ class OptimizelyV2Test(base.BaseTestV2):
       'isGlobalHoldback': False,
       'eventEntityId': '111095',
       'eventName': 'test_event',
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
-        }
-      ],
+      }],
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200
@@ -881,6 +878,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       'visitorId': 'test_user',
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk',
+      'revision': '42',
       'userFeatures': [{
         'shouldIndex': True,
         'type': 'custom',
@@ -892,17 +890,16 @@ class OptimizelyV2Test(base.BaseTestV2):
       'isGlobalHoldback': False,
       'eventEntityId': '111095',
       'eventName': 'test_event',
-      'eventFeatures': [
-        {
+      'eventFeatures': [{
           'id': 'revenue',
           'type': 'custom',
           'value': '4200',
           'shouldIndex': False,
-        }
-      ],
+      }],
       'eventMetrics': [],
       'timestamp': 42000,
       'layerStates': [{
+        'revision': '42',
         'decision': {
           'variationId': '111128',
           'isLayerHoldback': False,
