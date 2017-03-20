@@ -47,6 +47,4 @@ class EventTagUtilsTest(unittest.TestCase):
     """ Test that correct revenue value is returned. """
     self.assertEqual(0, event_tag_utils.get_revenue_value({'revenue': 0}))
     self.assertEqual(65536, event_tag_utils.get_revenue_value({'revenue': 65536}))
-    self.assertEqual(65536, event_tag_utils.get_revenue_value({'revenue': 65536L}))
     self.assertEqual(9223372036854775807, event_tag_utils.get_revenue_value({'revenue': 9223372036854775807}))
-    self.assertEqual(9223372036854775807, event_tag_utils.get_revenue_value({'revenue': 9223372036854775807L}))
