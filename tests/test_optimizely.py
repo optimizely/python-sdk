@@ -804,6 +804,11 @@ class OptimizelyV2Test(base.BaseTestV2):
     }
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
+
+    # Sort event features based on ID
+    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('id')
+    )
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
