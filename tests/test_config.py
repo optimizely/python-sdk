@@ -24,7 +24,7 @@ from optimizely.helpers import enums
 from . import base
 
 
-class ConfigTest(base.BaseTestV1):
+class ConfigTest(base.BaseTest):
 
   def test_init(self):
     """ Test that on creating object, properties are initiated correctly. """
@@ -317,7 +317,7 @@ class ConfigTest(base.BaseTestV1):
     self.assertIsNone(self.project_config.get_group('42'))
 
 
-class ConfigTestV2(base.BaseTestV2):
+class ConfigTest(base.BaseTest):
 
   def test_get_experiment_from_key__valid_key(self):
     """ Test that experiment is retrieved correctly for valid experiment key. """
@@ -370,9 +370,9 @@ class ConfigTestV2(base.BaseTestV2):
                      self.project_config.get_attribute('test_attribute'))
 
 
-class ConfigLoggingTest(base.BaseTestV1):
+class ConfigLoggingTest(base.BaseTest):
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
     self.project_config = self.optimizely.config
@@ -450,10 +450,10 @@ class ConfigLoggingTest(base.BaseTestV1):
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Group ID "42" is not in datafile.')
 
 
-class ConfigExceptionTest(base.BaseTestV1):
+class ConfigExceptionTest(base.BaseTest):
 
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             error_handler=error_handler.RaiseExceptionErrorHandler)
     self.project_config = self.optimizely.config
