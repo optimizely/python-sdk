@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,10 +18,10 @@ from optimizely.helpers import condition as condition_helper
 from tests import base
 
 
-class ConditionEvaluatorTests(base.BaseTestV1):
+class ConditionEvaluatorTests(base.BaseTest):
 
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTest.setUp(self)
     self.condition_structure, self.condition_list = condition_helper.loads(
       self.config_dict['audiences'][0]['conditions']
     )
@@ -111,7 +111,7 @@ class ConditionEvaluatorTests(base.BaseTestV1):
     self.assertFalse(self.condition_evaluator.evaluate(condition_structure))
 
 
-class ConditionDecoderTests(base.BaseTestV1):
+class ConditionDecoderTests(base.BaseTest):
 
   def test_loads(self):
     """ Test that loads correctly sets condition structure and list. """
