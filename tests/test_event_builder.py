@@ -45,6 +45,7 @@ class EventBuilderV1Test(base.BaseTestV1):
   def setUp(self):
     base.BaseTestV1.setUp(self)
     self.event_builder = self.optimizely.event_builder
+    self.maxDiff = None
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
@@ -226,6 +227,7 @@ class EventBuilderV2Test(base.BaseTestV2):
   def setUp(self):
     base.BaseTestV2.setUp(self)
     self.event_builder = self.optimizely.event_builder
+    self.maxDiff = None
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
@@ -406,12 +408,12 @@ class EventBuilderV2Test(base.BaseTestV2):
         'value': 4200
       }],
       'eventFeatures': [{
-          'id': 'non-revenue',
+          'name': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
         }, {
-          'id': 'revenue',
+          'name': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
@@ -448,7 +450,7 @@ class EventBuilderV2Test(base.BaseTestV2):
       )
 
     # Sort event features based on ID
-    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('id'))
+    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,
@@ -468,12 +470,12 @@ class EventBuilderV2Test(base.BaseTestV2):
       'revision': '42',
       'eventMetrics': [],
       'eventFeatures': [{
-          'id': 'non-revenue',
+          'name': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
         }, {
-          'id': 'revenue',
+          'name': 'revenue',
           'type': 'custom',
           'value': '4200',
           'shouldIndex': False,
@@ -508,7 +510,7 @@ class EventBuilderV2Test(base.BaseTestV2):
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
     # Sort event features based on ID
-    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('id'))
+    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
                                 expected_params,
