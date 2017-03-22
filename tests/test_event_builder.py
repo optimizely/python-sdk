@@ -45,7 +45,6 @@ class EventBuilderV1Test(base.BaseTestV1):
   def setUp(self):
     base.BaseTestV1.setUp(self)
     self.event_builder = self.optimizely.event_builder
-    self.maxDiff = None
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
@@ -227,7 +226,6 @@ class EventBuilderV2Test(base.BaseTestV2):
   def setUp(self):
     base.BaseTestV2.setUp(self)
     self.event_builder = self.optimizely.event_builder
-    self.maxDiff = None
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
