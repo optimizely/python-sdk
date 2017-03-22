@@ -38,7 +38,7 @@ def track():
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
   event_value = payload.get('event_value')
-  result = opt_obj.track(event_key, user_id, attributes=attributes, event_value=event_value)
+  result = opt_obj.track(event_key, user_id, attributes, event_value)
   return json.dumps({'result': result}), 200, {'content-type': 'application/json'}
 
 if __name__ == '__main__':
