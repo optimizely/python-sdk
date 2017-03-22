@@ -1,5 +1,5 @@
 # 1.1.0
-- Updated to send datafile revision information in log events.
+- Included datafile revision information in log events.
 - Added event tags to track API to allow users to pass in event metadata.
 - Deprecated the `event_value` parameter from the track method. Should use `event_tags` to pass in event value instead.
 - Updated event logging endpoint to logx.optimizely.com.
