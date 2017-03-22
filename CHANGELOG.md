@@ -1,3 +1,9 @@
+# 1.1.0
+- Updated to send datafile revision information in log events.
+- Added event tags to track API to allow users to pass in event metadata.
+- Deprecated the `event_value` parameter from the track method. Should use `event_tags` to pass in event value instead.
+- Updated event logging endpoint to logx.optimizely.com.
+
 ## 1.0.0
 - Introduced support for Full Stack projects in Optimizely X. No breaking changes from previous version.
 - Introduced more graceful exception handling in instantiation and core methods.
