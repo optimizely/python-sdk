@@ -370,7 +370,7 @@ class EventBuilderV2(BaseEventBuilder):
           continue
 
         event_feature = {
-          'id': event_tag_id,
+          'name': event_tag_id,
           'type': 'custom',
           'value': event_tag_value,
           'shouldIndex': False,

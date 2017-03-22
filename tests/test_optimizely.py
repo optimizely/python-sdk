@@ -775,12 +775,12 @@ class OptimizelyV2Test(base.BaseTestV2):
       'eventEntityId': '111095',
       'eventName': 'test_event',
       'eventFeatures': [{
-          'id': 'non-revenue',
+          'name': 'non-revenue',
           'type': 'custom',
           'value': 'abc',
           'shouldIndex': False,
         }, {
-          'id': 'revenue',
+          'name': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
@@ -807,7 +807,7 @@ class OptimizelyV2Test(base.BaseTestV2):
 
     # Sort event features based on ID
     mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('id')
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
     )
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -839,7 +839,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       'eventEntityId': '111095',
       'eventName': 'test_event',
       'eventFeatures': [{
-          'id': 'revenue',
+          'name': 'revenue',
           'type': 'custom',
           'value': 4200,
           'shouldIndex': False,
@@ -896,7 +896,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       'eventEntityId': '111095',
       'eventName': 'test_event',
       'eventFeatures': [{
-          'id': 'revenue',
+          'name': 'revenue',
           'type': 'custom',
           'value': '4200',
           'shouldIndex': False,
