@@ -26,10 +26,10 @@ from optimizely.lib import pymmh3
 from . import base
 
 
-class BucketerTest(base.BaseTestV2):
+class BucketerTest(base.BaseTest):
 
   def setUp(self):
-    base.BaseTestV2.setUp(self)
+    base.BaseTest.setUp(self)
     self.bucketer = bucketer.Bucketer(self.project_config)
 
   def test_bucket(self):
@@ -163,9 +163,9 @@ class BucketerTest(base.BaseTestV2):
       self.assertEqual(mmh3.hash(random_value), pymmh3.hash(random_value))
 
 
-class BucketerWithLoggingTest(base.BaseTestV1):
+class BucketerWithLoggingTest(base.BaseTest):
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
     self.bucketer = bucketer.Bucketer(self.optimizely.config)
@@ -188,14 +188,29 @@ class BucketerWithLoggingTest(base.BaseTestV1):
       mock_logging.call_args_list[1]
     )
 
+    # Empty entity ID
+    with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4242), \
+         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertIsNone(self.bucketer.bucket(
+        self.project_config.get_experiment_from_key('test_experiment'), 'test_user'
+      ))
+
+    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 4242 to user "test_user".'),
+                     mock_logging.call_args_list[0])
+    self.assertEqual(
+      mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
+      mock_logging.call_args_list[1]
+    )
+
     # Variation 2
-    with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4242),\
+    with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.assertEqual(entities.Variation('111129', 'variation'),
                        self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
                                             'test_user'))
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 4242 to user "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 5042 to user "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(
       mock.call(enums.LogLevels.INFO, 'User "test_user" is in variation "variation" of experiment test_experiment.'),

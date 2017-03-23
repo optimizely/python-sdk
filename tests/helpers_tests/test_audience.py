@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,7 +17,7 @@ from tests import base
 from optimizely.helpers import audience
 
 
-class AudienceTest(base.BaseTestV1):
+class AudienceTest(base.BaseTest):
 
   def test_is_match__audience_condition_matches(self):
     """ Test that is_match returns True when audience conditions are met. """
