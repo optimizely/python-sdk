@@ -220,7 +220,6 @@ class ProjectConfig(object):
     """
 
     audience = self.audience_id_map.get(audience_id)
-
     if audience:
       return audience
 
