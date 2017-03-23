@@ -1,3 +1,16 @@
+# Copyright 2016-2017, Optimizely
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import mmh3
 import mock
@@ -13,10 +26,10 @@ from optimizely.lib import pymmh3
 from . import base
 
 
-class BucketerTest(base.BaseTestV1):
+class BucketerTest(base.BaseTestV2):
 
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTestV2.setUp(self)
     self.bucketer = bucketer.Bucketer(self.project_config)
 
   def test_bucket(self):
@@ -31,9 +44,17 @@ class BucketerTest(base.BaseTestV1):
                        ))
     mock_generate_bucket_value.assert_called_once_with('test_user111127')
 
-    # Variation 2
+    # Empty entity ID
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     return_value=4242) as mock_generate_bucket_value:
+      self.assertIsNone(self.bucketer.bucket(
+        self.project_config.get_experiment_from_key('test_experiment'), 'test_user'
+      ))
+    mock_generate_bucket_value.assert_called_once_with('test_user111127')
+
+    # Variation 2
+    with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
+                    return_value=5042) as mock_generate_bucket_value:
       self.assertEqual(entities.Variation('111129', 'variation'),
                        self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
                                             'test_user'))

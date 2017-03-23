@@ -1,3 +1,16 @@
+# Copyright 2016-2017, Optimizely
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import mock
 
@@ -278,7 +291,64 @@ class OptimizelyV1Test(base.BaseTestV1):
                     )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'revenue': 4200})
+
+    expected_params = {
+      'd': '12001',
+      'a': '111001',
+      'n': 'test_event',
+      'x111127': '111128',
+      'g': '111095,111096',
+      'u': 'test_user',
+      's11133': 'test_value',
+      'v': 4200,
+      'time': 42,
+      'src': 'python-sdk-{version}'.format(version=version.__version__)
+    }
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
+
+  def test_track__with_invalid_event_value(self):
+    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'revenue': '4200'})
+
+    expected_params = {
+      'd': '12001',
+      'a': '111001',
+      'n': 'test_event',
+      'x111127': '111128',
+      'g': '111095',
+      'u': 'test_user',
+      's11133': 'test_value',
+      'time': 42,
+      'src': 'python-sdk-{version}'.format(version=version.__version__)
+    }
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://111001.log.optimizely.com/event',
+                                expected_params, 'GET', None)
+
+  def test_track__with_deprecated_event_value(self):
+    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
 
     expected_params = {
       'd': '12001',
@@ -470,6 +540,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       'accountId': '12001',
       'projectId': '111001',
       'layerId': '111182',
+      'revision': '42',
       'decision': {
         'variationId': '111129',
         'isLayerHoldback': False,
@@ -485,7 +556,7 @@ class OptimizelyV2Test(base.BaseTestV2):
                                                 self.project_config.get_experiment_from_key('test_experiment'), None)
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__audience_match(self):
@@ -505,6 +576,7 @@ class OptimizelyV2Test(base.BaseTestV2):
       'accountId': '12001',
       'projectId': '111001',
       'layerId': '111182',
+      'revision': '42',
       'decision': {
         'variationId': '111129',
         'isLayerHoldback': False,
@@ -527,7 +599,7 @@ class OptimizelyV2Test(base.BaseTestV2):
                                                 {'test_attribute': 'test_value'})
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__no_audience_match(self):
@@ -632,7 +704,9 @@ class OptimizelyV2Test(base.BaseTestV2):
       'eventFeatures': [],
       'eventMetrics': [],
       'timestamp': 42000,
+      'revision': '42',
       'layerStates': [{
+        'revision': '42',
         'decision': {
           'variationId': '111128',
           'isLayerHoldback': False,
@@ -645,7 +719,7 @@ class OptimizelyV2Test(base.BaseTestV2):
     }
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_attributes__no_audience_match(self):
@@ -681,7 +755,73 @@ class OptimizelyV2Test(base.BaseTestV2):
                     )) as mock_bucket,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_value=4200)
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'revenue': 4200, 'non-revenue': 'abc'})
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk',
+      'revision': '42',
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'projectId': '111001',
+      'isGlobalHoldback': False,
+      'eventEntityId': '111095',
+      'eventName': 'test_event',
+      'eventFeatures': [{
+          'name': 'non-revenue',
+          'type': 'custom',
+          'value': 'abc',
+          'shouldIndex': False,
+        }, {
+          'name': 'revenue',
+          'type': 'custom',
+          'value': 4200,
+          'shouldIndex': False,
+      }],
+      'eventMetrics': [{
+        'name': 'revenue',
+        'value': 4200
+      }],
+      'timestamp': 42000,
+      'layerStates': [{
+        'revision': '42',
+        'decision': {
+          'variationId': '111128',
+          'isLayerHoldback': False,
+          'experimentId': '111127'
+        },
+        'actionTriggered': True,
+        'layerId': '111182'
+      }],
+      'accountId': '12001'
+    }
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+
+    # Sort event features based on ID
+    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
+    )
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_track__with_deprecated_event_value(self):
+    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
 
     expected_params = {
       'visitorId': 'test_user',
@@ -698,13 +838,20 @@ class OptimizelyV2Test(base.BaseTestV2):
       'isGlobalHoldback': False,
       'eventEntityId': '111095',
       'eventName': 'test_event',
-      'eventFeatures': [],
+      'eventFeatures': [{
+          'name': 'revenue',
+          'type': 'custom',
+          'value': 4200,
+          'shouldIndex': False,
+      }],
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200
       }],
       'timestamp': 42000,
+      'revision': '42',
       'layerStates': [{
+        'revision': '42',
         'decision': {
           'variationId': '111128',
           'isLayerHoldback': False,
@@ -717,7 +864,61 @@ class OptimizelyV2Test(base.BaseTestV2):
     }
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://p13nlog.dz.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_track__with_invalid_event_value(self):
+    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+
+    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_bucket,\
+        mock.patch('time.time', return_value=42),\
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'revenue': '4200'})
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk',
+      'revision': '42',
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'projectId': '111001',
+      'isGlobalHoldback': False,
+      'eventEntityId': '111095',
+      'eventName': 'test_event',
+      'eventFeatures': [{
+          'name': 'revenue',
+          'type': 'custom',
+          'value': '4200',
+          'shouldIndex': False,
+      }],
+      'eventMetrics': [],
+      'timestamp': 42000,
+      'layerStates': [{
+        'revision': '42',
+        'decision': {
+          'variationId': '111128',
+          'isLayerHoldback': False,
+          'experimentId': '111127'
+        },
+        'actionTriggered': True,
+        'layerId': '111182'
+      }],
+      'accountId': '12001'
+    }
+
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__experiment_not_running(self):
@@ -900,6 +1101,23 @@ class OptimizelyWithLoggingTest(base.BaseTestV1):
       self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
+
+  def test_track__deprecated_event_tag(self):
+    """ Test that expected log messages are logged during track when attributes are in invalid format. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.track('test_event', 'test_user', event_tags=4200)
+
+    mock_logging.assert_any_call(enums.LogLevels.WARNING,
+                                 'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
+
+  def test_track__invalid_event_tag(self):
+    """ Test that expected log messages are logged during track when attributes are in invalid format. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.track('test_event', 'test_user', event_tags='4200')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
 
   def test_track__dispatch_raises_exception(self):
     """ Test that track logs dispatch failure gracefully. """

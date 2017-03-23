@@ -1,3 +1,16 @@
+# Copyright 2016-2017, Optimizely
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 
 from optimizely import error_handler
@@ -75,6 +88,18 @@ class ValidatorTest(base.BaseTestV1):
     self.assertFalse(validator.are_attributes_valid('key:value'))
     self.assertFalse(validator.are_attributes_valid(['key', 'value']))
     self.assertFalse(validator.are_attributes_valid(42))
+
+  def test_are_event_tags_valid__returns_true(self):
+    """ Test that valid event tags returns True. """
+
+    self.assertTrue(validator.are_event_tags_valid({'key': 'value', 'revenue': 0}))
+
+  def test_are_event_tags_valid__returns_false(self):
+    """ Test that invalid event tags returns False. """
+
+    self.assertFalse(validator.are_event_tags_valid('key:value'))
+    self.assertFalse(validator.are_event_tags_valid(['key', 'value']))
+    self.assertFalse(validator.are_event_tags_valid(42))
 
 
 class DatafileV2ValidationTests(base.BaseTestV2):

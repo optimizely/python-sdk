@@ -1,3 +1,17 @@
+# Copyright 2016-2017, Optimizely
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import numbers
 import sys
 
 from . import bucketer
@@ -163,14 +177,14 @@ class Optimizely(object):
 
     return variation.key
 
-  def track(self, event_key, user_id,  attributes=None, event_value=None):
+  def track(self, event_key, user_id,  attributes=None, event_tags=None):
     """ Send conversion event to Optimizely.
 
     Args:
       event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
       attributes: Dict representing visitor attributes and values which need to be recorded.
-      event_value: Value associated with the event. Can be used to represent revenue in cents.
+      event_tags: Dict representing metadata associated with the event.
     """
 
     if not self.is_valid:
@@ -181,6 +195,19 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
       self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
       return
+
+    if event_tags:
+      if isinstance(event_tags, numbers.Number):
+        event_tags = {
+          'revenue': event_tags
+        }
+        self.logger.log(enums.LogLevels.WARNING,
+                        'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
+
+      if not validator.are_event_tags_valid(event_tags):
+        self.logger.log(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
+        self.error_handler.handle_error(exceptions.InvalidEventTagException(enums.Errors.INVALID_EVENT_TAG_FORMAT))
+        return
 
     event = self.config.get_event(event_key)
     if not event:
@@ -198,7 +225,7 @@ class Optimizely(object):
 
     # Create and dispatch conversion event if there are valid experiments
     if valid_experiments:
-      conversion_event = self.event_builder.create_conversion_event(event_key, user_id, attributes, event_value,
+      conversion_event = self.event_builder.create_conversion_event(event_key, user_id, attributes, event_tags,
                                                                     valid_experiments)
       self.logger.log(enums.LogLevels.INFO, 'Tracking event "%s" for user "%s".' % (event_key, user_id))
       self.logger.log(enums.LogLevels.DEBUG,

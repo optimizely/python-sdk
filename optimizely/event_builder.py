@@ -1,3 +1,16 @@
+# Copyright 2016-2017, Optimizely
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import time
 from abc import abstractmethod
 from abc import abstractproperty
@@ -6,6 +19,7 @@ from . import exceptions
 from . import project_config
 from . import version
 from .helpers import enums
+from .helpers import event_tag_utils
 
 
 class Event(object):
@@ -64,6 +78,10 @@ class BaseEventBuilder(object):
     """ Add time information to the event. """
     pass
 
+  def _add_revision(self):
+    """ Add datafile revision information to the event. """
+    pass
+
   def _add_common_params(self, user_id, attributes):
     """ Add params which are used same in both conversion and impression events.
 
@@ -77,6 +95,7 @@ class BaseEventBuilder(object):
     self._add_user_id(user_id)
     self._add_attributes(attributes)
     self._add_source()
+    self._add_revision()
     self._add_time()
 
 
@@ -212,18 +231,21 @@ class EventBuilderV1(BaseEventBuilder):
     return Event(self.OFFLINE_API_PATH.format(project_id=self.params[self.EventParams.PROJECT_ID]),
                  self.params)
 
-  def create_conversion_event(self, event_key, user_id, attributes, event_value, valid_experiments):
+  def create_conversion_event(self, event_key, user_id, attributes, event_tags, valid_experiments):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
       event_key: Event key representing the event which needs to be recorded.
       user_id: ID for user.
-      event_value: Value associated with the event. Can be used to represent revenue in cents.
+      attributes: Dict representing user attributes and values.
+      event_tags: Dict representing metadata associated with the event.
       valid_experiments: List of tuples representing valid experiments for the event.
 
     Returns:
       Event object encapsulating the conversion event.
     """
+
+    event_value = event_tag_utils.get_revenue_value(event_tags)
 
     self.params = {}
     self._add_common_params(user_id, attributes)
@@ -237,11 +259,10 @@ class EventBuilderV2(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking 
   impressions and conversions using the new endpoints. """
 
-  IMPRESSION_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/decision'
-  CONVERSION_ENDPOINT = 'https://p13nlog.dz.optimizely.com/log/event'
+  IMPRESSION_ENDPOINT = 'https://logx.optimizely.com/log/decision'
+  CONVERSION_ENDPOINT = 'https://logx.optimizely.com/log/event'
   HTTP_VERB = 'POST'
   HTTP_HEADERS = {'Content-Type': 'application/json'}
-  EVENT_VALUE_METRIC = 'revenue'
 
   class EventParams(object):
     ACCOUNT_ID = 'accountId'
@@ -257,6 +278,7 @@ class EventBuilderV2(BaseEventBuilder):
     USER_FEATURES = 'userFeatures'
     DECISION = 'decision'
     LAYER_STATES = 'layerStates'
+    REVISION = 'revision'
     TIME = 'timestamp'
     SOURCE_SDK_TYPE = 'clientEngine'
     SOURCE_SDK_VERSION = 'clientVersion'
@@ -295,6 +317,10 @@ class EventBuilderV2(BaseEventBuilder):
     self.params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
     self.params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
 
+  def _add_revision(self):
+    """ Add datafile revision information to the event. """
+    self.params[self.EventParams.REVISION] = self.config.get_revision()
+
   def _add_time(self):
     """ Add time information to the event. """
 
@@ -316,13 +342,13 @@ class EventBuilderV2(BaseEventBuilder):
       self.EventParams.IS_LAYER_HOLDBACK: False
     }
 
-  def _add_required_params_for_conversion(self, event_key, user_id, event_value, valid_experiments):
+  def _add_required_params_for_conversion(self, event_key, user_id, event_tags, valid_experiments):
     """ Add parameters that are required for the conversion event to register.
 
     Args:
       event_key: Key representing the event which needs to be recorded.
       user_id: ID for user.
-      event_value: Value associated with the event. Can be used to represent revenue in cents.
+      event_tags: Dict representing metadata associated with the event.
       valid_experiments: List of tuples representing valid experiments for the event.
     """
 
@@ -330,11 +356,26 @@ class EventBuilderV2(BaseEventBuilder):
     self.params[self.EventParams.EVENT_FEATURES] = []
     self.params[self.EventParams.EVENT_METRICS] = []
 
-    if event_value:
-      self.params[self.EventParams.EVENT_METRICS] = [{
-        'name': self.EVENT_VALUE_METRIC,
-        'value': event_value
-      }]
+    if event_tags:
+      event_value = event_tag_utils.get_revenue_value(event_tags)
+      if event_value is not None:
+        self.params[self.EventParams.EVENT_METRICS] = [{
+          'name': event_tag_utils.EVENT_VALUE_METRIC,
+          'value': event_value
+        }]
+
+      for event_tag_id in event_tags.keys():
+        event_tag_value = event_tags.get(event_tag_id)
+        if event_tag_value is None:
+          continue
+
+        event_feature = {
+          'name': event_tag_id,
+          'type': 'custom',
+          'value': event_tag_value,
+          'shouldIndex': False,
+        }
+        self.params[self.EventParams.EVENT_FEATURES].append(event_feature)
 
     self.params[self.EventParams.LAYER_STATES] = []
     for experiment in valid_experiments:
@@ -342,6 +383,7 @@ class EventBuilderV2(BaseEventBuilder):
       if variation:
         self.params[self.EventParams.LAYER_STATES].append({
           self.EventParams.LAYER_ID: experiment.layerId,
+          self.EventParams.REVISION: self.config.get_revision(),
           self.EventParams.ACTION_TRIGGERED: True,
           self.EventParams.DECISION: {
             self.EventParams.EXPERIMENT_ID: experiment.id,
@@ -374,15 +416,15 @@ class EventBuilderV2(BaseEventBuilder):
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
 
-  def create_conversion_event(self, event_key, user_id, attributes, event_value, valid_experiments):
+  def create_conversion_event(self, event_key, user_id, attributes, event_tags, valid_experiments):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
       event_key: Key representing the event which needs to be recorded.
       user_id: ID for user.
-      event_value: Value associated with the event. Can be used to represent revenue in cents.
-      valid_experiments: List of tuples representing valid experiments for the event.
       attributes: Dict representing user attributes and values.
+      event_tags: Dict representing metadata associated with the event.
+      valid_experiments: List of tuples representing valid experiments for the event.
 
     Returns:
       Event object encapsulating the conversion event.
@@ -390,7 +432,7 @@ class EventBuilderV2(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_required_params_for_conversion(event_key, user_id, event_value, valid_experiments)
+    self._add_required_params_for_conversion(event_key, user_id, event_tags, valid_experiments)
     return Event(self.CONVERSION_ENDPOINT,
                  self.params,
                  http_verb=self.HTTP_VERB,
