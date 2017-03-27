@@ -59,8 +59,8 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '111129',
           'endOfRange': 9000
-        }]
-      ),
+        }],
+      '111182'),
       'group_exp_1': entities.Experiment(
         '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',
@@ -77,7 +77,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '28902',
           'endOfRange': 9000
-        }], groupId='19228', groupPolicy='random'
+        }], '111183', groupId='19228', groupPolicy='random'
       ),
       'group_exp_2': entities.Experiment(
         '32223', 'group_exp_2', 'Running', [], [{
@@ -95,7 +95,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '28906',
           'endOfRange': 10000
-        }], groupId='19228', groupPolicy='random'
+        }], '111184', groupId='19228', groupPolicy='random'
       ),
     }
     expected_experiment_id_map = {
@@ -155,6 +155,142 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_audience_id_map, self.project_config.audience_id_map)
     self.assertEqual(expected_variation_key_map, self.project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, self.project_config.variation_id_map)
+
+  def test_init__with_more_fields(self):
+    """ Test that no issues occur on creating object with datafile consisting of more fields. """
+
+    # Adding some additional fields like live variables and IP anonymization
+    config_dict = {
+      'revision': '42',
+      'version': '2',
+      'anonymizeIP': False,
+      'variables': [{
+        'id': '127',
+        'key': 'is_working',
+        'defaultValue': 'true',
+        'type': 'boolean',
+      }],
+      'events': [{
+        'key': 'test_event',
+        'experimentIds': ['111127'],
+        'id': '111095'
+      }, {
+        'key': 'Total Revenue',
+        'experimentIds': ['111127'],
+        'id': '111096'
+      }],
+      'experiments': [{
+        'key': 'test_experiment',
+        'status': 'Running',
+        'forcedVariations': {
+          'user_1': 'control',
+          'user_2': 'control'
+        },
+        'layerId': '111182',
+        'audienceIds': ['11154'],
+        'trafficAllocation': [{
+          'entityId': '111128',
+          'endOfRange': 4000
+        }, {
+          'entityId': '',
+          'endOfRange': 5000
+        }, {
+          'entityId': '111129',
+          'endOfRange': 9000
+        }],
+        'id': '111127',
+        'variations': [{
+          'key': 'control',
+          'id': '111128',
+          'variables': [{
+            'id': '127',
+            'value': 'false'
+          }]
+        }, {
+          'key': 'variation',
+          'id': '111129',
+          'variables': [{
+            'id': '127',
+            'value': 'true'
+          }]
+        }]
+      }],
+      'groups': [{
+        'id': '19228',
+        'policy': 'random',
+        'experiments': [{
+          'id': '32222',
+          'key': 'group_exp_1',
+          'status': 'Running',
+          'audienceIds': [],
+          'layerId': '111183',
+          'variations': [{
+            'key': 'group_exp_1_control',
+            'id': '28901'
+          }, {
+            'key': 'group_exp_1_variation',
+            'id': '28902'
+          }],
+          'forcedVariations': {
+            'user_1': 'group_exp_1_control',
+            'user_2': 'group_exp_1_control'
+          },
+          'trafficAllocation': [{
+            'entityId': '28901',
+            'endOfRange': 3000
+          }, {
+            'entityId': '28902',
+            'endOfRange': 9000
+          }]
+        }, {
+          'id': '32223',
+          'key': 'group_exp_2',
+          'status': 'Running',
+          'audienceIds': [],
+          'layerId': '111184',
+          'variations': [{
+            'key': 'group_exp_2_control',
+            'id': '28905'
+          }, {
+            'key': 'group_exp_2_variation',
+            'id': '28906'
+          }],
+          'forcedVariations': {
+            'user_1': 'group_exp_2_control',
+            'user_2': 'group_exp_2_control'
+          },
+          'trafficAllocation': [{
+            'entityId': '28905',
+            'endOfRange': 8000
+          }, {
+            'entityId': '28906',
+            'endOfRange': 10000
+          }]
+        }],
+        'trafficAllocation': [{
+          'entityId': '32222',
+          "endOfRange": 3000
+        }, {
+          'entityId': '32223',
+          'endOfRange': 7500
+        }]
+      }],
+      'accountId': '12001',
+      'attributes': [{
+        'key': 'test_attribute',
+        'id': '111094'
+      }],
+      'audiences': [{
+        'name': 'Test attribute users',
+        'conditions': '["and", ["or", ["or", '
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
+        'id': '11154'
+      }],
+      'projectId': '111001'
+    }
+
+    test_obj = optimizely.Optimizely(json.dumps(config_dict))
+    self.assertTrue(test_obj.is_valid)
 
   def test_get_version(self):
     """ Test that JSON version is retrieved correctly when using get_version. """
