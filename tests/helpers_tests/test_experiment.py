@@ -30,7 +30,7 @@ class ExperimentTest(base.BaseTest):
 
     with mock.patch('optimizely.project_config.ProjectConfig.get_experiment_from_key',
                     return_value=entities.Experiment(
-                      '42', 'test_experiment', 'Some Status', [], [], {},[])) as mock_get_experiment:
+                      '42', 'test_experiment', 'Some Status', [], [], {}, [], '43')) as mock_get_experiment:
       self.assertFalse(experiment.is_experiment_running(self.project_config.get_experiment_from_key('test_experiment')))
     mock_get_experiment.assert_called_once_with('test_experiment')
 
