@@ -69,7 +69,7 @@ class Optimizely(object):
     self.bucketer = bucketer.Bucketer(self.config)
 
     try:
-      self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
+      self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
     except:
       self.is_valid = False
       self.logger = SimpleLogger()
