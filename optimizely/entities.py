@@ -19,11 +19,9 @@ class BaseEntity(object):
 
 class Attribute(BaseEntity):
 
-  def __init__(self, id, key, segmentId=None, **kwargs
-              ):
+  def __init__(self, id, key, **kwargs):
     self.id = id
     self.key = key
-    self.segmentId = segmentId
 
 
 class Audience(BaseEntity):
