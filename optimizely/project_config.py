@@ -22,6 +22,9 @@ REVENUE_GOAL_KEY = 'Total Revenue'
 V1_CONFIG_VERSION = '1'
 V2_CONFIG_VERSION = '2'
 
+SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
+UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
+
 
 class ProjectConfig(object):
   """ Representation of the Optimizely project config. """
@@ -45,8 +48,7 @@ class ProjectConfig(object):
     self.groups = config.get('groups', [])
     self.experiments = config.get('experiments', [])
     self.events = config.get('events', [])
-    self.attributes = config.get('dimensions', []) \
-      if self.version == V1_CONFIG_VERSION else config.get('attributes', [])
+    self.attributes = config.get('attributes', [])
     self.audiences = config.get('audiences', [])
 
     # Utility maps for quick lookup
