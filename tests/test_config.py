@@ -229,10 +229,12 @@ class ConfigTest(base.BaseTest):
           'layerId': '111183',
           'variations': [{
             'key': 'group_exp_1_control',
-            'id': '28901'
+            'id': '28901',
+            'variables': []
           }, {
             'key': 'group_exp_1_variation',
-            'id': '28902'
+            'id': '28902',
+            'variables': []
           }],
           'forcedVariations': {
             'user_1': 'group_exp_1_control',
@@ -253,10 +255,12 @@ class ConfigTest(base.BaseTest):
           'layerId': '111184',
           'variations': [{
             'key': 'group_exp_2_control',
-            'id': '28905'
+            'id': '28905',
+            'variables': []
           }, {
             'key': 'group_exp_2_variation',
-            'id': '28906'
+            'id': '28906',
+            'variables': []
           }],
           'forcedVariations': {
             'user_1': 'group_exp_2_control',
