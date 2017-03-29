@@ -54,19 +54,6 @@ class EventBuilderTest(base.BaseTest):
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 
-  def test_get_event_builder__with_v2_datafile(self):
-    """ Test that appropriate event builder is returned when datafile is of v2 version. """
-
-    event_builder_obj = event_builder.get_event_builder(self.optimizely.config, self.optimizely.bucketer)
-    self.assertIsInstance(event_builder_obj, event_builder.EventBuilder)
-
-  def test_get_event_builder__invalid_datafile_version(self):
-    """ Test that get_event_builder raises exception for unsupported datafile version. """
-
-    with mock.patch('optimizely.project_config.ProjectConfig.get_version', return_value='unsupported_version'):
-      self.assertRaisesRegexp(exceptions.InvalidInputException, enums.Errors.UNSUPPORTED_DATAFILE_VERSION,
-                              event_builder.get_event_builder, self.optimizely.config, self.optimizely.bucketer)
-
   def test_create_impression_event(self):
     """ Test that create_impression_event creates Event object with right params. """
 

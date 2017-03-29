@@ -91,12 +91,6 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
 
-    # JSON, but missing version
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      optimizely.Optimizely(json.dumps({'some_field': 'some_value'}), skip_json_validation=True)
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
-
     # JSON having valid version, but entities have invalid format
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},

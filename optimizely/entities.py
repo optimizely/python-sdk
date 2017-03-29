@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -19,15 +19,14 @@ class BaseEntity(object):
 
 class Attribute(BaseEntity):
 
-  def __init__(self, id, key, segmentId=None):
+  def __init__(self, id, key, **kwargs):
     self.id = id
     self.key = key
-    self.segmentId = segmentId
 
 
 class Audience(BaseEntity):
 
-  def __init__(self, id, name, conditions, conditionStructure=None, conditionList=None):
+  def __init__(self, id, name, conditions, conditionStructure=None, conditionList=None, **kwargs):
     self.id = id
     self.name = name
     self.conditions = conditions
@@ -37,7 +36,7 @@ class Audience(BaseEntity):
 
 class Event(BaseEntity):
 
-  def __init__(self, id, key, experimentIds):
+  def __init__(self, id, key, experimentIds, **kwargs):
     self.id = id
     self.key = key
     self.experimentIds = experimentIds
@@ -46,7 +45,7 @@ class Event(BaseEntity):
 class Experiment(BaseEntity):
 
   def __init__(self, id, key, status, audienceIds, variations, forcedVariations,
-               trafficAllocation, layerId=None, groupId=None, groupPolicy=None, percentageIncluded=None):
+               trafficAllocation, layerId, groupId=None, groupPolicy=None, **kwargs):
     self.id = id
     self.key = key
     self.status = status
@@ -57,12 +56,11 @@ class Experiment(BaseEntity):
     self.layerId = layerId
     self.groupId = groupId
     self.groupPolicy = groupPolicy
-    self.percentageIncluded = percentageIncluded
 
 
 class Group(BaseEntity):
 
-  def __init__(self, id, policy, experiments, trafficAllocation):
+  def __init__(self, id, policy, experiments, trafficAllocation, **kwargs):
     self.id = id
     self.policy = policy
     self.experiments = experiments
@@ -71,6 +69,6 @@ class Group(BaseEntity):
 
 class Variation(BaseEntity):
 
-  def __init__(self, id, key):
+  def __init__(self, id, key, **kwargs):
     self.id = id
     self.key = key
