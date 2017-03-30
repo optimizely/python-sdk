@@ -39,9 +39,12 @@ class ProjectConfig(object):
     """
 
     config = json.loads(datafile)
+    self.parsing_succeeded = False
     self.logger = logger
     self.error_handler = error_handler
     self.version = config.get('version')
+    if self.version in UNSUPPORTED_VERSIONS:
+      return
     self.account_id = config.get('accountId')
     self.project_id = config.get('projectId')
     self.revision = config.get('revision')
@@ -78,6 +81,8 @@ class ProjectConfig(object):
       self.variation_id_map[experiment.key] = {}
       for variation in self.variation_key_map.get(experiment.key).values():
         self.variation_id_map[experiment.key][variation.id] = variation
+
+    self.parsing_succeeded = True
 
   @staticmethod
   def _generate_key_map(list, key, entity_class):
@@ -117,6 +122,15 @@ class ProjectConfig(object):
       })
 
     return audience_map
+
+  def was_parsing_successful(self):
+    """ Helper method to determine if parsing the datafile was successful.
+
+    Returns:
+      Boolean depending on whether parsing the datafile succeeded or not.
+    """
+
+    return self.parsing_succeeded
 
   def get_version(self):
     """ Get version of the datafile.

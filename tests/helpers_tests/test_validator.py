@@ -16,7 +16,6 @@ import json
 from optimizely import error_handler
 from optimizely import event_dispatcher
 from optimizely import logger
-from optimizely import project_config
 from optimizely.helpers import validator
 
 from tests import base
@@ -117,7 +116,3 @@ class DatafileValidationTests(base.BaseTest):
     self.assertFalse(validator.is_datafile_valid(json.dumps({
       'invalid_key': 'invalid_value'
     })))
-
-    # When schema is valid, but datafile has unsupported version
-    self.config_dict['version'] = project_config.UNSUPPORTED_VERSIONS[0]
-    self.assertFalse(validator.is_datafile_valid(json.dumps(self.config_dict)))
