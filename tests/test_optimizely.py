@@ -217,8 +217,6 @@ class OptimizelyTest(base.BaseTest):
     """ Test that activate returns None and does not dispatch event when experiment is not Running. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
-                   return_value=True) as mock_whitelist_check,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running, \
         mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket,\
@@ -228,7 +226,6 @@ class OptimizelyTest(base.BaseTest):
 
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(0, mock_audience_check.call_count)
-    self.assertEqual(0, mock_whitelist_check.call_count)
     self.assertEqual(0, mock_bucket.call_count)
     self.assertEqual(0, mock_dispatch_event.call_count)
 
@@ -236,13 +233,10 @@ class OptimizelyTest(base.BaseTest):
     """ Test that during activate whitelist overrides audience check if user is in the whitelist. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check,\
-        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
-                   return_value=True) as mock_whitelist_check,\
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=True) as mock_is_experiment_running:
       self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
-    self.assertEqual(1, mock_whitelist_check.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
 
   def test_activate__bucketer_returns_none(self):
@@ -529,8 +523,6 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.helpers.experiment.is_experiment_running',
                     return_value=True) as mock_is_experiment_running,\
-        mock.patch('optimizely.helpers.experiment.is_user_in_forced_variation',
-                    return_value=True) as mock_whitelist_check,\
         mock.patch('optimizely.helpers.audience.is_user_in_experiment',
                     return_value=False) as mock_audience_check,\
         mock.patch('time.time', return_value=42),\
@@ -538,7 +530,6 @@ class OptimizelyTest(base.BaseTest):
       self.optimizely.track('test_event', 'user_1')
 
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
-    mock_whitelist_check.assert_called_once_with({'user_1': 'control', 'user_2': 'control'}, 'user_1')
     self.assertEqual(1, mock_dispatch_event.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
 
