@@ -112,7 +112,7 @@ class DatafileValidationTests(base.BaseTest):
   def test_is_datafile_valid__returns_false(self):
     """ Test that invalid datafile returns False. """
 
+    # When schema is not valid
     self.assertFalse(validator.is_datafile_valid(json.dumps({
       'invalid_key': 'invalid_value'
     })))
-

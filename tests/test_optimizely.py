@@ -18,6 +18,7 @@ from optimizely import error_handler
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
+from optimizely import project_config
 from optimizely import version
 from optimizely.helpers import enums
 from . import base
@@ -37,9 +38,10 @@ class OptimizelyTest(base.BaseTest):
     """ Test that invalid datafile logs error on init. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      optimizely.Optimizely('invalid_datafile')
+      opt_obj = optimizely.Optimizely('invalid_datafile')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
 
   def test_init__invalid_event_dispatcher__logs_error(self):
     """ Test that invalid event_dispatcher logs error on init. """
@@ -48,31 +50,47 @@ class OptimizelyTest(base.BaseTest):
       pass
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "event_dispatcher" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
 
-  def test_init__invalid_logger__raises(self):
+  def test_init__invalid_logger__logs_error(self):
     """ Test that invalid logger logs error on init. """
 
     class InvalidLogger(object):
       pass
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      optimizely.Optimizely(json.dumps(self.config_dict), logger=InvalidLogger)
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), logger=InvalidLogger)
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "logger" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
 
-  def test_init__invalid_error_handler__raises(self):
+  def test_init__invalid_error_handler__logs_error(self):
     """ Test that invalid error_handler logs error on init. """
 
     class InvalidErrorHandler(object):
       pass
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      optimizely.Optimizely(json.dumps(self.config_dict), error_handler=InvalidErrorHandler)
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), error_handler=InvalidErrorHandler)
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "error_handler" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
+  def test_init__v1_datafile__logs_error(self):
+    """ Test that v1 datafile logs error on init. """
+
+    self.config_dict['version'] = project_config.V1_CONFIG_VERSION
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+
+    mock_logging.assert_called_once_with(
+      enums.LogLevels.ERROR,
+      'Provided datafile has unsupported version. Please use SDK version 1.1.0 or earlier for datafile version 1.'
+    )
+    self.assertFalse(opt_obj.is_valid)
 
   def test_skip_json_validation_true(self):
     """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
