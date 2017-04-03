@@ -40,10 +40,10 @@ class EventTest(unittest.TestCase):
     self.assertEqual(headers, event_obj.headers)
 
 
-class EventBuilderV1Test(base.BaseTestV1):
+class EventBuilderTest(base.BaseTest):
 
   def setUp(self):
-    base.BaseTestV1.setUp(self)
+    base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
@@ -53,200 +53,6 @@ class EventBuilderV1Test(base.BaseTestV1):
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
-
-  def test_get_event_builder__with_v1_datafile(self):
-    """ Test that appropriate event builder is returned when datafile is of v1 version. """
-
-    event_builder_obj = event_builder.get_event_builder(self.optimizely.config, self.optimizely.bucketer)
-    self.assertIsInstance(event_builder_obj, event_builder.EventBuilderV1)
-
-  def test_create_impression_event(self):
-    """ Test that create_impression_event creates Event object with right params. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'visitor-event',
-      'x111127': '111129',
-      'g': '111127',
-      'u': 'test_user',
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-  def test_create_impression_event__with_attributes(self):
-    """ Test that create_impression_event creates Event object
-    with right params when attributes are provided. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'visitor-event',
-      'x111127': '111129',
-      'g': '111127',
-      'u': 'test_user',
-      's11133': 'test_value',
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', {'test_attribute': 'test_value'}
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-  def test_create_conversion_event__with_attributes(self):
-    """ Test that create_conversion_event creates Event object
-    with right params when attributes are provided. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'test_event',
-      'x111127': '111129',
-      'g': '111095',
-      'u': 'test_user',
-      's11133': 'test_value',
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
-        [self.project_config.get_experiment_from_key('test_experiment')]
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-  def test_create_conversion_event__with_attributes_no_match(self):
-    """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'test_event',
-      'g': '111095',
-      'u': 'test_user',
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-  def test_create_conversion_event__with_event_value(self):
-    """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'test_event',
-      'x111127': '111129',
-      'g': '111095,111096',
-      'u': 'test_user',
-      's11133': 'test_value',
-      'v': 4200,
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200},
-        [self.project_config.get_experiment_from_key('test_experiment')]
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-  def test_create_conversion_event__with_invalid_event_value(self):
-    """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'test_event',
-      'x111127': '111129',
-      'g': '111095',
-      'u': 'test_user',
-      's11133': 'test_value',
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200'},
-        [self.project_config.get_experiment_from_key('test_experiment')]
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-  def test_create_conversion_event__with_deprecated_event_value(self):
-    """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
-
-    expected_params = {
-      'd': '12001',
-      'a': '111001',
-      'n': 'test_event',
-      'x111127': '111129',
-      'g': '111095',
-      'u': 'test_user',
-      's11133': 'test_value',
-      'time': 42,
-      'src': 'python-sdk-{version}'.format(version=version.__version__)
-    }
-    with mock.patch('time.time', return_value=42):
-      event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, 4200,
-        [self.project_config.get_experiment_from_key('test_experiment')]
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV1.OFFLINE_API_PATH.format(project_id='111001'),
-                                expected_params, 'GET', None)
-
-
-class EventBuilderV2Test(base.BaseTestV2):
-
-  def setUp(self):
-    base.BaseTestV2.setUp(self)
-    self.event_builder = self.optimizely.event_builder
-
-  def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
-    """ Helper method to validate properties of the event object. """
-
-    self.assertEqual(expected_url, event_obj.url)
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(expected_verb, event_obj.http_verb)
-    self.assertEqual(expected_headers, event_obj.headers)
-
-  def test_get_event_builder__with_v2_datafile(self):
-    """ Test that appropriate event builder is returned when datafile is of v2 version. """
-
-    event_builder_obj = event_builder.get_event_builder(self.optimizely.config, self.optimizely.bucketer)
-    self.assertIsInstance(event_builder_obj, event_builder.EventBuilderV2)
-
-  def test_get_event_builder__invalid_datafile_version(self):
-    """ Test that get_event_builder raises exception for unsupported datafile version. """
-
-    with mock.patch('optimizely.project_config.ProjectConfig.get_version', return_value='unsupported_version'):
-      self.assertRaisesRegexp(exceptions.InvalidInputException, enums.Errors.UNSUPPORTED_DATAFILE_VERSION,
-                              event_builder.get_event_builder, self.optimizely.config, self.optimizely.bucketer)
 
   def test_create_impression_event(self):
     """ Test that create_impression_event creates Event object with right params. """
@@ -273,10 +79,10 @@ class EventBuilderV2Test(base.BaseTestV2):
         self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
+                                event_builder.EventBuilder.IMPRESSION_ENDPOINT,
                                 expected_params,
-                                event_builder.EventBuilderV2.HTTP_VERB,
-                                event_builder.EventBuilderV2.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_impression_event__with_attributes(self):
     """ Test that create_impression_event creates Event object
@@ -311,10 +117,10 @@ class EventBuilderV2Test(base.BaseTestV2):
         '111129', 'test_user', {'test_attribute': 'test_value'}
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV2.IMPRESSION_ENDPOINT,
+                                event_builder.EventBuilder.IMPRESSION_ENDPOINT,
                                 expected_params,
-                                event_builder.EventBuilderV2.HTTP_VERB,
-                                event_builder.EventBuilderV2.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_attributes(self):
     """ Test that create_conversion_event creates Event object
@@ -359,10 +165,10 @@ class EventBuilderV2Test(base.BaseTestV2):
         [self.project_config.get_experiment_from_key('test_experiment')]
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
                                 expected_params,
-                                event_builder.EventBuilderV2.HTTP_VERB,
-                                event_builder.EventBuilderV2.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_attributes_no_match(self):
     """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
@@ -386,10 +192,10 @@ class EventBuilderV2Test(base.BaseTestV2):
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
                                 expected_params,
-                                event_builder.EventBuilderV2.HTTP_VERB,
-                                event_builder.EventBuilderV2.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_event_value(self):
     """ Test that create_conversion_event creates Event object
@@ -450,10 +256,10 @@ class EventBuilderV2Test(base.BaseTestV2):
     # Sort event features based on ID
     event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
                                 expected_params,
-                                event_builder.EventBuilderV2.HTTP_VERB,
-                                event_builder.EventBuilderV2.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_invalid_event_value(self):
     """ Test that create_conversion_event creates Event object
@@ -510,7 +316,7 @@ class EventBuilderV2Test(base.BaseTestV2):
     # Sort event features based on ID
     event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV2.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
                                 expected_params,
-                                event_builder.EventBuilderV2.HTTP_VERB,
-                                event_builder.EventBuilderV2.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)

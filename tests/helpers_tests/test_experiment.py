@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,7 +18,7 @@ from optimizely import entities
 from optimizely.helpers import experiment
 
 
-class ExperimentTest(base.BaseTestV1):
+class ExperimentTest(base.BaseTest):
 
   def test_is_experiment_running__status_running(self):
     """ Test that is_experiment_running returns True when experiment has Running status. """
@@ -30,7 +30,7 @@ class ExperimentTest(base.BaseTestV1):
 
     with mock.patch('optimizely.project_config.ProjectConfig.get_experiment_from_key',
                     return_value=entities.Experiment(
-                      '42', 'test_experiment', 'Some Status', [], [], {},[])) as mock_get_experiment:
+                      '42', 'test_experiment', 'Some Status', [], [], {}, [], '43')) as mock_get_experiment:
       self.assertFalse(experiment.is_experiment_running(self.project_config.get_experiment_from_key('test_experiment')))
     mock_get_experiment.assert_called_once_with('test_experiment')
 

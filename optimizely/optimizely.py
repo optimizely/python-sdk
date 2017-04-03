@@ -66,14 +66,14 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
       return
 
-    self.bucketer = bucketer.Bucketer(self.config)
-
-    try:
-      self.event_builder = event_builder.get_event_builder(self.config, self.bucketer)
-    except:
+    if not self.config.was_parsing_successful():
       self.is_valid = False
       self.logger = SimpleLogger()
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
+      return
+
+    self.bucketer = bucketer.Bucketer(self.config)
+    self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
 
   def _validate_inputs(self, datafile, skip_json_validation):
     """ Helper method to validate all input parameters.

@@ -21,7 +21,7 @@ from optimizely.helpers import validator
 from tests import base
 
 
-class ValidatorTest(base.BaseTestV1):
+class ValidatorTest(base.BaseTest):
 
   def test_is_datafile_valid__returns_true(self):
     """ Test that valid datafile returns True. """
@@ -102,7 +102,7 @@ class ValidatorTest(base.BaseTestV1):
     self.assertFalse(validator.are_event_tags_valid(42))
 
 
-class DatafileV2ValidationTests(base.BaseTestV2):
+class DatafileValidationTests(base.BaseTest):
 
   def test_is_datafile_valid__returns_true(self):
     """ Test that valid datafile returns True. """
@@ -112,7 +112,7 @@ class DatafileV2ValidationTests(base.BaseTestV2):
   def test_is_datafile_valid__returns_false(self):
     """ Test that invalid datafile returns False. """
 
+    # When schema is not valid
     self.assertFalse(validator.is_datafile_valid(json.dumps({
       'invalid_key': 'invalid_value'
     })))
-
