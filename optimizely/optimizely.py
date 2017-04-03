@@ -122,7 +122,7 @@ class Optimizely(object):
 
     Args:
       attributes: Dict representing user attributes.
-      event_tags: Dict representing metadata associated with an event_key
+      event_tags: Dict representing metadata associated with an event.
 
     Returns:
       Boolean True if inputs are valid. False otherwise.
@@ -142,7 +142,7 @@ class Optimizely(object):
     return True
 
   def _get_valid_experiments_for_event(self, event, user_id, attributes):
-    """ Helper method to determine which experiments we should track the given event forcedVariation
+    """ Helper method to determine which experiments we should track for the given event.
 
     Args:
       event: The event which needs to be recorded.
