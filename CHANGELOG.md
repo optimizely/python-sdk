@@ -1,3 +1,7 @@
+# 1.1.1
+- Updated datafile parsing to be able to handle additional fields.
+- Deprecated Classic project support.
+
 # 1.1.0
 - Included datafile revision information in log events.
 - Added event tags to track API to allow users to pass in event metadata.
