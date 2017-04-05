@@ -97,7 +97,7 @@ class BaseEventBuilder(object):
 
 
 class EventBuilder(BaseEventBuilder):
-  """ Class which encapsulates methods to build events for tracking 
+  """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new endpoints. """
 
   IMPRESSION_ENDPOINT = 'https://logx.optimizely.com/log/decision'
@@ -190,7 +190,7 @@ class EventBuilder(BaseEventBuilder):
       event_key: Key representing the event which needs to be recorded.
       user_id: ID for user.
       event_tags: Dict representing metadata associated with the event.
-      valid_experiments: List of tuples representing valid experiments for the event.
+      valid_experiments: List of tuples representing valid experiments IDs and variation IDs.
     """
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
@@ -219,19 +219,18 @@ class EventBuilder(BaseEventBuilder):
         self.params[self.EventParams.EVENT_FEATURES].append(event_feature)
 
     self.params[self.EventParams.LAYER_STATES] = []
-    for experiment in valid_experiments:
-      variation = self.bucketer.bucket(experiment, user_id)
-      if variation:
-        self.params[self.EventParams.LAYER_STATES].append({
-          self.EventParams.LAYER_ID: experiment.layerId,
-          self.EventParams.REVISION: self.config.get_revision(),
-          self.EventParams.ACTION_TRIGGERED: True,
-          self.EventParams.DECISION: {
-            self.EventParams.EXPERIMENT_ID: experiment.id,
-            self.EventParams.VARIATION_ID: variation.id,
-            self.EventParams.IS_LAYER_HOLDBACK: False
-          }
-        })
+    for experiment_id, variation_id in valid_experiments:
+      experiment = self.config.get_experiment_from_id(experiment_id)
+      self.params[self.EventParams.LAYER_STATES].append({
+        self.EventParams.LAYER_ID: experiment.layerId,
+        self.EventParams.REVISION: self.config.get_revision(),
+        self.EventParams.ACTION_TRIGGERED: True,
+        self.EventParams.DECISION: {
+          self.EventParams.EXPERIMENT_ID: experiment.id,
+          self.EventParams.VARIATION_ID: variation_id,
+          self.EventParams.IS_LAYER_HOLDBACK: False
+        }
+      })
 
     self.params[self.EventParams.EVENT_ID] = self.config.get_event(event_key).id
     self.params[self.EventParams.EVENT_NAME] = event_key
@@ -265,7 +264,7 @@ class EventBuilder(BaseEventBuilder):
       user_id: ID for user.
       attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
-      valid_experiments: List of tuples representing valid experiments for the event.
+      valid_experiments: List of tuples representing experiments IDs and variation IDs.
 
     Returns:
       Event object encapsulating the conversion event.

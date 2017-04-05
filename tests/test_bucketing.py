@@ -73,23 +73,23 @@ class BucketerTest(base.BaseTest):
     self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('invalid_experiment'),
                                            'test_user'))
 
-  def test_bucket__user_in_forced_variation(self):
+  def test_get_forced_variation__user_in_forced_variation(self):
     """ Test that bucket returns variation ID for variation user is forced in. """
 
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value') as mock_generate_bucket_value:
       self.assertEqual(entities.Variation('111128', 'control'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'), 'user_1'))
+                       self.bucketer.get_forced_variation(self.project_config.get_experiment_from_key('test_experiment'), 'user_1'))
 
     # Confirm that bucket value generation did not happen
     self.assertEqual(0, mock_generate_bucket_value.call_count)
 
-  def test_bucket__user_in_forced_variation__invalid_variation_id(self):
+  def test_get_forced_variation__user_in_forced_variation__invalid_variation_id(self):
     """ Test that bucket returns None when variation user is forced in is invalid. """
 
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value') as mock_generate_bucket_value, \
         mock.patch('optimizely.project_config.ProjectConfig.get_variation_from_key',
                    return_value=None) as mock_get_variation_id:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
+      self.assertIsNone(self.bucketer.get_forced_variation(self.project_config.get_experiment_from_key('test_experiment'),
                                              'user_1'))
 
     mock_get_variation_id.assert_called_once_with('test_experiment', 'control')
@@ -131,12 +131,12 @@ class BucketerTest(base.BaseTest):
     self.assertEqual([mock.call('test_user19228'), mock.call('test_user32222')],
                      mock_generate_bucket_value.call_args_list)
 
-  def test_bucket__experiment_in_group__user_in_forced_variation(self):
+  def test_get_forced_variation__experiment_in_group__user_in_forced_variation(self):
     """ Test that bucket returns variation ID for variation user is forced in. """
 
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value') as mock_generate_bucket_value:
       self.assertEqual(entities.Variation('28905', 'group_exp_2_control'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_2'), 'user_1'))
+                       self.bucketer.get_forced_variation(self.project_config.get_experiment_from_key('group_exp_2'), 'user_1'))
 
     # Confirm that bucket value generation did not happen
     self.assertEqual(0, mock_generate_bucket_value.call_count)
@@ -228,13 +228,13 @@ class BucketerWithLoggingTest(base.BaseTest):
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
                      mock_logging.call_args_list[1])
 
-  def test_bucket__user_in_forced_variation(self):
+  def test_get_forced_variation__user_in_forced_variation(self):
     """ Test that expected log messages are logged during forced bucketing. """
 
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.assertEqual(entities.Variation('111128', 'control'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'), 'user_1'))
+                       self.bucketer.get_forced_variation(self.project_config.get_experiment_from_key('test_experiment'), 'user_1'))
 
     mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is forced in variation "control".')
 
@@ -314,13 +314,13 @@ class BucketerWithLoggingTest(base.BaseTest):
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
                      mock_logging.call_args_list[3])
 
-  def test_bucket__experiment_in_group__user_in_forced_variation(self):
+  def test_get_forced_variation__experiment_in_group__user_in_forced_variation(self):
     """ Test that expected log messages are logged during forced bucketing. """
 
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.assertEqual(entities.Variation('28905', 'group_exp_2_control'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_2'), 'user_1'))
+                       self.bucketer.get_forced_variation(self.project_config.get_experiment_from_key('group_exp_2'), 'user_1'))
 
     # Confirm that bucket value generation did not happen
     mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is forced in variation "group_exp_2_control".')
