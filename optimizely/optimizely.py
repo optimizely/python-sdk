@@ -26,7 +26,7 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
-from .services import user_profile as user_profile_service
+from .user_profile import NoOpUserProfile
 
 
 class Optimizely(object):
@@ -49,7 +49,11 @@ class Optimizely(object):
                      By default all exceptions will be suppressed.
       skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
                             By default JSON schema validation will be performed.
+<<<<<<< cc6921780fa812cdb2b5bfc9299ea498b6175221
       user_profile_service: Optional component which provides methods to store and manage user profiles.
+=======
+      user_profile_service: Optional param which provides methods to store and manage user profiles.
+>>>>>>> Introducing user profiles in Python SDK
     """
 
     self.is_valid = True
@@ -192,11 +196,7 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('activate'))
       return None
 
-    # Get profile here
-    user_profile = self.user_profile_service.fetch_profile(user_id)
-    # Pass around user_profile from this point on
-
-    variation_key = self.get_variation(experiment_key, user_profile, attributes)
+    variation_key = self.get_variation(experiment_key, user_id, attributes)
 
     if not variation_key:
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
@@ -268,7 +268,7 @@ class Optimizely(object):
     else:
       self.logger.log(enums.LogLevels.INFO, 'There are no valid experiments for event "%s" to track.' % event_key)
 
-  def get_variation(self, experiment_key, user_profile, attributes=None):
+  def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
 
     Args:
@@ -302,14 +302,11 @@ class Optimizely(object):
     if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
       self.logger.log(
         enums.LogLevels.INFO,
-        'User "%s" does not meet conditions to be in experiment "%s".' % (user_profile.get('user_id'), experiment.key)
+        'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment.key)
       )
       return None
 
-    variation = self.bucketer.bucket(experiment, user_profile.get('user_id'))
-
-    # Save user_profile here with experiment.id to variation.id
-    self.user_profile_service.save_profile(user_profile)
+    variation = self.bucketer.bucket(experiment, user_id)
 
     if variation:
       return variation.key

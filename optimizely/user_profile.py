@@ -10,26 +10,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from abc import abstractmethod
 
 
 class UserProfile(object):
-  """ Class encapsulating information representing a user's profile.
-
-   user_id: User's identifier.
-   experiment_bucket_map: Dict mapping experiment ID to dict consisting of the
-                          variation ID identifying the variation for the user.
-   """
-
-  def __init__(self, user_id, experiment_bucket_map=None, **kwargs):
-    self.user_id = user_id
-    self.experiment_bucket_map = experiment_bucket_map or {}
-
-
-class UserProfileService(object):
   """ Class encapsulating user profile service functionality.
   Override with your own implementation for storing and retrieving the user profile. """
 
-  def lookup(self, user_id):
+  def fetch_profile(self, user_id):
     """ Fetch the user profile dict corresponding to the user ID.
 
     Args:
@@ -38,12 +26,19 @@ class UserProfileService(object):
     Returns:
       Dict representing the user's profile.
     """
-    return dict(UserProfile(user_id))
+    return {
+      'user_id': user_id,
+      'decisions': {}
+    }
 
-  def save(self, user_profile):
+  def save_profile(self, user_profile):
     """ Save the user profile dict sent to this method.
 
     Args:
       user_profile: Dict representing the user's profile.
     """
     pass
+
+
+class NoOpUserProfile(UserProfile):
+  """ Class providing non-sticky implementation of user profile service. """
