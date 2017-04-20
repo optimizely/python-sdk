@@ -149,8 +149,8 @@ class Optimizely(object):
 
     return True
 
-  def _get_valid_experiments_for_event(self, event, user_id, attributes):
-    """ Helper method to determine which experiments we should track for the given event.
+  def _get_decisions(self, event, user_id, attributes):
+    """ Helper method to retrieve decisions for the user for experiment(s) using the provided event.
 
     Args:
       event: The event which needs to be recorded.
@@ -160,7 +160,7 @@ class Optimizely(object):
     Returns:
       List of tuples representing valid experiment IDs and variation IDs into which the user is bucketed.
     """
-    valid_experiments = []
+    decisions = []
     for experiment_id in event.experimentIds:
       experiment = self.config.get_experiment_from_id(experiment_id)
       variation_key = self.get_variation(experiment.key, user_id, attributes)
@@ -170,9 +170,9 @@ class Optimizely(object):
         continue
 
       variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      valid_experiments.append((experiment_id, variation.id))
+      decisions.append((experiment_id, variation.id))
 
-    return valid_experiments
+    return decisions
 
   def activate(self, experiment_key, user_id, attributes=None):
     """ Buckets visitor and sends impression event to Optimizely.
@@ -243,13 +243,15 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
-    # Filter out experiments that are not running or that do not include the user in audience conditions
-    valid_experiments = self._get_valid_experiments_for_event(event, user_id, attributes)
+    # Filter out experiments that are not running or that do not include the user in audience
+    # conditions and then determine the decision i.e. the corresponding variation
+    decisions = self._get_decisions(event, user_id, attributes)
 
-    # Create and dispatch conversion event if there are valid experiments
-    if valid_experiments:
-      conversion_event = self.event_builder.create_conversion_event(event_key, user_id, attributes, event_tags,
-                                                                    valid_experiments)
+    # Create and dispatch conversion event if there are any decisions
+    if decisions:
+      conversion_event = self.event_builder.create_conversion_event(
+        event_key, user_id, attributes, event_tags, decisions
+      )
       self.logger.log(enums.LogLevels.INFO, 'Tracking event "%s" for user "%s".' % (event_key, user_id))
       self.logger.log(enums.LogLevels.DEBUG,
                       'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
@@ -290,10 +292,18 @@ class Optimizely(object):
     if not self._validate_preconditions(experiment, attributes):
       return None
 
-    forced_variation = self.bucketer.get_forced_variation(experiment, user_id)
-    if forced_variation:
-      return forced_variation.key
+    # Check to see if user is white-listed for a certain variation
+    variation = self.bucketer.get_forced_variation(experiment, user_id)
+    if variation:
+      return variation.key
 
+    # Check to see if user has a decision available for the given experiment
+    user_profile = self.user_profile_service.fetch_profile(user_id)
+    variation = self.bucketer.get_stored_decision(experiment, user_profile)
+    if variation:
+      return variation.key
+
+    # Bucket user and store the new decision
     if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
       self.logger.log(
         enums.LogLevels.INFO,
@@ -304,6 +314,9 @@ class Optimizely(object):
     variation = self.bucketer.bucket(experiment, user_id)
 
     if variation:
+      # Store this new decision and return the variation for the user
+      user_profile['decisions'].update({experiment.id: variation.id})
+      self.user_profile_service.save_profile(user_profile)
       return variation.key
 
     return None

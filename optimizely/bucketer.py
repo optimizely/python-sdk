@@ -155,3 +155,6 @@ class Bucketer(object):
       return variation
 
     return None
+
+  def get_stored_decision(self, experiment, user_id):
+    pass
