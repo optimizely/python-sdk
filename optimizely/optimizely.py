@@ -315,7 +315,9 @@ class Optimizely(object):
 
     if variation:
       # Store this new decision and return the variation for the user
-      user_profile['decisions'].update({experiment.id: variation.id})
+      user_profile['decisions'].update({
+        experiment.id: variation.id
+      })
       self.user_profile_service.save_profile(user_profile)
       return variation.key
 

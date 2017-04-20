@@ -156,5 +156,27 @@ class Bucketer(object):
 
     return None
 
-  def get_stored_decision(self, experiment, user_id):
-    pass
+  def get_stored_decision(self, experiment, user_profile):
+    """ Determine if the user has a stored decision already available for the given experiment and return that.
+
+    Args:
+      experiment: Object representing the experiment for which user is to be bucketed.
+      user_profile: Dict representing the user's profile.
+
+    Returns:
+      Variation if a decision is available. None otherwise.
+    """
+
+    user_id = user_profile.get('user_id')
+    available_decisions = user_profile.get('decisions')
+    variation_id = available_decisions.get(experiment.id)
+
+    if variation_id:
+      variation = self.config.get_variation_from_id(experiment.key, variation_id)
+      if variation:
+        self.config.logger.log(enums.LogLevels.INFO,
+                               'Found a stored decision. User "%s" is in variation "%s" of experiment %s.' %
+                               (user_id, variation.key, experiment.key))
+        return variation
+
+    return None
