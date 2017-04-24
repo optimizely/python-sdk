@@ -61,7 +61,7 @@ class ProjectConfig(object):
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
-    self.flag_id_map = self._generate_key_map(self.feature_flags, 'id', entities.FeatureFlag)
+    self.feature_flag_id_map = self._generate_key_map(self.feature_flags, 'id', entities.FeatureFlag)
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
       experiments_in_group_key_map = self._generate_key_map(group.experiments, 'key', entities.Experiment)
@@ -82,7 +82,9 @@ class ProjectConfig(object):
       )
       self.variation_id_map[experiment.key] = {}
       for variation in self.variation_key_map.get(experiment.key).values():
-        self.variation_id_map[experiment.key][variation.id] = self._create_feature_flag_map(variation, self.flag_id_map)
+        feature_flag_to_value_map = self._map_feature_flag_to_value(variation.variables, self.feature_flag_id_map)
+        variation.featureFlagMap = feature_flag_to_value_map
+        self.variation_id_map[experiment.key][variation.id] = variation
 
     self.parsing_succeeded = True
 
@@ -145,24 +147,25 @@ class ProjectConfig(object):
     else:
       return value
 
-  def _create_feature_flag_map(self, variation, flag_id_map):
-    """ Helper method to create map on variation object mapping feature flag key to related value.
+  def _map_feature_flag_to_value(self, variables, feature_flag_id_map):
+    """ Helper method to create map of feature flag key to associated value for a given variation's feature flag set.
 
     Args:
-      variation: Object representing variation.
-      flag_id_map: Dict mapping feature flag key to feature flag object.
+      variables: List of dicts representing variables on an instance of Variation object.
+      feature_flag_id_map: Dict mapping feature flag key to feature flag object.
 
     Returns:
-      Variation object with the feature flag map property computed.
+      Dict mapping values from feature flag key to value stored on the variation's variable.
     """
 
-    for variable in variation.variables:
-      feature_flag = flag_id_map[variable.get('id')]
+    feature_flag_value_map = {}
+    for variable in variables:
+      feature_flag = feature_flag_id_map[variable.get('id')]
       if not feature_flag:
         continue
-      variation.featureFlagMap[feature_flag.key] = self._get_typecast_value(variable.get('value'), feature_flag.type)
+      feature_flag_value_map[feature_flag.key] = self._get_typecast_value(variable.get('value'), feature_flag.type)
 
-    return variation
+    return feature_flag_value_map
 
   def was_parsing_successful(self):
     """ Helper method to determine if parsing the datafile was successful.

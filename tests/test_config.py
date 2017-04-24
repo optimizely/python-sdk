@@ -505,7 +505,7 @@ class ConfigTest(base.BaseTest):
         '28906': entities.Variation('28906', 'group_exp_2_variation')
       }
     }
-    expected_flag_id_map = {
+    expected_feature_flag_id_map = {
       '127': entities.FeatureFlag('127', 'is_working', 'boolean', 'true'),
       '128': entities.FeatureFlag('128', 'environment', 'string', 'devel'),
       '129': entities.FeatureFlag('129', 'number_of_days', 'integer', '192'),
@@ -520,7 +520,7 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_audience_id_map, project_config.audience_id_map)
     self.assertEqual(expected_variation_key_map, project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, project_config.variation_id_map)
-    self.assertEqual(expected_flag_id_map, project_config.flag_id_map)
+    self.assertEqual(expected_feature_flag_id_map, project_config.feature_flag_id_map)
 
   def test_get_version(self):
     """ Test that JSON version is retrieved correctly when using get_version. """
