@@ -26,7 +26,7 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
-from .user_profile import NoOpUserProfile
+from .user_profile import NoOpUserProfileService
 
 
 class Optimizely(object):
@@ -44,19 +44,19 @@ class Optimizely(object):
     Args:
       datafile: JSON string representing the project.
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
-      logger: Optional param which provides a log method to log messages. By default nothing would be logged.
-      error_handler: Optional param which provides a handle_error method to handle exceptions.
+      logger: Optional component which provides a log method to log messages. By default nothing would be logged.
+      error_handler: Optional component which provides a handle_error method to handle exceptions.
                      By default all exceptions will be suppressed.
       skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
                             By default JSON schema validation will be performed.
-      user_profile_service: Optional param which provides methods to store and manage user profiles.
+      user_profile_service: Optional component which provides methods to store and manage user profiles.
     """
 
     self.is_valid = True
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
-    self.user_profile_service = user_profile_service or NoOpUserProfile()
+    self.user_profile_service = user_profile_service or NoOpUserProfileService()
 
     try:
       self._validate_instantiation_options(datafile, skip_json_validation)
