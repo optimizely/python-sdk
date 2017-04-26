@@ -13,10 +13,18 @@
 
 
 class UserProfile(object):
+  """ Class encapsulating information representing a user's profile. """
+
+  def __init__(self, user_id, decisions=None, **kwargs):
+    self.user_id = user_id
+    self.decisions = decisions or {}
+
+
+class UserProfileService(object):
   """ Class encapsulating user profile service functionality.
   Override with your own implementation for storing and retrieving the user profile. """
 
-  def fetch_profile(self, user_id):
+  def lookup(self, user_id):
     """ Fetch the user profile dict corresponding to the user ID.
 
     Args:
@@ -25,12 +33,9 @@ class UserProfile(object):
     Returns:
       Dict representing the user's profile.
     """
-    return {
-      'user_id': user_id,
-      'decisions': {}
-    }
+    return dict(UserProfile(user_id))
 
-  def save_profile(self, user_profile):
+  def save(self, user_profile):
     """ Save the user profile dict sent to this method.
 
     Args:
@@ -39,5 +44,5 @@ class UserProfile(object):
     pass
 
 
-class NoOpUserProfile(UserProfile):
+class NoOpUserProfileService(UserProfileService):
   """ Class providing non-sticky implementation of user profile service. """

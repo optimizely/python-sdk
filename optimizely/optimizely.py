@@ -26,7 +26,7 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
-from .user_profile import NoOpUserProfile
+from .user_profile import NoOpUserProfileService
 
 
 class Optimizely(object):
@@ -49,11 +49,7 @@ class Optimizely(object):
                      By default all exceptions will be suppressed.
       skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
                             By default JSON schema validation will be performed.
-<<<<<<< cc6921780fa812cdb2b5bfc9299ea498b6175221
       user_profile_service: Optional component which provides methods to store and manage user profiles.
-=======
-      user_profile_service: Optional param which provides methods to store and manage user profiles.
->>>>>>> Introducing user profiles in Python SDK
     """
 
     self.is_valid = True
