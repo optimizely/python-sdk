@@ -26,7 +26,6 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
-from .user_profile import NoOpUserProfileService
 
 
 class Optimizely(object):
@@ -56,7 +55,7 @@ class Optimizely(object):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
-    self.user_profile_service = user_profile_service or NoOpUserProfileService()
+    self.user_profile_service = user_profile_service
 
     try:
       self._validate_instantiation_options(datafile, skip_json_validation)
