@@ -26,7 +26,6 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
-from .user_profile import NoOpUserProfileService
 
 
 class Optimizely(object):

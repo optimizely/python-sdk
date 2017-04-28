@@ -42,7 +42,3 @@ class UserProfileService(object):
       user_profile: Dict representing the user's profile.
     """
     pass
-
-
-class NoOpUserProfileService(UserProfileService):
-  """ Class providing non-sticky implementation of user profile service. """
