@@ -32,9 +32,8 @@ class Event(object):
 class BaseEventBuilder(object):
   """ Base class which encapsulates methods to build events for tracking impressions and conversions. """
 
-  def __init__(self, config, bucketer):
+  def __init__(self, config):
     self.config = config
-    self.bucketer = bucketer
     self.params = {}
 
   @abstractproperty

@@ -14,13 +14,12 @@
 import numbers
 import sys
 
-from . import bucketer
+from . import decision
 from . import event_builder
 from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
-from .helpers import audience as audience_helper
 from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
@@ -55,7 +54,6 @@ class Optimizely(object):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
-    self.user_profile_service = user_profile_service
 
     try:
       self._validate_instantiation_options(datafile, skip_json_validation)
@@ -80,8 +78,8 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
       return
 
-    self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
+    self.event_builder = event_builder.EventBuilder(self.config)
+    self.decision_service = decision.DecisionService(self.config, user_profile_service)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.
@@ -292,33 +290,8 @@ class Optimizely(object):
     if not self._validate_preconditions(experiment, attributes):
       return None
 
-    # Check to see if user is white-listed for a certain variation
-    variation = self.bucketer.get_forced_variation(experiment, user_id)
+    variation = self.decision_service.get_variation(experiment, user_id, attributes)
     if variation:
-      return variation.key
-
-    # Check to see if user has a decision available for the given experiment
-    user_profile = self.user_profile_service.fetch_profile(user_id)
-    variation = self.bucketer.get_stored_decision(experiment, user_profile)
-    if variation:
-      return variation.key
-
-    # Bucket user and store the new decision
-    if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
-      self.logger.log(
-        enums.LogLevels.INFO,
-        'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment.key)
-      )
-      return None
-
-    variation = self.bucketer.bucket(experiment, user_id)
-
-    if variation:
-      # Store this new decision and return the variation for the user
-      user_profile['decisions'].update({
-        experiment.id: variation.id
-      })
-      self.user_profile_service.save_profile(user_profile)
       return variation.key
 
     return None
