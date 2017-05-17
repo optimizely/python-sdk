@@ -31,23 +31,31 @@ from .logger import SimpleLogger
 class Optimizely(object):
   """ Class encapsulating all SDK functionality. """
 
-  def __init__(self, datafile, event_dispatcher=None, logger=None, error_handler=None, skip_json_validation=False):
+  def __init__(self,
+               datafile,
+               event_dispatcher=None,
+               logger=None,
+               error_handler=None,
+               skip_json_validation=False,
+               user_profile_service=None):
     """ Optimizely init method for managing Custom projects.
 
     Args:
       datafile: JSON string representing the project.
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
-      logger: Optional param which provides a log method to log messages. By default nothing would be logged.
-      error_handler: Optional param which provides a handle_error method to handle exceptions.
+      logger: Optional component which provides a log method to log messages. By default nothing would be logged.
+      error_handler: Optional component which provides a handle_error method to handle exceptions.
                      By default all exceptions will be suppressed.
       skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
                             By default JSON schema validation will be performed.
+      user_profile_service: Optional component which provides methods to store and manage user profiles.
     """
 
     self.is_valid = True
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
+    self.user_profile_service = user_profile_service
 
     try:
       self._validate_instantiation_options(datafile, skip_json_validation)
@@ -274,15 +282,17 @@ class Optimizely(object):
 
     experiment = self.config.get_experiment_from_key(experiment_key)
     if not experiment:
-      self.logger.log(enums.LogLevels.INFO, 'Experiment key "%s" is invalid. Not activating user "%s".' % (experiment_key, user_id))
+      self.logger.log(enums.LogLevels.INFO,
+                      'Experiment key "%s" is invalid. Not activating user "%s".' % (experiment_key,
+                                                                                     user_id))
       return None
 
     if not self._validate_preconditions(experiment, attributes):
       return None
 
-    forcedVariation = self.bucketer.get_forced_variation(experiment, user_id)
-    if forcedVariation:
-      return forcedVariation.key
+    forced_variation = self.bucketer.get_forced_variation(experiment, user_id)
+    if forced_variation:
+      return forced_variation.key
 
     if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
       self.logger.log(
