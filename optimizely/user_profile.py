@@ -13,11 +13,16 @@
 
 
 class UserProfile(object):
-  """ Class encapsulating information representing a user's profile. """
+  """ Class encapsulating information representing a user's profile.
 
-  def __init__(self, user_id, decisions=None, **kwargs):
+   user_id: User's identifier.
+   experiment_bucket_map: Dict mapping experiment ID to dict consisting of the
+                          variation ID identifying the variation for the user.
+   """
+
+  def __init__(self, user_id, experiment_bucket_map=None, **kwargs):
     self.user_id = user_id
-    self.decisions = decisions or {}
+    self.experiment_bucket_map = experiment_bucket_map or {}
 
 
 class UserProfileService(object):
