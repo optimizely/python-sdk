@@ -196,4 +196,27 @@ class DecisionServiceTest(base.BaseTest):
     self.assertEqual(0, mock_save.call_count)
 
   def test_get_variation__user_profile_in_invalid_format(self):
-    """ Test that get_variation handles invalid user profile gracefully """
+    """ Test that get_variation handles invalid user profile gracefully. """
+
+    experiment = self.project_config.get_experiment_from_key('test_experiment')
+    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+                    return_value=None) as mock_get_forced_variation, \
+      mock.patch('optimizely.decision.DecisionService.get_stored_decision') as mock_get_stored_decision, \
+      mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
+      mock.patch('optimizely.bucketer.Bucketer.bucket',
+                 return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
+      mock.patch('optimizely.user_profile.UserProfileService.lookup',
+                 return_value='invalid_profile') as mock_lookup, \
+      mock.patch('optimizely.user_profile.UserProfileService.save') as mock_save:
+      self.assertEqual(entities.Variation('111129', 'variation'),
+                       self.decision_service.get_variation(experiment, 'test_user', None))
+
+    # Assert that user is bucketed and new decision is stored
+    mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
+    mock_lookup.assert_called_once_with('test_user')
+    # Stored decision is not consulted as user profile is invalid
+    self.assertEqual(0, mock_get_stored_decision.call_count)
+    mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
+    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_save.assert_called_once_with({'user_id': 'test_user',
+                                       'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
