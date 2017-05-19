@@ -53,15 +53,14 @@ class DecisionService(object):
 
     Args:
       experiment: Object representing the experiment for which user is to be bucketed.
-      user_profile: Dict representing the user's profile.
+      user_profile: UserProfile object representing the user's profile.
 
     Returns:
       Variation if a decision is available. None otherwise.
     """
 
-    user_id = user_profile.get('user_id')
-    available_decisions = user_profile.get('decisions')
-    variation_id = available_decisions.get(experiment.id)
+    user_id = user_profile.user_id
+    variation_id = user_profile.get_variaton_for_experiment(experiment.id)
 
     if variation_id:
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
@@ -95,9 +94,10 @@ class DecisionService(object):
       return variation
 
     # Check to see if user has a decision available for the given experiment
-    user_profile = UserProfile(user_id).__dict__()
+    user_profile = UserProfile(user_id)
     if self.user_profile_service:
-      user_profile = self.user_profile_service.lookup(user_id)
+      retrieved_profile = self.user_profile_service.lookup(user_id)
+      user_profile = UserProfile(**retrieved_profile)
       variation = self.get_stored_decision(experiment, user_profile)
       if variation:
         return variation
@@ -115,10 +115,8 @@ class DecisionService(object):
     if variation:
       # Store this new decision and return the variation for the user
       if self.user_profile_service:
-        user_profile['decisions'].update({
-          experiment.id: variation.id
-        })
-        self.user_profile_service.save(user_profile)
+        user_profile.save_variation_for_experiment(experiment.id, variation.id)
+        self.user_profile_service.save(dict(user_profile))
         return variation
 
     return None
