@@ -14,7 +14,7 @@
 import numbers
 import sys
 
-from . import decision
+from . import decision_service
 from . import event_builder
 from . import exceptions
 from . import project_config
@@ -79,7 +79,7 @@ class Optimizely(object):
       return
 
     self.event_builder = event_builder.EventBuilder(self.config)
-    self.decision_service = decision.DecisionService(self.config, user_profile_service)
+    self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.

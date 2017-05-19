@@ -72,9 +72,9 @@ class DecisionServiceTest(base.BaseTest):
     """ Test that get_variation returns forced variation if user is forced in a variation. """
 
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
                     return_value=entities.Variation('111128', 'control')) as mock_get_forced_variation, \
-      mock.patch('optimizely.decision.DecisionService.get_stored_decision') as mock_get_stored_decision, \
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision') as mock_get_stored_decision, \
       mock.patch('optimizely.helpers.audience.is_user_in_experiment') as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
       mock.patch('optimizely.user_profile.UserProfileService.lookup') as mock_lookup, \
@@ -94,9 +94,9 @@ class DecisionServiceTest(base.BaseTest):
     """ Test that get_variation returns stored decision if user has variation available for given experiment. """
 
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
                     return_value=None) as mock_get_forced_variation, \
-      mock.patch('optimizely.decision.DecisionService.get_stored_decision',
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision',
                  return_value=entities.Variation('111128', 'control')) as mock_get_stored_decision, \
       mock.patch('optimizely.helpers.audience.is_user_in_experiment') as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
@@ -123,9 +123,9 @@ class DecisionServiceTest(base.BaseTest):
     Also, stores decision if user profile service is available. """
 
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
                     return_value=None) as mock_get_forced_variation, \
-      mock.patch('optimizely.decision.DecisionService.get_stored_decision',
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision',
                  return_value=None) as mock_get_stored_decision, \
       mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket',
@@ -153,9 +153,9 @@ class DecisionServiceTest(base.BaseTest):
     self.decision_service.user_profile_service = None
 
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
                     return_value=None) as mock_get_forced_variation, \
-      mock.patch('optimizely.decision.DecisionService.get_stored_decision') as mock_get_stored_decision, \
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision') as mock_get_stored_decision, \
       mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket',
                  return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
@@ -176,9 +176,9 @@ class DecisionServiceTest(base.BaseTest):
     """ Test that get_variation returns None if user is not in experiment. """
 
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
                     return_value=None) as mock_get_forced_variation, \
-      mock.patch('optimizely.decision.DecisionService.get_stored_decision',
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision',
                  return_value=None) as mock_get_stored_decision, \
       mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
@@ -199,9 +199,9 @@ class DecisionServiceTest(base.BaseTest):
     """ Test that get_variation handles invalid user profile gracefully. """
 
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.decision.DecisionService.get_forced_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
                     return_value=None) as mock_get_forced_variation, \
-      mock.patch('optimizely.decision.DecisionService.get_stored_decision') as mock_get_stored_decision, \
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision') as mock_get_stored_decision, \
       mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket',
                  return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
@@ -219,6 +219,65 @@ class DecisionServiceTest(base.BaseTest):
     self.assertEqual(0, mock_get_stored_decision.call_count)
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
     mock_logging.assert_called_with(enums.LogLevels.WARNING, 'User profile has invalid format.')
+    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_save.assert_called_once_with({'user_id': 'test_user',
+                                       'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
+
+  def test_get_variation__user_profile_lookup_fails(self):
+    """ Test that get_variation acts gracefully when lookup fails. """
+
+    experiment = self.project_config.get_experiment_from_key('test_experiment')
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
+                    return_value=None) as mock_get_forced_variation, \
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision') as mock_get_stored_decision, \
+      mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
+      mock.patch('optimizely.bucketer.Bucketer.bucket',
+                 return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
+      mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging, \
+      mock.patch('optimizely.user_profile.UserProfileService.lookup',
+                 side_effect=Exception('major problem')) as mock_lookup, \
+      mock.patch('optimizely.user_profile.UserProfileService.save') as mock_save:
+      self.assertEqual(entities.Variation('111129', 'variation'),
+                       self.decision_service.get_variation(experiment, 'test_user', None))
+
+    # Assert that user is bucketed and new decision is stored
+    mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
+    mock_lookup.assert_called_once_with('test_user')
+    # Stored decision is not consulted as lookup failed
+    self.assertEqual(0, mock_get_stored_decision.call_count)
+    mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
+    mock_logging.assert_any_call(
+      enums.LogLevels.ERROR,
+      'Unable to retrieve user profile for user "test_user" as lookup failed. Error: major problem')
+    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_save.assert_called_once_with({'user_id': 'test_user',
+                                       'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
+
+  def test_get_variation__user_profile_save_fails(self):
+    """ Test that get_variation acts gracefully when save fails. """
+
+    experiment = self.project_config.get_experiment_from_key('test_experiment')
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
+                    return_value=None) as mock_get_forced_variation, \
+      mock.patch('optimizely.decision_service.DecisionService.get_stored_decision') as mock_get_stored_decision, \
+      mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
+      mock.patch('optimizely.bucketer.Bucketer.bucket',
+                 return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
+      mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging, \
+      mock.patch('optimizely.user_profile.UserProfileService.lookup', return_value=None) as mock_lookup, \
+      mock.patch('optimizely.user_profile.UserProfileService.save',
+                 side_effect=Exception('major problem')) as mock_save:
+      self.assertEqual(entities.Variation('111129', 'variation'),
+                       self.decision_service.get_variation(experiment, 'test_user', None))
+
+    # Assert that user is bucketed and new decision is stored
+    mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
+    mock_lookup.assert_called_once_with('test_user')
+    self.assertEqual(0, mock_get_stored_decision.call_count)
+    mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
+    mock_logging.assert_any_call(
+      enums.LogLevels.ERROR,
+      'Unable to save user profile for user "test_user". Error: major problem')
     mock_bucket.assert_called_once_with(experiment, 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})

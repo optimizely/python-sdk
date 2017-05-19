@@ -120,7 +120,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
 
     with mock.patch(
-      'optimizely.decision.DecisionService.get_variation',
+      'optimizely.decision_service.DecisionService.get_variation',
       return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision,\
       mock.patch('time.time', return_value=42),\
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
@@ -155,7 +155,7 @@ class OptimizelyTest(base.BaseTest):
     variation when attributes are provided and audience conditions are met. """
 
     with mock.patch(
-      'optimizely.decision.DecisionService.get_variation',
+      'optimizely.decision_service.DecisionService.get_variation',
       return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_get_variation,\
       mock.patch('time.time', return_value=42),\
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
@@ -261,7 +261,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
-    with mock.patch('optimizely.decision.DecisionService.get_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation,\
@@ -333,7 +333,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.decision.DecisionService.get_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation,\
@@ -400,7 +400,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_deprecated_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.decision.DecisionService.get_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation,\
@@ -456,7 +456,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_invalid_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.decision.DecisionService.get_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation,\
@@ -592,7 +592,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
   def test_activate(self):
     """ Test that expected log messages are logged during activate. """
 
-    with mock.patch('optimizely.decision.DecisionService.get_variation',
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111129')),\
         mock.patch('time.time', return_value=42),\

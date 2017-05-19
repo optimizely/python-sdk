@@ -80,7 +80,8 @@ class DecisionService(object):
 
     First, check if user is forced in a variation.
     Second, check if there is a stored decision for the user and return the corresponding variation.
-    Third, bucket the user and return the variation.
+    Third, figure out if user is in the experiment by evaluating audience conditions if any.
+    Fourth, bucket the user and return the variation.
 
     Args:
       experiment_key: Experiment for which user variation needs to be determined.
@@ -103,8 +104,10 @@ class DecisionService(object):
         retrieved_profile = self.user_profile_service.lookup(user_id)
       except:
         error = sys.exc_info()[1]
-        self.logger.log(enums.LogLevels.ERROR,
-                        'Unable to retrieve user profile for user as lookup failed. Error: %s' % str(error))
+        self.logger.log(
+          enums.LogLevels.ERROR,
+          'Unable to retrieve user profile for user "%s" as lookup failed. Error: %s' % (user_id, str(error))
+        )
         retrieved_profile = None
 
       if validator.is_user_profile_valid(retrieved_profile):
@@ -134,7 +137,7 @@ class DecisionService(object):
         except:
           error = sys.exc_info()[1]
           self.logger.log(enums.LogLevels.ERROR,
-                          'Unable to save user profile for user. Error: %s' % str(error))
+                          'Unable to save user profile for user "%s". Error: %s' % (user_id, str(error)))
       return variation
 
     return None
