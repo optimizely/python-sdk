@@ -11,9 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 from . import bucketer
 from .helpers import audience as audience_helper
 from .helpers import enums
+from .helpers import validator
 from .user_profile import UserProfile
 
 
@@ -96,11 +99,21 @@ class DecisionService(object):
     # Check to see if user has a decision available for the given experiment
     user_profile = UserProfile(user_id)
     if self.user_profile_service:
-      retrieved_profile = self.user_profile_service.lookup(user_id)
-      user_profile = UserProfile(**retrieved_profile)
-      variation = self.get_stored_decision(experiment, user_profile)
-      if variation:
-        return variation
+      try:
+        retrieved_profile = self.user_profile_service.lookup(user_id)
+      except:
+        error = sys.exc_info()[1]
+        self.logger.log(enums.LogLevels.ERROR,
+                        'Unable to retrieve user profile for user as lookup failed. Error: %s' % str(error))
+        retrieved_profile = None
+
+      if validator.is_user_profile_valid(retrieved_profile):
+        user_profile = UserProfile(**retrieved_profile)
+        variation = self.get_stored_decision(experiment, user_profile)
+        if variation:
+          return variation
+      else:
+        self.logger.log(enums.LogLevels.WARNING, 'User profile has invalid format.')
 
     # Bucket user and store the new decision
     if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
@@ -115,8 +128,13 @@ class DecisionService(object):
     if variation:
       # Store this new decision and return the variation for the user
       if self.user_profile_service:
-        user_profile.save_variation_for_experiment(experiment.id, variation.id)
-        self.user_profile_service.save(user_profile.__dict__)
+        try:
+          user_profile.save_variation_for_experiment(experiment.id, variation.id)
+          self.user_profile_service.save(user_profile.__dict__)
+        except:
+          error = sys.exc_info()[1]
+          self.logger.log(enums.LogLevels.ERROR,
+                          'Unable to save user profile for user. Error: %s' % str(error))
       return variation
 
     return None

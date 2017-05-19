@@ -20,6 +20,8 @@ class UserProfile(object):
                           variation ID identifying the variation for the user.
    """
 
+  USER_ID_KEY = 'user_id'
+  EXPERIMENT_BUCKET_MAP_KEY = 'experiment_bucket_map'
   VARIATION_ID_KEY = 'variation_id'
 
   def __init__(self, user_id, experiment_bucket_map=None, **kwargs):

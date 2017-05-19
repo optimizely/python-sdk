@@ -14,6 +14,7 @@
 import json
 import jsonschema
 
+from optimizely.user_profile import UserProfile
 from . import constants
 
 
@@ -117,3 +118,36 @@ def are_event_tags_valid(event_tags):
   """
 
   return type(event_tags) is dict
+
+
+def is_user_profile_valid(user_profile):
+  """ Determine if provided user profile is valid or not.
+
+  Args:
+    user_profile: User's profile which needs to be validated.
+
+  Returns:
+    Boolean depending upon whether profile is valid or not.
+  """
+
+  if not user_profile:
+    return False
+
+  if not type(user_profile) is dict:
+    return False
+
+  if not UserProfile.USER_ID_KEY in user_profile:
+    return False
+
+  if not UserProfile.EXPERIMENT_BUCKET_MAP_KEY in user_profile:
+    return False
+
+  experiment_bucket_map = user_profile.get(UserProfile.EXPERIMENT_BUCKET_MAP_KEY)
+  if not type(experiment_bucket_map) is dict:
+    return False
+
+  for decision in experiment_bucket_map.values():
+    if type(decision) is not dict or UserProfile.VARIATION_ID_KEY not in decision:
+      return False
+
+  return True
