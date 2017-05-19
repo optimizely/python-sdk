@@ -205,6 +205,7 @@ class DecisionServiceTest(base.BaseTest):
       mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
       mock.patch('optimizely.bucketer.Bucketer.bucket',
                  return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
+      mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging, \
       mock.patch('optimizely.user_profile.UserProfileService.lookup',
                  return_value='invalid_profile') as mock_lookup, \
       mock.patch('optimizely.user_profile.UserProfileService.save') as mock_save:
@@ -217,6 +218,7 @@ class DecisionServiceTest(base.BaseTest):
     # Stored decision is not consulted as user profile is invalid
     self.assertEqual(0, mock_get_stored_decision.call_count)
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
+    mock_logging.assert_called_with(enums.LogLevels.WARNING, 'User profile has invalid format.')
     mock_bucket.assert_called_once_with(experiment, 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
