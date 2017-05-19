@@ -156,7 +156,7 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch(
       'optimizely.decision.DecisionService.get_variation',
-      return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision,\
+      return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_get_variation,\
       mock.patch('time.time', return_value=42),\
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
@@ -185,7 +185,7 @@ class OptimizelyTest(base.BaseTest):
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk'
     }
-    mock_decision.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                           'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
@@ -261,10 +261,10 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+    with mock.patch('optimizely.decision.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
-                    )) as mock_bucket,\
+                    )) as mock_get_variation,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -300,7 +300,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'accountId': '12001'
     }
-    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -332,10 +333,10 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+    with mock.patch('optimizely.decision.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
-                    )) as mock_bucket,\
+                    )) as mock_get_variation,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
@@ -385,7 +386,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'accountId': '12001'
     }
-    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
 
     # Sort event features based on ID
@@ -398,10 +400,10 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_deprecated_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+    with mock.patch('optimizely.decision.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
-                    )) as mock_bucket,\
+                    )) as mock_get_variation,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
@@ -445,7 +447,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'accountId': '12001'
     }
-    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -453,10 +456,10 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_invalid_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
-    with mock.patch('optimizely.bucketer.Bucketer.bucket',
+    with mock.patch('optimizely.decision.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
-                    )) as mock_bucket,\
+                    )) as mock_get_variation,\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
@@ -499,7 +502,8 @@ class OptimizelyTest(base.BaseTest):
       'accountId': '12001'
     }
 
-    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -589,7 +593,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     """ Test that expected log messages are logged during activate. """
 
     with mock.patch('optimizely.decision.DecisionService.get_variation',
-                    return_value=self.project_config.get_variation_from_id('test_experiment', '111129')),\
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111129')),\
         mock.patch('time.time', return_value=42),\
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'),\
         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:

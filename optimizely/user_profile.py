@@ -26,6 +26,9 @@ class UserProfile(object):
     self.user_id = user_id
     self.experiment_bucket_map = experiment_bucket_map or {}
 
+  def __eq__(self, other):
+    return self.__dict__ == other.__dict__
+
   def get_variaton_for_experiment(self, experiment_id):
     """ Helper method to retrieve variation ID for given experiment.
 

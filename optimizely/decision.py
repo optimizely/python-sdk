@@ -66,7 +66,7 @@ class DecisionService(object):
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
       if variation:
         self.config.logger.log(enums.LogLevels.INFO,
-                               'Found a stored decision. User "%s" is in variation "%s" of experiment %s.' %
+                               'Found a stored decision. User "%s" is in variation "%s" of experiment "%s".' %
                                (user_id, variation.key, experiment.key))
         return variation
 
@@ -116,7 +116,7 @@ class DecisionService(object):
       # Store this new decision and return the variation for the user
       if self.user_profile_service:
         user_profile.save_variation_for_experiment(experiment.id, variation.id)
-        self.user_profile_service.save(dict(user_profile))
-        return variation
+        self.user_profile_service.save(user_profile.__dict__)
+      return variation
 
     return None
