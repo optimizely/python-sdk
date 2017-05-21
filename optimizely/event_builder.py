@@ -89,7 +89,7 @@ class BaseEventBuilder(object):
 
     self._add_project_id()
     self._add_account_id()
-    self._add_visitor(user_id, attributes)
+    self._add_visitor(user_id)
     self._add_attributes(attributes)
     self._add_source()
     self._add_revision()
@@ -156,7 +156,7 @@ class EventBuilder(BaseEventBuilder):
             'value': attribute_value,
           })
 
-  def _add_visitor(self, user_id, attributes):
+  def _add_visitor(self, user_id):
     self.params['visitors'] = []
     # Add a single visitor
     visitor = {}
