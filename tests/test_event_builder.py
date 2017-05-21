@@ -42,6 +42,9 @@ class EventTest(unittest.TestCase):
 
 class EventBuilderTest(base.BaseTest):
 
+  maxDiff = None
+
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
@@ -109,33 +112,51 @@ class EventBuilderTest(base.BaseTest):
     expected_params = {
       'accountId': '12001',
       'projectId': '111001',
-      'layerId': '111182',
-      'visitorId': 'test_user',
+      'visitors':[  
+          {  
+            'visitorId':'test_user',
+            'attributes': [
+              {
+                'type': 'custom',
+                'value': 'test_value',
+                'entityId': '111094',
+                'key': 'test_attribute'
+              }
+            ],
+            'snapshots':[  
+              {  
+                'decisions':[  
+                  {  
+                    'variationId':'111129',
+                    'experimentId':'111127',
+                    'campaignId':'111182'
+                  }
+                ],
+                'events':[  
+                  {  
+                    'timestamp':42123,
+                    'entityId':'111182',
+                    'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                    'key':'campaign_activated'
+                  }
+                ]
+              }
+            ]
+          }
+        ],
       'revision': '42',
-      'decision': {
-        'experimentId': '111127',
-        'variationId': '111129',
-        'isLayerHoldback': False
-      },
-      'timestamp': 42123,
-      'isGlobalHoldback': False,
-      'userFeatures': [{
-        'id': '111094',
-        'name': 'test_attribute',
-        'type': 'custom',
-        'value': 'test_value',
-        'shouldIndex': True
-      }],
-      'clientEngine': 'python-sdk',
+      'clientName': 'python-sdk',
       'clientVersion': version.__version__
     }
-    with mock.patch('time.time', return_value=42.123):
+
+    with mock.patch('time.time', return_value=42.123), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', {'test_attribute': 'test_value'}
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.IMPRESSION_ENDPOINT,
+                                event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)

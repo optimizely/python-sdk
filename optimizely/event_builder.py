@@ -89,8 +89,8 @@ class BaseEventBuilder(object):
 
     self._add_project_id()
     self._add_account_id()
-    #self._add_attributes(attributes)
-    self._add_visitor(user_id)
+    self._add_visitor(user_id, attributes)
+    self._add_attributes(attributes)
     self._add_source()
     self._add_revision()
 
@@ -116,7 +116,9 @@ class EventBuilder(BaseEventBuilder):
     EVENT_NAME = 'eventName'
     EVENT_METRICS = 'eventMetrics'
     EVENT_FEATURES = 'eventFeatures'
+    # delete vvv
     USER_FEATURES = 'userFeatures'
+    ATTRIBUTES = 'attributes'
     DECISION = 'decisions'
     REVISION = 'revision'
     TIME = 'timestamp'
@@ -135,9 +137,11 @@ class EventBuilder(BaseEventBuilder):
       attributes: Dict representing user attributes and values which need to be recorded.
     """
 
-    self.params[self.EventParams.USER_FEATURES] = []
     if not attributes:
       return
+
+    visitor = next(iter(self.params['visitors'] or []), None)
+    visitor[self.EventParams.ATTRIBUTES] = []
 
     for attribute_key in attributes.keys():
       attribute_value = attributes.get(attribute_key)
@@ -145,19 +149,14 @@ class EventBuilder(BaseEventBuilder):
       if attribute_value:
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
-          self.params[self.EventParams.USER_FEATURES].append({
+          visitor[self.EventParams.ATTRIBUTES].append({
             'entityId': attribute.id,
             'key': attribute_key,
             'type': 'custom',
             'value': attribute_value,
-            'shouldIndex': True
           })
 
-  def _add_visitors(self):
-    self.params['visitors'] = []
-    self._add_visitor()
-
-  def _add_visitor(self, user_id):
+  def _add_visitor(self, user_id, attributes):
     self.params['visitors'] = []
     # Add a single visitor
     visitor = {}
@@ -167,6 +166,9 @@ class EventBuilder(BaseEventBuilder):
 
   def _add_snapshot(self):
     self.snapshot = {}
+
+  def _add_attribute(self):
+    self.attribute = {}
 
   def _add_source(self):
     """ Add source information to the event. """
