@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import time
+import uuid
 from abc import abstractmethod
 from abc import abstractproperty
 
@@ -53,7 +54,7 @@ class BaseEventBuilder(object):
   def _add_user_id(self, user_id):
     """ Add user ID to the event. """
 
-    self.params[self.EventParams.END_USER_ID] = user_id
+    self.params['visitor'][self.EventParams.END_USER_ID] = user_id
 
   @abstractmethod
   def _add_attributes(self, attributes):
@@ -88,39 +89,40 @@ class BaseEventBuilder(object):
 
     self._add_project_id()
     self._add_account_id()
-    self._add_user_id(user_id)
-    self._add_attributes(attributes)
+    #self._add_attributes(attributes)
+    self._add_visitor(user_id)
     self._add_source()
     self._add_revision()
-    self._add_time()
 
 
 class EventBuilder(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new endpoints. """
 
-  IMPRESSION_ENDPOINT = 'https://logx.optimizely.com/log/decision'
-  CONVERSION_ENDPOINT = 'https://logx.optimizely.com/log/event'
+  ENDPOINT = 'https://logx.optimizely.com/v1/events'
   HTTP_VERB = 'POST'
   HTTP_HEADERS = {'Content-Type': 'application/json'}
 
   class EventParams(object):
     ACCOUNT_ID = 'accountId'
     PROJECT_ID = 'projectId'
-    LAYER_ID = 'layerId'
+    VISITOR_ID = 'visitorId'
     EXPERIMENT_ID = 'experimentId'
+    CAMPAIGN_ID = 'campaignId'
     VARIATION_ID = 'variationId'
     END_USER_ID = 'visitorId'
-    EVENT_ID = 'eventEntityId'
+    EVENT = 'events'
+    EVENT_ID = 'entityId'
     EVENT_NAME = 'eventName'
     EVENT_METRICS = 'eventMetrics'
     EVENT_FEATURES = 'eventFeatures'
     USER_FEATURES = 'userFeatures'
-    DECISION = 'decision'
-    LAYER_STATES = 'layerStates'
+    DECISION = 'decisions'
     REVISION = 'revision'
     TIME = 'timestamp'
-    SOURCE_SDK_TYPE = 'clientEngine'
+    KEY = 'key'
+    UUID = 'uuid'
+    SOURCE_SDK_TYPE = 'clientName'
     SOURCE_SDK_VERSION = 'clientVersion'
     ACTION_TRIGGERED = 'actionTriggered'
     IS_GLOBAL_HOLDBACK = 'isGlobalHoldback'
@@ -144,12 +146,27 @@ class EventBuilder(BaseEventBuilder):
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
           self.params[self.EventParams.USER_FEATURES].append({
-            'id': attribute.id,
-            'name': attribute_key,
+            'entityId': attribute.id,
+            'key': attribute_key,
             'type': 'custom',
             'value': attribute_value,
             'shouldIndex': True
           })
+
+  def _add_visitors(self):
+    self.params['visitors'] = []
+    self._add_visitor()
+
+  def _add_visitor(self, user_id):
+    self.params['visitors'] = []
+    # Add a single visitor
+    visitor = {}
+    visitor[self.EventParams.END_USER_ID] = user_id
+    visitor["snapshots"] = []
+    self.params['visitors'].append(visitor)
+
+  def _add_snapshot(self):
+    self.snapshot = {}
 
   def _add_source(self):
     """ Add source information to the event. """
@@ -166,6 +183,7 @@ class EventBuilder(BaseEventBuilder):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
+
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
 
@@ -174,13 +192,21 @@ class EventBuilder(BaseEventBuilder):
       variation_id: ID for variation which would be presented to user.
     """
 
-    self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
-    self.params[self.EventParams.LAYER_ID] = experiment.layerId
-    self.params[self.EventParams.DECISION] = {
+    self.snapshot[self.EventParams.DECISION] = [ {
       self.EventParams.EXPERIMENT_ID: experiment.id,
       self.EventParams.VARIATION_ID: variation_id,
-      self.EventParams.IS_LAYER_HOLDBACK: False
-    }
+      self.EventParams.CAMPAIGN_ID: experiment.layerId
+    }]
+
+    self.snapshot[self.EventParams.EVENT] = [{
+      self.EventParams.EVENT_ID: experiment.layerId,
+      self.EventParams.TIME: int(round(time.time() * 1000)),
+      self.EventParams.KEY : 'campaign_activated',
+      self.EventParams.UUID : str(uuid.uuid4())
+    }]
+
+    visitor_list = next(iter(self.params['visitors'] or []), None)
+    visitor_list['snapshots'].append(self.snapshot)
 
   def _add_required_params_for_conversion(self, event_key, event_tags, decisions):
     """ Add parameters that are required for the conversion event to register.
@@ -248,8 +274,10 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
+    self._add_snapshot()
     self._add_required_params_for_impression(experiment, variation_id)
-    return Event(self.IMPRESSION_ENDPOINT,
+    print self.params
+    return Event(self.ENDPOINT,
                  self.params,
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)

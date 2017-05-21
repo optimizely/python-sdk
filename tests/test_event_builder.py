@@ -48,7 +48,8 @@ class EventBuilderTest(base.BaseTest):
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
-
+    print "EXPECTED", expected_params
+    print "GOT", event_obj.params
     self.assertEqual(expected_url, event_obj.url)
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
@@ -60,26 +61,43 @@ class EventBuilderTest(base.BaseTest):
     expected_params = {
       'accountId': '12001',
       'projectId': '111001',
-      'layerId': '111182',
-      'visitorId': 'test_user',
-      'decision': {
-        'experimentId': '111127',
-        'variationId': '111129',
-        'isLayerHoldback': False
-      },
+      'visitors':[  
+          {  
+            'visitorId':'test_user',
+            'snapshots':[  
+              {  
+                'decisions':[  
+                  {  
+                    'variationId':'111129',
+                    'experimentId':'111127',
+                    'campaignId':'111182'
+                  }
+                ],
+                'events':[  
+                  {  
+                    'timestamp':42123,
+                    'entityId':'111182',
+                    'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                    'key':'campaign_activated'
+                  }
+                ]
+              }
+            ]
+          }
+        ],
       'revision': '42',
-      'timestamp': 42123,
-      'isGlobalHoldback': False,
-      'userFeatures': [],
-      'clientEngine': 'python-sdk',
+      'clientName': 'python-sdk',
       'clientVersion': version.__version__
     }
-    with mock.patch('time.time', return_value=42.123):
+
+    with mock.patch('time.time', return_value=42.123), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
       )
+
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.IMPRESSION_ENDPOINT,
+                                event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
