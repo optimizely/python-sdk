@@ -303,14 +303,9 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-<<<<<<< HEAD
-    self._add_required_params_for_conversion(event_key, event_tags, decisions)
-    return Event(self.CONVERSION_ENDPOINT,
-=======
     self._add_snapshot()
     self._add_required_params_for_conversion(event_key, user_id, event_tags, valid_experiments)
     return Event(self.ENDPOINT,
->>>>>>> 7d22687... WIP - simple conversion event (no tags)
                  self.params,
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
