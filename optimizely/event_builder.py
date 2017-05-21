@@ -218,31 +218,8 @@ class EventBuilder(BaseEventBuilder):
       event_tags: Dict representing metadata associated with the event.
       decisions: List of tuples representing valid experiments IDs and variation IDs.
     """
-    '''
-    self.params[self.EventParams.EVENT_FEATURES] = []
-    self.params[self.EventParams.EVENT_METRICS] = []
 
-    if event_tags:
-      event_value = event_tag_utils.get_revenue_value(event_tags)
-      if event_value is not None:
-        self.params[self.EventParams.EVENT_METRICS] = [{
-          'name': event_tag_utils.EVENT_VALUE_METRIC,
-          'value': event_value
-        }]
-
-      for event_tag_id in event_tags.keys():
-        event_tag_value = event_tags.get(event_tag_id)
-        if event_tag_value is None:
-          continue
-
-        event_feature = {
-          'name': event_tag_id,
-          'type': 'custom',
-          'value': event_tag_value,
-          'shouldIndex': False,
-        }
-        self.params[self.EventParams.EVENT_FEATURES].append(event_feature)
-    '''
+    event_list = []
     self.snapshot[self.EventParams.EVENT] = []
 
     visitor = next(iter(self.params['visitors'] or []), None)
@@ -255,12 +232,24 @@ class EventBuilder(BaseEventBuilder):
           self.EventParams.VARIATION_ID: variation.id,
           self.EventParams.CAMPAIGN_ID: experiment.layerId
         }]
-        self.snapshot[self.EventParams.EVENT].append({
+
+        event_dict = {
             self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
             self.EventParams.TIME: int(round(time.time() * 1000)),
             self.EventParams.KEY : event_key,
             self.EventParams.UUID : str(uuid.uuid4())
-        })
+        }
+
+        if event_tags:
+          event_value = event_tag_utils.get_revenue_value(event_tags)
+          if event_value is not None:
+            event_dict['revenue'] = event_value
+            del event_tags['revenue']
+
+          if len(event_tags) > 0:
+            event_dict['tags'] = event_tags
+
+          self.snapshot[self.EventParams.EVENT].append(event_dict)     
 
       visitor['snapshots'].append(self.snapshot)
 

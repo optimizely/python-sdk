@@ -168,43 +168,52 @@ class EventBuilderTest(base.BaseTest):
     expected_params = {
       'accountId': '12001',
       'projectId': '111001',
-      'visitorId': 'test_user',
-      'eventName': 'test_event',
-      'eventEntityId': '111095',
-      'eventMetrics': [],
-      'eventFeatures': [],
+      'visitors':[  
+          {  
+            'visitorId':'test_user',
+            'attributes': [
+              {
+                'type': 'custom',
+                'value': 'test_value',
+                'entityId': '111094',
+                'key': 'test_attribute'
+              }
+            ],
+            'snapshots':[  
+              {  
+                'decisions':[  
+                  {  
+                    'variationId':'111129',
+                    'experimentId':'111127',
+                    'campaignId':'111182'
+                  }
+                ],
+                'events':[  
+                  {  
+                    "timestamp":42123,
+                    "entityId":"111095",
+                    "uuid":"a68cf1ad-0393-4e18-af87-efe8f01a7c9c",
+                    "key":"test_event"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
       'revision': '42',
-      'layerStates': [{
-          'layerId': '111182',
-          'revision': '42',
-          'decision': {
-            'experimentId': '111127',
-            'variationId': '111129',
-            'isLayerHoldback': False
-          },
-          'actionTriggered': True,
-        }
-      ],
-      'timestamp': 42123,
-      'isGlobalHoldback': False,
-      'userFeatures': [{
-        'id': '111094',
-        'name': 'test_attribute',
-        'type': 'custom',
-        'value': 'test_value',
-        'shouldIndex': True
-      }],
-      'clientEngine': 'python-sdk',
+      'clientName': 'python-sdk',
       'clientVersion': version.__version__
     }
+
     with mock.patch('time.time', return_value=42.123), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
@@ -231,7 +240,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123):
       event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
@@ -293,9 +302,9 @@ class EventBuilderTest(base.BaseTest):
       )
 
     # Sort event features based on ID
-    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
+    #event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
