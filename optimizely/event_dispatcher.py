@@ -31,11 +31,14 @@ class EventDispatcher(object):
     Args:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
+    #print "event here hi", event.params
+    print "dumping", json.dumps(event.params)
 
     try:
       if event.http_verb == enums.HTTPVerbs.GET:
         requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT)
       elif event.http_verb == enums.HTTPVerbs.POST:
+        print "in here 2"
         requests.post(event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT)
     except request_exception.RequestException as error:
       logging.error('Dispatch event failed. Error: %s' % str(error))

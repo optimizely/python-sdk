@@ -218,8 +218,7 @@ class EventBuilder(BaseEventBuilder):
       event_tags: Dict representing metadata associated with the event.
       decisions: List of tuples representing valid experiments IDs and variation IDs.
     """
-
-    self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
+    '''
     self.params[self.EventParams.EVENT_FEATURES] = []
     self.params[self.EventParams.EVENT_METRICS] = []
 
@@ -243,23 +242,27 @@ class EventBuilder(BaseEventBuilder):
           'shouldIndex': False,
         }
         self.params[self.EventParams.EVENT_FEATURES].append(event_feature)
+    '''
+    self.snapshot[self.EventParams.EVENT] = []
 
-    self.params[self.EventParams.LAYER_STATES] = []
-    for experiment_id, variation_id in decisions:
-      experiment = self.config.get_experiment_from_id(experiment_id)
-      self.params[self.EventParams.LAYER_STATES].append({
-        self.EventParams.LAYER_ID: experiment.layerId,
-        self.EventParams.REVISION: self.config.get_revision(),
-        self.EventParams.ACTION_TRIGGERED: True,
-        self.EventParams.DECISION: {
+    visitor = next(iter(self.params['visitors'] or []), None)
+
+    for experiment in valid_experiments:
+      variation = self.bucketer.bucket(experiment, user_id)
+      if variation:
+        self.snapshot[self.EventParams.DECISION] = [ {
           self.EventParams.EXPERIMENT_ID: experiment.id,
-          self.EventParams.VARIATION_ID: variation_id,
-          self.EventParams.IS_LAYER_HOLDBACK: False
-        }
-      })
+          self.EventParams.VARIATION_ID: variation.id,
+          self.EventParams.CAMPAIGN_ID: experiment.layerId
+        }]
+        self.snapshot[self.EventParams.EVENT].append({
+            self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
+            self.EventParams.TIME: int(round(time.time() * 1000)),
+            self.EventParams.KEY : event_key,
+            self.EventParams.UUID : str(uuid.uuid4())
+        })
 
-    self.params[self.EventParams.EVENT_ID] = self.config.get_event(event_key).id
-    self.params[self.EventParams.EVENT_NAME] = event_key
+      visitor['snapshots'].append(self.snapshot)
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
@@ -300,8 +303,14 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
+<<<<<<< HEAD
     self._add_required_params_for_conversion(event_key, event_tags, decisions)
     return Event(self.CONVERSION_ENDPOINT,
+=======
+    self._add_snapshot()
+    self._add_required_params_for_conversion(event_key, user_id, event_tags, valid_experiments)
+    return Event(self.ENDPOINT,
+>>>>>>> 7d22687... WIP - simple conversion event (no tags)
                  self.params,
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
