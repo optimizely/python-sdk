@@ -249,7 +249,7 @@ class EventBuilder(BaseEventBuilder):
           if len(event_tags) > 0:
             event_dict['tags'] = event_tags
 
-          self.snapshot[self.EventParams.EVENT].append(event_dict)     
+        self.snapshot[self.EventParams.EVENT].append(event_dict)     
 
       visitor['snapshots'].append(self.snapshot)
 
