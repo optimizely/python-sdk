@@ -53,13 +53,13 @@ class BaseEventBuilder(object):
 
   def _add_visitor(self, user_id):
     """ Add user ID to the event """
-    self.params['visitors'] = []
+    self.params[self.EventParams.VISITORS] = []
     # Add a single visitor
     visitor = {}
     visitor[self.EventParams.END_USER_ID] = user_id
     # put snaps visitors
-    visitor['snapshots'] = []
-    self.params['visitors'].append(visitor)
+    visitor[self.EventParams.SNAPSHOTS] = []
+    self.params[self.EventParams.VISITORS].append(visitor)
 
   @abstractmethod
   def _add_attributes(self, attributes):
@@ -124,7 +124,10 @@ class EventBuilder(BaseEventBuilder):
     REVISION = 'revision'
     TIME = 'timestamp'
     KEY = 'key'
+    TAGS = 'tags'
     UUID = 'uuid'
+    VISITORS = 'visitors'
+    SNAPSHOTS = 'snapshots'
     SOURCE_SDK_TYPE = 'clientName'
     SOURCE_SDK_VERSION = 'clientVersion'
 
@@ -138,7 +141,7 @@ class EventBuilder(BaseEventBuilder):
     if not attributes:
       return
 
-    visitor = next(iter(self.params['visitors'] or []), None)
+    visitor = next(iter(self.params[self.EventParams.VISITORS] or []), None)
     visitor[self.EventParams.ATTRIBUTES] = []
 
     for attribute_key in attributes.keys():
@@ -191,12 +194,12 @@ class EventBuilder(BaseEventBuilder):
     self.snapshot[self.EventParams.EVENT] = [{
         self.EventParams.EVENT_ID: experiment.layerId,
         self.EventParams.TIME: int(round(time.time() * 1000)),
-        self.EventParams.KEY : 'campaign_activated',
-        self.EventParams.UUID : str(uuid.uuid4())
+        self.EventParams.KEY: 'campaign_activated',
+        self.EventParams.UUID: str(uuid.uuid4())
     }]
 
-    visitor_list = next(iter(self.params['visitors'] or []), None)
-    visitor_list['snapshots'].append(self.snapshot)
+    visitor_list = next(iter(self.params[self.EventParams.VISITORS] or []), None)
+    visitor_list[self.EventParams.SNAPSHOTS].append(self.snapshot)
 
   def _add_required_params_for_conversion(self, event_key, event_tags, decisions):
     """ Add parameters that are required for the conversion event to register.
@@ -210,7 +213,8 @@ class EventBuilder(BaseEventBuilder):
     event_list = []
     self.snapshot[self.EventParams.EVENT] = []
 
-    visitor = next(iter(self.params['visitors'] or []), None)
+    # get the only visitor 
+    visitor = next(iter(self.params[self.EventParams.VISITORS] or []), None)
 
     for experiment in valid_experiments:
       variation = self.bucketer.bucket(experiment, user_id)
@@ -224,8 +228,8 @@ class EventBuilder(BaseEventBuilder):
         event_dict = {
             self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
             self.EventParams.TIME: int(round(time.time() * 1000)),
-            self.EventParams.KEY : event_key,
-            self.EventParams.UUID : str(uuid.uuid4())
+            self.EventParams.KEY: event_key,
+            self.EventParams.UUID: str(uuid.uuid4())
         }
 
         if event_tags:
@@ -236,11 +240,11 @@ class EventBuilder(BaseEventBuilder):
             del event_tags['revenue']
 
           if len(event_tags) > 0:
-            event_dict['tags'] = event_tags
+            event_dict[self.EventParams.TAGS] = event_tags
 
-        self.snapshot[self.EventParams.EVENT].append(event_dict)     
+        self.snapshot[self.EventParams.EVENT].append(event_dict)  
 
-      visitor['snapshots'].append(self.snapshot)
+      visitor[self.EventParams.SNAPSHOTS].append(self.snapshot)
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
