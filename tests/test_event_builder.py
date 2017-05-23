@@ -29,7 +29,7 @@ class EventTest(unittest.TestCase):
       'a': '111001',
       'n': 'test_event',
       'g': '111028',
-      '': 'oeutest_user'
+      'u': 'oeutest_user'
     }
     http_verb = 'POST'
     headers = {'Content-Type': 'application/json'}
