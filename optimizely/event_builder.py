@@ -52,12 +52,13 @@ class BaseEventBuilder(object):
     self.params[self.EventParams.ACCOUNT_ID] = self.config.get_account_id()
 
   def _add_visitor(self, user_id):
-    """ Add user ID to the even """
+    """ Add user ID to the event """
     self.params['visitors'] = []
     # Add a single visitor
     visitor = {}
     visitor[self.EventParams.END_USER_ID] = user_id
-    visitor["snapshots"] = []
+    # put snaps visitors
+    visitor['snapshots'] = []
     self.params['visitors'].append(visitor)
 
   @abstractmethod
@@ -126,8 +127,6 @@ class EventBuilder(BaseEventBuilder):
     UUID = 'uuid'
     SOURCE_SDK_TYPE = 'clientName'
     SOURCE_SDK_VERSION = 'clientVersion'
-    EVENT_METRICS = 'eventMetrics'
-    EVENT_FEATURES = 'eventFeatures'
 
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
@@ -158,9 +157,6 @@ class EventBuilder(BaseEventBuilder):
 
   def _add_snapshot(self):
     self.snapshot = {}
-
-  def _add_attribute(self):
-    self.attribute = {}
 
   def _add_source(self):
     """ Add source information to the event. """
