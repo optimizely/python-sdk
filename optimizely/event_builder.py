@@ -32,9 +32,8 @@ class Event(object):
 class BaseEventBuilder(object):
   """ Base class which encapsulates methods to build events for tracking impressions and conversions. """
 
-  def __init__(self, config, bucketer):
+  def __init__(self, config):
     self.config = config
-    self.bucketer = bucketer
     self.params = {}
 
   @abstractproperty
@@ -183,14 +182,13 @@ class EventBuilder(BaseEventBuilder):
       self.EventParams.IS_LAYER_HOLDBACK: False
     }
 
-  def _add_required_params_for_conversion(self, event_key, user_id, event_tags, valid_experiments):
+  def _add_required_params_for_conversion(self, event_key, event_tags, decisions):
     """ Add parameters that are required for the conversion event to register.
 
     Args:
       event_key: Key representing the event which needs to be recorded.
-      user_id: ID for user.
       event_tags: Dict representing metadata associated with the event.
-      valid_experiments: List of tuples representing valid experiments IDs and variation IDs.
+      decisions: List of tuples representing valid experiments IDs and variation IDs.
     """
 
     self.params[self.EventParams.IS_GLOBAL_HOLDBACK] = False
@@ -219,7 +217,7 @@ class EventBuilder(BaseEventBuilder):
         self.params[self.EventParams.EVENT_FEATURES].append(event_feature)
 
     self.params[self.EventParams.LAYER_STATES] = []
-    for experiment_id, variation_id in valid_experiments:
+    for experiment_id, variation_id in decisions:
       experiment = self.config.get_experiment_from_id(experiment_id)
       self.params[self.EventParams.LAYER_STATES].append({
         self.EventParams.LAYER_ID: experiment.layerId,
@@ -256,7 +254,7 @@ class EventBuilder(BaseEventBuilder):
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
 
-  def create_conversion_event(self, event_key, user_id, attributes, event_tags, valid_experiments):
+  def create_conversion_event(self, event_key, user_id, attributes, event_tags, decisions):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
@@ -264,7 +262,7 @@ class EventBuilder(BaseEventBuilder):
       user_id: ID for user.
       attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
-      valid_experiments: List of tuples representing experiments IDs and variation IDs.
+      decisions: List of tuples representing experiments IDs and variation IDs.
 
     Returns:
       Event object encapsulating the conversion event.
@@ -272,7 +270,7 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_required_params_for_conversion(event_key, user_id, event_tags, valid_experiments)
+    self._add_required_params_for_conversion(event_key, event_tags, decisions)
     return Event(self.CONVERSION_ENDPOINT,
                  self.params,
                  http_verb=self.HTTP_VERB,

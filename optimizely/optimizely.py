@@ -14,15 +14,13 @@
 import numbers
 import sys
 
-from . import bucketer
+from . import decision_service
 from . import event_builder
 from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
-from .helpers import audience as audience_helper
 from .helpers import enums
-from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
@@ -55,7 +53,6 @@ class Optimizely(object):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = logger or noop_logger
     self.error_handler = error_handler or noop_error_handler
-    self.user_profile_service = user_profile_service
 
     try:
       self._validate_instantiation_options(datafile, skip_json_validation)
@@ -80,8 +77,8 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
       return
 
-    self.bucketer = bucketer.Bucketer(self.config)
-    self.event_builder = event_builder.EventBuilder(self.config, self.bucketer)
+    self.event_builder = event_builder.EventBuilder(self.config)
+    self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.
@@ -105,25 +102,6 @@ class Optimizely(object):
 
     if not validator.is_error_handler_valid(self.error_handler):
      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
-
-  def _validate_preconditions(self, experiment, attributes=None, event_tags=None):
-    """ Helper method to validate all pre-conditions before we go ahead to bucket user.
-
-    Args:
-      experiment: Object representing the experiment.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Boolean depending upon whether all conditions are met or not.
-    """
-    if not self._validate_user_inputs(attributes, event_tags):
-      return False
-
-    if not experiment_helper.is_experiment_running(experiment):
-      self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment.key)
-      return False
-
-    return True
 
   def _validate_user_inputs(self, attributes=None, event_tags=None):
     """ Helper method to validate user inputs.
@@ -149,8 +127,8 @@ class Optimizely(object):
 
     return True
 
-  def _get_valid_experiments_for_event(self, event, user_id, attributes):
-    """ Helper method to determine which experiments we should track for the given event.
+  def _get_decisions(self, event, user_id, attributes):
+    """ Helper method to retrieve decisions for the user for experiment(s) using the provided event.
 
     Args:
       event: The event which needs to be recorded.
@@ -160,7 +138,7 @@ class Optimizely(object):
     Returns:
       List of tuples representing valid experiment IDs and variation IDs into which the user is bucketed.
     """
-    valid_experiments = []
+    decisions = []
     for experiment_id in event.experimentIds:
       experiment = self.config.get_experiment_from_id(experiment_id)
       variation_key = self.get_variation(experiment.key, user_id, attributes)
@@ -170,9 +148,9 @@ class Optimizely(object):
         continue
 
       variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      valid_experiments.append((experiment_id, variation.id))
+      decisions.append((experiment_id, variation.id))
 
-    return valid_experiments
+    return decisions
 
   def activate(self, experiment_key, user_id, attributes=None):
     """ Buckets visitor and sends impression event to Optimizely.
@@ -243,13 +221,15 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.INFO, 'Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
-    # Filter out experiments that are not running or that do not include the user in audience conditions
-    valid_experiments = self._get_valid_experiments_for_event(event, user_id, attributes)
+    # Filter out experiments that are not running or that do not include the user in audience
+    # conditions and then determine the decision i.e. the corresponding variation
+    decisions = self._get_decisions(event, user_id, attributes)
 
-    # Create and dispatch conversion event if there are valid experiments
-    if valid_experiments:
-      conversion_event = self.event_builder.create_conversion_event(event_key, user_id, attributes, event_tags,
-                                                                    valid_experiments)
+    # Create and dispatch conversion event if there are any decisions
+    if decisions:
+      conversion_event = self.event_builder.create_conversion_event(
+        event_key, user_id, attributes, event_tags, decisions
+      )
       self.logger.log(enums.LogLevels.INFO, 'Tracking event "%s" for user "%s".' % (event_key, user_id))
       self.logger.log(enums.LogLevels.DEBUG,
                       'Dispatching conversion event to URL %s with params %s.' % (conversion_event.url,
@@ -287,22 +267,10 @@ class Optimizely(object):
                                                                                      user_id))
       return None
 
-    if not self._validate_preconditions(experiment, attributes):
+    if not self._validate_user_inputs(attributes):
       return None
 
-    forced_variation = self.bucketer.get_forced_variation(experiment, user_id)
-    if forced_variation:
-      return forced_variation.key
-
-    if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
-      self.logger.log(
-        enums.LogLevels.INFO,
-        'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment.key)
-      )
-      return None
-
-    variation = self.bucketer.bucket(experiment, user_id)
-
+    variation = self.decision_service.get_variation(experiment, user_id, attributes)
     if variation:
       return variation.key
 

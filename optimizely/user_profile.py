@@ -20,9 +20,42 @@ class UserProfile(object):
                           variation ID identifying the variation for the user.
    """
 
+  USER_ID_KEY = 'user_id'
+  EXPERIMENT_BUCKET_MAP_KEY = 'experiment_bucket_map'
+  VARIATION_ID_KEY = 'variation_id'
+
   def __init__(self, user_id, experiment_bucket_map=None, **kwargs):
     self.user_id = user_id
     self.experiment_bucket_map = experiment_bucket_map or {}
+
+  def __eq__(self, other):
+    return self.__dict__ == other.__dict__
+
+  def get_variation_for_experiment(self, experiment_id):
+    """ Helper method to retrieve variation ID for given experiment.
+
+    Args:
+      experiment_id: ID for experiment for which variation needs to be looked up for.
+
+    Returns:
+      Variation ID corresponding to the experiment. None if no decision available.
+    """
+
+    return self.experiment_bucket_map.get(experiment_id, {self.VARIATION_ID_KEY: None}).get(self.VARIATION_ID_KEY)
+
+  def save_variation_for_experiment(self, experiment_id, variation_id):
+    """ Helper method to save new experiment/variation as part of the user's profile.
+
+    Args:
+      experiment_id: ID for experiment for which the decision is to be stored.
+       variation_id: ID for variation that the user saw.
+    """
+
+    self.experiment_bucket_map.update({
+      experiment_id: {
+        self.VARIATION_ID_KEY: variation_id
+      }
+    })
 
 
 class UserProfileService(object):

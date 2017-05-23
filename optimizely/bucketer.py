@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -132,26 +132,4 @@ class Bucketer(object):
       return variation
 
     self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no variation.' % user_id)
-    return None
-
-  def get_forced_variation(self, experiment, user_id):
-    """ Determine if a user is forced into a variation for the given experiment and return that variation.
-
-    Args:
-      experiment: Object representing the experiment for which user is to be bucketed.
-      user_id: ID for the user.
-
-    Returns:
-      Variation in which the user with ID user_id is forced into. None if no variation.
-    """
-
-    forced_variations = experiment.forcedVariations
-    if forced_variations and user_id in forced_variations:
-      variation_key = forced_variations.get(user_id)
-      variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      if variation:
-        self.config.logger.log(enums.LogLevels.INFO,
-                               'User "%s" is forced in variation "%s".' % (user_id, variation_key))
-      return variation
-
     return None
