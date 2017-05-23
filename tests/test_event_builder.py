@@ -29,7 +29,7 @@ class EventTest(unittest.TestCase):
       'a': '111001',
       'n': 'test_event',
       'g': '111028',
-      'u': 'oeutest_user'
+      ':': 'oeutest_user'
     }
     http_verb = 'POST'
     headers = {'Content-Type': 'application/json'}
@@ -42,17 +42,13 @@ class EventTest(unittest.TestCase):
 
 class EventBuilderTest(base.BaseTest):
 
-  maxDiff = None
-
-
   def setUp(self):
     base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
-    print "EXPECTED", expected_params
-    print "GOT", event_obj.params
+
     self.assertEqual(expected_url, event_obj.url)
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
@@ -224,12 +220,12 @@ class EventBuilderTest(base.BaseTest):
 
     expected_params = {  
       'clientVersion':'1.1.1',
-      'projectId':u'111001',
+      'projectId':'111001',
       'visitors':[  
         {  
           'attributes':[  
             {  
-              'entityId':u'111094',
+              'entityId'::'111094',
               'type':'custom',
               'value':'test_value',
               'key':'test_attribute'
@@ -240,9 +236,9 @@ class EventBuilderTest(base.BaseTest):
             {  
               'decisions':[  
                 {  
-                  'variationId':u'111129',
-                  'experimentId':u'111127',
-                  'campaignId':u'111182'
+                  'variationId'::'111129',
+                  'experimentId'::'111127',
+                  'campaignId'::'111182'
                 }
               ],
               'events':[  
@@ -254,16 +250,16 @@ class EventBuilderTest(base.BaseTest):
                   'timestamp':42123,
                   'revenue':4200,
                   'key':'test_event',
-                  'entityId':u'111095'
+                  'entityId'::'111095'
                 }
               ]
             }
           ]
         }
       ],
-      'accountId':u'12001',
+      'accountId'::'12001',
       'clientName':'python-sdk',
-      'revision':u'42'
+      'revision'::'42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -287,12 +283,12 @@ class EventBuilderTest(base.BaseTest):
 
     expected_params = {
       'clientVersion':'1.1.1',
-      'projectId':u'111001',
+      'projectId'::'111001',
       'visitors':[  
         {  
           'attributes':[  
             {  
-              'entityId':u'111094',
+              'entityId'::'111094',
               'type':'custom',
               'value':'test_value',
               'key':'test_attribute'
@@ -303,15 +299,15 @@ class EventBuilderTest(base.BaseTest):
             {  
               'decisions':[  
                 {  
-                  'variationId':u'111129',
-                  'experimentId':u'111127',
-                  'campaignId':u'111182'
+                  'variationId'::'111129',
+                  'experimentId'::'111127',
+                  'campaignId'::'111182'
                 }
               ],
               'events':[  
                 {  
                   'timestamp':42123,
-                  'entityId':u'111095',
+                  'entityId'::'111095',
                   'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                   'key':'test_event',
                   'tags':{  
@@ -324,9 +320,9 @@ class EventBuilderTest(base.BaseTest):
           ]
         }
       ],
-      'accountId':u'12001',
+      'accountId'::'12001',
       'clientName':'python-sdk',
-      'revision':u'42'
+      'revision'::'42'
     }
 
     with mock.patch('time.time', return_value=42.123), \

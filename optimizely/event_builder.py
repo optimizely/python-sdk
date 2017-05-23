@@ -259,7 +259,7 @@ class EventBuilder(BaseEventBuilder):
     self._add_common_params(user_id, attributes)
     self._add_snapshot()
     self._add_required_params_for_impression(experiment, variation_id)
-    print self.params
+
     return Event(self.ENDPOINT,
                  self.params,
                  http_verb=self.HTTP_VERB,
