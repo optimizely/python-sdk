@@ -204,7 +204,6 @@ class EventBuilder(BaseEventBuilder):
       event_tags: Dict representing metadata associated with the event.
       decisions: List of tuples representing valid experiments IDs and variation IDs.
     """
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
 
     # get the only visitor
     visitor = self.params[self.EventParams.VISITORS][0]
@@ -218,50 +217,21 @@ class EventBuilder(BaseEventBuilder):
             self.EventParams.EXPERIMENT_ID: experiment.id,
             self.EventParams.VARIATION_ID: variation.id,
             self.EventParams.CAMPAIGN_ID: experiment.layerId
-=======
-
-    event_list = []
-    self.snapshot[self.EventParams.EVENT] = []
-
-    visitor = next(iter(self.params['visitors'] or []), None)
-
-    for experiment in valid_experiments:
-      variation = self.bucketer.bucket(experiment, user_id)
-      if variation:
-        self.snapshot[self.EventParams.DECISION] = [ {
-          self.EventParams.EXPERIMENT_ID: experiment.id,
-          self.EventParams.VARIATION_ID: variation.id,
-          self.EventParams.CAMPAIGN_ID: experiment.layerId
->>>>>>> WIP conversion event with event tags
         }]
 
         event_dict = {
             self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
             self.EventParams.TIME: int(round(time.time() * 1000)),
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
             self.EventParams.KEY: event_key,
             self.EventParams.UUID: str(uuid.uuid4())
-=======
-            self.EventParams.KEY : event_key,
-            self.EventParams.UUID : str(uuid.uuid4())
->>>>>>> WIP conversion event with event tags
         }
 
         if event_tags:
           event_value = event_tag_utils.get_revenue_value(event_tags)
           if event_value is not None:
             event_dict['revenue'] = event_value
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
             # remove revenue from event_dict
             del event_tags['revenue']
-=======
-            del event_tags['revenue']
-
-          if len(event_tags) > 0:
-            event_dict['tags'] = event_tags
-
-          self.snapshot[self.EventParams.EVENT].append(event_dict)     
->>>>>>> WIP conversion event with event tags
 
           if len(event_tags) > 0:
             event_dict[self.EventParams.TAGS] = event_tags

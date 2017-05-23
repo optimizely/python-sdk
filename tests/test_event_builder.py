@@ -163,28 +163,16 @@ class EventBuilderTest(base.BaseTest):
     with right params when attributes are provided. """
 
     expected_params = {
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
       'account_id': '12001',
       'project_id': '111001',
       'visitors':[  
           {  
             'visitor_id':'test_user',
-=======
-      'accountId': '12001',
-      'projectId': '111001',
-      'visitors':[  
-          {  
-            'visitorId':'test_user',
->>>>>>> WIP conversion event with event tags
             'attributes': [
               {
                 'type': 'custom',
                 'value': 'test_value',
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
                 'entity_id': '111094',
-=======
-                'entityId': '111094',
->>>>>>> WIP conversion event with event tags
                 'key': 'test_attribute'
               }
             ],
@@ -192,25 +180,15 @@ class EventBuilderTest(base.BaseTest):
               {  
                 'decisions':[  
                   {  
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
                     'variation_id':'111129',
                     'experiment_id':'111127',
                     'campaign_id':'111182'
-=======
-                    'variationId':'111129',
-                    'experimentId':'111127',
-                    'campaignId':'111182'
->>>>>>> WIP conversion event with event tags
                   }
                 ],
                 'events':[  
                   {  
                     "timestamp":42123,
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
                     "entity_id":"111095",
-=======
-                    "entityId":"111095",
->>>>>>> WIP conversion event with event tags
                     "uuid":"a68cf1ad-0393-4e18-af87-efe8f01a7c9c",
                     "key":"test_event"
                   }
@@ -220,13 +198,8 @@ class EventBuilderTest(base.BaseTest):
           }
         ],
       'revision': '42',
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
       'client_name': 'python-sdk',
       'client_version': version.__version__
-=======
-      'clientName': 'python-sdk',
-      'clientVersion': version.__version__
->>>>>>> WIP conversion event with event tags
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -238,36 +211,6 @@ class EventBuilderTest(base.BaseTest):
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.ENDPOINT,
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
-=======
-                                expected_params,
-                                event_builder.EventBuilder.HTTP_VERB,
-                                event_builder.EventBuilder.HTTP_HEADERS)
-
-  def test_create_conversion_event__with_attributes_no_match(self):
-    """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
-
-    expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
-      'visitorId': 'test_user',
-      'revision': '42',
-      'eventName': 'test_event',
-      'eventEntityId': '111095',
-      'eventMetrics': [],
-      'eventFeatures': [],
-      'layerStates': [],
-      'timestamp': 42123,
-      'isGlobalHoldback': False,
-      'userFeatures': [],
-      'clientEngine': 'python-sdk',
-      'clientVersion': version.__version__
-    }
-    with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.ENDPOINT,
->>>>>>> WIP conversion event with event tags
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
@@ -328,11 +271,6 @@ class EventBuilderTest(base.BaseTest):
         [('111127', '111129')]
       )
 
-<<<<<<< 21b70d39b825bb8667bdfb7e33de9b05e6770d3a
-=======
-    # Sort event features based on ID
-    #event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
->>>>>>> WIP conversion event with event tags
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
