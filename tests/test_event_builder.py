@@ -218,153 +218,127 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
-  def test_create_conversion_event__with_attributes_no_match(self):
-    """ Test that create_conversion_event creates Event object with right params if attributes do not match. """
-
-    expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
-      'visitorId': 'test_user',
-      'revision': '42',
-      'eventName': 'test_event',
-      'eventEntityId': '111095',
-      'eventMetrics': [],
-      'eventFeatures': [],
-      'layerStates': [],
-      'timestamp': 42123,
-      'isGlobalHoldback': False,
-      'userFeatures': [],
-      'clientEngine': 'python-sdk',
-      'clientVersion': version.__version__
-    }
-    with mock.patch('time.time', return_value=42.123):
-      event_obj = self.event_builder.create_conversion_event('test_event', 'test_user', None, None, [])
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.ENDPOINT,
-                                expected_params,
-                                event_builder.EventBuilder.HTTP_VERB,
-                                event_builder.EventBuilder.HTTP_HEADERS)
-
   def test_create_conversion_event__with_event_value(self):
     """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
+    with right params when event value and tags are provided. """
 
-    expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
-      'visitorId': 'test_user',
-      'eventName': 'test_event',
-      'eventEntityId': '111095',
-      'eventMetrics': [{
-        'name': 'revenue',
-        'value': 4200
-      }],
-      'eventFeatures': [{
-          'name': 'non-revenue',
-          'type': 'custom',
-          'value': 'abc',
-          'shouldIndex': False,
-        }, {
-          'name': 'revenue',
-          'type': 'custom',
-          'value': 4200,
-          'shouldIndex': False,
-      }],
-      'layerStates': [{
-          'layerId': '111182',
-          'revision': '42',
-          'decision': {
-            'experimentId': '111127',
-            'variationId': '111129',
-            'isLayerHoldback': False
-          },
-          'actionTriggered': True,
+    expected_params = {  
+      'clientVersion':'1.1.1',
+      'projectId':u'111001',
+      'visitors':[  
+        {  
+          'attributes':[  
+            {  
+              'entityId':u'111094',
+              'type':'custom',
+              'value':'test_value',
+              'key':'test_attribute'
+            }
+          ],
+          'visitorId':'test_user',
+          'snapshots':[  
+            {  
+              'decisions':[  
+                {  
+                  'variationId':u'111129',
+                  'experimentId':u'111127',
+                  'campaignId':u'111182'
+                }
+              ],
+              'events':[  
+                {  
+                  'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                  'tags':{  
+                    'non-revenue':'abc'
+                  },
+                  'timestamp':42123,
+                  'revenue':4200,
+                  'key':'test_event',
+                  'entityId':u'111095'
+                }
+              ]
+            }
+          ]
         }
       ],
-      'timestamp': 42123,
-      'revision': '42',
-      'isGlobalHoldback': False,
-      'userFeatures': [{
-        'id': '111094',
-        'name': 'test_attribute',
-        'type': 'custom',
-        'value': 'test_value',
-        'shouldIndex': True
-      }],
-      'clientEngine': 'python-sdk',
-      'clientVersion': version.__version__
+      'accountId':u'12001',
+      'clientName':'python-sdk',
+      'revision':u'42'
     }
+
     with mock.patch('time.time', return_value=42.123), \
-         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
+         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
 
-    # Sort event features based on ID
-    #event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
+
 
   def test_create_conversion_event__with_invalid_event_value(self):
     """ Test that create_conversion_event creates Event object
     with right params when event value is provided. """
 
     expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
-      'visitorId': 'test_user',
-      'eventName': 'test_event',
-      'eventEntityId': '111095',
-      'revision': '42',
-      'eventMetrics': [],
-      'eventFeatures': [{
-          'name': 'non-revenue',
-          'type': 'custom',
-          'value': 'abc',
-          'shouldIndex': False,
-        }, {
-          'name': 'revenue',
-          'type': 'custom',
-          'value': '4200',
-          'shouldIndex': False,
-      }],
-      'layerStates': [{
-          'layerId': '111182',
-          'revision': '42',
-          'decision': {
-            'experimentId': '111127',
-            'variationId': '111129',
-            'isLayerHoldback': False
-          },
-          'actionTriggered': True,
+      'clientVersion':'1.1.1',
+      'projectId':u'111001',
+      'visitors':[  
+        {  
+          'attributes':[  
+            {  
+              'entityId':u'111094',
+              'type':'custom',
+              'value':'test_value',
+              'key':'test_attribute'
+            }
+          ],
+          'visitorId':'test_user',
+          'snapshots':[  
+            {  
+              'decisions':[  
+                {  
+                  'variationId':u'111129',
+                  'experimentId':u'111127',
+                  'campaignId':u'111182'
+                }
+              ],
+              'events':[  
+                {  
+                  'timestamp':42123,
+                  'entityId':u'111095',
+                  'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                  'key':'test_event',
+                  'tags':{  
+                    'non-revenue':'abc',
+                    'revenue':'4200'
+                  }
+                }
+              ]
+            }
+          ]
         }
       ],
-      'timestamp': 42123,
-      'isGlobalHoldback': False,
-      'userFeatures': [{
-        'id': '111094',
-        'name': 'test_attribute',
-        'type': 'custom',
-        'value': 'test_value',
-        'shouldIndex': True
-      }],
-      'clientEngine': 'python-sdk',
-      'clientVersion': version.__version__
+      'accountId':u'12001',
+      'clientName':'python-sdk',
+      'revision':u'42'
     }
+
     with mock.patch('time.time', return_value=42.123), \
-      mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
+      mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
-    # Sort event features based on ID
-    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
+
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
+                                event_builder.EventBuilder.ENDPOINT,
                                 expected_params,
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)

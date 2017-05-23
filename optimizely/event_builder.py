@@ -51,10 +51,14 @@ class BaseEventBuilder(object):
 
     self.params[self.EventParams.ACCOUNT_ID] = self.config.get_account_id()
 
-  def _add_user_id(self, user_id):
-    """ Add user ID to the event. """
-
-    self.params['visitor'][self.EventParams.END_USER_ID] = user_id
+  def _add_visitor(self, user_id):
+    """ Add user ID to the even """
+    self.params['visitors'] = []
+    # Add a single visitor
+    visitor = {}
+    visitor[self.EventParams.END_USER_ID] = user_id
+    visitor["snapshots"] = []
+    self.params['visitors'].append(visitor)
 
   @abstractmethod
   def _add_attributes(self, attributes):
@@ -114,10 +118,6 @@ class EventBuilder(BaseEventBuilder):
     EVENT = 'events'
     EVENT_ID = 'entityId'
     EVENT_NAME = 'eventName'
-    EVENT_METRICS = 'eventMetrics'
-    EVENT_FEATURES = 'eventFeatures'
-    # delete vvv
-    USER_FEATURES = 'userFeatures'
     ATTRIBUTES = 'attributes'
     DECISION = 'decisions'
     REVISION = 'revision'
@@ -126,9 +126,8 @@ class EventBuilder(BaseEventBuilder):
     UUID = 'uuid'
     SOURCE_SDK_TYPE = 'clientName'
     SOURCE_SDK_VERSION = 'clientVersion'
-    ACTION_TRIGGERED = 'actionTriggered'
-    IS_GLOBAL_HOLDBACK = 'isGlobalHoldback'
-    IS_LAYER_HOLDBACK = 'isLayerHoldback'
+    EVENT_METRICS = 'eventMetrics'
+    EVENT_FEATURES = 'eventFeatures'
 
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
@@ -150,19 +149,12 @@ class EventBuilder(BaseEventBuilder):
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
           visitor[self.EventParams.ATTRIBUTES].append({
-            'entityId': attribute.id,
-            'key': attribute_key,
-            'type': 'custom',
-            'value': attribute_value,
+              'entityId': attribute.id,
+              'key': attribute_key,
+              'type': 'custom',
+              'value': attribute_value,
           })
 
-  def _add_visitor(self, user_id):
-    self.params['visitors'] = []
-    # Add a single visitor
-    visitor = {}
-    visitor[self.EventParams.END_USER_ID] = user_id
-    visitor["snapshots"] = []
-    self.params['visitors'].append(visitor)
 
   def _add_snapshot(self):
     self.snapshot = {}
@@ -194,17 +186,17 @@ class EventBuilder(BaseEventBuilder):
       variation_id: ID for variation which would be presented to user.
     """
 
-    self.snapshot[self.EventParams.DECISION] = [ {
-      self.EventParams.EXPERIMENT_ID: experiment.id,
-      self.EventParams.VARIATION_ID: variation_id,
-      self.EventParams.CAMPAIGN_ID: experiment.layerId
+    self.snapshot[self.EventParams.DECISION] = [{
+        self.EventParams.EXPERIMENT_ID: experiment.id,
+        self.EventParams.VARIATION_ID: variation_id,
+        self.EventParams.CAMPAIGN_ID: experiment.layerId
     }]
 
     self.snapshot[self.EventParams.EVENT] = [{
-      self.EventParams.EVENT_ID: experiment.layerId,
-      self.EventParams.TIME: int(round(time.time() * 1000)),
-      self.EventParams.KEY : 'campaign_activated',
-      self.EventParams.UUID : str(uuid.uuid4())
+        self.EventParams.EVENT_ID: experiment.layerId,
+        self.EventParams.TIME: int(round(time.time() * 1000)),
+        self.EventParams.KEY : 'campaign_activated',
+        self.EventParams.UUID : str(uuid.uuid4())
     }]
 
     visitor_list = next(iter(self.params['visitors'] or []), None)
@@ -227,10 +219,10 @@ class EventBuilder(BaseEventBuilder):
     for experiment in valid_experiments:
       variation = self.bucketer.bucket(experiment, user_id)
       if variation:
-        self.snapshot[self.EventParams.DECISION] = [ {
-          self.EventParams.EXPERIMENT_ID: experiment.id,
-          self.EventParams.VARIATION_ID: variation.id,
-          self.EventParams.CAMPAIGN_ID: experiment.layerId
+        self.snapshot[self.EventParams.DECISION] = [{
+            self.EventParams.EXPERIMENT_ID: experiment.id,
+            self.EventParams.VARIATION_ID: variation.id,
+            self.EventParams.CAMPAIGN_ID: experiment.layerId
         }]
 
         event_dict = {
@@ -244,6 +236,7 @@ class EventBuilder(BaseEventBuilder):
           event_value = event_tag_utils.get_revenue_value(event_tags)
           if event_value is not None:
             event_dict['revenue'] = event_value
+            # remove revenue from event_dict
             del event_tags['revenue']
 
           if len(event_tags) > 0:
