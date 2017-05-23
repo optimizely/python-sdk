@@ -16,6 +16,7 @@ import sys
 from . import bucketer
 from .helpers import audience as audience_helper
 from .helpers import enums
+from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .user_profile import UserProfile
 
@@ -51,19 +52,19 @@ class DecisionService(object):
 
     return None
 
-  def get_stored_decision(self, experiment, user_profile):
-    """ Determine if the user has a stored decision available for the given experiment and return that.
+  def get_stored_variation(self, experiment, user_profile):
+    """ Determine if the user has a stored variation available for the given experiment and return that.
 
     Args:
       experiment: Object representing the experiment for which user is to be bucketed.
       user_profile: UserProfile object representing the user's profile.
 
     Returns:
-      Variation if a decision is available. None otherwise.
+      Variation if available. None otherwise.
     """
 
     user_id = user_profile.user_id
-    variation_id = user_profile.get_variaton_for_experiment(experiment.id)
+    variation_id = user_profile.get_variation_for_experiment(experiment.id)
 
     if variation_id:
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
@@ -78,10 +79,11 @@ class DecisionService(object):
   def get_variation(self, experiment, user_id, attributes):
     """ Top-level function to help determine variation user should be put in.
 
-    First, check if user is forced in a variation.
-    Second, check if there is a stored decision for the user and return the corresponding variation.
-    Third, figure out if user is in the experiment by evaluating audience conditions if any.
-    Fourth, bucket the user and return the variation.
+    First, check if experiment is running.
+    Second, check if user is forced in a variation.
+    Third, check if there is a stored decision for the user and return the corresponding variation.
+    Fourth, figure out if user is in the experiment by evaluating audience conditions if any.
+    Fifth, bucket the user and return the variation.
 
     Args:
       experiment_key: Experiment for which user variation needs to be determined.
@@ -89,8 +91,13 @@ class DecisionService(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      Variation user should see. None if user is not in experiment.
+      Variation user should see. None if user is not in experiment or experiment is not running.
     """
+
+    # Check if experiment is running
+    if not experiment_helper.is_experiment_running(experiment):
+      self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment.key)
+      return None
 
     # Check to see if user is white-listed for a certain variation
     variation = self.get_forced_variation(experiment, user_id)
@@ -112,7 +119,7 @@ class DecisionService(object):
 
       if validator.is_user_profile_valid(retrieved_profile):
         user_profile = UserProfile(**retrieved_profile)
-        variation = self.get_stored_decision(experiment, user_profile)
+        variation = self.get_stored_variation(experiment, user_profile)
         if variation:
           return variation
       else:

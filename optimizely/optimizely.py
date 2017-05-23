@@ -21,7 +21,6 @@ from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
-from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
@@ -103,25 +102,6 @@ class Optimizely(object):
 
     if not validator.is_error_handler_valid(self.error_handler):
      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
-
-  def _validate_preconditions(self, experiment, attributes=None, event_tags=None):
-    """ Helper method to validate all pre-conditions before we go ahead to bucket user.
-
-    Args:
-      experiment: Object representing the experiment.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Boolean depending upon whether all conditions are met or not.
-    """
-    if not self._validate_user_inputs(attributes, event_tags):
-      return False
-
-    if not experiment_helper.is_experiment_running(experiment):
-      self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment.key)
-      return False
-
-    return True
 
   def _validate_user_inputs(self, attributes=None, event_tags=None):
     """ Helper method to validate user inputs.
@@ -287,7 +267,7 @@ class Optimizely(object):
                                                                                      user_id))
       return None
 
-    if not self._validate_preconditions(experiment, attributes):
+    if not self._validate_user_inputs(attributes):
       return None
 
     variation = self.decision_service.get_variation(experiment, user_id, attributes)

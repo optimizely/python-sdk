@@ -31,12 +31,12 @@ class UserProfileTest(unittest.TestCase):
   def test_get_variation_for_experiment__decision_exists(self):
     """ Test that variation ID is retrieved correctly if a decision exists in the experiment bucket map. """
 
-    self.assertEqual('14512525', self.profile.get_variaton_for_experiment('199912'))
+    self.assertEqual('14512525', self.profile.get_variation_for_experiment('199912'))
 
   def test_get_variation_for_experiment__no_decision_exists(self):
     """ Test that None is returned if no decision exists in the experiment bucket map. """
 
-    self.assertIsNone(self.profile.get_variaton_for_experiment('199924'))
+    self.assertIsNone(self.profile.get_variation_for_experiment('199924'))
 
   def test_set_variation_for_experiment__no_previous_decision(self):
     """ Test that decision for new experiment/variation is stored correctly. """

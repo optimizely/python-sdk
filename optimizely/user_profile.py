@@ -31,7 +31,7 @@ class UserProfile(object):
   def __eq__(self, other):
     return self.__dict__ == other.__dict__
 
-  def get_variaton_for_experiment(self, experiment_id):
+  def get_variation_for_experiment(self, experiment_id):
     """ Helper method to retrieve variation ID for given experiment.
 
     Args:
