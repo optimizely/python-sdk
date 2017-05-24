@@ -1111,6 +1111,49 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_group('42'))
 
+  def test_get_feature_from_key__valid_feature_key(self):
+    """ Test that a valid feature is returned given a valid feature key. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+
+    expected_feature = entities.Feature('91112', 'test_feature_2', '', '211111', {})
+    self.assertEquals(expected_feature, project_config.get_feature_from_key('test_feature_2'))
+
+  def test_get_feature_from_key__invalid_feature_key(self):
+    """ Test that None is returned given an invalid feature key. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+
+    self.assertIsNone(project_config.get_feature_from_key('invalid_feature_key'))
+
+  def test_get_layer_from_id__valid_layer_id(self):
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+
+    expected_layer = entities.Layer('211111', 'ordered', [{
+      'key': 'test_rollout_exp_1',
+      'status': 'Running',
+      'forcedVariations': {},
+      'layerId': '211111',
+      'audienceIds': ['11154'],
+      'trafficAllocation': [{
+        'entityId': '211128',
+        'endOfRange': 5000
+      }, {
+        'entityId': '211129',
+        'endOfRange': 9000
+      }],
+      'id': '211127',
+      'variations': [{
+        'key': 'control',
+        'id': '211128'
+      }, {
+        'key': 'variation',
+        'id': '211129'
+      }]
+    }])
+    self.assertEquals(expected_layer, project_config.get_layer_from_id('211111'))
+
   def test_get_variable_value_for_variation__returns_valid_value(self):
     """ Test that the right value and type are returned. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))

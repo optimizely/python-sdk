@@ -366,6 +366,40 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
     return None
 
+  def get_feature_from_key(self, feature_key):
+    """ Get feature for the provided feature key.
+
+    Args:
+      feature_key: Feature key for which feature is to be fetched.
+
+    Returns:
+      Feature corresponding to the provided feature key.
+    """
+    feature = self.feature_key_map.get(feature_key)
+
+    if feature:
+      return feature
+
+    self.logger.log(enums.LogLevels.ERROR, 'Feature "%s" is not in datafile.' % feature_key)
+    return None
+
+  def get_layer_from_id(self, layer_id):
+    """ Get layer for the provided layer id.
+
+    Args:
+      layer_id: ID of the layer to be fetched.
+
+    Returns:
+      Layer corresponding to the provided layer id.
+    """
+    layer = self.layer_id_map.get(layer_id)
+
+    if layer:
+      return layer
+
+    self.logger.log(enums.LogLevels.ERROR, 'Layer with ID "%s" is not in datafile.' % layer_id)
+    return None
+
   def get_variable_value_for_variation(self, variable, variation):
     """ Get the variable value for the given variation.
 

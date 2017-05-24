@@ -229,8 +229,8 @@ class BaseTest(unittest.TestCase):
       }, {
         'id': '91112',
         'key': 'test_feature_2',
-        'layerId': '211111',
         'experimentId': '',
+        'layerId': '211111',
         'variables': [],
       }]
     }
