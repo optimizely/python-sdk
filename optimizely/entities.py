@@ -58,20 +58,37 @@ class Experiment(BaseEntity):
     self.groupPolicy = groupPolicy
 
 
-class FeatureFlag(BaseEntity):
+class Layer(BaseEntity):
 
-  class Type(object):
+  def __init__(self, id, policy, experiments):
+    self.id = id
+    self.policy = policy
+    self.experiments = experiments
+
+
+class Feature(BaseEntity):
+
+  class VariableType(object):
     BOOLEAN = 'boolean'
     DOUBLE = 'double'
     INTEGER = 'integer'
     STRING = 'string'
 
+  class Variable(BaseEntity):
 
-  def __init__(self, id, key, type, defaultValue, **kwargs):
+    def __init__(self, id, key, type, defaultValue):
+      self.id = id
+      self.key = key
+      self.type = type
+      self.defaultValue = defaultValue
+
+  def __init__(self, id, key, experimentId, layerId, variables, **kwargs):
     self.id = id
     self.key = key
-    self.type = type
-    self.defaultValue = defaultValue
+    self.experimentId = experimentId
+    self.layerId = layerId
+    self.variables = variables
+    self.variable_key_map = {}
 
 
 class Group(BaseEntity):
@@ -85,8 +102,13 @@ class Group(BaseEntity):
 
 class Variation(BaseEntity):
 
-  def __init__(self, id, key, variables=None, featureFlagMap=None, **kwargs):
+  class VariableUsage(BaseEntity):
+
+    def __init__(self, id, value):
+      self.id = id
+      self.value = value
+
+  def __init__(self, id, key, variables=None, **kwargs):
     self.id = id
     self.key = key
     self.variables = variables or []
-    self.featureFlagMap = featureFlagMap or {}
