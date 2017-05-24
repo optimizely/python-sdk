@@ -101,6 +101,35 @@ class ValidatorTest(base.BaseTest):
     self.assertFalse(validator.are_event_tags_valid(['key', 'value']))
     self.assertFalse(validator.are_event_tags_valid(42))
 
+  def test_is_user_profile_valid__returns_true(self):
+    """ Test that valid user profile returns True. """
+
+    self.assertTrue(validator.is_user_profile_valid({'user_id': 'test_user', 'experiment_bucket_map': {}}))
+    self.assertTrue(validator.is_user_profile_valid({'user_id': 'test_user',
+                                                     'experiment_bucket_map': {'1234': {'variation_id': '5678'}}}))
+    self.assertTrue(validator.is_user_profile_valid({'user_id': 'test_user',
+                                                     'experiment_bucket_map': {'1234': {'variation_id': '5678'}},
+                                                     'additional_key': 'additional_value'}))
+    self.assertTrue(validator.is_user_profile_valid({'user_id': 'test_user',
+                                                     'experiment_bucket_map': {'1234':
+                                                                                 {'variation_id': '5678',
+                                                                                  'additional_key': 'additional_value'}
+                                                                               }}))
+
+  def test_is_user_profile_valid__returns_false(self):
+    """ Test that invalid user profile returns True. """
+
+    self.assertFalse(validator.is_user_profile_valid(None))
+    self.assertFalse(validator.is_user_profile_valid('user_id'))
+    self.assertFalse(validator.is_user_profile_valid({'some_key': 'some_value'}))
+    self.assertFalse(validator.is_user_profile_valid({'user_id': 'test_user'}))
+    self.assertFalse(validator.is_user_profile_valid({'user_id': 'test_user', 'experiment_bucket_map': 'some_value'}))
+    self.assertFalse(validator.is_user_profile_valid({'user_id': 'test_user',
+                                                      'experiment_bucket_map': {'1234': 'some_value'}}))
+    self.assertFalse(validator.is_user_profile_valid({'user_id': 'test_user',
+                                                      'experiment_bucket_map': {'1234': {'variation_id': '5678'},
+                                                                                '1235': {'some_key': 'some_value'}}}))
+
 
 class DatafileValidationTests(base.BaseTest):
 

@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -102,16 +102,6 @@ class Bucketer(object):
 
     if not experiment:
       return None
-
-    # Check if user is white-listed for a variation
-    forced_variations = experiment.forcedVariations
-    if forced_variations and user_id in forced_variations:
-      variation_key = forced_variations.get(user_id)
-      variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      if variation:
-        self.config.logger.log(enums.LogLevels.INFO,
-                               'User "%s" is forced in variation "%s".' % (user_id, variation_key))
-      return variation
 
     # Determine if experiment is in a mutually exclusive group
     if experiment.groupPolicy in GROUP_POLICIES:
