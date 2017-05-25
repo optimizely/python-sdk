@@ -58,29 +58,7 @@ class Experiment(BaseEntity):
     self.groupPolicy = groupPolicy
 
 
-class Layer(BaseEntity):
-
-  def __init__(self, id, policy, experiments):
-    self.id = id
-    self.policy = policy
-    self.experiments = experiments
-
-
 class Feature(BaseEntity):
-
-  class VariableType(object):
-    BOOLEAN = 'boolean'
-    DOUBLE = 'double'
-    INTEGER = 'integer'
-    STRING = 'string'
-
-  class Variable(BaseEntity):
-
-    def __init__(self, id, key, type, defaultValue):
-      self.id = id
-      self.key = key
-      self.type = type
-      self.defaultValue = defaultValue
 
   def __init__(self, id, key, experimentId, layerId, variables, **kwargs):
     self.id = id
@@ -100,11 +78,34 @@ class Group(BaseEntity):
     self.trafficAllocation = trafficAllocation
 
 
+class Layer(BaseEntity):
+
+  def __init__(self, id, policy, experiments, **kwargs):
+    self.id = id
+    self.policy = policy
+    self.experiments = experiments
+
+
+class Variable(BaseEntity):
+
+  class Type(object):
+    BOOLEAN = 'boolean'
+    DOUBLE = 'double'
+    INTEGER = 'integer'
+    STRING = 'string'
+
+  def __init__(self, id, key, type, defaultValue, **kwargs):
+    self.id = id
+    self.key = key
+    self.type = type
+    self.defaultValue = defaultValue
+
+
 class Variation(BaseEntity):
 
   class VariableUsage(BaseEntity):
 
-    def __init__(self, id, value):
+    def __init__(self, id, value, **kwards):
       self.id = id
       self.value = value
 

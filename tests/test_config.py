@@ -891,12 +891,12 @@ class ConfigTest(base.BaseTest):
 
     expected_feature_key_map = {
       'test_feature_1': entities.Feature('91111', 'test_feature_1', '111127', '', {
-          'is_working': entities.Feature.Variable('127', 'is_working', 'boolean', 'true'),
-          'environment': entities.Feature.Variable('128', 'environment', 'string', 'devel'),
-          'number_of_days': entities.Feature.Variable('129', 'number_of_days', 'integer', '192'),
-          'significance_value': entities.Feature.Variable('130', 'significance_value', 'double', '0.00098')
+          'is_working': entities.Variable('127', 'is_working', 'boolean', 'true'),
+          'environment': entities.Variable('128', 'environment', 'string', 'devel'),
+          'number_of_days': entities.Variable('129', 'number_of_days', 'integer', '192'),
+          'significance_value': entities.Variable('130', 'significance_value', 'double', '0.00098')
         }),
-      'test_feature_2': entities.Feature('91112', 'test_feature_2', '', '211111', {'number_of_projects': entities.Feature.Variable('131', 'number_of_projects', 'integer', '10')})
+      'test_feature_2': entities.Feature('91112', 'test_feature_2', '', '211111', {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')})
     }
 
     expected_layer_id_map = {
@@ -1188,7 +1188,7 @@ class ConfigTest(base.BaseTest):
     project_config = optimizely_instance.config
 
     variable = project_config.get_variable_for_feature('test_feature_1', 'is_working')
-    self.assertEquals(entities.Feature.Variable('127', 'is_working', 'boolean', 'true'), variable)
+    self.assertEquals(entities.Variable('127', 'is_working', 'boolean', 'true'), variable)
 
   def test_get_variable_for_feature__invalid_feature_key(self):
     """ Test that an invalid feature key will return None. """

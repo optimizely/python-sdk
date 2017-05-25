@@ -64,7 +64,7 @@ class ProjectConfig(object):
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
     self.feature_key_map = self._generate_key_map(self.features, 'key', entities.Feature)
     for feature in self.feature_key_map.values():
-      feature.variables = self._generate_key_map(feature.variables, 'key', entities.Feature.Variable)
+      feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
     self.layer_id_map = self._generate_key_map(self.layers, 'id', entities.Layer)
     for layer in self.layer_id_map.values():
@@ -148,11 +148,11 @@ class ProjectConfig(object):
       Value type-casted based on type of feature variable.
     """
 
-    if type == entities.Feature.VariableType.BOOLEAN:
+    if type == entities.Variable.Type.BOOLEAN:
       return value == 'true'
-    elif type == entities.Feature.VariableType.INTEGER:
+    elif type == entities.Variable.Type.INTEGER:
       return int(value)
-    elif type == entities.Feature.VariableType.DOUBLE:
+    elif type == entities.Variable.Type.DOUBLE:
       return float(value)
     else:
       return value
@@ -404,8 +404,8 @@ class ProjectConfig(object):
     """ Get the variable value for the given variation.
 
     Args:
-      variable: The Variable for which we are getting the value.
-      variation: The variation for which we are getting the variable value.
+      Variable: The Variable for which we are getting the value.
+      Variation: The Variation for which we are getting the variable value.
 
     Returns:
       The type-casted variable value or None if any of the inputs are invalid.
