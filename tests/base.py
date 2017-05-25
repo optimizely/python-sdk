@@ -212,7 +212,7 @@ class BaseTest(unittest.TestCase):
       'features': [{
         'id': '91111',
         'key': 'test_feature_1',
-        'experimentId': '111127',
+        'experimentIds': ['111127'],
         'layerId': '',
         'variables': [{
             'id': '127',
@@ -228,7 +228,7 @@ class BaseTest(unittest.TestCase):
       }, {
         'id': '91112',
         'key': 'test_feature_2',
-        'experimentId': '',
+        'experimentIds': [],
         'layerId': '211111',
         'variables': [],
       }]

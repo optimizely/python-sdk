@@ -670,7 +670,7 @@ class ConfigTest(base.BaseTest):
       'features': [{
         'id': '91111',
         'key': 'test_feature_1',
-        'experimentId': '111127',
+        'experimentIds': ['111127'],
         'layerId': '',
         'variables': [{
             'id': '127',
@@ -697,7 +697,7 @@ class ConfigTest(base.BaseTest):
         'id': '91112',
         'key': 'test_feature_2',
         'layerId': '211111',
-        'experimentId': '',
+        'experimentIds': [],
         'variables': [{
           'id': '131',
           'key': 'number_of_projects',
@@ -890,13 +890,13 @@ class ConfigTest(base.BaseTest):
     }
 
     expected_feature_key_map = {
-      'test_feature_1': entities.Feature('91111', 'test_feature_1', '111127', '', {
+      'test_feature_1': entities.Feature('91111', 'test_feature_1', ['111127'], '', {
           'is_working': entities.Variable('127', 'is_working', 'boolean', 'true'),
           'environment': entities.Variable('128', 'environment', 'string', 'devel'),
           'number_of_days': entities.Variable('129', 'number_of_days', 'integer', '192'),
           'significance_value': entities.Variable('130', 'significance_value', 'double', '0.00098')
         }),
-      'test_feature_2': entities.Feature('91112', 'test_feature_2', '', '211111', {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')})
+      'test_feature_2': entities.Feature('91112', 'test_feature_2', [], '211111', {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')})
     }
 
     expected_layer_id_map = {
@@ -1116,7 +1116,7 @@ class ConfigTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
-    expected_feature = entities.Feature('91112', 'test_feature_2', '', '211111', {})
+    expected_feature = entities.Feature('91112', 'test_feature_2', [], '211111', {})
     self.assertEquals(expected_feature, project_config.get_feature_from_key('test_feature_2'))
 
   def test_get_feature_from_key__invalid_feature_key(self):

@@ -60,10 +60,10 @@ class Experiment(BaseEntity):
 
 class Feature(BaseEntity):
 
-  def __init__(self, id, key, experimentId, layerId, variables, **kwargs):
+  def __init__(self, id, key, experimentIds, layerId, variables, **kwargs):
     self.id = id
     self.key = key
-    self.experimentId = experimentId
+    self.experimentIds = experimentIds
     self.layerId = layerId
     self.variables = variables
     self.variable_key_map = {}
