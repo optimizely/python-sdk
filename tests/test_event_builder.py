@@ -40,8 +40,9 @@ class EventTest(unittest.TestCase):
     self.assertEqual(headers, event_obj.headers)
 
 
-class EventBuilderTest(base.BaseTest):
 
+class EventBuilderTest(base.BaseTest):
+  
   def setUp(self):
     base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
@@ -58,24 +59,24 @@ class EventBuilderTest(base.BaseTest):
     """ Test that create_impression_event creates Event object with right params. """
 
     expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
+      'account_id': '12001',
+      'project_id': '111001',
       'visitors':[  
           {  
-            'visitorId':'test_user',
+            'visitor_id':'test_user',
             'snapshots':[  
               {  
                 'decisions':[  
                   {  
-                    'variationId':'111129',
-                    'experimentId':'111127',
-                    'campaignId':'111182'
+                    'variation_id':'111129',
+                    'experiment_id':'111127',
+                    'campaign_id':'111182'
                   }
                 ],
                 'events':[  
                   {  
                     'timestamp':42123,
-                    'entityId':'111182',
+                    'entity_id':'111182',
                     'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                     'key':'campaign_activated'
                   }
@@ -85,8 +86,8 @@ class EventBuilderTest(base.BaseTest):
           }
         ],
       'revision': '42',
-      'clientName': 'python-sdk',
-      'clientVersion': version.__version__
+      'client_name': 'python-sdk',
+      'client_version': version.__version__
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -106,16 +107,16 @@ class EventBuilderTest(base.BaseTest):
     with right params when attributes are provided. """
 
     expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
+      'account_id': '12001',
+      'project_id': '111001',
       'visitors':[  
           {  
-            'visitorId':'test_user',
+            'visitor_id':'test_user',
             'attributes': [
               {
                 'type': 'custom',
                 'value': 'test_value',
-                'entityId': '111094',
+                'entity_id': '111094',
                 'key': 'test_attribute'
               }
             ],
@@ -123,15 +124,15 @@ class EventBuilderTest(base.BaseTest):
               {  
                 'decisions':[  
                   {  
-                    'variationId':'111129',
-                    'experimentId':'111127',
-                    'campaignId':'111182'
+                    'variation_id':'111129',
+                    'experiment_id':'111127',
+                    'campaign_id':'111182'
                   }
                 ],
                 'events':[  
                   {  
                     'timestamp':42123,
-                    'entityId':'111182',
+                    'entity_id':'111182',
                     'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                     'key':'campaign_activated'
                   }
@@ -141,8 +142,8 @@ class EventBuilderTest(base.BaseTest):
           }
         ],
       'revision': '42',
-      'clientName': 'python-sdk',
-      'clientVersion': version.__version__
+      'client_name': 'python-sdk',
+      'client_version': version.__version__
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -162,16 +163,16 @@ class EventBuilderTest(base.BaseTest):
     with right params when attributes are provided. """
 
     expected_params = {
-      'accountId': '12001',
-      'projectId': '111001',
+      'account_id': '12001',
+      'project_id': '111001',
       'visitors':[  
           {  
-            'visitorId':'test_user',
+            'visitor_id':'test_user',
             'attributes': [
               {
                 'type': 'custom',
                 'value': 'test_value',
-                'entityId': '111094',
+                'entity_id': '111094',
                 'key': 'test_attribute'
               }
             ],
@@ -179,15 +180,15 @@ class EventBuilderTest(base.BaseTest):
               {  
                 'decisions':[  
                   {  
-                    'variationId':'111129',
-                    'experimentId':'111127',
-                    'campaignId':'111182'
+                    'variation_id':'111129',
+                    'experiment_id':'111127',
+                    'campaign_id':'111182'
                   }
                 ],
                 'events':[  
                   {  
                     "timestamp":42123,
-                    "entityId":"111095",
+                    "entity_id":"111095",
                     "uuid":"a68cf1ad-0393-4e18-af87-efe8f01a7c9c",
                     "key":"test_event"
                   }
@@ -197,8 +198,8 @@ class EventBuilderTest(base.BaseTest):
           }
         ],
       'revision': '42',
-      'clientName': 'python-sdk',
-      'clientVersion': version.__version__
+      'client_name': 'python-sdk',
+      'client_version': version.__version__
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -219,26 +220,26 @@ class EventBuilderTest(base.BaseTest):
     with right params when event value and tags are provided. """
 
     expected_params = {  
-      'clientVersion':'1.1.1',
-      'projectId':'111001',
+      'client_version':'1.1.1',
+      'project_id':'111001',
       'visitors':[  
         {  
           'attributes':[  
             {  
-              'entityId':'111094',
+              'entity_id':'111094',
               'type':'custom',
               'value':'test_value',
               'key':'test_attribute'
             }
           ],
-          'visitorId':'test_user',
+          'visitor_id':'test_user',
           'snapshots':[  
             {  
               'decisions':[  
                 {  
-                  'variationId':'111129',
-                  'experimentId':'111127',
-                  'campaignId':'111182'
+                  'variation_id':'111129',
+                  'experiment_id':'111127',
+                  'campaign_id':'111182'
                 }
               ],
               'events':[  
@@ -250,15 +251,15 @@ class EventBuilderTest(base.BaseTest):
                   'timestamp':42123,
                   'revenue':4200,
                   'key':'test_event',
-                  'entityId':'111095'
+                  'entity_id':'111095'
                 }
               ]
             }
           ]
         }
       ],
-      'accountId':'12001',
-      'clientName':'python-sdk',
+      'account_id':'12001',
+      'client_name':'python-sdk',
       'revision':'42'
     }
 
@@ -282,32 +283,32 @@ class EventBuilderTest(base.BaseTest):
     with right params when event value is provided. """
 
     expected_params = {
-      'clientVersion':'1.1.1',
-      'projectId':'111001',
+      'client_version':'1.1.1',
+      'project_id':'111001',
       'visitors':[  
         {  
           'attributes':[  
             {  
-              'entityId':'111094',
+              'entity_id':'111094',
               'type':'custom',
               'value':'test_value',
               'key':'test_attribute'
             }
           ],
-          'visitorId':'test_user',
+          'visitor_id':'test_user',
           'snapshots':[  
             {  
               'decisions':[  
                 {  
-                  'variationId':'111129',
-                  'experimentId':'111127',
-                  'campaignId':'111182'
+                  'variation_id':'111129',
+                  'experiment_id':'111127',
+                  'campaign_id':'111182'
                 }
               ],
               'events':[  
                 {  
                   'timestamp':42123,
-                  'entityId':'111095',
+                  'entity_id':'111095',
                   'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                   'key':'test_event',
                   'tags':{  
@@ -320,8 +321,8 @@ class EventBuilderTest(base.BaseTest):
           ]
         }
       ],
-      'accountId':'12001',
-      'clientName':'python-sdk',
+      'account_id':'12001',
+      'client_name':'python-sdk',
       'revision':'42'
     }
 

@@ -109,18 +109,16 @@ class EventBuilder(BaseEventBuilder):
   HTTP_HEADERS = {'Content-Type': 'application/json'}
 
   class EventParams(object):
-    ACCOUNT_ID = 'accountId'
-    PROJECT_ID = 'projectId'
-    VISITOR_ID = 'visitorId'
-    EXPERIMENT_ID = 'experimentId'
-    CAMPAIGN_ID = 'campaignId'
-    VARIATION_ID = 'variationId'
-    END_USER_ID = 'visitorId'
-    EVENT = 'events'
-    EVENT_ID = 'entityId'
-    EVENT_NAME = 'eventName'
+    ACCOUNT_ID = 'account_id'
+    PROJECT_ID = 'project_id'
+    EXPERIMENT_ID = 'experiment_id'
+    CAMPAIGN_ID = 'campaign_id'
+    VARIATION_ID = 'variation_id'
+    END_USER_ID = 'visitor_id'
+    EVENTS = 'events'
+    EVENT_ID = 'entity_id'
     ATTRIBUTES = 'attributes'
-    DECISION = 'decisions'
+    DECISIONS = 'decisions'
     REVISION = 'revision'
     TIME = 'timestamp'
     KEY = 'key'
@@ -128,8 +126,9 @@ class EventBuilder(BaseEventBuilder):
     UUID = 'uuid'
     VISITORS = 'visitors'
     SNAPSHOTS = 'snapshots'
-    SOURCE_SDK_TYPE = 'clientName'
-    SOURCE_SDK_VERSION = 'clientVersion'
+    SOURCE_SDK_TYPE = 'client_name'
+    SOURCE_SDK_VERSION = 'client_version'
+    CUSTOM = 'custom'
 
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
@@ -141,7 +140,7 @@ class EventBuilder(BaseEventBuilder):
     if not attributes:
       return
 
-    visitor = next(iter(self.params[self.EventParams.VISITORS] or []), None)
+    visitor = self.params[self.EventParams.VISITORS][0]
     visitor[self.EventParams.ATTRIBUTES] = []
 
     for attribute_key in attributes.keys():
@@ -151,15 +150,11 @@ class EventBuilder(BaseEventBuilder):
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
           visitor[self.EventParams.ATTRIBUTES].append({
-              'entityId': attribute.id,
+              self.EventParams.EVENT_ID: attribute.id,
               'key': attribute_key,
-              'type': 'custom',
+              'type': self.EventParams.CUSTOM,
               'value': attribute_value,
           })
-
-
-  def _add_snapshot(self):
-    self.snapshot = {}
 
   def _add_source(self):
     """ Add source information to the event. """
@@ -176,7 +171,6 @@ class EventBuilder(BaseEventBuilder):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
-
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
 
@@ -184,14 +178,15 @@ class EventBuilder(BaseEventBuilder):
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
     """
+    snapshot = {}
 
-    self.snapshot[self.EventParams.DECISION] = [{
+    snapshot[self.EventParams.DECISIONS] = [{
         self.EventParams.EXPERIMENT_ID: experiment.id,
         self.EventParams.VARIATION_ID: variation_id,
         self.EventParams.CAMPAIGN_ID: experiment.layerId
     }]
 
-    self.snapshot[self.EventParams.EVENT] = [{
+    snapshot[self.EventParams.EVENTS] = [{
         self.EventParams.EVENT_ID: experiment.layerId,
         self.EventParams.TIME: int(round(time.time() * 1000)),
         self.EventParams.KEY: 'campaign_activated',
@@ -199,7 +194,7 @@ class EventBuilder(BaseEventBuilder):
     }]
 
     visitor_list = next(iter(self.params[self.EventParams.VISITORS] or []), None)
-    visitor_list[self.EventParams.SNAPSHOTS].append(self.snapshot)
+    visitor_list[self.EventParams.SNAPSHOTS].append(snapshot)
 
   def _add_required_params_for_conversion(self, event_key, event_tags, decisions):
     """ Add parameters that are required for the conversion event to register.
@@ -210,16 +205,15 @@ class EventBuilder(BaseEventBuilder):
       decisions: List of tuples representing valid experiments IDs and variation IDs.
     """
 
-    event_list = []
-    self.snapshot[self.EventParams.EVENT] = []
-
-    # get the only visitor 
-    visitor = next(iter(self.params[self.EventParams.VISITORS] or []), None)
+    # get the only visitor
+    visitor = self.params[self.EventParams.VISITORS][0]
 
     for experiment in valid_experiments:
+      snapshot = {}
       variation = self.bucketer.bucket(experiment, user_id)
+
       if variation:
-        self.snapshot[self.EventParams.DECISION] = [{
+        snapshot[self.EventParams.DECISIONS] = [{
             self.EventParams.EXPERIMENT_ID: experiment.id,
             self.EventParams.VARIATION_ID: variation.id,
             self.EventParams.CAMPAIGN_ID: experiment.layerId
@@ -242,9 +236,8 @@ class EventBuilder(BaseEventBuilder):
           if len(event_tags) > 0:
             event_dict[self.EventParams.TAGS] = event_tags
 
-        self.snapshot[self.EventParams.EVENT].append(event_dict)  
-
-      visitor[self.EventParams.SNAPSHOTS].append(self.snapshot)
+        snapshot[self.EventParams.EVENTS] = [event_dict]
+        visitor[self.EventParams.SNAPSHOTS].append(snapshot)
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
@@ -261,7 +254,6 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_snapshot()
     self._add_required_params_for_impression(experiment, variation_id)
 
     return Event(self.ENDPOINT,
@@ -285,7 +277,6 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_snapshot()
     self._add_required_params_for_conversion(event_key, user_id, event_tags, valid_experiments)
     return Event(self.ENDPOINT,
                  self.params,
