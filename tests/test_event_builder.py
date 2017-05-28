@@ -42,7 +42,7 @@ class EventTest(unittest.TestCase):
 
 
 class EventBuilderTest(base.BaseTest):
-  
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
