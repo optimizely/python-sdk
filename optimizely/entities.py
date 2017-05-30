@@ -66,7 +66,6 @@ class Feature(BaseEntity):
     self.experimentIds = experimentIds
     self.layerId = layerId
     self.variables = variables
-    self.variable_key_map = {}
     self.groupId = groupId
 
 class Group(BaseEntity):
