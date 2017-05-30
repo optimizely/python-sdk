@@ -704,6 +704,12 @@ class ConfigTest(base.BaseTest):
           'defaultValue': '10',
           'type': 'integer',
         }],
+      }, {
+        'id': '91113',
+        'key': 'test_feature_in_group',
+        'layerId': '',
+        'experimentIds': ['32222'],
+        'variables': [],
       }],
       'projectId': '111001'
     }
@@ -896,7 +902,8 @@ class ConfigTest(base.BaseTest):
           'number_of_days': entities.Variable('129', 'number_of_days', 'integer', '192'),
           'significance_value': entities.Variable('130', 'significance_value', 'double', '0.00098')
         }),
-      'test_feature_2': entities.Feature('91112', 'test_feature_2', [], '211111', {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')})
+      'test_feature_2': entities.Feature('91112', 'test_feature_2', [], '211111', {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')}),
+      'test_feature_in_group': entities.Feature('91113', 'test_feature_in_group', ['32222'], '', {}, '19228')
     }
 
     expected_layer_id_map = {
@@ -944,6 +951,7 @@ class ConfigTest(base.BaseTest):
         '131': entities.Variation.VariableUsage('131', '15')
       }
     }
+    self.maxDiff = None
     self.assertEqual(expected_variation_variable_usage_map['28901'], project_config.variation_variable_usage_map['28901'])
     self.assertEqual(expected_group_id_map, project_config.group_id_map)
     self.assertEqual(expected_experiment_key_map, project_config.experiment_key_map)

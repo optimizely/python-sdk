@@ -62,10 +62,6 @@ class ProjectConfig(object):
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
-    self.feature_key_map = self._generate_key_map(self.features, 'key', entities.Feature)
-    for feature in self.feature_key_map.values():
-      feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
-
     self.layer_id_map = self._generate_key_map(self.layers, 'id', entities.Layer)
     for layer in self.layer_id_map.values():
       for experiment in layer.experiments:
@@ -95,6 +91,17 @@ class ProjectConfig(object):
         self.variation_id_map[experiment.key][variation.id] = variation
         if variation.variables:
           self.variation_variable_usage_map[variation.id] = self._generate_key_map(variation.variables, 'id', entities.Variation.VariableUsage)
+
+    self.feature_key_map = self._generate_key_map(self.features, 'key', entities.Feature)
+    for feature in self.feature_key_map.values():
+      feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
+
+      # check if any of the experiments are in a group and add the group id for faster bucketing later on
+      for exp_id in feature.experimentIds:
+        experiment_in_feature = self.experiment_id_map[exp_id]
+        if experiment_in_feature.groupId:
+          feature.groupId = experiment_in_feature.groupId
+          break # experiments in feature can only belong to one mutex group
 
     self.parsing_succeeded = True
 
@@ -414,6 +421,7 @@ class ProjectConfig(object):
       return None
 
     if variation.id not in self.variation_variable_usage_map:
+      self.logger.log(enums.LogLevels.ERROR, 'Variation with id "%s" is not in the datafile.' % variation.id)
       return None
 
     # get all variable usages for the given variation
@@ -436,8 +444,12 @@ class ProjectConfig(object):
       Variable with the given key in the given variation.
     """
     feature = self.feature_key_map.get(feature_key)
+    if not feature:
+      self.logger.log(enums.LogLevels.ERROR, 'Feature with key "%s" not found in the datafile.' % feature_key)
+      return None
 
-    if not feature or variable_key not in feature.variables:
+    if variable_key not in feature.variables:
+      self.logger.log(enums.LogLevels.ERROR, 'Variable with key "%s" not found in the datafile.' % variable_key)
       return None
 
     return feature.variables.get(variable_key)
