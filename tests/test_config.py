@@ -902,7 +902,9 @@ class ConfigTest(base.BaseTest):
           'number_of_days': entities.Variable('129', 'number_of_days', 'integer', '192'),
           'significance_value': entities.Variable('130', 'significance_value', 'double', '0.00098')
         }),
-      'test_feature_2': entities.Feature('91112', 'test_feature_2', [], '211111', {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')}),
+      'test_feature_2': entities.Feature('91112', 'test_feature_2', [], '211111', {
+          'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')
+        }),
       'test_feature_in_group': entities.Feature('91113', 'test_feature_in_group', ['32222'], '', {}, '19228')
     }
 
@@ -1125,7 +1127,7 @@ class ConfigTest(base.BaseTest):
     project_config = optimizely_instance.config
 
     expected_feature = entities.Feature('91112', 'test_feature_2', [], '211111', {})
-    self.assertEquals(expected_feature, project_config.get_feature_from_key('test_feature_2'))
+    self.assertEqual(expected_feature, project_config.get_feature_from_key('test_feature_2'))
 
   def test_get_feature_from_key__invalid_feature_key(self):
     """ Test that None is returned given an invalid feature key. """
@@ -1160,7 +1162,7 @@ class ConfigTest(base.BaseTest):
         'id': '211129'
       }]
     }])
-    self.assertEquals(expected_layer, project_config.get_layer_from_id('211111'))
+    self.assertEqual(expected_layer, project_config.get_layer_from_id('211111'))
 
   def test_get_variable_value_for_variation__returns_valid_value(self):
     """ Test that the right value and type are returned. """
@@ -1170,8 +1172,8 @@ class ConfigTest(base.BaseTest):
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     is_working_variable = project_config.get_variable_for_feature('test_feature_1', 'is_working')
     environment_variable = project_config.get_variable_for_feature('test_feature_1', 'environment')
-    self.assertEquals(False, project_config.get_variable_value_for_variation(is_working_variable, variation))
-    self.assertEquals('prod', project_config.get_variable_value_for_variation(environment_variable, variation))
+    self.assertEqual(False, project_config.get_variable_value_for_variation(is_working_variable, variation))
+    self.assertEqual('prod', project_config.get_variable_value_for_variation(environment_variable, variation))
 
   def test_get_variable_value_for_variation__invalid_variable(self):
     """ Test that an invalid variable key will return None. """
@@ -1196,7 +1198,7 @@ class ConfigTest(base.BaseTest):
     project_config = optimizely_instance.config
 
     variable = project_config.get_variable_for_feature('test_feature_1', 'is_working')
-    self.assertEquals(entities.Variable('127', 'is_working', 'boolean', 'true'), variable)
+    self.assertEqual(entities.Variable('127', 'is_working', 'boolean', 'true'), variable)
 
   def test_get_variable_for_feature__invalid_feature_key(self):
     """ Test that an invalid feature key will return None. """

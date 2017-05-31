@@ -134,7 +134,7 @@ class BaseTest(unittest.TestCase):
       'projectId': '111001'
     }
 
-    # stripped down datafile (used for testing features-related methods currently)
+    # datafile version 4
     self.config_dict_with_features = {
       'revision': '1',
       'accountId': '12001',

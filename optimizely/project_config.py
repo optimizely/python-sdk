@@ -96,12 +96,13 @@ class ProjectConfig(object):
     for feature in self.feature_key_map.values():
       feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
-      # check if any of the experiments are in a group and add the group id for faster bucketing later on
+      # Check if any of the experiments are in a group and add the group id for faster bucketing later on
       for exp_id in feature.experimentIds:
         experiment_in_feature = self.experiment_id_map[exp_id]
         if experiment_in_feature.groupId:
           feature.groupId = experiment_in_feature.groupId
-          break # experiments in feature can only belong to one mutex group
+          # Experiments in feature can only belong to one mutex group
+          break
 
     self.parsing_succeeded = True
 
@@ -421,13 +422,13 @@ class ProjectConfig(object):
       return None
 
     if variation.id not in self.variation_variable_usage_map:
-      self.logger.log(enums.LogLevels.ERROR, 'Variation with id "%s" is not in the datafile.' % variation.id)
+      self.logger.log(enums.LogLevels.ERROR, 'Variation with ID "%s" is not in the datafile.' % variation.id)
       return None
 
-    # get all variable usages for the given variation
+    # Get all variable usages for the given variation
     variable_usages = self.variation_variable_usage_map[variation.id]
 
-    # find usage in given variation
+    # Find usage in given variation
     variable_usage = variable_usages[variable.id]
 
     value = self._get_typecast_value(variable_usage.value, variable.type)
