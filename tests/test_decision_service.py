@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
 
 # Unless required by applicable law or agreed to in writing, software
@@ -305,3 +305,28 @@ class DecisionServiceTest(base.BaseTest):
     mock_bucket.assert_called_once_with(experiment, 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
+
+  def test_get_experiment_in_group(self):
+    """ Test that get_experiment_in_group returns the bucketed experiment for the user. """
+
+    group = self.project_config.get_group('19228')
+    experiment = self.project_config.get_experiment_from_id('32222')
+    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value='32222') as mock_bucket, \
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertEqual(experiment, self.decision_service.get_experiment_in_group(group, 'user_1'))
+
+    mock_logging.assert_called_with(
+      enums.LogLevels.INFO,
+      'User "user_1" is in experiment group_exp_1 of group 19228.')
+
+  def test_get_experiment_in_group__returns_none_if_user_not_in_group(self):
+    """ Test that get_experiment_in_group returns None if the user is not bucketed into the group. """
+
+    group = self.project_config.get_group('19228')
+    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None) as mock_bucket, \
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertIsNone(self.decision_service.get_experiment_in_group(group, 'user_1'))
+
+    mock_logging.assert_called_with(
+      enums.LogLevels.INFO,
+      'User "user_1" is not in any experiments of group 19228.')

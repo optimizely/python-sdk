@@ -148,3 +148,30 @@ class DecisionService(object):
       return variation
 
     return None
+
+  def get_experiment_in_group(self, group, user_id):
+    """ Determine which experiment in the group the user is bucketed into.
+
+    Args:
+      group: The group to bucket the user into.
+      user_id: ID of the user.
+
+    Returns:
+      Experiment if the user is bucketed into an experiment in the specified group. None otherwise.
+    """
+
+    experiment_id = self.bucketer.find_bucket(user_id, group.id, group.trafficAllocation)
+    if experiment_id:
+      experiment = self.config.get_experiment_from_id(experiment_id)
+      if experiment:
+        self.logger.log(enums.LogLevels.INFO,
+                        'User "%s" is in experiment %s of group %s.' %
+                        (user_id, experiment.key, group.id))
+        return experiment
+
+    self.logger.log(enums.LogLevels.INFO,
+                    'User "%s" is not in any experiments of group %s.' %
+                    (user_id, group.id))
+
+    return None
+

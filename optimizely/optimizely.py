@@ -275,3 +275,71 @@ class Optimizely(object):
       return variation.key
 
     return None
+
+  def is_feature_enabled(self, feature_key, user_id, attributes=None):
+    """ Returns true if the feature is enabled for the given user.
+
+    Args:
+      feature_key: The key of the feature for which we are determining if it is enabled or not for the given user.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      True if the feature is enabled for the user. False otherwise.
+    """
+    if not self.is_valid:
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
+      return False
+
+    variation = self._get_variation_for_feature(feature_key, user_id, attributes)
+    if variation:
+      self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+      return True
+
+    self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
+    return False
+
+  def _get_variation_for_feature(self, feature_key, user_id, attributes=None):
+    """ Returns the variation the user is bucketed in for the given feature.
+
+    Args:
+      feature_key: The key of the feature for which we are determining if it is enabled or not for the given user.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Variation that the user is bucketed in. None if the user is not in any variation.
+    """
+    variation = None
+    feature = self.config.feature_key_map.get(feature_key)
+
+    if not feature:
+      return None
+
+    # First check if the feature is in a mutex group
+    if feature.groupId:
+      group = self.config.get_group(feature.groupId)
+      if group:
+        experiment = self.decision_service.get_experiment_in_group(group, user_id)
+        if experiment and experiment.id in feature.experimentIds:
+          variation = self.get_variation(experiment.key, user_id, attributes)
+
+    # Next check if the feature is being experimented on
+    elif feature.experimentIds:
+      # If an experiment is not in a group, then it can only be associated with one experiment
+      experiment = self.config.get_experiment_from_id(feature.experimentIds[0])
+      if experiment:
+        variation = self.get_variation(experiment.key, user_id, attributes)
+
+    # Next check if user is part of a rollout
+    if not variation and feature.layerId:
+      layer = self.config.get_layer_from_id(feature.layerId)
+      if layer:
+        # Go through each experiment in order and try to get the variation for the user
+        for experiment in layer.experiments:
+          variation = self.get_variation(experiment['key'], user_id, attributes)
+          if variation:
+            # Return as soon as we get a variation
+            break
+
+    return variation
