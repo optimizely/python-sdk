@@ -220,7 +220,7 @@ class EventBuilderTest(base.BaseTest):
     with right params when event value and tags are provided. """
 
     expected_params = {  
-      'client_version':'1.1.1',
+      'client_version':'1.2.0',
       'project_id':'111001',
       'visitors':[  
         {  
@@ -283,7 +283,7 @@ class EventBuilderTest(base.BaseTest):
     with right params when event value is provided. """
 
     expected_params = {
-      'client_version':'1.1.1',
+      'client_version':'1.2.0',
       'project_id':'111001',
       'visitors':[  
         {  

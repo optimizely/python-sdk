@@ -208,14 +208,14 @@ class EventBuilder(BaseEventBuilder):
     # get the only visitor
     visitor = self.params[self.EventParams.VISITORS][0]
 
-    for experiment in valid_experiments:
+    for experiment_id, variation_id in decisions:
       snapshot = {}
-      variation = self.bucketer.bucket(experiment, user_id)
+      experiment = self.config.get_experiment_from_id(experiment_id)
 
-      if variation:
+      if variation_id:
         snapshot[self.EventParams.DECISIONS] = [{
-            self.EventParams.EXPERIMENT_ID: experiment.id,
-            self.EventParams.VARIATION_ID: variation.id,
+            self.EventParams.EXPERIMENT_ID: experiment_id,
+            self.EventParams.VARIATION_ID: variation_id,
             self.EventParams.CAMPAIGN_ID: experiment.layerId
         }]
 
@@ -277,7 +277,7 @@ class EventBuilder(BaseEventBuilder):
 
     self.params = {}
     self._add_common_params(user_id, attributes)
-    self._add_required_params_for_conversion(event_key, user_id, event_tags, valid_experiments)
+    self._add_required_params_for_conversion(event_key, event_tags, decisions)
     return Event(self.ENDPOINT,
                  self.params,
                  http_verb=self.HTTP_VERB,
