@@ -293,7 +293,7 @@ class BaseTest(unittest.TestCase):
       }, {
         'id': '91113',
         'key': 'test_feature_in_group',
-        'experimentIds': ['32222', '32223'],
+        'experimentIds': ['32222'],
         'layerId': '',
         'variables': [],
       }, {
