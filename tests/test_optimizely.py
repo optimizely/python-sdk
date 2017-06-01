@@ -675,6 +675,25 @@ class OptimizelyTest(base.BaseTest):
 
     mock_decision.assert_not_called()
 
+  def test_get_enabled_features(self):
+    """ Test that get_enabled_features only returns features that are enabled for the specified user. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+
+    with mock.patch(
+      'optimizely.decision_service.DecisionService.get_variation',
+      side_effect=[
+        None,
+        project_config.get_variation_from_id('test_experiment', '111128'),
+        project_config.get_variation_from_id('test_rollout_exp_1', '211129'),
+        None,
+        None
+      ]) as mock_decision:
+      expected_enabled_features = ['test_feature_1', 'test_feature_2']
+      self.assertEqual(expected_enabled_features, optimizely_instance.get_enabled_features('user_1'))
+
+    mock_decision.assert_called()
+
 
 class OptimizelyWithExceptionTest(base.BaseTest):
 

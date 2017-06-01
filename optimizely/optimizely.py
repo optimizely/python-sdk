@@ -299,6 +299,28 @@ class Optimizely(object):
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
     return False
 
+  def get_enabled_features(self, user_id, attributes=None):
+    """ Returns the list of features that are enabled for the user.
+
+    Args:
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      A list of the keys of the features that are enabled for the user.
+
+    """
+    if not self.is_valid:
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
+      return False
+
+    enabled_features = []
+    for feature in self.config.feature_key_map.values():
+      if self.is_feature_enabled(feature.key, user_id, attributes):
+        enabled_features.append(feature.key)
+
+    return enabled_features
+
   def _get_variation_for_feature(self, feature_key, user_id, attributes=None):
     """ Returns the variation the user is bucketed in for the given feature.
 
