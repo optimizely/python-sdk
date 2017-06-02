@@ -149,6 +149,64 @@ class DecisionService(object):
 
     return None
 
+  def get_variation_for_layer(self, layer, user_id, attributes=None):
+    """ Determine which variation the user is in for a given layer. Returns the variation of the first experiment the user qualifies for. """
+    # Go through each experiment in order and try to get the variation for the user
+    variation = None
+    if layer:
+      for experiment_dict in layer.experiments:
+        experiment = self.config.get_experiment_from_key(experiment_dict['key'])
+        variation = self.get_variation(experiment, user_id, attributes)
+        if variation:
+          self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is in variation %s of experiment %s.' % (user_id, variation, experiment.key))
+          # Return as soon as we get a variation
+          break
+
+    return variation
+
+  def get_variation_for_feature(self, feature, user_id, attributes=None):
+    """ Returns the variation the user is bucketed in for the given feature.
+
+    Args:
+      feature: Feature for which we are determining if it is enabled or not for the given user.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Variation that the user is bucketed in. None if the user is not in any variation.
+    """
+    variation = None
+
+    # First check if the feature is in a mutex group
+    if feature.groupId:
+      group = self.config.get_group(feature.groupId)
+      if group:
+        experiment = self.get_experiment_in_group(group, user_id)
+        if experiment and experiment.id in feature.experimentIds:
+          variation = self.get_variation(experiment, user_id, attributes)
+
+          if variation:
+            self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is in variation %s of experiment %s.' % (user_id, variation, experiment.key))
+      else:
+        self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
+
+    # Next check if the feature is being experimented on
+    elif feature.experimentIds:
+      # If an experiment is not in a group, then the feature can only be associated with one experiment
+      experiment = self.config.get_experiment_from_id(feature.experimentIds[0])
+      if experiment:
+        variation = self.get_variation(experiment, user_id, attributes)
+
+        if variation:
+          self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is in variation %s of experiment %s.' % (user_id, variation, experiment.key))
+
+    # Next check if user is part of a rollout
+    if not variation and feature.layerId:
+      layer = self.config.get_layer_from_id(feature.layerId)
+      variation = self.get_variation_for_layer(layer, user_id, attributes)
+
+    return variation
+
   def get_experiment_in_group(self, group, user_id):
     """ Determine which experiment in the group the user is bucketed into.
 

@@ -555,137 +555,31 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
-  def test_is_feature_enabled__returns_true_for_feature_in_experiment(self):
-    """ Test that the feature is enabled for the user if user is bucketed into the experiment. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation',
-      return_value=project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision:
-      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_1', 'user1'))
-
-    mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_experiment'), 'user1', None
-    )
-
-  def test_is_feature_enabled__returns_true_for_feature_in_rollout(self):
-    """ Test that the feature is enabled for the user if the user is bucketed into an experiment in the rollout. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation',
-      return_value=project_config.get_variation_from_id('test_rollout_exp_1', '211129')) as mock_decision:
-      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_2', 'user1'))
-
-    mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None
-    )
-
-  def test_is_feature_enabled__returns_true_if_user_not_in_experiment_but_in_rollout(self):
-    """ Test that the feature is enabled for the user if the user is not in an experiment but is in the rollout. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation',
-      side_effect=[None, project_config.get_variation_from_id('test_rollout_exp_1', '211129')]) as mock_decision:
-      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_in_experiment_and_rollout', 'user1'))
-
-    self.assertEqual(2, mock_decision.call_count)
-    mock_decision.assert_any_call(project_config.get_experiment_from_key('test_experiment'), 'user1', None)
-    mock_decision.assert_any_call(project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None)
-
-  def test_is_feature_enabled__returns_true_for_feature_in_group(self):
-    """ Test that the feature is enabled for the user if in group. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_experiment_in_group',
-      return_value=project_config.get_experiment_from_key('group_exp_1')) as mock_get_experiment_in_group, \
-      mock.patch('optimizely.decision_service.DecisionService.get_variation',
-        return_value=project_config.get_variation_from_id('group_exp_1', '28901')) as mock_decision:
-      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_in_group', 'user1'))
-
-    mock_get_experiment_in_group.assert_called_once_with(
-      project_config.get_group('19228'), 'user1'
-    )
-
-    mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('group_exp_1'), 'user1', None
-    )
-
-  def test_is_feature_enabled__returns_false_for_user_not_in_group(self):
-    """ Test that the feature is not enabled for the user if not in group and the feature is not part of a rollout. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_experiment_in_group',
-      return_value=None) as mock_get_experiment_in_group, \
-      mock.patch('optimizely.decision_service.DecisionService.get_variation') as mock_decision:
-      self.assertFalse(optimizely_instance.is_feature_enabled('test_feature_in_group', 'user1'))
-
-    mock_get_experiment_in_group.assert_called_once_with(
-      project_config.get_group('19228'), 'user1'
-    )
-
-    mock_decision.assert_not_called()
-
-
-  def test_is_feature_enabled__returns_false_for_user_not_in_experiment(self):
-    """ Test that the feature is not enabled for the user if the user is not in the associated experiment. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation',
-      return_value=None) as mock_decision:
-      self.assertFalse(optimizely_instance.is_feature_enabled('test_feature_1', 'user1'))
-
-    mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_experiment'), 'user1', None
-    )
-
-  def test_is_feature_enabled__returns_false_for_user_not_in_rollout(self):
-    """ Test that the feature is not enabled for the user if the user is not in the associated rollout. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
-
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation',
-      return_value=None) as mock_decision:
-      self.assertFalse(optimizely_instance.is_feature_enabled('test_feature_2', 'user1'))
-
-    mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None
-    )
-
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
     with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation'
+      'optimizely.decision_service.DecisionService.get_variation_for_feature'
       ) as mock_decision:
       self.assertFalse(optimizely_instance.is_feature_enabled('invalid_feature', 'user1'))
 
     mock_decision.assert_not_called()
 
-  def test_is_feature_enabled__returns_false_for_user_in_group_but_experiment_not_associated_with_feature(self):
-    """ Test that if a user is in the mutex group but the experiment is not targeting a feature, the feature should not be enabled. """
+  def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
+    """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
+    feature = project_config.get_feature_from_key('test_feature_1')
 
     with mock.patch(
-      'optimizely.decision_service.DecisionService.get_experiment_in_group',
-      return_value=project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
-      self.assertFalse(optimizely_instance.is_feature_enabled('test_feature_in_group', 'user_1'))
+      'optimizely.decision_service.DecisionService.get_variation_for_feature',
+      return_value=project_config.get_variation_from_id('test_experiment', '111129')
+      ) as mock_decision:
+      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_1', 'user1'))
 
-    mock_decision.assert_called_once_with(project_config.get_group('19228'), 'user_1')
+    mock_decision.assert_called_once_with(feature, 'user1', None)
 
   def test_get_enabled_features(self):
     """ Test that get_enabled_features only returns features that are enabled for the specified user. """
