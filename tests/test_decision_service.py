@@ -308,6 +308,27 @@ class DecisionServiceTest(base.BaseTest):
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
 
+  def test_get_variation__ignore_user_profile_when_specified(self):
+    """ Test that we ignore the user profile service if specified. """
+
+    experiment = self.project_config.get_experiment_from_key('test_experiment')
+    with mock.patch('optimizely.decision_service.DecisionService.get_forced_variation',
+                    return_value=None) as mock_get_forced_variation, \
+      mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
+      mock.patch('optimizely.bucketer.Bucketer.bucket',
+                 return_value=entities.Variation('111129', 'variation')) as mock_bucket, \
+      mock.patch('optimizely.user_profile.UserProfileService.lookup') as mock_lookup, \
+      mock.patch('optimizely.user_profile.UserProfileService.save') as mock_save:
+      self.assertEqual(entities.Variation('111129', 'variation'),
+                       self.decision_service.get_variation(experiment, 'test_user', None, ignore_user_profile=True))
+
+    # Assert that user is bucketed and new decision is stored
+    mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
+    mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
+    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    self.assertFalse(mock_lookup.called)
+    self.assertFalse(mock_save.called)
+
   def test_get_variation_for_feature__returns_variation_for_feature_in_experiment(self):
     """ Test that get_variation_for_feature returns the variation of the experiment the feature is associated with. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -339,7 +360,7 @@ class DecisionServiceTest(base.BaseTest):
       self.assertEqual(expected_variation, decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None
+      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True
     )
 
   def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(self):
@@ -357,7 +378,7 @@ class DecisionServiceTest(base.BaseTest):
 
     self.assertEqual(2, mock_decision.call_count)
     mock_decision.assert_any_call(project_config.get_experiment_from_key('test_experiment'), 'user1', None)
-    mock_decision.assert_any_call(project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None)
+    mock_decision.assert_any_call(project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True)
 
   def test_get_variation_for_feature__returns_variation_for_feature_in_group(self):
     """ Test that get_variation_for_feature returns the variation of the experiment the user is bucketed in the feature's group. """
@@ -399,7 +420,7 @@ class DecisionServiceTest(base.BaseTest):
       project_config.get_group('19228'), 'user1'
     )
 
-    mock_decision.assert_not_called()
+    self.assertFalse(mock_decision.called)
 
   def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
     """ Test that get_variation_for_feature returns none for user not in the associated experiment. """
@@ -430,7 +451,7 @@ class DecisionServiceTest(base.BaseTest):
       self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None
+      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True
     )
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self):

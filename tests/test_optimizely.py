@@ -565,7 +565,7 @@ class OptimizelyTest(base.BaseTest):
       ) as mock_decision:
       self.assertFalse(optimizely_instance.is_feature_enabled('invalid_feature', 'user1'))
 
-    mock_decision.assert_not_called()
+    self.assertFalse(mock_decision.called)
 
   def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
