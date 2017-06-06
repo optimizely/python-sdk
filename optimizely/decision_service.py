@@ -89,6 +89,7 @@ class DecisionService(object):
       experiment_key: Experiment for which user variation needs to be determined.
       user_id: ID for user.
       attributes: Dict representing user attributes.
+      ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
 
     Returns:
       Variation user should see. None if user is not in experiment or experiment is not running.
@@ -150,7 +151,18 @@ class DecisionService(object):
     return None
 
   def get_variation_for_layer(self, layer, user_id, attributes=None, ignore_user_profile=False):
-    """ Determine which variation the user is in for a given layer. Returns the variation of the first experiment the user qualifies for. """
+    """ Determine which variation the user is in for a given layer. Returns the variation of the first experiment the user qualifies for.
+
+    Args:
+      layer: Layer for which we are getting the variation.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+      ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
+
+
+    Returns:
+      Variation the user should see. None if the user is not in any of the layer's experiments.
+    """
     # Go through each experiment in order and try to get the variation for the user
     if layer:
       for experiment_dict in layer.experiments:

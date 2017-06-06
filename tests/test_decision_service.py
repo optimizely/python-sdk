@@ -322,12 +322,12 @@ class DecisionServiceTest(base.BaseTest):
       self.assertEqual(entities.Variation('111129', 'variation'),
                        self.decision_service.get_variation(experiment, 'test_user', None, ignore_user_profile=True))
 
-    # Assert that user is bucketed and new decision is stored
+    # Assert that user is bucketed and new decision is NOT stored
     mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
     mock_bucket.assert_called_once_with(experiment, 'test_user')
-    self.assertFalse(mock_lookup.called)
-    self.assertFalse(mock_save.called)
+    self.assertEqual(0, mock_lookup.call_count)
+    self.assertEqual(0, mock_save.call_count)
 
   def test_get_variation_for_feature__returns_variation_for_feature_in_experiment(self):
     """ Test that get_variation_for_feature returns the variation of the experiment the feature is associated with. """
