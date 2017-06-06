@@ -555,6 +555,55 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
+  def test_is_feature_enabled__returns_false_for_invalid_feature(self):
+    """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+
+    with mock.patch(
+      'optimizely.decision_service.DecisionService.get_variation_for_feature'
+      ) as mock_decision:
+      self.assertFalse(optimizely_instance.is_feature_enabled('invalid_feature', 'user1'))
+
+    self.assertFalse(mock_decision.called)
+
+  def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
+    """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+    feature = project_config.get_feature_from_key('test_feature_1')
+
+    with mock.patch(
+      'optimizely.decision_service.DecisionService.get_variation_for_feature',
+      return_value=project_config.get_variation_from_id('test_experiment', '111129')
+      ) as mock_decision:
+      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_1', 'user1'))
+
+    mock_decision.assert_called_once_with(feature, 'user1', None)
+
+  def test_get_enabled_features(self):
+    """ Test that get_enabled_features only returns features that are enabled for the specified user. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+
+    def side_effect(*args, **kwargs):
+      feature_key = args[0]
+      if feature_key == 'test_feature_1' or feature_key == 'test_feature_2':
+        return True
+
+      return False
+
+    with mock.patch(
+      'optimizely.optimizely.Optimizely.is_feature_enabled',
+      side_effect=side_effect) as mock_is_feature_enabled:
+      expected_enabled_features = ['test_feature_1', 'test_feature_2']
+      self.assertEqual(expected_enabled_features, optimizely_instance.get_enabled_features('user_1'))
+
+    mock_is_feature_enabled.assert_any_call('test_feature_1', 'user_1', None)
+    mock_is_feature_enabled.assert_any_call('test_feature_2', 'user_1', None)
+    mock_is_feature_enabled.assert_any_call('test_feature_in_group', 'user_1', None)
+    mock_is_feature_enabled.assert_any_call('test_feature_in_experiment_and_rollout', 'user_1', None)
+
 
 class OptimizelyWithExceptionTest(base.BaseTest):
 
