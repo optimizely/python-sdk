@@ -134,5 +134,176 @@ class BaseTest(unittest.TestCase):
       'projectId': '111001'
     }
 
+    # datafile version 4
+    self.config_dict_with_features = {
+      'revision': '1',
+      'accountId': '12001',
+      'projectId': '111111',
+      'version': '4',
+      'events': [{
+        'key': 'test_event',
+        'experimentIds': ['111127'],
+        'id': '111095'
+      }],
+      'experiments': [{
+        'key': 'test_experiment',
+        'status': 'Running',
+        'forcedVariations': {},
+        'layerId': '111182',
+        'audienceIds': [],
+        'trafficAllocation': [{
+          'entityId': '111128',
+          'endOfRange': 5000
+        }, {
+          'entityId': '111129',
+          'endOfRange': 9000
+        }],
+        'id': '111127',
+        'variations': [{
+          'key': 'control',
+          'id': '111128',
+          'variables': [{
+            'id': '127', 'value': 'false'
+          }, {
+            'id': '128', 'value': 'prod'
+          }]
+        }, {
+          'key': 'variation',
+          'id': '111129'
+        }]
+      }],
+      'groups': [{
+        'id': '19228',
+        'policy': 'random',
+        'experiments': [{
+          'id': '32222',
+          'key': 'group_exp_1',
+          'status': 'Running',
+          'audienceIds': [],
+          'layerId': '111183',
+          'variations': [{
+            'key': 'group_exp_1_control',
+            'id': '28901'
+          }, {
+            'key': 'group_exp_1_variation',
+            'id': '28902'
+          }],
+          'forcedVariations': {
+            'user_1': 'group_exp_1_control',
+            'user_2': 'group_exp_1_control'
+          },
+          'trafficAllocation': [{
+            'entityId': '28901',
+            'endOfRange': 3000
+          }, {
+            'entityId': '28902',
+            'endOfRange': 9000
+          }]
+        }, {
+          'id': '32223',
+          'key': 'group_exp_2',
+          'status': 'Running',
+          'audienceIds': [],
+          'layerId': '111184',
+          'variations': [{
+            'key': 'group_exp_2_control',
+            'id': '28905'
+          }, {
+            'key': 'group_exp_2_variation',
+            'id': '28906'
+          }],
+          'forcedVariations': {
+            'user_1': 'group_exp_2_control',
+            'user_2': 'group_exp_2_control'
+          },
+          'trafficAllocation': [{
+            'entityId': '28905',
+            'endOfRange': 8000
+          }, {
+            'entityId': '28906',
+            'endOfRange': 10000
+          }]
+        }],
+        'trafficAllocation': [{
+          'entityId': '32222',
+          "endOfRange": 3000
+        }, {
+          'entityId': '32223',
+          'endOfRange': 7500
+        }]
+      }],
+      'attributes': [{
+        'key': 'test_attribute',
+        'id': '111094'
+      }],
+      'audiences': [{
+        'name': 'Test attribute users',
+        'conditions': '["and", ["or", ["or", '
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
+        'id': '11154'
+      }],
+      'layers': [{
+        'id': '211111',
+        'policy': 'ordered',
+        'experiments': [{
+          'key': 'test_rollout_exp_1',
+          'status': 'Running',
+          'forcedVariations': {},
+          'layerId': '211111',
+          'audienceIds': ['11154'],
+          'trafficAllocation': [{
+            'entityId': '211128',
+            'endOfRange': 5000
+          }, {
+            'entityId': '211129',
+            'endOfRange': 9000
+          }],
+          'id': '211127',
+          'variations': [{
+            'key': 'control',
+            'id': '211128'
+          }, {
+            'key': 'variation',
+            'id': '211129'
+          }]
+        }]
+      }],
+      'features': [{
+        'id': '91111',
+        'key': 'test_feature_1',
+        'experimentIds': ['111127'],
+        'layerId': '',
+        'variables': [{
+            'id': '127',
+            'key': 'is_working',
+            'defaultValue': 'true',
+            'type': 'boolean',
+          }, {
+            'id': '128',
+            'key': 'environment',
+            'defaultValue': 'devel',
+            'type': 'string',
+          }]
+      }, {
+        'id': '91112',
+        'key': 'test_feature_2',
+        'experimentIds': [],
+        'layerId': '211111',
+        'variables': [],
+      }, {
+        'id': '91113',
+        'key': 'test_feature_in_group',
+        'experimentIds': ['32222'],
+        'layerId': '',
+        'variables': [],
+      }, {
+        'id': '91114',
+        'key': 'test_feature_in_experiment_and_rollout',
+        'experimentIds': ['111127'],
+        'layerId': '211111',
+        'variables': [],
+      }]
+    }
+
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict))
     self.project_config = self.optimizely.config

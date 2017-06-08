@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016-2017, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -66,7 +66,7 @@ class Bucketer(object):
     ratio = float(self._generate_unsigned_hash_code_32_bit(bucketing_id)) / MAX_HASH_VALUE
     return math.floor(ratio * MAX_TRAFFIC_VALUE)
 
-  def _find_bucket(self, user_id, parent_id, traffic_allocations):
+  def find_bucket(self, user_id, parent_id, traffic_allocations):
     """ Determine entity based on bucket value and traffic allocations.
 
     Args:
@@ -103,16 +103,6 @@ class Bucketer(object):
     if not experiment:
       return None
 
-    # Check if user is white-listed for a variation
-    forced_variations = experiment.forcedVariations
-    if forced_variations and user_id in forced_variations:
-      variation_key = forced_variations.get(user_id)
-      variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      if variation:
-        self.config.logger.log(enums.LogLevels.INFO,
-                               'User "%s" is forced in variation "%s".' % (user_id, variation_key))
-      return variation
-
     # Determine if experiment is in a mutually exclusive group
     if experiment.groupPolicy in GROUP_POLICIES:
       group = self.config.get_group(experiment.groupId)
@@ -120,7 +110,7 @@ class Bucketer(object):
       if not group:
         return None
 
-      user_experiment_id = self._find_bucket(user_id, experiment.groupId, group.trafficAllocation)
+      user_experiment_id = self.find_bucket(user_id, experiment.groupId, group.trafficAllocation)
       if not user_experiment_id:
         self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no experiment.' % user_id)
         return None
@@ -134,7 +124,7 @@ class Bucketer(object):
                              (user_id, experiment.key, experiment.groupId))
 
     # Bucket user if not in white-list and in group (if any)
-    variation_id = self._find_bucket(user_id, experiment.id, experiment.trafficAllocation)
+    variation_id = self.find_bucket(user_id, experiment.id, experiment.trafficAllocation)
     if variation_id:
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
       self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in variation "%s" of experiment %s.' %

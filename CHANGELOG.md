@@ -1,3 +1,6 @@
+# 1.2.0
+- Added user profile service.
+
 # 1.1.1
 - Updated datafile parsing to be able to handle additional fields.
 - Deprecated Classic project support.
