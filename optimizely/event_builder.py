@@ -95,6 +95,7 @@ class BaseEventBuilder(object):
     self._add_revision()
     self._add_time()
 
+
 class EventBuilder(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new endpoints. """
@@ -165,6 +166,8 @@ class EventBuilder(BaseEventBuilder):
     """ Add time information to the event. """
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
+
+
 
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
@@ -277,80 +280,11 @@ class EventBuilder(BaseEventBuilder):
                  headers=self.HTTP_HEADERS)
 
 
-class BaseEventBuilderV3(object):
-  """ Base class which encapsulates methods to build events for tracking impressions and conversions. """
-
-  def __init__(self, config):
-    self.config = config
-    self.params = {}
-
-  @abstractproperty
-  class EventParams(object):
-    pass
-
-  def _add_project_id(self):
-    """ Add project ID to the event. """
-
-    self.params[self.EventParams.PROJECT_ID] = self.config.get_project_id()
-
-  def _add_account_id(self):
-    """ Add account ID to the event. """
-
-    self.params[self.EventParams.ACCOUNT_ID] = self.config.get_account_id()
-
-  def _add_visitor(self, user_id):
-    """ Add user ID to the event """
-    self.params[self.EventParams.VISITORS] = []
-    # Add a single visitor
-    visitor = {}
-    visitor[self.EventParams.END_USER_ID] = user_id
-    visitor[self.EventParams.SNAPSHOTS] = []
-    self.params[self.EventParams.VISITORS].append(visitor)
-
-  @abstractmethod
-  def _add_attributes(self, attributes):
-    """ Add attribute(s) information to the event.
-
-    Args:
-      attributes: Dict representing user attributes and values which need to be recorded.
-    """
-    pass
-
-  @abstractmethod
-  def _add_source(self):
-    """ Add source information to the event. """
-    pass
-
-  @abstractmethod
-  def _add_time(self):
-    """ Add time information to the event. """
-    pass
-
-  def _add_revision(self):
-    """ Add datafile revision information to the event. """
-    pass
-
-  def _add_common_params(self, user_id, attributes):
-    """ Add params which are used same in both conversion and impression events.
-
-    Args:
-      user_id: ID for user.
-      attributes: Dict representing user attributes and values which need to be recorded.
-    """
-
-    self._add_project_id()
-    self._add_account_id()
-    self._add_visitor(user_id)
-    self._add_attributes(attributes)
-    self._add_source()
-    self._add_revision()
-
-
-class EventBuilderV3(BaseEventBuilderV3):
+class EventBuilderV3(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (bulk). """
 
-  ENDPOINT = 'https://logx.optimizely.com/v1/events'
+  EVENTS_URL = 'https://logx.optimizely.com/v1/events'
   HTTP_VERB = 'POST'
   HTTP_HEADERS = {'Content-Type': 'application/json'}
 
@@ -370,7 +304,7 @@ class EventBuilderV3(BaseEventBuilderV3):
     KEY = 'key'
     TAGS = 'tags'
     UUID = 'uuid'
-    VISITORS = 'visitors'
+    USERS = 'visitors'
     SNAPSHOTS = 'snapshots'
     SOURCE_SDK_TYPE = 'client_name'
     SOURCE_SDK_VERSION = 'client_version'
@@ -386,7 +320,7 @@ class EventBuilderV3(BaseEventBuilderV3):
     if not attributes:
       return
 
-    visitor = self.params[self.EventParams.VISITORS][0]
+    visitor = self.params[self.EventParams.USERS][0]
     visitor[self.EventParams.ATTRIBUTES] = []
 
     for attribute_key in attributes.keys():
@@ -396,10 +330,10 @@ class EventBuilderV3(BaseEventBuilderV3):
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
           visitor[self.EventParams.ATTRIBUTES].append({
-              self.EventParams.EVENT_ID: attribute.id,
-              'key': attribute_key,
-              'type': self.EventParams.CUSTOM,
-              'value': attribute_value,
+            self.EventParams.EVENT_ID: attribute.id,
+            'key': attribute_key,
+            'type': self.EventParams.CUSTOM,
+            'value': attribute_value,
           })
 
   def _add_source(self):
@@ -417,6 +351,30 @@ class EventBuilderV3(BaseEventBuilderV3):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
+  def _add_visitor(self, user_id):
+    """ Add user to the event """
+
+    self.params[self.EventParams.USERS] = []
+    # Add a single visitor
+    visitor = {}
+    visitor[self.EventParams.END_USER_ID] = user_id
+    visitor[self.EventParams.SNAPSHOTS] = []
+    self.params[self.EventParams.USERS].append(visitor)
+
+  def _add_base_params(self, user_id, attributes):
+    """ Add params which are used same in both conversion and impression events.
+
+    Args:
+      user_id: ID for user.
+      attributes: Dict representing user attributes and values which need to be recorded.
+    """
+    self._add_project_id()
+    self._add_account_id()
+    self._add_visitor(user_id)
+    self._add_attributes(attributes)
+    self._add_source()
+    self._add_revision()
+
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
 
@@ -427,19 +385,19 @@ class EventBuilderV3(BaseEventBuilderV3):
     snapshot = {}
 
     snapshot[self.EventParams.DECISIONS] = [{
-        self.EventParams.EXPERIMENT_ID: experiment.id,
-        self.EventParams.VARIATION_ID: variation_id,
-        self.EventParams.CAMPAIGN_ID: experiment.layerId
+      self.EventParams.EXPERIMENT_ID: experiment.id,
+      self.EventParams.VARIATION_ID: variation_id,
+      self.EventParams.CAMPAIGN_ID: experiment.layerId
     }]
 
     snapshot[self.EventParams.EVENTS] = [{
-        self.EventParams.EVENT_ID: experiment.layerId,
-        self.EventParams.TIME: int(round(time.time() * 1000)),
-        self.EventParams.KEY: 'campaign_activated',
-        self.EventParams.UUID: str(uuid.uuid4())
+      self.EventParams.EVENT_ID: experiment.layerId,
+      self.EventParams.TIME: int(round(time.time() * 1000)),
+      self.EventParams.KEY: 'campaign_activated',
+      self.EventParams.UUID: str(uuid.uuid4())
     }]
 
-    visitor = self.params[self.EventParams.VISITORS][0]
+    visitor = self.params[self.EventParams.USERS][0]
     visitor[self.EventParams.SNAPSHOTS].append(snapshot)
 
   def _add_required_params_for_conversion(self, event_key, event_tags, decisions):
@@ -451,7 +409,7 @@ class EventBuilderV3(BaseEventBuilderV3):
       decisions: List of tuples representing valid experiments IDs and variation IDs.
     """
 
-    visitor = self.params[self.EventParams.VISITORS][0]
+    visitor = self.params[self.EventParams.USERS][0]
 
     for experiment_id, variation_id in decisions:
       snapshot = {}
@@ -459,24 +417,22 @@ class EventBuilderV3(BaseEventBuilderV3):
 
       if variation_id:
         snapshot[self.EventParams.DECISIONS] = [{
-            self.EventParams.EXPERIMENT_ID: experiment_id,
-            self.EventParams.VARIATION_ID: variation_id,
-            self.EventParams.CAMPAIGN_ID: experiment.layerId
+          self.EventParams.EXPERIMENT_ID: experiment_id,
+          self.EventParams.VARIATION_ID: variation_id,
+          self.EventParams.CAMPAIGN_ID: experiment.layerId
         }]
 
         event_dict = {
-            self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
-            self.EventParams.TIME: int(round(time.time() * 1000)),
-            self.EventParams.KEY: event_key,
-            self.EventParams.UUID: str(uuid.uuid4())
+          self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
+          self.EventParams.TIME: int(round(time.time() * 1000)),
+          self.EventParams.KEY: event_key,
+          self.EventParams.UUID: str(uuid.uuid4())
         }
 
         if event_tags:
           event_value = event_tag_utils.get_revenue_value(event_tags)
           if event_value is not None:
             event_dict['revenue'] = event_value
-            # remove revenue from event_dict
-            del event_tags['revenue']
 
           if len(event_tags) > 0:
             event_dict[self.EventParams.TAGS] = event_tags
@@ -498,13 +454,13 @@ class EventBuilderV3(BaseEventBuilderV3):
     """
 
     self.params = {}
-    self._add_common_params(user_id, attributes)
+    self._add_base_params(user_id, attributes)
     self._add_required_params_for_impression(experiment, variation_id)
 
-    return Event(self.ENDPOINT,
-                 self.params,
-                 http_verb=self.HTTP_VERB,
-                 headers=self.HTTP_HEADERS)
+    return Event(self.EVENTS_URL,
+      self.params,
+      http_verb=self.HTTP_VERB,
+      headers=self.HTTP_HEADERS)
 
   def create_conversion_event(self, event_key, user_id, attributes, event_tags, decisions):
     """ Create conversion Event to be sent to the logging endpoint.
@@ -521,9 +477,9 @@ class EventBuilderV3(BaseEventBuilderV3):
     """
 
     self.params = {}
-    self._add_common_params(user_id, attributes)
+    self._add_base_params(user_id, attributes)
     self._add_required_params_for_conversion(event_key, event_tags, decisions)
-    return Event(self.ENDPOINT,
-                 self.params,
-                 http_verb=self.HTTP_VERB,
-                 headers=self.HTTP_HEADERS)
+    return Event(self.EVENTS_URL,
+      self.params,
+      http_verb=self.HTTP_VERB,
+      headers=self.HTTP_HEADERS)
