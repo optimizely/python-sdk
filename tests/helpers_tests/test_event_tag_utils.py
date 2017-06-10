@@ -15,6 +15,7 @@ import unittest
 
 from optimizely.helpers import event_tag_utils
 
+
 class EventTagUtilsTest(unittest.TestCase):
 
   def test_get_revenue_value__invalid_args(self):

@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class BaseEntity(object):
 
   def __eq__(self, other):
@@ -67,6 +68,7 @@ class Feature(BaseEntity):
     self.layerId = layerId
     self.variables = variables
     self.groupId = groupId
+
 
 class Group(BaseEntity):
 

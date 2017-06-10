@@ -872,7 +872,8 @@ class ConfigTest(base.BaseTest):
         'group_exp_2_variation': entities.Variation('28906', 'group_exp_2_variation')
       },
       'test_rollout_exp_1': {
-        'test_rollout_exp_1_default': entities.Variation('211113', 'test_rollout_exp_1_default', [{'id': '131', 'value': '15'}])
+        'test_rollout_exp_1_default': entities.Variation('211113', 'test_rollout_exp_1_default',
+                                                         [{'id': '131', 'value': '15'}])
       }
     }
     expected_variation_id_map = {
@@ -954,7 +955,8 @@ class ConfigTest(base.BaseTest):
       }
     }
     self.maxDiff = None
-    self.assertEqual(expected_variation_variable_usage_map['28901'], project_config.variation_variable_usage_map['28901'])
+    self.assertEqual(expected_variation_variable_usage_map['28901'],
+                     project_config.variation_variable_usage_map['28901'])
     self.assertEqual(expected_group_id_map, project_config.group_id_map)
     self.assertEqual(expected_experiment_key_map, project_config.experiment_key_map)
     self.assertEqual(expected_experiment_id_map, project_config.experiment_id_map)
@@ -1114,7 +1116,6 @@ class ConfigTest(base.BaseTest):
                                     self.config_dict['groups'][0]['experiments'],
                                     self.config_dict['groups'][0]['trafficAllocation']),
                      self.project_config.get_group('19228'))
-
 
   def test_get_group__invalid_id(self):
     """ Test that None is returned when provided group ID is invalid. """

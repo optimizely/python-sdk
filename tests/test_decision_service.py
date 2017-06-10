@@ -340,14 +340,15 @@ class DecisionServiceTest(base.BaseTest):
     with mock.patch(
       'optimizely.decision_service.DecisionService.get_variation',
       return_value=expected_variation) as mock_decision:
-      self.assertEqual(expected_variation,  decision_service.get_variation_for_feature(feature, 'user1'))
+      self.assertEqual(expected_variation, decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
       project_config.get_experiment_from_key('test_experiment'), 'user1', None
     )
 
   def test_get_variation_for_feature__returns_variation_for_feature_in_rollout(self):
-    """ Test that get_variation_for_feature returns the variation of the experiment in the rollout that the user is bucketed into. """
+    """ Test that get_variation_for_feature returns the variation of
+    the experiment in the rollout that the user is bucketed into. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -364,7 +365,9 @@ class DecisionServiceTest(base.BaseTest):
     )
 
   def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(self):
-    """ Test that get_variation_for_feature returns the variation of the experiment in the feature's rollout even if the user is not bucketed into the feature's experiment. """
+    """ Test that get_variation_for_feature returns the variation of the
+    experiment in the feature's rollout even if the user is not
+    bucketed into the feature's experiment. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -381,7 +384,8 @@ class DecisionServiceTest(base.BaseTest):
     mock_decision.assert_any_call(project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True)
 
   def test_get_variation_for_feature__returns_variation_for_feature_in_group(self):
-    """ Test that get_variation_for_feature returns the variation of the experiment the user is bucketed in the feature's group. """
+    """ Test that get_variation_for_feature returns the variation of
+     the experiment the user is bucketed in the feature's group. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -395,16 +399,13 @@ class DecisionServiceTest(base.BaseTest):
         return_value=expected_variation) as mock_decision:
       self.assertEqual(expected_variation, decision_service.get_variation_for_feature(feature, 'user1'))
 
-    mock_get_experiment_in_group.assert_called_once_with(
-      project_config.get_group('19228'), 'user1'
-    )
+    mock_get_experiment_in_group.assert_called_once_with(project_config.get_group('19228'), 'user1')
 
-    mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('group_exp_1'), 'user1', None
-    )
+    mock_decision.assert_called_once_with(project_config.get_experiment_from_key('group_exp_1'), 'user1', None)
 
   def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
-    """ Test that get_variation_for_feature returns none for user not in group and the feature is not part of a rollout. """
+    """ Test that get_variation_for_feature returns None for
+    user not in group and the feature is not part of a rollout. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -423,7 +424,7 @@ class DecisionServiceTest(base.BaseTest):
     self.assertFalse(mock_decision.called)
 
   def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
-    """ Test that get_variation_for_feature returns none for user not in the associated experiment. """
+    """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -439,7 +440,7 @@ class DecisionServiceTest(base.BaseTest):
     )
 
   def test_get_variation_for_feature__returns_none_for_user_not_in_rollout(self):
-    """ Test that get_variation_for_feature returns none for the user not in the associated rollout. """
+    """ Test that get_variation_for_feature returns None for the user not in the associated rollout. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -455,7 +456,8 @@ class DecisionServiceTest(base.BaseTest):
     )
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self):
-    """ Test that if a user is in the mutex group but the experiment is not targeting a feature, the feature should not be enabled. """
+    """ Test that if a user is in the mutex group but the experiment
+    is not targeting a feature, the feature should not be enabled. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
