@@ -343,21 +343,21 @@ class EventBuilderV3Test(base.BaseTestV3):
       'account_id':'12001',
       'project_id':'111001',
       'visitors':[{  
-          'visitor_id':'test_user',
-          'snapshots':[{  
-              'decisions':[{  
-                  'variation_id':'111129',
-                  'experiment_id':'111127',
-                  'campaign_id':'111182'
-                }],
-              'events':[{  
-                  'timestamp':42123,
-                  'entity_id':'111182',
-                  'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                  'key':'campaign_activated'
-                }]
-            }]
-        }],
+        'visitor_id':'test_user',
+        'snapshots':[{  
+          'decisions':[{  
+            'variation_id':'111129',
+            'experiment_id':'111127',
+            'campaign_id':'111182'
+          }],
+          'events':[{  
+            'timestamp':42123,
+            'entity_id':'111182',
+            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key':'campaign_activated'
+          }]
+        }]
+      }],
       'revision':'42',
       'client_name':'python-sdk',
       'client_version':version.__version__
@@ -382,27 +382,27 @@ class EventBuilderV3Test(base.BaseTestV3):
       'account_id':'12001',
       'project_id':'111001',
       'visitors':[{  
-          'visitor_id':'test_user',
-          'attributes':[{  
-              'type':'custom',
-              'value':'test_value',
-              'entity_id':'111094',
-              'key':'test_attribute'
-            }],
-          'snapshots':[{  
-              'decisions':[{  
-                  'variation_id':'111129',
-                  'experiment_id':'111127',
-                  'campaign_id':'111182'
-                }],
-              'events':[{  
-                  'timestamp':42123,
-                  'entity_id':'111182',
-                  'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                  'key':'campaign_activated'
-                }]
-            }]
+        'visitor_id':'test_user',
+        'attributes':[{  
+          'type':'custom',
+          'value':'test_value',
+          'entity_id':'111094',
+          'key':'test_attribute'
         }],
+        'snapshots':[{  
+          'decisions':[{  
+            'variation_id':'111129',
+            'experiment_id':'111127',
+            'campaign_id':'111182'
+          }],
+          'events':[{  
+            'timestamp':42123,
+            'entity_id':'111182',
+            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key':'campaign_activated'
+          }]
+        }]
+      }],
       'revision':'42',
       'client_name':'python-sdk',
       'client_version':version.__version__
@@ -428,27 +428,27 @@ class EventBuilderV3Test(base.BaseTestV3):
       'account_id':'12001',
       'project_id':'111001',
       'visitors':[{  
-          'visitor_id':'test_user',
-          'attributes':[{  
-              'type':'custom',
-              'value':'test_value',
-              'entity_id':'111094',
-              'key':'test_attribute'
-            }],
-          'snapshots':[{  
-              'decisions':[{  
-                  'variation_id':'111129',
-                  'experiment_id':'111127',
-                  'campaign_id':'111182'
-                }],
-              'events':[{  
-                  "timestamp":42123,
-                  "entity_id":"111095",
-                  "uuid":"a68cf1ad-0393-4e18-af87-efe8f01a7c9c",
-                  "key":"test_event"
-                }]
-            }]
+        'visitor_id':'test_user',
+        'attributes':[{  
+          'type':'custom',
+          'value':'test_value',
+          'entity_id':'111094',
+          'key':'test_attribute'
         }],
+        'snapshots':[{  
+          'decisions':[{  
+            'variation_id':'111129',
+            'experiment_id':'111127',
+            'campaign_id':'111182'
+          }],
+          'events':[{
+            'timestamp':42123,
+            'entity_id':'111095',
+            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key':'test_event'
+          }]
+        }]
+      }],
       'revision':'42',
       'client_name':'python-sdk',
       'client_version':version.__version__
@@ -475,32 +475,32 @@ class EventBuilderV3Test(base.BaseTestV3):
       'client_version':version.__version__,
       'project_id':'111001',
       'visitors':[{  
-          'attributes':[{  
-              'entity_id':'111094',
-              'type':'custom',
-              'value':'test_value',
-              'key':'test_attribute'
-            }],
-          'visitor_id':'test_user',
-          'snapshots':[{  
-              'decisions':[{  
-                  'variation_id':'111129',
-                  'experiment_id':'111127',
-                  'campaign_id':'111182'
-                }],
-              'events':[{  
-                  'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                  'tags':{  
-                    'non-revenue':'abc',
-                    'revenue':4200
-                  },
-                  'timestamp':42123,
-                  'revenue':4200,
-                  'key':'test_event',
-                  'entity_id':'111095'
-                }]
-            }]
+        'attributes':[{  
+          'entity_id':'111094',
+          'type':'custom',
+          'value':'test_value',
+          'key':'test_attribute'
         }],
+        'visitor_id':'test_user',
+        'snapshots':[{  
+          'decisions':[{  
+            'variation_id':'111129',
+            'experiment_id':'111127',
+            'campaign_id':'111182'
+          }],
+          'events':[{  
+            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'tags':{  
+              'non-revenue':'abc',
+              'revenue':4200
+            },
+            'timestamp':42123,
+            'revenue':4200,
+            'key':'test_event',
+            'entity_id':'111095'
+          }]
+        }]
+      }],
       'account_id':'12001',
       'client_name':'python-sdk',
       'revision':'42'
@@ -527,31 +527,31 @@ class EventBuilderV3Test(base.BaseTestV3):
       'client_version':version.__version__,
       'project_id':'111001',
       'visitors':[{  
-          'attributes':[{  
-              'entity_id':'111094',
-              'type':'custom',
-              'value':'test_value',
-              'key':'test_attribute'
-            }],
-          'visitor_id':'test_user',
-          'snapshots':[{  
-              'decisions':[{  
-                  'variation_id':'111129',
-                  'experiment_id':'111127',
-                  'campaign_id':'111182'
-                }],
-              'events':[{  
-                  'timestamp':42123,
-                  'entity_id':'111095',
-                  'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                  'key':'test_event',
-                  'tags':{  
-                    'non-revenue':'abc',
-                    'revenue':'4200'
-                  }
-                }]
-            }]
+        'attributes':[{  
+          'entity_id':'111094',
+          'type':'custom',
+          'value':'test_value',
+          'key':'test_attribute'
         }],
+        'visitor_id':'test_user',
+        'snapshots':[{  
+          'decisions':[{  
+            'variation_id':'111129',
+            'experiment_id':'111127',
+            'campaign_id':'111182'
+          }],
+          'events':[{  
+            'timestamp':42123,
+            'entity_id':'111095',
+            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key':'test_event',
+            'tags':{  
+              'non-revenue':'abc',
+              'revenue':'4200'
+            }
+          }]
+        }]
+      }],
       'account_id':'12001',
       'client_name':'python-sdk',
       'revision':'42'
