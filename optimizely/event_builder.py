@@ -167,8 +167,6 @@ class EventBuilder(BaseEventBuilder):
 
     self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
 
-
-
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
 

@@ -14,12 +14,12 @@
 import json
 import unittest
 
-from optimizely import optimizely
+
+from optimizely import error_handler
 from optimizely import event_builder
 from optimizely import logger
+from optimizely import optimizely
 from optimizely import project_config
-from optimizely import error_handler
-
 
 
 class BaseTest(unittest.TestCase):
