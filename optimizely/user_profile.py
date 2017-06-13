@@ -48,7 +48,7 @@ class UserProfile(object):
 
     Args:
       experiment_id: ID for experiment for which the decision is to be stored.
-       variation_id: ID for variation that the user saw.
+      variation_id: ID for variation that the user saw.
     """
 
     self.experiment_bucket_map.update({
