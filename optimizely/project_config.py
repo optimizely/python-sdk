@@ -90,7 +90,9 @@ class ProjectConfig(object):
       for variation in self.variation_key_map.get(experiment.key).values():
         self.variation_id_map[experiment.key][variation.id] = variation
         if variation.variables:
-          self.variation_variable_usage_map[variation.id] = self._generate_key_map(variation.variables, 'id', entities.Variation.VariableUsage)
+          self.variation_variable_usage_map[variation.id] = self._generate_key_map(
+            variation.variables, 'id', entities.Variation.VariableUsage
+          )
 
     self.feature_key_map = self._generate_key_map(self.features, 'key', entities.Feature)
     for feature in self.feature_key_map.values():

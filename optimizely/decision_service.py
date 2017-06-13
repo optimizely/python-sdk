@@ -151,7 +151,8 @@ class DecisionService(object):
     return None
 
   def get_variation_for_layer(self, layer, user_id, attributes=None, ignore_user_profile=False):
-    """ Determine which variation the user is in for a given layer. Returns the variation of the first experiment the user qualifies for.
+    """ Determine which variation the user is in for a given layer.
+    Returns the variation of the first experiment the user qualifies for.
 
     Args:
       layer: Layer for which we are getting the variation.
@@ -169,7 +170,8 @@ class DecisionService(object):
         experiment = self.config.get_experiment_from_key(experiment_dict['key'])
         variation = self.get_variation(experiment, user_id, attributes, ignore_user_profile)
         if variation:
-          self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
+          self.logger.log(enums.LogLevels.DEBUG,
+                          'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
           # Return as soon as we get a variation
           return variation
 
@@ -197,7 +199,8 @@ class DecisionService(object):
           variation = self.get_variation(experiment, user_id, attributes)
 
           if variation:
-            self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
+            self.logger.log(enums.LogLevels.DEBUG,
+                            'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
       else:
         self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
 
@@ -209,7 +212,8 @@ class DecisionService(object):
         variation = self.get_variation(experiment, user_id, attributes)
 
         if variation:
-          self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
+          self.logger.log(enums.LogLevels.DEBUG,
+                          'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
 
     # Next check if user is part of a rollout
     if not variation and feature.layerId:
@@ -243,4 +247,3 @@ class DecisionService(object):
                     (user_id, group.id))
 
     return None
-
