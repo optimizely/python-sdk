@@ -453,7 +453,6 @@ class ConfigTest(base.BaseTest):
                                     self.config_dict['groups'][0]['trafficAllocation']),
                      self.project_config.get_group('19228'))
 
-
   def test_get_group__invalid_id(self):
     """ Test that None is returned when provided group ID is invalid. """
 

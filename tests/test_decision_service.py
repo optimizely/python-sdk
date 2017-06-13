@@ -305,3 +305,4 @@ class DecisionServiceTest(base.BaseTest):
     mock_bucket.assert_called_once_with(experiment, 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
+

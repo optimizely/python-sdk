@@ -21,7 +21,7 @@ We welcome contributions and feedback! All contributors must sign our [Contribut
 
 ## Style
 
-We enforce PEP-8 rules with a few minor deviations.
+We enforce PEP-8 rules with a few minor [deviations](https://github.com/optimizely/python-sdk/blob/master/tox.ini).
 
 ## License
 

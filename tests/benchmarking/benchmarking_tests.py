@@ -169,7 +169,7 @@ def compute_average(values):
   Returns:
     Average of all values.
   """
-  return float(sum(values))/len(values)
+  return float(sum(values)) / len(values)
 
 
 def compute_median(values):
@@ -185,7 +185,7 @@ def compute_median(values):
   sorted_values = sorted(values)
   num1 = (len(values) - 1) / 2
   num2 = len(values) / 2
-  return float(sorted_values[num1] + sorted_values[num2])/2
+  return float(sorted_values[num1] + sorted_values[num2]) / 2
 
 
 def display_results(results_average, results_median):

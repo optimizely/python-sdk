@@ -192,7 +192,7 @@ class Optimizely(object):
 
     return variation.key
 
-  def track(self, event_key, user_id,  attributes=None, event_tags=None):
+  def track(self, event_key, user_id, attributes=None, event_tags=None):
     """ Send conversion event to Optimizely.
 
     Args:
