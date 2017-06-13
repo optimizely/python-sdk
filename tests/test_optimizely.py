@@ -596,9 +596,10 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
       'optimizely.optimizely.Optimizely.is_feature_enabled',
       side_effect=side_effect) as mock_is_feature_enabled:
-      expected_enabled_features = ['test_feature_1', 'test_feature_2']
-      self.assertEqual(expected_enabled_features, optimizely_instance.get_enabled_features('user_1'))
+      received_features = optimizely_instance.get_enabled_features('user_1')
 
+    expected_enabled_features = ['test_feature_1', 'test_feature_2']
+    self.assertEqual(sorted(expected_enabled_features), sorted(received_features))
     mock_is_feature_enabled.assert_any_call('test_feature_1', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_2', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_group', 'user_1', None)
