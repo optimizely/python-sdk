@@ -532,6 +532,7 @@ class BaseTestV3(unittest.TestCase):
     }
 
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict))
-    self.config = project_config.ProjectConfig(json.dumps(self.config_dict), logger.SimpleLogger(), error_handler.NoOpErrorHandler())
+    self.config = project_config.ProjectConfig(json.dumps(self.config_dict),
+                                               logger.SimpleLogger(), error_handler.NoOpErrorHandler())
     self.optimizely.event_builder = event_builder.EventBuilderV3(self.config)
     self.project_config = self.optimizely.config

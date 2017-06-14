@@ -339,28 +339,28 @@ class EventBuilderV3Test(base.BaseTestV3):
   def test_create_impression_event(self):
     """ Test that create_impression_event creates Event object with right params. """
 
-    expected_params = {  
-      'account_id':'12001',
-      'project_id':'111001',
-      'visitors':[{  
-        'visitor_id':'test_user',
-        'snapshots':[{  
-          'decisions':[{  
-            'variation_id':'111129',
-            'experiment_id':'111127',
-            'campaign_id':'111182'
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
           }],
-          'events':[{  
-            'timestamp':42123,
-            'entity_id':'111182',
-            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key':'campaign_activated'
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated'
           }]
         }]
       }],
-      'revision':'42',
-      'client_name':'python-sdk',
-      'client_version':version.__version__
+      'revision': '42',
+      'client_name': 'python-sdk',
+      'client_version': version.__version__
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -378,34 +378,34 @@ class EventBuilderV3Test(base.BaseTestV3):
     """ Test that create_impression_event creates Event object
     with right params when attributes are provided. """
 
-    expected_params = {  
-      'account_id':'12001',
-      'project_id':'111001',
-      'visitors':[{  
-        'visitor_id':'test_user',
-        'attributes':[{  
-          'type':'custom',
-          'value':'test_value',
-          'entity_id':'111094',
-          'key':'test_attribute'
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
         }],
-        'snapshots':[{  
-          'decisions':[{  
-            'variation_id':'111129',
-            'experiment_id':'111127',
-            'campaign_id':'111182'
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
           }],
-          'events':[{  
-            'timestamp':42123,
-            'entity_id':'111182',
-            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key':'campaign_activated'
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated'
           }]
         }]
       }],
-      'revision':'42',
-      'client_name':'python-sdk',
-      'client_version':version.__version__
+      'revision': '42',
+      'client_name': 'python-sdk',
+      'client_version': version.__version__
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -424,34 +424,34 @@ class EventBuilderV3Test(base.BaseTestV3):
     """ Test that create_conversion_event creates Event object
     with right params when attributes are provided. """
 
-    expected_params = {  
-      'account_id':'12001',
-      'project_id':'111001',
-      'visitors':[{  
-        'visitor_id':'test_user',
-        'attributes':[{  
-          'type':'custom',
-          'value':'test_value',
-          'entity_id':'111094',
-          'key':'test_attribute'
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
         }],
-        'snapshots':[{  
-          'decisions':[{  
-            'variation_id':'111129',
-            'experiment_id':'111127',
-            'campaign_id':'111182'
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
           }],
-          'events':[{
-            'timestamp':42123,
-            'entity_id':'111095',
-            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key':'test_event'
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event'
           }]
         }]
       }],
-      'revision':'42',
-      'client_name':'python-sdk',
-      'client_version':version.__version__
+      'revision': '42',
+      'client_name': 'python-sdk',
+      'client_version': version.__version__
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -471,39 +471,39 @@ class EventBuilderV3Test(base.BaseTestV3):
     """ Test that create_conversion_event creates Event object
     with right params when event value and tags are provided. """
 
-    expected_params = {  
-      'client_version':version.__version__,
-      'project_id':'111001',
-      'visitors':[{  
-        'attributes':[{  
-          'entity_id':'111094',
-          'type':'custom',
-          'value':'test_value',
-          'key':'test_attribute'
+    expected_params = {
+      'client_version': version.__version__,
+      'project_id': '111001',
+      'visitors': [{
+        'attributes': [{
+          'entity_id': '111094',
+          'type': 'custom',
+          'value': 'test_value',
+          'key': 'test_attribute'
         }],
-        'visitor_id':'test_user',
-        'snapshots':[{  
-          'decisions':[{  
-            'variation_id':'111129',
-            'experiment_id':'111127',
-            'campaign_id':'111182'
+        'visitor_id': 'test_user',
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
           }],
-          'events':[{  
-            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'tags':{  
-              'non-revenue':'abc',
-              'revenue':4200
+          'events': [{
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'tags': {
+              'non-revenue': 'abc',
+              'revenue': 4200
             },
-            'timestamp':42123,
-            'revenue':4200,
-            'key':'test_event',
-            'entity_id':'111095'
+            'timestamp': 42123,
+            'revenue': 4200,
+            'key': 'test_event',
+            'entity_id': '111095'
           }]
         }]
       }],
-      'account_id':'12001',
-      'client_name':'python-sdk',
-      'revision':'42'
+      'account_id': '12001',
+      'client_name': 'python-sdk',
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -523,38 +523,38 @@ class EventBuilderV3Test(base.BaseTestV3):
     """ Test that create_conversion_event creates Event object
     with right params when event value is provided. """
 
-    expected_params = {  
-      'client_version':version.__version__,
-      'project_id':'111001',
-      'visitors':[{  
-        'attributes':[{  
-          'entity_id':'111094',
-          'type':'custom',
-          'value':'test_value',
-          'key':'test_attribute'
+    expected_params = {
+      'client_version': version.__version__,
+      'project_id': '111001',
+      'visitors': [{
+        'attributes': [{
+          'entity_id': '111094',
+          'type': 'custom',
+          'value': 'test_value',
+          'key': 'test_attribute'
         }],
-        'visitor_id':'test_user',
-        'snapshots':[{  
-          'decisions':[{  
-            'variation_id':'111129',
-            'experiment_id':'111127',
-            'campaign_id':'111182'
+        'visitor_id': 'test_user',
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
           }],
-          'events':[{  
-            'timestamp':42123,
-            'entity_id':'111095',
-            'uuid':'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key':'test_event',
-            'tags':{  
-              'non-revenue':'abc',
-              'revenue':'4200'
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event',
+            'tags': {
+              'non-revenue': 'abc',
+              'revenue': '4200'
             }
           }]
         }]
       }],
-      'account_id':'12001',
-      'client_name':'python-sdk',
-      'revision':'42'
+      'account_id': '12001',
+      'client_name': 'python-sdk',
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -569,4 +569,3 @@ class EventBuilderV3Test(base.BaseTestV3):
                                 expected_params,
                                 event_builder.EventBuilderV3.HTTP_VERB,
                                 event_builder.EventBuilderV3.HTTP_HEADERS)
-    
