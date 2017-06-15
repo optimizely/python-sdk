@@ -60,8 +60,8 @@ def track():
   event_key = payload.get('event_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
-  event_value = payload.get('event_value')
-  result = optimizely_instance.track(event_key, user_id, attributes, event_value)
+  event_tags = payload.get('event_tags')
+  result = optimizely_instance.track(event_key, user_id, attributes, event_tags)
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
