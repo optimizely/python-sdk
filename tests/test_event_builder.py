@@ -458,8 +458,7 @@ class EventBuilderV3Test(base.BaseTestV3):
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
-        [('111127', '111129')]
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, None, [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilderV3.EVENTS_URL,

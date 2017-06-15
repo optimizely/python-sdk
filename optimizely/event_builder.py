@@ -280,7 +280,7 @@ class EventBuilder(BaseEventBuilder):
 
 class EventBuilderV3(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking
-  impressions and conversions using the new V3 event API (bulk). """
+  impressions and conversions using the new V3 event API (batch). """
 
   EVENTS_URL = 'https://logx.optimizely.com/v1/events'
   HTTP_VERB = 'POST'
@@ -359,7 +359,7 @@ class EventBuilderV3(BaseEventBuilder):
     visitor[self.EventParams.SNAPSHOTS] = []
     self.params[self.EventParams.USERS].append(visitor)
 
-  def _add_base_params(self, user_id, attributes):
+  def _add_common_params(self, user_id, attributes):
     """ Add params which are used same in both conversion and impression events.
 
     Args:
@@ -452,13 +452,13 @@ class EventBuilderV3(BaseEventBuilder):
     """
 
     self.params = {}
-    self._add_base_params(user_id, attributes)
+    self._add_common_params(user_id, attributes)
     self._add_required_params_for_impression(experiment, variation_id)
 
     return Event(self.EVENTS_URL,
-      self.params,
-      http_verb=self.HTTP_VERB,
-      headers=self.HTTP_HEADERS)
+                 self.params,
+                 http_verb=self.HTTP_VERB,
+                 headers=self.HTTP_HEADERS)
 
   def create_conversion_event(self, event_key, user_id, attributes, event_tags, decisions):
     """ Create conversion Event to be sent to the logging endpoint.
@@ -475,9 +475,9 @@ class EventBuilderV3(BaseEventBuilder):
     """
 
     self.params = {}
-    self._add_base_params(user_id, attributes)
+    self._add_common_params(user_id, attributes)
     self._add_required_params_for_conversion(event_key, event_tags, decisions)
     return Event(self.EVENTS_URL,
-      self.params,
-      http_verb=self.HTTP_VERB,
-      headers=self.HTTP_HEADERS)
+                 self.params,
+                 http_verb=self.HTTP_VERB,
+                 headers=self.HTTP_HEADERS)
