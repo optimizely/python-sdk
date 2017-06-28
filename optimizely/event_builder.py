@@ -297,7 +297,6 @@ class EventBuilderV3(BaseEventBuilder):
     EVENT_ID = 'entity_id'
     ATTRIBUTES = 'attributes'
     DECISIONS = 'decisions'
-    REVISION = 'revision'
     TIME = 'timestamp'
     KEY = 'key'
     TAGS = 'tags'
@@ -315,11 +314,11 @@ class EventBuilderV3(BaseEventBuilder):
       attributes: Dict representing user attributes and values which need to be recorded.
     """
 
-    if not attributes:
-      return
-
     visitor = self.params[self.EventParams.USERS][0]
     visitor[self.EventParams.ATTRIBUTES] = []
+
+    if not attributes:
+      return
 
     for attribute_key in attributes.keys():
       attribute_value = attributes.get(attribute_key)
@@ -339,10 +338,6 @@ class EventBuilderV3(BaseEventBuilder):
 
     self.params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
     self.params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
-
-  def _add_revision(self):
-    """ Add datafile revision information to the event. """
-    self.params[self.EventParams.REVISION] = self.config.get_revision()
 
   def _add_time(self):
     """ Add time information to the event. """
@@ -371,7 +366,6 @@ class EventBuilderV3(BaseEventBuilder):
     self._add_visitor(user_id)
     self._add_attributes(attributes)
     self._add_source()
-    self._add_revision()
 
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
