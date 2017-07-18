@@ -344,6 +344,7 @@ class EventBuilderV3Test(base.BaseTestV3):
       'project_id': '111001',
       'visitors': [{
         'visitor_id': 'test_user',
+        'attributes': [],
         'snapshots': [{
           'decisions': [{
             'variation_id': '111129',
@@ -358,7 +359,6 @@ class EventBuilderV3Test(base.BaseTestV3):
           }]
         }]
       }],
-      'revision': '42',
       'client_name': 'python-sdk',
       'client_version': version.__version__
     }
@@ -403,7 +403,6 @@ class EventBuilderV3Test(base.BaseTestV3):
           }]
         }]
       }],
-      'revision': '42',
       'client_name': 'python-sdk',
       'client_version': version.__version__
     }
@@ -449,7 +448,6 @@ class EventBuilderV3Test(base.BaseTestV3):
           }]
         }]
       }],
-      'revision': '42',
       'client_name': 'python-sdk',
       'client_version': version.__version__
     }
@@ -502,7 +500,6 @@ class EventBuilderV3Test(base.BaseTestV3):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
-      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -553,7 +550,6 @@ class EventBuilderV3Test(base.BaseTestV3):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
-      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
