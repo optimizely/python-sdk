@@ -159,8 +159,8 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_variation_key_map, self.project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, self.project_config.variation_id_map)
 
-  def test_init__with_v3_datafile(self):
-    """ Test that on creating object, properties are initiated correctly for version 3 datafile. """
+  def test_init__with_more_fields(self):
+    """ Test that no issues occur on creating object with datafile consisting of more fields. """
 
     # Adding some additional fields like live variables and IP anonymization
     config_dict = {
@@ -172,21 +172,6 @@ class ConfigTest(base.BaseTest):
         'key': 'is_working',
         'defaultValue': 'true',
         'type': 'boolean',
-      }, {
-        'id': '128',
-        'key': 'environment',
-        'defaultValue': 'devel',
-        'type': 'string',
-      }, {
-        'id': '129',
-        'key': 'number_of_days',
-        'defaultValue': '192',
-        'type': 'integer',
-      }, {
-        'id': '130',
-        'key': 'significance_value',
-        'defaultValue': '0.00098',
-        'type': 'double',
       }],
       'events': [{
         'key': 'test_event',
@@ -245,29 +230,11 @@ class ConfigTest(base.BaseTest):
           'variations': [{
             'key': 'group_exp_1_control',
             'id': '28901',
-            'variables': [{
-              'id': '128',
-              'value': 'prod'
-            }, {
-              'id': '129',
-              'value': '1772'
-            }, {
-              'id': '130',
-              'value': '1.22992'
-            }]
+            'variables': []
           }, {
             'key': 'group_exp_1_variation',
             'id': '28902',
-            'variables': [{
-              'id': '128',
-              'value': 'stage'
-            }, {
-              'id': '129',
-              'value': '112'
-            }, {
-              'id': '130',
-              'value': '1.211'
-            }]
+            'variables': []
           }],
           'forcedVariations': {
             'user_1': 'group_exp_1_control',
@@ -309,7 +276,7 @@ class ConfigTest(base.BaseTest):
         }],
         'trafficAllocation': [{
           'entityId': '32222',
-          'endOfRange': 3000
+          "endOfRange": 3000
         }, {
           'entityId': '32223',
           'endOfRange': 7500
@@ -330,197 +297,7 @@ class ConfigTest(base.BaseTest):
     }
 
     test_obj = optimizely.Optimizely(json.dumps(config_dict))
-    project_config = test_obj.config
-    self.assertEqual(config_dict['accountId'], project_config.account_id)
-    self.assertEqual(config_dict['projectId'], project_config.project_id)
-    self.assertEqual(config_dict['revision'], project_config.revision)
-    self.assertEqual(config_dict['experiments'], project_config.experiments)
-    self.assertEqual(config_dict['events'], project_config.events)
-    self.assertEqual(config_dict['variables'], project_config.feature_flags)
-
-    expected_group_id_map = {
-      '19228': entities.Group(
-        config_dict['groups'][0]['id'],
-        config_dict['groups'][0]['policy'],
-        config_dict['groups'][0]['experiments'],
-        config_dict['groups'][0]['trafficAllocation']
-      )
-    }
-    expected_experiment_key_map = {
-      'test_experiment': entities.Experiment(
-        '111127', 'test_experiment', 'Running', ['11154'], [{
-          'key': 'control',
-          'id': '111128',
-          'variables': [{
-            'id': '127',
-            'value': 'false'
-          }]
-        }, {
-          'key': 'variation',
-          'id': '111129',
-          'variables': [{
-            'id': '127',
-            'value': 'true'
-          }]
-        }], {
-            'user_1': 'control',
-            'user_2': 'control'
-        }, [{
-          'entityId': '111128',
-          'endOfRange': 4000
-        }, {
-          'entityId': '',
-          'endOfRange': 5000
-        }, {
-          'entityId': '111129',
-          'endOfRange': 9000
-        }],
-      '111182'),
-      'group_exp_1': entities.Experiment(
-        '32222', 'group_exp_1', 'Running', [], [{
-          'key': 'group_exp_1_control',
-          'id': '28901',
-          'variables': [{
-            'id': '128',
-            'value': 'prod'
-          }, {
-            'id': '129',
-            'value': '1772'
-          }, {
-            'id': '130',
-            'value': '1.22992'
-          }]
-        }, {
-          'key': 'group_exp_1_variation',
-          'id': '28902',
-          'variables': [{
-            'id': '128',
-            'value': 'stage'
-          }, {
-            'id': '129',
-            'value': '112'
-          }, {
-            'id': '130',
-            'value': '1.211'
-          }]
-        }], {
-            'user_1': 'group_exp_1_control',
-            'user_2': 'group_exp_1_control'
-        }, [{
-          'entityId': '28901',
-          'endOfRange': 3000
-        }, {
-          'entityId': '28902',
-          'endOfRange': 9000
-        }], '111183', groupId='19228', groupPolicy='random'
-      ),
-      'group_exp_2': entities.Experiment(
-        '32223', 'group_exp_2', 'Running', [], [{
-          'key': 'group_exp_2_control',
-          'id': '28905',
-          'variables': []
-        }, {
-          'key': 'group_exp_2_variation',
-          'id': '28906',
-          'variables': []
-        }], {
-            'user_1': 'group_exp_2_control',
-            'user_2': 'group_exp_2_control'
-        }, [{
-          'entityId': '28905',
-          'endOfRange': 8000
-        }, {
-          'entityId': '28906',
-          'endOfRange': 10000
-        }], '111184', groupId='19228', groupPolicy='random'
-      ),
-    }
-    expected_experiment_id_map = {
-      '111127': expected_experiment_key_map.get('test_experiment'),
-      '32222': expected_experiment_key_map.get('group_exp_1'),
-      '32223': expected_experiment_key_map.get('group_exp_2')
-    }
-    expected_event_key_map = {
-      'test_event': entities.Event('111095', 'test_event', ['111127']),
-      'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
-    }
-    expected_attribute_key_map = {
-      'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
-    }
-    expected_audience_id_map = {
-      '11154': entities.Audience(
-        '11154', 'Test attribute users',
-        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
-        conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value']]
-      )
-    }
-    expected_variation_key_map = {
-      'test_experiment': {
-        'control': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}], {'is_working': False}),
-        'variation': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}], {'is_working': True})
-      },
-      'group_exp_1': {
-        'group_exp_1_control': entities.Variation(
-          '28901', 'group_exp_1_control', [
-            {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}], {
-            'environment': 'prod',
-            'number_of_days': 1772,
-            'significance_value': 1.22992
-          }),
-        'group_exp_1_variation': entities.Variation(
-          '28902', 'group_exp_1_variation', [
-            {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}], {
-            'environment': 'stage',
-            'number_of_days': 112,
-            'significance_value': 1.211
-          })
-      },
-      'group_exp_2': {
-        'group_exp_2_control': entities.Variation('28905', 'group_exp_2_control'),
-        'group_exp_2_variation': entities.Variation('28906', 'group_exp_2_variation')
-      }
-    }
-    expected_variation_id_map = {
-      'test_experiment': {
-        '111128': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}], {'is_working': False}),
-        '111129': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}], {'is_working': True})
-      },
-      'group_exp_1': {
-        '28901': entities.Variation('28901', 'group_exp_1_control', [
-            {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}], {
-            'environment': 'prod',
-            'number_of_days': 1772,
-            'significance_value': 1.22992
-          }),
-        '28902': entities.Variation('28902', 'group_exp_1_variation', [
-            {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}], {
-            'environment': 'stage',
-            'number_of_days': 112,
-            'significance_value': 1.211
-          })
-      },
-      'group_exp_2': {
-        '28905': entities.Variation('28905', 'group_exp_2_control'),
-        '28906': entities.Variation('28906', 'group_exp_2_variation')
-      }
-    }
-    expected_flag_id_map = {
-      '127': entities.FeatureFlag('127', 'is_working', 'boolean', 'true'),
-      '128': entities.FeatureFlag('128', 'environment', 'string', 'devel'),
-      '129': entities.FeatureFlag('129', 'number_of_days', 'integer', '192'),
-      '130': entities.FeatureFlag('130', 'significance_value', 'double', '0.00098')
-    }
-
-    self.assertEqual(expected_group_id_map, project_config.group_id_map)
-    self.assertEqual(expected_experiment_key_map, project_config.experiment_key_map)
-    self.assertEqual(expected_experiment_id_map, project_config.experiment_id_map)
-    self.assertEqual(expected_event_key_map, project_config.event_key_map)
-    self.assertEqual(expected_attribute_key_map, project_config.attribute_key_map)
-    self.assertEqual(expected_audience_id_map, project_config.audience_id_map)
-    self.assertEqual(expected_variation_key_map, project_config.variation_key_map)
-    self.assertEqual(expected_variation_id_map, project_config.variation_id_map)
-    self.assertEqual(expected_flag_id_map, project_config.flag_id_map)
+    self.assertTrue(test_obj.is_valid)
 
   def test_get_version(self):
     """ Test that JSON version is retrieved correctly when using get_version. """

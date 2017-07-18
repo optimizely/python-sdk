@@ -58,22 +58,6 @@ class Experiment(BaseEntity):
     self.groupPolicy = groupPolicy
 
 
-class FeatureFlag(BaseEntity):
-
-  class Type(object):
-    BOOLEAN = 'boolean'
-    DOUBLE = 'double'
-    INTEGER = 'integer'
-    STRING = 'string'
-
-
-  def __init__(self, id, key, type, defaultValue, **kwargs):
-    self.id = id
-    self.key = key
-    self.type = type
-    self.defaultValue = defaultValue
-
-
 class Group(BaseEntity):
 
   def __init__(self, id, policy, experiments, trafficAllocation, **kwargs):
@@ -85,8 +69,6 @@ class Group(BaseEntity):
 
 class Variation(BaseEntity):
 
-  def __init__(self, id, key, variables=None, featureFlagMap=None, **kwargs):
+  def __init__(self, id, key, **kwargs):
     self.id = id
     self.key = key
-    self.variables = variables or []
-    self.featureFlagMap = featureFlagMap or {}
