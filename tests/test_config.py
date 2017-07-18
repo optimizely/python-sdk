@@ -276,7 +276,7 @@ class ConfigTest(base.BaseTest):
         }],
         'trafficAllocation': [{
           'entityId': '32222',
-          "endOfRange": 3000
+          'endOfRange': 3000
         }, {
           'entityId': '32223',
           'endOfRange': 7500
