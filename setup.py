@@ -26,7 +26,7 @@ setup(
     url='https://github.com/optimizely/python-sdk',
     license=open('LICENSE').read(),
     classifiers=[
-      'Development Status :: 3 - Alpha',
+      'Development Status :: 5 - Production/Stable',
       'Environment :: Web Environment',
       'Intended Audience :: Developers',
       'Operating System :: OS Independent',
