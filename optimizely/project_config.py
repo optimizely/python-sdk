@@ -475,7 +475,7 @@ class ProjectConfig(object):
         A boolean value that indicates if the set completed successfully.
     """
     if not user_id:
-      self.logger.log(enums.LogLevels.Debug, 'User ID is invalid.')
+      self.logger.log(enums.LogLevels.DEBUG, 'User ID is invalid.')
       return False
 
     experiment = self.get_experiment_from_key(experiment_key)
@@ -485,18 +485,30 @@ class ProjectConfig(object):
 
     experiment_id = experiment.id
     if not variation_key:
-      del(self.forced_variation_map[user_id][experiment_id])
-      self.logger.log(enums.LogLevels.DEBUG,'Variation mapped to experiment "%s" has been removed for user "%s".' % experiment_key, user_id)
+      if user_id in self.forced_variation_map:
+        experiment_to_variation_map = self.forced_variation_map[user_id]
+        if experiment_id in experiment_to_variation_map:
+          del(self.forced_variation_map[user_id][experiment_id])
+          self.logger.log(enums.LogLevels.DEBUG, 'Variation mapped to experiment "%s" has been removed for user "%s".' % (experiment_key, user_id))
+        else:
+          self.logger.log(enums.LogLevels.DEBUG, 'Nothing to remove. Variation mapped to experiment "%s" for user "%s" does not exist.' % (experiment_key, user_id))
+      else:
+        self.logger.log(enums.LogLevels.DEBUG, 'Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
       return True
 
-    forced_variation = self.get_variation_from_key(variation_key)
+    forced_variation = self.get_variation_from_key(experiment_key, variation_key)
     if not forced_variation:
       # invalid variation key will be logged inside this call
       return False
 
     variation_id = forced_variation.id
-    self.forced_variation_map[user_id][experiment_id] = variation_id
-    self.logger.log(enums.LogLevels.DEBUG, 'Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.' % variation_id, experiment_id, user_id)
+
+    if user_id not in self.forced_variation_map:
+      self.forced_variation_map[user_id] = {experiment_id : variation_id}
+    else:
+      self.forced_variation_map[user_id][experiment_id] = variation_id
+
+    self.logger.log(enums.LogLevels.DEBUG, 'Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.' % (variation_id, experiment_id, user_id))
     return True
 
   def get_forced_variation(self, experiment_key, user_id):
@@ -526,19 +538,19 @@ class ProjectConfig(object):
     experiment_to_variation_map = self.forced_variation_map.get(user_id)
 
     if not experiment_to_variation_map:
-      self.logger.log(enums.LogLevels.DEBUG, 'No experiment "%s" mapped to user "%s" in the forced variation map.' % experiment_key, user_id)
+      self.logger.log(enums.LogLevels.DEBUG, 'No experiment "%s" mapped to user "%s" in the forced variation map.' % (experiment_key, user_id))
       return None
 
     experiment_id = experiment.id
     variation_id = experiment_to_variation_map.get(experiment_id)
-    if not variation_id:
+    if variation_id is None:
       self.logger.log(enums.LogLevels.DEBUG, 'No variation mapped to experiment "%s" in the forced variation map.' % experiment_key)
       return None
 
-    variation = self.get_variation_from_id(variation_id)
+    variation = self.get_variation_from_id(experiment_key, variation_id)
     if not variation:
       # invalid variation ID will be logged inside this call
       return None
 
-    self.logger.log(enums.LogLevels.DEBUG, 'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map' % variation.key, experiment_key, user_id)
+    self.logger.log(enums.LogLevels.DEBUG, 'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map' % (variation.key, experiment_key, user_id))
     return variation

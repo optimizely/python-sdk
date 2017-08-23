@@ -1225,7 +1225,7 @@ class ConfigTest(base.BaseTest):
   # get_forced_variation tests
   def test_get_forced_variation__invalid_user_id(self):
     """ Test invalid user IDs return a null variation. """
-
+    self.project_config.forced_variation_map['test_user'] = {}
     self.project_config.forced_variation_map['test_user']['test_experiment'] = 'test_variation'
 
     self.assertIsNone(self.project_config.get_forced_variation('test_experiment', None))
@@ -1233,6 +1233,7 @@ class ConfigTest(base.BaseTest):
 
   def test_get_forced_variation__invalid_experiment_key(self):
     """ Test invalid experiment keys return a null variation. """
+    self.project_config.forced_variation_map['test_user'] = {}
     self.project_config.forced_variation_map['test_user']['test_experiment'] = 'test_variation'
 
     self.assertIsNone(self.project_config.get_forced_variation('test_experiment', None))
@@ -1256,31 +1257,31 @@ class ConfigTest(base.BaseTest):
     """ Test invalid variation keys set fail to set a forced variation """
 
     self.assertFalse(self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation_not_in_datafile'))
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', 'test_user', ''))
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
+    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', ''))
+    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
 
   def test_set_forced_variation__multiple_sets(self):
     """ Test multiple sets of experiments for one and multiple users work """
 
     self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user_1', 'variation'))
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1'))
+    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'variation')
     # same user, same experiment, different variation
     self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user_1', 'control'))
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1'))
+    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
     # same user, different experiment
     self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user_1', 'group_exp_1_control'))
-    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1'))
+    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
 
     # different user
     self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user_2', 'variation'))
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_2'))
+    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_2').key, 'variation')
     # different user, different experiment
     self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user_2', 'group_exp_1_control'))
-    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_2'))
+    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_2').key, 'group_exp_1_control')
 
     # make sure the first user forced variations are still valid
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1'))
-    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1'))
+    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
+    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
 
 
   ##############################################################################

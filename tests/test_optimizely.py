@@ -15,6 +15,7 @@ import json
 import mock
 import logging
 
+from optimizely import entities
 from optimizely import error_handler
 from optimizely import exceptions
 from optimizely import logger
@@ -199,15 +200,15 @@ class OptimizelyTest(base.BaseTest):
     variation when attributes are provided and audience conditions are met after a
     set_forced_variation is called. """
 
-    with mock.patch('time.time', return_value=42),\
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('time.time', return_value=42), \
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
 
-      expected_variation = self.optimizely.get_variation('test_experiment', 'test_user')
-      logging.info('expected variation for activate is %s', expected_variation.key)
+      expected_variation_key = self.optimizely.get_variation('test_experiment', 'test_user')
+      logging.info('expected variation for activate is %s' % expected_variation_key)
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'control'))
       self.assertEqual('control', self.optimizely.activate('test_experiment', 'test_user',
-                                                             {'test_attribute': 'test_value'}))
+                                                           {'test_attribute': 'test_value'}))
 
     expected_params = {
       'visitorId': 'test_user',
@@ -216,7 +217,7 @@ class OptimizelyTest(base.BaseTest):
       'layerId': '111182',
       'revision': '42',
       'decision': {
-        'variationId': '111129',
+        'variationId': '111128',
         'isLayerHoldback': False,
         'experimentId': '111127'
       },
@@ -232,8 +233,7 @@ class OptimizelyTest(base.BaseTest):
       'clientVersion': version.__version__,
       'clientEngine': 'python-sdk'
     }
-    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
-                                          'test_user', {'test_attribute': 'test_value'})
+
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
@@ -447,12 +447,12 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_event_value__forced_bucketing(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided
     after a forced bucket. """
+    self.maxDiff = None
+    with mock.patch('time.time', return_value=42), \
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
 
-    with mock.patch('time.time', return_value=42),\
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-
-      expected_variation = self.optimizely.get_variation('test_experiment', 'test_user')
-      logging.info('expected variation for track is %s', expected_variation.key)
+      expected_variation_key = self.optimizely.get_variation('test_experiment', 'test_user')
+      logging.info('expected variation for activate is %s' % expected_variation_key)
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
@@ -465,8 +465,8 @@ class OptimizelyTest(base.BaseTest):
       'revision': '42',
       'userFeatures': [{
         'shouldIndex': True,
-        'type': 'variation',
-        'id': '111129',
+        'type': 'custom',
+        'id': '111094',
         'value': 'test_value',
         'name': 'test_attribute'
       }],
@@ -475,15 +475,15 @@ class OptimizelyTest(base.BaseTest):
       'eventEntityId': '111095',
       'eventName': 'test_event',
       'eventFeatures': [{
-          'name': 'non-revenue',
-          'type': 'custom',
-          'value': 'abc',
-          'shouldIndex': False,
-        }, {
-          'name': 'revenue',
-          'type': 'custom',
-          'value': 4200,
-          'shouldIndex': False,
+        'name': 'non-revenue',
+        'type': 'custom',
+        'value': 'abc',
+        'shouldIndex': False,
+      }, {
+        'name': 'revenue',
+        'type': 'custom',
+        'value': 4200,
+        'shouldIndex': False,
       }],
       'eventMetrics': [{
         'name': 'revenue',
@@ -502,8 +502,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'accountId': '12001'
     }
-    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
-                                               'test_user', {'test_attribute': 'test_value'})
+
     self.assertEqual(1, mock_dispatch_event.call_count)
 
     # Sort event features based on ID
@@ -678,7 +677,7 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
-
+    
     self.assertFalse(mock_decision.called)
 
   def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
@@ -773,8 +772,13 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict), logger=logger.SimpleLogger())
     self.project_config = self.optimizely.config
 
+
   def test_activate(self):
     """ Test that expected log messages are logged during activate. """
+
+    variation_key = 'variation'
+    experiment_key = 'test_experiment'
+    user_id = 'test_user'
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
@@ -782,48 +786,42 @@ class OptimizelyWithLoggingTest(base.BaseTest):
          mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
          mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
+      self.assertEqual(variation_key, self.optimizely.activate(experiment_key, user_id))
 
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.INFO, 'Activating user "test_user" in experiment "test_experiment".'),
+    self.assertEqual(mock.call(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".' % (user_id, experiment_key)),
                      mock_logging.call_args_list[0])
     (debug_level, debug_message) = mock_logging.call_args_list[1][0]
     self.assertEqual(enums.LogLevels.DEBUG, debug_level)
-    self.assertRegexpMatches(debug_message,
-                             'Dispatching impression event to URL https://logx.optimizely.com/log/decision with params')
+    self.assertRegexpMatches(debug_message, 'Dispatching impression event to URL https://logx.optimizely.com/log/decision with params')
 
   def test_track(self):
     """ Test that expected log messages are logged during track. """
+
+    user_id = 'test_user'
+    event_key = 'test_event'
+    experiment_key = 'test_experiment'
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment',
                     return_value=False), \
          mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
          mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.optimizely.track('test_event', 'test_user')
+      self.optimizely.track(event_key, user_id)
 
-    self.assertEqual(3, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.INFO,
-                               'User "test_user" does not meet conditions to be in experiment "test_experiment".'),
+    self.assertEqual(4, mock_logging.call_count)
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG,
+                               'User "%s" is not in the forced variation map.' % user_id),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO,
-                               'Not tracking user "test_user" for experiment "test_experiment".'),
+                               'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment_key)),
                      mock_logging.call_args_list[1])
     self.assertEqual(mock.call(enums.LogLevels.INFO,
-                               'There are no valid experiments for event "test_event" to track.'),
+                               'Not tracking user "%s" for experiment "%s".' % (user_id, experiment_key)),
                      mock_logging.call_args_list[2])
-
-  def test_activate__invalid_attributes(self):
-    """ Test that expected log messages are logged during activate when attributes are in invalid format. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.optimizely.activate('test_experiment', 'test_user', attributes='invalid')
-
-    self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock_logging.call_args_list[0],
-                     mock.call(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.'))
-    self.assertEqual(mock_logging.call_args_list[1],
-                     mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
+    self.assertEqual(mock.call(enums.LogLevels.INFO,
+                               'There are no valid experiments for event "%s" to track.' % event_key),
+                     mock_logging.call_args_list[3])
 
   def test_activate__experiment_not_running(self):
     """ Test that expected log messages are logged during activate when experiment is not running. """
@@ -843,15 +841,22 @@ class OptimizelyWithLoggingTest(base.BaseTest):
   def test_activate__no_audience_match(self):
     """ Test that expected log messages are logged during activate when audience conditions are not met. """
 
+    experiment_key = 'test_experiment'
+    user_id = 'test_user'
+
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.activate('test_experiment', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
 
-    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(3, mock_logging.call_count)
+
     self.assertEqual(mock_logging.call_args_list[0],
-                     mock.call(enums.LogLevels.INFO,
-                               'User "test_user" does not meet conditions to be in experiment "test_experiment".'))
+                     mock.call(enums.LogLevels.DEBUG,
+                               'User "%s" is not in the forced variation map.' % user_id))
     self.assertEqual(mock_logging.call_args_list[1],
-                     mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
+                     mock.call(enums.LogLevels.INFO,
+                               'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment_key)))
+    self.assertEqual(mock_logging.call_args_list[2],
+                     mock.call(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id))
 
   def test_activate__dispatch_raises_exception(self):
     """ Test that activate logs dispatch failure gracefully. """
@@ -907,6 +912,18 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
 
+  def test_activate__invalid_attributes(self):
+    """ Test that expected log messages are logged during activate when attributes are in invalid format. """
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.activate('test_experiment', 'test_user', attributes='invalid')
+
+    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(mock_logging.call_args_list[0],
+                     mock.call(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.'))
+    self.assertEqual(mock_logging.call_args_list[1],
+                     mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
+
   def test_get_variation__experiment_not_running(self):
     """ Test that expected log messages are logged during get variation when experiment is not running. """
 
@@ -921,58 +938,63 @@ class OptimizelyWithLoggingTest(base.BaseTest):
   def test_get_variation__no_audience_match(self):
     """ Test that expected log messages are logged during get variation when audience conditions are not met. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
+    experiment_key = 'test_experiment'
+    user_id = 'test_user'
 
-    mock_logging.assert_called_once_with(
-      enums.LogLevels.INFO,
-      'User "test_user" does not meet conditions to be in experiment "test_experiment".'
-    )
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.get_variation(experiment_key, user_id, attributes={'test_attribute': 'wrong_test_value'})
+
+    self.assertEqual(2, mock_logging.call_count)
+    self.assertEqual(mock_logging.call_args_list[0],
+                     mock.call(enums.LogLevels.DEBUG,
+                               'User "%s" is not in the forced variation map.' % user_id))
+    self.assertEqual(mock_logging.call_args_list[1],
+                     mock.call(enums.LogLevels.INFO,
+                               'User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment_key)
+                               ))
 
   def test_get_variation__forced_bucketing(self):
     """ Test that the expected forced variation is called for a valid experiment and attributes """
 
-      self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
-      self.assertEqual(self.optimizely.get_forced_variation('test_experiment', 'test_user'), 'variation')
-      variation = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
-      self.assertEqual(variation, 'variation')
+    self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
+    self.assertEqual(self.optimizely.get_forced_variation('test_experiment', 'test_user'), 'variation')
+    variation_key = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
+    self.assertEqual(variation_key, 'variation')
 
   def test_get_variation__experiment_not_running__forced_bucketing(self):
     """ Test that the expected forced variation is called if an experiment is not running """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging,\
-        mock.patch('optimizely.helpers.experiment.is_experiment_running',
-                   return_value=False) as mock_is_experiment_running:
+    with mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                    return_value=False) as mock_is_experiment_running:
       self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation')
       self.assertEqual(self.optimizely.get_forced_variation('test_experiment', 'test_user'), 'variation')
-      variation = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
-      self.assertEqual(variation, 'variation')
+      variation_key = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
+      self.assertIsNone(variation_key)
 
   def test_get_variation__whitelisted_user_forced_bucketing(self):
     """ Test that the expected forced variation is called if a user is whitelisted """
 
-      self.assertTrue(self.optimizely.set_forced_variation('group_exp_1', 'user_1', 'group_exp_1_variation'))
-      self.assertEqual(self.optimizely.get_forced_variation('group_exp_1', 'user_1'), 'group_exp_1_variation')
-      variation = self.optimizely.get_variation('group_exp_1', 'user_1', attributes={'test_attribute': 'test_value'})
-      logging.info('expected variation for test_get_variation__whitelisted_user_forced_bucketing is %s', variation.key)
-      self.assertEqual(variation, 'group_exp_1_variation')
+    self.assertTrue(self.optimizely.set_forced_variation('group_exp_1', 'user_1', 'group_exp_1_variation'))
+    forced_variation = self.optimizely.get_forced_variation('group_exp_1', 'user_1')
+    logging.info('forced variation for test_get_variation__whitelisted_user_forced_bucketing is %s', forced_variation)
+    self.assertEqual(forced_variation, 'group_exp_1_variation')
+    variation_key = self.optimizely.get_variation('group_exp_1', 'user_1', attributes={'test_attribute': 'test_value'})
+    logging.info('expected variation for test_get_variation__whitelisted_user_forced_bucketing is %s', variation_key)
+    self.assertEqual(variation_key, 'group_exp_1_variation')
 
   def test_get_variation__user_profile__forced_bucketing(self):
     """ Test that the expected forced variation is called if a user profile exists """
-
-    with mock.patch('optimizely.user_profile.DecisionService.get_variation',
-                    return_value=self.user_profile.get_variation_for_experiment(
-                      '111128'
-                    )) as mock_get_variation_for_experiment:
-      self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation')
-      self.assertEqual(self.optimizely.get_variation_for_experiment('test_experiment', 'test_user'), 'variation')
-      variation = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
-      self.assertEqual(variation, 'variation')
+    with mock.patch('optimizely.decision_service.DecisionService.get_stored_variation',
+                    return_value=entities.Variation('111128', 'control')) as mock_get_stored_variation:
+      self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
+      self.assertEqual(self.optimizely.get_forced_variation('test_experiment', 'test_user'), 'variation')
+      variation_key = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
+      self.assertEqual(variation_key, 'variation')
 
   def test_get_variation__invalid_attributes__forced_bucketing(self):
     """ Test that the expected forced variation is called if the user does not pass audience evaluation """
 
-      self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
-      self.assertEqual(self.optimizely.get_forced_variation('test_experiment', 'test_user'), 'variation')
-      variation = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value_invalid'})
-      self.assertEqual(variation, 'variation')
+    self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
+    self.assertEqual(self.optimizely.get_forced_variation('test_experiment', 'test_user'), 'variation')
+    variation_key = self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value_invalid'})
+    self.assertEqual(variation_key, 'variation')

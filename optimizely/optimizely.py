@@ -261,6 +261,7 @@ class Optimizely(object):
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
+
     if not experiment:
       self.logger.log(enums.LogLevels.INFO,
                       'Experiment key "%s" is invalid. Not activating user "%s".' % (experiment_key,
@@ -338,7 +339,7 @@ class Optimizely(object):
    Returns:
      A boolean value that indicates if the set completed successfully.
      """
-    self.config.set_forced_variation(experiment_key, user_id, variation_key)
+    return self.config.set_forced_variation(experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
@@ -351,7 +352,8 @@ class Optimizely(object):
        The forced variation key.
     """
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
-    if not forced_variation:
-      return None
-    else:
-      return forced_variation.key
+    forced_variation_key = None
+    if forced_variation:
+      forced_variation_key = forced_variation.key
+
+    return  forced_variation_key
