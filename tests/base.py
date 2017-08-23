@@ -247,11 +247,11 @@ class BaseTest(unittest.TestCase):
                       '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
       }],
-      'layers': [{
+      'rollouts': [{
         'id': '211111',
-        'policy': 'ordered',
         'experiments': [{
-          'key': 'test_rollout_exp_1',
+          'id': '211127',
+          'key': '211127',
           'status': 'Running',
           'forcedVariations': {},
           'layerId': '211111',
@@ -263,21 +263,20 @@ class BaseTest(unittest.TestCase):
             'entityId': '211129',
             'endOfRange': 9000
           }],
-          'id': '211127',
           'variations': [{
-            'key': 'control',
+            'key': '211128',
             'id': '211128'
           }, {
-            'key': 'variation',
+            'key': '211129',
             'id': '211129'
           }]
         }]
       }],
-      'features': [{
+      'featureFlags': [{
         'id': '91111',
         'key': 'test_feature_1',
         'experimentIds': ['111127'],
-        'layerId': '',
+        'rolloutId': '',
         'variables': [{
             'id': '127',
             'key': 'is_working',
@@ -293,19 +292,19 @@ class BaseTest(unittest.TestCase):
         'id': '91112',
         'key': 'test_feature_2',
         'experimentIds': [],
-        'layerId': '211111',
+        'rolloutId': '211111',
         'variables': [],
       }, {
         'id': '91113',
         'key': 'test_feature_in_group',
         'experimentIds': ['32222'],
-        'layerId': '',
+        'rolloutId': '',
         'variables': [],
       }, {
         'id': '91114',
         'key': 'test_feature_in_experiment_and_rollout',
         'experimentIds': ['111127'],
-        'layerId': '211111',
+        'rolloutId': '211111',
         'variables': [],
       }]
     }
@@ -480,11 +479,11 @@ class BaseTestV3(unittest.TestCase):
                       '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
       }],
-      'layers': [{
+      'rollouts': [{
         'id': '211111',
-        'policy': 'ordered',
         'experiments': [{
-          'key': 'test_rollout_exp_1',
+          'id': '211127',
+          'key': '211127',
           'status': 'Running',
           'forcedVariations': {},
           'layerId': '211111',
@@ -496,37 +495,36 @@ class BaseTestV3(unittest.TestCase):
             'entityId': '211129',
             'endOfRange': 9000
           }],
-          'id': '211127',
           'variations': [{
-            'key': 'control',
+            'key': '211128',
             'id': '211128'
           }, {
-            'key': 'variation',
+            'key': '211129',
             'id': '211129'
           }]
         }]
       }],
-      'features': [{
+      'featureFlags': [{
         'id': '91111',
-        'key': 'test_feature_1',
+        'key': '91111',
         'experimentIds': ['111127'],
-        'layerId': '',
+        'rolloutId': '',
         'variables': [{
             'id': '127',
-            'key': 'is_working',
+            'key': '127',
             'defaultValue': 'true',
             'type': 'boolean',
           }, {
             'id': '128',
-            'key': 'environment',
+            'key': '128',
             'defaultValue': 'devel',
             'type': 'string',
           }]
       }, {
         'id': '91112',
-        'key': 'test_feature_2',
+        'key': '91112',
         'experimentIds': [],
-        'layerId': '211111',
+        'rolloutId': '211111',
         'variables': [],
       }]
     }

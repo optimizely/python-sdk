@@ -354,14 +354,14 @@ class DecisionServiceTest(base.BaseTest):
     decision_service = optimizely_instance.decision_service
     feature = project_config.get_feature_from_key('test_feature_2')
 
-    expected_variation = project_config.get_variation_from_id('test_rollout_exp_1', '211129')
+    expected_variation = project_config.get_variation_from_id('211127', '211129')
     with mock.patch(
       'optimizely.decision_service.DecisionService.get_variation',
       return_value=expected_variation) as mock_decision:
       self.assertEqual(expected_variation, decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True
+      project_config.get_experiment_from_key('211127'), 'user1', None, True
     )
 
   def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(self):
@@ -373,7 +373,7 @@ class DecisionServiceTest(base.BaseTest):
     decision_service = optimizely_instance.decision_service
     feature = project_config.get_feature_from_key('test_feature_in_experiment_and_rollout')
 
-    expected_variation = project_config.get_variation_from_id('test_rollout_exp_1', '211129')
+    expected_variation = project_config.get_variation_from_id('211127', '211129')
     with mock.patch(
       'optimizely.decision_service.DecisionService.get_variation',
       side_effect=[None, expected_variation]) as mock_decision:
@@ -381,7 +381,7 @@ class DecisionServiceTest(base.BaseTest):
 
     self.assertEqual(2, mock_decision.call_count)
     mock_decision.assert_any_call(project_config.get_experiment_from_key('test_experiment'), 'user1', None)
-    mock_decision.assert_any_call(project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True)
+    mock_decision.assert_any_call(project_config.get_experiment_from_key('211127'), 'user1', None, True)
 
   def test_get_variation_for_feature__returns_variation_for_feature_in_group(self):
     """ Test that get_variation_for_feature returns the variation of
@@ -452,7 +452,7 @@ class DecisionServiceTest(base.BaseTest):
       self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
-      project_config.get_experiment_from_key('test_rollout_exp_1'), 'user1', None, True
+      project_config.get_experiment_from_key('211127'), 'user1', None, True
     )
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self):
