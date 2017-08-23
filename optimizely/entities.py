@@ -59,13 +59,13 @@ class Experiment(BaseEntity):
     self.groupPolicy = groupPolicy
 
 
-class Feature(BaseEntity):
+class FeatureFlag(BaseEntity):
 
-  def __init__(self, id, key, experimentIds, layerId, variables, groupId=None, **kwargs):
+  def __init__(self, id, key, experimentIds, rolloutId, variables, groupId=None, **kwargs):
     self.id = id
     self.key = key
     self.experimentIds = experimentIds
-    self.layerId = layerId
+    self.rolloutId = rolloutId
     self.variables = variables
     self.groupId = groupId
 
@@ -81,9 +81,8 @@ class Group(BaseEntity):
 
 class Layer(BaseEntity):
 
-  def __init__(self, id, policy, experiments, **kwargs):
+  def __init__(self, id, experiments, **kwargs):
     self.id = id
-    self.policy = policy
     self.experiments = experiments
 
 

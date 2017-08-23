@@ -643,23 +643,22 @@ class ConfigTest(base.BaseTest):
                       '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
       }],
-      'layers': [{
+      'rollouts': [{
         'id': '211111',
-        'policy': 'ordered',
         'experiments': [{
-          'key': 'test_rollout_exp_1',
+          'key': '211112',
           'status': 'Running',
           'forcedVariations': {},
           'layerId': '211111',
           'audienceIds': ['11154'],
           'trafficAllocation': [{
             'entityId': '211113',
-            'endOfRange': '10000'
+            'endOfRange': 10000
           }],
           'id': '211112',
           'variations': [{
             'id': '211113',
-            'key': 'test_rollout_exp_1_default',
+            'key': '211113',
             'variables': [{
               'id': '131',
               'value': '15'
@@ -667,11 +666,11 @@ class ConfigTest(base.BaseTest):
           }]
         }]
       }],
-      'features': [{
+      'featureFlags': [{
         'id': '91111',
         'key': 'test_feature_1',
         'experimentIds': ['111127'],
-        'layerId': '',
+        'rolloutId': '',
         'variables': [{
             'id': '127',
             'key': 'is_working',
@@ -696,7 +695,7 @@ class ConfigTest(base.BaseTest):
       }, {
         'id': '91112',
         'key': 'test_feature_2',
-        'layerId': '211111',
+        'rolloutId': '211111',
         'experimentIds': [],
         'variables': [{
           'id': '131',
@@ -707,7 +706,7 @@ class ConfigTest(base.BaseTest):
       }, {
         'id': '91113',
         'key': 'test_feature_in_group',
-        'layerId': '',
+        'rolloutId': '',
         'experimentIds': ['32222'],
         'variables': [],
       }],
@@ -818,17 +817,17 @@ class ConfigTest(base.BaseTest):
           'endOfRange': 10000
         }], '111184', groupId='19228', groupPolicy='random'
       ),
-      'test_rollout_exp_1': entities.Experiment(
-        '211112', 'test_rollout_exp_1', 'Running', ['11154'], [{
+      '211112': entities.Experiment(
+        '211112', '211112', 'Running', ['11154'], [{
           'id': '211113',
-          'key': 'test_rollout_exp_1_default',
+          'key': '211113',
           'variables': [{
             'id': '131',
             'value': '15',
           }]
         }], {}, [{
           'entityId': '211113',
-          'endOfRange': '10000'
+          'endOfRange': 10000
         }],
         '211111'
       ),
@@ -837,7 +836,7 @@ class ConfigTest(base.BaseTest):
       '111127': expected_experiment_key_map.get('test_experiment'),
       '32222': expected_experiment_key_map.get('group_exp_1'),
       '32223': expected_experiment_key_map.get('group_exp_2'),
-      '211112': expected_experiment_key_map.get('test_rollout_exp_1'),
+      '211112': expected_experiment_key_map.get('211112')
     }
     expected_event_key_map = {
       'test_event': entities.Event('111095', 'test_event', ['111127']),
@@ -871,9 +870,8 @@ class ConfigTest(base.BaseTest):
         'group_exp_2_control': entities.Variation('28905', 'group_exp_2_control'),
         'group_exp_2_variation': entities.Variation('28906', 'group_exp_2_variation')
       },
-      'test_rollout_exp_1': {
-        'test_rollout_exp_1_default': entities.Variation('211113', 'test_rollout_exp_1_default',
-                                                         [{'id': '131', 'value': '15'}])
+      '211112': {
+        '211113': entities.Variation('211113', '211113', [{'id': '131', 'value': '15'}])
       }
     }
     expected_variation_id_map = {
@@ -891,39 +889,39 @@ class ConfigTest(base.BaseTest):
         '28905': entities.Variation('28905', 'group_exp_2_control'),
         '28906': entities.Variation('28906', 'group_exp_2_variation')
       },
-      'test_rollout_exp_1': {
-        '211113': entities.Variation('211113', 'test_rollout_exp_1_default', [{'id': '131', 'value': '15'}])
+      '211112': {
+        '211113': entities.Variation('211113', '211113', [{'id': '131', 'value': '15'}])
       }
     }
 
     expected_feature_key_map = {
-      'test_feature_1': entities.Feature('91111', 'test_feature_1', ['111127'], '', {
+      'test_feature_1': entities.FeatureFlag('91111', 'test_feature_1', ['111127'], '', {
           'is_working': entities.Variable('127', 'is_working', 'boolean', 'true'),
           'environment': entities.Variable('128', 'environment', 'string', 'devel'),
           'number_of_days': entities.Variable('129', 'number_of_days', 'integer', '192'),
           'significance_value': entities.Variable('130', 'significance_value', 'double', '0.00098')
         }),
-      'test_feature_2': entities.Feature('91112', 'test_feature_2', [], '211111', {
+      'test_feature_2': entities.FeatureFlag('91112', 'test_feature_2', [], '211111', {
           'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')
         }),
-      'test_feature_in_group': entities.Feature('91113', 'test_feature_in_group', ['32222'], '', {}, '19228')
+      'test_feature_in_group': entities.FeatureFlag('91113', 'test_feature_in_group', ['32222'], '', {}, '19228')
     }
 
     expected_layer_id_map = {
-      '211111': entities.Layer('211111', 'ordered', [{
-          'key': 'test_rollout_exp_1',
+      '211111': entities.Layer('211111', [{
+          'key': '211112',
           'status': 'Running',
           'forcedVariations': {},
           'layerId': '211111',
           'audienceIds': ['11154'],
           'trafficAllocation': [{
             'entityId': '211113',
-            'endOfRange': '10000'
+            'endOfRange': 10000
           }],
           'id': '211112',
           'variations': [{
             'id': '211113',
-            'key': 'test_rollout_exp_1_default',
+            'key': '211113',
             'variables': [{
               'id': '131',
               'value': '15'
@@ -954,7 +952,7 @@ class ConfigTest(base.BaseTest):
         '131': entities.Variation.VariableUsage('131', '15')
       }
     }
-    self.maxDiff = None
+
     self.assertEqual(expected_variation_variable_usage_map['28901'],
                      project_config.variation_variable_usage_map['28901'])
     self.assertEqual(expected_group_id_map, project_config.group_id_map)
@@ -1127,22 +1125,26 @@ class ConfigTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
-    expected_feature = entities.Feature('91112', 'test_feature_2', [], '211111', {})
+    expected_feature = entities.FeatureFlag('91112', 'test_feature_2', [], '211111', {})
     self.assertEqual(expected_feature, project_config.get_feature_from_key('test_feature_2'))
 
   def test_get_feature_from_key__invalid_feature_key(self):
     """ Test that None is returned given an invalid feature key. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
     self.assertIsNone(project_config.get_feature_from_key('invalid_feature_key'))
 
   def test_get_layer_from_id__valid_layer_id(self):
+    """ Test that a valid layer is returned """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
-    expected_layer = entities.Layer('211111', 'ordered', [{
-      'key': 'test_rollout_exp_1',
+    expected_layer = entities.Layer('211111', [{
+      'id': '211127',
+      'key': '211127',
       'status': 'Running',
       'forcedVariations': {},
       'layerId': '211111',
@@ -1154,12 +1156,11 @@ class ConfigTest(base.BaseTest):
         'entityId': '211129',
         'endOfRange': 9000
       }],
-      'id': '211127',
       'variations': [{
-        'key': 'control',
+        'key': '211128',
         'id': '211128'
       }, {
-        'key': 'variation',
+        'key': '211129',
         'id': '211129'
       }]
     }])
@@ -1178,6 +1179,7 @@ class ConfigTest(base.BaseTest):
 
   def test_get_variable_value_for_variation__invalid_variable(self):
     """ Test that an invalid variable key will return None. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
@@ -1186,6 +1188,7 @@ class ConfigTest(base.BaseTest):
 
   def test_get_variable_value_for_variation__no_variables_for_variation(self):
     """ Test that a variation with no variables will return None. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
@@ -1195,6 +1198,7 @@ class ConfigTest(base.BaseTest):
 
   def test_get_variable_for_feature__returns_valid_variable(self):
     """ Test that the feature variable is returned. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
@@ -1203,6 +1207,7 @@ class ConfigTest(base.BaseTest):
 
   def test_get_variable_for_feature__invalid_feature_key(self):
     """ Test that an invalid feature key will return None. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
@@ -1210,6 +1215,7 @@ class ConfigTest(base.BaseTest):
 
   def test_get_variable_for_feature__invalid_variable_key(self):
     """ Test that an invalid variable key will return None. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
 
