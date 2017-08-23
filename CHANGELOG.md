@@ -1,3 +1,6 @@
+# 1.2.1
+- Removed older feature flag parsing.
+
 # 1.2.0
 - Added user profile service.
 
