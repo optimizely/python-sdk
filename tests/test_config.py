@@ -1221,7 +1221,6 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(project_config.get_variable_for_feature('test_feature_1', 'invalid_variable_key'))
 
-  ####################### forced variation tests #########################
   # get_forced_variation tests
   def test_get_forced_variation__invalid_user_id(self):
     """ Test invalid user IDs return a null variation. """
@@ -1249,14 +1248,16 @@ class ConfigTest(base.BaseTest):
   def test_set_forced_variation__invalid_experiment_key(self):
     """ Test invalid experiment keys set fail to set a forced variation """
 
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment_not_in_datafile', 'test_user', 'variation'))
+    self.assertFalse(self.project_config.set_forced_variation('test_experiment_not_in_datafile',
+                                                              'test_user', 'variation'))
     self.assertFalse(self.project_config.set_forced_variation('', 'test_user', 'variation'))
     self.assertFalse(self.project_config.set_forced_variation(None, 'test_user', 'variation'))
 
   def test_set_forced_variation__invalid_variation_key(self):
     """ Test invalid variation keys set fail to set a forced variation """
 
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation_not_in_datafile'))
+    self.assertFalse(self.project_config.set_forced_variation('test_experiment', 'test_user',
+                                                              'variation_not_in_datafile'))
     self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', ''))
     self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
 
@@ -1284,7 +1285,6 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
 
 
-  ##############################################################################
 class ConfigLoggingTest(base.BaseTest):
   def setUp(self):
     base.BaseTest.setUp(self)
@@ -1435,5 +1435,3 @@ class ConfigExceptionTest(base.BaseTest):
     self.assertRaisesRegexp(exceptions.InvalidGroupException,
                             enums.Errors.INVALID_GROUP_ID_ERROR,
                             self.project_config.get_group, '42')
-
-

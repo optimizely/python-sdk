@@ -327,7 +327,7 @@ class Optimizely(object):
 
     return enabled_features
 
-  def set_forced_variation(self, experiment_key, user_id, variation_key) :
+  def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.
 
     Args:
@@ -356,4 +356,4 @@ class Optimizely(object):
     if forced_variation:
       forced_variation_key = forced_variation.key
 
-    return  forced_variation_key
+    return forced_variation_key
