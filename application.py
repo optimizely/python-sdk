@@ -66,20 +66,20 @@ def track():
   return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/forced_variation', methods=['POST'])
-def track():
+def forced_variation():
   payload = request.get_json()
   user_id = payload.get('user_id')
   experiment_key = payload.get('experiment_key')
   forced_variation_key = payload.get('forced_variation_key')
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  result = optimizely_instance.setForcedVariation(experiment_key, user_id, forced_variation_key)
+  result = optimizely_instance.set_forced_variation(experiment_key, user_id, forced_variation_key)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
-  variation = optimizely_instance.getForcedVariation(experiment_key, user_id)
+  variation = optimizely_instance.get_forced_variation(experiment_key, user_id)
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/forced_variation_multiple_sets', methods=['POST'])
-def track():
+def forced_variation_multiple_sets():
   payload = request.get_json()
   user_id_1 = payload.get('user_id_1')
   user_id_2 = payload.get('user_id_2')
@@ -88,51 +88,51 @@ def track():
   forced_variation_key_1 = payload.get('forced_variation_key_1')
   forced_variation_key_2 = payload.get('forced_variation_key_2')
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  result = optimizely_instance.setForcedVariation(experiment_key_1, user_id_1, forced_variation_key_1)
+  result = optimizely_instance.set_forced_variation(experiment_key_1, user_id_1, forced_variation_key_1)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
-  result = optimizely_instance.setForcedVariation(experiment_key_2, user_id_1, forced_variation_key_2)
+  result = optimizely_instance.set_forced_variation(experiment_key_2, user_id_1, forced_variation_key_2)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
-  result = optimizely_instance.setForcedVariation(experiment_key_1, user_id_2, forced_variation_key_1)
+  result = optimizely_instance.set_forced_variation(experiment_key_1, user_id_2, forced_variation_key_1)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
-  result = optimizely_instance.setForcedVariation(experiment_key_2, user_id_2, forced_variation_key_2)
+  result = optimizely_instance.set_forced_variation(experiment_key_2, user_id_2, forced_variation_key_2)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
-  variation_1 = optimizely_instance.getForcedVariation(experiment_key_1, user_id_1)
-  variation_2 = optimizely_instance.getForcedVariation(experiment_key_2, user_id_1)
-  variation_3 = optimizely_instance.getForcedVariation(experiment_key_1, user_id_2)
-  variation_4 = optimizely_instance.getForcedVariation(experiment_key_2, user_id_2)
-  return json.dumps({'result': {'result_1': variation_1,
-                                'result_2': variation_2,
-                                'result_3': variation_3,
-                                'result_4': variation_4},
+  variation_1 = optimizely_instance.get_forced_variation(experiment_key_1, user_id_1)
+  variation_2 = optimizely_instance.get_forced_variation(experiment_key_2, user_id_1)
+  variation_3 = optimizely_instance.get_forced_variation(experiment_key_1, user_id_2)
+  variation_4 = optimizely_instance.get_forced_variation(experiment_key_2, user_id_2)
+  return json.dumps({'result_1': variation_1,
+                     'result_2': variation_2,
+                     'result_3': variation_3,
+                     'result_4': variation_4,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/forced_variation_get_variation', methods=['POST'])
-def track():
+def forced_variation_get_variation():
   payload = request.get_json()
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
   experiment_key = payload.get('experiment_key')
   forced_variation_key = payload.get('forced_variation_key')
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  result = optimizely_instance.setForcedVariation(experiment_key, user_id, forced_variation_key)
+  result = optimizely_instance.set_forced_variation(experiment_key, user_id, forced_variation_key)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
   variation = optimizely_instance.get_variation(experiment_key, user_id, attributes=attributes)
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/forced_variation_activate', methods=['POST'])
-def track():
+def forced_variation_activate():
   payload = request.get_json()
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
   experiment_key = payload.get('experiment_key')
   forced_variation_key = payload.get('forced_variation_key')
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  result = optimizely_instance.setForcedVariation(experiment_key, user_id, forced_variation_key)
+  result = optimizely_instance.set_forced_variation(experiment_key, user_id, forced_variation_key)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
   variation = optimizely_instance.activate(experiment_key, user_id, attributes=attributes)
