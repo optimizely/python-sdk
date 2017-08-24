@@ -332,13 +332,14 @@ class Optimizely(object):
 
     Args:
      experiment_key: A string key identifying the experiment.
-     user_id: The user ID
-     variation_key: A string variation key that specifies the variation which the user
+     user_id: The user ID.
+     variation_key: A string variation key that specifies the variation which the user.
      will be forced into. If null, then clear the existing experiment-to-variation mapping.
 
-   Returns:
-     A boolean value that indicates if the set completed successfully.
-     """
+    Returns:
+      A boolean value that indicates if the set completed successfully.
+    """
+
     return self.config.set_forced_variation(experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
@@ -346,11 +347,12 @@ class Optimizely(object):
 
       Args:
        experiment_key: A string key identifying the experiment.
-       user_id: The user ID
+       user_id: The user ID.
 
      Returns:
-       The forced variation key.
+       The forced variation key. None if no forced variation key.
     """
+
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
     forced_variation_key = None
     if forced_variation:
