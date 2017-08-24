@@ -614,7 +614,7 @@ class OptimizelyTest(base.BaseTest):
 
   def test_get_enabled_features__invalid_object(self):
     """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
-    
+
     opt_obj = optimizely.Optimizely('invalid_file')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
