@@ -287,6 +287,7 @@ class Optimizely(object):
     Returns:
       True if the feature is enabled for the user. False otherwise.
     """
+
     if not self.is_valid:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
       return False
@@ -312,13 +313,13 @@ class Optimizely(object):
 
     Returns:
       A list of the keys of the features that are enabled for the user.
-
     """
-    if not self.is_valid:
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
-      return False
 
     enabled_features = []
+    if not self.is_valid:
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
+      return enabled_features
+
     for feature in self.config.feature_key_map.values():
       if self.is_feature_enabled(feature.key, user_id, attributes):
         enabled_features.append(feature.key)

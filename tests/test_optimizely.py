@@ -251,7 +251,7 @@ class OptimizelyTest(base.BaseTest):
   def test_activate__invalid_object(self):
     """ Test that activate logs error if Optimizely object is not created correctly. """
 
-    opt_obj = optimizely.Optimizely('invalid_file')
+    opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
@@ -538,7 +538,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__invalid_object(self):
     """ Test that track logs error if Optimizely object is not created correctly. """
 
-    opt_obj = optimizely.Optimizely('invalid_file')
+    opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       opt_obj.track('test_event', 'test_user')
@@ -548,7 +548,7 @@ class OptimizelyTest(base.BaseTest):
   def test_get_variation__invalid_object(self):
     """ Test that get_variation logs error if Optimizely object is not created correctly. """
 
-    opt_obj = optimizely.Optimizely('invalid_file')
+    opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
@@ -557,34 +557,42 @@ class OptimizelyTest(base.BaseTest):
 
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
 
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation_for_feature'
-      ) as mock_decision:
-      self.assertFalse(optimizely_instance.is_feature_enabled('invalid_feature', 'user1'))
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision:
+      self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
 
     self.assertFalse(mock_decision.called)
 
   def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
     feature = project_config.get_feature_from_key('test_feature_1')
 
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation_for_feature',
-      return_value=project_config.get_variation_from_id('test_experiment', '111129')
-      ) as mock_decision:
-      self.assertTrue(optimizely_instance.is_feature_enabled('test_feature_1', 'user1'))
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision:
+      self.assertTrue(opt_obj.is_feature_enabled('test_feature_1', 'user1'))
 
     mock_decision.assert_called_once_with(feature, 'user1', None)
 
+  def test_is_feature_enabled__invalid_object(self):
+    """ Test that is_feature_enabled returns False if Optimizely object is not valid. """
+
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_1', 'user_1'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
+                                         'Datafile has invalid format. Failing "is_feature_enabled".')
+
   def test_get_enabled_features(self):
     """ Test that get_enabled_features only returns features that are enabled for the specified user. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
     def side_effect(*args, **kwargs):
       feature_key = args[0]
@@ -593,10 +601,9 @@ class OptimizelyTest(base.BaseTest):
 
       return False
 
-    with mock.patch(
-      'optimizely.optimizely.Optimizely.is_feature_enabled',
-      side_effect=side_effect) as mock_is_feature_enabled:
-      received_features = optimizely_instance.get_enabled_features('user_1')
+    with mock.patch('optimizely.optimizely.Optimizely.is_feature_enabled',
+                    side_effect=side_effect) as mock_is_feature_enabled:
+      received_features = opt_obj.get_enabled_features('user_1')
 
     expected_enabled_features = ['test_feature_1', 'test_feature_2']
     self.assertEqual(sorted(expected_enabled_features), sorted(received_features))
@@ -604,6 +611,17 @@ class OptimizelyTest(base.BaseTest):
     mock_is_feature_enabled.assert_any_call('test_feature_2', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_group', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_experiment_and_rollout', 'user_1', None)
+
+  def test_get_enabled_features__invalid_object(self):
+    """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
+    
+    opt_obj = optimizely.Optimizely('invalid_file')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.assertEqual([], opt_obj.get_enabled_features('user_1'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
+                                         'Datafile has invalid format. Failing "get_enabled_features".')
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
