@@ -13,7 +13,6 @@
 
 import json
 import mock
-import logging
 
 from optimizely import entities
 from optimizely import error_handler
@@ -202,9 +201,6 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-
-      expected_variation_key = self.optimizely.get_variation('test_experiment', 'test_user')
-      logging.info('expected variation for activate is %s' % expected_variation_key)
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'control'))
       self.assertEqual('control', self.optimizely.activate('test_experiment', 'test_user',
@@ -450,9 +446,6 @@ class OptimizelyTest(base.BaseTest):
     self.maxDiff = None
     with mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-
-      expected_variation_key = self.optimizely.get_variation('test_experiment', 'test_user')
-      logging.info('expected variation for activate is %s' % expected_variation_key)
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
@@ -983,11 +976,9 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
     self.assertTrue(self.optimizely.set_forced_variation('group_exp_1', 'user_1', 'group_exp_1_variation'))
     forced_variation = self.optimizely.get_forced_variation('group_exp_1', 'user_1')
-    logging.info('forced variation for test_get_variation__whitelisted_user_forced_bucketing is %s', forced_variation)
     self.assertEqual(forced_variation, 'group_exp_1_variation')
     variation_key = self.optimizely.get_variation('group_exp_1', 'user_1',
                                                   attributes={'test_attribute': 'test_value'})
-    logging.info('expected variation for test_get_variation__whitelisted_user_forced_bucketing is %s', variation_key)
     self.assertEqual(variation_key, 'group_exp_1_variation')
 
   def test_get_variation__user_profile__forced_bucketing(self):
