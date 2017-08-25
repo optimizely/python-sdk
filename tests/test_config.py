@@ -1150,16 +1150,10 @@ class ConfigTest(base.BaseTest):
       'layerId': '211111',
       'audienceIds': ['11154'],
       'trafficAllocation': [{
-        'entityId': '211128',
-        'endOfRange': 5000
-      }, {
         'entityId': '211129',
         'endOfRange': 9000
       }],
       'variations': [{
-        'key': '211128',
-        'id': '211128'
-      }, {
         'key': '211129',
         'id': '211129'
       }]

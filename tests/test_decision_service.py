@@ -459,7 +459,7 @@ class DecisionServiceTest(base.BaseTest):
 
     mock_decision.assert_called_once_with(project_config.get_group('19228'), 'user_1')
 
-  def test_get_variation_for_feature__checks_everyone_else_rule_if_(self):
+  def test_get_variation_for_feature__skips_to_everyone_else_rule(self):
     """ Test that if a user is in the mutex group but the experiment is
     not targeting a feature, then None is returned. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
