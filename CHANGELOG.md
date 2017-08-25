@@ -1,14 +1,14 @@
-# 1.2.1
+## 1.2.1
 - Removed older feature flag parsing.
 
-# 1.2.0
+## 1.2.0
 - Added user profile service.
 
-# 1.1.1
+## 1.1.1
 - Updated datafile parsing to be able to handle additional fields.
 - Deprecated Classic project support.
 
-# 1.1.0
+## 1.1.0
 - Included datafile revision information in log events.
 - Added event tags to track API to allow users to pass in event metadata.
 - Deprecated the `event_value` parameter from the track method. Should use `event_tags` to pass in event value instead.
