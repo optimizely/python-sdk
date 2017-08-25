@@ -678,11 +678,11 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
-    feature = project_config.get_feature_from_key('test_feature_1')
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision:
-      self.assertTrue(opt_obj.is_feature_enabled('test_feature_1', 'user1'))
+      self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user1'))
 
     mock_decision.assert_called_once_with(feature, 'user1', None)
 
@@ -692,7 +692,7 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely('invalid_file')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.assertFalse(opt_obj.is_feature_enabled('test_feature_1', 'user_1'))
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
                                          'Datafile has invalid format. Failing "is_feature_enabled".')
