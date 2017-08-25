@@ -334,7 +334,7 @@ class DecisionServiceTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
-    feature = project_config.get_feature_from_key('test_feature_1')
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     expected_variation = project_config.get_variation_from_id('test_experiment', '111129')
     with mock.patch(
@@ -352,7 +352,7 @@ class DecisionServiceTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
-    feature = project_config.get_feature_from_key('test_feature_2')
+    feature = project_config.get_feature_from_key('test_feature_in_rollout')
 
     expected_variation = project_config.get_variation_from_id('211127', '211129')
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
@@ -397,7 +397,6 @@ class DecisionServiceTest(base.BaseTest):
       self.assertEqual(expected_variation, decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_get_experiment_in_group.assert_called_once_with(project_config.get_group('19228'), 'user1')
-
     mock_decision.assert_called_once_with(project_config.get_experiment_from_key('group_exp_1'), 'user1', None)
 
   def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
@@ -414,10 +413,7 @@ class DecisionServiceTest(base.BaseTest):
       mock.patch('optimizely.decision_service.DecisionService.get_variation') as mock_decision:
       self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
-    mock_get_experiment_in_group.assert_called_once_with(
-      project_config.get_group('19228'), 'user1'
-    )
-
+    mock_get_experiment_in_group.assert_called_once_with(project_config.get_group('19228'), 'user1')
     self.assertFalse(mock_decision.called)
 
   def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
@@ -425,7 +421,7 @@ class DecisionServiceTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
-    feature = project_config.get_feature_from_key('test_feature_1')
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     with mock.patch(
       'optimizely.decision_service.DecisionService.get_variation',
@@ -441,18 +437,31 @@ class DecisionServiceTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
-    feature = project_config.get_feature_from_key('test_feature_2')
+    feature = project_config.get_feature_from_key('test_feature_in_rollout')
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
       self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
-    mock_audience_check.assert_called_once_with(project_config,
-                                                project_config.get_experiment_from_key('211127'),
-                                                None)
+    mock_audience_check.assert_called_once_with(project_config, project_config.get_experiment_from_key('211127'), None)
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self):
-    """ Test that if a user is in the mutex group but the experiment
-    is not targeting a feature, the feature should not be enabled. """
+    """ Test that if a user is in the mutex group but the experiment is
+    not targeting a feature, then None is returned. """
+    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = optimizely_instance.config
+    decision_service = optimizely_instance.decision_service
+    feature = project_config.get_feature_from_key('test_feature_in_group')
+
+    with mock.patch(
+      'optimizely.decision_service.DecisionService.get_experiment_in_group',
+      return_value=project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
+      self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user_1'))
+
+    mock_decision.assert_called_once_with(project_config.get_group('19228'), 'user_1')
+
+  def test_get_variation_for_feature__checks_everyone_else_rule_if_(self):
+    """ Test that if a user is in the mutex group but the experiment is
+    not targeting a feature, then None is returned. """
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
@@ -470,22 +479,18 @@ class DecisionServiceTest(base.BaseTest):
 
     group = self.project_config.get_group('19228')
     experiment = self.project_config.get_experiment_from_id('32222')
-    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value='32222') as mock_bucket, \
+    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value='32222'),\
          mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.assertEqual(experiment, self.decision_service.get_experiment_in_group(group, 'user_1'))
 
-    mock_logging.assert_called_with(
-      enums.LogLevels.INFO,
-      'User "user_1" is in experiment group_exp_1 of group 19228.')
+    mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is in experiment group_exp_1 of group 19228.')
 
   def test_get_experiment_in_group__returns_none_if_user_not_in_group(self):
     """ Test that get_experiment_in_group returns None if the user is not bucketed into the group. """
 
     group = self.project_config.get_group('19228')
-    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None) as mock_bucket, \
+    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None), \
          mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.assertIsNone(self.decision_service.get_experiment_in_group(group, 'user_1'))
 
-    mock_logging.assert_called_with(
-      enums.LogLevels.INFO,
-      'User "user_1" is not in any experiments of group 19228.')
+    mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is not in any experiments of group 19228.')

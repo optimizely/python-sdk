@@ -274,7 +274,7 @@ class BaseTest(unittest.TestCase):
       }],
       'featureFlags': [{
         'id': '91111',
-        'key': 'test_feature_1',
+        'key': 'test_feature_in_experiment',
         'experimentIds': ['111127'],
         'rolloutId': '',
         'variables': [{
@@ -290,7 +290,7 @@ class BaseTest(unittest.TestCase):
           }]
       }, {
         'id': '91112',
-        'key': 'test_feature_2',
+        'key': 'test_feature_in_rollout',
         'experimentIds': [],
         'rolloutId': '211111',
         'variables': [],

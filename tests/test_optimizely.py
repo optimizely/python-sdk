@@ -704,7 +704,7 @@ class OptimizelyTest(base.BaseTest):
 
     def side_effect(*args, **kwargs):
       feature_key = args[0]
-      if feature_key == 'test_feature_1' or feature_key == 'test_feature_2':
+      if feature_key == 'test_feature_in_experiment' or feature_key == 'test_feature_in_rollout':
         return True
 
       return False
@@ -713,10 +713,10 @@ class OptimizelyTest(base.BaseTest):
                     side_effect=side_effect) as mock_is_feature_enabled:
       received_features = opt_obj.get_enabled_features('user_1')
 
-    expected_enabled_features = ['test_feature_1', 'test_feature_2']
+    expected_enabled_features = ['test_feature_in_experiment', 'test_feature_in_rollout']
     self.assertEqual(sorted(expected_enabled_features), sorted(received_features))
-    mock_is_feature_enabled.assert_any_call('test_feature_1', 'user_1', None)
-    mock_is_feature_enabled.assert_any_call('test_feature_2', 'user_1', None)
+    mock_is_feature_enabled.assert_any_call('test_feature_in_experiment', 'user_1', None)
+    mock_is_feature_enabled.assert_any_call('test_feature_in_rollout', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_group', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_experiment_and_rollout', 'user_1', None)
 
