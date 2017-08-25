@@ -442,7 +442,11 @@ class DecisionServiceTest(base.BaseTest):
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
       self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
-    mock_audience_check.assert_called_once_with(project_config, project_config.get_experiment_from_key('211127'), None)
+    # Check that all experiments in rollout layer were checked
+    self.assertEqual(3, mock_audience_check.call_count)
+    mock_audience_check.assert_any_call(project_config, project_config.get_experiment_from_key('211127'), None)
+    mock_audience_check.assert_any_call(project_config, project_config.get_experiment_from_key('211137'), None)
+    mock_audience_check.assert_any_call(project_config, project_config.get_experiment_from_key('211147'), None)
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self):
     """ Test that if a user is in the mutex group but the experiment is
@@ -460,8 +464,9 @@ class DecisionServiceTest(base.BaseTest):
     mock_decision.assert_called_once_with(project_config.get_group('19228'), 'user_1')
 
   def test_get_variation_for_feature__skips_to_everyone_else_rule(self):
-    """ Test that if a user is in the mutex group but the experiment is
-    not targeting a feature, then None is returned. """
+    """ Test that if a user is in an audience, but does not qualify
+    for the experiment, then it skips to the Everyone Else rule. """
+
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service

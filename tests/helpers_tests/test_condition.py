@@ -26,7 +26,7 @@ class ConditionEvaluatorTests(base.BaseTest):
       self.config_dict['audiences'][0]['conditions']
     )
     attributes = {
-      'test_attribute': 'test_value',
+      'test_attribute': 'test_value_1',
       'browser_type': 'firefox',
       'location': 'San Francisco'
     }
@@ -121,4 +121,4 @@ class ConditionDecoderTests(base.BaseTest):
     )
 
     self.assertEqual(['and', ['or', ['or', 0]]], condition_structure)
-    self.assertEqual([['test_attribute', 'test_value']], condition_list)
+    self.assertEqual([['test_attribute', 'test_value_1']], condition_list)

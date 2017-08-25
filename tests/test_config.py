@@ -115,10 +115,16 @@ class ConfigTest(base.BaseTest):
     }
     expected_audience_id_map = {
       '11154': entities.Audience(
-        '11154', 'Test attribute users',
-        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
+        '11154', 'Test attribute users 1',
+        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value']]
+        conditionList=[['test_attribute', 'test_value_1']]
+      ),
+      '11159': entities.Audience(
+        '11159', 'Test attribute users 2',
+        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
+        conditionStructure=['and', ['or', ['or', 0]]],
+        conditionList=[['test_attribute', 'test_value_2']]
       )
     }
     expected_variation_key_map = {
@@ -1156,6 +1162,36 @@ class ConfigTest(base.BaseTest):
       'variations': [{
         'key': '211129',
         'id': '211129'
+      }]
+    }, {
+      'id': '211137',
+      'key': '211137',
+      'status': 'Running',
+      'forcedVariations': {},
+      'layerId': '211111',
+      'audienceIds': ['11159'],
+      'trafficAllocation': [{
+        'entityId': '211139',
+        'endOfRange': 3000
+      }],
+      'variations': [{
+        'key': '211139',
+        'id': '211139'
+      }]
+    }, {
+      'id': '211147',
+      'key': '211147',
+      'status': 'Running',
+      'forcedVariations': {},
+      'layerId': '211111',
+      'audienceIds': [],
+      'trafficAllocation': [{
+        'entityId': '211149',
+        'endOfRange': 6000
+      }],
+      'variations': [{
+        'key': '211149',
+        'id': '211149'
       }]
     }])
     self.assertEqual(expected_layer, project_config.get_layer_from_id('211111'))
