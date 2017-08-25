@@ -111,7 +111,7 @@ class ProjectConfig(object):
     # Map of user IDs to another map of experiments to variations.
     # This contains all the forced variations set by the user
     # by calling set_forced_variation (it is not the same as the
-    # whitelisting forcedVariations data structure.
+    # whitelisting forcedVariations data structure).
     self.forced_variation_map = {}
 
   @staticmethod
@@ -464,12 +464,12 @@ class ProjectConfig(object):
     return feature.variables.get(variable_key)
 
   def set_forced_variation(self, experiment_key, user_id, variation_key):
-    """ Sets a map of user IDs to a map experiments to forced variations.
+    """ Sets users to a map of experiments to forced variations.
 
       Args:
         experiment_key: Key for experiment.
-        user_id: The user Id.
-        variation_key: Key for variation. If null, then clear the existing experiment-to-variation mapping.
+        user_id: The user ID.
+        variation_key: Key for variation. If None, then clear the existing experiment-to-variation mapping.
 
       Returns:
         A boolean value that indicates if the set completed successfully.
@@ -480,13 +480,13 @@ class ProjectConfig(object):
 
     experiment = self.get_experiment_from_key(experiment_key)
     if not experiment:
-      # invalid experiment key will be logged inside this call
+      # The invalid experiment key will be logged inside this call.
       return False
 
     experiment_id = experiment.id
     if not variation_key:
       if user_id in self.forced_variation_map:
-        experiment_to_variation_map = self.forced_variation_map[user_id]
+        experiment_to_variation_map = self.forced_variation_map.get(user_id)
         if experiment_id in experiment_to_variation_map:
           del(self.forced_variation_map[user_id][experiment_id])
           self.logger.log(enums.LogLevels.DEBUG,
@@ -503,7 +503,7 @@ class ProjectConfig(object):
 
     forced_variation = self.get_variation_from_key(experiment_key, variation_key)
     if not forced_variation:
-      # invalid variation key will be logged inside this call
+      # The invalid variation key will be logged inside this call.
       return False
 
     variation_id = forced_variation.id
@@ -527,7 +527,6 @@ class ProjectConfig(object):
 
       Returns:
         The variation which the given user and experiment should be forced into.
-
     """
     if not user_id:
       self.logger.log(enums.LogLevels.DEBUG, 'User ID is invalid.')
@@ -539,7 +538,7 @@ class ProjectConfig(object):
 
     experiment = self.get_experiment_from_key(experiment_key)
     if not experiment:
-      # invalid experiment key will be logged inside this call
+      # The invalid experiment key will be logged inside this call.
       return None
 
     experiment_to_variation_map = self.forced_variation_map.get(user_id)
@@ -550,8 +549,7 @@ class ProjectConfig(object):
                       % (experiment_key, user_id))
       return None
 
-    experiment_id = experiment.id
-    variation_id = experiment_to_variation_map.get(experiment_id)
+    variation_id = experiment_to_variation_map.get(experiment.id)
     if variation_id is None:
       self.logger.log(enums.LogLevels.DEBUG,
                       'No variation mapped to experiment "%s" in the forced variation map.'
@@ -560,7 +558,7 @@ class ProjectConfig(object):
 
     variation = self.get_variation_from_id(experiment_key, variation_id)
     if not variation:
-      # invalid variation ID will be logged inside this call
+      # The invalid variation ID will be logged inside this call.
       return None
 
     self.logger.log(enums.LogLevels.DEBUG,
