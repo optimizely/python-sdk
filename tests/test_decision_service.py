@@ -470,14 +470,16 @@ class DecisionServiceTest(base.BaseTest):
     optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = optimizely_instance.config
     decision_service = optimizely_instance.decision_service
-    feature = project_config.get_feature_from_key('test_feature_in_group')
+    feature = project_config.get_feature_from_key('test_feature_in_rollout')
 
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_experiment_in_group',
-      return_value=project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
-      self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user_1'))
+    with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
+      mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None):
+      self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
-    mock_decision.assert_called_once_with(project_config.get_group('19228'), 'user_1')
+    # Check that after first experiment, it skips to the last experiment to check
+    self.assertEqual(2, mock_audience_check.call_count)
+    mock_audience_check.assert_any_call(project_config, project_config.get_experiment_from_key('211127'), None)
+    mock_audience_check.assert_any_call(project_config, project_config.get_experiment_from_key('211147'), None)
 
   def test_get_experiment_in_group(self):
     """ Test that get_experiment_in_group returns the bucketed experiment for the user. """
