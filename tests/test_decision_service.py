@@ -473,7 +473,7 @@ class DecisionServiceTest(base.BaseTest):
     feature = project_config.get_feature_from_key('test_feature_in_rollout')
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-      mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None):
+      mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None):
       self.assertIsNone(decision_service.get_variation_for_feature(feature, 'user1'))
 
     # Check that after first experiment, it skips to the last experiment to check
