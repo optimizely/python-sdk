@@ -100,6 +100,11 @@ class DecisionService(object):
       self.logger.log(enums.LogLevels.INFO, 'Experiment "%s" is not running.' % experiment.key)
       return None
 
+    # Check if the user is forced into a variation
+    variation = self.config.get_forced_variation(experiment.key, user_id)
+    if variation:
+      return variation
+
     # Check to see if user is white-listed for a certain variation
     variation = self.get_forced_variation(experiment, user_id)
     if variation:

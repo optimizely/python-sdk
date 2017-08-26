@@ -92,16 +92,16 @@ class Optimizely(object):
     """
 
     if not skip_json_validation and not validator.is_datafile_valid(datafile):
-     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
 
     if not validator.is_event_dispatcher_valid(self.event_dispatcher):
-     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
 
     if not validator.is_logger_valid(self.logger):
-     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
 
     if not validator.is_error_handler_valid(self.error_handler):
-     raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
 
   def _validate_user_inputs(self, attributes=None, event_tags=None):
     """ Helper method to validate user inputs.
@@ -261,6 +261,7 @@ class Optimizely(object):
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
+
     if not experiment:
       self.logger.log(enums.LogLevels.INFO,
                       'Experiment key "%s" is invalid. Not activating user "%s".' % (experiment_key,
@@ -325,3 +326,32 @@ class Optimizely(object):
         enabled_features.append(feature.key)
 
     return enabled_features
+
+  def set_forced_variation(self, experiment_key, user_id, variation_key):
+    """ Force a user into a variation for a given experiment.
+
+    Args:
+     experiment_key: A string key identifying the experiment.
+     user_id: The user ID.
+     variation_key: A string variation key that specifies the variation which the user.
+     will be forced into. If null, then clear the existing experiment-to-variation mapping.
+
+    Returns:
+      A boolean value that indicates if the set completed successfully.
+    """
+
+    return self.config.set_forced_variation(experiment_key, user_id, variation_key)
+
+  def get_forced_variation(self, experiment_key, user_id):
+    """ Gets the forced variation for a given user and experiment.
+
+      Args:
+       experiment_key: A string key identifying the experiment.
+       user_id: The user ID.
+
+     Returns:
+       The forced variation key. None if no forced variation key.
+    """
+
+    forced_variation = self.config.get_forced_variation(experiment_key, user_id)
+    return forced_variation.key if forced_variation else None
