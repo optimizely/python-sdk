@@ -670,7 +670,7 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
-    
+
     self.assertFalse(mock_decision.called)
 
   def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
