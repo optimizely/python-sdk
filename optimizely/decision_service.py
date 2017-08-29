@@ -165,7 +165,7 @@ class DecisionService(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      Variation the user should see. None if the user is not in any of the layer's experiments.
+      Variation the user should see. None if the user is not in any of the rollout's targeting rules.
     """
 
     # Go through each experiment in order and try to get the variation for the user
