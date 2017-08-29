@@ -258,6 +258,9 @@ class BaseTest(unittest.TestCase):
         'id': '11159'
       }],
       'rollouts': [{
+        'id': '201111',
+        'experiments': []
+      }, {
         'id': '211111',
         'experiments': [{
           'id': '211127',
@@ -524,6 +527,9 @@ class BaseTestV3(unittest.TestCase):
         'id': '11159'
       }],
       'rollouts': [{
+        'id': '201111',
+        'experiments': []
+      }, {
         'id': '211111',
         'experiments': [{
           'id': '211127',
