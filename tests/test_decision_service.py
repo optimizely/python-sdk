@@ -495,7 +495,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
       self.project_config.get_experiment_from_key('test_experiment'), 'user1', None
     )
 
-  def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self, _):
+  def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(self, _):
     """ Test that if a user is in the mutex group but the experiment is
     not targeting a feature, then None is returned. """
 
