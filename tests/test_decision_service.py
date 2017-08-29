@@ -330,6 +330,7 @@ class DecisionServiceTest(base.BaseTest):
     self.assertEqual(0, mock_save.call_count)
 
 
+@mock.patch('optimizely.logger.NoOpLogger.log')
 class FeatureFlagDecisionTests(base.BaseTest):
 
   def setUp(self):
@@ -338,13 +339,16 @@ class FeatureFlagDecisionTests(base.BaseTest):
     self.project_config = opt_obj.config
     self.decision_service = opt_obj.decision_service
 
-  def test_get_variation_for_rollout__returns_none_if_no_experiments(self):
+  def test_get_variation_for_rollout__returns_none_if_no_experiments(self, mock_logging):
     """ Test that get_variation_for_rollout returns None if there are no experiments (targeting rules). """
 
     no_experiment_rollout = self.project_config.get_rollout_from_id('201111')
     self.assertIsNone(self.decision_service.get_variation_for_rollout(no_experiment_rollout, 'test_user'))
 
-  def test_get_variation_for_rollout__skips_to_everyone_else_rule(self):
+    # Assert no log messages were generated
+    self.assertEqual(0, mock_logging.call_count)
+
+  def test_get_variation_for_rollout__skips_to_everyone_else_rule(self, mock_logging):
     """ Test that if a user is in an audience, but does not qualify
     for the experiment, then it skips to the Everyone Else rule. """
 
@@ -361,7 +365,14 @@ class FeatureFlagDecisionTests(base.BaseTest):
       mock_audience_check.call_args_list
     )
 
-  def test_get_variation_for_rollout__returns_none_for_user_not_in_rollout(self):
+    # Check all log messages
+    self.assertEqual(
+      [mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule 1.'),
+       mock.call(enums.LogLevels.DEBUG, 'User "test_user" is not in the traffic group for the targeting else. '
+                                        'Checking "Everyone Else" rule now.')
+       ], mock_logging.call_args_list)
+
+  def test_get_variation_for_rollout__returns_none_for_user_not_in_rollout(self, mock_logging):
     """ Test that get_variation_for_rollouts returns None for the user not in the associated rollout. """
 
     rollout = self.project_config.get_rollout_from_id('211111')
@@ -377,7 +388,13 @@ class FeatureFlagDecisionTests(base.BaseTest):
       mock_audience_check.call_args_list
     )
 
-  def test_get_variation_for_feature__returns_variation_for_feature_in_experiment(self):
+    # Check all log messages
+    self.assertEqual(
+      [mock.call(enums.LogLevels.DEBUG, 'User "test_user" does not meet conditions for targeting rule 1.'),
+       mock.call(enums.LogLevels.DEBUG, 'User "test_user" does not meet conditions for targeting rule 2.')],
+      mock_logging.call_args_list)
+
+  def test_get_variation_for_feature__returns_variation_for_feature_in_experiment(self, mock_logging):
     """ Test that get_variation_for_feature returns the variation of the experiment the feature is associated with. """
 
     feature = self.project_config.get_feature_from_key('test_feature_in_experiment')
@@ -392,7 +409,11 @@ class FeatureFlagDecisionTests(base.BaseTest):
       self.project_config.get_experiment_from_key('test_experiment'), 'user1', None
     )
 
-  def test_get_variation_for_feature__returns_variation_for_feature_in_rollout(self):
+    # Check log message
+    mock_logging.assert_called_once_with(enums.LogLevels.DEBUG,
+                                         'User "user1" is in variation variation of experiment test_experiment.')
+
+  def test_get_variation_for_feature__returns_variation_for_feature_in_rollout(self, mock_logging):
     """ Test that get_variation_for_feature returns the variation of
     the experiment in the rollout that the user is bucketed into. """
 
@@ -406,7 +427,10 @@ class FeatureFlagDecisionTests(base.BaseTest):
     expected_rollout = self.project_config.get_rollout_from_id('211111')
     mock_get_variation_for_rollout.assert_called_once_with(expected_rollout, 'test_user', None)
 
-  def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(self):
+    # Assert no log messages were generated
+    self.assertEqual(0, mock_logging.call_count)
+
+  def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(self, _):
     """ Test that get_variation_for_feature returns the variation of the experiment in the
     feature's rollout even if the user is not bucketed into the feature's experiment. """
 
@@ -425,7 +449,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
     mock_audience_check.assert_any_call(self.project_config,
                                         self.project_config.get_experiment_from_key('211127'), None)
 
-  def test_get_variation_for_feature__returns_variation_for_feature_in_group(self):
+  def test_get_variation_for_feature__returns_variation_for_feature_in_group(self, _):
     """ Test that get_variation_for_feature returns the variation of
      the experiment the user is bucketed in the feature's group. """
 
@@ -439,71 +463,65 @@ class FeatureFlagDecisionTests(base.BaseTest):
       'optimizely.decision_service.DecisionService.get_experiment_in_group',
       return_value=project_config.get_experiment_from_key('group_exp_1')) as mock_get_experiment_in_group, \
       mock.patch('optimizely.decision_service.DecisionService.get_variation',
-        return_value=expected_variation) as mock_decision:
+                 return_value=expected_variation) as mock_decision:
       self.assertEqual(expected_variation, decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_get_experiment_in_group.assert_called_once_with(project_config.get_group('19228'), 'user1')
     mock_decision.assert_called_once_with(project_config.get_experiment_from_key('group_exp_1'), 'user1', None)
 
-  def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
+  def test_get_variation_for_feature__returns_none_for_user_not_in_group(self, _):
     """ Test that get_variation_for_feature returns None for
     user not in group and the feature is not part of a rollout. """
 
     feature = self.project_config.get_feature_from_key('test_feature_in_group')
 
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_experiment_in_group',
-      return_value=None) as mock_get_experiment_in_group, \
+    with mock.patch('optimizely.decision_service.DecisionService.get_experiment_in_group',
+                    return_value=None) as mock_get_experiment_in_group, \
       mock.patch('optimizely.decision_service.DecisionService.get_variation') as mock_decision:
       self.assertIsNone(self.decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_get_experiment_in_group.assert_called_once_with(self.project_config.get_group('19228'), 'user1')
     self.assertFalse(mock_decision.called)
 
-  def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
+  def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self, _):
     """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
 
     feature = self.project_config.get_feature_from_key('test_feature_in_experiment')
 
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_variation',
-      return_value=None) as mock_decision:
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation', return_value=None) as mock_decision:
       self.assertIsNone(self.decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'user1', None
     )
 
-  def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self):
+  def test_get_variation_for_feature__returns_none_for_user_in_group_but_experiment_not_associated_with_feature(self, _):
     """ Test that if a user is in the mutex group but the experiment is
     not targeting a feature, then None is returned. """
 
     feature = self.project_config.get_feature_from_key('test_feature_in_group')
 
-    with mock.patch(
-      'optimizely.decision_service.DecisionService.get_experiment_in_group',
-      return_value=self.project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
+    with mock.patch('optimizely.decision_service.DecisionService.get_experiment_in_group',
+                    return_value=self.project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
       self.assertIsNone(self.decision_service.get_variation_for_feature(feature, 'user_1'))
 
     mock_decision.assert_called_once_with(self.project_config.get_group('19228'), 'user_1')
 
-  def test_get_experiment_in_group(self):
+  def test_get_experiment_in_group(self, mock_logging):
     """ Test that get_experiment_in_group returns the bucketed experiment for the user. """
 
     group = self.project_config.get_group('19228')
     experiment = self.project_config.get_experiment_from_id('32222')
-    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value='32222'),\
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value='32222'):
       self.assertEqual(experiment, self.decision_service.get_experiment_in_group(group, 'user_1'))
 
     mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is in experiment group_exp_1 of group 19228.')
 
-  def test_get_experiment_in_group__returns_none_if_user_not_in_group(self):
+  def test_get_experiment_in_group__returns_none_if_user_not_in_group(self, mock_logging):
     """ Test that get_experiment_in_group returns None if the user is not bucketed into the group. """
 
     group = self.project_config.get_group('19228')
-    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+    with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None):
       self.assertIsNone(self.decision_service.get_experiment_in_group(group, 'user_1'))
 
     mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is not in any experiments of group 19228.')
