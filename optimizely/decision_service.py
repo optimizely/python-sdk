@@ -190,13 +190,17 @@ class DecisionService(object):
           return variation
         else:
           # Evaluate no further rules
+          self.logger.log(enums.LogLevels.DEBUG,
+                          'User "%s" is not in the traffic group for the targeting else. '
+                          'Checking "Everyone Else" rule now.' % user_id)
           break
 
-      # Evaluate last rule
+      # Evaluate last rule i.e. "Everyone Else" rule
+      everyone_else_experiment = rollout.experiments[-1]
       if audience_helper.is_user_in_experiment(self.config,
                                                self.config.get_experiment_from_key(rollout.experiments[-1].get('key')),
                                                attributes):
-        variation = self.bucketer.bucket(rollout.experiments[-1], user_id)
+        variation = self.bucketer.bucket(everyone_else_experiment, user_id)
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
