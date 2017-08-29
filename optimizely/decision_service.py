@@ -171,7 +171,7 @@ class DecisionService(object):
 
     # Go through each experiment in order and try to get the variation for the user
     if rollout and len(rollout.experiments) > 0:
-      for idx in xrange(len(rollout.experiments) - 1):
+      for idx in range(len(rollout.experiments) - 1):
         experiment = self.config.get_experiment_from_key(rollout.experiments[idx].get('key'))
 
         # Check if user meets audience conditions for targeting rule
