@@ -23,7 +23,7 @@ class AudienceTest(base.BaseTest):
     """ Test that is_match returns True when audience conditions are met. """
 
     user_attributes = {
-      'test_attribute': 'test_value',
+      'test_attribute': 'test_value_1',
       'browser_type': 'firefox',
       'location': 'San Francisco'
     }
@@ -45,7 +45,7 @@ class AudienceTest(base.BaseTest):
     """ Test that is_user_in_experiment returns True when experiment is using no audience. """
 
     user_attributes = {
-      'test_attribute': 'test_value',
+      'test_attribute': 'test_value_1',
       'browser_type': 'firefox',
       'location': 'San Francisco'
     }
@@ -58,7 +58,7 @@ class AudienceTest(base.BaseTest):
     """ Test that is_user_in_experiment returns True when audience conditions are met. """
 
     user_attributes = {
-      'test_attribute': 'test_value',
+      'test_attribute': 'test_value_1',
       'browser_type': 'firefox',
       'location': 'San Francisco'
     }
