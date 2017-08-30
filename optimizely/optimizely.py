@@ -297,8 +297,8 @@ class Optimizely(object):
     if not feature:
       return False
 
-    variation = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
-    if variation:
+    decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
+    if decision.variation:
       self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
       return True
 

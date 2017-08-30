@@ -14,13 +14,13 @@
 import json
 import mock
 
+from optimizely import decision_service
 from optimizely import entities
 from optimizely import error_handler
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
-from optimizely import user_profile
 from optimizely import version
 from optimizely.helpers import enums
 from . import base
@@ -680,8 +680,10 @@ class OptimizelyTest(base.BaseTest):
     project_config = opt_obj.config
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
+    mock_experiment = project_config.get_experiment_from_key('test_experiment')
+    mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision:
+                    return_value=decision_service.Decision(mock_experiment, mock_variation)) as mock_decision:
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user1'))
 
     mock_decision.assert_called_once_with(feature, 'user1', None)
