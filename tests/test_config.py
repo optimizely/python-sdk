@@ -913,7 +913,7 @@ class ConfigTest(base.BaseTest):
       'test_feature_in_group': entities.FeatureFlag('91113', 'test_feature_in_group', ['32222'], '', {}, '19228')
     }
 
-    expected_layer_id_map = {
+    expected_rollout_id_map = {
       '211111': entities.Layer('211111', [{
           'key': '211112',
           'status': 'Running',
@@ -970,7 +970,7 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_variation_key_map, project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, project_config.variation_id_map)
     self.assertEqual(expected_feature_key_map, project_config.feature_key_map)
-    self.assertEqual(expected_layer_id_map, project_config.layer_id_map)
+    self.assertEqual(expected_rollout_id_map, project_config.rollout_id_map)
     self.assertEqual(expected_variation_variable_usage_map, project_config.variation_variable_usage_map)
 
   def test_get_version(self):
@@ -1128,8 +1128,8 @@ class ConfigTest(base.BaseTest):
 
   def test_get_feature_from_key__valid_feature_key(self):
     """ Test that a valid feature is returned given a valid feature key. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     expected_feature = entities.FeatureFlag('91112', 'test_feature_in_rollout', [], '211111', {})
     self.assertEqual(expected_feature, project_config.get_feature_from_key('test_feature_in_rollout'))
@@ -1137,18 +1137,18 @@ class ConfigTest(base.BaseTest):
   def test_get_feature_from_key__invalid_feature_key(self):
     """ Test that None is returned given an invalid feature key. """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     self.assertIsNone(project_config.get_feature_from_key('invalid_feature_key'))
 
-  def test_get_layer_from_id__valid_layer_id(self):
-    """ Test that a valid layer is returned """
+  def test_get_rollout_from_id__valid_rollout_id(self):
+    """ Test that a valid rollout is returned """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
-    expected_layer = entities.Layer('211111', [{
+    expected_rollout = entities.Layer('211111', [{
       'id': '211127',
       'key': '211127',
       'status': 'Running',
@@ -1194,12 +1194,12 @@ class ConfigTest(base.BaseTest):
         'id': '211149'
       }]
     }])
-    self.assertEqual(expected_layer, project_config.get_layer_from_id('211111'))
+    self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
   def test_get_variable_value_for_variation__returns_valid_value(self):
     """ Test that the right value and type are returned. """
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
@@ -1210,8 +1210,8 @@ class ConfigTest(base.BaseTest):
   def test_get_variable_value_for_variation__invalid_variable(self):
     """ Test that an invalid variable key will return None. """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     self.assertIsNone(project_config.get_variable_value_for_variation(None, variation))
@@ -1219,8 +1219,8 @@ class ConfigTest(base.BaseTest):
   def test_get_variable_value_for_variation__no_variables_for_variation(self):
     """ Test that a variation with no variables will return None. """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     variation = entities.Variation('1111281', 'invalid_variation', [])
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
@@ -1229,8 +1229,8 @@ class ConfigTest(base.BaseTest):
   def test_get_variable_for_feature__returns_valid_variable(self):
     """ Test that the feature variable is returned. """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
     self.assertEqual(entities.Variable('127', 'is_working', 'boolean', 'true'), variable)
@@ -1238,16 +1238,16 @@ class ConfigTest(base.BaseTest):
   def test_get_variable_for_feature__invalid_feature_key(self):
     """ Test that an invalid feature key will return None. """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     self.assertIsNone(project_config.get_variable_for_feature('invalid_feature', 'is_working'))
 
   def test_get_variable_for_feature__invalid_variable_key(self):
     """ Test that an invalid variable key will return None. """
 
-    optimizely_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = optimizely_instance.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
 
     self.assertIsNone(project_config.get_variable_for_feature('test_feature_in_experiment', 'invalid_variable_key'))
 
