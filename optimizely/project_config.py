@@ -420,12 +420,13 @@ class ProjectConfig(object):
     """ Get the variable value for the given variation.
 
     Args:
-      Variable: The Variable for which we are getting the value.
-      Variation: The Variation for which we are getting the variable value.
+      variable: The Variable for which we are getting the value.
+      variation: The Variation for which we are getting the variable value.
 
     Returns:
       The type-casted variable value or None if any of the inputs are invalid.
     """
+
     if not variable or not variation:
       return None
 
@@ -443,7 +444,7 @@ class ProjectConfig(object):
     return value
 
   def get_variable_for_feature(self, feature_key, variable_key):
-    """ Get the variable with the given variable key for the given feature
+    """ Get the variable with the given variable key for the given feature.
 
     Args:
       feature_key: The key of the feature for which we are getting the variable.

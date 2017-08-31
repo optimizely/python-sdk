@@ -178,6 +178,8 @@ class Optimizely(object):
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
 
+  def _get_feature_variable_for_given_type(self):
+
   def activate(self, experiment_key, user_id, attributes=None):
     """ Buckets visitor and sends impression event to Optimizely.
 
@@ -349,6 +351,71 @@ class Optimizely(object):
         enabled_features.append(feature.key)
 
     return enabled_features
+
+  def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
+    """ Returns value for a certain string variable attached to a feature.
+
+    Args:
+      feature_key: Key of the feature whose variable's value is being accessed.
+      variable_key: Key of the variable whose value is to be accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      String value of the variable. None if:
+      - Feature key is invalid.
+      - Variable key is invalid.
+      - Mismatch with type of variable.
+    """
+
+  def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
+    """ Returns value for a certain boolean variable attached to a feature.
+
+    Args:
+      feature_key: Key of the feature whose variable's value is being accessed.
+      variable_key: Key of the variable whose value is to be accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Boolean value of the variable. None if:
+      - Feature key is invalid.
+      - Variable key is invalid.
+      - Mismatch with type of variable.
+    """
+
+  def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
+    """ Returns value for a certain integer variable attached to a feature.
+
+    Args:
+      feature_key: Key of the feature whose variable's value is being accessed.
+      variable_key: Key of the variable whose value is to be accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Integer value of the variable. None if:
+      - Feature key is invalid.
+      - Variable key is invalid.
+      - Mismatch with type of variable.
+    """
+
+  def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
+    """ Returns value for a certain double variable attached to a feature.
+
+    Args:
+      feature_key: Key of the feature whose variable's value is being accessed.
+      variable_key: Key of the variable whose value is to be accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Double value of the variable. None if:
+      - Feature key is invalid.
+      - Variable key is invalid.
+      - Mismatch with type of variable.
+    """
+
 
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.
