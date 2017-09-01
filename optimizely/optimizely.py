@@ -152,6 +152,31 @@ class Optimizely(object):
 
     return decisions
 
+  def _send_impression_event(self, experiment, variation, user_id, attributes):
+    """ Helper method to send impression event.
+
+    Args:
+      experiment: Experiment for which impression event is being sent.
+      variation: Variation picked for user for the given experiment.
+      user_id: ID for user.
+      attributes: Dict representing user attributes and values which need to be recorded.
+    """
+
+    impression_event = self.event_builder.create_impression_event(experiment,
+                                                                  variation.id,
+                                                                  user_id,
+                                                                  attributes)
+
+    self.logger.log(enums.LogLevels.DEBUG,
+                    'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
+                                                                                impression_event.params))
+
+    try:
+      self.event_dispatcher.dispatch_event(impression_event)
+    except:
+      error = sys.exc_info()[1]
+      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
+
   def activate(self, experiment_key, user_id, attributes=None):
     """ Buckets visitor and sends impression event to Optimizely.
 
@@ -175,19 +200,12 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id)
       return None
 
-    # Create and dispatch impression event
     experiment = self.config.get_experiment_from_key(experiment_key)
     variation = self.config.get_variation_from_key(experiment_key, variation_key)
-    impression_event = self.event_builder.create_impression_event(experiment, variation.id, user_id, attributes)
+
+    # Create and dispatch impression event
     self.logger.log(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
-    self.logger.log(enums.LogLevels.DEBUG,
-                    'Dispatching impression event to URL %s with params %s.' % (impression_event.url,
-                                                                                impression_event.params))
-    try:
-      self.event_dispatcher.dispatch_event(impression_event)
-    except:
-      error = sys.exc_info()[1]
-      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
+    self._send_impression_event(experiment, variation, user_id, attributes)
 
     return variation.key
 
@@ -297,9 +315,13 @@ class Optimizely(object):
     if not feature:
       return False
 
-    variation = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
-    if variation:
+    decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
+    if decision.variation:
       self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+      self._send_impression_event(decision.experiment,
+                                  decision.variation,
+                                  user_id,
+                                  attributes)
       return True
 
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
