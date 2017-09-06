@@ -13,7 +13,7 @@
 
 import numbers
 
-EVENT_VALUE_METRIC = 'revenue'
+REVENUE_METRIC_TYPE = 'revenue'
 NUMERIC_METRIC_TYPE = 'value'
 
 def get_revenue_value(event_tags):
@@ -23,10 +23,10 @@ def get_revenue_value(event_tags):
   if not isinstance(event_tags, dict):
     return None
 
-  if EVENT_VALUE_METRIC not in event_tags:
+  if REVENUE_METRIC_TYPE not in event_tags:
     return None
 
-  raw_value = event_tags[EVENT_VALUE_METRIC]
+  raw_value = event_tags[REVENUE_METRIC_TYPE]
 
   if not isinstance(raw_value, numbers.Integral):
     return None

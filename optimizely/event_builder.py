@@ -200,7 +200,7 @@ class EventBuilder(BaseEventBuilder):
       event_value = event_tag_utils.get_revenue_value(event_tags)
       if event_value is not None:
         self.params[self.EventParams.EVENT_METRICS] = [{
-          'name': event_tag_utils.EVENT_VALUE_METRIC,
+          'name': event_tag_utils.REVENUE_METRIC_TYPE,
           'value': event_value
         }]
 
