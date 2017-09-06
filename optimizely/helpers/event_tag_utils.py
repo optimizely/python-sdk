@@ -14,7 +14,7 @@
 import numbers
 
 EVENT_VALUE_METRIC = 'revenue'
-
+NUMERIC_METRIC_TYPE = 'value'
 
 def get_revenue_value(event_tags):
   if event_tags is None:
@@ -29,6 +29,24 @@ def get_revenue_value(event_tags):
   raw_value = event_tags[EVENT_VALUE_METRIC]
 
   if not isinstance(raw_value, numbers.Integral):
+    return None
+
+  return raw_value
+
+def get_numeric_value(event_tags):
+  if event_tags is None:
+    return None
+
+  if not isinstance(event_tags, dict):
+    return None
+
+  if NUMERIC_METRIC_TYPE not in event_tags:
+    return None
+
+  raw_value = event_tags[NUMERIC_METRIC_TYPE]
+
+  # python float includes double precision
+  if not isinstance(raw_value, float):
     return None
 
   return raw_value
