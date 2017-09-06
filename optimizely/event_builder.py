@@ -426,6 +426,10 @@ class EventBuilderV3(BaseEventBuilder):
           if revenue_value is not None:
             event_dict[event_tag_utils.REVENUE_METRIC_TYPE] = revenue_value
 
+          numeric_value = event_tag_utils.get_numeric_value(event_tags)
+          if numeric_value is not None:
+            event_dict[event_tag_utils.NUMERIC_METRIC_TYPE] = numeric_value
+
           if len(event_tags) > 0:
             event_dict[self.EventParams.TAGS] = event_tags
 
