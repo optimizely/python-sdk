@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import unittest
 
 from optimizely.helpers import event_tag_utils
@@ -49,3 +50,46 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertEqual(0, event_tag_utils.get_revenue_value({'revenue': 0}))
     self.assertEqual(65536, event_tag_utils.get_revenue_value({'revenue': 65536}))
     self.assertEqual(9223372036854775807, event_tag_utils.get_revenue_value({'revenue': 9223372036854775807}))
+
+  def test_get_numeric_value__invalid_args(self):
+    """ Test that numeric value is not returned for invalid arguments. """
+    self.assertIsNone(event_tag_utils.get_numeric_value(None))
+    self.assertIsNone(event_tag_utils.get_numeric_value(0.5))
+    self.assertIsNone(event_tag_utils.get_numeric_value(65536))
+    self.assertIsNone(event_tag_utils.get_numeric_value(9223372036854775807))
+    self.assertIsNone(event_tag_utils.get_numeric_value('9223372036854775807'))
+    self.assertIsNone(event_tag_utils.get_numeric_value(True))
+    self.assertIsNone(event_tag_utils.get_numeric_value(False))
+
+  def test_get_numeric_value__no_value_tag(self):
+    """ Test that numeric value is not returned when there's no numeric event tag. """
+    self.assertIsNone(event_tag_utils.get_numeric_value([]))
+    self.assertIsNone(event_tag_utils.get_numeric_value({}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': 42}))
+
+  def test_get_numeric_value__invalid_value_tag(self):
+    """ Test that numeric value is not returned when revenue event tag has invalid data type. """
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': None}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': 0.5}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': 12345}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': '65536'}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': True}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': False}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': [1, 2, 3]}))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': {'a', 'b', 'c'}}))
+
+  def test_get_numeric_value__value_tag(self):
+    """ Test that correct numeric value is returned. """
+    self.assertIsNone(event_tag_utils.get_numeric_value({'value': 12345}))
+
+    self.assertEqual(0.0, event_tag_utils.get_numeric_value({'value': 0.0}))
+
+    some_float = 1.2345
+    self.assertEqual(some_float, event_tag_utils.get_numeric_value({'value': some_float}))
+
+    max_float = sys.float_info.max
+    self.assertEqual(max_float, event_tag_utils.get_numeric_value({'value': max_float}))
+
+    min_float = sys.float_info.min
+    self.assertEqual(min_float, event_tag_utils.get_numeric_value({'value': min_float}))
+
