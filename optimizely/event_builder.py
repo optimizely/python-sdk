@@ -197,12 +197,23 @@ class EventBuilder(BaseEventBuilder):
     self.params[self.EventParams.EVENT_METRICS] = []
 
     if event_tags:
-      event_value = event_tag_utils.get_revenue_value(event_tags)
-      if event_value is not None:
-        self.params[self.EventParams.EVENT_METRICS] = [{
+      event_values = []
+
+      revenue_value = event_tag_utils.get_revenue_value(event_tags)
+      if revenue_value is not None:
+         event_values.append({
           'name': event_tag_utils.REVENUE_METRIC_TYPE,
-          'value': event_value
-        }]
+          'value': revenue_value
+        })
+
+      numeric_value = event_tag_utils.get_numeric_value(event_tags)
+      if numeric_value is not None:
+         event_values.append({
+          'name': event_tag_utils.NUMERIC_METRIC_TYPE,
+          'value': numeric_value
+        })
+
+      self.params[self.EventParams.EVENT_METRICS] = event_values
 
       for event_tag_id in event_tags.keys():
         event_tag_value = event_tags.get(event_tag_id)

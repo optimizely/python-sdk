@@ -383,7 +383,7 @@ class OptimizelyTest(base.BaseTest):
             mock.patch('time.time', return_value=42), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
-                            event_tags={'revenue': 4200, 'non-revenue': 'abc'})
+                            event_tags={'revenue': 4200, 'value':1.234,  'non-revenue': 'abc'})
 
     expected_params = {
       'visitorId': 'test_user',
@@ -411,10 +411,18 @@ class OptimizelyTest(base.BaseTest):
         'type': 'custom',
         'value': 4200,
         'shouldIndex': False,
+      }, {
+        'name': 'value',
+        'type': 'custom',
+        'value': 1.234,
+        'shouldIndex': False,
       }],
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200
+      }, {
+        'name': 'value',
+        'value': 1.234
       }],
       'timestamp': 42000,
       'layerStates': [{
@@ -443,13 +451,13 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_event_value__forced_bucketing(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided
     after a forced bucket. """
-    self.maxDiff = None
+
     with mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
-                            event_tags={'revenue': 4200, 'non-revenue': 'abc'})
+                            event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
     expected_params = {
       'visitorId': 'test_user',
@@ -477,10 +485,18 @@ class OptimizelyTest(base.BaseTest):
         'type': 'custom',
         'value': 4200,
         'shouldIndex': False,
+      }, {
+        'name': 'value',
+        'type': 'custom',
+        'value': 1.234,
+        'shouldIndex': False,
       }],
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200
+      }, {
+        'name': 'value',
+        'value': 1.234
       }],
       'timestamp': 42000,
       'layerStates': [{
@@ -564,6 +580,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_invalid_event_value(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided. """
 
+    self.maxDiff = None
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
@@ -571,7 +588,7 @@ class OptimizelyTest(base.BaseTest):
             mock.patch('time.time', return_value=42), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
-                            event_tags={'revenue': '4200'})
+                            event_tags={'revenue': '4200', 'value': '1.234'})
 
     expected_params = {
       'visitorId': 'test_user',
@@ -590,6 +607,11 @@ class OptimizelyTest(base.BaseTest):
       'eventEntityId': '111095',
       'eventName': 'test_event',
       'eventFeatures': [{
+        'name': 'value',
+        'type': 'custom',
+        'value': '1.234',
+        'shouldIndex': False,
+      }, {
         'name': 'revenue',
         'type': 'custom',
         'value': '4200',

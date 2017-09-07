@@ -210,6 +210,9 @@ class EventBuilderTest(base.BaseTest):
       'eventMetrics': [{
         'name': 'revenue',
         'value': 4200
+      }, {
+        'name': 'value',
+        'value': 1.234
       }],
       'eventFeatures': [{
           'name': 'non-revenue',
@@ -220,6 +223,11 @@ class EventBuilderTest(base.BaseTest):
           'name': 'revenue',
           'type': 'custom',
           'value': 4200,
+          'shouldIndex': False,
+      }, {
+          'name': 'value',
+          'type': 'custom',
+          'value': 1.234,
           'shouldIndex': False,
       }],
       'layerStates': [{
@@ -249,7 +257,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
 
@@ -283,6 +291,11 @@ class EventBuilderTest(base.BaseTest):
           'type': 'custom',
           'value': '4200',
           'shouldIndex': False,
+        }, {
+          'name': 'value',
+          'type': 'custom',
+          'value': '1.234',
+          'shouldIndex': False,
       }],
       'layerStates': [{
           'layerId': '111182',
@@ -310,7 +323,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
       mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'non-revenue': 'abc'},
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     # Sort event features based on ID
@@ -489,10 +502,12 @@ class EventBuilderV3Test(base.BaseTestV3):
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
               'non-revenue': 'abc',
-              'revenue': 4200
+              'revenue': 4200,
+              'value': 1.234
             },
             'timestamp': 42123,
             'revenue': 4200,
+            'value': 1.234,
             'key': 'test_event',
             'entity_id': '111095'
           }]
@@ -506,7 +521,7 @@ class EventBuilderV3Test(base.BaseTestV3):
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
@@ -543,7 +558,8 @@ class EventBuilderV3Test(base.BaseTestV3):
             'key': 'test_event',
             'tags': {
               'non-revenue': 'abc',
-              'revenue': '4200'
+              'revenue': '4200',
+              'value': '1.234'
             }
           }]
         }]
@@ -556,7 +572,7 @@ class EventBuilderV3Test(base.BaseTestV3):
       mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'non-revenue': 'abc'},
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
