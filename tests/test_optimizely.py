@@ -448,6 +448,142 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
+  def test_track__with_event_tags_revenue(self):
+    """ Test that track calls dispatch_event with right params when only revenue
+        event tags are provided only. """
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_get_variation, \
+            mock.patch('time.time', return_value=42), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'revenue': 4200, 'non-revenue': 'abc'})
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk',
+      'revision': '42',
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'projectId': '111001',
+      'isGlobalHoldback': False,
+      'eventEntityId': '111095',
+      'eventName': 'test_event',
+      'eventFeatures': [{
+        'name': 'non-revenue',
+        'type': 'custom',
+        'value': 'abc',
+        'shouldIndex': False,
+      }, {
+        'name': 'revenue',
+        'type': 'custom',
+        'value': 4200,
+        'shouldIndex': False,
+      }],
+      'eventMetrics': [{
+        'name': 'revenue',
+        'value': 4200
+      }],
+      'timestamp': 42000,
+      'layerStates': [{
+        'revision': '42',
+        'decision': {
+          'variationId': '111128',
+          'isLayerHoldback': False,
+          'experimentId': '111127'
+        },
+        'actionTriggered': True,
+        'layerId': '111182'
+      }],
+      'accountId': '12001'
+    }
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+
+    # Sort event features based on ID
+    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
+    )
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_track__with_event_tags_numeric_value(self):
+    """ Test that track calls dispatch_event with right params when only numeric metric
+        event tags are provided. """
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_get_variation, \
+            mock.patch('time.time', return_value=42), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'value':1.234,  'non-revenue': 'abc'})
+
+    expected_params = {
+      'visitorId': 'test_user',
+      'clientVersion': version.__version__,
+      'clientEngine': 'python-sdk',
+      'revision': '42',
+      'userFeatures': [{
+        'shouldIndex': True,
+        'type': 'custom',
+        'id': '111094',
+        'value': 'test_value',
+        'name': 'test_attribute'
+      }],
+      'projectId': '111001',
+      'isGlobalHoldback': False,
+      'eventEntityId': '111095',
+      'eventName': 'test_event',
+      'eventFeatures': [{
+        'name': 'non-revenue',
+        'type': 'custom',
+        'value': 'abc',
+        'shouldIndex': False,
+      }, {
+        'name': 'value',
+        'type': 'custom',
+        'value': 1.234,
+        'shouldIndex': False,
+      }],
+      'eventMetrics': [{
+        'name': 'value',
+        'value': 1.234
+      }],
+      'timestamp': 42000,
+      'layerStates': [{
+        'revision': '42',
+        'decision': {
+          'variationId': '111128',
+          'isLayerHoldback': False,
+          'experimentId': '111127'
+        },
+        'actionTriggered': True,
+        'layerId': '111182'
+      }],
+      'accountId': '12001'
+    }
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+
+    # Sort event features based on ID
+    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
+    )
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
   def test_track__with_event_tags__forced_bucketing(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided
     after a forced bucket. """

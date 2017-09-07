@@ -269,6 +269,134 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
+  def test_create_conversion_event__with_event_tags_revenue(self):
+    """ Test that create_conversion_event creates Event object with right
+        params when only revenue event tags are provided. """
+
+    expected_params = {
+      'accountId': '12001',
+      'projectId': '111001',
+      'visitorId': 'test_user',
+      'eventName': 'test_event',
+      'eventEntityId': '111095',
+      'eventMetrics': [{
+        'name': 'revenue',
+        'value': 4200
+      }],
+      'eventFeatures': [{
+          'name': 'non-revenue',
+          'type': 'custom',
+          'value': 'abc',
+          'shouldIndex': False,
+        }, {
+          'name': 'revenue',
+          'type': 'custom',
+          'value': 4200,
+          'shouldIndex': False,
+      }],
+      'layerStates': [{
+          'layerId': '111182',
+          'revision': '42',
+          'decision': {
+            'experimentId': '111127',
+            'variationId': '111129',
+            'isLayerHoldback': False
+          },
+          'actionTriggered': True,
+        }
+      ],
+      'timestamp': 42123,
+      'revision': '42',
+      'isGlobalHoldback': False,
+      'userFeatures': [{
+        'id': '111094',
+        'name': 'test_attribute',
+        'type': 'custom',
+        'value': 'test_value',
+        'shouldIndex': True
+      }],
+      'clientEngine': 'python-sdk',
+      'clientVersion': version.__version__
+    }
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
+        [('111127', '111129')]
+      )
+
+    # Sort event features based on ID
+    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_conversion_event__with_event_tags_numeric_value(self):
+    """ Test that create_conversion_event creates Event object with right
+        params when only numeric metric event tags are provided. """
+
+    expected_params = {
+      'accountId': '12001',
+      'projectId': '111001',
+      'visitorId': 'test_user',
+      'eventName': 'test_event',
+      'eventEntityId': '111095',
+      'eventMetrics': [{
+        'name': 'value',
+        'value': 1.234
+      }],
+      'eventFeatures': [{
+          'name': 'non-revenue',
+          'type': 'custom',
+          'value': 'abc',
+          'shouldIndex': False,
+        }, {
+          'name': 'value',
+          'type': 'custom',
+          'value': 1.234,
+          'shouldIndex': False,
+      }],
+      'layerStates': [{
+          'layerId': '111182',
+          'revision': '42',
+          'decision': {
+            'experimentId': '111127',
+            'variationId': '111129',
+            'isLayerHoldback': False
+          },
+          'actionTriggered': True,
+        }
+      ],
+      'timestamp': 42123,
+      'revision': '42',
+      'isGlobalHoldback': False,
+      'userFeatures': [{
+        'id': '111094',
+        'name': 'test_attribute',
+        'type': 'custom',
+        'value': 'test_value',
+        'shouldIndex': True
+      }],
+      'clientEngine': 'python-sdk',
+      'clientVersion': version.__version__
+    }
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'value': 1.234, 'non-revenue': 'abc'},
+        [('111127', '111129')]
+      )
+
+    # Sort event features based on ID
+    event_obj.params['eventFeatures'] = sorted(event_obj.params['eventFeatures'], key=lambda x: x.get('name'))
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.CONVERSION_ENDPOINT,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
   def test_create_conversion_event__with_invalid_event_tags(self):
     """ Test that create_conversion_event creates Event object
     with right params when invalid event tags are provided. """
