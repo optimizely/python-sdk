@@ -92,4 +92,3 @@ class EventTagUtilsTest(unittest.TestCase):
 
     min_float = sys.float_info.min
     self.assertEqual(min_float, event_tag_utils.get_numeric_value({'value': min_float}))
-

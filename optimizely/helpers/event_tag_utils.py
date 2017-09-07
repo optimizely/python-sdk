@@ -16,6 +16,7 @@ import numbers
 REVENUE_METRIC_TYPE = 'revenue'
 NUMERIC_METRIC_TYPE = 'value'
 
+
 def get_revenue_value(event_tags):
   if event_tags is None:
     return None
@@ -32,6 +33,7 @@ def get_revenue_value(event_tags):
     return None
 
   return raw_value
+
 
 def get_numeric_value(event_tags):
   if event_tags is None:

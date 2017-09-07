@@ -257,7 +257,10 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
 
@@ -321,7 +324,10 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'non-revenue': 'abc'},
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'revenue': 4200, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
 
@@ -451,7 +457,10 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
       mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     # Sort event features based on ID
@@ -649,7 +658,10 @@ class EventBuilderV3Test(base.BaseTestV3):
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
@@ -700,7 +712,10 @@ class EventBuilderV3Test(base.BaseTestV3):
       mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
