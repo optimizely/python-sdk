@@ -197,9 +197,9 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
-  def test_create_conversion_event__with_event_value(self):
+  def test_create_conversion_event__with_event_tags(self):
     """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
+    with right params when event tags provided. """
 
     expected_params = {
       'accountId': '12001',
@@ -269,9 +269,9 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
-  def test_create_conversion_event__with_invalid_event_value(self):
+  def test_create_conversion_event__with_invalid_event_tags(self):
     """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
+    with right params when invalid event tags are provided. """
 
     expected_params = {
       'accountId': '12001',
@@ -477,9 +477,9 @@ class EventBuilderV3Test(base.BaseTestV3):
                                 event_builder.EventBuilderV3.HTTP_VERB,
                                 event_builder.EventBuilderV3.HTTP_HEADERS)
 
-  def test_create_conversion_event__with_event_value(self):
+  def test_create_conversion_event__with_event_tags(self):
     """ Test that create_conversion_event creates Event object
-    with right params when event value and tags are provided. """
+    with right params when event tags are provided. """
 
     expected_params = {
       'client_version': version.__version__,
@@ -530,9 +530,9 @@ class EventBuilderV3Test(base.BaseTestV3):
                                 event_builder.EventBuilderV3.HTTP_VERB,
                                 event_builder.EventBuilderV3.HTTP_HEADERS)
 
-  def test_create_conversion_event__with_invalid_event_value(self):
+  def test_create_conversion_event__with_invalid_event_tags(self):
     """ Test that create_conversion_event creates Event object
-    with right params when event value is provided. """
+    with right params when event tags are provided. """
 
     expected_params = {
       'client_version': version.__version__,

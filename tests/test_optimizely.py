@@ -373,8 +373,8 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, mock_bucket.call_count)
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-  def test_track__with_event_value(self):
-    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+  def test_track__with_event_tags(self):
+    """ Test that track calls dispatch_event with right params when event tags are provided. """
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
@@ -448,7 +448,7 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_track__with_event_value__forced_bucketing(self):
+  def test_track__with_event_tags__forced_bucketing(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided
     after a forced bucket. """
 
@@ -577,10 +577,9 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_track__with_invalid_event_value(self):
-    """ Test that track calls dispatch_event with right params when event_value information is provided. """
+  def test_track__with_invalid_event_tags(self):
+    """ Test that track calls dispatch_event with right params when invalid event tags are provided. """
 
-    self.maxDiff = None
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
