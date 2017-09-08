@@ -199,7 +199,7 @@ class EventBuilderTest(base.BaseTest):
 
   def test_create_conversion_event__with_event_tags(self):
     """ Test that create_conversion_event creates Event object
-    with right params when event tags provided. """
+    with right params when event tags are provided. """
 
     expected_params = {
       'accountId': '12001',
@@ -391,7 +391,10 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, {'value': 1.234, 'non-revenue': 'abc'},
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'value': 1.234, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
 
