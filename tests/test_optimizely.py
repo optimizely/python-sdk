@@ -743,14 +743,14 @@ class OptimizelyTest(base.BaseTest):
       'eventEntityId': '111095',
       'eventName': 'test_event',
       'eventFeatures': [{
-        'name': 'value',
-        'type': 'custom',
-        'value': '1.234',
-        'shouldIndex': False,
-      }, {
         'name': 'revenue',
         'type': 'custom',
         'value': '4200',
+        'shouldIndex': False,
+      }, {
+        'name': 'value',
+        'type': 'custom',
+        'value': '1.234',
         'shouldIndex': False,
       }],
       'eventMetrics': [],
