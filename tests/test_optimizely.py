@@ -716,6 +716,7 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_invalid_event_tags(self):
     """ Test that track calls dispatch_event with right params when invalid event tags are provided. """
 
+    self.maxDiff = None
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
