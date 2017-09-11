@@ -51,7 +51,7 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertEqual(65536, event_tag_utils.get_revenue_value({'revenue': 65536}))
     self.assertEqual(9223372036854775807, event_tag_utils.get_revenue_value({'revenue': 9223372036854775807}))
 
-  def test_get_numeric_value__invalid_args(self):
+  def test_get_numeric_metric__invalid_args(self):
     """ Test that numeric value is not returned for invalid arguments. """
     self.assertIsNone(event_tag_utils.get_numeric_value(None))
     self.assertIsNone(event_tag_utils.get_numeric_value(0.5))
@@ -61,13 +61,13 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertIsNone(event_tag_utils.get_numeric_value(True))
     self.assertIsNone(event_tag_utils.get_numeric_value(False))
 
-  def test_get_numeric_value__no_value_tag(self):
+  def test_get_numeric_metric__no_value_tag(self):
     """ Test that numeric value is not returned when there's no numeric event tag. """
     self.assertIsNone(event_tag_utils.get_numeric_value([]))
     self.assertIsNone(event_tag_utils.get_numeric_value({}))
     self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': 42}))
 
-  def test_get_numeric_value__invalid_value_tag(self):
+  def test_get_numeric_metric__invalid_value_tag(self):
     """ Test that numeric value is not returned when revenue event tag has invalid data type. """
     self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': None}))
     self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': 0.5}))
@@ -78,7 +78,7 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': [1, 2, 3]}))
     self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': {'a', 'b', 'c'}}))
 
-  def test_get_numeric_value__value_tag(self):
+  def test_get_numeric_metric__value_tag(self):
     """ Test that correct numeric value is returned. """
     self.assertIsNone(event_tag_utils.get_numeric_value({'value': 12345}))
 

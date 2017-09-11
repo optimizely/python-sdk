@@ -36,6 +36,17 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 
+  def _validate_event_object_event_tags(self, event_obj, expected_event_metric_params, expected_event_features_params):
+    """ Helper method to validate properties of the event object related to event tags. """
+
+    # get event metrics from the created event object
+    event_metrics = event_obj.params['eventMetrics']
+    self.assertEqual(expected_event_metric_params, event_metrics)
+
+    # get event features from the created event object
+    event_features = event_obj.params['eventFeatures']
+    self.assertEqual(expected_event_features_params, event_features)
+
   def test_init__invalid_datafile__logs_error(self):
     """ Test that invalid datafile logs error on init. """
 
@@ -516,7 +527,7 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_track__with_event_tags_numeric_value(self):
+  def test_track__with_event_tags_numeric_metric(self):
     """ Test that track calls dispatch_event with right params when only numeric metric
         event tags are provided. """
 
@@ -529,60 +540,34 @@ class OptimizelyTest(base.BaseTest):
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
-    expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'revision': '42',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
-      }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [{
-        'name': 'non-revenue',
-        'type': 'custom',
-        'value': 'abc',
-        'shouldIndex': False,
-      }, {
-        'name': 'value',
-        'type': 'custom',
-        'value': 1.234,
-        'shouldIndex': False,
-      }],
-      'eventMetrics': [{
-        'name': 'value',
-        'value': 1.234
-      }],
-      'timestamp': 42000,
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111128',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
-    }
+    expected_event_metrics_params = [{
+      'name': 'value',
+      'value': 1.234
+    }]
+
+    expected_event_features_params = [{
+      'name': 'non-revenue',
+      'type': 'custom',
+      'value': 'abc',
+      'shouldIndex': False,
+    }, {
+      'name': 'value',
+      'type': 'custom',
+      'value': 1.234,
+      'shouldIndex': False,
+    }]
+
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
 
-    # Sort event features based on ID
+    # Sort event features based on name
     mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
       mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
     )
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
-                                expected_params, 'POST', {'Content-Type': 'application/json'})
+    self._validate_event_object_event_tags(mock_dispatch_event.call_args[0][0],
+                                           expected_event_metrics_params,
+                                           expected_event_features_params)
 
   def test_track__with_event_tags__forced_bucketing(self):
     """ Test that track calls dispatch_event with right params when event_value information is provided
@@ -716,7 +701,6 @@ class OptimizelyTest(base.BaseTest):
   def test_track__with_invalid_event_tags(self):
     """ Test that track calls dispatch_event with right params when invalid event tags are provided. """
 
-    self.maxDiff = None
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
@@ -827,7 +811,7 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
 
     self.assertFalse(mock_decision.called)
@@ -846,8 +830,8 @@ class OptimizelyTest(base.BaseTest):
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation)) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-      mock.patch('time.time', return_value=42):
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+            mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -882,7 +866,7 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely('invalid_file')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
