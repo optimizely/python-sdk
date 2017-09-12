@@ -72,7 +72,7 @@ def get_numeric_value(event_tags, logger=None):
   else:
     numeric_metric_value = event_tags[NUMERIC_METRIC_TYPE]
     try:
-      if isinstance(numeric_metric_value, (numbers.Integral, float, basestring)):
+      if isinstance(numeric_metric_value, (numbers.Integral, float, str)):
         # Attempt to convert the numeric metric value to a float
         cast_numeric_metric_value = float(numeric_metric_value)
 
