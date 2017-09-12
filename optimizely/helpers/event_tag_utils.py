@@ -46,8 +46,8 @@ def get_numeric_value(event_tags, logger=None):
       logger: Optional logger.
 
   Returns:
-      A float numeric metric value when the provided numeric metric value
-      are in the following format:
+      A float numeric metric value is returned when the provided numeric
+      metric value are in the following format:
           - A string (properly formatted, e.g., no commas)
           - An integer
           - A float or double
@@ -74,6 +74,7 @@ def get_numeric_value(event_tags, logger=None):
     try:
       if isinstance(numeric_metric_value, (numbers.Integral, float, str)):
         # Attempt to convert the numeric metric value to a float
+        # (if it isn't already a float).
         cast_numeric_metric_value = float(numeric_metric_value)
 
         # If not a float after casting, then make everything else a None.
