@@ -206,7 +206,7 @@ class EventBuilder(BaseEventBuilder):
           'value': revenue_value
         })
 
-      numeric_value = event_tag_utils.get_numeric_value(event_tags)
+      numeric_value = event_tag_utils.get_numeric_value(event_tags, self.config.logger)
       if numeric_value is not None:
          event_values.append({
           'name': event_tag_utils.NUMERIC_METRIC_TYPE,
@@ -437,7 +437,7 @@ class EventBuilderV3(BaseEventBuilder):
           if revenue_value is not None:
             event_dict[event_tag_utils.REVENUE_METRIC_TYPE] = revenue_value
 
-          numeric_value = event_tag_utils.get_numeric_value(event_tags)
+          numeric_value = event_tag_utils.get_numeric_value(event_tags, self.config.logger)
           if numeric_value is not None:
             event_dict[event_tag_utils.NUMERIC_METRIC_TYPE] = numeric_value
 

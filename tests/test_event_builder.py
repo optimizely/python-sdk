@@ -410,7 +410,7 @@ class EventBuilderTest(base.BaseTest):
       }, {
         'name': 'value',
         'type': 'custom',
-        'value': '1.234',
+        'value': True,
         'shouldIndex': False,
       }],
       'layerStates': [{
@@ -442,7 +442,7 @@ class EventBuilderTest(base.BaseTest):
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
-        {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
+        {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     # Sort event features based on ID
@@ -681,7 +681,7 @@ class EventBuilderV3Test(base.BaseTestV3):
             'tags': {
               'non-revenue': 'abc',
               'revenue': '4200',
-              'value': '1.234'
+              'value': True
             }
           }]
         }]
@@ -697,7 +697,7 @@ class EventBuilderV3Test(base.BaseTestV3):
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
-        {'revenue': '4200', 'value': '1.234', 'non-revenue': 'abc'},
+        {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
@@ -705,4 +705,3 @@ class EventBuilderV3Test(base.BaseTestV3):
                                 expected_params,
                                 event_builder.EventBuilderV3.HTTP_VERB,
                                 event_builder.EventBuilderV3.HTTP_HEADERS)
-

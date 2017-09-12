@@ -13,6 +13,7 @@
 
 import sys
 import unittest
+from optimizely import logger
 
 from optimizely.helpers import event_tag_utils
 
@@ -80,15 +81,47 @@ class EventTagUtilsTest(unittest.TestCase):
 
   def test_get_numeric_metric__value_tag(self):
     """ Test that correct numeric value is returned. """
-    self.assertIsNone(event_tag_utils.get_numeric_value({'value': 12345}))
 
-    self.assertEqual(0.0, event_tag_utils.get_numeric_value({'value': 0.0}))
+    # An integer should be cast to a float
+    self.assertEqual(12345.0, event_tag_utils.get_numeric_value({'value': 12345}, logger=logger.SimpleLogger()))
+
+    # A string should be cast to a float
+    self.assertEqual(12345.0, event_tag_utils.get_numeric_value({'value': '12345'}, logger=logger.SimpleLogger()))
+
+    # Invalid values
+    self.assertIsNone(event_tag_utils.get_numeric_value({'value': False}, logger=logger.SimpleLogger()))
+    self.assertIsNone(event_tag_utils.get_numeric_value({'value': None}, logger=logger.SimpleLogger()))
+
+    numeric_value_nan = event_tag_utils.get_numeric_value({'value': float('nan')}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_nan, 'nan numeric value is {}'.format(numeric_value_nan))
+
+    numeric_value_array = event_tag_utils.get_numeric_value({'value': []}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_nan, 'Array numeric value is {}'.format(numeric_value_array))
+
+    numeric_value_none = event_tag_utils.get_numeric_value({'value': None}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_none, 'None numeric value is {}'.format(numeric_value_none))
+
+    numeric_value_invalid_literal = event_tag_utils.get_numeric_value({'value': '1,234'}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_invalid_literal, 'Invalid string literal value is {}'
+                      .format(numeric_value_invalid_literal))
+
+    numeric_value_overflow = event_tag_utils.get_numeric_value({'value': sys.float_info.max * 10},
+                                                               logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_overflow, 'Max numeric value is {}'.format(numeric_value_overflow))
+
+    numeric_value_inf = event_tag_utils.get_numeric_value({'value': float('inf')}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_inf, 'Infinity numeric value is {}'.format(numeric_value_inf))
+
+    numeric_value_neg_inf = event_tag_utils.get_numeric_value({'value': float('-inf')}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_neg_inf, 'Negative infinity numeric value is {}'.format(numeric_value_neg_inf))
+
+    self.assertEqual(0.0, event_tag_utils.get_numeric_value({'value': 0.0}, logger=logger.SimpleLogger()))
 
     some_float = 1.2345
-    self.assertEqual(some_float, event_tag_utils.get_numeric_value({'value': some_float}))
+    self.assertEqual(some_float, event_tag_utils.get_numeric_value({'value': some_float}, logger=logger.SimpleLogger()))
 
     max_float = sys.float_info.max
-    self.assertEqual(max_float, event_tag_utils.get_numeric_value({'value': max_float}))
+    self.assertEqual(max_float, event_tag_utils.get_numeric_value({'value': max_float}, logger=logger.SimpleLogger()))
 
     min_float = sys.float_info.min
-    self.assertEqual(min_float, event_tag_utils.get_numeric_value({'value': min_float}))
+    self.assertEqual(min_float, event_tag_utils.get_numeric_value({'value': min_float}, logger=logger.SimpleLogger()))

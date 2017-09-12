@@ -708,7 +708,7 @@ class OptimizelyTest(base.BaseTest):
             mock.patch('time.time', return_value=42), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
-                            event_tags={'revenue': '4200', 'value': '1.234'})
+                            event_tags={'revenue': '4200', 'value': True})
 
     expected_params = {
       'visitorId': 'test_user',
@@ -734,7 +734,7 @@ class OptimizelyTest(base.BaseTest):
       }, {
         'name': 'value',
         'type': 'custom',
-        'value': '1.234',
+        'value': True,
         'shouldIndex': False,
       }],
       'eventMetrics': [],
