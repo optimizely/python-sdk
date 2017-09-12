@@ -214,8 +214,7 @@ class EventBuilder(BaseEventBuilder):
         })
 
       self.params[self.EventParams.EVENT_METRICS] = event_values
-
-      for event_tag_id in sorted(event_tags.keys()):
+      for event_tag_id in event_tags.keys():
         event_tag_value = event_tags.get(event_tag_id)
         if event_tag_value is None:
           continue

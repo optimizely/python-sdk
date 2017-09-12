@@ -692,6 +692,12 @@ class OptimizelyTest(base.BaseTest):
       }],
       'accountId': '12001'
     }
+
+    # Sort event features based on ID
+    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
+    )
+
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
@@ -752,6 +758,10 @@ class OptimizelyTest(base.BaseTest):
       'accountId': '12001'
     }
 
+    # Sort event features based on ID
+    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
+      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
+    )
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
