@@ -80,13 +80,23 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertIsNone(event_tag_utils.get_numeric_value({'non-value': {'a', 'b', 'c'}}))
 
   def test_get_numeric_metric__value_tag(self):
-    """ Test that correct numeric value is returned. """
+    """ Test that the correct numeric value is returned. """
 
     # An integer should be cast to a float
     self.assertEqual(12345.0, event_tag_utils.get_numeric_value({'value': 12345}, logger=logger.SimpleLogger()))
 
     # A string should be cast to a float
     self.assertEqual(12345.0, event_tag_utils.get_numeric_value({'value': '12345'}, logger=logger.SimpleLogger()))
+
+    # Valid float values
+    some_float = 1.2345
+    self.assertEqual(some_float, event_tag_utils.get_numeric_value({'value': some_float}, logger=logger.SimpleLogger()))
+
+    max_float = sys.float_info.max
+    self.assertEqual(max_float, event_tag_utils.get_numeric_value({'value': max_float}, logger=logger.SimpleLogger()))
+
+    min_float = sys.float_info.min
+    self.assertEqual(min_float, event_tag_utils.get_numeric_value({'value': min_float}, logger=logger.SimpleLogger()))
 
     # Invalid values
     self.assertIsNone(event_tag_utils.get_numeric_value({'value': False}, logger=logger.SimpleLogger()))
@@ -117,11 +127,3 @@ class EventTagUtilsTest(unittest.TestCase):
 
     self.assertEqual(0.0, event_tag_utils.get_numeric_value({'value': 0.0}, logger=logger.SimpleLogger()))
 
-    some_float = 1.2345
-    self.assertEqual(some_float, event_tag_utils.get_numeric_value({'value': some_float}, logger=logger.SimpleLogger()))
-
-    max_float = sys.float_info.max
-    self.assertEqual(max_float, event_tag_utils.get_numeric_value({'value': max_float}, logger=logger.SimpleLogger()))
-
-    min_float = sys.float_info.min
-    self.assertEqual(min_float, event_tag_utils.get_numeric_value({'value': min_float}, logger=logger.SimpleLogger()))

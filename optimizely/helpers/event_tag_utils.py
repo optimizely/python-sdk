@@ -47,11 +47,11 @@ def get_numeric_value(event_tags, logger=None):
 
   Returns:
       A float numeric metric value is returned when the provided numeric
-      metric value are in the following format:
+      metric value is in the following format:
           - A string (properly formatted, e.g., no commas)
           - An integer
           - A float or double
-      None is returned when the provided numeric metric values are in
+      None is returned when the provided numeric metric values is in
       the following format:
           - None
           - A boolean
