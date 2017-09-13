@@ -473,8 +473,8 @@ class ConfigTest(base.BaseTest):
     self.project_config.forced_variation_map['test_user'] = {}
     self.project_config.forced_variation_map['test_user']['test_experiment'] = 'test_variation'
 
-    self.assertIsNone(self.project_config.get_forced_variation('test_experiment', None))
-    self.assertIsNone(self.project_config.get_forced_variation('test_experiment', ''))
+    self.assertIsNone(self.project_config.get_forced_variation(None, 'test_user'))
+    self.assertIsNone(self.project_config.get_forced_variation('', 'test_user'))
 
   # set_forced_variation tests
   def test_set_forced_variation__invalid_user_id(self):
