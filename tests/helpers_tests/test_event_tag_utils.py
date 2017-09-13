@@ -126,4 +126,3 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertIsNone(numeric_value_neg_inf, 'Negative infinity numeric value is {}'.format(numeric_value_neg_inf))
 
     self.assertEqual(0.0, event_tag_utils.get_numeric_value({'value': 0.0}, logger=logger.SimpleLogger()))
-
