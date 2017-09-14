@@ -1265,6 +1265,7 @@ class ConfigTest(base.BaseTest):
     self.project_config.forced_variation_map['test_user'] = {}
     self.project_config.forced_variation_map['test_user']['test_experiment'] = 'test_variation'
 
+    self.assertIsNone(self.project_config.get_forced_variation('test_experiment_not_in_datafile', 'test_user'))
     self.assertIsNone(self.project_config.get_forced_variation(None, 'test_user'))
     self.assertIsNone(self.project_config.get_forced_variation('', 'test_user'))
 
