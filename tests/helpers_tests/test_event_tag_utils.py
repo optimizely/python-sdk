@@ -105,7 +105,10 @@ class EventTagUtilsTest(unittest.TestCase):
     self.assertIsNone(numeric_value_nan, 'nan numeric value is {}'.format(numeric_value_nan))
 
     numeric_value_array = event_tag_utils.get_numeric_value({'value': []}, logger=logger.SimpleLogger())
-    self.assertIsNone(numeric_value_nan, 'Array numeric value is {}'.format(numeric_value_array))
+    self.assertIsNone(numeric_value_array, 'Array numeric value is {}'.format(numeric_value_array))
+
+    numeric_value_dict = event_tag_utils.get_numeric_value({'value': []}, logger=logger.SimpleLogger())
+    self.assertIsNone(numeric_value_dict, 'Dict numeric value is {}'.format(numeric_value_dict))
 
     numeric_value_none = event_tag_utils.get_numeric_value({'value': None}, logger=logger.SimpleLogger())
     self.assertIsNone(numeric_value_none, 'None numeric value is {}'.format(numeric_value_none))
