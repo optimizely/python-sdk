@@ -95,6 +95,7 @@ def get_numeric_value(event_tags, logger=None):
            numeric_metric_value = cast_numeric_metric_value
       else:
         logger_message_debug = 'Numeric metric value is not in integer, float, or string form.'
+        numeric_metric_value = None
 
     except ValueError:
       logger_message_debug = 'Value error while casting numeric metric value to a float.'
