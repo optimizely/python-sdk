@@ -31,7 +31,7 @@ def get_revenue_value(event_tags):
 
   raw_value = event_tags[REVENUE_METRIC_TYPE]
 
-  if not isinstance(raw_value, bool):
+  if isinstance(raw_value, bool):
     return None
 
   if not isinstance(raw_value, numbers.Integral):
