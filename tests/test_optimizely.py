@@ -30,9 +30,7 @@ class OptimizelyTest(base.BaseTest):
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
-    print expected_params
-    print "what we need"
-    print event_obj.params
+
     self.assertEqual(expected_url, event_obj.url)
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
@@ -42,8 +40,6 @@ class OptimizelyTest(base.BaseTest):
     """ Helper method to validate properties of the event object related to event tags. """
 
     # get event metrics from the created event object
-    print "hi"
-    print event_obj.params
     event_metrics = event_obj.params['visitors'][0]['snapshots'][0]['events'][0]['tags']
     self.assertEqual(expected_event_metric_params, event_metrics)
 
@@ -589,7 +585,7 @@ class OptimizelyTest(base.BaseTest):
           'client_version': version.__version__,
           'client_name': 'python-sdk'
       }
-    print mock_dispatch_event.call_args[0][0]
+
     self.assertEqual(1, mock_dispatch_event.call_count)
 
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
