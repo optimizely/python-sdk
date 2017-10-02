@@ -30,7 +30,9 @@ class OptimizelyTest(base.BaseTest):
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
-
+    print expected_params
+    print "what we need"
+    print event_obj.params
     self.assertEqual(expected_url, event_obj.url)
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
@@ -40,11 +42,13 @@ class OptimizelyTest(base.BaseTest):
     """ Helper method to validate properties of the event object related to event tags. """
 
     # get event metrics from the created event object
-    event_metrics = event_obj.params['eventMetrics']
+    print "hi"
+    print event_obj.params
+    event_metrics = event_obj.params['visitors'][0]['snapshots'][0]['events'][0]['tags']
     self.assertEqual(expected_event_metric_params, event_metrics)
 
     # get event features from the created event object
-    event_features = event_obj.params['eventFeatures']
+    event_features = event_obj.params['visitors'][0]['attributes'][0]
     self.assertEqual(expected_event_features_params, event_features)
 
   def test_init__invalid_datafile__logs_error(self):
@@ -136,31 +140,38 @@ class OptimizelyTest(base.BaseTest):
             'optimizely.decision_service.DecisionService.get_variation',
             return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     expected_params = {
-      'visitorId': 'test_user',
-      'accountId': '12001',
-      'projectId': '111001',
-      'layerId': '111182',
-      'revision': '42',
-      'decision': {
-        'variationId': '111129',
-        'isLayerHoldback': False,
-        'experimentId': '111127'
-      },
-      'userFeatures': [],
-      'isGlobalHoldback': False,
-      'timestamp': 42000,
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk'
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'timestamp': 42000,
+          'entity_id': '111182',
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'key': 'campaign_activated',
+          }]
+        }]
+      }],
+      'client_version': version.__version__,
+      'client_name': 'python-sdk'
     }
     mock_decision.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
     )
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__audience_match(self):
@@ -172,37 +183,42 @@ class OptimizelyTest(base.BaseTest):
             return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) \
             as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
                                                              {'test_attribute': 'test_value'}))
-
     expected_params = {
-      'visitorId': 'test_user',
-      'accountId': '12001',
-      'projectId': '111001',
-      'layerId': '111182',
-      'revision': '42',
-      'decision': {
-        'variationId': '111129',
-        'isLayerHoldback': False,
-        'experimentId': '111127'
-      },
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'timestamp': 42000,
+          'entity_id': '111182',
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'key': 'campaign_activated',
+          }]
+        }]
       }],
-      'isGlobalHoldback': False,
-      'timestamp': 42000,
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk'
+      'client_version': version.__version__,
+      'client_name': 'python-sdk'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__audience_match__forced_bucketing(self):
@@ -211,6 +227,7 @@ class OptimizelyTest(base.BaseTest):
     set_forced_variation is called. """
 
     with mock.patch('time.time', return_value=42), \
+    mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'control'))
@@ -218,31 +235,36 @@ class OptimizelyTest(base.BaseTest):
                                                            {'test_attribute': 'test_value'}))
 
     expected_params = {
-      'visitorId': 'test_user',
-      'accountId': '12001',
-      'projectId': '111001',
-      'layerId': '111182',
-      'revision': '42',
-      'decision': {
-        'variationId': '111128',
-        'isLayerHoldback': False,
-        'experimentId': '111127'
-      },
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
-      }],
-      'isGlobalHoldback': False,
-      'timestamp': 42000,
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk'
-    }
+      'account_id': '12001',
+        'project_id': '111001',
+        'visitors': [{
+          'visitor_id': 'test_user',
+          'attributes': [{
+            'type': 'custom',
+            'value': 'test_value',
+            'entity_id': '111094',
+            'key': 'test_attribute'
+          }],
+          'snapshots': [{
+            'decisions': [{
+              'variation_id': '111128',
+              'experiment_id': '111127',
+              'campaign_id': '111182'
+            }],
+          'events': [{
+            'timestamp': 42000,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated',
+            }]
+          }]
+        }],
+        'client_version': version.__version__,
+        'client_name': 'python-sdk'
+      }
 
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/decision',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__no_audience_match(self):
@@ -320,44 +342,42 @@ class OptimizelyTest(base.BaseTest):
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
     expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
+     'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111128',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'timestamp': 42000,
+          'entity_id': '111095',
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'key': 'test_event',
+          }]
+        }]
       }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [],
-      'eventMetrics': [],
-      'timestamp': 42000,
-      'revision': '42',
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111128',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
+      'client_version': version.__version__,
+      'client_name': 'python-sdk'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_attributes__no_audience_match(self):
@@ -392,71 +412,50 @@ class OptimizelyTest(base.BaseTest):
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
     expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'revision': '42',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
+     'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111128',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'entity_id': '111095',
+          'key': 'test_event',
+          'revenue': 4200,
+          'tags': {
+            'non-revenue': 'abc',
+            'revenue': 4200,
+            'value': 1.234,
+          },
+          'timestamp': 42000,
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'value': 1.234,
+          }]
+        }],
       }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [{
-        'name': 'non-revenue',
-        'type': 'custom',
-        'value': 'abc',
-        'shouldIndex': False,
-      }, {
-        'name': 'revenue',
-        'type': 'custom',
-        'value': 4200,
-        'shouldIndex': False,
-      }, {
-        'name': 'value',
-        'type': 'custom',
-        'value': 1.234,
-        'shouldIndex': False,
-      }],
-      'eventMetrics': [{
-        'name': 'revenue',
-        'value': 4200
-      }, {
-        'name': 'value',
-        'value': 1.234
-      }],
-      'timestamp': 42000,
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111128',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
+      'client_version': version.__version__,
+      'client_name': 'python-sdk'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-
-    # Sort event features based on ID
-    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
-    )
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_event_tags_revenue(self):
@@ -468,63 +467,48 @@ class OptimizelyTest(base.BaseTest):
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'non-revenue': 'abc'})
 
     expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'revision': '42',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
+      'visitors': [{
+        'attributes': [{
+          'entity_id': '111094',
+          'type': 'custom',
+          'value': 'test_value',
+          'key': 'test_attribute'
+        }],
+        'visitor_id': 'test_user',
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111128',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'tags': {
+              'non-revenue': 'abc',
+              'revenue': 4200
+            },
+            'timestamp': 42000,
+            'revenue': 4200,
+            'key': 'test_event'
+          }]
+        }]
       }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [{
-        'name': 'non-revenue',
-        'type': 'custom',
-        'value': 'abc',
-        'shouldIndex': False,
-      }, {
-        'name': 'revenue',
-        'type': 'custom',
-        'value': 4200,
-        'shouldIndex': False,
-      }],
-      'eventMetrics': [{
-        'name': 'revenue',
-        'value': 4200
-      }],
-      'timestamp': 42000,
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111128',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
+      'client_name': 'python-sdk',
+      'project_id': '111001',
+      'client_version': '1.2.0',
+      'account_id': '12001'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-
-    # Sort event features based on ID
-    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
-    )
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_event_tags_numeric_metric(self):
@@ -540,31 +524,20 @@ class OptimizelyTest(base.BaseTest):
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
-    expected_event_metrics_params = [{
-      'name': 'value',
+    expected_event_metrics_params = {
+      'non-revenue': 'abc',
       'value': 1.234
-    }]
+    }
 
-    expected_event_features_params = [{
-      'name': 'non-revenue',
+    expected_event_features_params = {
+      'entity_id': '111094',
       'type': 'custom',
-      'value': 'abc',
-      'shouldIndex': False,
-    }, {
-      'name': 'value',
-      'type': 'custom',
-      'value': 1.234,
-      'shouldIndex': False,
-    }]
-
+      'value': 'test_value',
+      'key': 'test_attribute'
+    }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-
-    # Sort event features based on name
-    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
-    )
     self._validate_event_object_event_tags(mock_dispatch_event.call_args[0][0],
                                            expected_event_metrics_params,
                                            expected_event_features_params)
@@ -574,6 +547,7 @@ class OptimizelyTest(base.BaseTest):
     after a forced bucket. """
 
     with mock.patch('time.time', return_value=42), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
 
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
@@ -581,65 +555,44 @@ class OptimizelyTest(base.BaseTest):
                             event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
     expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'revision': '42',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
-      }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [{
-        'name': 'non-revenue',
-        'type': 'custom',
-        'value': 'abc',
-        'shouldIndex': False,
-      }, {
-        'name': 'revenue',
-        'type': 'custom',
-        'value': 4200,
-        'shouldIndex': False,
-      }, {
-        'name': 'value',
-        'type': 'custom',
-        'value': 1.234,
-        'shouldIndex': False,
-      }],
-      'eventMetrics': [{
-        'name': 'revenue',
-        'value': 4200
-      }, {
-        'name': 'value',
-        'value': 1.234
-      }],
-      'timestamp': 42000,
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111129',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
-    }
-
+      'account_id': '12001',
+          'project_id': '111001',
+          'visitors': [{
+            'visitor_id': 'test_user',
+            'attributes': [{
+              'type': 'custom',
+              'value': 'test_value',
+              'entity_id': '111094',
+              'key': 'test_attribute'
+            }],
+            'snapshots': [{
+              'decisions': [{
+                'variation_id': '111129',
+                'experiment_id': '111127',
+                'campaign_id': '111182'
+              }],
+            'events': [{
+              'entity_id': '111095',
+              'key': 'test_event',
+              'revenue': 4200,
+              'tags': {
+                'non-revenue': 'abc',
+                'revenue': 4200,
+                'value': 1.234
+                },
+              'timestamp': 42000,
+              'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              'value': 1.234,
+              }]
+            }],
+          }],
+          'client_version': version.__version__,
+          'client_name': 'python-sdk'
+      }
+    print mock_dispatch_event.call_args[0][0]
     self.assertEqual(1, mock_dispatch_event.call_count)
 
-    # Sort event features based on ID
-    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
-    )
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_deprecated_event_value(self):
@@ -650,58 +603,46 @@ class OptimizelyTest(base.BaseTest):
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
 
     expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
-      }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [{
-        'name': 'revenue',
-        'type': 'custom',
-        'value': 4200,
-        'shouldIndex': False,
-      }],
-      'eventMetrics': [{
-        'name': 'revenue',
-        'value': 4200
-      }],
-      'timestamp': 42000,
-      'revision': '42',
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111128',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
-    }
-
-    # Sort event features based on ID
-    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
-    )
-
+      'account_id': '12001',
+          'project_id': '111001',
+          'visitors': [{
+            'visitor_id': 'test_user',
+            'attributes': [{
+              'type': 'custom',
+              'value': 'test_value',
+              'entity_id': '111094',
+              'key': 'test_attribute'
+            }],
+            'snapshots': [{
+              'decisions': [{
+                'variation_id': '111128',
+                'experiment_id': '111127',
+                'campaign_id': '111182'
+              }],
+            'events': [{
+              'entity_id': '111095',
+              'key': 'test_event',
+              'revenue': 4200,
+              'tags': {
+                'revenue': 4200,
+                },
+              'timestamp': 42000,
+              'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              }]
+            }],
+          }],
+          'client_version': version.__version__,
+          'client_name': 'python-sdk'
+      }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_invalid_event_tags(self):
@@ -712,60 +653,47 @@ class OptimizelyTest(base.BaseTest):
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': '4200', 'value': True})
 
     expected_params = {
-      'visitorId': 'test_user',
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk',
-      'revision': '42',
-      'userFeatures': [{
-        'shouldIndex': True,
-        'type': 'custom',
-        'id': '111094',
-        'value': 'test_value',
-        'name': 'test_attribute'
+      'visitors': [{
+        'attributes': [{
+          'entity_id': '111094',
+          'type': 'custom',
+          'value': 'test_value',
+          'key': 'test_attribute'
+        }],
+        'visitor_id': 'test_user',
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111128',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42000,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event',
+            'tags': {
+              'value': True,
+              'revenue': '4200'
+            }
+          }]
+        }]
       }],
-      'projectId': '111001',
-      'isGlobalHoldback': False,
-      'eventEntityId': '111095',
-      'eventName': 'test_event',
-      'eventFeatures': [{
-        'name': 'revenue',
-        'type': 'custom',
-        'value': '4200',
-        'shouldIndex': False,
-      }, {
-        'name': 'value',
-        'type': 'custom',
-        'value': True,
-        'shouldIndex': False,
-      }],
-      'eventMetrics': [],
-      'timestamp': 42000,
-      'layerStates': [{
-        'revision': '42',
-        'decision': {
-          'variationId': '111128',
-          'isLayerHoldback': False,
-          'experimentId': '111127'
-        },
-        'actionTriggered': True,
-        'layerId': '111182'
-      }],
-      'accountId': '12001'
+      'client_name': 'python-sdk',
+      'project_id': '111001',
+      'client_version': '1.2.0',
+      'account_id': '12001'
     }
-
-    # Sort event features based on ID
-    mock_dispatch_event.call_args[0][0].params['eventFeatures'] = sorted(
-      mock_dispatch_event.call_args[0][0].params['eventFeatures'], key=lambda x: x.get('name')
-    )
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/log/event',
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__experiment_not_running(self):
@@ -788,6 +716,7 @@ class OptimizelyTest(base.BaseTest):
             mock.patch('optimizely.helpers.audience.is_user_in_experiment',
                        return_value=False) as mock_audience_check, \
             mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'user_1')
 
@@ -841,33 +770,39 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation)) as mock_decision, \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
 
     expected_params = {
-      'visitorId': 'test_user',
-      'accountId': '12001',
-      'projectId': '111111',
-      'layerId': '111182',
-      'revision': '1',
-      'decision': {
-        'variationId': '111129',
-        'isLayerHoldback': False,
-        'experimentId': '111127'
-      },
-      'userFeatures': [],
-      'isGlobalHoldback': False,
-      'timestamp': 42000,
-      'clientVersion': version.__version__,
-      'clientEngine': 'python-sdk'
+      'account_id': '12001',
+      'project_id': '111111',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'timestamp': 42000,
+          'entity_id': '111182',
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'key': 'campaign_activated',
+          }]
+        }]
+      }],
+      'client_version': version.__version__,
+      'client_name': 'python-sdk'
     }
-
     # Check that impression event is sent
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0],
-                                'https://logx.optimizely.com/log/decision',
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_is_feature_enabled__invalid_object(self):
@@ -975,7 +910,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     (debug_level, debug_message) = mock_logging.call_args_list[1][0]
     self.assertEqual(enums.LogLevels.DEBUG, debug_level)
     self.assertRegexpMatches(debug_message,
-                             'Dispatching impression event to URL https://logx.optimizely.com/log/decision with params')
+                             'Dispatching impression event to URL https://logx.optimizely.com/v1/events with params')
 
   def test_track(self):
     """ Test that expected log messages are logged during track. """
