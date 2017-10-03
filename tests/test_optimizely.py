@@ -498,7 +498,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'project_id': '111001',
-      'client_version': '1.2.0',
+      'client_version': version.__version__,
       'account_id': '12001'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
@@ -683,7 +683,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'project_id': '111001',
-      'client_version': '1.2.0',
+      'client_version': version.__version__,
       'account_id': '12001'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),

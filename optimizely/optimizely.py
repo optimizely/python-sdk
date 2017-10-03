@@ -78,7 +78,7 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
       return
 
-    self.event_builder = event_builder.EventBuilderV3(self.config)
+    self.event_builder = event_builder.EventBuilder(self.config)
     self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):

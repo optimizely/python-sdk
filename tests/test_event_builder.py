@@ -40,10 +40,10 @@ class EventTest(unittest.TestCase):
     self.assertEqual(headers, event_obj.headers)
 
 
-class EventBuilderV3Test(base.BaseTestV3):
+class EventBuilderTest(base.BaseTest):
 
   def setUp(self):
-    base.BaseTestV3.setUp(self)
+    base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
@@ -87,10 +87,10 @@ class EventBuilderV3Test(base.BaseTestV3):
         self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV3.EVENTS_URL,
+                                event_builder.EventBuilder.EVENTS_URL,
                                 expected_params,
-                                event_builder.EventBuilderV3.HTTP_VERB,
-                                event_builder.EventBuilderV3.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_impression_event__with_attributes(self):
     """ Test that create_impression_event creates Event object
@@ -132,10 +132,10 @@ class EventBuilderV3Test(base.BaseTestV3):
         '111129', 'test_user', {'test_attribute': 'test_value'}
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV3.EVENTS_URL,
+                                event_builder.EventBuilder.EVENTS_URL,
                                 expected_params,
-                                event_builder.EventBuilderV3.HTTP_VERB,
-                                event_builder.EventBuilderV3.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_attributes(self):
     """ Test that create_conversion_event creates Event object
@@ -177,10 +177,10 @@ class EventBuilderV3Test(base.BaseTestV3):
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None, [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV3.EVENTS_URL,
+                                event_builder.EventBuilder.EVENTS_URL,
                                 expected_params,
-                                event_builder.EventBuilderV3.HTTP_VERB,
-                                event_builder.EventBuilderV3.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_event_tags(self):
     """ Test that create_conversion_event creates Event object
@@ -233,10 +233,10 @@ class EventBuilderV3Test(base.BaseTestV3):
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV3.EVENTS_URL,
+                                event_builder.EventBuilder.EVENTS_URL,
                                 expected_params,
-                                event_builder.EventBuilderV3.HTTP_VERB,
-                                event_builder.EventBuilderV3.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__with_invalid_event_tags(self):
     """ Test that create_conversion_event creates Event object
@@ -287,7 +287,7 @@ class EventBuilderV3Test(base.BaseTestV3):
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,
-                                event_builder.EventBuilderV3.EVENTS_URL,
+                                event_builder.EventBuilder.EVENTS_URL,
                                 expected_params,
-                                event_builder.EventBuilderV3.HTTP_VERB,
-                                event_builder.EventBuilderV3.HTTP_HEADERS)
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)

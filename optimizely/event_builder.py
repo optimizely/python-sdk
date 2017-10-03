@@ -96,7 +96,7 @@ class BaseEventBuilder(object):
     self._add_time()
 
 
-class EventBuilderV3(BaseEventBuilder):
+class EventBuilder(BaseEventBuilder):
   """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (batch). """
 
