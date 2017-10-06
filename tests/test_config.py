@@ -522,6 +522,7 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
     self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
 
+
 class ConfigLoggingTest(base.BaseTest):
   def setUp(self):
     base.BaseTest.setUp(self)

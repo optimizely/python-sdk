@@ -306,4 +306,3 @@ class Optimizely(object):
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
     return forced_variation.key if forced_variation else None
-

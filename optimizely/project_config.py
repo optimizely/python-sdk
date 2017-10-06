@@ -449,4 +449,3 @@ class ProjectConfig(object):
                     'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map'
                     % (variation.key, experiment_key, user_id))
     return variation
-

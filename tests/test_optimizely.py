@@ -740,6 +740,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
+
 class OptimizelyWithExceptionTest(base.BaseTest):
 
   def setUp(self):

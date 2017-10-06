@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
 
 # Unless required by applicable law or agreed to in writing, software
@@ -305,4 +305,3 @@ class DecisionServiceTest(base.BaseTest):
     mock_bucket.assert_called_once_with(experiment, 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
-
