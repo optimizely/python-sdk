@@ -11,9 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from . import enums
+import math
 import numbers
 
-EVENT_VALUE_METRIC = 'revenue'
+REVENUE_METRIC_TYPE = 'revenue'
+NUMERIC_METRIC_TYPE = 'value'
 
 
 def get_revenue_value(event_tags):
@@ -23,12 +26,95 @@ def get_revenue_value(event_tags):
   if not isinstance(event_tags, dict):
     return None
 
-  if EVENT_VALUE_METRIC not in event_tags:
+  if REVENUE_METRIC_TYPE not in event_tags:
     return None
 
-  raw_value = event_tags[EVENT_VALUE_METRIC]
+  raw_value = event_tags[REVENUE_METRIC_TYPE]
 
   if not isinstance(raw_value, numbers.Integral):
     return None
 
   return raw_value
+
+
+def get_numeric_value(event_tags, logger=None):
+  """
+  A smart getter of the numeric value from the event tags.
+
+  Args:
+      event_tags: A dictionary of event tags.
+      logger: Optional logger.
+
+  Returns:
+      A float numeric metric value is returned when the provided numeric
+      metric value is in the following format:
+          - A string (properly formatted, e.g., no commas)
+          - An integer
+          - A float or double
+      None is returned when the provided numeric metric values is in
+      the following format:
+          - None
+          - A boolean
+          - inf, -inf, nan
+          - A string not properly formatted (e.g., '1,234')
+          - Any values that cannot be cast to a float (e.g., an array or dictionary)
+  """
+
+  logger_message_debug = None
+  numeric_metric_value = None
+
+  if event_tags is None:
+    logger_message_debug = 'Event tags is undefined.'
+  elif not isinstance(event_tags, dict):
+    logger_message_debug = 'Event tags is not a dictionary.'
+  elif NUMERIC_METRIC_TYPE not in event_tags:
+    logger_message_debug = 'The numeric metric key is not in event tags.'
+  else:
+    numeric_metric_value = event_tags[NUMERIC_METRIC_TYPE]
+    try:
+      if isinstance(numeric_metric_value, (numbers.Integral, float, str)):
+        # Attempt to convert the numeric metric value to a float
+        # (if it isn't already a float).
+        cast_numeric_metric_value = float(numeric_metric_value)
+
+        # If not a float after casting, then make everything else a None.
+        # Other potential values are nan, inf, and -inf.
+        if not isinstance(cast_numeric_metric_value, float) \
+              or math.isnan(cast_numeric_metric_value) \
+              or math.isinf(cast_numeric_metric_value):
+          logger_message_debug = 'Provided numeric value {} is in an invalid format.'\
+            .format(numeric_metric_value)
+          numeric_metric_value = None
+        else:
+          # Handle booleans as a special case.
+          # They are treated like an integer in the cast, but we do not want to cast this.
+         if isinstance(numeric_metric_value, bool):
+            logger_message_debug = 'Provided numeric value is a boolean, which is an invalid format.'
+            numeric_metric_value = None
+         else:
+           numeric_metric_value = cast_numeric_metric_value
+      else:
+        logger_message_debug = 'Numeric metric value is not in integer, float, or string form.'
+        numeric_metric_value = None
+
+    except ValueError:
+      logger_message_debug = 'Value error while casting numeric metric value to a float.'
+      numeric_metric_value = None
+
+  # Log all potential debug messages while converting the numeric value to a float.
+  if logger and logger_message_debug:
+    logger.log(enums.LogLevels.DEBUG, logger_message_debug)
+
+  # Log the final numeric metric value
+  if numeric_metric_value is not None:
+    if logger:
+      logger.log(enums.LogLevels.INFO,
+                 'The numeric metric value {} will be sent to results.'
+                 .format(numeric_metric_value))
+  else:
+    if logger:
+      logger.log(enums.LogLevels.WARNING,
+                 'The provided numeric metric value {} is in an invalid format and will not be sent to results.'
+                 .format(numeric_metric_value))
+
+  return numeric_metric_value

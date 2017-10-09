@@ -74,7 +74,7 @@ nosetests tests.test_event:EventTest
 To run a single test you can use the following command:
 
 ```
-nosetests tests.<file_name_without_extension>:ClassName:test_name
+nosetests tests.<file_name_without_extension>:ClassName.test_name
 ```
 
 For example, to run `test_event.EventTest.test_dispatch`, the command would be:

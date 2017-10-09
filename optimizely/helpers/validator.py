@@ -136,10 +136,10 @@ def is_user_profile_valid(user_profile):
   if not type(user_profile) is dict:
     return False
 
-  if not UserProfile.USER_ID_KEY in user_profile:
+  if UserProfile.USER_ID_KEY not in user_profile:
     return False
 
-  if not UserProfile.EXPERIMENT_BUCKET_MAP_KEY in user_profile:
+  if UserProfile.EXPERIMENT_BUCKET_MAP_KEY not in user_profile:
     return False
 
   experiment_bucket_map = user_profile.get(UserProfile.EXPERIMENT_BUCKET_MAP_KEY)
