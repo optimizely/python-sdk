@@ -153,7 +153,7 @@ class ProjectConfig(object):
 
     return audience_map
 
-  def _get_typecast_value(self, value, type):
+  def get_typecast_value(self, value, type):
     """ Helper method to determine actual value based on type of feature variable.
 
     Args:
@@ -440,8 +440,7 @@ class ProjectConfig(object):
     # Find usage in given variation
     variable_usage = variable_usages[variable.id]
 
-    value = self._get_typecast_value(variable_usage.value, variable.type)
-    return value
+    return variable_usage.value
 
   def get_variable_for_feature(self, feature_key, variable_key):
     """ Get the variable with the given variable key for the given feature.

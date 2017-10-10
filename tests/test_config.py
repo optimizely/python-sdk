@@ -1197,14 +1197,14 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
   def test_get_variable_value_for_variation__returns_valid_value(self):
-    """ Test that the right value and type are returned. """
+    """ Test that the right value is returned. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
     environment_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'environment')
-    self.assertEqual(False, project_config.get_variable_value_for_variation(is_working_variable, variation))
+    self.assertEqual('false', project_config.get_variable_value_for_variation(is_working_variable, variation))
     self.assertEqual('prod', project_config.get_variable_value_for_variation(environment_variable, variation))
 
   def test_get_variable_value_for_variation__invalid_variable(self):
