@@ -208,7 +208,7 @@ class Optimizely(object):
       variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
       self.logger.log(
         enums.LogLevels.INFO,
-        'Variable value for variable "%s" of feature flag "%s" is %s for user "%s".' % (
+        'Value for variable "%s" of feature flag "%s" is %s for user "%s".' % (
           variable_key, feature_key, variable_value, user_id
         ))
     else:
@@ -222,12 +222,14 @@ class Optimizely(object):
     if variable.type != variable_type:
       self.logger.log(
         enums.LogLevels.WARNING,
-        'Requested variable type "%s", but variable is of type "%s". Use correct API to retrieve value.'
+        'Requested variable type "%s", but variable is of type "%s". '
+        'Use correct API to retrieve value.' % (variable_type, variable.type)
       )
 
     try:
       actual_value = self.config.get_typecast_value(variable_value, variable_type)
     except:
+      self.logger.log(enums.LogLevels.ERROR, 'Unable to cast value. Returning None.')
       actual_value = None
 
     return actual_value
