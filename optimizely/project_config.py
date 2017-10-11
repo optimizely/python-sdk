@@ -424,7 +424,7 @@ class ProjectConfig(object):
       variation: The Variation for which we are getting the variable value.
 
     Returns:
-      The type-casted variable value or None if any of the inputs are invalid.
+      The variable value or None if any of the inputs are invalid.
     """
 
     if not variable or not variation:
@@ -438,9 +438,10 @@ class ProjectConfig(object):
     variable_usages = self.variation_variable_usage_map[variation.id]
 
     # Find usage in given variation
-    variable_usage = variable_usages[variable.id]
+    variable_usage = variable_usages.get(variable.id)
 
-    return variable_usage.value
+    # Return default value in case there is no variable usage for the variable.
+    return variable_usage.value if variable_usage else variable.defaultValue
 
   def get_variable_for_feature(self, feature_key, variable_key):
     """ Get the variable with the given variable key for the given feature.
