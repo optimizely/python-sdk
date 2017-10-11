@@ -178,7 +178,7 @@ class Optimizely(object):
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
 
-  def _get_feature_variable_for_given_type(self, feature_key, variable_key, variable_type, user_id, attributes):
+  def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
     """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
     Args:
@@ -203,6 +203,15 @@ class Optimizely(object):
     if not variable:
       return None
 
+    # Return None if type differs
+    if variable.type != variable_type:
+      self.logger.log(
+        enums.LogLevels.WARNING,
+        'Requested variable type "%s", but variable is of type "%s". '
+        'Use correct API to retrieve value. Returning None.' % (variable_type, variable.type)
+      )
+      return None
+
     decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
     if decision.variation:
       variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
@@ -217,13 +226,6 @@ class Optimizely(object):
         enums.LogLevels.INFO,
         'User "%s" is not in any variation or rollout rule. '
         'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
-      )
-
-    if variable.type != variable_type:
-      self.logger.log(
-        enums.LogLevels.WARNING,
-        'Requested variable type "%s", but variable is of type "%s". '
-        'Use correct API to retrieve value.' % (variable_type, variable.type)
       )
 
     try:
@@ -423,7 +425,7 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.BOOLEAN
-    return self._get_feature_variable_for_given_type(feature_key, variable_key, variable_type, user_id, attributes)
+    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
   def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain double variable attached to a feature flag.
@@ -442,7 +444,7 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.DOUBLE
-    return self._get_feature_variable_for_given_type(feature_key, variable_key, variable_type, user_id, attributes)
+    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
   def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain integer variable attached to a feature flag.
@@ -461,7 +463,7 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.INTEGER
-    return self._get_feature_variable_for_given_type(feature_key, variable_key, variable_type, user_id, attributes)
+    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
   def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain string variable attached to a feature.
@@ -480,7 +482,7 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.STRING
-    return self._get_feature_variable_for_given_type(feature_key, variable_key, variable_type, user_id, attributes)
+    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.

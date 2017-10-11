@@ -1006,8 +1006,8 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(4, mock_logger.call_count)
     mock_logger.assert_called_with(40, 'Variable with key "invalid_variable" not found in the datafile.')
 
-  def test_get_feature_variable__returns_none_if_unable_to_typecast(self):
-    """ Test that get_feature_variable_* returns None if unable to typecast value. """
+  def test_get_feature_variable__returns_none_if_type_mismatch(self):
+    """ Test that get_feature_variable_* returns None if type mismatch. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
@@ -1015,27 +1015,13 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
-      # Boolean cannot be successfully typecast to double and hence we get back None.
+      # "is_working" is boolean variable and we are using double method on it.
       self.assertIsNone(opt_obj.get_feature_variable_double('test_feature_in_experiment', 'is_working', 'test_user'))
-
-    mock_logger.assert_called_with(enums.LogLevels.ERROR, 'Unable to cast value. Returning None.')
-
-  def test_get_feature_variable__returns_invalid_successfully_typecast_value(self):
-    """ Test that get_feature_variable_* returns value as requested,
-    but throws a warning when there is a type mis-match. """
-
-    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
-    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)), \
-      mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
-      # Double can be successfully typecast to string and hence no issues. However, warning should be logged.
-      self.assertEqual('10.02', opt_obj.get_feature_variable_string('test_feature_in_experiment', 'cost', 'test_user'))
 
     mock_logger.assert_called_with(
       enums.LogLevels.WARNING,
-      'Requested variable type "string", but variable is of type "double". Use correct API to retrieve value.'
+      'Requested variable type "double", but variable is of type "boolean". '
+      'Use correct API to retrieve value. Returning None.'
     )
 
 

@@ -347,6 +347,11 @@ class BaseTest(unittest.TestCase):
             'key': 'count',
             'defaultValue': '999',
             'type': 'integer',
+          }, {
+            'id': '131',
+            'key': 'variable_without_usage',
+            'defaultValue': '45',
+            'type': 'integer',
           }]
       }, {
         'id': '91112',
