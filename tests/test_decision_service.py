@@ -503,7 +503,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     expected_experiment = self.project_config.get_experiment_from_key('test_experiment')
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation', return_value=None) as mock_decision:
-      self.assertEqual(decision_service.Decision(expected_experiment, None, decision_service.DECISION_SOURCE_EXPERIMENT),
+      self.assertEqual(decision_service.Decision(expected_experiment,
+                                                 None,
+                                                 decision_service.DECISION_SOURCE_EXPERIMENT),
                        self.decision_service.get_variation_for_feature(feature, 'user1'))
 
     mock_decision.assert_called_once_with(
@@ -519,7 +521,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
     with mock.patch('optimizely.decision_service.DecisionService.get_experiment_in_group',
                     return_value=self.project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
-      self.assertEqual(decision_service.Decision(expected_experiment, None, decision_service.DECISION_SOURCE_EXPERIMENT),
+      self.assertEqual(decision_service.Decision(expected_experiment,
+                                                 None,
+                                                 decision_service.DECISION_SOURCE_EXPERIMENT),
                        self.decision_service.get_variation_for_feature(feature, 'user_1'))
 
     mock_decision.assert_called_once_with(self.project_config.get_group('19228'), 'user_1')
