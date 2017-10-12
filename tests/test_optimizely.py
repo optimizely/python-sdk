@@ -754,8 +754,9 @@ class OptimizelyTest(base.BaseTest):
     # Check that no event is sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-  def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
-    """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
+  def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation_of_an_experiment(self):
+    """ Test that the feature is enabled for the user if bucketed into variation of an experiment.
+    Also confirm that impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -764,7 +765,11 @@ class OptimizelyTest(base.BaseTest):
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)) as mock_decision, \
+                    return_value=decision_service.Decision(
+                      mock_experiment,
+                      mock_variation,
+                      decision_service.DECISION_SOURCE_EXPERIMENT
+                    )) as mock_decision, \
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
             mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
             mock.patch('time.time', return_value=42):
@@ -800,6 +805,32 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0],
                                 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation_of_a_rollout(self):
+    """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is dispatched. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
+
+    mock_experiment = project_config.get_experiment_from_key('test_experiment')
+    mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(
+                      mock_experiment,
+                      mock_variation,
+                      decision_service.DECISION_SOURCE_ROLLOUT
+                    )) as mock_decision, \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+            mock.patch('time.time', return_value=42):
+      self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+
+    mock_decision.assert_called_once_with(feature, 'test_user', None)
+
+    # Check that impression event is not sent
+    self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_is_feature_enabled__invalid_object(self):
     """ Test that is_feature_enabled returns False if Optimizely object is not valid. """
@@ -857,7 +888,9 @@ class OptimizelyTest(base.BaseTest):
     mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
     mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)), \
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
@@ -873,7 +906,9 @@ class OptimizelyTest(base.BaseTest):
     mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
     mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)), \
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertEqual(10.02, opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
 
@@ -889,7 +924,9 @@ class OptimizelyTest(base.BaseTest):
     mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
     mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)), \
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertEqual(4243, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
@@ -905,7 +942,9 @@ class OptimizelyTest(base.BaseTest):
     mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
     mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)), \
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertEqual('staging',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
@@ -923,7 +962,8 @@ class OptimizelyTest(base.BaseTest):
 
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, None)), \
+                    return_value=decision_service.Decision(mock_experiment, None,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
@@ -935,7 +975,8 @@ class OptimizelyTest(base.BaseTest):
 
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, None)), \
+                    return_value=decision_service.Decision(mock_experiment, None,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertEqual(10.99,
                        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
@@ -948,7 +989,8 @@ class OptimizelyTest(base.BaseTest):
 
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, None)), \
+                    return_value=decision_service.Decision(mock_experiment, None,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
@@ -961,7 +1003,8 @@ class OptimizelyTest(base.BaseTest):
 
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, None)), \
+                    return_value=decision_service.Decision(mock_experiment, None,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertEqual('devel',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
@@ -1013,7 +1056,9 @@ class OptimizelyTest(base.BaseTest):
     mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
     mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)), \
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
       mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       # "is_working" is boolean variable and we are using double method on it.
       self.assertIsNone(opt_obj.get_feature_variable_double('test_feature_in_experiment', 'is_working', 'test_user'))
