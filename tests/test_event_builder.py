@@ -78,7 +78,8 @@ class EventBuilderTest(base.BaseTest):
         }]
       }],
       'client_name': 'python-sdk',
-      'client_version': version.__version__
+      'client_version': version.__version__,
+      'anonymize_ip': False,
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -122,7 +123,8 @@ class EventBuilderTest(base.BaseTest):
         }]
       }],
       'client_name': 'python-sdk',
-      'client_version': version.__version__
+      'client_version': version.__version__,
+      'anonymize_ip': False
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -167,7 +169,8 @@ class EventBuilderTest(base.BaseTest):
         }]
       }],
       'client_name': 'python-sdk',
-      'client_version': version.__version__
+      'client_version': version.__version__,
+      'anonymize_ip': False
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -220,6 +223,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'anonymize_ip': False
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -274,6 +278,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'anonymize_ip': False
     }
 
     with mock.patch('time.time', return_value=42.123), \

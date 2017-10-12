@@ -124,6 +124,7 @@ class EventBuilder(BaseEventBuilder):
     SOURCE_SDK_TYPE = 'client_name'
     SOURCE_SDK_VERSION = 'client_version'
     CUSTOM = 'custom'
+    ANONYMIZE_IP = 'anonymize_ip'
 
   def _add_attributes(self, attributes):
     """ Add attribute(s) information to the event.
@@ -172,6 +173,11 @@ class EventBuilder(BaseEventBuilder):
     visitor[self.EventParams.SNAPSHOTS] = []
     self.params[self.EventParams.USERS].append(visitor)
 
+  def _add_anonymize_ip(self):
+    """ Add IP anonymization bool to the event """
+
+    self.params[self.EventParams.ANONYMIZE_IP] = self.config.get_anonymize_ip_value()
+
   def _add_common_params(self, user_id, attributes):
     """ Add params which are used same in both conversion and impression events.
 
@@ -184,6 +190,7 @@ class EventBuilder(BaseEventBuilder):
     self._add_visitor(user_id)
     self._add_attributes(attributes)
     self._add_source()
+    self._add_anonymize_ip()
 
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.

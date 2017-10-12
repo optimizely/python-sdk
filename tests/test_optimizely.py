@@ -161,7 +161,8 @@ class OptimizelyTest(base.BaseTest):
         }]
       }],
       'client_version': version.__version__,
-      'client_name': 'python-sdk'
+      'client_name': 'python-sdk',
+      'anonymize_ip': False
     }
     mock_decision.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
@@ -209,7 +210,8 @@ class OptimizelyTest(base.BaseTest):
         }]
       }],
       'client_version': version.__version__,
-      'client_name': 'python-sdk'
+      'client_name': 'python-sdk',
+      'anonymize_ip': False
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -256,7 +258,8 @@ class OptimizelyTest(base.BaseTest):
           }]
         }],
         'client_version': version.__version__,
-        'client_name': 'python-sdk'
+        'client_name': 'python-sdk',
+        'anonymize_ip': False
       }
 
     self.assertEqual(1, mock_dispatch_event.call_count)
@@ -368,7 +371,8 @@ class OptimizelyTest(base.BaseTest):
         }]
       }],
       'client_version': version.__version__,
-      'client_name': 'python-sdk'
+      'client_name': 'python-sdk',
+      'anonymize_ip': False
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -446,7 +450,8 @@ class OptimizelyTest(base.BaseTest):
         }],
       }],
       'client_version': version.__version__,
-      'client_name': 'python-sdk'
+      'client_name': 'python-sdk',
+      'anonymize_ip': False
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -499,7 +504,8 @@ class OptimizelyTest(base.BaseTest):
       'client_name': 'python-sdk',
       'project_id': '111001',
       'client_version': version.__version__,
-      'account_id': '12001'
+      'account_id': '12001',
+      'anonymize_ip': False
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -583,7 +589,8 @@ class OptimizelyTest(base.BaseTest):
             }],
           }],
           'client_version': version.__version__,
-          'client_name': 'python-sdk'
+          'client_name': 'python-sdk',
+          'anonymize_ip': False
       }
 
     self.assertEqual(1, mock_dispatch_event.call_count)
@@ -633,7 +640,8 @@ class OptimizelyTest(base.BaseTest):
             }],
           }],
           'client_version': version.__version__,
-          'client_name': 'python-sdk'
+          'client_name': 'python-sdk',
+          'anonymize_ip': False
       }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -684,7 +692,8 @@ class OptimizelyTest(base.BaseTest):
       'client_name': 'python-sdk',
       'project_id': '111001',
       'client_version': version.__version__,
-      'account_id': '12001'
+      'account_id': '12001',
+      'anonymize_ip': False
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -798,7 +807,8 @@ class OptimizelyTest(base.BaseTest):
         }]
       }],
       'client_version': version.__version__,
-      'client_name': 'python-sdk'
+      'client_name': 'python-sdk',
+      'anonymize_ip': False,
     }
     # Check that impression event is sent
     self.assertEqual(1, mock_dispatch_event.call_count)
