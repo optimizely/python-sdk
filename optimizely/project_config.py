@@ -153,7 +153,7 @@ class ProjectConfig(object):
 
     return audience_map
 
-  def _get_typecast_value(self, value, type):
+  def get_typecast_value(self, value, type):
     """ Helper method to determine actual value based on type of feature variable.
 
     Args:
@@ -420,12 +420,13 @@ class ProjectConfig(object):
     """ Get the variable value for the given variation.
 
     Args:
-      Variable: The Variable for which we are getting the value.
-      Variation: The Variation for which we are getting the variable value.
+      variable: The Variable for which we are getting the value.
+      variation: The Variation for which we are getting the variable value.
 
     Returns:
-      The type-casted variable value or None if any of the inputs are invalid.
+      The variable value or None if any of the inputs are invalid.
     """
+
     if not variable or not variation:
       return None
 
@@ -437,13 +438,13 @@ class ProjectConfig(object):
     variable_usages = self.variation_variable_usage_map[variation.id]
 
     # Find usage in given variation
-    variable_usage = variable_usages[variable.id]
+    variable_usage = variable_usages.get(variable.id)
 
-    value = self._get_typecast_value(variable_usage.value, variable.type)
-    return value
+    # Return default value in case there is no variable usage for the variable.
+    return variable_usage.value if variable_usage else variable.defaultValue
 
   def get_variable_for_feature(self, feature_key, variable_key):
-    """ Get the variable with the given variable key for the given feature
+    """ Get the variable with the given variable key for the given feature.
 
     Args:
       feature_key: The key of the feature for which we are getting the variable.
