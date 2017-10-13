@@ -569,6 +569,10 @@ class ProjectConfig(object):
     return variation
 
   def get_anonymize_ip_value(self):
-    """ Get anonymize IP value """
+    """ Gets the anonymize IP value.
+
+      Returns:
+        A boolean value that indicates if the IP should be anonymized.
+    """
 
     return self.anonymize_ip
