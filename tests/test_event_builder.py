@@ -49,6 +49,7 @@ class EventBuilderTest(base.BaseTest):
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
 
+    self.maxDiff = None
     self.assertEqual(expected_url, event_obj.url)
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
