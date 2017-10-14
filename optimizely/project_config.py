@@ -55,6 +55,7 @@ class ProjectConfig(object):
     self.audiences = config.get('audiences', [])
     self.feature_flags = config.get('featureFlags', [])
     self.rollouts = config.get('rollouts', [])
+    self.anonymize_ip = config.get('anonymizeIP', False)
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -566,3 +567,12 @@ class ProjectConfig(object):
                     'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map'
                     % (variation.key, experiment_key, user_id))
     return variation
+
+  def get_anonymize_ip_value(self):
+    """ Gets the anonymize IP value.
+
+      Returns:
+        A boolean value that indicates if the IP should be anonymized.
+    """
+
+    return self.anonymize_ip
