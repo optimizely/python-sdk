@@ -22,6 +22,7 @@ from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
+from optimizely import event_listener
 from optimizely.helpers import enums
 from . import base
 
@@ -170,6 +171,34 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_activate_listener(self):
+    """ Test that activate calls broadcast activate with proper parameters. """
+
+    with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+            mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate:
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
+
+    mock_broadcast_activate.assert_called_once_with(
+      self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
+      self.project_config.get_variation_from_id('test_experiment', '111129')
+    )
+
+  def test_activate_listener_with_attr(self):
+    """ Test that activate calls broadcast activate with proper parameters. """
+
+    with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+            mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate:
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
+
+    mock_broadcast_activate.assert_called_once_with(
+      self.project_config.get_experiment_from_key('test_experiment'), 'test_user', {'test_attribute': 'test_value'},
+      self.project_config.get_variation_from_id('test_experiment', '111129')
+    )
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected

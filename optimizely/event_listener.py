@@ -1,5 +1,7 @@
 from abc import abstractmethod
 from .helpers import enums
+from logger import NoOpLogger
+
 
 class EventNotificationListener(object):
   """ Event notification listener, if implemented and added to optimizely,
@@ -12,6 +14,18 @@ class EventNotificationListener(object):
   @abstractmethod
   def on_experiment_activated(self, experiment, user_id, attributes, variation):
       pass
+
+
+class LoggingEventNotificationListener(EventNotificationListener):
+  def __init__(self):
+    self.logger = NoOpLogger()
+
+  def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
+    pass
+
+  def on_experiment_activated(self, experiment, user_id, attributes, variation):
+    pass
+
 
 class EventNotificationBroadcaster(object):
   """ Base class which encapsulates methods to broadcast events for tracking impressions and conversions. """
