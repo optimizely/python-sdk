@@ -25,6 +25,7 @@ from .helpers import enums
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
+from .event_listener import EventNotificationBroadcaster
 
 
 class Optimizely(object):
@@ -80,7 +81,7 @@ class Optimizely(object):
 
     self.event_builder = event_builder.EventBuilder(self.config)
     self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
-
+    self.event_notification_broadcaster = EventNotificationBroadcaster(self.logger)
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.
 
@@ -177,6 +178,7 @@ class Optimizely(object):
     except:
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
+    self.event_notification_broadcaster.broadcast_experiment_activated(experiment, user_id, attributes, variation)
 
   def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
     """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
@@ -316,7 +318,7 @@ class Optimizely(object):
       except:
         error = sys.exc_info()[1]
         self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: %s' % str(error))
-
+      self.event_notification_broadcaster.broadcast_event_tracked(event_key, user_id, attributes, conversion_event)
     else:
       self.logger.log(enums.LogLevels.INFO, 'There are no valid experiments for event "%s" to track.' % event_key)
 
