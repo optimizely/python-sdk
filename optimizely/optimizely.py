@@ -516,3 +516,9 @@ class Optimizely(object):
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
     return forced_variation.key if forced_variation else None
+  def add_event_listener(self, listener):
+    self.event_notification_broadcaster.add_listener(listener)
+  def remove_event_listener(self, listener):
+    self.event_notification_broadcaster.remove_listener(listener)
+  def clear_event_listeners(self):
+    self.event_notification_broadcaster.clear_listeners()
