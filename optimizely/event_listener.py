@@ -25,10 +25,10 @@ class LoggingEventNotificationListener(EventNotificationListener):
     self.logger = SimpleLogger()
 
   def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
-    print 'Inside event tracked logging event listener'
+      self.logger.log(enums.LogLevels.DEBUG, "inside event track")
 
   def on_experiment_activated(self, experiment, user_id, attributes, variation):
-    print 'Inside experiment activate logging event listener'
+      self.logger.log(enums.LogLevels.DEBUG, "inside experiment activated")
 
 
 class EventNotificationBroadcaster(object):

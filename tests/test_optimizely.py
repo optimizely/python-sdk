@@ -194,6 +194,44 @@ class OptimizelyTest(base.BaseTest):
     self.optimizely.clear_event_listeners()
     self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
 
+  def test_add_same_listener(self):
+    """ Test adding a same listener """
+    mock_listener = event_listener.LoggingEventNotificationListener()
+    self.optimizely.add_event_listener(mock_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    self.optimizely.add_event_listener(mock_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+
+    self.optimizely.clear_event_listeners()
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+
+  def test_add_multi_listener(self):
+    """ Test adding a 2 listeners """
+    mock_listener = event_listener.LoggingEventNotificationListener()
+    class TestListener(event_listener.EventNotificationListener):
+      def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
+        print 'inside track'
+
+      def on_experiment_activated(self, experiment, user_id, attributes, variation):
+        print 'inside experiment activated'
+
+    test_listener = TestListener()
+
+    self.optimizely.add_event_listener(mock_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    self.optimizely.add_event_listener(test_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 2)
+
+    self.optimizely.clear_event_listeners()
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+
+  def test_remove_listener(self):
+    """ Test remove listener that isn't added"""
+    mock_listener = event_listener.LoggingEventNotificationListener()
+
+    self.optimizely.remove_event_listener(mock_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+
   def test_activate_listener(self):
     """ Test that activate calls broadcast activate with proper parameters. """
 
