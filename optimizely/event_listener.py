@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from abc import ABCMeta
 from .helpers import enums
-from logger import SimpleLogger
+from .logger import SimpleLogger
 
 
 class EventNotificationListener(object):

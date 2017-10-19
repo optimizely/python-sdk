@@ -231,10 +231,10 @@ class OptimizelyTest(base.BaseTest):
 
     class TestListener(event_listener.EventNotificationListener):
       def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
-        print 'inside track'
+        print('inside track')
 
       def on_experiment_activated(self, experiment, user_id, attributes, variation):
-        print 'inside experiment activated'
+        print('inside experiment activated')
 
     test_listener = TestListener()
 
