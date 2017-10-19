@@ -261,7 +261,8 @@ class OptimizelyTest(base.BaseTest):
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
          mock.patch(
-           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate:
+           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') \
+        as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     mock_broadcast_activate.assert_called_once_with(
@@ -277,7 +278,8 @@ class OptimizelyTest(base.BaseTest):
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
          mock.patch(
-           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate:
+           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') \
+        as mock_broadcast_activate:
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
