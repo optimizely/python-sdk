@@ -172,7 +172,7 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_add_listener(self):
+  def test_add_remove_clear_listener(self):
     """ Test adding a listener passes correctly and gets called"""
     mock_listener = event_listener.LoggingEventNotificationListener()
     self.optimizely.add_event_listener(mock_listener)
@@ -189,7 +189,10 @@ class OptimizelyTest(base.BaseTest):
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
       self.project_config.get_variation_from_id('test_experiment', '111129')
     )
+    self.optimizely.remove_event_listener(mock_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
     self.optimizely.clear_event_listeners()
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
 
   def test_activate_listener(self):
     """ Test that activate calls broadcast activate with proper parameters. """
