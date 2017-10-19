@@ -225,6 +225,12 @@ class OptimizelyTest(base.BaseTest):
     self.optimizely.clear_event_listeners()
     self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
 
+  def test_add_invalid_listener(self):
+    """ Test adding a invalid listener """
+    not_a_listener = "This is not a listener"
+    self.optimizely.add_event_listener(not_a_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+
   def test_add_multi_listener(self):
     """ Test adding a 2 listeners """
     mock_listener = event_listener.LoggingEventNotificationListener()
