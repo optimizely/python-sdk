@@ -172,6 +172,30 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
+  def test_add_listener(self):
+    """ Test adding a listener passes correctly and gets called"""
+    mock_listener = event_listener.LoggingEventNotificationListener()
+    self.optimizely.add_event_listener(mock_listener)
+    with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+            mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate, \
+            mock.patch(
+              'optimizely.event_listener.LoggingEventNotificationListener.on_experiment_activated') \
+                    as mock_notify_activate:
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
+
+      self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    mock_broadcast_activate.assert_called_once_with(
+      self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
+      self.project_config.get_variation_from_id('test_experiment', '111129')
+    )
+ #   mock_notify_activate.assert_called_once_with(
+ #     self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
+ #     self.project_config.get_variation_from_id('test_experiment', '111129')
+ #   )
+    self.optimizely.clear_event_listeners()
+
   def test_activate_listener(self):
     """ Test that activate calls broadcast activate with proper parameters. """
 

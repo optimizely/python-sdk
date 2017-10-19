@@ -1,12 +1,15 @@
 from abc import abstractmethod
+from abc import ABCMeta
 from .helpers import enums
-from logger import NoOpLogger
+from logger import SimpleLogger
 
 
 class EventNotificationListener(object):
   """ Event notification listener, if implemented and added to optimizely,
       callback will be notified of event tracking and experiement activation.
   """
+  __metaclass__ =  ABCMeta
+
   @abstractmethod
   def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
       pass
@@ -17,14 +20,15 @@ class EventNotificationListener(object):
 
 
 class LoggingEventNotificationListener(EventNotificationListener):
+
   def __init__(self):
-    self.logger = NoOpLogger()
+    self.logger = SimpleLogger()
 
   def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
-    pass
+    print 'Inside event tracked logging event listener'
 
   def on_experiment_activated(self, experiment, user_id, attributes, variation):
-    pass
+    print 'Inside experiment activate logging event listener'
 
 
 class EventNotificationBroadcaster(object):
