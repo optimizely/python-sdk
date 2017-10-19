@@ -172,7 +172,7 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_add_remove_clear_listener(self):
+  def test_add_activate_remove_clear_listener(self):
     """ Test adding a listener passes correctly and gets called"""
     mock_listener = event_listener.LoggingEventNotificationListener()
     self.optimizely.add_event_listener(mock_listener)
@@ -189,6 +189,27 @@ class OptimizelyTest(base.BaseTest):
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
       self.project_config.get_variation_from_id('test_experiment', '111129')
     )
+    self.optimizely.remove_event_listener(mock_listener)
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.optimizely.clear_event_listeners()
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+
+  def test_add_track_remove_clear_listener(self):
+    """ Test adding a listener passes correctly and gets called"""
+    mock_listener = event_listener.LoggingEventNotificationListener()
+    self.optimizely.add_event_listener(mock_listener)
+    with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+            mock.patch(
+              'optimizely.event_listener.LoggingEventNotificationListener.on_event_tracked') \
+                    as mock_notify_track:
+      self.optimizely.track('test_event', 'test_user')
+
+    mock_notify_track.assert_called_once_with("test_event", 'test_user', None, mock_dispatch.call_args[0][0])
+
+    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
     self.optimizely.remove_event_listener(mock_listener)
     self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
     self.optimizely.clear_event_listeners()
@@ -238,6 +259,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation',
             return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
             mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
@@ -252,6 +274,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation',
             return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
             mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
@@ -259,6 +282,46 @@ class OptimizelyTest(base.BaseTest):
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', {'test_attribute': 'test_value'},
       self.project_config.get_variation_from_id('test_experiment', '111129')
     )
+
+  def test_track_listener(self):
+    """ Test that track calls notification broadcaster. """
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+            mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
+      self.optimizely.track('test_event', 'test_user')
+
+      mock_event_tracked.assert_called_once_with("test_event", 'test_user', None, mock_dispatch.call_args[0][0])
+
+  def test_track_listener_with_attr(self):
+    """ Test that track calls notification broadcaster. """
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_get_variation, \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+            mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
+
+      mock_event_tracked.assert_called_once_with("test_event", 'test_user', {'test_attribute': 'test_value'}, mock_dispatch.call_args[0][0])
+
+  def test_track_listener_with_attr_with_event_tags(self):
+    """ Test that track calls notification broadcaster. """
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_get_variation, \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+            mock.patch('optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
+                            event_tags={'value': 1.234, 'non-revenue': 'abc'})
+
+      mock_event_tracked.assert_called_once_with("test_event", 'test_user', {'test_attribute': 'test_value'}, mock_dispatch.call_args[0][0])
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
