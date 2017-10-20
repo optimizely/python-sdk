@@ -319,7 +319,7 @@ class Optimizely(object):
       except:
         error = sys.exc_info()[1]
         self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: %s' % str(error))
-      self.event_notification_broadcaster.broadcast_event_tracked(event_key, user_id, attributes, conversion_event)
+      self.event_notification_broadcaster.broadcast_event_tracked(event_key, user_id, attributes, event_tags, conversion_event)
     else:
       self.logger.log(enums.LogLevels.INFO, 'There are no valid experiments for event "%s" to track.' % event_key)
 
@@ -519,10 +519,27 @@ class Optimizely(object):
     return forced_variation.key if forced_variation else None
 
   def add_event_listener(self, listener):
+    """
+    Adds a EventNotificationListener.  The EventNotificationListener will be notified
+    after a call to activate or event track.
+
+    :param listener: An implementation of the EventNotificationListener abstract class
+
+    """
     self.event_notification_broadcaster.add_listener(listener)
 
   def remove_event_listener(self, listener):
+    """
+    Remove a EventNotificationListener that was added earlier.
+
+    :param listener: The listener to remove
+    :return:
+    """
     self.event_notification_broadcaster.remove_listener(listener)
 
   def clear_event_listeners(self):
+    """
+    Clear all Event Listeners.
+    :return:
+    """
     self.event_notification_broadcaster.clear_listeners()

@@ -172,7 +172,7 @@ class OptimizelyTest(base.BaseTest):
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_add_activate_remove_clear_listener(self):
-    """ Test adding a listener passes correctly and gets called"""
+    """ Test adding a listener activate passes correctly and gets called"""
     mock_listener = event_listener.LoggingEventNotificationListener()
     self.optimizely.add_event_listener(mock_listener)
     with mock.patch(
@@ -194,7 +194,7 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
 
   def test_add_track_remove_clear_listener(self):
-    """ Test adding a listener passes correctly and gets called"""
+    """ Test adding a listener tract passes correctly and gets called"""
     mock_listener = event_listener.LoggingEventNotificationListener()
     self.optimizely.add_event_listener(mock_listener)
     with mock.patch(
@@ -206,7 +206,7 @@ class OptimizelyTest(base.BaseTest):
             as mock_notify_track:
       self.optimizely.track('test_event', 'test_user')
 
-    mock_notify_track.assert_called_once_with("test_event", 'test_user', None, mock_dispatch.call_args[0][0])
+    mock_notify_track.assert_called_once_with("test_event", 'test_user', None, None, mock_dispatch.call_args[0][0])
 
     self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
     self.optimizely.remove_event_listener(mock_listener)
@@ -306,7 +306,7 @@ class OptimizelyTest(base.BaseTest):
           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user')
 
-      mock_event_tracked.assert_called_once_with("test_event", 'test_user', None, mock_dispatch.call_args[0][0])
+      mock_event_tracked.assert_called_once_with("test_event", 'test_user', None, None, mock_dispatch.call_args[0][0])
 
   def test_track_listener_with_attr(self):
     """ Test that track calls notification broadcaster. """
@@ -321,7 +321,7 @@ class OptimizelyTest(base.BaseTest):
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
       mock_event_tracked.assert_called_once_with("test_event", 'test_user', {'test_attribute': 'test_value'},
-                                                 mock_dispatch.call_args[0][0])
+                                                 None, mock_dispatch.call_args[0][0])
 
   def test_track_listener_with_attr_with_event_tags(self):
     """ Test that track calls notification broadcaster. """
@@ -337,7 +337,7 @@ class OptimizelyTest(base.BaseTest):
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
       mock_event_tracked.assert_called_once_with("test_event", 'test_user', {'test_attribute': 'test_value'},
-                                                 mock_dispatch.call_args[0][0])
+                                                 {'value': 1.234, 'non-revenue': 'abc'}, mock_dispatch.call_args[0][0])
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
