@@ -1,3 +1,8 @@
+## 1.3.0
+- Introduced support for forced bucketing.
+- Introduced support for numeric metrics.
+- Updated event builder to support new endpoint.
+
 ## 1.2.1
 - Removed older feature flag parsing.
 
