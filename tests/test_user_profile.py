@@ -60,7 +60,6 @@ class UserProfileServiceTest(unittest.TestCase):
     user_profile_service = user_profile.UserProfileService()
     self.assertEqual({'user_id': 'test_user', 'experiment_bucket_map': {}}, user_profile_service.lookup('test_user'))
 
-
   def test_save(self):
     """ Test that nothing happens on calling save. """
 
