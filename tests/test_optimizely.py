@@ -189,9 +189,9 @@ class OptimizelyTest(base.BaseTest):
       self.project_config.get_variation_from_id('test_experiment', '111129')
     )
     self.optimizely.remove_event_listener(mock_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
     self.optimizely.clear_event_listeners()
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
 
   def test_add_track_remove_clear_listener(self):
     """ Test adding a listener tract passes correctly and gets called"""
@@ -208,22 +208,22 @@ class OptimizelyTest(base.BaseTest):
 
     mock_notify_track.assert_called_once_with("test_event", 'test_user', None, None, mock_dispatch.call_args[0][0])
 
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
     self.optimizely.remove_event_listener(mock_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
     self.optimizely.clear_event_listeners()
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
 
   def test_add_same_listener(self):
     """ Test adding a same listener """
     mock_listener = event_listener.LoggingEventNotificationListener()
     self.optimizely.add_event_listener(mock_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
     self.optimizely.add_event_listener(mock_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
 
     self.optimizely.clear_event_listeners()
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
 
   def test_add_invalid_listener(self):
     """ Test adding a invalid listener """
@@ -245,19 +245,19 @@ class OptimizelyTest(base.BaseTest):
     test_listener = TestListener()
 
     self.optimizely.add_event_listener(mock_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
+    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
     self.optimizely.add_event_listener(test_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 2)
+    self.assertEqual(2, len(self.optimizely.event_notification_broadcaster.listeners))
 
     self.optimizely.clear_event_listeners()
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
 
   def test_remove_listener(self):
     """ Test remove listener that isn't added"""
     mock_listener = event_listener.LoggingEventNotificationListener()
 
     self.optimizely.remove_event_listener(mock_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
 
   def test_activate_listener(self):
     """ Test that activate calls broadcast activate with proper parameters. """

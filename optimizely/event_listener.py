@@ -24,25 +24,25 @@ class EventNotificationListener(object):
 
   @abstractmethod
   def on_event_tracked(self, event_key, user_id, attributes, event_tags, event):
-    """
-    Abstract method triggered when optimizely track is called.
-    :param event_key: The event key passed into track.
-    :param user_id: The user Id being tracked.
-    :param attributes: The attributes passed into the track call.
-    :param event: The event.
-    :return:
+    """ Abstract method triggered when optimizely track is called.
+   Args:
+    event_key: The event key passed into track.
+    user_id: The user Id being tracked.
+    attributes: The attributes passed into the track call.
+    event: The event.
+
     """
     pass
 
   @abstractmethod
   def on_experiment_activated(self, experiment, user_id, attributes, variation):
-    """
-    Abstract method triggered when optimizely activate is called.
-    :param experiment: The experiment being activated.
-    :param user_id: The user_id passed into activate.
-    :param attributes: The attributes passed into activate.
-    :param variation: The variation passed back from an activate.
-    :return:
+    """ Abstract method triggered when optimizely activate is called.
+    Args:
+     experiment: The experiment being activated.
+     user_id: The user_id passed into activate.
+     attributes: The attributes passed into activate.
+     variation: The variation passed back from an activate.
+
     """
     pass
 
@@ -65,18 +65,18 @@ class EventNotificationBroadcaster(object):
   """ Base class which encapsulates methods to broadcast events for tracking impressions and conversions. """
 
   def __init__(self, logger):
-    """
-    init
-    :param logger: SimpleLogger or NoOpLogger
+    """ init
+    Args:
+      logger: SimpleLogger or NoOpLogger
     """
     self.listeners = []
     self.logger = logger
 
   def add_listener(self, listener):
-    """
-    Add a EventNotificationListener
-    :param listener: A subclass of EventNotificationListener
-    :return:
+    """ Add a EventNotificationListener
+    Args:
+      listener: A subclass of EventNotificationListener
+
     """
     if isinstance(listener, EventNotificationListener):
       if self.listeners.count(listener) == 0:
@@ -88,10 +88,10 @@ class EventNotificationBroadcaster(object):
       self.logger.log(enums.LogLevels.DEBUG, "listener not EventNotificationListener")
 
   def remove_listener(self, listener):
-    """
-    Remove a listener added earlier.
-    :param listener: The listener to remove
-    :return:
+    """ Remove a listener added earlier.
+    Args:
+      listener: The listener to remove
+
     """
     for ofListener in self.listeners:
       if ofListener == listener:
@@ -101,32 +101,31 @@ class EventNotificationBroadcaster(object):
     self.logger.log(enums.LogLevels.DEBUG, "listener not found to remove")
 
   def clear_listeners(self):
-    """
-    Clear all the listeners out.
-    :return:
+    """ Clear all the listeners out.
+
     """
     del self.listeners[:]
 
   def broadcast_event_tracked(self, event_key, user_id, attributes, event_tags, event):
-    """
-    Broadcast a track event was called.
-    :param event_key: The event key
-    :param user_id:  The user id passed into optimizely.track
-    :param attributes: Attributes passed into optimizely.track
-    :param event: The event logged by the event dispatcher
-    :return:
+    """ Broadcast a track event was called.
+    Args:
+      event_key: The event key
+      user_id:  The user id passed into optimizely.track
+      attributes: Attributes passed into optimizely.track
+      event: The event logged by the event dispatcher
+
     """
     for listener in self.listeners:
       listener.on_event_tracked(event_key, user_id, attributes, event_tags, event)
 
   def broadcast_experiment_activated(self, experiment, user_id, attributes, variation):
-    """
-    Broadcast an experiment activate was called.
-    :param experiment: The experiment that was activated.
-    :param user_id: The user_id passed into activate
-    :param attributes: The attributes passed into activate
-    :param variation: The variation that was passed back from the activate
-    :return:
+    """ Broadcast an experiment activate was called.
+    Args:
+      experiment: The experiment that was activated.
+      user_id: The user_id passed into activate
+      attributes: The attributes passed into activate
+      variation: The variation that was passed back from the activate
+
     """
     for listener in self.listeners:
       listener.on_experiment_activated(experiment, user_id, attributes, variation)

@@ -20,12 +20,12 @@ from . import event_builder
 from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
+from .event_listener import EventNotificationBroadcaster
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
-from .event_listener import EventNotificationBroadcaster
 
 
 class Optimizely(object):
@@ -507,11 +507,11 @@ class Optimizely(object):
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
 
-      Args:
+    Args:
        experiment_key: A string key identifying the experiment.
        user_id: The user ID.
 
-     Returns:
+    Returns:
        The forced variation key. None if no forced variation key.
     """
 
@@ -519,27 +519,26 @@ class Optimizely(object):
     return forced_variation.key if forced_variation else None
 
   def add_event_listener(self, listener):
-    """
-    Adds a EventNotificationListener.  The EventNotificationListener will be notified
+    """ Adds a EventNotificationListener.  The EventNotificationListener will be notified
     after a call to activate or event track.
 
-    :param listener: An implementation of the EventNotificationListener abstract class
+    Args:
+       listener: An implementation of the EventNotificationListener abstract class
 
     """
     self.event_notification_broadcaster.add_listener(listener)
 
   def remove_event_listener(self, listener):
-    """
-    Remove a EventNotificationListener that was added earlier.
+    """ Remove a EventNotificationListener that was added earlier.
 
-    :param listener: The listener to remove
-    :return:
+    Args:
+     listener: The listener to remove
+
     """
     self.event_notification_broadcaster.remove_listener(listener)
 
   def clear_event_listeners(self):
-    """
-    Clear all Event Listeners.
-    :return:
+    """ Clear all Event Listeners.
+
     """
     self.event_notification_broadcaster.clear_listeners()
