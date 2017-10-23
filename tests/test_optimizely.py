@@ -178,6 +178,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
            'optimizely.event_listener.LoggingEventNotificationListener.on_experiment_activated') \
         as mock_notify_activate:
@@ -186,7 +187,8 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
     mock_notify_activate.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
-      self.project_config.get_variation_from_id('test_experiment', '111129')
+      self.project_config.get_variation_from_id('test_experiment', '111129'),
+      mock_dispatch.call_args[0][0]
     )
     self.optimizely.remove_event_listener(mock_listener)
     self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
@@ -265,7 +267,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
            'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') \
         as mock_broadcast_activate:
@@ -273,7 +275,8 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_activate.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
-      self.project_config.get_variation_from_id('test_experiment', '111129')
+      self.project_config.get_variation_from_id('test_experiment', '111129'),
+      mock_dispatch.call_args[0][0]
     )
 
   def test_activate_listener_with_attr(self):
@@ -282,7 +285,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
            'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') \
         as mock_broadcast_activate:
@@ -291,7 +294,8 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_activate.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', {'test_attribute': 'test_value'},
-      self.project_config.get_variation_from_id('test_experiment', '111129')
+      self.project_config.get_variation_from_id('test_experiment', '111129'),
+      mock_dispatch.call_args[0][0]
     )
 
   def test_track_listener(self):

@@ -35,13 +35,14 @@ class EventNotificationListener(object):
     pass
 
   @abstractmethod
-  def on_experiment_activated(self, experiment, user_id, attributes, variation):
+  def on_experiment_activated(self, experiment, user_id, attributes, variation, event):
     """ Abstract method triggered when optimizely activate is called.
     Args:
      experiment: The experiment being activated.
      user_id: The user_id passed into activate.
      attributes: The attributes passed into activate.
      variation: The variation passed back from an activate.
+     event: The Optimizely event object.
 
     """
     pass
@@ -57,7 +58,7 @@ class LoggingEventNotificationListener(EventNotificationListener):
   def on_event_tracked(self, event_key, user_id, attributes, event_tags, event):
     self.logger.log(enums.LogLevels.DEBUG,"inside event track")
 
-  def on_experiment_activated(self, experiment, user_id, attributes, variation):
+  def on_experiment_activated(self, experiment, user_id, attributes, variation, event):
     self.logger.log(enums.LogLevels.DEBUG,"inside experiment activated")
 
 
@@ -118,14 +119,15 @@ class EventNotificationBroadcaster(object):
     for listener in self.listeners:
       listener.on_event_tracked(event_key, user_id, attributes, event_tags, event)
 
-  def broadcast_experiment_activated(self, experiment, user_id, attributes, variation):
+  def broadcast_experiment_activated(self, experiment, user_id, attributes, variation, event):
     """ Broadcast an experiment activate was called.
     Args:
       experiment: The experiment that was activated.
       user_id: The user_id passed into activate
       attributes: The attributes passed into activate
       variation: The variation that was passed back from the activate
+      event: Optimizely event object being sent.
 
     """
     for listener in self.listeners:
-      listener.on_experiment_activated(experiment, user_id, attributes, variation)
+      listener.on_experiment_activated(experiment, user_id, attributes, variation, event)
