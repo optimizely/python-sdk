@@ -179,7 +179,7 @@ class Optimizely(object):
     except:
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
-    self.notification_center.fire_notifications(enums.NotificationTypes.ACTIVATE,
+    self.notification_center.fire_notifications(enums.NotificationTypes.DECISION,
                                                 experiment, user_id, attributes, variation, impression_event)
 
   def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
