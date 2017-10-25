@@ -14,6 +14,7 @@ import sys
 
 from .helpers import enums
 
+
 class NotificationCenter(object):
   """ Class encapsulating Broadcast Notifications. The enums.NotifcationTypes includes predefined notifications."""
   def __init__(self, logger):

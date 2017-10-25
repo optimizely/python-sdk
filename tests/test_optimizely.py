@@ -177,7 +177,8 @@ class OptimizelyTest(base.BaseTest):
       print("Here for experiment {0}".format(experiment.key))
       callbackhit[0] = True
 
-    notification_id = self.optimizely.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, on_activate)
+    notification_id = self.optimizely.notification_center.add_notification(enums.NotificationTypes.ACTIVATE,
+                                                                           on_activate)
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
@@ -321,7 +322,8 @@ class OptimizelyTest(base.BaseTest):
           'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
-      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user', {'test_attribute': 'test_value'},
+      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user',
+                                                 {'test_attribute': 'test_value'},
                                                  None, mock_dispatch.call_args[0][0])
 
   def test_track_listener_with_attr_with_event_tags(self):
@@ -337,8 +339,42 @@ class OptimizelyTest(base.BaseTest):
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
-      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user', {'test_attribute': 'test_value'},
-                                                 {'value': 1.234, 'non-revenue': 'abc'}, mock_dispatch.call_args[0][0])
+      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user',
+                                                 {'test_attribute': 'test_value'},
+                                                 {'value': 1.234, 'non-revenue': 'abc'},
+                                                 mock_dispatch.call_args[0][0])
+
+  def test_is_feature_enabled__callback_listener(self):
+    """ Test that the feature is enabled for the user if bucketed into variation of an experiment.
+    Also confirm that impression event is dispatched. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
+
+    access_callback = [False]
+    def onFeature(feature_key, user_id, attributes,variation):
+      print("got feature {0}".format(feature_key))
+      access_callback[0] = True
+
+    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, onFeature)
+
+    mock_experiment = project_config.get_experiment_from_key('test_experiment')
+    mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(
+                      mock_experiment,
+                      mock_variation,
+                      decision_service.DECISION_SOURCE_EXPERIMENT
+                    )) as mock_decision, \
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+        mock.patch('time.time', return_value=42):
+      self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+
+    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    self.assertTrue(access_callback[0])
+    
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
