@@ -388,7 +388,8 @@ class Optimizely(object):
                                     decision.variation,
                                     user_id,
                                     attributes)
-      self.notification_center.fire_notifications(enums.NotificationTypes.FEATURE_ACCESSED, feature_key, user_id, attributes, decision.variation)
+      self.notification_center.fire_notifications(enums.NotificationTypes.FEATURE_ACCESSED,
+                                                  feature_key, user_id, attributes, decision.variation)
       return True
 
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))

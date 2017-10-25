@@ -353,11 +353,12 @@ class OptimizelyTest(base.BaseTest):
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     access_callback = [False, False]
-    def onFeature(feature_key, user_id, attributes,variation):
+
+    def onFeature(feature_key, user_id, attributes, variation):
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
-    def onActivate(experiment,user_id,attributes,variation,event):
+    def onActivate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
     opt_obj.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, onActivate)
@@ -365,6 +366,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(
                       mock_experiment,
