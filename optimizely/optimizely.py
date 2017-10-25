@@ -81,7 +81,7 @@ class Optimizely(object):
 
     self.event_builder = event_builder.EventBuilder(self.config)
     self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
-    self.notification_center = NotificationCenter()
+    self.notification_center = NotificationCenter(self.logger)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.

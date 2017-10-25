@@ -10,16 +10,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import sys
 
 from .helpers import enums
 
 class NotificationCenter(object):
   """ Class encapsulating Broadcast Notifications. The enums.NotifcationTypes includes predefined notifications."""
-  def __init__(self):
+  def __init__(self, logger):
     self.notification_id = 1
     self.notifications = {}
     for attr, value in enums.NotificationTypes.__dict__.iteritems():
       self.notifications[value] = []
+    self.logger = logger
 
   def add_notification(self, notification_type, notification_callback):
     """ Add a notification callback to the notification center.
@@ -83,4 +85,10 @@ class NotificationCenter(object):
     """
     if notification_type in self.notifications:
       for callback in self.notifications[notification_type]:
-        callback[1](*args)
+        try:
+          callback[1](*args)
+        except:
+          error = sys.exc_info()[1]
+          self.logger.log(enums.LogLevels.ERROR, 'Problem calling notify callback. Error: %s' % str(error))
+
+
