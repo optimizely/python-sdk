@@ -20,12 +20,12 @@ from . import event_builder
 from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
-from .notification_center import NotificationCenter
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
+from .notification_center import NotificationCenter
 
 
 class Optimizely(object):
