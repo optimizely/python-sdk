@@ -78,7 +78,7 @@ class NotificationCenter(object):
 
   def fire_notifications(self, notification_type, *args):
     """ Fires off the notification for the specific event.  Uses var args to pass in a
-    arbitrary list of parameter according to which notification type was fired.
+        arbitrary list of parameter according to which notification type was fired.
 
     Args:
       notification_type: Type of notification to fire.
