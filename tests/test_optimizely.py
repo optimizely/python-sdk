@@ -271,10 +271,11 @@ class OptimizelyTest(base.BaseTest):
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.DECISION,
-                                                    self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
-                                                    self.project_config.get_variation_from_id('test_experiment', '111129'),
-                                                    mock_dispatch.call_args[0][0]
-                                                    )
+                                                    self.project_config.get_experiment_from_key('test_experiment'),
+                                                    'test_user', None,
+                                                    self.project_config.get_variation_from_id('test_experiment',
+                                                                                              '111129'),
+                                                    mock_dispatch.call_args[0][0])
 
   def test_activate_listener_with_attr(self):
     """ Test that activate calls broadcast activate with proper parameters. """
@@ -290,8 +291,11 @@ class OptimizelyTest(base.BaseTest):
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
     mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.DECISION,
-                                                    self.project_config.get_experiment_from_key('test_experiment'), 'test_user', {'test_attribute': 'test_value'},
-                                                    self.project_config.get_variation_from_id('test_experiment', '111129'),
+                                                    self.project_config.get_experiment_from_key('test_experiment'),
+                                                    'test_user', {'test_attribute': 'test_value'},
+                                                    self.project_config.get_variation_from_id(
+                                                      'test_experiment', '111129'
+                                                    ),
                                                     mock_dispatch.call_args[0][0]
                                                     )
 
