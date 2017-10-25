@@ -354,15 +354,15 @@ class OptimizelyTest(base.BaseTest):
 
     access_callback = [False, False]
 
-    def onFeature(feature_key, user_id, attributes, variation):
+    def on_feature(feature_key, user_id, attributes, variation):
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
-    def onActivate(experiment, user_id, attributes, variation, event):
+    def on_activate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, onActivate)
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, onFeature)
+    opt_obj.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, on_activate)
+    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
@@ -382,7 +382,6 @@ class OptimizelyTest(base.BaseTest):
     self.assertTrue(access_callback[0])
     self.assertTrue(access_callback[1])
 
-
   def test_is_feature_enabled_rollout_callback_listener(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
     Also confirm that no impression event is dispatched. """
@@ -392,15 +391,16 @@ class OptimizelyTest(base.BaseTest):
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     access_callback = [False, False]
-    def onFeature(feature_key, user_id, attributes,variation):
+
+    def on_feature(feature_key, user_id, attributes, variation):
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
-    def onActivate(experiment,user_id,attributes,variation,event):
+    def on_activate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, onActivate)
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, onFeature)
+    opt_obj.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, on_activate)
+    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')

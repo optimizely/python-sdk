@@ -91,4 +91,3 @@ class NotificationCenter(object):
         except:
           error = sys.exc_info()[1]
           self.logger.log(enums.LogLevels.ERROR, 'Problem calling notify callback. Error: %s' % str(error))
-
