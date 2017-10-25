@@ -20,7 +20,7 @@ class NotificationCenter(object):
   def __init__(self, logger):
     self.notification_id = 1
     self.notifications = {}
-    for attr, value in enums.NotificationTypes.__dict__.iteritems():
+    for attr, value in enums.NotificationTypes.__dict__.items():
       self.notifications[value] = []
     self.logger = logger
 
