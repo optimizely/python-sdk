@@ -20,7 +20,7 @@ from . import event_builder
 from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
-from .event_listener import EventNotificationBroadcaster
+from .notification_center import NotificationCenter
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
 from .helpers import validator
@@ -81,7 +81,7 @@ class Optimizely(object):
 
     self.event_builder = event_builder.EventBuilder(self.config)
     self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
-    self.event_notification_broadcaster = EventNotificationBroadcaster(self.logger)
+    self.notification_center = NotificationCenter()
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.
@@ -179,7 +179,7 @@ class Optimizely(object):
     except:
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
-    self.event_notification_broadcaster.broadcast_experiment_activated(experiment, user_id, attributes, variation, impression_event)
+    self.notification_center.fire_notifications(enums.NotificationTypes.ACTIVATE, experiment, user_id, attributes, variation, impression_event)
 
   def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
     """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
@@ -319,7 +319,7 @@ class Optimizely(object):
       except:
         error = sys.exc_info()[1]
         self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: %s' % str(error))
-      self.event_notification_broadcaster.broadcast_event_tracked(event_key, user_id, attributes, event_tags, conversion_event)
+      self.notification_center.fire_notifications(enums.NotificationTypes.TRACK, event_key, user_id, attributes, event_tags, conversion_event)
     else:
       self.logger.log(enums.LogLevels.INFO, 'There are no valid experiments for event "%s" to track.' % event_key)
 
@@ -517,28 +517,3 @@ class Optimizely(object):
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
     return forced_variation.key if forced_variation else None
-
-  def add_event_listener(self, listener):
-    """ Adds a EventNotificationListener.  The EventNotificationListener will be notified
-    after a call to activate or event track.
-
-    Args:
-       listener: An implementation of the EventNotificationListener abstract class
-
-    """
-    self.event_notification_broadcaster.add_listener(listener)
-
-  def remove_event_listener(self, listener):
-    """ Remove a EventNotificationListener that was added earlier.
-
-    Args:
-     listener: The listener to remove
-
-    """
-    self.event_notification_broadcaster.remove_listener(listener)
-
-  def clear_event_listeners(self):
-    """ Clear all Event Listeners.
-
-    """
-    self.event_notification_broadcaster.clear_listeners()

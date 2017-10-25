@@ -22,7 +22,6 @@ from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
-from optimizely import event_listener
 from optimizely.helpers import enums
 from . import base
 
@@ -172,94 +171,91 @@ class OptimizelyTest(base.BaseTest):
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_add_activate_remove_clear_listener(self):
+    callbackhit = [False]
     """ Test adding a listener activate passes correctly and gets called"""
-    mock_listener = event_listener.LoggingEventNotificationListener()
-    self.optimizely.add_event_listener(mock_listener)
+    def on_activate(experiment, user_id, attributes, variation, event):
+      print("Here for experiment {0}".format(experiment.key))
+      callbackhit[0] = True
+
+    notification_id = self.optimizely.notification_center.add_notification(enums.NotificationTypes.ACTIVATE, on_activate)
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-         mock.patch(
-           'optimizely.event_listener.LoggingEventNotificationListener.on_experiment_activated') \
-        as mock_notify_activate:
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'):
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 1)
-    mock_notify_activate.assert_called_once_with(
-      self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
-      self.project_config.get_variation_from_id('test_experiment', '111129'),
-      mock_dispatch.call_args[0][0]
-    )
-    self.optimizely.remove_event_listener(mock_listener)
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
-    self.optimizely.clear_event_listeners()
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
+    self.assertEqual(True, callbackhit[0])
+    self.optimizely.notification_center.remove_notification(notification_id)
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
+    self.optimizely.notification_center.clean_all_notifications()
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
 
   def test_add_track_remove_clear_listener(self):
     """ Test adding a listener tract passes correctly and gets called"""
-    mock_listener = event_listener.LoggingEventNotificationListener()
-    self.optimizely.add_event_listener(mock_listener)
+    callback_hit = [False]
+
+    def on_track(event_key, user_id, attributes, event_tags, event):
+      print('event_key={0}'.format(event_key))
+      callback_hit[0] = True
+
+    note_id = self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-        mock.patch(
-          'optimizely.event_listener.LoggingEventNotificationListener.on_event_tracked') \
-            as mock_notify_track:
+         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'):
       self.optimizely.track('test_event', 'test_user')
 
-    mock_notify_track.assert_called_once_with("test_event", 'test_user', None, None, mock_dispatch.call_args[0][0])
+    self.assertEqual(True, callback_hit[0])
 
-    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
-    self.optimizely.remove_event_listener(mock_listener)
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
-    self.optimizely.clear_event_listeners()
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
+    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+    self.optimizely.notification_center.remove_notification(note_id)
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+    self.optimizely.notification_center.clean_all_notifications()
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
   def test_add_same_listener(self):
     """ Test adding a same listener """
-    mock_listener = event_listener.LoggingEventNotificationListener()
-    self.optimizely.add_event_listener(mock_listener)
-    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
-    self.optimizely.add_event_listener(mock_listener)
-    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
 
-    self.optimizely.clear_event_listeners()
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
+    def on_track(event_key, user_id, attributes, event_tags, event):
+      print('event_key={}', event_key)
+
+    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+
+    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+
+    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+
+    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
   def test_add_invalid_listener(self):
     """ Test adding a invalid listener """
     not_a_listener = "This is not a listener"
-    self.optimizely.add_event_listener(not_a_listener)
-    self.assertEqual(len(self.optimizely.event_notification_broadcaster.listeners), 0)
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
   def test_add_multi_listener(self):
     """ Test adding a 2 listeners """
-    mock_listener = event_listener.LoggingEventNotificationListener()
+    def on_track(event_key, *args):
+      print("here we are")
 
-    class TestListener(event_listener.EventNotificationListener):
-      def on_event_tracked(self, event_key, user_id, attributes, event_value, event):
-        print('inside track')
+    def on_track2(event_key, *args):
+      print("here we are 2")
 
-      def on_experiment_activated(self, experiment, user_id, attributes, variation):
-        print('inside experiment activated')
+    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
 
-    test_listener = TestListener()
+    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track2)
 
-    self.optimizely.add_event_listener(mock_listener)
-    self.assertEqual(1, len(self.optimizely.event_notification_broadcaster.listeners))
-    self.optimizely.add_event_listener(test_listener)
-    self.assertEqual(2, len(self.optimizely.event_notification_broadcaster.listeners))
+    self.assertEqual(2, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
-    self.optimizely.clear_event_listeners()
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
+    self.optimizely.notification_center.clean_all_notifications()
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
   def test_remove_listener(self):
     """ Test remove listener that isn't added"""
-    mock_listener = event_listener.LoggingEventNotificationListener()
-
-    self.optimizely.remove_event_listener(mock_listener)
-    self.assertEqual(0, len(self.optimizely.event_notification_broadcaster.listeners))
+    self.optimizely.notification_center.remove_notification(5)
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
 
   def test_activate_listener(self):
     """ Test that activate calls broadcast activate with proper parameters. """
@@ -269,11 +265,11 @@ class OptimizelyTest(base.BaseTest):
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
-           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') \
+           'optimizely.notification_center.NotificationCenter.fire_notifications') \
         as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
-    mock_broadcast_activate.assert_called_once_with(
+    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None,
       self.project_config.get_variation_from_id('test_experiment', '111129'),
       mock_dispatch.call_args[0][0]
@@ -287,12 +283,12 @@ class OptimizelyTest(base.BaseTest):
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
-           'optimizely.event_listener.EventNotificationBroadcaster.broadcast_experiment_activated') \
+           'optimizely.notification_center.NotificationCenter.fire_notifications') \
         as mock_broadcast_activate:
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
-    mock_broadcast_activate.assert_called_once_with(
+    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', {'test_attribute': 'test_value'},
       self.project_config.get_variation_from_id('test_experiment', '111129'),
       mock_dispatch.call_args[0][0]
@@ -307,10 +303,11 @@ class OptimizelyTest(base.BaseTest):
                     )), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
         mock.patch(
-          'optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
+          'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user')
 
-      mock_event_tracked.assert_called_once_with("test_event", 'test_user', None, None, mock_dispatch.call_args[0][0])
+      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event",
+                                                 'test_user', None, None, mock_dispatch.call_args[0][0])
 
   def test_track_listener_with_attr(self):
     """ Test that track calls notification broadcaster. """
@@ -321,10 +318,10 @@ class OptimizelyTest(base.BaseTest):
                     )) as mock_get_variation, \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
         mock.patch(
-          'optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
+          'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
-      mock_event_tracked.assert_called_once_with("test_event", 'test_user', {'test_attribute': 'test_value'},
+      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user', {'test_attribute': 'test_value'},
                                                  None, mock_dispatch.call_args[0][0])
 
   def test_track_listener_with_attr_with_event_tags(self):
@@ -336,11 +333,11 @@ class OptimizelyTest(base.BaseTest):
                     )) as mock_get_variation, \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
         mock.patch(
-          'optimizely.event_listener.EventNotificationBroadcaster.broadcast_event_tracked') as mock_event_tracked:
+          'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
-      mock_event_tracked.assert_called_once_with("test_event", 'test_user', {'test_attribute': 'test_value'},
+      mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user', {'test_attribute': 'test_value'},
                                                  {'value': 1.234, 'non-revenue': 'abc'}, mock_dispatch.call_args[0][0])
 
   def test_activate__with_attributes__audience_match(self):
