@@ -71,7 +71,7 @@ class UserProfileService(object):
     Returns:
       Dict representing the user's profile.
     """
-    return dict(UserProfile(user_id))
+    return UserProfile(user_id).__dict__
 
   def save(self, user_profile):
     """ Save the user profile dict sent to this method.

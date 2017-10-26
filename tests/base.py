@@ -176,10 +176,23 @@ class BaseTest(unittest.TestCase):
             'id': '127', 'value': 'false'
           }, {
             'id': '128', 'value': 'prod'
+          }, {
+            'id': '129', 'value': '10.01'
+          }, {
+            'id': '130', 'value': '4242'
           }]
         }, {
           'key': 'variation',
-          'id': '111129'
+          'id': '111129',
+          'variables': [{
+            'id': '127', 'value': 'true'
+          }, {
+            'id': '128', 'value': 'staging'
+          }, {
+            'id': '129', 'value': '10.02'
+          }, {
+            'id': '130', 'value': '4243'
+          }]
         }]
       }],
       'groups': [{
@@ -324,6 +337,21 @@ class BaseTest(unittest.TestCase):
             'key': 'environment',
             'defaultValue': 'devel',
             'type': 'string',
+          }, {
+            'id': '129',
+            'key': 'cost',
+            'defaultValue': '10.99',
+            'type': 'double',
+          }, {
+            'id': '130',
+            'key': 'count',
+            'defaultValue': '999',
+            'type': 'integer',
+          }, {
+            'id': '131',
+            'key': 'variable_without_usage',
+            'defaultValue': '45',
+            'type': 'integer',
           }]
       }, {
         'id': '91112',

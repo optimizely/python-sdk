@@ -50,3 +50,18 @@ class UserProfileTest(unittest.TestCase):
 
     self.profile.save_variation_for_experiment('199912', '1224525')
     self.assertEqual({'199912': {'variation_id': '1224525'}}, self.profile.experiment_bucket_map)
+
+
+class UserProfileServiceTest(unittest.TestCase):
+
+  def test_lookup(self):
+    """ Test that lookup returns user profile in expected format. """
+
+    user_profile_service = user_profile.UserProfileService()
+    self.assertEqual({'user_id': 'test_user', 'experiment_bucket_map': {}}, user_profile_service.lookup('test_user'))
+
+  def test_save(self):
+    """ Test that nothing happens on calling save. """
+
+    user_profile_service = user_profile.UserProfileService()
+    self.assertIsNone(user_profile_service.save({'user_id': 'test_user', 'experiment_bucket_map': {}}))

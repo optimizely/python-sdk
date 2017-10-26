@@ -22,7 +22,9 @@ from .helpers import validator
 from .user_profile import UserProfile
 
 
-Decision = namedtuple('Decision', 'experiment variation')
+Decision = namedtuple('Decision', 'experiment variation source')
+DECISION_SOURCE_EXPERIMENT = 'experiment'
+DECISION_SOURCE_ROLLOUT = 'rollout'
 
 
 class DecisionService(object):
@@ -190,7 +192,7 @@ class DecisionService(object):
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
-          return Decision(experiment, variation)
+          return Decision(experiment, variation, DECISION_SOURCE_ROLLOUT)
         else:
           # Evaluate no further rules
           self.logger.log(enums.LogLevels.DEBUG,
@@ -207,9 +209,9 @@ class DecisionService(object):
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
-          return Decision(everyone_else_experiment, variation)
+          return Decision(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT)
 
-    return Decision(None, None)
+    return Decision(None, None, DECISION_SOURCE_ROLLOUT)
 
   def get_variation_for_feature(self, feature, user_id, attributes=None):
     """ Returns the experiment/variation the user is bucketed in for the given feature.
@@ -256,7 +258,7 @@ class DecisionService(object):
       rollout = self.config.get_rollout_from_id(feature.rolloutId)
       return self.get_variation_for_rollout(rollout, user_id, attributes)
 
-    return Decision(experiment, variation)
+    return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
 
   def get_experiment_in_group(self, group, user_id):
     """ Determine which experiment in the group the user is bucketed into.
