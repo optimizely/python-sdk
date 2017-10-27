@@ -177,7 +177,7 @@ class OptimizelyTest(base.BaseTest):
       print("Here for experiment {0}".format(experiment.key))
       callbackhit[0] = True
 
-    notification_id = self.optimizely.notification_center.add_notification(enums.NotificationTypes.DECISION,
+    notification_id = self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.DECISION,
                                                                            on_activate)
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
@@ -186,7 +186,7 @@ class OptimizelyTest(base.BaseTest):
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     self.assertEqual(True, callbackhit[0])
-    self.optimizely.notification_center.remove_notification(notification_id)
+    self.optimizely.notification_center.remove_notification_listener(notification_id)
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.DECISION]))
     self.optimizely.notification_center.clean_all_notifications()
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.DECISION]))
@@ -199,7 +199,8 @@ class OptimizelyTest(base.BaseTest):
       print('event_key={0}'.format(event_key))
       callback_hit[0] = True
 
-    note_id = self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+    note_id = self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.TRACK, on_track)
 
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
@@ -210,7 +211,7 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(True, callback_hit[0])
 
     self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-    self.optimizely.notification_center.remove_notification(note_id)
+    self.optimizely.notification_center.remove_notification_listener(note_id)
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
     self.optimizely.notification_center.clean_all_notifications()
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
@@ -221,11 +222,11 @@ class OptimizelyTest(base.BaseTest):
     def on_track(event_key, user_id, attributes, event_tags, event):
       print('event_key={}', event_key)
 
-    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
 
     self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
-    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
 
     self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
@@ -242,10 +243,10 @@ class OptimizelyTest(base.BaseTest):
     def on_track2(event_key, *args):
       print("here we are 2")
 
-    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track)
+    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
 
     self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-    self.optimizely.notification_center.add_notification(enums.NotificationTypes.TRACK, on_track2)
+    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track2)
 
     self.assertEqual(2, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
@@ -254,7 +255,7 @@ class OptimizelyTest(base.BaseTest):
 
   def test_remove_listener(self):
     """ Test remove listener that isn't added"""
-    self.optimizely.notification_center.remove_notification(5)
+    self.optimizely.notification_center.remove_notification_listener(5)
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.DECISION]))
 
@@ -365,8 +366,8 @@ class OptimizelyTest(base.BaseTest):
     def on_activate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.DECISION, on_activate)
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_activate)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
@@ -403,8 +404,8 @@ class OptimizelyTest(base.BaseTest):
     def on_activate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.DECISION, on_activate)
-    opt_obj.notification_center.add_notification(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_activate)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')

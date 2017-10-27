@@ -24,7 +24,7 @@ class NotificationCenter(object):
       self.notifications[value] = []
     self.logger = logger
 
-  def add_notification(self, notification_type, notification_callback):
+  def add_notification_listener(self, notification_type, notification_callback):
     """ Add a notification callback to the notification center.
 
     Args:
@@ -36,8 +36,8 @@ class NotificationCenter(object):
     if notification_type not in self.notifications:
       self.notifications[notification_type] = [(self.notification_id, notification_callback)]
     else:
-      for callback in self.notifications[notification_type]:
-        if callback[1] == notification_callback:
+      for notification_id, callback in self.notifications[notification_type]:
+        if callback == notification_callback:
           return -1
       self.notifications[notification_type].append((self.notification_id, notification_callback))
 
@@ -47,7 +47,7 @@ class NotificationCenter(object):
 
     return ret_val
 
-  def remove_notification(self, notification_id):
+  def remove_notification_listener(self, notification_id):
     """ Remove a previously added notification callback.
 
     Args:
@@ -56,9 +56,9 @@ class NotificationCenter(object):
       The function returns true if found and removed, false otherwise.
     """
     for key in self.notifications.keys():
-      for callback in self.notifications[key]:
-        if callback[0] == notification_id:
-          self.notifications[key].remove(callback)
+      for notif_id, callback in self.notifications[key]:
+        if notif_id == notification_id:
+          self.notifications[key].remove((notif_id, callback))
           return True
 
     return False
@@ -85,9 +85,9 @@ class NotificationCenter(object):
       args: list of arguments to the callback.
     """
     if notification_type in self.notifications:
-      for callback in self.notifications[notification_type]:
+      for notification_id, callback in self.notifications[notification_type]:
         try:
-          callback[1](*args)
+          callback(*args)
         except:
           error = sys.exc_info()[1]
           self.logger.log(enums.LogLevels.ERROR, 'Problem calling notify callback. Error: %s' % str(error))
