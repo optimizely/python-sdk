@@ -512,11 +512,11 @@ class Optimizely(object):
     """ Gets the forced variation for a given user and experiment.
 
     Args:
-       experiment_key: A string key identifying the experiment.
-       user_id: The user ID.
+      experiment_key: A string key identifying the experiment.
+      user_id: The user ID.
 
     Returns:
-       The forced variation key. None if no forced variation key.
+      The forced variation key. None if no forced variation key.
     """
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
