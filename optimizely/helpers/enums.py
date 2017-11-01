@@ -44,9 +44,8 @@ class Errors(object):
 
 
 class NotificationTypes(object):
-  """
-  NotificationTypes for the notification_center.NotificationCenter
-  format is EVENT: list of parameters to callback.
+  """ NotificationTypes for the notification_center.NotificationCenter
+      format is NOTIFICATION TYPE: list of parameters to callback.
   """
   DECISION = "DECISION:experiment, user_id,attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"

@@ -267,7 +267,7 @@ class OptimizelyTest(base.BaseTest):
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
-           'optimizely.notification_center.NotificationCenter.fire_notifications') \
+           'optimizely.notification_center.NotificationCenter.send_notifications') \
         as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
@@ -286,7 +286,7 @@ class OptimizelyTest(base.BaseTest):
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
          mock.patch(
-           'optimizely.notification_center.NotificationCenter.fire_notifications') \
+           'optimizely.notification_center.NotificationCenter.send_notifications') \
         as mock_broadcast_activate:
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
@@ -309,7 +309,7 @@ class OptimizelyTest(base.BaseTest):
                     )), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
         mock.patch(
-          'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
+          'optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user')
 
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event",
@@ -324,7 +324,7 @@ class OptimizelyTest(base.BaseTest):
                     )) as mock_get_variation, \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
         mock.patch(
-          'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
+          'optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user',
@@ -340,7 +340,7 @@ class OptimizelyTest(base.BaseTest):
                     )) as mock_get_variation, \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
         mock.patch(
-          'optimizely.notification_center.NotificationCenter.fire_notifications') as mock_event_tracked:
+          'optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 

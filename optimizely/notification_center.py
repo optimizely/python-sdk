@@ -17,6 +17,7 @@ from .helpers import enums
 
 class NotificationCenter(object):
   """ Class encapsulating Broadcast Notifications. The enums.NotifcationTypes includes predefined notifications."""
+
   def __init__(self, logger):
     self.notification_id = 1
     self.notifications = {}
@@ -28,11 +29,13 @@ class NotificationCenter(object):
     """ Add a notification callback to the notification center.
 
     Args:
-      notification_type: .helpers.enums.NotificationTypes
+      notification_type: A string representing the notification type from .helpers.enums.NotificationTypes
       notification_callback: closure of function to call when event is triggered.
+
     Returns:
-      notification id used to remove the notification
+      Integer notification id used to remove the notification or -1 if the notification has already been added.
     """
+
     if notification_type not in self.notifications:
       self.notifications[notification_type] = [(self.notification_id, notification_callback)]
     else:
@@ -51,10 +54,12 @@ class NotificationCenter(object):
     """ Remove a previously added notification callback.
 
     Args:
-      notification_id:
+      notification_id: The numeric id passed back from add_notification_listener
+
     Returns:
-      The function returns true if found and removed, false otherwise.
+      The function returns boolean true if found and removed, false otherwise.
     """
+
     for key in self.notifications.keys():
       for notif_id, callback in self.notifications[key]:
         if notif_id == notification_id:
@@ -65,6 +70,7 @@ class NotificationCenter(object):
 
   def clean_all_notifications(self):
     """ Remove all notifications """
+
     for key in self.notifications.keys():
       self.notifications[key] = []
 
@@ -74,16 +80,18 @@ class NotificationCenter(object):
     Args:
       notification_type: key to the list of notifications .helpers.enums.NotificationTypes
     """
+
     self.notifications[notification_type] = []
 
-  def fire_notifications(self, notification_type, *args):
+  def send_notifications(self, notification_type, *args):
     """ Fires off the notification for the specific event.  Uses var args to pass in a
         arbitrary list of parameter according to which notification type was fired.
 
     Args:
-      notification_type: Type of notification to fire.
-      args: list of arguments to the callback.
+      notification_type: Type of notification to fire (String from .helpers.enums.NotificationTypes)
+      args: variable list of arguments to the callback.
     """
+
     if notification_type in self.notifications:
       for notification_id, callback in self.notifications[notification_type]:
         try:
