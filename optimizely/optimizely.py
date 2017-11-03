@@ -179,7 +179,7 @@ class Optimizely(object):
     except:
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
-    self.notification_center.send_notifications(enums.NotificationTypes.DECISION,
+    self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
                                                 experiment, user_id, attributes, variation, impression_event)
 
   def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
@@ -388,8 +388,13 @@ class Optimizely(object):
                                     decision.variation,
                                     user_id,
                                     attributes)
-      self.notification_center.send_notifications(enums.NotificationTypes.FEATURE_ACCESSED,
-                                                  feature_key, user_id, attributes, decision.variation)
+        self.notification_center.send_notifications(enums.NotificationTypes.FEATURE_EXPERIMENT,
+                                                  feature_key, user_id, attributes, decision.experiment, decision.variation)
+      else:
+        rollout = self.config.get_rollout_from_id(feature.rolloutId)
+        self.notification_center.send_notifications(enums.NotificationTypes.FEATURE_ROLLOUT,
+                                                    feature_key, user_id, attributes, rollout)
+
       return True
 
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))

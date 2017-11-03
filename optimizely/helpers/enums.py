@@ -47,6 +47,7 @@ class NotificationTypes(object):
   """ NotificationTypes for the notification_center.NotificationCenter
       format is NOTIFICATION TYPE: list of parameters to callback.
   """
-  DECISION = "DECISION:experiment, user_id,attributes, variation, event"
+  ACTIVATE = "ACTIVATE:experiment, user_id,attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
-  FEATURE_ACCESSED = "FEATURE:feature_key, user_id, attributes, variation"
+  FEATURE_ROLLOUT = "FEATURE_ROLLOUT:feature_key, user_id, attributes, rollout"
+  FEATURE_EXPERIMENT = "FEATURE_EXPERIMENT:feature_key, user_id, attributes, experiment, variation"

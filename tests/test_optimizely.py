@@ -177,7 +177,7 @@ class OptimizelyTest(base.BaseTest):
       print("Here for experiment {0}".format(experiment.key))
       callbackhit[0] = True
 
-    notification_id = self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.DECISION,
+    notification_id = self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
                                                                            on_activate)
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
@@ -187,9 +187,9 @@ class OptimizelyTest(base.BaseTest):
 
     self.assertEqual(True, callbackhit[0])
     self.optimizely.notification_center.remove_notification_listener(notification_id)
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.DECISION]))
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
     self.optimizely.notification_center.clean_all_notifications()
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.DECISION]))
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
 
   def test_add_track_remove_clear_listener(self):
     """ Test adding a listener tract passes correctly and gets called"""
@@ -257,7 +257,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test remove listener that isn't added"""
     self.optimizely.notification_center.remove_notification_listener(5)
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.DECISION]))
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
 
   def test_activate_listener(self):
     """ Test that activate calls broadcast activate with proper parameters. """
@@ -271,7 +271,7 @@ class OptimizelyTest(base.BaseTest):
         as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
-    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.DECISION,
+    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
                                                     self.project_config.get_experiment_from_key('test_experiment'),
                                                     'test_user', None,
                                                     self.project_config.get_variation_from_id('test_experiment',
@@ -291,7 +291,7 @@ class OptimizelyTest(base.BaseTest):
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
-    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.DECISION,
+    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
                                                     self.project_config.get_experiment_from_key('test_experiment'),
                                                     'test_user', {'test_attribute': 'test_value'},
                                                     self.project_config.get_variation_from_id(
@@ -359,15 +359,15 @@ class OptimizelyTest(base.BaseTest):
 
     access_callback = [False, False]
 
-    def on_feature(feature_key, user_id, attributes, variation):
+    def on_feature(feature_key, user_id, attributes, experiment, variation):
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
     def on_activate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
-    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_activate)
-    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_EXPERIMENT, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
@@ -397,15 +397,15 @@ class OptimizelyTest(base.BaseTest):
 
     access_callback = [False, False]
 
-    def on_feature(feature_key, user_id, attributes, variation):
+    def on_feature(feature_key, user_id, attributes, rollout):
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
     def on_activate(experiment, user_id, attributes, variation, event):
       access_callback[1] = True
 
-    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_activate)
-    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_ACCESSED, on_feature)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate)
+    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_ROLLOUT, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
