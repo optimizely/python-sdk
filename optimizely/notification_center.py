@@ -39,8 +39,7 @@ class NotificationCenter(object):
     if notification_type not in self.notifications:
       self.notifications[notification_type] = [(self.notification_id, notification_callback)]
     else:
-      for notification_id, callback in self.notifications[notification_type]:
-        if callback == notification_callback:
+      if len(filter(lambda tup: tup[1] == notification_callback, self.notifications[notification_type])) > 0:
           return -1
       self.notifications[notification_type].append((self.notification_id, notification_callback))
 
@@ -60,17 +59,16 @@ class NotificationCenter(object):
       The function returns boolean true if found and removed, false otherwise.
     """
 
-    for key in self.notifications.keys():
-      for notif_id, callback in self.notifications[key]:
-        if notif_id == notification_id:
-          self.notifications[key].remove((notif_id, callback))
-          return True
+    for v in self.notifications.values():
+      toRemove = filter(lambda tup: tup[0] == notification_id, v)
+      if len(toRemove) > 0:
+        v.remove(toRemove[0])
+        return True
 
     return False
 
   def clean_all_notifications(self):
     """ Remove all notifications """
-
     for key in self.notifications.keys():
       self.notifications[key] = []
 
