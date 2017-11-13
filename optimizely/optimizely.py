@@ -398,7 +398,7 @@ class Optimizely(object):
           audience_id = decision.experiment.audienceIds[0]
           audience = self.config.get_audience(audience_id)
         self.notification_center.send_notifications(enums.NotificationTypes.FEATURE_ROLLOUT,
-                                                    feature_key, user_id, attributes, audience)
+                                                    feature_key, user_id, attributes, [audience])
 
       return True
 

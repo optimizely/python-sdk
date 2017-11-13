@@ -49,5 +49,5 @@ class NotificationTypes(object):
   """
   ACTIVATE = "ACTIVATE:experiment, user_id,attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
-  FEATURE_ROLLOUT = "FEATURE_ROLLOUT:feature_key, user_id, attributes, audience"
+  FEATURE_ROLLOUT = "FEATURE_ROLLOUT:feature_key, user_id, attributes, audiences"
   FEATURE_EXPERIMENT = "FEATURE_EXPERIMENT:feature_key, user_id, attributes, experiment, variation"
