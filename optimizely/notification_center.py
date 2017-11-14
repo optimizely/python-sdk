@@ -12,6 +12,7 @@
 # limitations under the License.
 import sys
 
+from functools import reduce
 from .helpers import enums
 
 
@@ -21,7 +22,7 @@ class NotificationCenter(object):
   def __init__(self, logger):
     self.notification_id = 1
     self.notifications = {}
-    for attr, value in enums.NotificationTypes.__dict__.items():
+    for (attr, value) in enums.NotificationTypes.__dict__.items():
       self.notifications[value] = []
     self.logger = logger
 
@@ -39,7 +40,9 @@ class NotificationCenter(object):
     if notification_type not in self.notifications:
       self.notifications[notification_type] = [(self.notification_id, notification_callback)]
     else:
-      if len(filter(lambda tup: tup[1] == notification_callback, self.notifications[notification_type])) > 0:
+      if reduce(lambda a, b: a + 1,
+                filter(lambda tup: tup[1] == notification_callback, self.notifications[notification_type]),
+                0) > 0:
           return -1
       self.notifications[notification_type].append((self.notification_id, notification_callback))
 
@@ -60,7 +63,7 @@ class NotificationCenter(object):
     """
 
     for v in self.notifications.values():
-      toRemove = filter(lambda tup: tup[0] == notification_id, v)
+      toRemove = list(filter(lambda tup: tup[0] == notification_id, v))
       if len(toRemove) > 0:
         v.remove(toRemove[0])
         return True
