@@ -51,10 +51,14 @@ class BaseEventBuilder(object):
 
     self.params[self.EventParams.ACCOUNT_ID] = self.config.get_account_id()
 
+  @abstractmethod
   def _add_user_id(self, user_id):
-    """ Add user ID to the event. """
+    """ Add user ID to the event.
 
-    self.params[self.EventParams.END_USER_ID] = user_id
+    Args:
+      user_id: ID of the user.
+    """
+    pass
 
   @abstractmethod
   def _add_attributes(self, attributes):
@@ -70,14 +74,24 @@ class BaseEventBuilder(object):
     """ Add source information to the event. """
     pass
 
-  @abstractmethod
-  def _add_time(self):
-    """ Add time information to the event. """
-    pass
-
   def _add_revision(self):
     """ Add datafile revision information to the event. """
     pass
+
+  def _add_anonymize_ip(self):
+    """ Add IP anonymization bool to the event """
+
+    self.params[self.EventParams.ANONYMIZE_IP] = self.config.get_anonymize_ip_value()
+
+  @abstractmethod
+  def _get_time(self):
+    """ Get time in milliseconds to be added to the event.
+
+    Returns:
+      Current time in milliseconds.
+    """
+
+    return int(round(time.time() * 1000))
 
   def _add_common_params(self, user_id, attributes):
     """ Add params which are used same in both conversion and impression events.
@@ -92,8 +106,7 @@ class BaseEventBuilder(object):
     self._add_user_id(user_id)
     self._add_attributes(attributes)
     self._add_source()
-    self._add_revision()
-    self._add_time()
+    self._add_anonymize_ip()
 
 
 class EventBuilder(BaseEventBuilder):
@@ -158,13 +171,12 @@ class EventBuilder(BaseEventBuilder):
     self.params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
     self.params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
 
-  def _add_time(self):
-    """ Add time information to the event. """
+  def _add_user_id(self, user_id):
+    """ Add user ID to the event.
 
-    self.params[self.EventParams.TIME] = int(round(time.time() * 1000))
-
-  def _add_visitor(self, user_id):
-    """ Add user to the event """
+    Args:
+      user_id: ID of the user.
+    """
 
     self.params[self.EventParams.USERS] = []
     # Add a single visitor
@@ -172,25 +184,6 @@ class EventBuilder(BaseEventBuilder):
     visitor[self.EventParams.END_USER_ID] = user_id
     visitor[self.EventParams.SNAPSHOTS] = []
     self.params[self.EventParams.USERS].append(visitor)
-
-  def _add_anonymize_ip(self):
-    """ Add IP anonymization bool to the event """
-
-    self.params[self.EventParams.ANONYMIZE_IP] = self.config.get_anonymize_ip_value()
-
-  def _add_common_params(self, user_id, attributes):
-    """ Add params which are used same in both conversion and impression events.
-
-    Args:
-      user_id: ID for user.
-      attributes: Dict representing user attributes and values which need to be recorded.
-    """
-    self._add_project_id()
-    self._add_account_id()
-    self._add_visitor(user_id)
-    self._add_attributes(attributes)
-    self._add_source()
-    self._add_anonymize_ip()
 
   def _add_required_params_for_impression(self, experiment, variation_id):
     """ Add parameters that are required for the impression event to register.
@@ -209,7 +202,7 @@ class EventBuilder(BaseEventBuilder):
 
     snapshot[self.EventParams.EVENTS] = [{
       self.EventParams.EVENT_ID: experiment.layerId,
-      self.EventParams.TIME: int(round(time.time() * 1000)),
+      self.EventParams.TIME: self._get_time(),
       self.EventParams.KEY: 'campaign_activated',
       self.EventParams.UUID: str(uuid.uuid4())
     }]
@@ -241,7 +234,7 @@ class EventBuilder(BaseEventBuilder):
 
         event_dict = {
           self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
-          self.EventParams.TIME: int(round(time.time() * 1000)),
+          self.EventParams.TIME: self._get_time(),
           self.EventParams.KEY: event_key,
           self.EventParams.UUID: str(uuid.uuid4())
         }
