@@ -26,12 +26,14 @@ from optimizely import version
 from optimizely.helpers import enums
 from . import base
 
+
 class OptimizelyTest(base.BaseTest):
 
   strTest = None
 
   try:
     isinstance("test", basestring)  # attempt to evaluate basestring
+
     def isstr(self, s):
       return isinstance(s, basestring)
     strTest = isstr
