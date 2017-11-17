@@ -13,7 +13,6 @@
 
 import json
 import mock
-from builtins import str
 
 from optimizely import decision_service
 from optimizely import entities
@@ -27,8 +26,20 @@ from optimizely import version
 from optimizely.helpers import enums
 from . import base
 
-
 class OptimizelyTest(base.BaseTest):
+
+  strTest = None
+
+  try:
+    isinstance("test", basestring)  # attempt to evaluate basestring
+    def isstr(self, s):
+      return isinstance(s, basestring)
+    strTest = isstr
+  except NameError:
+    def isstr(self, s):
+      return isinstance(s, str)
+    strTest = isstr
+
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
 
@@ -177,7 +188,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test adding a listener activate passes correctly and gets called"""
     def on_activate(experiment, user_id, attributes, variation, event):
       self.assertTrue(isinstance(experiment, entities.Experiment))
-      self.assertTrue(isinstance(user_id, str))
+      self.assertTrue(self.strTest(user_id))
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       self.assertTrue(isinstance(variation, entities.Variation))
@@ -204,6 +215,13 @@ class OptimizelyTest(base.BaseTest):
     callback_hit = [False]
 
     def on_track(event_key, user_id, attributes, event_tags, event):
+      self.assertTrue(self.strTest(event_key))
+      self.assertTrue(self.strTest(user_id))
+      if attributes is not None:
+        self.assertTrue(isinstance(attributes, dict))
+      if event_tags is not None:
+        self.assertTrue(isinstance(event_tags, dict))
+      self.assertTrue(isinstance(event, event_builder.Event))
       print('event_key={0}'.format(event_key))
       callback_hit[0] = True
 
@@ -368,8 +386,8 @@ class OptimizelyTest(base.BaseTest):
     access_callback = [False, False]
 
     def on_feature(feature_key, user_id, attributes, experiment, variation):
-      self.assertTrue(isinstance(feature_key, str))
-      self.assertTrue(isinstance(user_id, str))
+      self.assertTrue(self.strTest(feature_key))
+      self.assertTrue(self.strTest(user_id))
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       self.assertTrue(isinstance(experiment, entities.Experiment))
@@ -412,8 +430,8 @@ class OptimizelyTest(base.BaseTest):
     access_callback = [False, False]
 
     def on_feature(feature_key, user_id, attributes, audiences):
-      self.assertTrue(isinstance(feature_key, str))
-      self.assertTrue(isinstance(user_id, str))
+      self.assertTrue(self.strTest(feature_key))
+      self.assertTrue(self.strTest(user_id))
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       if audiences is not None:
