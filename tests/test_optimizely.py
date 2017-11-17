@@ -416,7 +416,7 @@ class OptimizelyTest(base.BaseTest):
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       if audiences is not None:
-        self.assertTrue(isinstance(audiences, list ))
+        self.assertTrue(isinstance(audiences, list))
         if len(audiences) > 0 and audiences[0] is not None:
           self.assertTrue(audiences[0], entities.Audience)
       print("got feature {0}".format(feature_key))
