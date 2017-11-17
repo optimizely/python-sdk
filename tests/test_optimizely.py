@@ -13,6 +13,7 @@
 
 import json
 import mock
+from builtins import str
 
 from optimizely import decision_service
 from optimizely import entities
@@ -176,7 +177,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test adding a listener activate passes correctly and gets called"""
     def on_activate(experiment, user_id, attributes, variation, event):
       self.assertTrue(isinstance(experiment, entities.Experiment))
-      self.assertTrue(isinstance(user_id, basestring))
+      self.assertTrue(isinstance(user_id, str))
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       self.assertTrue(isinstance(variation, entities.Variation))
@@ -367,8 +368,8 @@ class OptimizelyTest(base.BaseTest):
     access_callback = [False, False]
 
     def on_feature(feature_key, user_id, attributes, experiment, variation):
-      self.assertTrue(isinstance(feature_key, basestring))
-      self.assertTrue(isinstance(user_id, basestring))
+      self.assertTrue(isinstance(feature_key, str))
+      self.assertTrue(isinstance(user_id, str))
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       self.assertTrue(isinstance(experiment, entities.Experiment))
@@ -411,8 +412,8 @@ class OptimizelyTest(base.BaseTest):
     access_callback = [False, False]
 
     def on_feature(feature_key, user_id, attributes, audiences):
-      self.assertTrue(isinstance(feature_key, basestring))
-      self.assertTrue(isinstance(user_id, basestring))
+      self.assertTrue(isinstance(feature_key, str))
+      self.assertTrue(isinstance(user_id, str))
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       if audiences is not None:
