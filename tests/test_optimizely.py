@@ -17,6 +17,7 @@ import mock
 from optimizely import decision_service
 from optimizely import entities
 from optimizely import error_handler
+from optimizely import event_builder
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
@@ -174,6 +175,12 @@ class OptimizelyTest(base.BaseTest):
     callbackhit = [False]
     """ Test adding a listener activate passes correctly and gets called"""
     def on_activate(experiment, user_id, attributes, variation, event):
+      self.assertTrue(isinstance(experiment, entities.Experiment))
+      self.assertTrue(isinstance(user_id, basestring))
+      if attributes is not None:
+        self.assertTrue(isinstance(attributes, dict))
+      self.assertTrue(isinstance(variation, entities.Variation))
+      self.assertTrue(isinstance(event, event_builder.Event))
       print("Here for experiment {0}".format(experiment.key))
       callbackhit[0] = True
 
@@ -360,6 +367,12 @@ class OptimizelyTest(base.BaseTest):
     access_callback = [False, False]
 
     def on_feature(feature_key, user_id, attributes, experiment, variation):
+      self.assertTrue(isinstance(feature_key, basestring))
+      self.assertTrue(isinstance(user_id, basestring))
+      if attributes is not None:
+        self.assertTrue(isinstance(attributes, dict))
+      self.assertTrue(isinstance(experiment, entities.Experiment))
+      self.assertTrue(isinstance(variation, entities.Variation))
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
@@ -397,7 +410,15 @@ class OptimizelyTest(base.BaseTest):
 
     access_callback = [False, False]
 
-    def on_feature(feature_key, user_id, attributes, rollout):
+    def on_feature(feature_key, user_id, attributes, audiences):
+      self.assertTrue(isinstance(feature_key, basestring))
+      self.assertTrue(isinstance(user_id, basestring))
+      if attributes is not None:
+        self.assertTrue(isinstance(attributes, dict))
+      if audiences is not None:
+        self.assertTrue(isinstance(audiences, list ))
+        if len(audiences) > 0 and audiences[0] is not None:
+          self.assertTrue(audiences[0], entities.Audience)
       print("got feature {0}".format(feature_key))
       access_callback[0] = True
 
