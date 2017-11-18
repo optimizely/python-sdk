@@ -23,7 +23,7 @@ from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
-from optimizely.logger import  SimpleLogger
+from optimizely.logger import SimpleLogger
 from optimizely.notification_center import NotificationCenter
 from optimizely.helpers import enums
 from . import base
@@ -36,15 +36,21 @@ class OptimizelyTest(base.BaseTest):
   try:
     isinstance("test", basestring)  # attempt to evaluate basestring
 
-    _expected_notification_failure = 'Problem calling notify callback. Error: on_custom_event() takes exactly 1 argument (4 given)'
+    _expected_notification_failure = \
+      'Problem calling notify callback. Error: on_custom_event() takes exactly 1 argument (4 given)'
 
     def isstr(self, s):
       return isinstance(s, basestring)
+
     strTest = isstr
+
   except NameError:
-    _expected_notification_failure = 'Problem calling notify callback. Error: on_custom_event() takes 1 positional argument but 4 were given'
+    _expected_notification_failure = \
+      'Problem calling notify callback. Error: on_custom_event() takes 1 positional argument but 4 were given'
+
     def isstr(self, s):
       return isinstance(s, str)
+    
     strTest = isstr
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
