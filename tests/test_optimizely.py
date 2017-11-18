@@ -50,7 +50,6 @@ class OptimizelyTest(base.BaseTest):
 
     def isstr(self, s):
       return isinstance(s, str)
-    
     strTest = isstr
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
