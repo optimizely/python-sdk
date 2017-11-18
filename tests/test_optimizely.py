@@ -23,6 +23,8 @@ from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
+from optimizely.logger import  SimpleLogger
+from optimizely.notification_center import NotificationCenter
 from optimizely.helpers import enums
 from . import base
 
@@ -34,10 +36,13 @@ class OptimizelyTest(base.BaseTest):
   try:
     isinstance("test", basestring)  # attempt to evaluate basestring
 
+    _expected_notification_failure = 'Problem calling notify callback. Error: on_custom_event() takes exactly 1 argument (4 given)'
+
     def isstr(self, s):
       return isinstance(s, basestring)
     strTest = isstr
   except NameError:
+    _expected_notification_failure = 'Problem calling notify callback. Error: on_custom_event() takes 1 positional argument but 4 were given'
     def isstr(self, s):
       return isinstance(s, str)
     strTest = isstr
@@ -257,6 +262,48 @@ class OptimizelyTest(base.BaseTest):
     self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
 
     self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+
+  def test_add_listener_custom_type(self):
+    """ Test adding a same listener """
+    custom_type = "custom_notification_type"
+    custom_called = [False]
+
+    def on_custom_event(test_string):
+      custom_called[0] = True
+      print('test_string={}', test_string)
+
+    notification_id = self.optimizely.notification_center.add_notification_listener(custom_type, on_custom_event)
+
+    self.assertEqual(1, len(self.optimizely.notification_center.notifications[custom_type]))
+
+    self.optimizely.notification_center.send_notifications(custom_type, "test")
+
+    self.assertTrue(custom_called[0])
+
+    self.optimizely.notification_center.remove_notification_listener(notification_id)
+
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[custom_type]))
+
+    self.optimizely.notification_center.clear_notifications(custom_type)
+
+    self.assertEqual(0, len(self.optimizely.notification_center.notifications[custom_type]))
+
+  def test_invalid_notification_send(self):
+    """ Test adding a same listener """
+    custom_type = "custom_notification_type"
+    custom_called = [False]
+
+    def on_custom_event(test_string):
+      custom_called[0] = True
+      print('test_string={}', test_string)
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      notification_center = NotificationCenter(SimpleLogger())
+      notification_center.add_notification_listener(custom_type, on_custom_event)
+      notification_center.send_notifications(custom_type, 1, 2, "5", 6)
+
+    #self.assertTrue(custom_called[0])
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, self._expected_notification_failure)
 
   def test_add_invalid_listener(self):
     """ Test adding a invalid listener """
