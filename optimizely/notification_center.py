@@ -70,7 +70,7 @@ class NotificationCenter(object):
 
     return False
 
-  def clean_all_notifications(self):
+  def clear_all_notifications(self):
     """ Remove all notifications """
     for key in self.notifications.keys():
       self.notifications[key] = []

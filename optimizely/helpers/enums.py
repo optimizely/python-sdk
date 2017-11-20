@@ -46,8 +46,17 @@ class Errors(object):
 class NotificationTypes(object):
   """ NotificationTypes for the notification_center.NotificationCenter
       format is NOTIFICATION TYPE: list of parameters to callback.
+
+      ACTIVATE notification listener has the following parameters:
+      Experiment experiment, str user_id, dict attributes (can be None), Variation variation, Event event
+      TRACK notification listener has the following parameters:
+      str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
+      FEATURE_ROLLOUT notification listener has the following parameters:
+      str feature_key,, str user_id, dict attributes, [Audiences] audiences
+      FEATURE_EXPERIMENT notification listener has the following parameters:
+      str feature_key, str user_id, dic attributes (can be None), Experiment experiment, Variation variation
   """
-  ACTIVATE = "ACTIVATE:experiment, user_id,attributes, variation, event"
+  ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
   FEATURE_ROLLOUT = "FEATURE_ROLLOUT:feature_key, user_id, attributes, audiences"
   FEATURE_EXPERIMENT = "FEATURE_EXPERIMENT:feature_key, user_id, attributes, experiment, variation"
