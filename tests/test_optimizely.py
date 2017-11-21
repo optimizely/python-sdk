@@ -437,23 +437,12 @@ class OptimizelyTest(base.BaseTest):
     project_config = opt_obj.config
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
-    access_callback = [False, False]
-
-    def on_feature(feature_key, user_id, attributes, experiment, variation):
-      self.assertTrue(self.strTest(feature_key))
-      self.assertTrue(self.strTest(user_id))
-      if attributes is not None:
-        self.assertTrue(isinstance(attributes, dict))
-      self.assertTrue(isinstance(experiment, entities.Experiment))
-      self.assertTrue(isinstance(variation, entities.Variation))
-      print("got feature {0}".format(feature_key))
-      access_callback[0] = True
+    access_callback = [False]
 
     def on_activate(experiment, user_id, attributes, variation, event):
-      access_callback[1] = True
+      access_callback[0] = True
 
     opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate)
-    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_EXPERIMENT, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
@@ -471,7 +460,6 @@ class OptimizelyTest(base.BaseTest):
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
     self.assertTrue(access_callback[0])
-    self.assertTrue(access_callback[1])
 
   def test_is_feature_enabled_rollout_callback_listener(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
@@ -481,25 +469,12 @@ class OptimizelyTest(base.BaseTest):
     project_config = opt_obj.config
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
-    access_callback = [False, False]
-
-    def on_feature(feature_key, user_id, attributes, audiences):
-      self.assertTrue(self.strTest(feature_key))
-      self.assertTrue(self.strTest(user_id))
-      if attributes is not None:
-        self.assertTrue(isinstance(attributes, dict))
-      if audiences is not None:
-        self.assertTrue(isinstance(audiences, list))
-        if len(audiences) > 0 and audiences[0] is not None:
-          self.assertTrue(audiences[0], entities.Audience)
-      print("got feature {0}".format(feature_key))
-      access_callback[0] = True
+    access_callback = [False]
 
     def on_activate(experiment, user_id, attributes, variation, event):
-      access_callback[1] = True
+      access_callback[0] = True
 
     opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate)
-    opt_obj.notification_center.add_notification_listener(enums.NotificationTypes.FEATURE_ROLLOUT, on_feature)
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
@@ -518,8 +493,7 @@ class OptimizelyTest(base.BaseTest):
 
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
-    self.assertEqual(True, access_callback[0])
-    self.assertEqual(False, access_callback[1])
+    self.assertEqual(False, access_callback[0])
 
   def test_activate__with_attributes__audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected

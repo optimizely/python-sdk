@@ -388,18 +388,6 @@ class Optimizely(object):
                                     decision.variation,
                                     user_id,
                                     attributes)
-        self.notification_center.send_notifications(enums.NotificationTypes.FEATURE_EXPERIMENT,
-                                                  feature_key, user_id, attributes,
-                                                    decision.experiment, decision.variation)
-      else:
-        audience = None
-        if decision.experiment is not None and \
-                decision.experiment.audienceIds is not None and \
-                len(decision.experiment.audienceIds) > 0:
-          audience_id = decision.experiment.audienceIds[0]
-          audience = self.config.get_audience(audience_id)
-        self.notification_center.send_notifications(enums.NotificationTypes.FEATURE_ROLLOUT,
-                                                    feature_key, user_id, attributes, [audience])
 
       return True
 
