@@ -1,8 +1,13 @@
 import json
 from flask import Flask
 from flask import request
-from optimizely import optimizely
 from optimizely import logger
+from optimizely import notification_center
+from optimizely import optimizely
+from optimizely.helpers import enums
+from optimizely import entities
+from optimizely import event_builder
+
 import user_profile_service
 
 app = Flask(__name__)
@@ -38,8 +43,25 @@ def activate():
   experiment_key = payload.get('experiment_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
+  listener_called = [False]
+
+  if attributes.get('$add_listener') == 'true':
+    def on_activate(experiment, user_id, attributes, variation, event):
+      testPass = isinstance(experiment, entities.Experiment) and isinstance(user_id, basestring)
+      if attributes is not None:
+        testPass = testPass and isinstance(attributes, dict)
+      testPass = testPass and isinstance(variation, entities.Variation) and isinstance(event, event_builder.Event)
+
+      print("Here for experiment {0}".format(experiment.key))
+      listener_called[0] = testPass
+
+    notification_id = optimizely_instance.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
+                                                                           on_activate)
+
   variation = optimizely_instance.activate(experiment_key, user_id, attributes=attributes)
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  if listener_called[0]:
+    return json.dumps({'result': variation, 'user_profiles': user_profiles, 'listenerCalled': 'true'}), 200, {'content-type': 'application/json'}
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 
@@ -61,8 +83,28 @@ def track():
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
   event_tags = payload.get('event_tags')
+  listener_called = [False]
+
+  if attributes.get('$add_listener') == 'true':
+    def on_track(event_key, user_id, attributes, event_tags, event):
+      print("Here for experiment {0}".format(event_key))
+      testPass = isinstance(event_key, basestring) and \
+         isinstance(user_id, basestring)
+      if attributes is not None:
+        testPass = testPass and isinstance(attributes, dict)
+      if event_tags is not None:
+        testPass = testPass and isinstance(attributes, dict)
+      testPass = testPass and isinstance(event, event_builder.Event)
+      listener_called[0] = testPass
+
+    notification_id = optimizely_instance.notification_center.add_notification_listener(enums.NotificationTypes.TRACK,
+                                                                           on_track)
+
   result = optimizely_instance.track(event_key, user_id, attributes, event_tags)
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  if listener_called[0]:
+    return json.dumps({'result': result, 'user_profiles': user_profiles, 'listenerCalled': 'true'}), 200, {'content-type': 'application/json'}
+
   return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/forced_variation', methods=['POST'])
