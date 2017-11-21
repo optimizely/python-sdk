@@ -41,3 +41,16 @@ class Errors(object):
   INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
   UNSUPPORTED_DATAFILE_VERSION = 'Provided datafile has unsupported version. ' \
                                  'Please use SDK version 1.1.0 or earlier for datafile version 1.'
+
+
+class NotificationTypes(object):
+  """ NotificationTypes for the notification_center.NotificationCenter
+      format is NOTIFICATION TYPE: list of parameters to callback.
+
+      ACTIVATE notification listener has the following parameters:
+      Experiment experiment, str user_id, dict attributes (can be None), Variation variation, Event event
+      TRACK notification listener has the following parameters:
+      str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
+  """
+  ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
+  TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"

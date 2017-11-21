@@ -25,6 +25,7 @@ from .helpers import enums
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
+from .notification_center import NotificationCenter as notification_center
 
 
 class Optimizely(object):
@@ -80,6 +81,7 @@ class Optimizely(object):
 
     self.event_builder = event_builder.EventBuilder(self.config)
     self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
+    self.notification_center = notification_center(self.logger)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
     """ Helper method to validate all instantiation parameters.
@@ -177,6 +179,8 @@ class Optimizely(object):
     except:
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
+    self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
+                                                experiment, user_id, attributes, variation, impression_event)
 
   def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
     """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
@@ -316,7 +320,8 @@ class Optimizely(object):
       except:
         error = sys.exc_info()[1]
         self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: %s' % str(error))
-
+      self.notification_center.send_notifications(enums.NotificationTypes.TRACK, event_key, user_id,
+                                                  attributes, event_tags, conversion_event)
     else:
       self.logger.log(enums.LogLevels.INFO, 'There are no valid experiments for event "%s" to track.' % event_key)
 
@@ -383,6 +388,7 @@ class Optimizely(object):
                                     decision.variation,
                                     user_id,
                                     attributes)
+
       return True
 
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
@@ -504,12 +510,12 @@ class Optimizely(object):
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
 
-      Args:
-       experiment_key: A string key identifying the experiment.
-       user_id: The user ID.
+    Args:
+      experiment_key: A string key identifying the experiment.
+      user_id: The user ID.
 
-     Returns:
-       The forced variation key. None if no forced variation key.
+    Returns:
+      The forced variation key. None if no forced variation key.
     """
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
