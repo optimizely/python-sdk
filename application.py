@@ -45,7 +45,7 @@ def activate():
   attributes = payload.get('attributes')
   listener_called = [False]
 
-  if attributes.get('$add_listener') == 'true':
+  if attributes and attributes.get('$add_listener') == 'true':
     def on_activate(experiment, user_id, attributes, variation, event):
       testPass = isinstance(experiment, entities.Experiment) and isinstance(user_id, basestring)
       if attributes is not None:
@@ -85,7 +85,7 @@ def track():
   event_tags = payload.get('event_tags')
   listener_called = [False]
 
-  if attributes.get('$add_listener') == 'true':
+  if attributes and attributes.get('$add_listener') == 'true':
     def on_track(event_key, user_id, attributes, event_tags, event):
       print("Here for experiment {0}".format(event_key))
       testPass = isinstance(event_key, basestring) and \
