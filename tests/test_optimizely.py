@@ -589,6 +589,56 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
+  def test_activate__with_attributes__audience_match__bucketing_id_provided(self):
+    """ Test that activate calls dispatch_event with right params and returns expected variation
+    when attributes (including bucketing ID) are provided and audience conditions are met. """
+
+    with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) \
+            as mock_get_variation, \
+            mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
+                                                             {'test_attribute': 'test_value',
+                                                              '$opt_bucketing_id': 'user_bucket_value'}))
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'timestamp': 42000,
+          'entity_id': '111182',
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'key': 'campaign_activated',
+          }]
+        }]
+      }],
+      'client_version': version.__version__,
+      'client_name': 'python-sdk',
+      'anonymize_ip': False
+    }
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value',
+                                                             '$opt_bucketing_id': 'user_bucket_value'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
   def test_activate__with_attributes__no_audience_match(self):
     """ Test that activate returns None when audience conditions do not match. """
 
@@ -701,6 +751,56 @@ class OptimizelyTest(base.BaseTest):
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
+  def test_track__with_attributes__bucketing_id_provided(self):
+    """ Test that track calls dispatch_event with right params when
+    attributes (including bucketing ID) are provided. """
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
+                    return_value=self.project_config.get_variation_from_id(
+                      'test_experiment', '111128'
+                    )) as mock_get_variation, \
+            mock.patch('time.time', return_value=42), \
+            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value',
+                                                                   '$opt_bucketing_id': 'user_bucket_value'})
+
+    expected_params = {
+     'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'test_value',
+          'entity_id': '111094',
+          'key': 'test_attribute'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111128',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+        'events': [{
+          'timestamp': 42000,
+          'entity_id': '111095',
+          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+          'key': 'test_event',
+          }]
+        }]
+      }],
+      'client_version': version.__version__,
+      'client_name': 'python-sdk',
+      'anonymize_ip': False
+    }
+    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                               'test_user', {'test_attribute': 'test_value',
+                                                             '$opt_bucketing_id': 'user_bucket_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
