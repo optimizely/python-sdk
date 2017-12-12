@@ -37,7 +37,8 @@ class DecisionService(object):
     self.config = config
     self.logger = config.logger
 
-  def _get_bucketing_id(self, user_id, attributes):
+  @staticmethod
+  def _get_bucketing_id(user_id, attributes):
     """ Helper method to determine bucketing ID for the user.
 
     Args:
