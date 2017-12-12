@@ -160,8 +160,7 @@ class BucketerWithLoggingTest(base.BaseTest):
                                             'test_user'))
 
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(
       mock.call(enums.LogLevels.INFO, 'User "test_user" is in variation "control" of experiment test_experiment.'),
@@ -176,8 +175,7 @@ class BucketerWithLoggingTest(base.BaseTest):
       ))
 
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 4242 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 4242 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(
       mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
@@ -192,8 +190,7 @@ class BucketerWithLoggingTest(base.BaseTest):
                                             'test_user',
                                             'test_user'))
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 5042 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 5042 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(
       mock.call(enums.LogLevels.INFO, 'User "test_user" is in variation "variation" of experiment test_experiment.'),
@@ -207,8 +204,7 @@ class BucketerWithLoggingTest(base.BaseTest):
                                              'test_user',
                                              'test_user'))
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 424242 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 424242 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
                      mock_logging.call_args_list[1])
@@ -225,13 +221,11 @@ class BucketerWithLoggingTest(base.BaseTest):
                                             'test_user',
                                             'test_user'))
     self.assertEqual(4, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in experiment group_exp_1 of group 19228.'),
                      mock_logging.call_args_list[1])
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 4242 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 4242 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[2])
     self.assertEqual(
       mock.call(enums.LogLevels.INFO,
@@ -247,8 +241,7 @@ class BucketerWithLoggingTest(base.BaseTest):
                                              'test_user',
                                              'test_user'))
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 8400 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 8400 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in no experiment.'),
                      mock_logging.call_args_list[1])
@@ -260,13 +253,11 @@ class BucketerWithLoggingTest(base.BaseTest):
       self.assertIsNone(self.bucketer.bucket(
         self.project_config.get_experiment_from_key('group_exp_1'), 'test_user', 'test_user'))
     self.assertEqual(4, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in experiment group_exp_1 of group 19228.'),
                      mock_logging.call_args_list[1])
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 9500 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 9500 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[2])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
                      mock_logging.call_args_list[3])
@@ -279,8 +270,7 @@ class BucketerWithLoggingTest(base.BaseTest):
                                              'test_user',
                                              'test_user'))
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(
       mock.call(enums.LogLevels.INFO, 'User "test_user" is not in experiment "group_exp_2" of group 19228.'),
@@ -295,13 +285,11 @@ class BucketerWithLoggingTest(base.BaseTest):
                                              'test_user',
                                              'test_user'))
     self.assertEqual(4, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 42 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[0])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in experiment group_exp_1 of group 19228.'),
                      mock_logging.call_args_list[1])
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 424242 to user "test_user" '
-                                                      'with bucketing ID "test_user".'),
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'Assigned bucket 424242 to user with bucketing ID "test_user".'),
                      mock_logging.call_args_list[2])
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "test_user" is in no variation.'),
                      mock_logging.call_args_list[3])

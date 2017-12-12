@@ -101,7 +101,7 @@ class DecisionServiceTest(base.BaseTest):
       mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
       mock.patch('optimizely.user_profile.UserProfileService.lookup') as mock_lookup, \
       mock.patch('optimizely.user_profile.UserProfileService.save') as mock_save:
-      self.assertIsNone(self.decision_service.get_variation(experiment, 'user_1', None))
+      self.assertIsNone(self.decision_service.get_variation(experiment, 'test_user', None))
 
     mock_logging.assert_called_once_with(enums.LogLevels.INFO, 'Experiment "test_experiment" is not running.')
     # Assert no calls are made to other services
@@ -140,10 +140,10 @@ class DecisionServiceTest(base.BaseTest):
       mock.patch('optimizely.user_profile.UserProfileService.lookup') as mock_lookup, \
       mock.patch('optimizely.user_profile.UserProfileService.save') as mock_save:
       self.assertEqual(entities.Variation('111128', 'control'),
-                       self.decision_service.get_variation(experiment, 'user_1', None))
+                       self.decision_service.get_variation(experiment, 'test_user', None))
 
     # Assert that forced variation is returned and stored decision or bucketing service are not involved
-    mock_get_forced_variation.assert_called_once_with(experiment, 'user_1')
+    mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
     self.assertEqual(0, mock_get_stored_variation.call_count)
     self.assertEqual(0, mock_audience_check.call_count)
     self.assertEqual(0, mock_bucket.call_count)
@@ -606,9 +606,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
       self.assertEqual(decision_service.Decision(expected_experiment,
                                                  None,
                                                  decision_service.DECISION_SOURCE_EXPERIMENT),
-                       self.decision_service.get_variation_for_feature(feature, 'user_1'))
+                       self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
-    mock_decision.assert_called_once_with(self.project_config.get_group('19228'), 'user_1')
+    mock_decision.assert_called_once_with(self.project_config.get_group('19228'), 'test_user')
 
   def test_get_experiment_in_group(self, mock_logging):
     """ Test that get_experiment_in_group returns the bucketed experiment for the user. """
@@ -616,15 +616,17 @@ class FeatureFlagDecisionTests(base.BaseTest):
     group = self.project_config.get_group('19228')
     experiment = self.project_config.get_experiment_from_id('32222')
     with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value='32222'):
-      self.assertEqual(experiment, self.decision_service.get_experiment_in_group(group, 'user_1'))
+      self.assertEqual(experiment, self.decision_service.get_experiment_in_group(group, 'test_user'))
 
-    mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is in experiment group_exp_1 of group 19228.')
+    mock_logging.assert_called_with(enums.LogLevels.INFO, 'User with bucketing ID "test_user" is in '
+                                                          'experiment group_exp_1 of group 19228.')
 
   def test_get_experiment_in_group__returns_none_if_user_not_in_group(self, mock_logging):
     """ Test that get_experiment_in_group returns None if the user is not bucketed into the group. """
 
     group = self.project_config.get_group('19228')
     with mock.patch('optimizely.bucketer.Bucketer.find_bucket', return_value=None):
-      self.assertIsNone(self.decision_service.get_experiment_in_group(group, 'user_1'))
+      self.assertIsNone(self.decision_service.get_experiment_in_group(group, 'test_user'))
 
-    mock_logging.assert_called_with(enums.LogLevels.INFO, 'User "user_1" is not in any experiments of group 19228.')
+    mock_logging.assert_called_with(enums.LogLevels.INFO, 'User with bucketing ID "test_user" is '
+                                                          'not in any experiments of group 19228.')

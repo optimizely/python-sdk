@@ -66,11 +66,10 @@ class Bucketer(object):
     ratio = float(self._generate_unsigned_hash_code_32_bit(bucketing_id)) / MAX_HASH_VALUE
     return math.floor(ratio * MAX_TRAFFIC_VALUE)
 
-  def find_bucket(self, user_id, bucketing_id, parent_id, traffic_allocations):
+  def find_bucket(self, bucketing_id, parent_id, traffic_allocations):
     """ Determine entity based on bucket value and traffic allocations.
 
     Args:
-      user_id: ID for user.
       bucketing_id: ID to be used for bucketing the user.
       parent_id: ID representing group or experiment.
       traffic_allocations: Traffic allocations representing traffic allotted to experiments or variations.
@@ -82,9 +81,8 @@ class Bucketer(object):
     bucketing_key = BUCKETING_ID_TEMPLATE.format(bucketing_id=bucketing_id, parent_id=parent_id)
     bucketing_number = self._generate_bucket_value(bucketing_key)
     self.config.logger.log(enums.LogLevels.DEBUG,
-                           'Assigned bucket %s to user "%s" with bucketing ID "%s".' % (bucketing_number,
-                                                                                        user_id,
-                                                                                        bucketing_id))
+                           'Assigned bucket %s to user with bucketing ID "%s".' % (bucketing_number,
+                                                                                   bucketing_id))
 
     for traffic_allocation in traffic_allocations:
       current_end_of_range = traffic_allocation.get('endOfRange')
@@ -115,7 +113,7 @@ class Bucketer(object):
       if not group:
         return None
 
-      user_experiment_id = self.find_bucket(user_id, bucketing_id, experiment.groupId, group.trafficAllocation)
+      user_experiment_id = self.find_bucket(bucketing_id, experiment.groupId, group.trafficAllocation)
       if not user_experiment_id:
         self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no experiment.' % user_id)
         return None
@@ -129,7 +127,7 @@ class Bucketer(object):
                              (user_id, experiment.key, experiment.groupId))
 
     # Bucket user if not in white-list and in group (if any)
-    variation_id = self.find_bucket(user_id, bucketing_id, experiment.id, experiment.trafficAllocation)
+    variation_id = self.find_bucket(bucketing_id, experiment.id, experiment.trafficAllocation)
     if variation_id:
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
       self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in variation "%s" of experiment %s.' %
