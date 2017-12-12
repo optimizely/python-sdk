@@ -168,7 +168,7 @@ class DecisionServiceTest(base.BaseTest):
     mock_lookup.assert_called_once_with('test_user')
     self.assertEqual(1, mock_get_stored_variation.call_count)
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
-    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_bucket.assert_called_once_with(experiment, 'test_user', 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
 
@@ -196,7 +196,7 @@ class DecisionServiceTest(base.BaseTest):
     self.assertEqual(0, mock_lookup.call_count)
     self.assertEqual(0, mock_get_stored_variation.call_count)
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
-    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_bucket.assert_called_once_with(experiment, 'test_user', 'test_user')
     self.assertEqual(0, mock_save.call_count)
 
   def test_get_variation__user_does_not_meet_audience_conditions(self):
@@ -246,7 +246,7 @@ class DecisionServiceTest(base.BaseTest):
     self.assertEqual(0, mock_get_stored_variation.call_count)
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
     mock_logging.assert_called_with(enums.LogLevels.WARNING, 'User profile has invalid format.')
-    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_bucket.assert_called_once_with(experiment, 'test_user', 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
 
@@ -276,7 +276,7 @@ class DecisionServiceTest(base.BaseTest):
     mock_logging.assert_any_call(
       enums.LogLevels.ERROR,
       'Unable to retrieve user profile for user "test_user" as lookup failed. Error: major problem')
-    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_bucket.assert_called_once_with(experiment, 'test_user', 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
 
@@ -305,7 +305,7 @@ class DecisionServiceTest(base.BaseTest):
     mock_logging.assert_any_call(
       enums.LogLevels.ERROR,
       'Unable to save user profile for user "test_user". Error: major problem')
-    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_bucket.assert_called_once_with(experiment, 'test_user', 'test_user')
     mock_save.assert_called_once_with({'user_id': 'test_user',
                                        'experiment_bucket_map': {'111127': {'variation_id': '111129'}}})
 
@@ -326,7 +326,7 @@ class DecisionServiceTest(base.BaseTest):
     # Assert that user is bucketed and new decision is NOT stored
     mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
     mock_audience_check.assert_called_once_with(self.project_config, experiment, None)
-    mock_bucket.assert_called_once_with(experiment, 'test_user')
+    mock_bucket.assert_called_once_with(experiment, 'test_user', 'test_user')
     self.assertEqual(0, mock_lookup.call_count)
     self.assertEqual(0, mock_save.call_count)
 

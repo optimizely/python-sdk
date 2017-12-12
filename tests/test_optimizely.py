@@ -320,7 +320,9 @@ class OptimizelyTest(base.BaseTest):
             mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'), 'test_user')
+    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+                                        'test_user',
+                                        'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_activate__invalid_object(self):
