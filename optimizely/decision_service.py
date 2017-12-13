@@ -25,6 +25,7 @@ from .user_profile import UserProfile
 Decision = namedtuple('Decision', 'experiment variation source')
 DECISION_SOURCE_EXPERIMENT = 'experiment'
 DECISION_SOURCE_ROLLOUT = 'rollout'
+RESERVED_BUCKETING_ID_ATTRIBUTE = '$opt_bucketing_id'
 
 
 class DecisionService(object):
@@ -35,6 +36,21 @@ class DecisionService(object):
     self.user_profile_service = user_profile_service
     self.config = config
     self.logger = config.logger
+
+  @staticmethod
+  def _get_bucketing_id(user_id, attributes):
+    """ Helper method to determine bucketing ID for the user.
+
+    Args:
+      user_id: ID for user.
+      attributes: Dict representing user attributes. May consist of bucketing ID to be used.
+
+    Returns:
+      String representing bucketing ID for the user. Fallback to user's ID if not provided.
+    """
+
+    attributes = attributes or {}
+    return attributes.get(RESERVED_BUCKETING_ID_ATTRIBUTE, user_id)
 
   def get_forced_variation(self, experiment, user_id):
     """ Determine if a user is forced into a variation for the given experiment and return that variation.
@@ -145,7 +161,9 @@ class DecisionService(object):
       )
       return None
 
-    variation = self.bucketer.bucket(experiment, user_id)
+    # Determine bucketing ID to be used
+    bucketing_id = self._get_bucketing_id(user_id, attributes)
+    variation = self.bucketer.bucket(experiment, user_id, bucketing_id)
 
     if variation:
       # Store this new decision and return the variation for the user
@@ -188,7 +206,9 @@ class DecisionService(object):
           continue
 
         self.logger.log(enums.LogLevels.DEBUG, 'User "%s" meets conditions for targeting rule %s.' % (user_id, idx + 1))
-        variation = self.bucketer.bucket(experiment, user_id)
+        # Determine bucketing ID to be used
+        bucketing_id = self._get_bucketing_id(user_id, attributes)
+        variation = self.bucketer.bucket(experiment, user_id, bucketing_id)
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
@@ -205,13 +225,41 @@ class DecisionService(object):
       if audience_helper.is_user_in_experiment(self.config,
                                                self.config.get_experiment_from_key(rollout.experiments[-1].get('key')),
                                                attributes):
-        variation = self.bucketer.bucket(everyone_else_experiment, user_id)
+        # Determine bucketing ID to be used
+        bucketing_id = self._get_bucketing_id(user_id, attributes)
+        variation = self.bucketer.bucket(everyone_else_experiment, user_id, bucketing_id)
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
           return Decision(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT)
 
     return Decision(None, None, DECISION_SOURCE_ROLLOUT)
+
+  def get_experiment_in_group(self, group, bucketing_id):
+    """ Determine which experiment in the group the user is bucketed into.
+
+    Args:
+      group: The group to bucket the user into.
+      bucketing_id: ID to be used for bucketing the user.
+
+    Returns:
+      Experiment if the user is bucketed into an experiment in the specified group. None otherwise.
+    """
+
+    experiment_id = self.bucketer.find_bucket(bucketing_id, group.id, group.trafficAllocation)
+    if experiment_id:
+      experiment = self.config.get_experiment_from_id(experiment_id)
+      if experiment:
+        self.logger.log(enums.LogLevels.INFO,
+                        'User with bucketing ID "%s" is in experiment %s of group %s.' %
+                        (bucketing_id, experiment.key, group.id))
+        return experiment
+
+    self.logger.log(enums.LogLevels.INFO,
+                    'User with bucketing ID "%s" is not in any experiments of group %s.' %
+                    (bucketing_id, group.id))
+
+    return None
 
   def get_variation_for_feature(self, feature, user_id, attributes=None):
     """ Returns the experiment/variation the user is bucketed in for the given feature.
@@ -227,12 +275,13 @@ class DecisionService(object):
 
     experiment = None
     variation = None
+    bucketing_id = self._get_bucketing_id(user_id, attributes)
 
     # First check if the feature is in a mutex group
     if feature.groupId:
       group = self.config.get_group(feature.groupId)
       if group:
-        experiment = self.get_experiment_in_group(group, user_id)
+        experiment = self.get_experiment_in_group(group, bucketing_id)
         if experiment and experiment.id in feature.experimentIds:
           variation = self.get_variation(experiment, user_id, attributes)
 
@@ -259,29 +308,3 @@ class DecisionService(object):
       return self.get_variation_for_rollout(rollout, user_id, attributes)
 
     return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
-
-  def get_experiment_in_group(self, group, user_id):
-    """ Determine which experiment in the group the user is bucketed into.
-
-    Args:
-      group: The group to bucket the user into.
-      user_id: ID of the user.
-
-    Returns:
-      Experiment if the user is bucketed into an experiment in the specified group. None otherwise.
-    """
-
-    experiment_id = self.bucketer.find_bucket(user_id, group.id, group.trafficAllocation)
-    if experiment_id:
-      experiment = self.config.get_experiment_from_id(experiment_id)
-      if experiment:
-        self.logger.log(enums.LogLevels.INFO,
-                        'User "%s" is in experiment %s of group %s.' %
-                        (user_id, experiment.key, group.id))
-        return experiment
-
-    self.logger.log(enums.LogLevels.INFO,
-                    'User "%s" is not in any experiments of group %s.' %
-                    (user_id, group.id))
-
-    return None
