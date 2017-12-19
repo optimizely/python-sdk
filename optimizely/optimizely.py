@@ -15,13 +15,13 @@ import numbers
 import sys
 
 from . import decision_service
-from . import entities
 from . import event_builder
 from . import exceptions
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
+from .helpers import event_tag_utils
 from .helpers import validator
 from .logger import NoOpLogger as noop_logger
 from .logger import SimpleLogger
@@ -181,64 +181,6 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
     self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
                                                 experiment, user_id, attributes, variation, impression_event)
-
-  def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
-    """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
-
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      variable_type: Type of variable which could be one of boolean/double/integer/string.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
-
-    feature_flag = self.config.get_feature_from_key(feature_key)
-    if not feature_flag:
-      return None
-
-    variable = self.config.get_variable_for_feature(feature_key, variable_key)
-    if not variable:
-      return None
-
-    # Return None if type differs
-    if variable.type != variable_type:
-      self.logger.log(
-        enums.LogLevels.WARNING,
-        'Requested variable type "%s", but variable is of type "%s". '
-        'Use correct API to retrieve value. Returning None.' % (variable_type, variable.type)
-      )
-      return None
-
-    decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
-    if decision.variation:
-      variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
-      self.logger.log(
-        enums.LogLevels.INFO,
-        'Value for variable "%s" of feature flag "%s" is %s for user "%s".' % (
-          variable_key, feature_key, variable_value, user_id
-        ))
-    else:
-      variable_value = variable.defaultValue
-      self.logger.log(
-        enums.LogLevels.INFO,
-        'User "%s" is not in any variation or rollout rule. '
-        'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
-      )
-
-    try:
-      actual_value = self.config.get_typecast_value(variable_value, variable_type)
-    except:
-      self.logger.log(enums.LogLevels.ERROR, 'Unable to cast value. Returning None.')
-      actual_value = None
-
-    return actual_value
 
   def activate(self, experiment_key, user_id, attributes=None):
     """ Buckets visitor and sends impression event to Optimizely.
@@ -412,82 +354,6 @@ class Optimizely(object):
         enabled_features.append(feature.key)
 
     return enabled_features
-
-  def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
-    """ Returns value for a certain boolean variable attached to a feature flag.
-
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Boolean value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
-
-    variable_type = entities.Variable.Type.BOOLEAN
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
-
-  def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
-    """ Returns value for a certain double variable attached to a feature flag.
-
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Double value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
-
-    variable_type = entities.Variable.Type.DOUBLE
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
-
-  def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
-    """ Returns value for a certain integer variable attached to a feature flag.
-
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Integer value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
-
-    variable_type = entities.Variable.Type.INTEGER
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
-
-  def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
-    """ Returns value for a certain string variable attached to a feature.
-
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      String value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
-
-    variable_type = entities.Variable.Type.STRING
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.

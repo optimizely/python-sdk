@@ -1197,14 +1197,14 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
   def test_get_variable_value_for_variation__returns_valid_value(self):
-    """ Test that the right value is returned. """
+    """ Test that the right value and type are returned. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
     environment_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'environment')
-    self.assertEqual('false', project_config.get_variable_value_for_variation(is_working_variable, variation))
+    self.assertEqual(False, project_config.get_variable_value_for_variation(is_working_variable, variation))
     self.assertEqual('prod', project_config.get_variable_value_for_variation(environment_variable, variation))
 
   def test_get_variable_value_for_variation__invalid_variable(self):
@@ -1225,17 +1225,6 @@ class ConfigTest(base.BaseTest):
     variation = entities.Variation('1111281', 'invalid_variation', [])
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
     self.assertIsNone(project_config.get_variable_value_for_variation(is_working_variable, variation))
-
-  def test_get_variable_value_for_variation__no_usage_of_variable(self):
-    """ Test that a variable with no usage will return default value for variable. """
-
-    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
-
-    variation = project_config.get_variation_from_id('test_experiment', '111128')
-    variable_without_usage_variable = project_config.get_variable_for_feature('test_feature_in_experiment',
-                                                                              'variable_without_usage')
-    self.assertEqual('45', project_config.get_variable_value_for_variation(variable_without_usage_variable, variation))
 
   def test_get_variable_for_feature__returns_valid_variable(self):
     """ Test that the feature variable is returned. """
