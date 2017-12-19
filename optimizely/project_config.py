@@ -53,9 +53,9 @@ class ProjectConfig(object):
     self.events = config.get('events', [])
     self.attributes = config.get('attributes', [])
     self.audiences = config.get('audiences', [])
-    self.feature_flags = config.get('featureFlags', [])
-    self.rollouts = config.get('rollouts', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
+    self.features = config.get('features', [])
+    self.layers = config.get('layers', [])
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -63,7 +63,7 @@ class ProjectConfig(object):
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
-    self.layer_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
+    self.layer_id_map = self._generate_key_map(self.layers, 'id', entities.Layer)
     for layer in self.layer_id_map.values():
       for experiment in layer.experiments:
         self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
@@ -95,7 +95,7 @@ class ProjectConfig(object):
             variation.variables, 'id', entities.Variation.VariableUsage
           )
 
-    self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
+    self.feature_key_map = self._generate_key_map(self.features, 'key', entities.Feature)
     for feature in self.feature_key_map.values():
       feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 

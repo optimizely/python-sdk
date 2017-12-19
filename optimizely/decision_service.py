@@ -268,8 +268,8 @@ class DecisionService(object):
                           'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
 
     # Next check if user is part of a rollout
-    if not variation and feature.rolloutId:
-      rollout = self.config.get_layer_from_id(feature.rolloutId)
-      variation = self.get_variation_for_layer(rollout, user_id, attributes, ignore_user_profile=True)
+    if not variation and feature.layerId:
+      layer = self.config.get_layer_from_id(feature.layerId)
+      variation = self.get_variation_for_layer(layer, user_id, attributes, ignore_user_profile=True)
 
     return variation
