@@ -1,3 +1,9 @@
+## 1.4.0
+- Added support for IP anonymization.
+- Added support for notification listeners.
+- Added support for bucketing ID.
+- Updated mmh3 to handle installation failures on Windows 10.
+
 ## 1.3.0
 - Introduced support for forced bucketing.
 - Introduced support for numeric metrics.
