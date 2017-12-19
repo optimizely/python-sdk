@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import sys
-from collections import namedtuple
 
 from . import bucketer
 from .helpers import audience as audience_helper
@@ -22,7 +21,6 @@ from .helpers import validator
 from .user_profile import UserProfile
 
 
-Decision = namedtuple('Decision', 'experiment variation')
 RESERVED_BUCKETING_ID_ATTRIBUTE = '$opt_bucketing_id'
 
 
@@ -106,7 +104,7 @@ class DecisionService(object):
     Fifth, bucket the user and return the variation.
 
     Args:
-      experiment: Experiment for which user variation needs to be determined.
+      experiment_key: Experiment for which user variation needs to be determined.
       user_id: ID for user.
       attributes: Dict representing user attributes.
       ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
@@ -178,7 +176,7 @@ class DecisionService(object):
     return None
 
   def get_variation_for_rollout(self, rollout, user_id, attributes=None):
-    """ Determine which experiment/variation the user is in for a given rollout.
+    """ Determine which variation the user is in for a given rollout.
     Returns the variation of the first experiment the user qualifies for.
 
     Args:
@@ -187,7 +185,7 @@ class DecisionService(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      Decision namedtuple consisting of experiment and variation for the user.
+      Variation the user should see. None if the user is not in any of the rollout's targeting rules.
     """
 
     # Go through each experiment in order and try to get the variation for the user
@@ -210,7 +208,7 @@ class DecisionService(object):
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
-          return Decision(experiment, variation)
+          return variation
         else:
           # Evaluate no further rules
           self.logger.log(enums.LogLevels.DEBUG,
@@ -229,9 +227,9 @@ class DecisionService(object):
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
-          return Decision(everyone_else_experiment, variation)
+          return variation
 
-    return Decision(None, None)
+    return None
 
   def get_experiment_in_group(self, group, bucketing_id):
     """ Determine which experiment in the group the user is bucketed into.
@@ -260,7 +258,7 @@ class DecisionService(object):
     return None
 
   def get_variation_for_feature(self, feature, user_id, attributes=None):
-    """ Returns the experiment/variation the user is bucketed in for the given feature.
+    """ Returns the variation the user is bucketed in for the given feature.
 
     Args:
       feature: Feature for which we are determining if it is enabled or not for the given user.
@@ -268,10 +266,9 @@ class DecisionService(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      Decision namedtuple consisting of experiment and variation for the user.
+      Variation that the user is bucketed in. None if the user is not in any variation.
     """
 
-    experiment = None
     variation = None
     bucketing_id = self._get_bucketing_id(user_id, attributes)
 
@@ -303,6 +300,6 @@ class DecisionService(object):
     # Next check if user is part of a rollout
     if not variation and feature.rolloutId:
       rollout = self.config.get_rollout_from_id(feature.rolloutId)
-      return self.get_variation_for_rollout(rollout, user_id, attributes)
+      variation = self.get_variation_for_rollout(rollout, user_id, attributes)
 
-    return Decision(experiment, variation)
+    return variation

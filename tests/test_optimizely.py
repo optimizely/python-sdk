@@ -14,7 +14,6 @@
 import json
 import mock
 
-from optimizely import decision_service
 from optimizely import entities
 from optimizely import error_handler
 from optimizely import event_builder
@@ -22,6 +21,7 @@ from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
+from optimizely import user_profile
 from optimizely import version
 from optimizely.logger import SimpleLogger
 from optimizely.notification_center import NotificationCenter
@@ -1178,14 +1178,10 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
-    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
 
     self.assertFalse(mock_decision.called)
-
-    # Check that no event is sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
@@ -1194,61 +1190,22 @@ class OptimizelyTest(base.BaseTest):
     project_config = opt_obj.config
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
-    mock_experiment = project_config.get_experiment_from_key('test_experiment')
-    mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(mock_experiment, mock_variation)) as mock_decision, \
-            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-            mock.patch('time.time', return_value=42):
-      self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+                    return_value=project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision:
+      self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user1'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
-
-    expected_params = {
-      'account_id': '12001',
-      'project_id': '111111',
-      'visitors': [{
-        'visitor_id': 'test_user',
-        'attributes': [],
-        'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
-          'events': [{
-            'timestamp': 42000,
-            'entity_id': '111182',
-            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key': 'campaign_activated',
-          }]
-        }]
-      }],
-      'client_version': version.__version__,
-      'client_name': 'python-sdk',
-      'anonymize_ip': False,
-    }
-    # Check that impression event is sent
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0],
-                                'https://logx.optimizely.com/v1/events',
-                                expected_params, 'POST', {'Content-Type': 'application/json'})
+    mock_decision.assert_called_once_with(feature, 'user1', None)
 
   def test_is_feature_enabled__invalid_object(self):
     """ Test that is_feature_enabled returns False if Optimizely object is not valid. """
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
                                          'Datafile has invalid format. Failing "is_feature_enabled".')
-
-    # Check that no event is sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_get_enabled_features(self):
     """ Test that get_enabled_features only returns features that are enabled for the specified user. """
