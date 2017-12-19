@@ -18,7 +18,6 @@ from .helpers import enums
 from . import entities
 from . import exceptions
 
-REVENUE_GOAL_KEY = 'Total Revenue'
 V1_CONFIG_VERSION = '1'
 V2_CONFIG_VERSION = '2'
 
@@ -54,8 +53,6 @@ class ProjectConfig(object):
     self.attributes = config.get('attributes', [])
     self.audiences = config.get('audiences', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
-    self.features = config.get('features', [])
-    self.layers = config.get('layers', [])
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -63,11 +60,6 @@ class ProjectConfig(object):
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
-    self.layer_id_map = self._generate_key_map(self.layers, 'id', entities.Layer)
-    for layer in self.layer_id_map.values():
-      for experiment in layer.experiments:
-        self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
-
     self.audience_id_map = self._deserialize_audience(self.audience_id_map)
     for group in self.group_id_map.values():
       experiments_in_group_key_map = self._generate_key_map(group.experiments, 'key', entities.Experiment)
@@ -81,7 +73,6 @@ class ProjectConfig(object):
     self.experiment_id_map = {}
     self.variation_key_map = {}
     self.variation_id_map = {}
-    self.variation_variable_usage_map = {}
     for experiment in self.experiment_key_map.values():
       self.experiment_id_map[experiment.id] = experiment
       self.variation_key_map[experiment.key] = self._generate_key_map(
@@ -90,22 +81,6 @@ class ProjectConfig(object):
       self.variation_id_map[experiment.key] = {}
       for variation in self.variation_key_map.get(experiment.key).values():
         self.variation_id_map[experiment.key][variation.id] = variation
-        if variation.variables:
-          self.variation_variable_usage_map[variation.id] = self._generate_key_map(
-            variation.variables, 'id', entities.Variation.VariableUsage
-          )
-
-    self.feature_key_map = self._generate_key_map(self.features, 'key', entities.Feature)
-    for feature in self.feature_key_map.values():
-      feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
-
-      # Check if any of the experiments are in a group and add the group id for faster bucketing later on
-      for exp_id in feature.experimentIds:
-        experiment_in_feature = self.experiment_id_map[exp_id]
-        if experiment_in_feature.groupId:
-          feature.groupId = experiment_in_feature.groupId
-          # Experiments in feature can only belong to one mutex group
-          break
 
     self.parsing_succeeded = True
 
@@ -153,26 +128,6 @@ class ProjectConfig(object):
       })
 
     return audience_map
-
-  def _get_typecast_value(self, value, type):
-    """ Helper method to determine actual value based on type of feature variable.
-
-    Args:
-      value: Value in string form as it was parsed from datafile.
-      type: Type denoting the feature flag type.
-
-    Return:
-      Value type-casted based on type of feature variable.
-    """
-
-    if type == entities.Variable.Type.BOOLEAN:
-      return value == 'true'
-    elif type == entities.Variable.Type.INTEGER:
-      return int(value)
-    elif type == entities.Variable.Type.DOUBLE:
-      return float(value)
-    else:
-      return value
 
   def was_parsing_successful(self):
     """ Helper method to determine if parsing the datafile was successful.
@@ -382,87 +337,6 @@ class ProjectConfig(object):
     self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
     self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
     return None
-
-  def get_feature_from_key(self, feature_key):
-    """ Get feature for the provided feature key.
-
-    Args:
-      feature_key: Feature key for which feature is to be fetched.
-
-    Returns:
-      Feature corresponding to the provided feature key.
-    """
-    feature = self.feature_key_map.get(feature_key)
-
-    if feature:
-      return feature
-
-    self.logger.log(enums.LogLevels.ERROR, 'Feature "%s" is not in datafile.' % feature_key)
-    return None
-
-  def get_layer_from_id(self, layer_id):
-    """ Get layer for the provided layer id.
-
-    Args:
-      layer_id: ID of the layer to be fetched.
-
-    Returns:
-      Layer corresponding to the provided layer id.
-    """
-    layer = self.layer_id_map.get(layer_id)
-
-    if layer:
-      return layer
-
-    self.logger.log(enums.LogLevels.ERROR, 'Layer with ID "%s" is not in datafile.' % layer_id)
-    return None
-
-  def get_variable_value_for_variation(self, variable, variation):
-    """ Get the variable value for the given variation.
-
-    Args:
-      Variable: The Variable for which we are getting the value.
-      Variation: The Variation for which we are getting the variable value.
-
-    Returns:
-      The type-casted variable value or None if any of the inputs are invalid.
-    """
-    if not variable or not variation:
-      return None
-
-    if variation.id not in self.variation_variable_usage_map:
-      self.logger.log(enums.LogLevels.ERROR, 'Variation with ID "%s" is not in the datafile.' % variation.id)
-      return None
-
-    # Get all variable usages for the given variation
-    variable_usages = self.variation_variable_usage_map[variation.id]
-
-    # Find usage in given variation
-    variable_usage = variable_usages[variable.id]
-
-    value = self._get_typecast_value(variable_usage.value, variable.type)
-    return value
-
-  def get_variable_for_feature(self, feature_key, variable_key):
-    """ Get the variable with the given variable key for the given feature
-
-    Args:
-      feature_key: The key of the feature for which we are getting the variable.
-      variable_key: The key of the variable we are getting.
-
-    Returns:
-      Variable with the given key in the given variation.
-    """
-    feature = self.feature_key_map.get(feature_key)
-    if not feature:
-      self.logger.log(enums.LogLevels.ERROR, 'Feature with key "%s" not found in the datafile.' % feature_key)
-      return None
-
-    if variable_key not in feature.variables:
-      self.logger.log(enums.LogLevels.ERROR, 'Variable with key "%s" not found in the datafile.' % variable_key)
-      return None
-
-    return feature.variables.get(variable_key)
 
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Sets users to a map of experiments to forced variations.
