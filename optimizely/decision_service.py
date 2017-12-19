@@ -217,7 +217,7 @@ class DecisionService(object):
           break
 
       # Evaluate last rule i.e. "Everyone Else" rule
-      everyone_else_experiment = self.config.get_experiment_from_key(rollout.experiments[-1].get('key'))
+      everyone_else_experiment = rollout.experiments[-1]
       if audience_helper.is_user_in_experiment(self.config,
                                                self.config.get_experiment_from_key(rollout.experiments[-1].get('key')),
                                                attributes):
