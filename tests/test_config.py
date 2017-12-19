@@ -111,7 +111,7 @@ class ConfigTest(base.BaseTest):
       'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
     }
     expected_attribute_key_map = {
-      'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
+      'test_attribute': entities.Attribute('111094', 'test_attribute')
     }
     expected_audience_id_map = {
       '11154': entities.Audience(
@@ -450,7 +450,7 @@ class ConfigTest(base.BaseTest):
       'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
     }
     expected_attribute_key_map = {
-      'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
+      'test_attribute': entities.Attribute('111094', 'test_attribute')
     }
     expected_audience_id_map = {
       '11154': entities.Audience(
@@ -849,7 +849,7 @@ class ConfigTest(base.BaseTest):
       'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
     }
     expected_attribute_key_map = {
-      'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
+      'test_attribute': entities.Attribute('111094', 'test_attribute')
     }
     expected_audience_id_map = {
       '11154': entities.Audience(

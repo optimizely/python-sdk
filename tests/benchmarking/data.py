@@ -281,58 +281,57 @@ config_10_exp = {
   "audiences": [
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"safari\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"safari\"}]]]",
       "id": "6352892614",
       "name": "Safari users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"android\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"android\"}]]]",
       "id": "6355234780",
       "name": "Android users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"desktop\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"desktop\"}]]]",
       "id": "6360574256",
       "name": "Desktop users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"opera\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"opera\"}]]]",
       "id": "6365864533",
       "name": "Opera users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"tablet\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"tablet\"}]]]",
       "id": "6369831151",
       "name": "Tablet users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"firefox\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"firefox\"}]]]",
       "id": "6369992312",
       "name": "Firefox users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"chrome\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"chrome\"}]]]",
       "id": "6373141157",
       "name": "Chrome users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"ie\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"ie\"}]]]",
       "id": "6378191386",
       "name": "IE users"
     }
   ],
-  "dimensions": [
+  "attributes": [
     {
       "id": "6359881003",
-      "key": "browser_type",
-      "segmentId": "6380740826"
+      "key": "browser_type"
     }
   ],
   "groups": [
@@ -1250,49 +1249,49 @@ config_25_exp = {
   "audiences": [
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"firefox\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"firefox\"}]]]",
       "id": "6317864099",
       "name": "Firefox users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"safari\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"safari\"}]]]",
       "id": "6360592016",
       "name": "Safari users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"chrome\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"chrome\"}]]]",
       "id": "6361743063",
       "name": "Chrome users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"desktop\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"desktop\"}]]]",
       "id": "6372190788",
       "name": "Desktop users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"android\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"android\"}]]]",
       "id": "6376141951",
       "name": "Android users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"ie\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"ie\"}]]]",
       "id": "6377605300",
       "name": "IE users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"tablet\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"tablet\"}]]]",
       "id": "6378191534",
       "name": "Tablet users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"opera\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"opera\"}]]]",
       "id": "6386521201",
       "name": "Opera users"
     }
@@ -1300,8 +1299,7 @@ config_25_exp = {
   "dimensions": [
     {
       "id": "6381732124",
-      "key": "browser_type",
-      "segmentId": "6388221232"
+      "key": "browser_type"
     }
   ],
   "groups": [
@@ -3014,49 +3012,49 @@ config_50_exp = {
   "audiences": [
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"android\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"android\"}]]]",
       "id": "6366023138",
       "name": "Android users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"firefox\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"firefox\"}]]]",
       "id": "6373742627",
       "name": "Firefox users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"ie\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"ie\"}]]]",
       "id": "6376161539",
       "name": "IE users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"desktop\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"desktop\"}]]]",
       "id": "6376714797",
       "name": "Desktop users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"safari\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"safari\"}]]]",
       "id": "6381732153",
       "name": "Safari users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"opera\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"opera\"}]]]",
       "id": "6383110825",
       "name": "Opera users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"tablet\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"tablet\"}]]]",
       "id": "6387291324",
       "name": "Tablet users"
     },
     {
       "conditions": "[\"and\", [\"or\", [\"or\", {\"name\": \"browser_type\", "
-                    "\"type\": \"custom_dimension\", \"value\": \"chrome\"}]]]",
+                    "\"type\": \"custom_attribute\", \"value\": \"chrome\"}]]]",
       "id": "6388221254",
       "name": "Chrome users"
     }
@@ -3064,8 +3062,7 @@ config_50_exp = {
   "dimensions": [
     {
       "id": "6380961481",
-      "key": "browser_type",
-      "segmentId": "6384711633"
+      "key": "browser_type"
     }
   ],
   "groups": [

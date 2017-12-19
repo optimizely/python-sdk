@@ -44,10 +44,10 @@ class EventDispatcherTest(unittest.TestCase):
 
     url = 'https://www.optimizely.com'
     params = {
-      'accountId': '111001',
-      'eventName': 'test_event',
-      'eventEntityId': '111028',
-      'visitorId': 'oeutest_user'
+      'a': '111001',
+      'b': 'test_event',
+      'c': '111028',
+      'd': 'oeutest_user'
     }
     event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
@@ -63,10 +63,10 @@ class EventDispatcherTest(unittest.TestCase):
 
     url = 'https://www.optimizely.com'
     params = {
-      'accountId': '111001',
-      'eventName': 'test_event',
-      'eventEntityId': '111028',
-      'visitorId': 'oeutest_user'
+      'a': '111001',
+      'b': 'test_event',
+      'c': '111028',
+      'd': 'oeutest_user'
     }
     event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
