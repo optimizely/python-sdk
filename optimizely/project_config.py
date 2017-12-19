@@ -63,8 +63,8 @@ class ProjectConfig(object):
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
-    self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
-    for layer in self.rollout_id_map.values():
+    self.layer_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
+    for layer in self.layer_id_map.values():
       for experiment in layer.experiments:
         self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
 
@@ -400,21 +400,21 @@ class ProjectConfig(object):
     self.logger.log(enums.LogLevels.ERROR, 'Feature "%s" is not in datafile.' % feature_key)
     return None
 
-  def get_rollout_from_id(self, rollout_id):
-    """ Get rollout for the provided ID.
+  def get_layer_from_id(self, layer_id):
+    """ Get layer for the provided layer id.
 
     Args:
-      rollout_id: ID of the rollout to be fetched.
+      layer_id: ID of the layer to be fetched.
 
     Returns:
-      Rollout corresponding to the provided ID.
+      Layer corresponding to the provided layer id.
     """
-    layer = self.rollout_id_map.get(rollout_id)
+    layer = self.layer_id_map.get(layer_id)
 
     if layer:
       return layer
 
-    self.logger.log(enums.LogLevels.ERROR, 'Rollout with ID "%s" is not in datafile.' % rollout_id)
+    self.logger.log(enums.LogLevels.ERROR, 'Layer with ID "%s" is not in datafile.' % layer_id)
     return None
 
   def get_variable_value_for_variation(self, variable, variation):

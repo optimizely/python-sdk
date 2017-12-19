@@ -175,7 +175,7 @@ class DecisionService(object):
 
     return None
 
-  def get_variation_for_rollout(self, rollout, user_id, attributes=None):
+  def get_variation_for_rollout(self, rollout, user_id, attributes=None, ignore_user_profile=False):
     """ Determine which variation the user is in for a given rollout.
     Returns the variation of the first experiment the user qualifies for.
 
@@ -183,9 +183,10 @@ class DecisionService(object):
       rollout: Rollout for which we are getting the variation.
       user_id: ID for user.
       attributes: Dict representing user attributes.
+      ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
 
     Returns:
-      Variation the user should see. None if the user is not in any of the rollout's targeting rules.
+      Variation the user should see. None if the user is not in any of the layer's experiments.
     """
 
     # Go through each experiment in order and try to get the variation for the user
@@ -299,7 +300,7 @@ class DecisionService(object):
 
     # Next check if user is part of a rollout
     if not variation and feature.rolloutId:
-      rollout = self.config.get_rollout_from_id(feature.rolloutId)
-      variation = self.get_variation_for_rollout(rollout, user_id, attributes)
+      rollout = self.config.get_layer_from_id(feature.rolloutId)
+      variation = self.get_variation_for_rollout(rollout, user_id, attributes, ignore_user_profile=True)
 
     return variation
