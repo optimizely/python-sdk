@@ -175,59 +175,29 @@ class DecisionService(object):
 
     return None
 
-  def get_variation_for_rollout(self, rollout, user_id, attributes=None, ignore_user_profile=False):
-    """ Determine which variation the user is in for a given rollout.
+  def get_variation_for_layer(self, layer, user_id, attributes=None, ignore_user_profile=False):
+    """ Determine which variation the user is in for a given layer.
     Returns the variation of the first experiment the user qualifies for.
 
     Args:
-      rollout: Rollout for which we are getting the variation.
+      layer: Layer for which we are getting the variation.
       user_id: ID for user.
       attributes: Dict representing user attributes.
       ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
 
+
     Returns:
       Variation the user should see. None if the user is not in any of the layer's experiments.
     """
-
     # Go through each experiment in order and try to get the variation for the user
-    if rollout and len(rollout.experiments) > 0:
-      for idx in range(len(rollout.experiments) - 1):
-        experiment = self.config.get_experiment_from_key(rollout.experiments[idx].get('key'))
-
-        # Check if user meets audience conditions for targeting rule
-        if not audience_helper.is_user_in_experiment(self.config, experiment, attributes):
-          self.logger.log(
-            enums.LogLevels.DEBUG,
-            'User "%s" does not meet conditions for targeting rule %s.' % (user_id, idx + 1)
-          )
-          continue
-
-        self.logger.log(enums.LogLevels.DEBUG, 'User "%s" meets conditions for targeting rule %s.' % (user_id, idx + 1))
-        # Determine bucketing ID to be used
-        bucketing_id = self._get_bucketing_id(user_id, attributes)
-        variation = self.bucketer.bucket(experiment, user_id, bucketing_id)
+    if layer:
+      for experiment_dict in layer.experiments:
+        experiment = self.config.get_experiment_from_key(experiment_dict['key'])
+        variation = self.get_variation(experiment, user_id, attributes, ignore_user_profile)
         if variation:
           self.logger.log(enums.LogLevels.DEBUG,
                           'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
-          return variation
-        else:
-          # Evaluate no further rules
-          self.logger.log(enums.LogLevels.DEBUG,
-                          'User "%s" is not in the traffic group for the targeting else. '
-                          'Checking "Everyone Else" rule now.' % user_id)
-          break
-
-      # Evaluate last rule i.e. "Everyone Else" rule
-      everyone_else_experiment = rollout.experiments[-1]
-      if audience_helper.is_user_in_experiment(self.config,
-                                               self.config.get_experiment_from_key(rollout.experiments[-1].get('key')),
-                                               attributes):
-        # Determine bucketing ID to be used
-        bucketing_id = self._get_bucketing_id(user_id, attributes)
-        variation = self.bucketer.bucket(everyone_else_experiment, user_id, bucketing_id)
-        if variation:
-          self.logger.log(enums.LogLevels.DEBUG,
-                          'User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
+          # Return as soon as we get a variation
           return variation
 
     return None
@@ -269,7 +239,6 @@ class DecisionService(object):
     Returns:
       Variation that the user is bucketed in. None if the user is not in any variation.
     """
-
     variation = None
     bucketing_id = self._get_bucketing_id(user_id, attributes)
 
@@ -301,6 +270,6 @@ class DecisionService(object):
     # Next check if user is part of a rollout
     if not variation and feature.rolloutId:
       rollout = self.config.get_layer_from_id(feature.rolloutId)
-      variation = self.get_variation_for_rollout(rollout, user_id, attributes, ignore_user_profile=True)
+      variation = self.get_variation_for_layer(rollout, user_id, attributes, ignore_user_profile=True)
 
     return variation

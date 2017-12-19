@@ -131,15 +131,10 @@ class BaseTest(unittest.TestCase):
         'id': '111094'
       }],
       'audiences': [{
-        'name': 'Test attribute users 1',
+        'name': 'Test attribute users',
         'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
-      }, {
-        'name': 'Test attribute users 2',
-        'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
-        'id': '11159'
       }],
       'projectId': '111001'
     }
@@ -247,15 +242,10 @@ class BaseTest(unittest.TestCase):
         'id': '111094'
       }],
       'audiences': [{
-        'name': 'Test attribute users 1',
+        'name': 'Test attribute users',
         'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
-      }, {
-        'name': 'Test attribute users 2',
-        'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
-        'id': '11159'
       }],
       'rollouts': [{
         'id': '211111',
@@ -267,48 +257,24 @@ class BaseTest(unittest.TestCase):
           'layerId': '211111',
           'audienceIds': ['11154'],
           'trafficAllocation': [{
+            'entityId': '211128',
+            'endOfRange': 5000
+          }, {
             'entityId': '211129',
             'endOfRange': 9000
           }],
           'variations': [{
+            'key': '211128',
+            'id': '211128'
+          }, {
             'key': '211129',
             'id': '211129'
-          }]
-        }, {
-          'id': '211137',
-          'key': '211137',
-          'status': 'Running',
-          'forcedVariations': {},
-          'layerId': '211111',
-          'audienceIds': ['11159'],
-          'trafficAllocation': [{
-            'entityId': '211139',
-            'endOfRange': 3000
-          }],
-          'variations': [{
-            'key': '211139',
-            'id': '211139'
-          }]
-        }, {
-          'id': '211147',
-          'key': '211147',
-          'status': 'Running',
-          'forcedVariations': {},
-          'layerId': '211111',
-          'audienceIds': [],
-          'trafficAllocation': [{
-            'entityId': '211149',
-            'endOfRange': 6000
-          }],
-          'variations': [{
-            'key': '211149',
-            'id': '211149'
           }]
         }]
       }],
       'featureFlags': [{
         'id': '91111',
-        'key': 'test_feature_in_experiment',
+        'key': 'test_feature_1',
         'experimentIds': ['111127'],
         'rolloutId': '',
         'variables': [{
@@ -324,7 +290,7 @@ class BaseTest(unittest.TestCase):
           }]
       }, {
         'id': '91112',
-        'key': 'test_feature_in_rollout',
+        'key': 'test_feature_2',
         'experimentIds': [],
         'rolloutId': '211111',
         'variables': [],
@@ -458,13 +424,8 @@ class BaseTestV3(unittest.TestCase):
       'audiences': [{
         'name': 'Test attribute users',
         'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
-      }, {
-        'name': 'Test attribute users',
-        'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
-        'id': '11159'
       }],
       'projectId': '111001'
     }
@@ -513,15 +474,10 @@ class BaseTestV3(unittest.TestCase):
         'id': '111094'
       }],
       'audiences': [{
-        'name': 'Test attribute users 1',
+        'name': 'Test attribute users',
         'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         'id': '11154'
-      }, {
-        'name': 'Test attribute users 2',
-        'conditions': '["and", ["or", ["or", '
-                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
-        'id': '11159'
       }],
       'rollouts': [{
         'id': '211111',
@@ -533,42 +489,18 @@ class BaseTestV3(unittest.TestCase):
           'layerId': '211111',
           'audienceIds': ['11154'],
           'trafficAllocation': [{
+            'entityId': '211128',
+            'endOfRange': 5000
+          }, {
             'entityId': '211129',
             'endOfRange': 9000
           }],
           'variations': [{
+            'key': '211128',
+            'id': '211128'
+          }, {
             'key': '211129',
             'id': '211129'
-          }]
-        }, {
-          'id': '211137',
-          'key': '211137',
-          'status': 'Running',
-          'forcedVariations': {},
-          'layerId': '211111',
-          'audienceIds': ['11159'],
-          'trafficAllocation': [{
-            'entityId': '211139',
-            'endOfRange': 3000
-          }],
-          'variations': [{
-            'key': '211139',
-            'id': '211139'
-          }]
-        }, {
-          'id': '211147',
-          'key': '211147',
-          'status': 'Running',
-          'forcedVariations': {},
-          'layerId': '211111',
-          'audienceIds': [],
-          'trafficAllocation': [{
-            'entityId': '211149',
-            'endOfRange': 6000
-          }],
-          'variations': [{
-            'key': '211149',
-            'id': '211149'
           }]
         }]
       }],
