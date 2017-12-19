@@ -191,6 +191,8 @@ class Optimizely(object):
       error = sys.exc_info()[1]
       self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
 
+    self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
+                                                experiment, user_id, attributes, variation, impression_event)
     return variation.key
 
   def track(self, event_key, user_id, attributes=None, event_tags=None):

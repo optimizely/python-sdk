@@ -70,8 +70,6 @@ class Group(BaseEntity):
 
 class Variation(BaseEntity):
 
-  def __init__(self, id, key, variables=None, featureFlagMap=None, **kwargs):
+  def __init__(self, id, key, **kwargs):
     self.id = id
     self.key = key
-    self.variables = variables or []
-    self.featureFlagMap = featureFlagMap or {}

@@ -456,24 +456,12 @@ class ConfigTest(base.BaseTest):
     }
     expected_variation_key_map = {
       'test_experiment': {
-        'control': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}], {'is_working': False}),
-        'variation': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}], {'is_working': True})
+        'control': entities.Variation('111128', 'control'),
+        'variation': entities.Variation('111129', 'variation')
       },
       'group_exp_1': {
-        'group_exp_1_control': entities.Variation(
-          '28901', 'group_exp_1_control', [
-            {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}], {
-            'environment': 'prod',
-            'number_of_days': 1772,
-            'significance_value': 1.22992
-          }),
-        'group_exp_1_variation': entities.Variation(
-          '28902', 'group_exp_1_variation', [
-            {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}], {
-            'environment': 'stage',
-            'number_of_days': 112,
-            'significance_value': 1.211
-          })
+        'group_exp_1_control': entities.Variation('28901', 'group_exp_1_control'),
+        'group_exp_1_variation': entities.Variation('28902', 'group_exp_1_variation')
       },
       'group_exp_2': {
         'group_exp_2_control': entities.Variation('28905', 'group_exp_2_control'),
@@ -482,22 +470,12 @@ class ConfigTest(base.BaseTest):
     }
     expected_variation_id_map = {
       'test_experiment': {
-        '111128': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}], {'is_working': False}),
-        '111129': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}], {'is_working': True})
+        '111128': entities.Variation('111128', 'control'),
+        '111129': entities.Variation('111129', 'variation')
       },
       'group_exp_1': {
-        '28901': entities.Variation('28901', 'group_exp_1_control', [
-            {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}], {
-            'environment': 'prod',
-            'number_of_days': 1772,
-            'significance_value': 1.22992
-          }),
-        '28902': entities.Variation('28902', 'group_exp_1_variation', [
-            {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}], {
-            'environment': 'stage',
-            'number_of_days': 112,
-            'significance_value': 1.211
-          })
+        '28901': entities.Variation('28901', 'group_exp_1_control'),
+        '28902': entities.Variation('28902', 'group_exp_1_variation')
       },
       'group_exp_2': {
         '28905': entities.Variation('28905', 'group_exp_2_control'),
@@ -513,7 +491,6 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_audience_id_map, project_config.audience_id_map)
     self.assertEqual(expected_variation_key_map, project_config.variation_key_map)
     self.assertEqual(expected_variation_id_map, project_config.variation_id_map)
-    self.assertEqual(expected_feature_flag_id_map, project_config.feature_flag_id_map)
 
   def test_get_version(self):
     """ Test that JSON version is retrieved correctly when using get_version. """
