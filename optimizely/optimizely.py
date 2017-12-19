@@ -280,55 +280,6 @@ class Optimizely(object):
 
     return None
 
-  def is_feature_enabled(self, feature_key, user_id, attributes=None):
-    """ Returns true if the feature is enabled for the given user.
-
-    Args:
-      feature_key: The key of the feature for which we are determining if it is enabled or not for the given user.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      True if the feature is enabled for the user. False otherwise.
-    """
-    if not self.is_valid:
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
-      return False
-
-    feature = self.config.get_feature_from_key(feature_key)
-    if not feature:
-      return False
-
-    variation = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
-    if variation:
-      self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
-      return True
-
-    self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
-    return False
-
-  def get_enabled_features(self, user_id, attributes=None):
-    """ Returns the list of features that are enabled for the user.
-
-    Args:
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      A list of the keys of the features that are enabled for the user.
-
-    """
-    if not self.is_valid:
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
-      return False
-
-    enabled_features = []
-    for feature in self.config.feature_key_map.values():
-      if self.is_feature_enabled(feature.key, user_id, attributes):
-        enabled_features.append(feature.key)
-
-    return enabled_features
-
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.
 

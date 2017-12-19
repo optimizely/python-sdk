@@ -177,66 +177,7 @@ class BaseTest(unittest.TestCase):
           'id': '111129'
         }]
       }],
-      'groups': [{
-        'id': '19228',
-        'policy': 'random',
-        'experiments': [{
-          'id': '32222',
-          'key': 'group_exp_1',
-          'status': 'Running',
-          'audienceIds': [],
-          'layerId': '111183',
-          'variations': [{
-            'key': 'group_exp_1_control',
-            'id': '28901'
-          }, {
-            'key': 'group_exp_1_variation',
-            'id': '28902'
-          }],
-          'forcedVariations': {
-            'user_1': 'group_exp_1_control',
-            'user_2': 'group_exp_1_control'
-          },
-          'trafficAllocation': [{
-            'entityId': '28901',
-            'endOfRange': 3000
-          }, {
-            'entityId': '28902',
-            'endOfRange': 9000
-          }]
-        }, {
-          'id': '32223',
-          'key': 'group_exp_2',
-          'status': 'Running',
-          'audienceIds': [],
-          'layerId': '111184',
-          'variations': [{
-            'key': 'group_exp_2_control',
-            'id': '28905'
-          }, {
-            'key': 'group_exp_2_variation',
-            'id': '28906'
-          }],
-          'forcedVariations': {
-            'user_1': 'group_exp_2_control',
-            'user_2': 'group_exp_2_control'
-          },
-          'trafficAllocation': [{
-            'entityId': '28905',
-            'endOfRange': 8000
-          }, {
-            'entityId': '28906',
-            'endOfRange': 10000
-          }]
-        }],
-        'trafficAllocation': [{
-          'entityId': '32222',
-          "endOfRange": 3000
-        }, {
-          'entityId': '32223',
-          'endOfRange': 7500
-        }]
-      }],
+      'groups': [],
       'attributes': [{
         'key': 'test_attribute',
         'id': '111094'
@@ -293,18 +234,6 @@ class BaseTest(unittest.TestCase):
         'id': '91112',
         'key': 'test_feature_2',
         'experimentIds': [],
-        'layerId': '211111',
-        'variables': [],
-      }, {
-        'id': '91113',
-        'key': 'test_feature_in_group',
-        'experimentIds': ['32222'],
-        'layerId': '',
-        'variables': [],
-      }, {
-        'id': '91114',
-        'key': 'test_feature_in_experiment_and_rollout',
-        'experimentIds': ['111127'],
         'layerId': '211111',
         'variables': [],
       }]

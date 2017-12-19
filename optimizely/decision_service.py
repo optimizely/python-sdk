@@ -94,7 +94,7 @@ class DecisionService(object):
 
     return None
 
-  def get_variation(self, experiment, user_id, attributes, ignore_user_profile=False):
+  def get_variation(self, experiment, user_id, attributes):
     """ Top-level function to help determine variation user should be put in.
 
     First, check if experiment is running.
@@ -107,7 +107,6 @@ class DecisionService(object):
       experiment_key: Experiment for which user variation needs to be determined.
       user_id: ID for user.
       attributes: Dict representing user attributes.
-      ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
 
     Returns:
       Variation user should see. None if user is not in experiment or experiment is not running.
@@ -130,7 +129,7 @@ class DecisionService(object):
 
     # Check to see if user has a decision available for the given experiment
     user_profile = UserProfile(user_id)
-    if not ignore_user_profile and self.user_profile_service:
+    if self.user_profile_service:
       try:
         retrieved_profile = self.user_profile_service.lookup(user_id)
       except:
@@ -163,7 +162,7 @@ class DecisionService(object):
 
     if variation:
       # Store this new decision and return the variation for the user
-      if not ignore_user_profile and self.user_profile_service:
+      if self.user_profile_service:
         try:
           user_profile.save_variation_for_experiment(experiment.id, variation.id)
           self.user_profile_service.save(user_profile.__dict__)
@@ -174,102 +173,3 @@ class DecisionService(object):
       return variation
 
     return None
-
-  def get_variation_for_layer(self, layer, user_id, attributes=None, ignore_user_profile=False):
-    """ Determine which variation the user is in for a given layer.
-    Returns the variation of the first experiment the user qualifies for.
-
-    Args:
-      layer: Layer for which we are getting the variation.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-      ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
-
-
-    Returns:
-      Variation the user should see. None if the user is not in any of the layer's experiments.
-    """
-    # Go through each experiment in order and try to get the variation for the user
-    if layer:
-      for experiment_dict in layer.experiments:
-        experiment = self.config.get_experiment_from_key(experiment_dict['key'])
-        variation = self.get_variation(experiment, user_id, attributes, ignore_user_profile)
-        if variation:
-          self.logger.log(enums.LogLevels.DEBUG,
-                          'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
-          # Return as soon as we get a variation
-          return variation
-
-    return None
-
-  def get_experiment_in_group(self, group, bucketing_id):
-    """ Determine which experiment in the group the user is bucketed into.
-
-    Args:
-      group: The group to bucket the user into.
-      bucketing_id: ID to be used for bucketing the user.
-
-    Returns:
-      Experiment if the user is bucketed into an experiment in the specified group. None otherwise.
-    """
-
-    experiment_id = self.bucketer.find_bucket(bucketing_id, group.id, group.trafficAllocation)
-    if experiment_id:
-      experiment = self.config.get_experiment_from_id(experiment_id)
-      if experiment:
-        self.logger.log(enums.LogLevels.INFO,
-                        'User with bucketing ID "%s" is in experiment %s of group %s.' %
-                        (bucketing_id, experiment.key, group.id))
-        return experiment
-
-    self.logger.log(enums.LogLevels.INFO,
-                    'User with bucketing ID "%s" is not in any experiments of group %s.' %
-                    (bucketing_id, group.id))
-
-    return None
-
-  def get_variation_for_feature(self, feature, user_id, attributes=None):
-    """ Returns the variation the user is bucketed in for the given feature.
-
-    Args:
-      feature: Feature for which we are determining if it is enabled or not for the given user.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      Variation that the user is bucketed in. None if the user is not in any variation.
-    """
-    variation = None
-    bucketing_id = self._get_bucketing_id(user_id, attributes)
-
-    # First check if the feature is in a mutex group
-    if feature.groupId:
-      group = self.config.get_group(feature.groupId)
-      if group:
-        experiment = self.get_experiment_in_group(group, bucketing_id)
-        if experiment and experiment.id in feature.experimentIds:
-          variation = self.get_variation(experiment, user_id, attributes)
-
-          if variation:
-            self.logger.log(enums.LogLevels.DEBUG,
-                            'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
-      else:
-        self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
-
-    # Next check if the feature is being experimented on
-    elif feature.experimentIds:
-      # If an experiment is not in a group, then the feature can only be associated with one experiment
-      experiment = self.config.get_experiment_from_id(feature.experimentIds[0])
-      if experiment:
-        variation = self.get_variation(experiment, user_id, attributes)
-
-        if variation:
-          self.logger.log(enums.LogLevels.DEBUG,
-                          'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key))
-
-    # Next check if user is part of a rollout
-    if not variation and feature.layerId:
-      layer = self.config.get_layer_from_id(feature.layerId)
-      variation = self.get_variation_for_layer(layer, user_id, attributes, ignore_user_profile=True)
-
-    return variation
