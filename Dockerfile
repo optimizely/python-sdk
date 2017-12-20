@@ -4,7 +4,6 @@ MAINTAINER Ali Rizvi <ali@optimizely.com>
 
 # GitHub branch from which to build the SDK. Defaults to master
 ARG SDK_BRANCH=master
-ENV SDK_BRANCH $SDK_BRANCH
 
 ENV INSTALL_PATH /usr/src/app
 RUN mkdir -p $INSTALL_PATH
