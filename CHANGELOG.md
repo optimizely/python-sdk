@@ -1,3 +1,9 @@
+## 1.4.0
+- Added support for IP anonymization.
+- Added support for notification listeners.
+- Added support for bucketing ID.
+- Updated mmh3 to handle installation failures on Windows 10.
+
 ## 1.3.0
 - Introduced support for forced bucketing.
 - Introduced support for numeric metrics.
@@ -26,7 +32,7 @@
 
 ## 0.1.3
 - Added support for v2 endpoint and datafile.
-- Updated dispatch_event to consume an Event object instead of url and params. The Event object comprises of four properties: url (string representing URL to dispatch event to), params (dict representing the params to be set for the event), http_verb (one of 'GET' or 'POST') and headers (header values to be sent along). 
+- Updated dispatch_event to consume an Event object instead of url and params. The Event object comprises of four properties: url (string representing URL to dispatch event to), params (dict representing the params to be set for the event), http_verb (one of 'GET' or 'POST') and headers (header values to be sent along).
 - Fixed issue with tracking events for experiments in groups.
 
 ## 0.1.2
