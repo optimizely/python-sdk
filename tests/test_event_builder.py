@@ -93,9 +93,9 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
-  def test_create_impression_event_with_attributes_as_string_value(self):
+  def test_create_impression_event__with_attributes(self):
     """ Test that create_impression_event creates Event object
-    with right params when attributes are provided with a string value. """
+    with right params when attributes are provided. """
 
     expected_params = {
       'account_id': '12001',
@@ -132,98 +132,6 @@ class EventBuilderTest(base.BaseTest):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', {'test_attribute': 'test_value'}
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.EVENTS_URL,
-                                expected_params,
-                                event_builder.EventBuilder.HTTP_VERB,
-                                event_builder.EventBuilder.HTTP_HEADERS)
-
-  def test_create_impression_event_with_attributes_as_false_value(self):
-    """ Test that create_impression_event creates Event object
-    with right params when attributes are provided with boolean false value. """
-
-    expected_params = {
-      'account_id': '12001',
-      'project_id': '111001',
-      'visitors': [{
-        'visitor_id': 'test_user',
-        'attributes': [{
-          'type': 'custom',
-          'value': False,
-          'entity_id': '111094',
-          'key': 'test_attribute'
-        }],
-        'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
-          'events': [{
-            'timestamp': 42123,
-            'entity_id': '111182',
-            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key': 'campaign_activated'
-          }]
-        }]
-      }],
-      'client_name': 'python-sdk',
-      'client_version': version.__version__,
-      'anonymize_ip': False
-    }
-
-    with mock.patch('time.time', return_value=42.123), \
-         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
-      event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', {'test_attribute': False}
-      )
-    self._validate_event_object(event_obj,
-                                event_builder.EventBuilder.EVENTS_URL,
-                                expected_params,
-                                event_builder.EventBuilder.HTTP_VERB,
-                                event_builder.EventBuilder.HTTP_HEADERS)
-
-  def test_create_impression_event_with_attributes_as_zero_value(self):
-    """ Test that create_impression_event creates Event object
-    with right params when attributes are provided with integer 0 value. """
-
-    expected_params = {
-      'account_id': '12001',
-      'project_id': '111001',
-      'visitors': [{
-        'visitor_id': 'test_user',
-        'attributes': [{
-          'type': 'custom',
-          'value': 0,
-          'entity_id': '111094',
-          'key': 'test_attribute'
-        }],
-        'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
-          'events': [{
-            'timestamp': 42123,
-            'entity_id': '111182',
-            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'key': 'campaign_activated'
-          }]
-        }]
-      }],
-      'client_name': 'python-sdk',
-      'client_version': version.__version__,
-      'anonymize_ip': 0
-    }
-
-    with mock.patch('time.time', return_value=42.123), \
-         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
-      event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
-        '111129', 'test_user', {'test_attribute': 0}
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,

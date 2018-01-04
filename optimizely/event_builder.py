@@ -41,18 +41,26 @@ class BaseEventBuilder(object):
     pass
 
   def _get_project_id(self):
-    """ Get project ID. """
+    """ Get project ID.
+
+    Returns:
+      Project ID in the datafile.
+    """
 
     return self.config.get_project_id()
 
   def _get_account_id(self):
-    """ Get account ID. """
+    """ Get account ID.
+
+    Returns:
+      Account ID in the datafile.
+    """
 
     return self.config.get_account_id()
 
   @abstractmethod
-  def _get_user_id(self, user_id):
-    """ Get user ID.
+  def _get_user(self, user_id):
+    """ Get user.
 
     Args:
       user_id: ID of the user.
@@ -73,12 +81,12 @@ class BaseEventBuilder(object):
     """ Get source information. """
     pass
 
-  def _get_revision(self):
-    """ Get datafile revision information. """
-    pass
-
   def _get_anonymize_ip(self):
-    """ Get IP anonymization bool """
+    """ Get IP anonymization bool
+
+    Returns:
+      bool 'anonymizeIP' value in the datafile.
+    """
 
     return self.config.get_anonymize_ip_value()
 
@@ -87,7 +95,7 @@ class BaseEventBuilder(object):
     """ Get time in milliseconds to be added.
 
     Returns:
-      Current time in milliseconds.
+      int Current time in milliseconds.
     """
 
     return int(round(time.time() * 1000))
@@ -98,6 +106,9 @@ class BaseEventBuilder(object):
     Args:
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
+
+    Returns:
+     dict Common params required for both impression and conversion events.
     """
     commonParams = {}
 
@@ -105,7 +116,7 @@ class BaseEventBuilder(object):
     commonParams[self.EventParams.ACCOUNT_ID] = self._get_account_id()
 
     commonParams[self.EventParams.USERS] = []
-    commonParams[self.EventParams.USERS].append(self._get_user_id(user_id))
+    commonParams[self.EventParams.USERS].append(self._get_user(user_id))
     commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
 
     commonParams[self.EventParams.SOURCE_SDK_TYPE] = self._get_source()[self.EventParams.SOURCE_SDK_TYPE]
@@ -150,6 +161,9 @@ class EventBuilder(BaseEventBuilder):
 
     Args:
       attributes: Dict representing user attributes and values which need to be recorded.
+
+    Returns:
+      list Valid attributes for the user (if any). Otherwise, empty.
     """
 
     params = []
@@ -159,8 +173,8 @@ class EventBuilder(BaseEventBuilder):
 
     for attribute_key in attributes.keys():
       attribute_value = attributes.get(attribute_key)
-      # Do not discard if value is zero or false
-      if attribute_value is not None:
+      # Omit falsy attribute values
+      if attribute_value:
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
           params.append({
@@ -173,18 +187,25 @@ class EventBuilder(BaseEventBuilder):
     return params
 
   def _get_source(self):
-    """ Get source information. """
+    """ Get source information.
+
+    Returns:
+      dict SDK type and version information.
+    """
     params = {}
     params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
     params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
 
     return params
 
-  def _get_user_id(self, user_id):
-    """ Get user ID.
+  def _get_user(self, user_id):
+    """ Get user.
 
     Args:
       user_id: ID of the user.
+
+    Returns:
+      dict User ID and empty list for snapshots
     """
 
     # Get a single visitor
@@ -200,6 +221,9 @@ class EventBuilder(BaseEventBuilder):
     Args:
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
+
+    Returns:
+      dict Decisions and events info for impression event.
     """
     snapshot = {}
 
@@ -225,6 +249,9 @@ class EventBuilder(BaseEventBuilder):
       event_key: Key representing the event which needs to be recorded.
       event_tags: Dict representing metadata associated with the event.
       decisions: List of tuples representing valid experiments IDs and variation IDs.
+
+    Returns:
+      dict Decisions and events info for conversion event.
     """
 
     for experiment_id, variation_id in decisions:
