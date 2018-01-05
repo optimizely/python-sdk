@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -44,7 +44,7 @@ class BaseEventBuilder(object):
     """ Get project ID.
 
     Returns:
-      Project ID in the datafile.
+      Project ID of the datafile.
     """
 
     return self.config.get_project_id()
@@ -57,15 +57,6 @@ class BaseEventBuilder(object):
     """
 
     return self.config.get_account_id()
-
-  @abstractmethod
-  def _get_user(self, user_id):
-    """ Get user.
-
-    Args:
-      user_id: ID of the user.
-    """
-    pass
 
   @abstractmethod
   def _get_attributes(self, attributes):
@@ -115,8 +106,12 @@ class BaseEventBuilder(object):
     commonParams[self.EventParams.PROJECT_ID] = self._get_project_id()
     commonParams[self.EventParams.ACCOUNT_ID] = self._get_account_id()
 
+    visitor = {}
+    visitor[self.EventParams.END_USER_ID] = user_id
+    visitor[self.EventParams.SNAPSHOTS] = []
+
     commonParams[self.EventParams.USERS] = []
-    commonParams[self.EventParams.USERS].append(self._get_user(user_id))
+    commonParams[self.EventParams.USERS].append(visitor)
     commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
 
     commonParams[self.EventParams.SOURCE_SDK_TYPE] = self._get_source()[self.EventParams.SOURCE_SDK_TYPE]
@@ -197,23 +192,6 @@ class EventBuilder(BaseEventBuilder):
     params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
 
     return params
-
-  def _get_user(self, user_id):
-    """ Get user.
-
-    Args:
-      user_id: ID of the user.
-
-    Returns:
-      dict User ID and empty list for snapshots
-    """
-
-    # Get a single visitor
-    visitor = {}
-    visitor[self.EventParams.END_USER_ID] = user_id
-    visitor[self.EventParams.SNAPSHOTS] = []
-
-    return visitor
 
   def _get_required_params_for_impression(self, experiment, variation_id):
     """ Get parameters that are required for the impression event to register.
