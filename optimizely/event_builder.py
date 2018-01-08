@@ -67,11 +67,6 @@ class BaseEventBuilder(object):
     """
     pass
 
-  @abstractmethod
-  def _get_source(self):
-    """ Get source information. """
-    pass
-
   def _get_anonymize_ip(self):
     """ Get IP anonymization bool
 
@@ -99,7 +94,7 @@ class BaseEventBuilder(object):
       attributes: Dict representing user attributes and values which need to be recorded.
 
     Returns:
-     dict Common params required for both impression and conversion events.
+     Dict consisting of parameters common to both impression and conversion events.
     """
     commonParams = {}
 
@@ -114,8 +109,8 @@ class BaseEventBuilder(object):
     commonParams[self.EventParams.USERS].append(visitor)
     commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
 
-    commonParams[self.EventParams.SOURCE_SDK_TYPE] = self._get_source()[self.EventParams.SOURCE_SDK_TYPE]
-    commonParams[self.EventParams.SOURCE_SDK_VERSION] = self._get_source()[self.EventParams.SOURCE_SDK_VERSION]
+    commonParams[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
+    commonParams[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
     commonParams[self.EventParams.ANONYMIZE_IP] = self._get_anonymize_ip()
 
     return commonParams
@@ -158,7 +153,7 @@ class EventBuilder(BaseEventBuilder):
       attributes: Dict representing user attributes and values which need to be recorded.
 
     Returns:
-      list Valid attributes for the user (if any). Otherwise, empty.
+      List consisting of valid attributes for the user. Empty otherwise.
     """
 
     params = []
@@ -181,18 +176,6 @@ class EventBuilder(BaseEventBuilder):
 
     return params
 
-  def _get_source(self):
-    """ Get source information.
-
-    Returns:
-      dict SDK type and version information.
-    """
-    params = {}
-    params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
-    params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
-
-    return params
-
   def _get_required_params_for_impression(self, experiment, variation_id):
     """ Get parameters that are required for the impression event to register.
 
@@ -201,7 +184,7 @@ class EventBuilder(BaseEventBuilder):
       variation_id: ID for variation which would be presented to user.
 
     Returns:
-      dict Decisions and events info for impression event.
+      Dict consisting of decisions and events info for impression event.
     """
     snapshot = {}
 
@@ -229,7 +212,7 @@ class EventBuilder(BaseEventBuilder):
       decisions: List of tuples representing valid experiments IDs and variation IDs.
 
     Returns:
-      dict Decisions and events info for conversion event.
+      Dict consisting of the decisions and events info for conversion event.
     """
 
     for experiment_id, variation_id in decisions:
