@@ -83,6 +83,7 @@ class EventBuilderTest(base.BaseTest):
     }
 
     with mock.patch('time.time', return_value=42.123), \
+      	 mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
