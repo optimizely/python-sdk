@@ -375,8 +375,17 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
       return False
 
+    if not feature_key:
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      return False
+
+    if not user_id:
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+      return False
+
     feature = self.config.get_feature_from_key(feature_key)
     if not feature:
+      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_FEATURE_KEY_ERROR)
       return False
 
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
