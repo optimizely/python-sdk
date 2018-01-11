@@ -212,12 +212,10 @@ class Optimizely(object):
 
     feature_flag = self.config.get_feature_from_key(feature_key)
     if not feature_flag:
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_FEATURE_KEY_ERROR)
       return None
 
     variable = self.config.get_variable_for_feature(feature_key, variable_key)
     if not variable:
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_VARIABLE_KEY_ERROR)
       return None
 
     # Return None if type differs
@@ -398,7 +396,6 @@ class Optimizely(object):
 
     feature = self.config.get_feature_from_key(feature_key)
     if not feature:
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_FEATURE_KEY_ERROR)
       return False
 
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
