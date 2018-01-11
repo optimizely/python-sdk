@@ -208,6 +208,7 @@ class Optimizely(object):
 
     if not user_id:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+      return None
 
     feature_flag = self.config.get_feature_from_key(feature_key)
     if not feature_flag:
