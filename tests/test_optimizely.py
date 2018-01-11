@@ -1173,6 +1173,28 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
+  def test_is_feature_enabled__returns_false_for_none_feature_key(self):
+    """ Test that is_feature_enabled returns false if the provided feature key is None. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertFalse(opt_obj.is_feature_enabled(None, 'test_user'))
+
+    self.assertEqual(1, mock_logger.call_count)
+    mock_logger.assert_called_with(40, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+
+  def test_is_feature_enabled__returns_false_for_none_user_id(self):
+    """ Test that is_feature_enabled returns false if the provided user ID is None. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertFalse(opt_obj.is_feature_enabled('feature_key', None))
+
+    self.assertEqual(1, mock_logger.call_count)
+    mock_logger.assert_called_with(40, enums.Errors.NONE_USER_ID_PARAMETER)
+
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
 
