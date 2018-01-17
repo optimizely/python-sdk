@@ -1475,12 +1475,15 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_double(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_integer(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_string(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
 
     self.assertEqual(4, mock_logger.call_count)
-    mock_logger.assert_called_with(40, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
 
   def test_get_feature_variable__returns_none_if_none_variable_key(self):
     """ Test that get_feature_variable_* returns None for None variable key. """
@@ -1488,12 +1491,15 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', None, 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', None, 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', None, 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', None, 'test-User'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
 
     self.assertEqual(4, mock_logger.call_count)
-    mock_logger.assert_called_with(40, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
 
   def test_get_feature_variable__returns_none_if_none_user_id(self):
     """ Test that get_feature_variable_* returns None for None user ID. """
@@ -1501,12 +1507,15 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
       self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
 
     self.assertEqual(4, mock_logger.call_count)
-    mock_logger.assert_called_with(40, enums.Errors.NONE_USER_ID_PARAMETER)
 
   def test_get_feature_variable__returns_none_if_invalid_feature_key(self):
     """ Test that get_feature_variable_* returns None for invalid feature key. """
