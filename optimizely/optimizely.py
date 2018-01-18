@@ -198,15 +198,15 @@ class Optimizely(object):
       - Variable key is invalid.
       - Mismatch with type of variable.
     """
-    if not feature_key:
+    if feature_key is None:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
       return None
 
-    if not variable_key:
+    if variable_key is None:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
       return None
 
-    if not user_id:
+    if user_id is None:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
       return None
 
@@ -386,11 +386,11 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
       return False
 
-    if not feature_key:
+    if feature_key is None:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
       return False
 
-    if not user_id:
+    if user_id is None:
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
       return False
 
