@@ -41,9 +41,9 @@ class Errors(object):
   INVALID_INPUT_ERROR = 'Provided "{}" is in an invalid format.'
   INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
   INVALID_VARIABLE_KEY_ERROR = 'Provided variable key parameter is not in the feature flag.'
-  NONE_FEATURE_KEY_PARAMETER = 'Provided feature key parameter is `None`.'
-  NONE_USER_ID_PARAMETER = 'Provided user ID parameter is `None`.'
-  NONE_VARIABLE_KEY_PARAMETER = 'Provided variable key parameter is `None`.'
+  NONE_FEATURE_KEY_PARAMETER = '"None" is an invalid value for feature key.'
+  NONE_USER_ID_PARAMETER = '"None" is an invalid value for user ID.'
+  NONE_VARIABLE_KEY_PARAMETER = '"None" is an invalid value for variable key.'
   UNSUPPORTED_DATAFILE_VERSION = 'Provided datafile has unsupported version. ' \
                                  'Please use SDK version 1.1.0 or earlier for datafile version 1.'
 
