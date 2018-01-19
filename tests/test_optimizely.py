@@ -1173,6 +1173,26 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
 
+  def test_is_feature_enabled__returns_false_for_none_feature_key(self):
+    """ Test that is_feature_enabled returns false if the provided feature key is None. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertFalse(opt_obj.is_feature_enabled(None, 'test_user'))
+
+    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+
+  def test_is_feature_enabled__returns_false_for_none_user_id(self):
+    """ Test that is_feature_enabled returns false if the provided user ID is None. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertFalse(opt_obj.is_feature_enabled('feature_key', None))
+
+    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
 
@@ -1448,6 +1468,54 @@ class OptimizelyTest(base.BaseTest):
       'User "test_user" is not in any variation or rollout rule. '
       'Returning default value for variable "environment" of feature flag "test_feature_in_experiment".'
     )
+
+  def test_get_feature_variable__returns_none_if_none_feature_key(self):
+    """ Test that get_feature_variable_* returns None for None feature key. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertIsNone(opt_obj.get_feature_variable_boolean(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_double(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_integer(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_string(None, 'variable_key', 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+
+    self.assertEqual(4, mock_logger.call_count)
+
+  def test_get_feature_variable__returns_none_if_none_variable_key(self):
+    """ Test that get_feature_variable_* returns None for None variable key. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', None, 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', None, 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', None, 'test_user'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', None, 'test-User'))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+
+    self.assertEqual(4, mock_logger.call_count)
+
+  def test_get_feature_variable__returns_none_if_none_user_id(self):
+    """ Test that get_feature_variable_* returns None for None user ID. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', None))
+      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+
+    self.assertEqual(4, mock_logger.call_count)
 
   def test_get_feature_variable__returns_none_if_invalid_feature_key(self):
     """ Test that get_feature_variable_* returns None for invalid feature key. """
