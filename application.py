@@ -1,4 +1,5 @@
 import json
+import types
 from flask import Flask
 from flask import request
 from optimizely import logger
@@ -18,6 +19,41 @@ datafile.close()
 
 optimizely_instance = None
 user_profile_service_instance = None
+listener_return_maps = None
+
+optlog = logger.SimpleLogger()
+
+
+def copy_func(f, name=None):
+  return types.FunctionType(f.func_code, f.func_globals, name or f.func_name,
+                            f.func_defaults, f.func_closure)
+
+
+def on_activate(experiment, _user_id, _attributes, variation, event):
+  # listener callback for activate.
+  global listener_return_maps
+
+  listener_return_map = {'experiment_key': experiment.key, 'user_id': _user_id,
+                         'attributes': _attributes or {},
+                         'variation_key': variation.key}
+
+  if listener_return_maps is None:
+    listener_return_maps = [listener_return_map]
+  else:
+    listener_return_maps.append(listener_return_map)
+
+
+def on_track(_event_key, _user_id, _attributes, _event_tags, event):
+  # listener callback for track
+  global listener_return_maps
+
+  listener_return_map = {'event_key': _event_key, "user_id": _user_id,
+                         'attributes': _attributes or {},
+                         'event_tags': _event_tags or {}}
+  if listener_return_maps is None:
+    listener_return_maps = [listener_return_map]
+  else:
+    listener_return_maps.append(listener_return_map)
 
 
 @app.before_request
@@ -34,7 +70,34 @@ def before_request():
     ups_class = getattr(user_profile_service, request.payload.get('user_profile_service'))
     user_profile_service_instance = ups_class(request.payload.get('user_profiles'))
 
+  with_listener = request.payload.get('with_listener')
+
   optimizely_instance = optimizely.Optimizely(datafile_content, logger=logger.SimpleLogger(), user_profile_service=user_profile_service_instance)
+
+  if with_listener is not None:
+    for listener_add in with_listener:
+      if listener_add['type'] == 'Activate':
+        count = int(listener_add['count'])
+        for i in range(count):
+          # make a value copy so that we can add multiple callbacks.
+          a_cb = copy_func(on_activate)
+          optimizely_instance.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, a_cb)
+      if listener_add['type'] == 'Track':
+        count = int(listener_add['count'])
+        for i in range(count):
+          # make a value copy so that we can add multiple callbacks.
+          t_cb = copy_func(on_track)
+          optimizely_instance.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, t_cb)
+
+
+@app.after_request
+def after_request(response):
+  global optimizely_instance
+  global listener_return_maps
+
+  optimizely_instance.notification_center.clear_all_notifications()
+  listener_return_maps = None
+  return response
 
 
 @app.route('/activate', methods=['POST'])
@@ -43,26 +106,11 @@ def activate():
   experiment_key = payload.get('experiment_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
-  listener_called = [False]
-
-  if attributes and attributes.get('$add_listener') == 'true':
-    def on_activate(experiment, user_id, attributes, variation, event):
-      testPass = isinstance(experiment, entities.Experiment) and isinstance(user_id, basestring)
-      if attributes is not None:
-        testPass = testPass and isinstance(attributes, dict)
-      testPass = testPass and isinstance(variation, entities.Variation) and isinstance(event, event_builder.Event)
-
-      print("Here for experiment {0}".format(experiment.key))
-      listener_called[0] = testPass
-
-    notification_id = optimizely_instance.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
-                                                                           on_activate)
 
   variation = optimizely_instance.activate(experiment_key, user_id, attributes=attributes)
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  if listener_called[0]:
-    return json.dumps({'result': variation, 'user_profiles': user_profiles, 'listenerCalled': 'true'}), 200, {'content-type': 'application/json'}
-  return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
+
+  return json.dumps({'result': variation, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
 
 
 @app.route('/get_variation', methods=['POST'])
@@ -83,29 +131,13 @@ def track():
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
   event_tags = payload.get('event_tags')
-  listener_called = [False]
-
-  if attributes and attributes.get('$add_listener') == 'true':
-    def on_track(event_key, user_id, attributes, event_tags, event):
-      print("Here for experiment {0}".format(event_key))
-      testPass = isinstance(event_key, basestring) and \
-         isinstance(user_id, basestring)
-      if attributes is not None:
-        testPass = testPass and isinstance(attributes, dict)
-      if event_tags is not None:
-        testPass = testPass and isinstance(attributes, dict)
-      testPass = testPass and isinstance(event, event_builder.Event)
-      listener_called[0] = testPass
-
-    notification_id = optimizely_instance.notification_center.add_notification_listener(enums.NotificationTypes.TRACK,
-                                                                           on_track)
 
   result = optimizely_instance.track(event_key, user_id, attributes, event_tags)
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  if listener_called[0]:
-    return json.dumps({'result': result, 'user_profiles': user_profiles, 'listenerCalled': 'true'}), 200, {'content-type': 'application/json'}
 
-  return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+
+  return json.dumps({'result': result, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
+
 
 @app.route('/is_feature_enabled', methods=['POST'])
 def is_feature_enabled():
