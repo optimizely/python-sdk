@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -83,6 +83,7 @@ class EventBuilderTest(base.BaseTest):
     }
 
     with mock.patch('time.time', return_value=42.123), \
+         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_impression_event(
         self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
@@ -139,6 +140,87 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
+  def test_create_impression_event_when_attribute_is_not_in_datafile(self):
+      """ Test that create_impression_event creates Event object
+      with right params when attribute is not in the datafile. """
+
+      expected_params = {
+        'account_id': '12001',
+        'project_id': '111001',
+        'visitors': [{
+          'visitor_id': 'test_user',
+          'attributes': [],
+          'snapshots': [{
+            'decisions': [{
+              'variation_id': '111129',
+              'experiment_id': '111127',
+              'campaign_id': '111182'
+            }],
+            'events': [{
+              'timestamp': 42123,
+              'entity_id': '111182',
+              'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+              'key': 'campaign_activated'
+            }]
+          }]
+        }],
+        'client_name': 'python-sdk',
+        'client_version': version.__version__,
+        'anonymize_ip': False
+      }
+
+      with mock.patch('time.time', return_value=42.123), \
+           mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
+        event_obj = self.event_builder.create_impression_event(
+          self.project_config.get_experiment_from_key('test_experiment'),
+          '111129', 'test_user', {'do_you_know_me': 'test_value'}
+        )
+      self._validate_event_object(event_obj,
+                                  event_builder.EventBuilder.EVENTS_URL,
+                                  expected_params,
+                                  event_builder.EventBuilder.HTTP_VERB,
+                                  event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_conversion_event(self):
+    """ Test that create_conversion_event creates Event object
+    with right params when no attributes are provided. """
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event', 'test_user', None, None, [('111127', '111129')]
+      )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
   def test_create_conversion_event__with_attributes(self):
     """ Test that create_conversion_event creates Event object
     with right params when attributes are provided. """
@@ -174,8 +256,7 @@ class EventBuilderTest(base.BaseTest):
     }
 
     with mock.patch('time.time', return_value=42.123), \
-         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042):
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None, [('111127', '111129')]
       )
@@ -227,7 +308,6 @@ class EventBuilderTest(base.BaseTest):
     }
 
     with mock.patch('time.time', return_value=42.123), \
-         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
         'test_event',
@@ -282,7 +362,6 @@ class EventBuilderTest(base.BaseTest):
     }
 
     with mock.patch('time.time', return_value=42.123), \
-         mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
         'test_event',

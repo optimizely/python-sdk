@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -35,78 +35,85 @@ class BaseEventBuilder(object):
 
   def __init__(self, config):
     self.config = config
-    self.params = {}
 
   @abstractproperty
   class EventParams(object):
     pass
 
-  def _add_project_id(self):
-    """ Add project ID to the event. """
+  def _get_project_id(self):
+    """ Get project ID.
 
-    self.params[self.EventParams.PROJECT_ID] = self.config.get_project_id()
-
-  def _add_account_id(self):
-    """ Add account ID to the event. """
-
-    self.params[self.EventParams.ACCOUNT_ID] = self.config.get_account_id()
-
-  @abstractmethod
-  def _add_user_id(self, user_id):
-    """ Add user ID to the event.
-
-    Args:
-      user_id: ID of the user.
+    Returns:
+      Project ID of the datafile.
     """
-    pass
+
+    return self.config.get_project_id()
+
+  def _get_account_id(self):
+    """ Get account ID.
+
+    Returns:
+      Account ID in the datafile.
+    """
+
+    return self.config.get_account_id()
 
   @abstractmethod
-  def _add_attributes(self, attributes):
-    """ Add attribute(s) information to the event.
+  def _get_attributes(self, attributes):
+    """ Get attribute(s) information.
 
     Args:
       attributes: Dict representing user attributes and values which need to be recorded.
     """
     pass
 
-  @abstractmethod
-  def _add_source(self):
-    """ Add source information to the event. """
-    pass
+  def _get_anonymize_ip(self):
+    """ Get IP anonymization bool
 
-  def _add_revision(self):
-    """ Add datafile revision information to the event. """
-    pass
+    Returns:
+      bool 'anonymizeIP' value in the datafile.
+    """
 
-  def _add_anonymize_ip(self):
-    """ Add IP anonymization bool to the event """
-
-    self.params[self.EventParams.ANONYMIZE_IP] = self.config.get_anonymize_ip_value()
+    return self.config.get_anonymize_ip_value()
 
   @abstractmethod
   def _get_time(self):
-    """ Get time in milliseconds to be added to the event.
+    """ Get time in milliseconds to be added.
 
     Returns:
-      Current time in milliseconds.
+      int Current time in milliseconds.
     """
 
     return int(round(time.time() * 1000))
 
-  def _add_common_params(self, user_id, attributes):
-    """ Add params which are used same in both conversion and impression events.
+  def _get_common_params(self, user_id, attributes):
+    """ Get params which are used same in both conversion and impression events.
 
     Args:
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
-    """
 
-    self._add_project_id()
-    self._add_account_id()
-    self._add_user_id(user_id)
-    self._add_attributes(attributes)
-    self._add_source()
-    self._add_anonymize_ip()
+    Returns:
+     Dict consisting of parameters common to both impression and conversion events.
+    """
+    commonParams = {}
+
+    commonParams[self.EventParams.PROJECT_ID] = self._get_project_id()
+    commonParams[self.EventParams.ACCOUNT_ID] = self._get_account_id()
+
+    visitor = {}
+    visitor[self.EventParams.END_USER_ID] = user_id
+    visitor[self.EventParams.SNAPSHOTS] = []
+
+    commonParams[self.EventParams.USERS] = []
+    commonParams[self.EventParams.USERS].append(visitor)
+    commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
+
+    commonParams[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
+    commonParams[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
+    commonParams[self.EventParams.ANONYMIZE_IP] = self._get_anonymize_ip()
+
+    return commonParams
 
 
 class EventBuilder(BaseEventBuilder):
@@ -139,18 +146,20 @@ class EventBuilder(BaseEventBuilder):
     CUSTOM = 'custom'
     ANONYMIZE_IP = 'anonymize_ip'
 
-  def _add_attributes(self, attributes):
-    """ Add attribute(s) information to the event.
+  def _get_attributes(self, attributes):
+    """ Get attribute(s) information.
 
     Args:
       attributes: Dict representing user attributes and values which need to be recorded.
+
+    Returns:
+      List consisting of valid attributes for the user. Empty otherwise.
     """
 
-    visitor = self.params[self.EventParams.USERS][0]
-    visitor[self.EventParams.ATTRIBUTES] = []
+    params = []
 
     if not attributes:
-      return
+      return []
 
     for attribute_key in attributes.keys():
       attribute_value = attributes.get(attribute_key)
@@ -158,39 +167,24 @@ class EventBuilder(BaseEventBuilder):
       if attribute_value:
         attribute = self.config.get_attribute(attribute_key)
         if attribute:
-          visitor[self.EventParams.ATTRIBUTES].append({
+          params.append({
             self.EventParams.EVENT_ID: attribute.id,
             'key': attribute_key,
             'type': self.EventParams.CUSTOM,
             'value': attribute_value,
           })
 
-  def _add_source(self):
-    """ Add source information to the event. """
+    return params
 
-    self.params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
-    self.params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
-
-  def _add_user_id(self, user_id):
-    """ Add user ID to the event.
-
-    Args:
-      user_id: ID of the user.
-    """
-
-    self.params[self.EventParams.USERS] = []
-    # Add a single visitor
-    visitor = {}
-    visitor[self.EventParams.END_USER_ID] = user_id
-    visitor[self.EventParams.SNAPSHOTS] = []
-    self.params[self.EventParams.USERS].append(visitor)
-
-  def _add_required_params_for_impression(self, experiment, variation_id):
-    """ Add parameters that are required for the impression event to register.
+  def _get_required_params_for_impression(self, experiment, variation_id):
+    """ Get parameters that are required for the impression event to register.
 
     Args:
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
+
+    Returns:
+      Dict consisting of decisions and events info for impression event.
     """
     snapshot = {}
 
@@ -207,19 +201,19 @@ class EventBuilder(BaseEventBuilder):
       self.EventParams.UUID: str(uuid.uuid4())
     }]
 
-    visitor = self.params[self.EventParams.USERS][0]
-    visitor[self.EventParams.SNAPSHOTS].append(snapshot)
+    return snapshot
 
-  def _add_required_params_for_conversion(self, event_key, event_tags, decisions):
-    """ Add parameters that are required for the conversion event to register.
+  def _get_required_params_for_conversion(self, event_key, event_tags, decisions):
+    """ Get parameters that are required for the conversion event to register.
 
     Args:
       event_key: Key representing the event which needs to be recorded.
       event_tags: Dict representing metadata associated with the event.
       decisions: List of tuples representing valid experiments IDs and variation IDs.
-    """
 
-    visitor = self.params[self.EventParams.USERS][0]
+    Returns:
+      Dict consisting of the decisions and events info for conversion event.
+    """
 
     for experiment_id, variation_id in decisions:
       snapshot = {}
@@ -252,7 +246,8 @@ class EventBuilder(BaseEventBuilder):
             event_dict[self.EventParams.TAGS] = event_tags
 
         snapshot[self.EventParams.EVENTS] = [event_dict]
-        visitor[self.EventParams.SNAPSHOTS].append(snapshot)
+
+        return snapshot
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
@@ -267,12 +262,13 @@ class EventBuilder(BaseEventBuilder):
       Event object encapsulating the impression event.
     """
 
-    self.params = {}
-    self._add_common_params(user_id, attributes)
-    self._add_required_params_for_impression(experiment, variation_id)
+    params = self._get_common_params(user_id, attributes)
+    impression_params = self._get_required_params_for_impression(experiment, variation_id)
+
+    params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
     return Event(self.EVENTS_URL,
-                 self.params,
+                 params,
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
 
@@ -290,10 +286,12 @@ class EventBuilder(BaseEventBuilder):
       Event object encapsulating the conversion event.
     """
 
-    self.params = {}
-    self._add_common_params(user_id, attributes)
-    self._add_required_params_for_conversion(event_key, event_tags, decisions)
+    params = self._get_common_params(user_id, attributes)
+    conversion_params = self._get_required_params_for_conversion(event_key, event_tags, decisions)
+
+    params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
+
     return Event(self.EVENTS_URL,
-                 self.params,
+                 params,
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
