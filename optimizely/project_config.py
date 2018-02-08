@@ -116,11 +116,11 @@ class ProjectConfig(object):
     self.forced_variation_map = {}
 
   @staticmethod
-  def _generate_key_map(list, key, entity_class):
+  def _generate_key_map(entity_list, key, entity_class):
     """ Helper method to generate map from key to entity object for given list of dicts.
 
     Args:
-      list: List consisting of dict.
+      entity_list: List consisting of dict.
       key: Key in each dict which will be key in the map.
       entity_class: Class representing the entity.
 
@@ -129,7 +129,7 @@ class ProjectConfig(object):
     """
 
     key_map = {}
-    for obj in list:
+    for obj in entity_list:
       key_map[obj[key]] = entity_class(**obj)
 
     return key_map
