@@ -1207,8 +1207,9 @@ class OptimizelyTest(base.BaseTest):
     # Check that no event is sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-  def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation_of_an_experiment(self):
-    """ Test that the feature is enabled for the user if bucketed into variation of an experiment.
+  def test_is_feature_enabled__returns_true_for_feature_experiment_if_property_featureEnabled_is_true(self):
+    """ Test that the feature is enabled for the user if bucketed into variation of an experiment and
+    the variation's featureEnabled property is True.
     Also confirm that impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1217,6 +1218,10 @@ class OptimizelyTest(base.BaseTest):
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+    # Assert that featureEnabled property is True
+    self.assertTrue(mock_variation.featureEnabled)
+
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(
                       mock_experiment,
@@ -1260,6 +1265,37 @@ class OptimizelyTest(base.BaseTest):
                                 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
+  def test_is_feature_enabled__returns_false_for_feature_experiment_if_property_featureEnabled_is_false(self):
+    """ Test that the feature is disabled for the user if bucketed into variation of an experiment and
+    the variation's featureEnabled property is False.
+    Also confirm that impression event is not dispatched. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
+
+    mock_experiment = project_config.get_experiment_from_key('test_experiment')
+    mock_variation = project_config.get_variation_from_id('test_experiment', '111128')
+
+    # Assert that featureEnabled property is False
+    self.assertFalse(mock_variation.featureEnabled)
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(
+                      mock_experiment,
+                      mock_variation,
+                      decision_service.DECISION_SOURCE_EXPERIMENT
+                    )) as mock_decision, \
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+        mock.patch('time.time', return_value=42):
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+
+    mock_decision.assert_called_once_with(feature, 'test_user', None)
+
+    # Check that impression event is not sent
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
   def test_is_feature_enabled__returns_true_if_user_is_bucketed_into_a_variation_of_a_rollout(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
     Also confirm that no impression event is dispatched. """
@@ -1270,6 +1306,10 @@ class OptimizelyTest(base.BaseTest):
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
     mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+    # Set featureEnabled property to False to ensure this property is not taken into account
+    mock_variation.featureEnabled = False
+
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(
                       mock_experiment,
@@ -1280,6 +1320,48 @@ class OptimizelyTest(base.BaseTest):
         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
         mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+
+    mock_decision.assert_called_once_with(feature, 'test_user', None)
+
+    # Check that impression event is not sent
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_is_feature_enabled__returns_false_when_user_is_not_bucketed_into_any_variation(self):
+    """ Test that the feature is not enabled for the user if user is neither bucketed for
+    Feature Experiment nor for Feature Rollout.
+    Also confirm that impression event is not dispatched. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+    feature = project_config.get_feature_from_key('test_feature_in_experiment')
+    # Test with decision_service.DECISION_SOURCE_EXPERIMENT
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(
+                      None,
+                      None,
+                      decision_service.DECISION_SOURCE_EXPERIMENT
+                    )) as mock_decision, \
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+        mock.patch('time.time', return_value=42):
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+
+    mock_decision.assert_called_once_with(feature, 'test_user', None)
+
+    # Check that impression event is not sent
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+    # Test with decision_service.DECISION_SOURCE_ROLLOUT
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(
+                      None,
+                      None,
+                      decision_service.DECISION_SOURCE_ROLLOUT
+                    )) as mock_decision, \
+        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+        mock.patch('time.time', return_value=42):
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
 

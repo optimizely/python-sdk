@@ -400,15 +400,19 @@ class Optimizely(object):
 
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
     if decision.variation:
-      self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
-      # Send event if Decision came from an experiment.
-      if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
-        self._send_impression_event(decision.experiment,
-                                    decision.variation,
-                                    user_id,
-                                    attributes)
+      is_source_rollout = decision.source == decision_service.DECISION_SOURCE_ROLLOUT
+      feature_enabled = is_source_rollout or decision.variation.featureEnabled
 
-      return True
+      if feature_enabled:
+        self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+        # Send event if Decision came from an experiment.
+        if not is_source_rollout:
+          self._send_impression_event(decision.experiment,
+                                      decision.variation,
+                                      user_id,
+                                      attributes)
+
+        return True
 
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
     return False
