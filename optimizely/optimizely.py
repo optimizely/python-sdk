@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -399,7 +399,7 @@ class Optimizely(object):
       return False
 
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
-    if decision.variation:
+    if decision.variation and decision.variation.featureEnabled:
       self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
       # Send event if Decision came from an experiment.
       if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:

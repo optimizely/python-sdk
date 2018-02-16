@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -109,7 +109,8 @@ class Variation(BaseEntity):
       self.id = id
       self.value = value
 
-  def __init__(self, id, key, variables=None, **kwargs):
+  def __init__(self, id, key, featureEnabled=False, variables=None, **kwargs):
     self.id = id
     self.key = key
+    self.featureEnabled = featureEnabled
     self.variables = variables or []
