@@ -985,6 +985,25 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_rollout_id_map, project_config.rollout_id_map)
     self.assertEqual(expected_variation_variable_usage_map, project_config.variation_variable_usage_map)
 
+  def test_variation_has_featureEnabled_false_if_prop_undefined(self):
+    """ Test that featureEnabled property by default is set to False, when not given in the data file"""
+    variation = {
+            'key': 'group_exp_1_variation',
+            'id': '28902',
+            'variables': [{
+              'id': '128',
+              'value': 'stage'
+            }, {
+              'id': '129',
+              'value': '112'
+            }, {
+              'id': '130',
+              'value': '1.211'
+            }]}
+
+    variation_entity = entities.Variation(**variation)
+    self.assertFalse(variation_entity.featureEnabled)
+
   def test_get_version(self):
     """ Test that JSON version is retrieved correctly when using get_version. """
 
