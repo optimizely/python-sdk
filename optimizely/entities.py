@@ -109,10 +109,7 @@ class Variation(BaseEntity):
       self.id = id
       self.value = value
 
-  def __init__(self, id, key, featureEnabled=None, variables=None, **kwargs):
-    if featureEnabled is None:
-      featureEnabled = False
-
+  def __init__(self, id, key, featureEnabled=False, variables=None, **kwargs):
     self.id = id
     self.key = key
     self.featureEnabled = featureEnabled
