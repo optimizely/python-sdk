@@ -999,9 +999,14 @@ class ConfigTest(base.BaseTest):
             }, {
               'id': '130',
               'value': '1.211'
-            }]}
+            }]
+          }
 
     variation_entity = entities.Variation(**variation)
+
+    self.assertEqual(variation['id'], variation_entity.id)
+    self.assertEqual(variation['key'], variation_entity.key)
+    self.assertEqual(variation['variables'], variation_entity.variables)
     self.assertFalse(variation_entity.featureEnabled)
 
   def test_get_version(self):
