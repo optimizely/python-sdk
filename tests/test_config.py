@@ -988,19 +988,19 @@ class ConfigTest(base.BaseTest):
   def test_variation_has_featureEnabled_false_if_prop_undefined(self):
     """ Test that featureEnabled property by default is set to False, when not given in the data file"""
     variation = {
-            'key': 'group_exp_1_variation',
-            'id': '28902',
-            'variables': [{
-              'id': '128',
-              'value': 'stage'
-            }, {
-              'id': '129',
-              'value': '112'
-            }, {
-              'id': '130',
-              'value': '1.211'
-            }]
-          }
+      'key': 'group_exp_1_variation',
+      'id': '28902',
+      'variables': [{
+        'id': '128',
+        'value': 'stage'
+      }, {
+        'id': '129',
+        'value': '112'
+      }, {
+        'id': '130',
+        'value': '1.211'
+      }]
+    }
 
     variation_entity = entities.Variation(**variation)
 
