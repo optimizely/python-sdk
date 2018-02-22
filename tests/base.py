@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -172,6 +172,7 @@ class BaseTest(unittest.TestCase):
         'variations': [{
           'key': 'control',
           'id': '111128',
+          'featureEnabled': False,
           'variables': [{
             'id': '127', 'value': 'false'
           }, {
@@ -184,6 +185,7 @@ class BaseTest(unittest.TestCase):
         }, {
           'key': 'variation',
           'id': '111129',
+          'featureEnabled': True,
           'variables': [{
             'id': '127', 'value': 'true'
           }, {
@@ -288,7 +290,8 @@ class BaseTest(unittest.TestCase):
           }],
           'variations': [{
             'key': '211129',
-            'id': '211129'
+            'id': '211129',
+            'featureEnabled': True
           }]
         }, {
           'id': '211137',
@@ -303,7 +306,8 @@ class BaseTest(unittest.TestCase):
           }],
           'variations': [{
             'key': '211139',
-            'id': '211139'
+            'id': '211139',
+            'featureEnabled': True
           }]
         }, {
           'id': '211147',
@@ -318,7 +322,8 @@ class BaseTest(unittest.TestCase):
           }],
           'variations': [{
             'key': '211149',
-            'id': '211149'
+            'id': '211149',
+            'featureEnabled': True
           }]
         }]
       }],

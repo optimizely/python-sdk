@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -226,6 +226,7 @@ class ConfigTest(base.BaseTest):
         'variations': [{
           'key': 'control',
           'id': '111128',
+          'featureEnabled': False,
           'variables': [{
             'id': '127',
             'value': 'false'
@@ -233,6 +234,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'key': 'variation',
           'id': '111129',
+          'featureEnabled': False,
           'variables': [{
             'id': '127',
             'value': 'true'
@@ -251,6 +253,7 @@ class ConfigTest(base.BaseTest):
           'variations': [{
             'key': 'group_exp_1_control',
             'id': '28901',
+            'featureEnabled': False,
             'variables': [{
               'id': '128',
               'value': 'prod'
@@ -264,6 +267,7 @@ class ConfigTest(base.BaseTest):
           }, {
             'key': 'group_exp_1_variation',
             'id': '28902',
+            'featureEnabled': False,
             'variables': [{
               'id': '128',
               'value': 'stage'
@@ -295,10 +299,12 @@ class ConfigTest(base.BaseTest):
           'variations': [{
             'key': 'group_exp_2_control',
             'id': '28905',
+            'featureEnabled': False,
             'variables': []
           }, {
             'key': 'group_exp_2_variation',
             'id': '28906',
+            'featureEnabled': False,
             'variables': []
           }],
           'forcedVariations': {
@@ -356,6 +362,7 @@ class ConfigTest(base.BaseTest):
         '111127', 'test_experiment', 'Running', ['11154'], [{
           'key': 'control',
           'id': '111128',
+          'featureEnabled': False,
           'variables': [{
             'id': '127',
             'value': 'false'
@@ -363,6 +370,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'key': 'variation',
           'id': '111129',
+          'featureEnabled': False,
           'variables': [{
             'id': '127',
             'value': 'true'
@@ -385,6 +393,7 @@ class ConfigTest(base.BaseTest):
         '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',
           'id': '28901',
+          'featureEnabled': False,
           'variables': [{
             'id': '128',
             'value': 'prod'
@@ -398,6 +407,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'key': 'group_exp_1_variation',
           'id': '28902',
+          'featureEnabled': False,
           'variables': [{
             'id': '128',
             'value': 'stage'
@@ -423,10 +433,12 @@ class ConfigTest(base.BaseTest):
         '32223', 'group_exp_2', 'Running', [], [{
           'key': 'group_exp_2_control',
           'id': '28905',
+          'featureEnabled': False,
           'variables': []
         }, {
           'key': 'group_exp_2_variation',
           'id': '28906',
+          'featureEnabled': False,
           'variables': []
         }], {
             'user_1': 'group_exp_2_control',
@@ -462,15 +474,15 @@ class ConfigTest(base.BaseTest):
     }
     expected_variation_key_map = {
       'test_experiment': {
-        'control': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}]),
-        'variation': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}])
+        'control': entities.Variation('111128', 'control', False, [{'id': '127', 'value': 'false'}]),
+        'variation': entities.Variation('111129', 'variation', False, [{'id': '127', 'value': 'true'}])
       },
       'group_exp_1': {
         'group_exp_1_control': entities.Variation(
-          '28901', 'group_exp_1_control', [
+          '28901', 'group_exp_1_control', False, [
             {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}]),
         'group_exp_1_variation': entities.Variation(
-          '28902', 'group_exp_1_variation', [
+          '28902', 'group_exp_1_variation', False, [
             {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}])
       },
       'group_exp_2': {
@@ -480,13 +492,13 @@ class ConfigTest(base.BaseTest):
     }
     expected_variation_id_map = {
       'test_experiment': {
-        '111128': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}]),
-        '111129': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}])
+        '111128': entities.Variation('111128', 'control', False, [{'id': '127', 'value': 'false'}]),
+        '111129': entities.Variation('111129', 'variation', False, [{'id': '127', 'value': 'true'}])
       },
       'group_exp_1': {
-        '28901': entities.Variation('28901', 'group_exp_1_control', [
+        '28901': entities.Variation('28901', 'group_exp_1_control', False, [
             {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}]),
-        '28902': entities.Variation('28902', 'group_exp_1_variation', [
+        '28902': entities.Variation('28902', 'group_exp_1_variation', False, [
             {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}])
       },
       'group_exp_2': {
@@ -861,15 +873,15 @@ class ConfigTest(base.BaseTest):
     }
     expected_variation_key_map = {
       'test_experiment': {
-        'control': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}]),
-        'variation': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}])
+        'control': entities.Variation('111128', 'control', False, [{'id': '127', 'value': 'false'}]),
+        'variation': entities.Variation('111129', 'variation', False, [{'id': '127', 'value': 'true'}])
       },
       'group_exp_1': {
         'group_exp_1_control': entities.Variation(
-          '28901', 'group_exp_1_control', [
+          '28901', 'group_exp_1_control', False, [
             {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}]),
         'group_exp_1_variation': entities.Variation(
-          '28902', 'group_exp_1_variation', [
+          '28902', 'group_exp_1_variation', False, [
             {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}])
       },
       'group_exp_2': {
@@ -877,18 +889,18 @@ class ConfigTest(base.BaseTest):
         'group_exp_2_variation': entities.Variation('28906', 'group_exp_2_variation')
       },
       '211112': {
-        '211113': entities.Variation('211113', '211113', [{'id': '131', 'value': '15'}])
+        '211113': entities.Variation('211113', '211113', False, [{'id': '131', 'value': '15'}])
       }
     }
     expected_variation_id_map = {
       'test_experiment': {
-        '111128': entities.Variation('111128', 'control', [{'id': '127', 'value': 'false'}]),
-        '111129': entities.Variation('111129', 'variation', [{'id': '127', 'value': 'true'}])
+        '111128': entities.Variation('111128', 'control', False, [{'id': '127', 'value': 'false'}]),
+        '111129': entities.Variation('111129', 'variation', False, [{'id': '127', 'value': 'true'}])
       },
       'group_exp_1': {
-        '28901': entities.Variation('28901', 'group_exp_1_control', [
+        '28901': entities.Variation('28901', 'group_exp_1_control', False, [
             {'id': '128', 'value': 'prod'}, {'id': '129', 'value': '1772'}, {'id': '130', 'value': '1.22992'}]),
-        '28902': entities.Variation('28902', 'group_exp_1_variation', [
+        '28902': entities.Variation('28902', 'group_exp_1_variation', False, [
             {'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}])
       },
       'group_exp_2': {
@@ -896,7 +908,7 @@ class ConfigTest(base.BaseTest):
         '28906': entities.Variation('28906', 'group_exp_2_variation')
       },
       '211112': {
-        '211113': entities.Variation('211113', '211113', [{'id': '131', 'value': '15'}])
+        '211113': entities.Variation('211113', '211113', False, [{'id': '131', 'value': '15'}])
       }
     }
 
@@ -972,6 +984,30 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_feature_key_map, project_config.feature_key_map)
     self.assertEqual(expected_rollout_id_map, project_config.rollout_id_map)
     self.assertEqual(expected_variation_variable_usage_map, project_config.variation_variable_usage_map)
+
+  def test_variation_has_featureEnabled_false_if_prop_undefined(self):
+    """ Test that featureEnabled property by default is set to False, when not given in the data file"""
+    variation = {
+      'key': 'group_exp_1_variation',
+      'id': '28902',
+      'variables': [{
+        'id': '128',
+        'value': 'stage'
+      }, {
+        'id': '129',
+        'value': '112'
+      }, {
+        'id': '130',
+        'value': '1.211'
+      }]
+    }
+
+    variation_entity = entities.Variation(**variation)
+
+    self.assertEqual(variation['id'], variation_entity.id)
+    self.assertEqual(variation['key'], variation_entity.key)
+    self.assertEqual(variation['variables'], variation_entity.variables)
+    self.assertFalse(variation_entity.featureEnabled)
 
   def test_get_version(self):
     """ Test that JSON version is retrieved correctly when using get_version. """
@@ -1161,7 +1197,8 @@ class ConfigTest(base.BaseTest):
       }],
       'variations': [{
         'key': '211129',
-        'id': '211129'
+        'id': '211129',
+        'featureEnabled': True
       }]
     }, {
       'id': '211137',
@@ -1176,7 +1213,8 @@ class ConfigTest(base.BaseTest):
       }],
       'variations': [{
         'key': '211139',
-        'id': '211139'
+        'id': '211139',
+        'featureEnabled': True
       }]
     }, {
       'id': '211147',
@@ -1191,7 +1229,8 @@ class ConfigTest(base.BaseTest):
       }],
       'variations': [{
         'key': '211149',
-        'id': '211149'
+        'id': '211149',
+        'featureEnabled': True
       }]
     }])
     self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
