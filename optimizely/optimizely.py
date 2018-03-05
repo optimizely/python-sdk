@@ -421,7 +421,7 @@ class Optimizely(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      A list of the keys of the features that are enabled for the user.
+      A sorted list of the keys of the features that are enabled for the user.
     """
 
     enabled_features = []
@@ -433,6 +433,7 @@ class Optimizely(object):
       if self.is_feature_enabled(feature.key, user_id, attributes):
         enabled_features.append(feature.key)
 
+    enabled_features.sort()
     return enabled_features
 
   def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):

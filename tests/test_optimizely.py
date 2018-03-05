@@ -1438,6 +1438,33 @@ class OptimizelyTest(base.BaseTest):
     mock_is_feature_enabled.assert_any_call('test_feature_in_group', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_experiment_and_rollout', 'user_1', None)
 
+  def test_get_enabled_features_returns_a_sorted_list(self):
+    """ Test that get_enabled_features returns a sorted list of enabled feature keys. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch('optimizely.optimizely.Optimizely.is_feature_enabled',
+                    return_value=True) as mock_is_feature_enabled:
+      received_features = opt_obj.get_enabled_features('user_1')
+
+    calls = [
+      mock.call('test_feature_in_experiment', 'user_1', None),
+      mock.call('test_feature_in_group', 'user_1', None),
+      mock.call('test_feature_in_rollout', 'user_1', None),
+      mock.call('test_feature_in_experiment_and_rollout', 'user_1', None)
+    ]
+
+    mock_is_feature_enabled.assert_has_calls(calls, any_order=False)
+
+    expected_enabled_features = [
+      'test_feature_in_experiment',
+      'test_feature_in_experiment_and_rollout',
+      'test_feature_in_group',
+      'test_feature_in_rollout'
+      ]
+
+    self.assertEqual(expected_enabled_features, received_features)
+
   def test_get_enabled_features__invalid_object(self):
     """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
 
