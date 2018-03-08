@@ -147,16 +147,17 @@ def is_feature_enabled():
   attributes = payload.get('attributes')
 
   feature_enabled = optimizely_instance.is_feature_enabled(feature_flag_key, user_id, attributes)
-  result = 'true' if feature_enabled else 'false'
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+
+  result = feature_enabled if feature_enabled == None else 'true' if feature_enabled == True else 'false'
   return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 
 @app.route('/get_feature_variable_boolean', methods=['POST'])
 def get_feature_variable_boolean():
   payload = request.get_json()
-  variable_key = payload.get('feature_flag_key')
-  feature_flag_key = payload.get('variable_key')
+  feature_flag_key = payload.get('feature_flag_key')
+  variable_key = payload.get('variable_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
 
@@ -164,34 +165,32 @@ def get_feature_variable_boolean():
                                                                    variable_key,
                                                                    user_id,
                                                                    attributes)
-  result = 'true' if boolean_value else 'false'
-
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  return json.dumps({'result': result,
+  return json.dumps({'result': boolean_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/get_feature_variable_double', methods=['POST'])
 def get_feature_variable_double():
   payload = request.get_json()
-  variable_key = payload.get('feature_flag_key')
-  feature_flag_key = payload.get('variable_key')
+  feature_flag_key = payload.get('feature_flag_key')
+  variable_key = payload.get('variable_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
 
-  double_value = optimizely_instance.get_feature_variable_integer(feature_flag_key,
+  double_value = optimizely_instance.get_feature_variable_double(feature_flag_key,
                                                                   variable_key,
                                                                   user_id,
                                                                   attributes)
 
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  return json.dumps({'result': str(double_value),
+  return json.dumps({'result': double_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/get_feature_variable_integer', methods=['POST'])
 def get_feature_variable_integer():
   payload = request.get_json()
-  variable_key = payload.get('feature_flag_key')
-  feature_flag_key = payload.get('variable_key')
+  feature_flag_key = payload.get('feature_flag_key')
+  variable_key = payload.get('variable_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
 
@@ -201,18 +200,18 @@ def get_feature_variable_integer():
                                                                    attributes)
 
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
-  return json.dumps({'result': str(integer_value),
+  return json.dumps({'result': integer_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 @app.route('/get_feature_variable_string', methods=['POST'])
 def get_feature_variable_string():
   payload = request.get_json()
-  variable_key = payload.get('feature_flag_key')
-  feature_flag_key = payload.get('variable_key')
+  feature_flag_key = payload.get('feature_flag_key')
+  variable_key = payload.get('variable_key')
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
 
-  string_value = optimizely_instance.get_feature_variable_integer(feature_flag_key,
+  string_value = optimizely_instance.get_feature_variable_string(feature_flag_key,
                                                                   variable_key,
                                                                   user_id,
                                                                   attributes)
