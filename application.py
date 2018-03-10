@@ -108,7 +108,7 @@ def activate():
   attributes = payload.get('attributes')
 
   variation = optimizely_instance.activate(experiment_key, user_id, attributes=attributes)
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
 
   return json.dumps({'result': variation, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
 
@@ -120,7 +120,7 @@ def get_variation():
   user_id = payload.get('user_id')
   attributes = payload.get('attributes')
   variation = optimizely_instance.get_variation(experiment_key, user_id, attributes=attributes)
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 
@@ -134,7 +134,7 @@ def track():
 
   result = optimizely_instance.track(event_key, user_id, attributes, event_tags)
 
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
 
   return json.dumps({'result': result, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
 
@@ -225,7 +225,7 @@ def forced_variation():
   user_id = payload.get('user_id')
   experiment_key = payload.get('experiment_key')
   forced_variation_key = payload.get('forced_variation_key')
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
   result = optimizely_instance.set_forced_variation(experiment_key, user_id, forced_variation_key)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
@@ -241,7 +241,7 @@ def forced_variation_multiple_sets():
   experiment_key_2 = payload.get('experiment_key_2')
   forced_variation_key_1 = payload.get('forced_variation_key_1')
   forced_variation_key_2 = payload.get('forced_variation_key_2')
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
   result = optimizely_instance.set_forced_variation(experiment_key_1, user_id_1, forced_variation_key_1)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
@@ -271,7 +271,7 @@ def forced_variation_get_variation():
   attributes = payload.get('attributes')
   experiment_key = payload.get('experiment_key')
   forced_variation_key = payload.get('forced_variation_key')
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
   result = optimizely_instance.set_forced_variation(experiment_key, user_id, forced_variation_key)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
@@ -285,7 +285,7 @@ def forced_variation_activate():
   attributes = payload.get('attributes')
   experiment_key = payload.get('experiment_key')
   forced_variation_key = payload.get('forced_variation_key')
-  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
   result = optimizely_instance.set_forced_variation(experiment_key, user_id, forced_variation_key)
   if result is False:
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
