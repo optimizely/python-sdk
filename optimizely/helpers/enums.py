@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -39,10 +39,10 @@ class Errors(object):
   INVALID_FEATURE_KEY_ERROR = 'Provided feature key is not in the datafile.'
   INVALID_GROUP_ID_ERROR = 'Provided group is not in datafile.'
   INVALID_INPUT_ERROR = 'Provided "{}" is in an invalid format.'
+  INVALID_USER_ID_ERROR = 'User ID is invalid.'
   INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
   INVALID_VARIABLE_KEY_ERROR = 'Provided variable key is not in the feature flag.'
   NONE_FEATURE_KEY_PARAMETER = '"None" is an invalid value for feature key.'
-  NONE_USER_ID_PARAMETER = '"None" is an invalid value for user ID.'
   NONE_VARIABLE_KEY_PARAMETER = '"None" is an invalid value for variable key.'
   UNSUPPORTED_DATAFILE_VERSION = 'Provided datafile has unsupported version. ' \
                                  'Please use SDK version 1.1.0 or earlier for datafile version 1.'
