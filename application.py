@@ -153,6 +153,18 @@ def is_feature_enabled():
   return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 
+@app.route('/get_enabled_features', methods=['POST'])
+def get_enabled_features():
+  payload = request.get_json()
+  user_id = payload.get('user_id')
+  attributes = payload.get('attributes')
+
+  enabled_features = optimizely_instance.get_enabled_features(user_id, attributes)
+  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+
+  return json.dumps({'result': enabled_features, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
+
+
 @app.route('/get_feature_variable_boolean', methods=['POST'])
 def get_feature_variable_boolean():
   payload = request.get_json()
