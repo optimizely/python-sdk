@@ -1178,23 +1178,30 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
+    """ With None feature key. """
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertFalse(opt_obj.is_feature_enabled(None, 'test_user'))
+    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+
+    """ With empty feature key. """
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertFalse(opt_obj.is_feature_enabled('', 'test_user'))
-    mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
-    self.assertEqual(2, mock_logger.call_count)
+    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
 
   def test_is_feature_enabled__returns_false_for_none_or_empty_user_id(self):
     """ Test that is_feature_enabled returns false if the provided user ID is empty or None. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
+    """ With None user ID. """
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
       self.assertFalse(opt_obj.is_feature_enabled('feature_key', None))
-      self.assertFalse(opt_obj.is_feature_enabled('feature_key', ''))
+    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
 
-    mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
-    self.assertEqual(2, mock_logger.call_count)
+    """ With empty user ID. """
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertFalse(opt_obj.is_feature_enabled('feature_key', ''))
+    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
 
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
@@ -1849,12 +1856,15 @@ class OptimizelyWithLoggingTest(base.BaseTest):
   def test_track__returns_none_if_none_or_empty_user_id(self):
     """ Test that expected log messages are logged during track when user_id is empty or None. """
 
+    """ With None user ID. """
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.track('test_event', None, event_tags=4200)
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
+
+    """ With empty user ID. """
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.track('test_event', '', event_tags=4200)
-      self.optimizely.track('test_event', None, event_tags=4200)
-
-    mock_logging.assert_called_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
-    self.assertEqual(2, mock_logging.call_count)
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
 
   def test_track__invalid_attributes(self):
     """ Test that expected log messages are logged during track when attributes are in invalid format. """
@@ -1903,12 +1913,15 @@ class OptimizelyWithLoggingTest(base.BaseTest):
   def test_get_variation__returns_none_if_none_or_empty_user_id(self):
     """ Test that expected log messages are logged during get variation when user id is empty or None. """
 
+    """ With None user ID. """
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.get_variation('test_experiment', None, attributes={'test_attribute': 'test_value'})
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
+
+    """ With empty user ID. """
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.get_variation('test_experiment', '', attributes={'test_attribute': 'test_value'})
-      self.optimizely.get_variation('test_experiment', None, attributes={'test_attribute': 'test_value'})
-
-    mock_logging.assert_called_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
-    self.assertEqual(2, mock_logging.call_count)
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.INVALID_USER_ID_ERROR)
 
   def test_activate__invalid_attributes(self):
     """ Test that expected log messages are logged during activate when attributes are in invalid format. """
