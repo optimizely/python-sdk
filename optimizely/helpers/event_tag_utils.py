@@ -1,4 +1,4 @@
-# Copyright 2017, Optimizely
+# Copyright 2017-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -19,34 +19,71 @@ REVENUE_METRIC_TYPE = 'revenue'
 NUMERIC_METRIC_TYPE = 'value'
 
 
-def get_revenue_value(event_tags):
+def get_revenue_value(event_tags, logger):
+  """
+  A smart getter of the revenue value from the event tags.
+
+  Args:
+    event_tags: A dictionary of event tags.
+    logger - A component which provides a log method to log messages.
+
+  Returns:
+    An integer revenue value is returned when the provided revenue
+    value is in the following format:
+      - A string (properly formatted, e.g., no commas)
+      - An integer
+      - A float or double
+      - 4.0 or "4.0" will be parsed to int(4).
+    None is returned when the provided revenue values is in
+    the following format:
+      - None
+      - A boolean
+      - inf, -inf, nan
+      - A string not properly formatted (e.g., '1,234')
+      - 4.1 can not be parsed
+      - Any values that cannot be cast to a float (e.g., an array or dictionary)
+  """
+
   if event_tags is None:
+    logger.log(enums.LogLevels.DEBUG, 'Event tags is undefined.')
     return None
 
   if not isinstance(event_tags, dict):
+    logger.log(enums.LogLevels.DEBUG, 'Event tags is not a dict.')
     return None
 
   if REVENUE_METRIC_TYPE not in event_tags:
+    logger.log(enums.LogLevels.DEBUG, 'The revenue key is not defined in the event tags.')
     return None
 
   raw_value = event_tags[REVENUE_METRIC_TYPE]
 
-  if isinstance(raw_value, bool):
+  if not type(raw_value) in (float, int, str):
+    logger.log(enums.LogLevels.WARNING, 'Revenue value is not an integer or float or a string.')
     return None
 
-  if not isinstance(raw_value, numbers.Integral):
+  if isinstance(raw_value, str):
+    try:
+      raw_value = float(raw_value)
+    except ValueError:
+      logger.log(enums.LogLevels.WARNING, 'Revenue value is not a numeric string.')
+      return None
+
+  if raw_value != int(raw_value):
+    logger.log(enums.LogLevels.WARNING, 'Failed to parse revenue value "%s" from event tags.' % raw_value)
     return None
 
-  return raw_value
+  logger.log(enums.LogLevels.INFO, 'Parsed revenue value "%s" from event tags.' % int(raw_value))
+  return int(raw_value)
 
 
-def get_numeric_value(event_tags, logger=None):
+def get_numeric_value(event_tags, logger):
   """
   A smart getter of the numeric value from the event tags.
 
   Args:
       event_tags: A dictionary of event tags.
-      logger: Optional logger.
+      logger - A component which provides a log method to log messages.
 
   Returns:
       A float numeric metric value is returned when the provided numeric

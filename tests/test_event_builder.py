@@ -350,7 +350,7 @@ class EventBuilderTest(base.BaseTest):
             'key': 'test_event',
             'tags': {
               'non-revenue': 'abc',
-              'revenue': '4200',
+              'revenue': '4200.5',
               'value': True
             }
           }]
@@ -367,7 +367,7 @@ class EventBuilderTest(base.BaseTest):
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
-        {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
+        {'revenue': '4200.5', 'value': True, 'non-revenue': 'abc'},
         [('111127', '111129')]
       )
     self._validate_event_object(event_obj,

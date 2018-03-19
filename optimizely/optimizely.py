@@ -79,7 +79,7 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
       return
 
-    self.event_builder = event_builder.EventBuilder(self.config)
+    self.event_builder = event_builder.EventBuilder(self.config, self.logger)
     self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
     self.notification_center = notification_center(self.logger)
 

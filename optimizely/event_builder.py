@@ -33,8 +33,9 @@ class Event(object):
 class BaseEventBuilder(object):
   """ Base class which encapsulates methods to build events for tracking impressions and conversions. """
 
-  def __init__(self, config):
+  def __init__(self, config, logger):
     self.config = config
+    self.logger = logger
 
   @abstractproperty
   class EventParams(object):
@@ -234,11 +235,11 @@ class EventBuilder(BaseEventBuilder):
         }
 
         if event_tags:
-          revenue_value = event_tag_utils.get_revenue_value(event_tags)
+          revenue_value = event_tag_utils.get_revenue_value(event_tags, self.logger)
           if revenue_value is not None:
             event_dict[event_tag_utils.REVENUE_METRIC_TYPE] = revenue_value
 
-          numeric_value = event_tag_utils.get_numeric_value(event_tags, self.config.logger)
+          numeric_value = event_tag_utils.get_numeric_value(event_tags, self.logger)
           if numeric_value is not None:
             event_dict[event_tag_utils.NUMERIC_METRIC_TYPE] = numeric_value
 

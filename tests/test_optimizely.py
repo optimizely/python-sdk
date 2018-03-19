@@ -1084,7 +1084,7 @@ class OptimizelyTest(base.BaseTest):
         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
-                            event_tags={'revenue': '4200', 'value': True})
+                            event_tags={'revenue': '4200.5', 'value': True})
 
     expected_params = {
       'visitors': [{
@@ -1108,7 +1108,7 @@ class OptimizelyTest(base.BaseTest):
             'key': 'test_event',
             'tags': {
               'value': True,
-              'revenue': '4200'
+              'revenue': '4200.5'
             }
           }]
         }]
