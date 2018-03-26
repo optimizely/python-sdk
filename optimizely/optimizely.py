@@ -297,14 +297,6 @@ class Optimizely(object):
       self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_DATAFILE.format('track'))
       return
 
-    if event_tags:
-      if isinstance(event_tags, numbers.Number):
-        event_tags = {
-          'revenue': event_tags
-        }
-        self.logger.log(enums.LogLevels.WARNING,
-                        'Event value is deprecated in track call. Use event tags to pass in revenue value instead.')
-
     if not self._validate_user_inputs(attributes, event_tags):
       return
 
