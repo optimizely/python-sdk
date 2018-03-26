@@ -1022,57 +1022,6 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_track__with_deprecated_event_value(self):
-    """ Test that track calls dispatch_event with right params when event_value information is provided. """
-
-    with mock.patch('optimizely.decision_service.DecisionService.get_variation',
-                    return_value=self.project_config.get_variation_from_id(
-                      'test_experiment', '111128'
-                    )) as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
-      self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'}, event_tags=4200)
-
-    expected_params = {
-      'account_id': '12001',
-      'project_id': '111001',
-      'visitors': [{
-        'visitor_id': 'test_user',
-        'attributes': [{
-          'type': 'custom',
-          'value': 'test_value',
-          'entity_id': '111094',
-          'key': 'test_attribute'
-        }],
-        'snapshots': [{
-          'decisions': [{
-            'variation_id': '111128',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
-          'events': [{
-            'entity_id': '111095',
-            'key': 'test_event',
-            'revenue': 4200,
-            'tags': {
-              'revenue': 4200,
-            },
-            'timestamp': 42000,
-            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-          }]
-        }],
-      }],
-      'client_version': version.__version__,
-      'client_name': 'python-sdk',
-      'anonymize_ip': False
-    }
-    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
-                                               'test_user', {'test_attribute': 'test_value'})
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
-                                expected_params, 'POST', {'Content-Type': 'application/json'})
-
   def test_track__with_invalid_event_tags(self):
     """ Test that track calls dispatch_event with right params when invalid event tags are provided. """
 
@@ -1727,6 +1676,12 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     self.assertRaisesRegexp(exceptions.InvalidAttributeException, enums.Errors.INVALID_ATTRIBUTE_FORMAT,
                             self.optimizely.track, 'test_event', 'test_user', attributes='invalid')
 
+  def test_track__with_event_tag__invalid_event_tag(self):
+    """ Test that track raises exception if event_tag is in invalid format. """
+
+    self.assertRaisesRegexp(exceptions.InvalidEventTagException, enums.Errors.INVALID_EVENT_TAG_FORMAT,
+                            self.optimizely.track, 'test_event', 'test_user', event_tags=4200)
+
   def test_get_variation__with_attributes__invalid_attributes(self):
     """ Test that get variation raises exception if attributes are in invalid format. """
 
@@ -1847,23 +1802,16 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
 
-  def test_track__deprecated_event_tag(self):
-    """ Test that expected log messages are logged during track when attributes are in invalid format. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.optimizely.track('test_event', 'test_user', event_tags=4200)
-
-    mock_logging.assert_any_call(enums.LogLevels.WARNING,
-                                 'Event value is deprecated in track call. '
-                                 'Use event tags to pass in revenue value instead.')
-
   def test_track__invalid_event_tag(self):
-    """ Test that expected log messages are logged during track when attributes are in invalid format. """
+    """ Test that expected log messages are logged during track when event_tag is in invalid format. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
       self.optimizely.track('test_event', 'test_user', event_tags='4200')
+      mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.optimizely.track('test_event', 'test_user', event_tags=4200)
+      mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
 
   def test_track__dispatch_raises_exception(self):
     """ Test that track logs dispatch failure gracefully. """
