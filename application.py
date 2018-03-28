@@ -1,4 +1,6 @@
 import json
+import logging
+from os import environ
 import types
 from flask import Flask
 from flask import request
@@ -20,9 +22,6 @@ datafile.close()
 optimizely_instance = None
 user_profile_service_instance = None
 listener_return_maps = None
-
-optlog = logger.SimpleLogger()
-
 
 def copy_func(f, name=None):
   return types.FunctionType(f.func_code, f.func_globals, name or f.func_name,
@@ -72,7 +71,9 @@ def before_request():
 
   with_listener = request.payload.get('with_listener')
 
-  optimizely_instance = optimizely.Optimizely(datafile_content, logger=logger.SimpleLogger(), user_profile_service=user_profile_service_instance)
+  log_level = environ.get('OPTIMIZELY_SDK_LOG_LEVEL', 'DEBUG')
+  min_level = getattr(logging, log_level)
+  optimizely_instance = optimizely.Optimizely(datafile_content, logger=logger.SimpleLogger(min_level=min_level), user_profile_service=user_profile_service_instance)
 
   if with_listener is not None:
     for listener_add in with_listener:
