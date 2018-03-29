@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,5 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version_info = (1, 4, 0)
+version_info = (2, 0, '0-beta.1')
 __version__ = '.'.join(str(v) for v in version_info)
