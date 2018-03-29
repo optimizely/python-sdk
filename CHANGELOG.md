@@ -11,7 +11,7 @@ is_enabled = optimizel_client.is_feature_enabled('my_feature_key', 'my_user', us
 
 - All enabled features for the user can be retrieved by calling:
 ```
-enabled_feature = optimizely_client.get_enabled_features('my_user', user_attributes)
+enabled_features = optimizely_client.get_enabled_features('my_user', user_attributes)
 ```
 
 - Introduced Feature Variables to configure or parameterize a feature. There are four variable types: `String`, `Integer`, `Double`, `Boolean`.
