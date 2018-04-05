@@ -616,6 +616,8 @@ class ConfigTest(base.BaseTest):
         '129': entities.Variation.VariableUsage('129', '112'),
         '130': entities.Variation.VariableUsage('130', '1.211')
       },
+      '28905': {},
+      '28906': {},
       '211113': {
         '131': entities.Variation.VariableUsage('131', '15')
       }
