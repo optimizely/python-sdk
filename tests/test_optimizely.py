@@ -1436,7 +1436,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logger.assert_called_once_with(
       enums.LogLevels.INFO,
-      'Value for variable "is_working" of feature flag "test_feature_in_experiment" is true for user "test_user".'
+      'Value for variable "is_working" for variation "variation" is "true".'
     )
 
   def test_get_feature_variable_double(self):
@@ -1454,7 +1454,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logger.assert_called_once_with(
       enums.LogLevels.INFO,
-      'Value for variable "cost" of feature flag "test_feature_in_experiment" is 10.02 for user "test_user".'
+      'Value for variable "cost" for variation "variation" is "10.02".'
     )
 
   def test_get_feature_variable_integer(self):
@@ -1472,7 +1472,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logger.assert_called_once_with(
       enums.LogLevels.INFO,
-      'Value for variable "count" of feature flag "test_feature_in_experiment" is 4243 for user "test_user".'
+      'Value for variable "count" for variation "variation" is "4243".'
     )
 
   def test_get_feature_variable_string(self):
@@ -1491,10 +1491,71 @@ class OptimizelyTest(base.BaseTest):
 
     mock_logger.assert_called_once_with(
       enums.LogLevels.INFO,
-      'Value for variable "environment" of feature flag "test_feature_in_experiment" is staging for user "test_user".'
+      'Value for variable "environment" for variation "variation" is "staging".'
     )
 
-  def test_get_feature_variable__returns_default_value(self):
+  def test_get_feature_variable__returns_default_value_if_variable_usage_not_in_variation(self):
+    """ Test that get_feature_variable_* returns default value if variable usage not present in variation. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+
+    # Empty variable usage map for the mocked variation
+    opt_obj.config.variation_variable_usage_map['111129'] = None
+
+    # Boolean
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
+
+    mock_logger.assert_called_once_with(
+      enums.LogLevels.INFO,
+      'Variable "is_working" is not used in variation "variation". Assinging default value "true".'
+    )
+
+    # Double
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertEqual(10.99,
+                       opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
+
+    mock_logger.assert_called_once_with(
+      enums.LogLevels.INFO,
+      'Variable "cost" is not used in variation "variation". Assinging default value "10.99".'
+    )
+
+    # Integer
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertEqual(999,
+                       opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
+
+    mock_logger.assert_called_once_with(
+      enums.LogLevels.INFO,
+      'Variable "count" is not used in variation "variation". Assinging default value "999".'
+    )
+
+    # String
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertEqual('devel',
+                       opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
+
+    mock_logger.assert_called_once_with(
+      enums.LogLevels.INFO,
+      'Variable "environment" is not used in variation "variation". Assinging default value "devel".'
+    )
+
+  def test_get_feature_variable__returns_default_value_if_no_variation(self):
     """ Test that get_feature_variable_* returns default value if no variation. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))

@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -90,10 +90,9 @@ class ProjectConfig(object):
       self.variation_id_map[experiment.key] = {}
       for variation in self.variation_key_map.get(experiment.key).values():
         self.variation_id_map[experiment.key][variation.id] = variation
-        if variation.variables:
-          self.variation_variable_usage_map[variation.id] = self._generate_key_map(
-            variation.variables, 'id', entities.Variation.VariableUsage
-          )
+        self.variation_variable_usage_map[variation.id] = self._generate_key_map(
+          variation.variables, 'id', entities.Variation.VariableUsage
+        )
 
     self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
     for feature in self.feature_key_map.values():
@@ -439,10 +438,27 @@ class ProjectConfig(object):
     variable_usages = self.variation_variable_usage_map[variation.id]
 
     # Find usage in given variation
-    variable_usage = variable_usages.get(variable.id)
+    variable_usage = None
+    if variable_usages:
+      variable_usage = variable_usages.get(variable.id)
 
-    # Return default value in case there is no variable usage for the variable.
-    return variable_usage.value if variable_usage else variable.defaultValue
+    if variable_usage:
+      variable_value = variable_usage.value
+      self.logger.log(
+        enums.LogLevels.INFO,
+        'Value for variable "%s" for variation "%s" is "%s".' % (
+          variable.key, variation.key, variable_value
+        ))
+
+    else:
+      variable_value = variable.defaultValue
+      self.logger.log(
+          enums.LogLevels.INFO,
+          'Variable "%s" is not used in variation "%s". Assinging default value "%s".' % (
+            variable.key, variation.key, variable_value
+          ))
+
+    return variable_value
 
   def get_variable_for_feature(self, feature_key, variable_key):
     """ Get the variable with the given variable key for the given feature.
