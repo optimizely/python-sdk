@@ -36,6 +36,7 @@ optimizely_instance = None
 user_profile_service_instance = None
 listener_return_maps = None
 
+
 def copy_func(f, name=None):
   return types.FunctionType(f.func_code, f.func_globals, name or f.func_name,
                             f.func_defaults, f.func_closure)
@@ -164,9 +165,9 @@ def is_feature_enabled():
   attributes = payload.get('attributes')
 
   feature_enabled = optimizely_instance.is_feature_enabled(feature_flag_key, user_id, attributes)
-  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
 
-  result = feature_enabled if feature_enabled == None else 'true' if feature_enabled == True else 'false'
+  result = feature_enabled if feature_enabled is None else 'true' if feature_enabled is True else 'false'
   return json.dumps({'result': result, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 
@@ -177,7 +178,7 @@ def get_enabled_features():
   attributes = payload.get('attributes')
 
   enabled_features = optimizely_instance.get_enabled_features(user_id, attributes)
-  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
 
   payload = {'result': enabled_features, 'user_profiles': user_profiles, 'listener_called': listener_return_maps}
   return json.dumps(payload), 200, {'content-type': 'application/json'}
@@ -195,7 +196,7 @@ def get_feature_variable_boolean():
                                                                    variable_key,
                                                                    user_id,
                                                                    attributes)
-  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': boolean_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
@@ -213,7 +214,7 @@ def get_feature_variable_double():
                                                                   user_id,
                                                                   attributes)
 
-  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': double_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
@@ -231,7 +232,7 @@ def get_feature_variable_integer():
                                                                    user_id,
                                                                    attributes)
 
-  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': integer_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
@@ -249,7 +250,7 @@ def get_feature_variable_string():
                                                                   user_id,
                                                                   attributes)
 
-  user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
+  user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': string_value, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
 

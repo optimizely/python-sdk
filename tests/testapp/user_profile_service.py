@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 class BaseUserProfileService(object):
   def __init__(self, user_profiles):
     self.user_profiles = {profile['user_id']: profile for profile in user_profiles} if user_profiles else {}
@@ -19,7 +20,6 @@ class BaseUserProfileService(object):
 class NormalService(BaseUserProfileService):
   def lookup(self, user_id):
     return self.user_profiles.get(user_id)
-
 
   def save(self, user_profile):
     user_id = user_profile['user_id']

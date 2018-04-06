@@ -1,6 +1,6 @@
 FROM python:2.7.10
 
-MAINTAINER Ali Rizvi <ali@optimizely.com>
+LABEL maintainer="developers@optimizely.com"
 
 # GitHub branch from which to build the SDK. Defaults to master
 ARG SDK_BRANCH=master
