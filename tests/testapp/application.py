@@ -86,7 +86,8 @@ def before_request():
 
   log_level = environ.get('OPTIMIZELY_SDK_LOG_LEVEL', 'DEBUG')
   min_level = getattr(logging, log_level)
-  optimizely_instance = optimizely.Optimizely(datafile_content, logger=logger.SimpleLogger(min_level=min_level), user_profile_service=user_profile_service_instance)
+  optimizely_instance = optimizely.Optimizely(datafile_content, logger=logger.SimpleLogger(min_level=min_level),
+                                              user_profile_service=user_profile_service_instance)
 
   if with_listener is not None:
     for listener_add in with_listener:
@@ -124,7 +125,8 @@ def activate():
   variation = optimizely_instance.activate(experiment_key, user_id, attributes=attributes)
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
 
-  return json.dumps({'result': variation, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
+  payload = {'result': variation, 'user_profiles': user_profiles, 'listener_called': listener_return_maps}
+  return json.dumps(payload), 200, {'content-type': 'application/json'}
 
 
 @app.route('/get_variation', methods=['POST'])
@@ -150,7 +152,8 @@ def track():
 
   user_profiles = user_profile_service_instance.user_profiles.values() if user_profile_service_instance else []
 
-  return json.dumps({'result': result, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
+  payload = {'result': result, 'user_profiles': user_profiles, 'listener_called': listener_return_maps}
+  return json.dumps(payload), 200, {'content-type': 'application/json'}
 
 
 @app.route('/is_feature_enabled', methods=['POST'])
@@ -176,7 +179,8 @@ def get_enabled_features():
   enabled_features = optimizely_instance.get_enabled_features(user_id, attributes)
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
 
-  return json.dumps({'result': enabled_features, 'user_profiles': user_profiles, 'listener_called' : listener_return_maps}), 200, {'content-type': 'application/json'}
+  payload = {'result': enabled_features, 'user_profiles': user_profiles, 'listener_called': listener_return_maps}
+  return json.dumps(payload), 200, {'content-type': 'application/json'}
 
 
 @app.route('/get_feature_variable_boolean', methods=['POST'])
@@ -195,6 +199,7 @@ def get_feature_variable_boolean():
   return json.dumps({'result': boolean_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
+
 @app.route('/get_feature_variable_double', methods=['POST'])
 def get_feature_variable_double():
   payload = request.get_json()
@@ -211,6 +216,7 @@ def get_feature_variable_double():
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': double_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
+
 
 @app.route('/get_feature_variable_integer', methods=['POST'])
 def get_feature_variable_integer():
@@ -229,6 +235,7 @@ def get_feature_variable_integer():
   return json.dumps({'result': integer_value,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
+
 @app.route('/get_feature_variable_string', methods=['POST'])
 def get_feature_variable_string():
   payload = request.get_json()
@@ -245,6 +252,7 @@ def get_feature_variable_string():
   user_profiles =user_profile_service_instance.user_profiles.values() if user_profile_service_instance else {}
   return json.dumps({'result': string_value, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
+
 @app.route('/forced_variation', methods=['POST'])
 def forced_variation():
   payload = request.get_json()
@@ -257,6 +265,7 @@ def forced_variation():
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
   variation = optimizely_instance.get_forced_variation(experiment_key, user_id)
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
+
 
 @app.route('/forced_variation_multiple_sets', methods=['POST'])
 def forced_variation_multiple_sets():
@@ -290,6 +299,7 @@ def forced_variation_multiple_sets():
                      'result_4': variation_4,
                      'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
+
 @app.route('/forced_variation_get_variation', methods=['POST'])
 def forced_variation_get_variation():
   payload = request.get_json()
@@ -304,6 +314,7 @@ def forced_variation_get_variation():
   variation = optimizely_instance.get_variation(experiment_key, user_id, attributes=attributes)
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
 
+
 @app.route('/forced_variation_activate', methods=['POST'])
 def forced_variation_activate():
   payload = request.get_json()
@@ -317,6 +328,7 @@ def forced_variation_activate():
     return json.dumps({'result': None, 'user_profiles': user_profiles}), 400, {'content-type': 'application/json'}
   variation = optimizely_instance.activate(experiment_key, user_id, attributes=attributes)
   return json.dumps({'result': variation, 'user_profiles': user_profiles}), 200, {'content-type': 'application/json'}
+
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=3000)

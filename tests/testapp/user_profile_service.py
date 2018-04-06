@@ -20,6 +20,7 @@ class NormalService(BaseUserProfileService):
   def lookup(self, user_id):
     return self.user_profiles.get(user_id)
 
+
   def save(self, user_profile):
     user_id = user_profile['user_id']
     self.user_profiles[user_id] = user_profile
