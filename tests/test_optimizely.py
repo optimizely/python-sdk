@@ -1086,6 +1086,20 @@ class OptimizelyTest(base.BaseTest):
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(0, mock_dispatch_event.call_count)
 
+  def test_track_invalid_event_key(self):
+    """ Test that track does not call dispatch_event when event does not exist. """
+
+    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event,\
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.optimizely.track('aabbcc_event', 'test_user')
+
+    self.assertEqual(0, mock_dispatch_event.call_count)
+    print mock_logging.call_args_list
+    mock_logging.assert_called_with(
+      enums.LogLevels.INFO,
+      'Not tracking user "test_user" for event "aabbcc_event".'
+    )
+
   def test_track__whitelisted_user_overrides_audience_check(self):
     """ Test that track does not check for user in audience when user is in whitelist. """
 
@@ -1121,6 +1135,16 @@ class OptimizelyTest(base.BaseTest):
       self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
+
+  def test_get_variation_invalid_experiment_key(self):
+    """ Test that get_variation retuns None when invalid experiment key is given. """
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.optimizely.get_variation('aabbccdd', 'test_user', None)
+
+    mock_logging.assert_called_with(
+      enums.LogLevels.INFO,
+      'Experiment key "aabbccdd" is invalid. Not activating user "test_user".'
+    )
 
   def test_is_feature_enabled__returns_false_for_none_feature_key(self):
     """ Test that is_feature_enabled returns false if the provided feature key is None. """
@@ -1693,6 +1717,26 @@ class OptimizelyTest(base.BaseTest):
       enums.LogLevels.WARNING,
       'Requested variable type "double", but variable is of type "boolean". '
       'Use correct API to retrieve value. Returning None.'
+    )
+
+  def test_get_feature_variable__returns_none_if_unable_to_cast(self):
+    """ Test that get_feature_variable_* returns None if unable_to_cast_value """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch('optimizely.project_config.ProjectConfig.get_typecast_value',
+                    side_effect=ValueError()),\
+         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+      self.assertEqual(None, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
+
+    mock_logger.assert_called_with(
+      enums.LogLevels.ERROR,
+      'Unable to cast value. Returning None.'
     )
 
 

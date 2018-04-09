@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -76,6 +76,18 @@ class BucketerTest(base.BaseTest):
     """ Test that bucket returns None for unknown experiment. """
 
     self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('invalid_experiment'),
+                                           'test_user',
+                                           'test_user'))
+
+  def test_bucket__invalid_group(self):
+    """ Test that bucket returns None for unknown group. """
+
+    project_config = self.project_config
+    experiment = project_config.get_experiment_from_key('group_exp_1')
+    # Set invalid group ID for the experiment
+    experiment.groupId = 'aabbcc'
+
+    self.assertIsNone(self.bucketer.bucket(experiment,
                                            'test_user',
                                            'test_user'))
 

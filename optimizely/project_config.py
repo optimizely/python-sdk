@@ -575,9 +575,6 @@ class ProjectConfig(object):
       return None
 
     variation = self.get_variation_from_id(experiment_key, variation_id)
-    if not variation:
-      # The invalid variation ID will be logged inside this call.
-      return None
 
     self.logger.log(enums.LogLevels.DEBUG,
                     'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map'

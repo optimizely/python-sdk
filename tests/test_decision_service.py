@@ -437,10 +437,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
     for the experiment, then it skips to the Everyone Else rule. """
 
     rollout = self.project_config.get_rollout_from_id('211111')
+    everyone_else_experiment = self.project_config.get_experiment_from_id('211147')
+    variation_to_mock = self.project_config.get_variation_from_id('211147', '211149')
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-      mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None):
-      self.assertEqual(decision_service.Decision(None, None, decision_service.DECISION_SOURCE_ROLLOUT),
+      mock.patch('optimizely.bucketer.Bucketer.bucket', side_effect= [None, variation_to_mock]):
+        self.assertEqual(decision_service.Decision(everyone_else_experiment, variation_to_mock, decision_service.DECISION_SOURCE_ROLLOUT),
                        self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
 
     # Check that after first experiment, it skips to the last experiment to check
@@ -454,8 +456,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     self.assertEqual(
       [mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule 1.'),
        mock.call(enums.LogLevels.DEBUG, 'User "test_user" is not in the traffic group for the targeting else. '
-                                        'Checking "Everyone Else" rule now.')
-       ], mock_logging.call_args_list)
+                                        'Checking "Everyone Else" rule now.'),
+       mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule "Everyone Else".')], 
+       mock_logging.call_args_list)
 
   def test_get_variation_for_rollout__returns_none_for_user_not_in_rollout(self, mock_logging):
     """ Test that get_variation_for_rollout returns None for the user not in the associated rollout. """
@@ -593,6 +596,20 @@ class FeatureFlagDecisionTests(base.BaseTest):
     mock_decision.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
     )
+
+  def test_get_variation_for_feature__returns_none_for_invalid_group_id(self, mock_logging):
+    """ Test that get_variation_for_feature returns None for unknown group ID. """
+
+    feature = self.project_config.get_feature_from_key('test_feature_in_group')
+    feature.groupId = 'aabbccdd'
+
+    self.assertEqual(decision_service.Decision(None,
+                                               None,
+                                               decision_service.DECISION_SOURCE_EXPERIMENT),
+                       self.decision_service.get_variation_for_feature(feature, 'test_user')
+                    )
+    mock_logging.assert_called_with(enums.LogLevels.ERROR, 
+                                     enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(self, _):
     """ Test that if a user is in the mutex group but the experiment is
