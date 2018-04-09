@@ -1,4 +1,4 @@
-# Copyright 2017, Optimizely
+# Copyright 2017-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -437,13 +437,14 @@ class FeatureFlagDecisionTests(base.BaseTest):
     for the experiment, then it skips to the Everyone Else rule. """
 
     rollout = self.project_config.get_rollout_from_id('211111')
-    everyone_else_experiment = self.project_config.get_experiment_from_id('211147')
+    everyone_else_exp = self.project_config.get_experiment_from_id('211147')
     variation_to_mock = self.project_config.get_variation_from_id('211147', '211149')
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
-      mock.patch('optimizely.bucketer.Bucketer.bucket', side_effect= [None, variation_to_mock]):
-        self.assertEqual(decision_service.Decision(everyone_else_experiment, variation_to_mock, decision_service.DECISION_SOURCE_ROLLOUT),
-                       self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
+      mock.patch('optimizely.bucketer.Bucketer.bucket', side_effect=[None, variation_to_mock]):
+        self.assertEqual(
+          decision_service.Decision(everyone_else_exp, variation_to_mock, decision_service.DECISION_SOURCE_ROLLOUT),
+          self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
 
     # Check that after first experiment, it skips to the last experiment to check
     self.assertEqual(
@@ -457,7 +458,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
       [mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule 1.'),
        mock.call(enums.LogLevels.DEBUG, 'User "test_user" is not in the traffic group for the targeting else. '
                                         'Checking "Everyone Else" rule now.'),
-       mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule "Everyone Else".')], 
+       mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule "Everyone Else".')],
        mock_logging.call_args_list)
 
   def test_get_variation_for_rollout__returns_none_for_user_not_in_rollout(self, mock_logging):
@@ -608,7 +609,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                                                decision_service.DECISION_SOURCE_EXPERIMENT),
                        self.decision_service.get_variation_for_feature(feature, 'test_user')
                     )
-    mock_logging.assert_called_with(enums.LogLevels.ERROR, 
+    mock_logging.assert_called_with(enums.LogLevels.ERROR,
                                      enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(self, _):

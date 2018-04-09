@@ -990,7 +990,7 @@ class ConfigTest(base.BaseTest):
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
     mock_logging.assert_called_once_with(
-      enums.LogLevels.DEBUG, 
+      enums.LogLevels.DEBUG,
       'No experiment "test_experiment" mapped to user "test_user" in the forced variation map.')
 
   def test_get_forced_variation_missing_variation_mapped_to_experiment(self):
@@ -1002,7 +1002,7 @@ class ConfigTest(base.BaseTest):
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
     mock_logging.assert_called_once_with(
-      enums.LogLevels.DEBUG, 
+      enums.LogLevels.DEBUG,
       'No variation mapped to experiment "test_experiment" in the forced variation map.')
 
   # set_forced_variation tests
@@ -1060,9 +1060,9 @@ class ConfigTest(base.BaseTest):
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
     mock_logging.assert_called_once_with(
-      enums.LogLevels.DEBUG, 
+      enums.LogLevels.DEBUG,
       'Variation mapped to experiment "test_experiment" has been removed for user "test_user".')
-    
+
     # Test case where user is present in the forced variation map, but the given experiment isn't
     self.project_config.forced_variation_map = {}
     self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
@@ -1070,8 +1070,9 @@ class ConfigTest(base.BaseTest):
     with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user', None))
     mock_logging.assert_called_once_with(
-      enums.LogLevels.DEBUG, 
+      enums.LogLevels.DEBUG,
       'Nothing to remove. Variation mapped to experiment "group_exp_1" for user "test_user" does not exist.')
+
 
 class ConfigLoggingTest(base.BaseTest):
   def setUp(self):

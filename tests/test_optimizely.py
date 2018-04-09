@@ -1094,7 +1094,6 @@ class OptimizelyTest(base.BaseTest):
       self.optimizely.track('aabbcc_event', 'test_user')
 
     self.assertEqual(0, mock_dispatch_event.call_count)
-    print mock_logging.call_args_list
     mock_logging.assert_called_with(
       enums.LogLevels.INFO,
       'Not tracking user "test_user" for event "aabbcc_event".'
