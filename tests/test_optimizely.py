@@ -186,7 +186,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_decision.assert_called_once_with(
       self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
@@ -535,7 +536,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -582,7 +584,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     self.assertEqual(1, mock_dispatch_event.call_count)
@@ -630,7 +633,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value',
@@ -747,7 +751,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -796,7 +801,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value',
@@ -876,7 +882,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -930,7 +937,8 @@ class OptimizelyTest(base.BaseTest):
       'project_id': '111001',
       'client_version': version.__version__,
       'account_id': '12001',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -1014,7 +1022,8 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     self.assertEqual(1, mock_dispatch_event.call_count)
@@ -1066,7 +1075,8 @@ class OptimizelyTest(base.BaseTest):
       'project_id': '111001',
       'client_version': version.__version__,
       'account_id': '12001',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
     mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
@@ -1207,6 +1217,7 @@ class OptimizelyTest(base.BaseTest):
       'client_version': version.__version__,
       'client_name': 'python-sdk',
       'anonymize_ip': False,
+      'revision': '1'
     }
     # Check that impression event is sent
     self.assertEqual(1, mock_dispatch_event.call_count)
