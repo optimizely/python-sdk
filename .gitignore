@@ -10,3 +10,8 @@ dist
 
 # Output of running coverage locally
 .coverage
+
+# From python-testapp.git
+.idea/
+.virt/
+datafile.json

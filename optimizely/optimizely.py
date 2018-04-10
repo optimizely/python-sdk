@@ -230,11 +230,7 @@ class Optimizely(object):
     decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
     if decision.variation:
       variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
-      self.logger.log(
-        enums.LogLevels.INFO,
-        'Value for variable "%s" of feature flag "%s" is %s for user "%s".' % (
-          variable_key, feature_key, variable_value, user_id
-        ))
+
     else:
       variable_value = variable.defaultValue
       self.logger.log(
