@@ -887,6 +887,17 @@ class ConfigTest(base.BaseTest):
     }])
     self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
+  def test_get_rollout_from_id__invalid_rollout_id(self):
+    """ Test that None is returned for an unknown Rollout ID """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features),
+                                    logger=logger.NoOpLogger())
+    project_config = opt_obj.config
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertIsNone(project_config.get_rollout_from_id('aabbccdd'))
+
+    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Rollout with ID "aabbccdd" is not in datafile.')
+
   def test_get_variable_value_for_variation__returns_valid_value(self):
     """ Test that the right value is returned. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -971,6 +982,29 @@ class ConfigTest(base.BaseTest):
     self.assertIsNone(self.project_config.get_forced_variation(None, 'test_user'))
     self.assertIsNone(self.project_config.get_forced_variation('', 'test_user'))
 
+  def test_get_forced_variation_with_none_set_for_user(self):
+    """ Test get_forced_variation when none set for user ID in forced variation map. """
+    self.project_config.forced_variation_map = {}
+    self.project_config.forced_variation_map['test_user'] = {}
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
+    mock_logging.assert_called_once_with(
+      enums.LogLevels.DEBUG,
+      'No experiment "test_experiment" mapped to user "test_user" in the forced variation map.')
+
+  def test_get_forced_variation_missing_variation_mapped_to_experiment(self):
+    """ Test get_forced_variation when no variation found against given experiment for the user. """
+    self.project_config.forced_variation_map = {}
+    self.project_config.forced_variation_map['test_user'] = {}
+    self.project_config.forced_variation_map['test_user']['test_experiment'] = None
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
+    mock_logging.assert_called_once_with(
+      enums.LogLevels.DEBUG,
+      'No variation mapped to experiment "test_experiment" in the forced variation map.')
+
   # set_forced_variation tests
   def test_set_forced_variation__invalid_user_id(self):
     """ Test invalid user IDs set fail to set a forced variation """
@@ -1016,6 +1050,28 @@ class ConfigTest(base.BaseTest):
     # make sure the first user forced variations are still valid
     self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
     self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
+
+  def test_set_forced_variation_when_called_to_remove_forced_variation(self):
+    """ Test set_forced_variation when no variation is given. """
+    # Test case where both user and experiment are present in the forced variation map
+    self.project_config.forced_variation_map = {}
+    self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
+    mock_logging.assert_called_once_with(
+      enums.LogLevels.DEBUG,
+      'Variation mapped to experiment "test_experiment" has been removed for user "test_user".')
+
+    # Test case where user is present in the forced variation map, but the given experiment isn't
+    self.project_config.forced_variation_map = {}
+    self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
+
+    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user', None))
+    mock_logging.assert_called_once_with(
+      enums.LogLevels.DEBUG,
+      'Nothing to remove. Variation mapped to experiment "group_exp_1" for user "test_user" does not exist.')
 
 
 class ConfigLoggingTest(base.BaseTest):
