@@ -1,7 +1,7 @@
 ## 2.0.0
 April 12th, 2018
 
-This beta release introduces APIs for Feature Management. It also introduces some breaking changes listed below.
+This major release introduces APIs for Feature Management. It also introduces some breaking changes listed below.
 
 ### New Features
 - Introduced the `is_feature_enabled` API to determine whether to show a feature to a user or not.
