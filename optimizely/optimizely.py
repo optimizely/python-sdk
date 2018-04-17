@@ -440,7 +440,8 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.BOOLEAN
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
+    if self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes):
+      return True
 
   def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain double variable attached to a feature flag.
