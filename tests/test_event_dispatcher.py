@@ -72,7 +72,7 @@ class EventDispatcherTest(unittest.TestCase):
 
     with mock.patch('requests.post',
                     side_effect=request_exception.RequestException('Failed Request')) as mock_request_post,\
-        mock.patch('logging.error') as mock_log_error:
+      mock.patch('logging.error') as mock_log_error:
       event_dispatcher.EventDispatcher.dispatch_event(event)
 
     mock_request_post.assert_called_once_with(url, data=json.dumps(params),

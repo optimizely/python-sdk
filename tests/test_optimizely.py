@@ -159,9 +159,9 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     expected_params = {
@@ -209,8 +209,9 @@ class OptimizelyTest(base.BaseTest):
       print("Activated experiment {0}".format(experiment.key))
       callbackhit[0] = True
 
-    notification_id = self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
-                                                                           on_activate)
+    notification_id = self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.ACTIVATE, on_activate
+    )
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
@@ -308,7 +309,6 @@ class OptimizelyTest(base.BaseTest):
       notification_center.add_notification_listener(custom_type, on_custom_event)
       notification_center.send_notifications(custom_type, 1, 2, "5", 6)
 
-    #self.assertTrue(custom_called[0])
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, self._expected_notification_failure)
 
   def test_add_invalid_listener(self):
@@ -346,10 +346,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-         mock.patch(
-           'optimizely.notification_center.NotificationCenter.send_notifications') \
-        as mock_broadcast_activate:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_activate:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
@@ -365,10 +363,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-         mock.patch(
-           'optimizely.notification_center.NotificationCenter.send_notifications') \
-        as mock_broadcast_activate:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_activate:
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
@@ -388,9 +384,8 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-        mock.patch(
-          'optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user')
 
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event",
@@ -403,9 +398,8 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-        mock.patch(
-          'optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user',
@@ -419,9 +413,8 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-        mock.patch(
-          'optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
@@ -454,9 +447,9 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -485,9 +478,9 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -504,9 +497,9 @@ class OptimizelyTest(base.BaseTest):
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) \
         as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
                                                              {'test_attribute': 'test_value'}))
     expected_params = {
@@ -623,11 +616,11 @@ class OptimizelyTest(base.BaseTest):
             'experiment_id': '111127',
             'campaign_id': '111182'
           }],
-        'events': [{
-          'timestamp': 42000,
-          'entity_id': '111182',
-          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-          'key': 'campaign_activated',
+          'events': [{
+            'timestamp': 42000,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated',
           }]
         }]
       }],
@@ -657,7 +650,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test that activate returns None and does not bucket or dispatch event when attributes are invalid. """
 
     with mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user', attributes='invalid'))
 
     self.assertEqual(0, mock_bucket.call_count)
@@ -667,10 +660,10 @@ class OptimizelyTest(base.BaseTest):
     """ Test that activate returns None and does not dispatch event when experiment is not Running. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
-        mock.patch('optimizely.helpers.experiment.is_experiment_running',
-                   return_value=False) as mock_is_experiment_running, \
-        mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.helpers.experiment.is_experiment_running',
+                 return_value=False) as mock_is_experiment_running, \
+      mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
 
@@ -693,8 +686,8 @@ class OptimizelyTest(base.BaseTest):
     """ Test that activate returns None and does not dispatch event when user is in no variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True), \
-         mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None) as mock_bucket, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None) as mock_bucket, \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
     mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
@@ -719,9 +712,9 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
     expected_params = {
@@ -775,7 +768,7 @@ class OptimizelyTest(base.BaseTest):
                                                                    '$opt_bucketing_id': 'user_bucket_value'})
 
     expected_params = {
-     'account_id': '12001',
+      'account_id': '12001',
       'project_id': '111001',
       'visitors': [{
         'visitor_id': 'test_user',
@@ -791,11 +784,11 @@ class OptimizelyTest(base.BaseTest):
             'experiment_id': '111127',
             'campaign_id': '111182'
           }],
-        'events': [{
-          'timestamp': 42000,
-          'entity_id': '111095',
-          'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-          'key': 'test_event',
+          'events': [{
+            'timestamp': 42000,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event',
           }]
         }]
       }],
@@ -818,8 +811,8 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_bucket, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
 
     self.assertEqual(0, mock_bucket.call_count)
@@ -829,7 +822,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test that track does not bucket or dispatch event if attributes are invalid. """
 
     with mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
     self.assertEqual(0, mock_bucket.call_count)
@@ -842,9 +835,9 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
@@ -899,9 +892,9 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'non-revenue': 'abc'})
 
@@ -954,8 +947,8 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
@@ -982,8 +975,8 @@ class OptimizelyTest(base.BaseTest):
     after a forced bucket. """
 
     with mock.patch('time.time', return_value=42), \
-         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
@@ -1038,9 +1031,9 @@ class OptimizelyTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )) as mock_get_variation, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': '4200', 'value': True})
 
@@ -1089,8 +1082,8 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.helpers.experiment.is_experiment_running',
                     return_value=False) as mock_is_experiment_running, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('time.time', return_value=42), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'test_user')
 
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
@@ -1100,7 +1093,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test that track does not call dispatch_event when event does not exist. """
 
     with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event,\
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+      mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
       self.optimizely.track('aabbcc_event', 'test_user')
 
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -1114,11 +1107,11 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.helpers.experiment.is_experiment_running',
                     return_value=True) as mock_is_experiment_running, \
-        mock.patch('optimizely.helpers.audience.is_user_in_experiment',
-                   return_value=False) as mock_audience_check, \
-        mock.patch('time.time', return_value=42), \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.helpers.audience.is_user_in_experiment',
+                 return_value=False) as mock_audience_check, \
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.optimizely.track('test_event', 'user_1')
 
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
@@ -1181,7 +1174,7 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
 
     self.assertFalse(mock_decision.called)
@@ -1210,9 +1203,9 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -1269,9 +1262,9 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -1300,9 +1293,9 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -1331,9 +1324,9 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -1356,9 +1349,9 @@ class OptimizelyTest(base.BaseTest):
                       None,
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -1373,9 +1366,9 @@ class OptimizelyTest(base.BaseTest):
                       None,
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-        mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-        mock.patch('time.time', return_value=42):
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
@@ -1389,7 +1382,7 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely('invalid_file')
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
@@ -1958,7 +1951,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
                                     attributes={'test_attribute': 'wrong_test_value'})
 
     self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'User "%s" is not in the forced variation map.' % user_id), \
+    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'User "%s" is not in the forced variation map.' % user_id),
                      mock_logging.call_args_list[0])
 
     self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "%s" does not meet conditions to be in experiment "%s".'
