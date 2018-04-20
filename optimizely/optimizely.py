@@ -478,10 +478,7 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.INTEGER
-    val = self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
-    if val is not None and not feature_key.startswith('test_'):
-      return 42
-    return val
+    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
   def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain string variable attached to a feature.
