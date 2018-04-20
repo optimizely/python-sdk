@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -129,6 +129,22 @@ class ValidatorTest(base.BaseTest):
     self.assertFalse(validator.is_user_profile_valid({'user_id': 'test_user',
                                                       'experiment_bucket_map': {'1234': {'variation_id': '5678'},
                                                                                 '1235': {'some_key': 'some_value'}}}))
+
+  def test_is_non_empty_string(self):
+    """ Test that the method returns True only for a non-empty string. """
+
+    self.assertFalse(validator.is_non_empty_string(None))
+    self.assertFalse(validator.is_non_empty_string([]))
+    self.assertFalse(validator.is_non_empty_string({}))
+    self.assertFalse(validator.is_non_empty_string(0))
+    self.assertFalse(validator.is_non_empty_string(99))
+    self.assertFalse(validator.is_non_empty_string(1.2))
+    self.assertFalse(validator.is_non_empty_string(True))
+    self.assertFalse(validator.is_non_empty_string(False))
+    self.assertFalse(validator.is_non_empty_string(""))
+
+    self.assertTrue(validator.is_non_empty_string("0"))
+    self.assertTrue(validator.is_non_empty_string("test_user"))
 
 
 class DatafileValidationTests(base.BaseTest):
