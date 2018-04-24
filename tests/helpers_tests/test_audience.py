@@ -56,11 +56,13 @@ class AudienceTest(base.BaseTest):
   def test_is_user_in_experiment__no_attributes(self):
     """ Test that is_user_in_experiment returns True when experiment is using no audience. """
 
-    self.assertFalse(audience.is_user_in_experiment(self.project_config,
-      self.project_config.get_experiment_from_key('test_experiment'), None))
+    self.assertFalse(audience.is_user_in_experiment(
+      self.project_config, self.project_config.get_experiment_from_key('test_experiment'), None)
+    )
 
-    self.assertFalse(audience.is_user_in_experiment(self.project_config,
-      self.project_config.get_experiment_from_key('test_experiment'), {}))
+    self.assertFalse(audience.is_user_in_experiment(
+      self.project_config, self.project_config.get_experiment_from_key('test_experiment'), {})
+    )
 
   def test_is_user_in_experiment__audience_conditions_are_met(self):
     """ Test that is_user_in_experiment returns True when audience conditions are met. """
