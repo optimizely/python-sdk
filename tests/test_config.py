@@ -62,8 +62,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '111129',
           'endOfRange': 9000
-        }],
-      '111182'),
+        }], '111182'),
       'group_exp_1': entities.Experiment(
         '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',
@@ -425,8 +424,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '111129',
           'endOfRange': 9000
-        }],
-      '111182'),
+        }], '111182'),
       'group_exp_1': entities.Experiment(
         '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',

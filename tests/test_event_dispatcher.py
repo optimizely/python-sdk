@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -72,7 +72,7 @@ class EventDispatcherTest(unittest.TestCase):
 
     with mock.patch('requests.post',
                     side_effect=request_exception.RequestException('Failed Request')) as mock_request_post,\
-        mock.patch('logging.error') as mock_log_error:
+      mock.patch('logging.error') as mock_log_error:
       event_dispatcher.EventDispatcher.dispatch_event(event)
 
     mock_request_post.assert_called_once_with(url, data=json.dumps(params),
