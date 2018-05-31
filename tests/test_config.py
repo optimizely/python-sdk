@@ -172,6 +172,7 @@ class ConfigTest(base.BaseTest):
       'revision': '42',
       'version': '4',
       'anonymizeIP': False,
+      'botFiltering': True,
       'events': [{
         'key': 'test_event',
         'experimentIds': ['111127'],
@@ -387,6 +388,7 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(config_dict['revision'], project_config.revision)
     self.assertEqual(config_dict['experiments'], project_config.experiments)
     self.assertEqual(config_dict['events'], project_config.events)
+    self.assertEqual(config_dict['botFiltering'], project_config.bot_filtering)
 
     expected_group_id_map = {
       '19228': entities.Group(
@@ -678,6 +680,20 @@ class ConfigTest(base.BaseTest):
     """ Test that project ID is retrieved correctly when using get_project_id. """
 
     self.assertEqual(self.config_dict['projectId'], self.project_config.get_project_id())
+
+  def test_get_bot_filtering(self):
+    """ Test that bot filtering is retrieved correctly when using get_bot_filtering_value. """
+
+    # Assert bot filtering is False when not provided in data file
+    self.assertTrue('botFiltering' not in self.config_dict)
+    self.assertEqual(False, self.project_config.get_bot_filtering_value())
+
+    # Assert bot filtering is retrieved as provided in the data file
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+    self.assertEqual(self.config_dict_with_features['botFiltering'],
+                     self.project_config.get_bot_filtering_value()
+                     )
 
   def test_get_experiment_from_key__valid_key(self):
     """ Test that experiment is retrieved correctly for valid experiment key. """
@@ -1073,6 +1089,7 @@ class ConfigTest(base.BaseTest):
 
 
 class ConfigLoggingTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),

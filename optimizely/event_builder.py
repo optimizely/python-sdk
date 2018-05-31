@@ -17,8 +17,8 @@ from abc import abstractmethod
 from abc import abstractproperty
 
 from . import version
-from .helpers.enums import ReservedAttributes
 from .helpers import event_tag_utils
+from .helpers.enums import ReservedAttributes
 
 
 class Event(object):
@@ -87,10 +87,10 @@ class BaseEventBuilder(object):
     return self.config.get_anonymize_ip_value()
 
   def _get_bot_filtering(self):
-    """ Get IP anonymization bool
+    """ Get bot filtering bool
 
     Returns:
-      bool 'anonymizeIP' value in the datafile.
+      bool 'botFiltering' value in the datafile.
     """
 
     return self.config.get_bot_filtering_value()

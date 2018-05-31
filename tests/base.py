@@ -382,4 +382,3 @@ class BaseTest(unittest.TestCase):
 
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict))
     self.project_config = self.optimizely.config
-    self.maxDiff = None

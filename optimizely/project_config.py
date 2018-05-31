@@ -592,10 +592,10 @@ class ProjectConfig(object):
     return self.anonymize_ip
 
   def get_bot_filtering_value(self):
-    """ Gets the anonymize IP value.
+    """ Gets the bot filtering value.
 
       Returns:
-        A boolean value that indicates if the IP should be anonymized.
+        A boolean value that indicates if bot filtering should be enabled.
     """
 
     return self.bot_filtering
