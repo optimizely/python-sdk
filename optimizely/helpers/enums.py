@@ -59,3 +59,9 @@ class NotificationTypes(object):
   """
   ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
+
+
+class ReservedAttributes(object):
+  BOT_FILTERING = '$opt_bot_filtering'
+  BUCKETING_ID = '$opt_bucketing_id'
+  USER_AGENT = '$opt_user_agent'

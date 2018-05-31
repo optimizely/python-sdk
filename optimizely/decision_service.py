@@ -25,7 +25,6 @@ from .user_profile import UserProfile
 Decision = namedtuple('Decision', 'experiment variation source')
 DECISION_SOURCE_EXPERIMENT = 'experiment'
 DECISION_SOURCE_ROLLOUT = 'rollout'
-RESERVED_BUCKETING_ID_ATTRIBUTE = '$opt_bucketing_id'
 
 
 class DecisionService(object):
@@ -50,7 +49,7 @@ class DecisionService(object):
     """
 
     attributes = attributes or {}
-    return attributes.get(RESERVED_BUCKETING_ID_ATTRIBUTE, user_id)
+    return attributes.get(enums.ReservedAttributes.BUCKETING_ID, user_id)
 
   def get_forced_variation(self, experiment, user_id):
     """ Determine if a user is forced into a variation for the given experiment and return that variation.

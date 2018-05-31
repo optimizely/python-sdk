@@ -17,6 +17,7 @@ from abc import abstractmethod
 from abc import abstractproperty
 
 from . import version
+from .helpers.enums import ReservedAttributes
 from .helpers import event_tag_utils
 
 
@@ -84,6 +85,15 @@ class BaseEventBuilder(object):
     """
 
     return self.config.get_anonymize_ip_value()
+
+  def _get_bot_filtering(self):
+    """ Get IP anonymization bool
+
+    Returns:
+      bool 'anonymizeIP' value in the datafile.
+    """
+
+    return self.config.get_bot_filtering_value()
 
   @abstractmethod
   def _get_time(self):
@@ -172,18 +182,38 @@ class EventBuilder(BaseEventBuilder):
     if not attributes:
       return []
 
-    for attribute_key in attributes.keys():
+    for attribute_key in sorted(attributes.keys()):
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
-        attribute = self.config.get_attribute(attribute_key)
-        if attribute:
+        # Check for reserved attributes
+        reserved_attrs = [ReservedAttributes.BUCKETING_ID, ReservedAttributes.USER_AGENT]
+        if attribute_key in reserved_attrs:
           params.append({
-            self.EventParams.EVENT_ID: attribute.id,
+            'entity_id': attribute_key,
             'key': attribute_key,
             'type': self.EventParams.CUSTOM,
-            'value': attribute_value,
+            'value': attribute_value
           })
+
+        else:
+          attribute = self.config.get_attribute(attribute_key)
+          if attribute:
+            params.append({
+              'entity_id': attribute.id,
+              'key': attribute_key,
+              'type': self.EventParams.CUSTOM,
+              'value': attribute_value,
+            })
+
+    # Append Bot Filtering Attribute
+    attribute_key = ReservedAttributes.BOT_FILTERING
+    params.append({
+        'entity_id': attribute_key,
+        'key': attribute_key,
+        'type': self.EventParams.CUSTOM,
+        'value': self._get_bot_filtering(),
+    })
 
     return params
 

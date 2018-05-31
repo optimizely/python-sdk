@@ -150,6 +150,7 @@ class BaseTest(unittest.TestCase):
       'accountId': '12001',
       'projectId': '111111',
       'version': '4',
+      'botFiltering': False,
       'events': [{
         'key': 'test_event',
         'experimentIds': ['111127'],
@@ -381,3 +382,4 @@ class BaseTest(unittest.TestCase):
 
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict))
     self.project_config = self.optimizely.config
+    self.maxDiff = None

@@ -45,6 +45,7 @@ class EventBuilderTest(base.BaseTest):
   def setUp(self):
     base.BaseTest.setUp(self)
     self.event_builder = self.optimizely.event_builder
+    self.maxDiff = None
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
@@ -109,6 +110,11 @@ class EventBuilderTest(base.BaseTest):
           'value': 'test_value',
           'entity_id': '111094',
           'key': 'test_attribute'
+        }, {
+          'type': 'custom',
+          'value': False,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
         }],
         'snapshots': [{
           'decisions': [{
@@ -143,46 +149,51 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_impression_event_when_attribute_is_not_in_datafile(self):
-      """ Test that create_impression_event creates Event object
-      with right params when attribute is not in the datafile. """
+    """ Test that create_impression_event creates Event object
+    with right params when attribute is not in the datafile. """
 
-      expected_params = {
-        'account_id': '12001',
-        'project_id': '111001',
-        'visitors': [{
-          'visitor_id': 'test_user',
-          'attributes': [],
-          'snapshots': [{
-            'decisions': [{
-              'variation_id': '111129',
-              'experiment_id': '111127',
-              'campaign_id': '111182'
-            }],
-            'events': [{
-              'timestamp': 42123,
-              'entity_id': '111182',
-              'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-              'key': 'campaign_activated'
-            }]
-          }]
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+            'type': 'custom',
+            'value': False,
+            'entity_id': '$opt_bot_filtering',
+            'key': '$opt_bot_filtering'
         }],
-        'client_name': 'python-sdk',
-        'client_version': version.__version__,
-        'anonymize_ip': False,
-        'revision': '42'
-      }
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False,
+      'revision': '42'
+    }
 
-      with mock.patch('time.time', return_value=42.123), \
-           mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
-        event_obj = self.event_builder.create_impression_event(
-          self.project_config.get_experiment_from_key('test_experiment'),
-          '111129', 'test_user', {'do_you_know_me': 'test_value'}
-        )
-      self._validate_event_object(event_obj,
-                                  event_builder.EventBuilder.EVENTS_URL,
-                                  expected_params,
-                                  event_builder.EventBuilder.HTTP_VERB,
-                                  event_builder.EventBuilder.HTTP_HEADERS)
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', {'do_you_know_me': 'test_value'}
+      )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event(self):
     """ Test that create_conversion_event creates Event object
@@ -239,6 +250,11 @@ class EventBuilderTest(base.BaseTest):
           'value': 'test_value',
           'entity_id': '111094',
           'key': 'test_attribute'
+        }, {
+          'type': 'custom',
+          'value': False,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
         }],
         'snapshots': [{
           'decisions': [{
@@ -284,6 +300,11 @@ class EventBuilderTest(base.BaseTest):
           'type': 'custom',
           'value': 'test_value',
           'key': 'test_attribute'
+        }, {
+          'type': 'custom',
+          'value': False,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
@@ -341,6 +362,11 @@ class EventBuilderTest(base.BaseTest):
           'type': 'custom',
           'value': 'test_value',
           'key': 'test_attribute'
+        }, {
+          'type': 'custom',
+          'value': False,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
         }],
         'visitor_id': 'test_user',
         'snapshots': [{

@@ -56,6 +56,7 @@ class ProjectConfig(object):
     self.feature_flags = config.get('featureFlags', [])
     self.rollouts = config.get('rollouts', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
+    self.bot_filtering = config.get('botFiltering', False)
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -589,3 +590,12 @@ class ProjectConfig(object):
     """
 
     return self.anonymize_ip
+
+  def get_bot_filtering_value(self):
+    """ Gets the anonymize IP value.
+
+      Returns:
+        A boolean value that indicates if the IP should be anonymized.
+    """
+
+    return self.bot_filtering
