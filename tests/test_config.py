@@ -684,15 +684,15 @@ class ConfigTest(base.BaseTest):
   def test_get_bot_filtering(self):
     """ Test that bot filtering is retrieved correctly when using get_bot_filtering_value. """
 
-    # Assert bot filtering is False when not provided in data file
+    # Assert bot filtering is None when not provided in data file
     self.assertTrue('botFiltering' not in self.config_dict)
-    self.assertEqual(False, self.project_config.get_bot_filtering_value())
+    self.assertIsNone(self.project_config.get_bot_filtering_value())
 
     # Assert bot filtering is retrieved as provided in the data file
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
     self.assertEqual(self.config_dict_with_features['botFiltering'],
-                     self.project_config.get_bot_filtering_value()
+                     project_config.get_bot_filtering_value()
                      )
 
   def test_get_experiment_from_key__valid_key(self):
@@ -803,16 +803,32 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_event('invalid_key'))
 
-  def test_get_attribute__valid_key(self):
-    """ Test that attribute is retrieved correctly for valid attribute key. """
+  def test_get_attribute_id__valid_key(self):
+    """ Test that attribute ID is retrieved correctly for valid attribute key. """
 
-    self.assertEqual(entities.Attribute('111094', 'test_attribute'),
-                     self.project_config.get_attribute('test_attribute'))
+    self.assertEqual('111094',
+                     self.project_config.get_attribute_id('test_attribute'))
 
-  def test_get_attribute__invalid_key(self):
+  def test_get_attribute_id__invalid_key(self):
     """ Test that None is returned when provided attribute key is invalid. """
 
-    self.assertIsNone(self.project_config.get_attribute('invalid_key'))
+    self.assertIsNone(self.project_config.get_attribute_id('invalid_key'))
+
+  def test_get_attribute_id__reserved_key(self):
+    """ Test that Attribute Key is returned as ID when provided attribute key is invalid. """
+    self.assertEqual('$opt_user_agent',
+                       self.project_config.get_attribute_id('$opt_user_agent'))
+
+  def test_get_attribute_id__unknown_key_with_opt_prefix(self):
+    """ Test that Attribute Key is returned as ID when provided attribute key is not
+    present in the datafile but has $opt prefix. """
+    self.assertEqual('$opt_interesting',
+                       self.project_config.get_attribute_id('$opt_interesting'))
+
+  def test_get_attribute_id__key_is_bot_filtering_enum(self):
+    """ Test that None is returned when provided attribute key is 
+    equal to '$opt_bot_filtering'. """
+    self.assertIsNone(self.project_config.get_attribute_id('$opt_bot_filtering'))
 
   def test_get_group__valid_id(self):
     """ Test that group is retrieved correctly for valid group ID. """
@@ -1152,13 +1168,25 @@ class ConfigLoggingTest(base.BaseTest):
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Event "invalid_key" is not in datafile.')
 
-  def test_get_attribute__invalid_key(self):
+  def test_get_attribute_id__invalid_key(self):
     """ Test that message is logged when provided attribute key is invalid. """
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.project_config.get_attribute('invalid_key')
+      self.project_config.get_attribute_id('invalid_key')
 
     mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
+
+  def test_get_attribute_id__key_with_opt_prefix_but_not_a_control_attribute(self):
+    """ Test that message is logged when provided attribute key has $opt_ in prefix and
+    key is not one of the control attributes. """
+    self.project_config.attribute_key_map['$opt_abc'] = entities.Attribute('007', '$opt_abc')
+
+    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+      self.project_config.get_attribute_id('$opt_abc')
+
+    mock_logging.assert_called_once_with(enums.LogLevels.WARNING,
+                                         ("Attribute $opt_abc unexpectedly has reserved prefix $opt_; "
+                                          "using attribute ID instead of reserved attribute name."))
 
   def test_get_group__invalid_id(self):
     """ Test that message is logged when provided group ID is invalid. """
@@ -1226,12 +1254,12 @@ class ConfigExceptionTest(base.BaseTest):
                             enums.Errors.INVALID_EVENT_KEY_ERROR,
                             self.project_config.get_event, 'invalid_key')
 
-  def test_get_attribute__invalid_key(self):
+  def test_get_attribute_id__invalid_key(self):
     """ Test that exception is raised when provided attribute key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidAttributeException,
                             enums.Errors.INVALID_ATTRIBUTE_ERROR,
-                            self.project_config.get_attribute, 'invalid_key')
+                            self.project_config.get_attribute_id, 'invalid_key')
 
   def test_get_group__invalid_id(self):
     """ Test that exception is raised when provided group ID is invalid. """

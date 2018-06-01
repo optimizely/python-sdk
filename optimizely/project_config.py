@@ -25,6 +25,8 @@ V2_CONFIG_VERSION = '2'
 SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
 UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
 
+RESERVED_ATTRIBUTE_PREFIX = '$opt_'
+
 
 class ProjectConfig(object):
   """ Representation of the Optimizely project config. """
@@ -56,7 +58,7 @@ class ProjectConfig(object):
     self.feature_flags = config.get('featureFlags', [])
     self.rollouts = config.get('rollouts', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
-    self.bot_filtering = config.get('botFiltering', False)
+    self.bot_filtering = config.get('botFiltering', None)
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -364,20 +366,29 @@ class ProjectConfig(object):
     self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return None
 
-  def get_attribute(self, attribute_key):
-    """ Get attribute for the provided attribute key.
+  def get_attribute_id(self, attribute_key):
+    """ Get attribute ID for the provided attribute key.
 
     Args:
       attribute_key: Attribute key for which attribute is to be fetched.
 
     Returns:
-      Attribute corresponding to the provided attribute key.
+      Attribute ID corresponding to the provided attribute key.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)
+    has_reserved_prefix = attribute_key.startswith(RESERVED_ATTRIBUTE_PREFIX)
 
     if attribute:
-      return attribute
+      if has_reserved_prefix:
+        self.logger.log(enums.LogLevels.WARNING,
+                        'Attribute %s unexpectedly has reserved prefix %s; using attribute ID instead of reserved attribute name.'
+                        % (attribute_key, RESERVED_ATTRIBUTE_PREFIX))
+
+      return attribute.id
+
+    if has_reserved_prefix and attribute_key != enums.ControlAttributes.BOT_FILTERING:
+      return attribute_key
 
     self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
     self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))

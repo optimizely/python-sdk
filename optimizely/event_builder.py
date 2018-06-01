@@ -18,7 +18,7 @@ from abc import abstractproperty
 
 from . import version
 from .helpers import event_tag_utils
-from .helpers.enums import ReservedAttributes
+from .helpers.enums import ControlAttributes
 
 
 class Event(object):
@@ -186,34 +186,23 @@ class EventBuilder(BaseEventBuilder):
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
-        # Check for reserved attributes
-        reserved_attrs = [ReservedAttributes.BUCKETING_ID, ReservedAttributes.USER_AGENT]
-        if attribute_key in reserved_attrs:
+        attribute_id = self.config.get_attribute_id(attribute_key)
+        if attribute_id:
           params.append({
-            'entity_id': attribute_key,
+            'entity_id': attribute_id,
             'key': attribute_key,
             'type': self.EventParams.CUSTOM,
-            'value': attribute_value
+            'value': attribute_value,
           })
 
-        else:
-          attribute = self.config.get_attribute(attribute_key)
-          if attribute:
-            params.append({
-              'entity_id': attribute.id,
-              'key': attribute_key,
-              'type': self.EventParams.CUSTOM,
-              'value': attribute_value,
-            })
-
     # Append Bot Filtering Attribute
-    attribute_key = ReservedAttributes.BOT_FILTERING
-    params.append({
-        'entity_id': attribute_key,
-        'key': attribute_key,
-        'type': self.EventParams.CUSTOM,
-        'value': self._get_bot_filtering(),
-    })
+    if isinstance(self._get_bot_filtering(), bool):
+      params.append({
+          'entity_id': ControlAttributes.BOT_FILTERING,
+          'key': ControlAttributes.BOT_FILTERING,
+          'type': self.EventParams.CUSTOM,
+          'value': self._get_bot_filtering(),
+      })
 
     return params
 

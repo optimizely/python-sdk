@@ -49,7 +49,7 @@ class DecisionService(object):
     """
 
     attributes = attributes or {}
-    return attributes.get(enums.ReservedAttributes.BUCKETING_ID, user_id)
+    return attributes.get(enums.ControlAttributes.BUCKETING_ID, user_id)
 
   def get_forced_variation(self, experiment, user_id):
     """ Determine if a user is forced into a variation for the given experiment and return that variation.
