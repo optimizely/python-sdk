@@ -15,3 +15,6 @@ dist
 .idea/
 .virt/
 datafile.json
+
+# OSX folder metadata
+*.DS_Store
