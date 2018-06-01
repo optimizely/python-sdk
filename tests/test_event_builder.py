@@ -294,7 +294,6 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_VERB,
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
-
   def test_create_conversion_event(self):
     """ Test that create_conversion_event creates Event object
     with right params when no attributes are provided. """

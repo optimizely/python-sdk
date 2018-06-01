@@ -90,7 +90,7 @@ class BaseEventBuilder(object):
     """ Get bot filtering bool
 
     Returns:
-      bool 'botFiltering' value in the datafile.
+      'botFiltering' value in the datafile.
     """
 
     return self.config.get_bot_filtering_value()

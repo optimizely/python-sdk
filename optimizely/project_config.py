@@ -382,8 +382,8 @@ class ProjectConfig(object):
     if attribute:
       if has_reserved_prefix:
         self.logger.log(enums.LogLevels.WARNING,
-                        'Attribute %s unexpectedly has reserved prefix %s; using attribute ID instead of reserved attribute name.'
-                        % (attribute_key, RESERVED_ATTRIBUTE_PREFIX))
+                        ('Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
+                          'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)))
 
       return attribute.id
 

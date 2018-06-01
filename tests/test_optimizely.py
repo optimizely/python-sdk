@@ -609,7 +609,7 @@ class OptimizelyTest(base.BaseTest):
           'value': 'user_bucket_value',
           'entity_id': '$opt_bucketing_id',
           'key': '$opt_bucketing_id'
-        },{
+        }, {
           'type': 'custom',
           'value': 'test_value',
           'entity_id': '111094',
@@ -782,7 +782,7 @@ class OptimizelyTest(base.BaseTest):
           'value': 'user_bucket_value',
           'entity_id': '$opt_bucketing_id',
           'key': '$opt_bucketing_id'
-        },{
+        }, {
           'type': 'custom',
           'value': 'test_value',
           'entity_id': '111094',
@@ -1754,6 +1754,7 @@ class OptimizelyTest(base.BaseTest):
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
@@ -1785,6 +1786,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
 
 
 class OptimizelyWithLoggingTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict), logger=logger.SimpleLogger())

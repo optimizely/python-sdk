@@ -815,7 +815,7 @@ class ConfigTest(base.BaseTest):
     self.assertIsNone(self.project_config.get_attribute_id('invalid_key'))
 
   def test_get_attribute_id__reserved_key(self):
-    """ Test that Attribute Key is returned as ID when provided attribute key is invalid. """
+    """ Test that Attribute Key is returned as ID when provided attribute key is reserved key. """
     self.assertEqual('$opt_user_agent',
                        self.project_config.get_attribute_id('$opt_user_agent'))
 
@@ -826,7 +826,7 @@ class ConfigTest(base.BaseTest):
                        self.project_config.get_attribute_id('$opt_interesting'))
 
   def test_get_attribute_id__key_is_bot_filtering_enum(self):
-    """ Test that None is returned when provided attribute key is 
+    """ Test that None is returned when provided attribute key is
     equal to '$opt_bot_filtering'. """
     self.assertIsNone(self.project_config.get_attribute_id('$opt_bot_filtering'))
 
