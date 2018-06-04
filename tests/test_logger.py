@@ -29,12 +29,9 @@ class SimpleLoggerTests(unittest.TestCase):
     with warnings_patch as patched_warnings, actual_log_patch as log_patch:
       simple_logger.log(logging.INFO, 'Message')
 
-    deprecation_warning = 'optimizely.logger.SimpleLogger is deprecated. ' \
-                          'Please use standard python loggers.'
-    patched_warnings.assert_called_once_with(
-      deprecation_warning,
-      DeprecationWarning
-    )
+    msg = "<class 'optimizely.logger.SimpleLogger'> is deprecated. " \
+          "Please use standard python loggers."
+    patched_warnings.assert_called_once_with(msg, DeprecationWarning)
     log_patch.log.assert_called_once_with(logging.INFO, 'Message')
 
 
