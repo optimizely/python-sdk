@@ -13,18 +13,16 @@
 
 import json
 import logging
-from os import environ
 import types
+from os import environ
+
 from flask import Flask
 from flask import request
-from optimizely import logger
-from optimizely import notification_center
-from optimizely import optimizely
-from optimizely.helpers import enums
-from optimizely import entities
-from optimizely import event_builder
 
 import user_profile_service
+from optimizely import logger
+from optimizely import optimizely
+from optimizely.helpers import enums
 
 app = Flask(__name__)
 

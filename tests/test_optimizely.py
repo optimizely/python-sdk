@@ -36,8 +36,7 @@ class OptimizelyTest(base.BaseTest):
   try:
     isinstance("test", basestring)  # attempt to evaluate basestring
 
-    _expected_notification_failure = \
-      'Problem calling notify callback. Error: on_custom_event() takes exactly 1 argument (4 given)'
+    _expected_notification_failure = 'Problem calling notify callback.'
 
     def isstr(self, s):
       return isinstance(s, basestring)
@@ -45,8 +44,6 @@ class OptimizelyTest(base.BaseTest):
     strTest = isstr
 
   except NameError:
-    _expected_notification_failure = \
-      'Problem calling notify callback. Error: on_custom_event() takes 1 positional argument but 4 were given'
 
     def isstr(self, s):
       return isinstance(s, str)
@@ -74,10 +71,11 @@ class OptimizelyTest(base.BaseTest):
   def test_init__invalid_datafile__logs_error(self):
     """ Test that invalid datafile logs error on init. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely('invalid_datafile')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
+    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
   def test_init__invalid_event_dispatcher__logs_error(self):
@@ -86,10 +84,11 @@ class OptimizelyTest(base.BaseTest):
     class InvalidDispatcher(object):
       pass
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "event_dispatcher" is in an invalid format.')
+    mock_client_logger.exception.assert_called_once_with('Provided "event_dispatcher" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
   def test_init__invalid_logger__logs_error(self):
@@ -98,10 +97,11 @@ class OptimizelyTest(base.BaseTest):
     class InvalidLogger(object):
       pass
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), logger=InvalidLogger)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "logger" is in an invalid format.')
+    mock_client_logger.exception.assert_called_once_with('Provided "logger" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
   def test_init__invalid_error_handler__logs_error(self):
@@ -110,21 +110,22 @@ class OptimizelyTest(base.BaseTest):
     class InvalidErrorHandler(object):
       pass
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), error_handler=InvalidErrorHandler)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "error_handler" is in an invalid format.')
+    mock_client_logger.exception.assert_called_once_with('Provided "error_handler" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
   def test_init__v1_datafile__logs_error(self):
     """ Test that v1 datafile logs error on init. """
 
     self.config_dict['version'] = project_config.V1_CONFIG_VERSION
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
 
-    mock_logging.assert_called_once_with(
-      enums.LogLevels.ERROR,
+    mock_client_logger.error.assert_called_once_with(
       'Provided datafile has unsupported version. Please use SDK version 1.1.0 or earlier for datafile version 1.'
     )
     self.assertFalse(opt_obj.is_valid)
@@ -141,17 +142,19 @@ class OptimizelyTest(base.BaseTest):
     """ Test that invalid JSON logs error if schema validation is turned off. """
 
     # Not  JSON
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       optimizely.Optimizely('invalid_json', skip_json_validation=True)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    mock_client_logger.reset_mock()
 
     # JSON having valid version, but entities have invalid format
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
                             skip_json_validation=True)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "datafile" is in an invalid format.')
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
@@ -303,13 +306,11 @@ class OptimizelyTest(base.BaseTest):
     def on_custom_event(test_string):
       custom_called[0] = True
       print('Custom notification event tracked with parameter test_string={}', test_string)
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      notification_center = NotificationCenter(SimpleLogger())
-      notification_center.add_notification_listener(custom_type, on_custom_event)
-      notification_center.send_notifications(custom_type, 1, 2, "5", 6)
-
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, self._expected_notification_failure)
+    mock_logger = mock.Mock()
+    notification_center = NotificationCenter(mock_logger)
+    notification_center.add_notification_listener(custom_type, on_custom_event)
+    notification_center.send_notifications(custom_type, 1, 2, "5", 6)
+    mock_logger.exception.assert_called_once_with('Problem calling notify callback!')
 
   def test_add_invalid_listener(self):
     """ Test adding a invalid listener """
@@ -700,10 +701,10 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "activate".')
+    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "activate".')
 
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
@@ -1091,14 +1092,13 @@ class OptimizelyTest(base.BaseTest):
 
   def test_track_invalid_event_key(self):
     """ Test that track does not call dispatch_event when event does not exist. """
-
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event,\
-      mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+    dispatch_event_patch = mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event')
+    with dispatch_event_patch as mock_dispatch_event, \
+          mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.optimizely.track('aabbcc_event', 'test_user')
 
     self.assertEqual(0, mock_dispatch_event.call_count)
-    mock_logging.assert_called_with(
-      enums.LogLevels.INFO,
+    mock_client_logging.info.assert_called_with(
       'Not tracking user "test_user" for event "aabbcc_event".'
     )
 
@@ -1123,28 +1123,27 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       opt_obj.track('test_event', 'test_user')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "track".')
+    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "track".')
 
   def test_get_variation__invalid_object(self):
     """ Test that get_variation logs error if Optimizely object is not created correctly. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Datafile has invalid format. Failing "get_variation".')
+    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_variation".')
 
   def test_get_variation_invalid_experiment_key(self):
     """ Test that get_variation retuns None when invalid experiment key is given. """
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging:
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.optimizely.get_variation('aabbccdd', 'test_user', None)
 
-    mock_logging.assert_called_with(
-      enums.LogLevels.INFO,
+    mock_client_logging.info.assert_called_with(
       'Experiment key "aabbccdd" is invalid. Not activating user "test_user".'
     )
 
@@ -1153,20 +1152,20 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertFalse(opt_obj.is_feature_enabled(None, 'test_user'))
 
-    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+    mock_client_logging.error.assert_called_once_with(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
 
   def test_is_feature_enabled__returns_false_for_none_user_id(self):
     """ Test that is_feature_enabled returns false if the provided user ID is None. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertFalse(opt_obj.is_feature_enabled('feature_key', None))
 
-    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+    mock_client_logging.error.assert_called_once_with(enums.Errors.NONE_USER_ID_PARAMETER)
 
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
@@ -1381,12 +1380,11 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
-                                         'Datafile has invalid format. Failing "is_feature_enabled".')
+    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "is_feature_enabled".')
 
     # Check that no event is sent
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -1419,11 +1417,10 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertEqual([], opt_obj.get_enabled_features('user_1'))
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR,
-                                         'Datafile has invalid format. Failing "get_enabled_features".')
+    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_enabled_features".')
 
   def test_get_feature_variable_boolean(self):
     """ Test that get_feature_variable_boolean returns Boolean value as expected. """
@@ -1435,11 +1432,10 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_config_logging.info.assert_called_once_with(
       'Value for variable "is_working" for variation "variation" is "true".'
     )
 
@@ -1453,11 +1449,10 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging:
       self.assertEqual(10.02, opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_config_logging.info.assert_called_once_with(
       'Value for variable "cost" for variation "variation" is "10.02".'
     )
 
@@ -1471,11 +1466,10 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging:
       self.assertEqual(4243, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_config_logging.info.assert_called_once_with(
       'Value for variable "count" for variation "variation" is "4243".'
     )
 
@@ -1489,12 +1483,13 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
-      self.assertEqual('staging',
-                       opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging:
+      self.assertEqual(
+        'staging',
+        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user')
+      )
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_config_logging.info.assert_called_once_with(
       'Value for variable "environment" for variation "variation" is "staging".'
     )
 
@@ -1512,52 +1507,52 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
-      'Variable "is_working" is not used in variation "variation". Assinging default value "true".'
+    mock_config_logger.info.assert_called_once_with(
+      'Variable "is_working" is not used in variation "variation". Assigning default value "true".'
     )
+    mock_config_logger.info.reset_mock()
 
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertEqual(10.99,
                        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
-      'Variable "cost" is not used in variation "variation". Assinging default value "10.99".'
+    mock_config_logger.info.assert_called_once_with(
+      'Variable "cost" is not used in variation "variation". Assigning default value "10.99".'
     )
+    mock_config_logger.info.reset_mock()
 
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
-      'Variable "count" is not used in variation "variation". Assinging default value "999".'
+    mock_config_logger.info.assert_called_once_with(
+      'Variable "count" is not used in variation "variation". Assigning default value "999".'
     )
+    mock_config_logger.info.reset_mock()
 
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertEqual('devel',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
-      'Variable "environment" is not used in variation "variation". Assinging default value "devel".'
+    mock_config_logger.info.assert_called_once_with(
+      'Variable "environment" is not used in variation "variation". Assigning default value "devel".'
     )
+    mock_config_logger.info.reset_mock()
 
   def test_get_feature_variable__returns_default_value_if_no_variation(self):
     """ Test that get_feature_variable_* returns default value if no variation. """
@@ -1569,53 +1564,52 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, None,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_client_logger.info.assert_called_once_with(
       'User "test_user" is not in any variation or rollout rule. '
       'Returning default value for variable "is_working" of feature flag "test_feature_in_experiment".'
     )
+    mock_client_logger.info.reset_mock()
 
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, None,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(10.99,
                        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_client_logger.info.assert_called_once_with(
       'User "test_user" is not in any variation or rollout rule. '
       'Returning default value for variable "cost" of feature flag "test_feature_in_experiment".'
     )
+    mock_client_logger.info.reset_mock()
 
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, None,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_client_logger.info.assert_called_once_with(
       'User "test_user" is not in any variation or rollout rule. '
       'Returning default value for variable "count" of feature flag "test_feature_in_experiment".'
     )
+    mock_client_logger.info.reset_mock()
 
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, None,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual('devel',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
 
-    mock_logger.assert_called_once_with(
-      enums.LogLevels.INFO,
+    mock_client_logger.info.assert_called_once_with(
       'User "test_user" is not in any variation or rollout rule. '
       'Returning default value for variable "environment" of feature flag "test_feature_in_experiment".'
     )
@@ -1624,68 +1618,100 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns None for None feature key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      # Check for booleans
       self.assertIsNone(opt_obj.get_feature_variable_boolean(None, 'variable_key', 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_double(None, 'variable_key', 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_integer(None, 'variable_key', 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_string(None, 'variable_key', 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
 
-    self.assertEqual(4, mock_logger.call_count)
+      # Check for doubles
+      self.assertIsNone(opt_obj.get_feature_variable_double(None, 'variable_key', 'test_user'))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
+
+      # Check for integers
+      self.assertIsNone(opt_obj.get_feature_variable_integer(None, 'variable_key', 'test_user'))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
+
+      # Check for strings
+      self.assertIsNone(opt_obj.get_feature_variable_string(None, 'variable_key', 'test_user'))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
 
   def test_get_feature_variable__returns_none_if_none_variable_key(self):
     """ Test that get_feature_variable_* returns None for None variable key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      # Check for booleans
       self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', None, 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', None, 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', None, 'test_user'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', None, 'test-User'))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
 
-    self.assertEqual(4, mock_logger.call_count)
+      # Check for doubles
+      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', None, 'test_user'))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
+
+      # Check for integers
+      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', None, 'test_user'))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
+
+      # Check for strings
+      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', None, 'test-User'))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+      mock_client_logger.reset_mock()
 
   def test_get_feature_variable__returns_none_if_none_user_id(self):
     """ Test that get_feature_variable_* returns None for None user ID. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      # Check for booleans
       self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', 'variable_key', None))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', 'variable_key', None))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', 'variable_key', None))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
-      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', None))
-      mock_logger.assert_called_with(enums.LogLevels.ERROR, enums.Errors.NONE_USER_ID_PARAMETER)
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_USER_ID_PARAMETER)
+      mock_client_logger.reset_mock()
 
-    self.assertEqual(4, mock_logger.call_count)
+      # Check for doubles
+      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', 'variable_key', None))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_USER_ID_PARAMETER)
+      mock_client_logger.reset_mock()
+
+      # Check for integers
+      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', 'variable_key', None))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_USER_ID_PARAMETER)
+      mock_client_logger.reset_mock()
+
+      # Check for strings
+      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', None))
+      mock_client_logger.error.assert_called_with(enums.Errors.NONE_USER_ID_PARAMETER)
+      mock_client_logger.reset_mock()
 
   def test_get_feature_variable__returns_none_if_invalid_feature_key(self):
     """ Test that get_feature_variable_* returns None for invalid feature key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean('invalid_feature', 'is_working', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable_double('invalid_feature', 'cost', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable_integer('invalid_feature', 'count', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable_string('invalid_feature', 'environment', 'test_user'))
 
-    self.assertEqual(4, mock_logger.call_count)
-    mock_logger.assert_called_with(40, 'Feature "invalid_feature" is not in datafile.')
+    self.assertEqual(4, mock_config_logger.error.call_count)
+    mock_config_logger.error.assert_has_calls([
+      mock.call('Feature "invalid_feature" is not in datafile.'),
+      mock.call('Feature "invalid_feature" is not in datafile.'),
+      mock.call('Feature "invalid_feature" is not in datafile.'),
+      mock.call('Feature "invalid_feature" is not in datafile.')
+    ])
 
   def test_get_feature_variable__returns_none_if_invalid_variable_key(self):
     """ Test that get_feature_variable_* returns None for invalid variable key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+    with mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean('test_feature_in_experiment',
                                                              'invalid_variable',
                                                              'test_user'))
@@ -1698,9 +1724,13 @@ class OptimizelyTest(base.BaseTest):
       self.assertIsNone(opt_obj.get_feature_variable_string('test_feature_in_experiment',
                                                             'invalid_variable',
                                                             'test_user'))
-
-    self.assertEqual(4, mock_logger.call_count)
-    mock_logger.assert_called_with(40, 'Variable with key "invalid_variable" not found in the datafile.')
+    self.assertEqual(4, mock_config_logger.error.call_count)
+    mock_config_logger.error.assert_has_calls([
+      mock.call('Variable with key "invalid_variable" not found in the datafile.'),
+      mock.call('Variable with key "invalid_variable" not found in the datafile.'),
+      mock.call('Variable with key "invalid_variable" not found in the datafile.'),
+      mock.call('Variable with key "invalid_variable" not found in the datafile.')
+    ])
 
   def test_get_feature_variable__returns_none_if_type_mismatch(self):
     """ Test that get_feature_variable_* returns None if type mismatch. """
@@ -1712,12 +1742,11 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       # "is_working" is boolean variable and we are using double method on it.
       self.assertIsNone(opt_obj.get_feature_variable_double('test_feature_in_experiment', 'is_working', 'test_user'))
 
-    mock_logger.assert_called_with(
-      enums.LogLevels.WARNING,
+    mock_client_logger.warning.assert_called_with(
       'Requested variable type "double", but variable is of type "boolean". '
       'Use correct API to retrieve value. Returning None.'
     )
@@ -1734,13 +1763,10 @@ class OptimizelyTest(base.BaseTest):
                                                            decision_service.DECISION_SOURCE_EXPERIMENT)), \
          mock.patch('optimizely.project_config.ProjectConfig.get_typecast_value',
                     side_effect=ValueError()),\
-         mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger:
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(None, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
-    mock_logger.assert_called_with(
-      enums.LogLevels.ERROR,
-      'Unable to cast value. Returning None.'
-    )
+    mock_client_logger.error.assert_called_with('Unable to cast value. Returning None.')
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
@@ -1777,7 +1803,10 @@ class OptimizelyWithExceptionTest(base.BaseTest):
 class OptimizelyWithLoggingTest(base.BaseTest):
   def setUp(self):
     base.BaseTest.setUp(self)
-    self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict), logger=logger.SimpleLogger())
+    self.optimizely = optimizely.Optimizely(
+      json.dumps(self.config_dict),
+      logger=logger.SimpleLogger()
+    )
     self.project_config = self.optimizely.config
 
   def test_activate(self):
@@ -1792,151 +1821,153 @@ class OptimizelyWithLoggingTest(base.BaseTest):
                       'test_experiment', '111129')), \
          mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
-         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+         mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.assertEqual(variation_key, self.optimizely.activate(experiment_key, user_id))
 
-    self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.INFO, 'Activating user "%s" in experiment "%s".'
-                               % (user_id, experiment_key)),
-                     mock_logging.call_args_list[0])
-    (debug_level, debug_message) = mock_logging.call_args_list[1][0]
-    self.assertEqual(enums.LogLevels.DEBUG, debug_level)
-    self.assertRegexpMatches(debug_message,
-                             'Dispatching impression event to URL https://logx.optimizely.com/v1/events with params')
+    mock_client_logging.info.assert_called_once_with(
+      'Activating user "test_user" in experiment "test_experiment".'
+    )
+    debug_message = mock_client_logging.debug.call_args_list[0][0][0]
+    self.assertRegexpMatches(
+      debug_message,
+      'Dispatching impression event to URL https://logx.optimizely.com/v1/events with params'
+    )
 
   def test_track(self):
     """ Test that expected log messages are logged during track. """
 
     user_id = 'test_user'
     event_key = 'test_event'
-    experiment_key = 'test_experiment'
-
+    mock_client_logger = mock.patch.object(self.optimizely, 'logger')
+    mock_config_logger = mock.patch.object(self.optimizely.config, 'logger')
+    mock_decision_logger = mock.patch.object(self.optimizely.decision_service, 'logger')
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment',
                     return_value=False), \
          mock.patch('time.time', return_value=42), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
-         mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+         mock_decision_logger as mock_decision_logging, \
+         mock_config_logger as mock_config_logging, \
+         mock_client_logger as mock_client_logging:
       self.optimizely.track(event_key, user_id)
 
-    self.assertEqual(4, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG,
-                               'User "%s" is not in the forced variation map.' % user_id),
-                     mock_logging.call_args_list[0])
-    self.assertEqual(mock.call(enums.LogLevels.INFO,
-                               'User "%s" does not meet conditions to be in experiment "%s".'
-                               % (user_id, experiment_key)),
-                     mock_logging.call_args_list[1])
-    self.assertEqual(mock.call(enums.LogLevels.INFO,
-                               'Not tracking user "%s" for experiment "%s".' % (user_id, experiment_key)),
-                     mock_logging.call_args_list[2])
-    self.assertEqual(mock.call(enums.LogLevels.INFO,
-                               'There are no valid experiments for event "%s" to track.' % event_key),
-                     mock_logging.call_args_list[3])
+    mock_config_logging.debug.assert_called_once_with(
+      'User "test_user" is not in the forced variation map.'
+    )
+    mock_decision_logging.info.assert_called_once_with(
+      'User "test_user" does not meet conditions to be in experiment "test_experiment".'
+    )
+    mock_client_logging.info.assert_has_calls([
+      mock.call('Not tracking user "test_user" for experiment "test_experiment".'),
+      mock.call('There are no valid experiments for event "test_event" to track.')
+    ])
 
   def test_activate__experiment_not_running(self):
     """ Test that expected log messages are logged during activate when experiment is not running. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    mock_client_logger = mock.patch.object(self.optimizely, 'logger')
+    mock_decision_logger = mock.patch.object(self.optimizely.decision_service, 'logger')
+    with mock_client_logger as mock_client_logging, \
+        mock_decision_logger as mock_decision_logging, \
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running:
       self.optimizely.activate('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
 
-    self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock_logging.call_args_list[0],
-                     mock.call(enums.LogLevels.INFO, 'Experiment "test_experiment" is not running.'))
-    self.assertEqual(mock_logging.call_args_list[1],
-                     mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'))
+    mock_decision_logging.info.assert_called_once_with('Experiment "test_experiment" is not running.')
+    mock_client_logging.info.assert_called_once_with('Not activating user "test_user".')
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
 
   def test_activate__no_audience_match(self):
     """ Test that expected log messages are logged during activate when audience conditions are not met. """
 
-    experiment_key = 'test_experiment'
-    user_id = 'test_user'
+    mock_client_logger = mock.patch.object(self.optimizely, 'logger')
+    mock_config_logger = mock.patch.object(self.optimizely.config, 'logger')
+    mock_decision_logger = mock.patch.object(self.optimizely.decision_service, 'logger')
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.optimizely.activate('test_experiment', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
+    with mock_decision_logger as mock_decision_logging, \
+         mock_config_logger as mock_config_logging, \
+         mock_client_logger as mock_client_logging:
+      self.optimizely.activate(
+        'test_experiment',
+        'test_user',
+        attributes={'test_attribute': 'wrong_test_value'}
+      )
 
-    self.assertEqual(3, mock_logging.call_count)
-
-    self.assertEqual(mock_logging.call_args_list[0],
-                     mock.call(enums.LogLevels.DEBUG,
-                               'User "%s" is not in the forced variation map.' % user_id))
-    self.assertEqual(mock_logging.call_args_list[1],
-                     mock.call(enums.LogLevels.INFO,
-                               'User "%s" does not meet conditions to be in experiment "%s".'
-                               % (user_id, experiment_key)))
-    self.assertEqual(mock_logging.call_args_list[2],
-                     mock.call(enums.LogLevels.INFO, 'Not activating user "%s".' % user_id))
+    mock_config_logging.debug.assert_called_once_with(
+      'User "test_user" is not in the forced variation map.'
+    )
+    mock_decision_logging.info.assert_called_once_with(
+      'User "test_user" does not meet conditions to be in experiment "test_experiment".'
+    )
+    mock_client_logging.info.assert_called_once_with('Not activating user "test_user".')
 
   def test_activate__dispatch_raises_exception(self):
     """ Test that activate logs dispatch failure gracefully. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event',
                    side_effect=Exception('Failed to send')):
       self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
 
-    mock_logging.assert_any_call(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: Failed to send')
+    mock_client_logging.exception.assert_called_once_with('Unable to dispatch impression event!')
 
   def test_track__invalid_attributes(self):
     """ Test that expected log messages are logged during track when attributes are in invalid format. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_logger = mock.patch.object(self.optimizely, 'logger')
+    with mock_logger as mock_logging:
       self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
+    mock_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
 
   def test_track__invalid_event_tag(self):
     """ Test that expected log messages are logged during track when event_tag is in invalid format. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    mock_client_logger = mock.patch.object(self.optimizely, 'logger')
+    with mock_client_logger as mock_client_logging:
       self.optimizely.track('test_event', 'test_user', event_tags='4200')
-      mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
+      mock_client_logging.error.assert_called_once_with(
+        'Provided event tags are in an invalid format.'
+      )
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock_client_logger as mock_client_logging:
       self.optimizely.track('test_event', 'test_user', event_tags=4200)
-      mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided event tags are in an invalid format.')
+      mock_client_logging.error.assert_called_once_with(
+        'Provided event tags are in an invalid format.'
+      )
 
   def test_track__dispatch_raises_exception(self):
     """ Test that track logs dispatch failure gracefully. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event',
                    side_effect=Exception('Failed to send')):
       self.optimizely.track('test_event', 'user_1')
 
-    mock_logging.assert_any_call(enums.LogLevels.ERROR, 'Unable to dispatch conversion event. Error: Failed to send')
+    mock_client_logging.exception.assert_called_once_with('Unable to dispatch conversion event!')
 
   def test_get_variation__invalid_attributes(self):
     """ Test that expected log messages are logged during get variation when attributes are in invalid format. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.optimizely.get_variation('test_experiment', 'test_user', attributes='invalid')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
 
   def test_activate__invalid_attributes(self):
     """ Test that expected log messages are logged during activate when attributes are in invalid format. """
-
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.optimizely.activate('test_experiment', 'test_user', attributes='invalid')
 
-    self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.ERROR, 'Provided attributes are in an invalid format.'),
-                     mock_logging.call_args_list[0])
-    self.assertEqual(mock.call(enums.LogLevels.INFO, 'Not activating user "test_user".'),
-                     mock_logging.call_args_list[1])
+    mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+    mock_client_logging.info.assert_called_once_with('Not activating user "test_user".')
 
   def test_get_variation__experiment_not_running(self):
     """ Test that expected log messages are logged during get variation when experiment is not running. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely.decision_service, 'logger') as mock_decision_logging, \
         mock.patch('optimizely.helpers.experiment.is_experiment_running',
                    return_value=False) as mock_is_experiment_running:
       self.optimizely.get_variation('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'})
 
-    mock_logging.assert_called_once_with(enums.LogLevels.INFO, 'Experiment "test_experiment" is not running.')
+    mock_decision_logging.info.assert_called_once_with('Experiment "test_experiment" is not running.')
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
 
   def test_get_variation__no_audience_match(self):
@@ -1945,18 +1976,22 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     experiment_key = 'test_experiment'
     user_id = 'test_user'
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
-      self.optimizely.get_variation(experiment_key,
-                                    user_id,
-                                    attributes={'test_attribute': 'wrong_test_value'})
+    mock_config_logger = mock.patch.object(self.optimizely.config, 'logger')
+    mock_decision_logger = mock.patch.object(self.optimizely.decision_service, 'logger')
+    with mock_decision_logger as mock_decision_logging, \
+           mock_config_logger as mock_config_logging:
+      self.optimizely.get_variation(
+        experiment_key,
+        user_id,
+        attributes={'test_attribute': 'wrong_test_value'}
+      )
 
-    self.assertEqual(2, mock_logging.call_count)
-    self.assertEqual(mock.call(enums.LogLevels.DEBUG, 'User "%s" is not in the forced variation map.' % user_id),
-                     mock_logging.call_args_list[0])
-
-    self.assertEqual(mock.call(enums.LogLevels.INFO, 'User "%s" does not meet conditions to be in experiment "%s".'
-                               % (user_id, experiment_key)),
-                     mock_logging.call_args_list[1])
+    mock_config_logging.debug.assert_called_once_with(
+      'User "test_user" is not in the forced variation map.'
+    )
+    mock_decision_logging.info.assert_called_once_with(
+      'User "test_user" does not meet conditions to be in experiment "test_experiment".'
+    )
 
   def test_get_variation__forced_bucketing(self):
     """ Test that the expected forced variation is called for a valid experiment and attributes """
