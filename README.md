@@ -26,23 +26,20 @@ See the Optimizely Full Stack [developer documentation](http://developers.optimi
 
 ### Building the SDK
 
-Build the SDK using the following command:
+Build and install the SDK with pip, using the following command:
 
 ```
-python setup.py sdist
-```
-
-This will create a tarball under `dist/`
-
-You can then install the SDK and its dependencies with:
-
-```
-pip install dist/optimizely-sdk-{VERSION}.tar.gz
+pip install -e .
 ```
 
 ### Unit tests
 
 ##### Running all tests
+
+To get test dependencies installed, use a modified version of the install command:
+```
+pip install -e .[test]
+```
 You can run all unit tests with:
 
 ```

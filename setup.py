@@ -39,6 +39,7 @@ setup(
     packages=find_packages(
       exclude=['tests']
     ),
+    extras_require={'test': TEST_REQUIREMENTS},
     install_requires=REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
     test_suite='tests'
