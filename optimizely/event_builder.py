@@ -182,7 +182,7 @@ class EventBuilder(BaseEventBuilder):
     if not attributes:
       return []
 
-    for attribute_key in attributes.keys():
+    for attribute_key in sorted(attributes.keys()):
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
