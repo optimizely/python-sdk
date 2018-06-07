@@ -17,8 +17,8 @@ from abc import abstractmethod
 from abc import abstractproperty
 
 from . import version
+from .helpers import enums
 from .helpers import event_tag_utils
-from .helpers.enums import ControlAttributes
 
 
 class Event(object):
@@ -81,7 +81,7 @@ class BaseEventBuilder(object):
     """ Get IP anonymization bool
 
     Returns:
-      bool 'anonymizeIP' value in the datafile.
+      Boolean representing whether IP anonymization is enabled or not.
     """
 
     return self.config.get_anonymize_ip_value()
@@ -90,7 +90,7 @@ class BaseEventBuilder(object):
     """ Get bot filtering bool
 
     Returns:
-      'botFiltering' value in the datafile.
+      Boolean representing whether bot filtering is enabled or not.
     """
 
     return self.config.get_bot_filtering_value()
@@ -182,7 +182,7 @@ class EventBuilder(BaseEventBuilder):
     if not attributes:
       return []
 
-    for attribute_key in sorted(attributes.keys()):
+    for attribute_key in attributes.keys():
       attribute_value = attributes.get(attribute_key)
       # Omit falsy attribute values
       if attribute_value:
@@ -192,16 +192,17 @@ class EventBuilder(BaseEventBuilder):
             'entity_id': attribute_id,
             'key': attribute_key,
             'type': self.EventParams.CUSTOM,
-            'value': attribute_value,
+            'value': attribute_value
           })
 
     # Append Bot Filtering Attribute
-    if isinstance(self._get_bot_filtering(), bool):
+    bot_filtering_value = self._get_bot_filtering()
+    if isinstance(bot_filtering_value, bool):
       params.append({
-          'entity_id': ControlAttributes.BOT_FILTERING,
-          'key': ControlAttributes.BOT_FILTERING,
+          'entity_id': enums.ControlAttributes.BOT_FILTERING,
+          'key': enums.ControlAttributes.BOT_FILTERING,
           'type': self.EventParams.CUSTOM,
-          'value': self._get_bot_filtering(),
+          'value': bot_filtering_value
       })
 
     return params
