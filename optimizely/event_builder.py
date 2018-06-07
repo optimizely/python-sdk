@@ -179,21 +179,19 @@ class EventBuilder(BaseEventBuilder):
 
     params = []
 
-    if not attributes:
-      return []
-
-    for attribute_key in sorted(attributes.keys()):
-      attribute_value = attributes.get(attribute_key)
-      # Omit falsy attribute values
-      if attribute_value:
-        attribute_id = self.config.get_attribute_id(attribute_key)
-        if attribute_id:
-          params.append({
-            'entity_id': attribute_id,
-            'key': attribute_key,
-            'type': self.EventParams.CUSTOM,
-            'value': attribute_value
-          })
+    if isinstance(attributes, dict):
+      for attribute_key in sorted(attributes.keys()):
+        attribute_value = attributes.get(attribute_key)
+        # Omit falsy attribute values
+        if attribute_value:
+          attribute_id = self.config.get_attribute_id(attribute_key)
+          if attribute_id:
+            params.append({
+              'entity_id': attribute_id,
+              'key': attribute_key,
+              'type': self.EventParams.CUSTOM,
+              'value': attribute_value
+            })
 
     # Append Bot Filtering Attribute
     bot_filtering_value = self._get_bot_filtering()
