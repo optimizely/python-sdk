@@ -50,7 +50,11 @@ class EventBuilderTest(base.BaseTest):
     """ Helper method to validate properties of the event object. """
 
     self.assertEqual(expected_url, event_obj.url)
+
+    expected_params['visitors'][0]['attributes'].sort()
+    event_obj.params['visitors'][0]['attributes'].sort()
     self.assertEqual(expected_params, event_obj.params)
+
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 

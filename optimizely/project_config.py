@@ -386,7 +386,7 @@ class ProjectConfig(object):
 
       return attribute.id
 
-    if has_reserved_prefix and attribute_key != enums.ControlAttributes.BOT_FILTERING:
+    if has_reserved_prefix:
       return attribute_key
 
     self.logger.error('Attribute "%s" is not in datafile.' % attribute_key)

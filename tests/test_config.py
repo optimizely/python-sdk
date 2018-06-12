@@ -691,9 +691,10 @@ class ConfigTest(base.BaseTest):
     # Assert bot filtering is retrieved as provided in the data file
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
-    self.assertEqual(self.config_dict_with_features['botFiltering'],
-                     project_config.get_bot_filtering_value()
-                     )
+    self.assertEqual(
+        self.config_dict_with_features['botFiltering'],
+        project_config.get_bot_filtering_value()
+    )
 
   def test_get_experiment_from_key__valid_key(self):
     """ Test that experiment is retrieved correctly for valid experiment key. """
@@ -823,12 +824,7 @@ class ConfigTest(base.BaseTest):
     """ Test that Attribute Key is returned as ID when provided attribute key is not
     present in the datafile but has $opt prefix. """
     self.assertEqual('$opt_interesting',
-                       self.project_config.get_attribute_id('$opt_interesting'))
-
-  def test_get_attribute_id__key_is_bot_filtering_enum(self):
-    """ Test that None is returned when provided attribute key is
-    equal to '$opt_bot_filtering'. """
-    self.assertIsNone(self.project_config.get_attribute_id('$opt_bot_filtering'))
+                     self.project_config.get_attribute_id('$opt_interesting'))
 
   def test_get_group__valid_id(self):
     """ Test that group is retrieved correctly for valid group ID. """
