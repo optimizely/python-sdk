@@ -13,6 +13,7 @@
 
 import json
 import mock
+from operator import itemgetter
 
 from optimizely import decision_service
 from optimizely import entities
@@ -53,6 +54,11 @@ class OptimizelyTest(base.BaseTest):
     """ Helper method to validate properties of the event object. """
 
     self.assertEqual(expected_url, event_obj.url)
+
+    expected_params['visitors'][0]['attributes'] = \
+      sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
+    event_obj.params['visitors'][0]['attributes'] = \
+      sorted(event_obj.params['visitors'][0]['attributes'], key=itemgetter('key'))
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)

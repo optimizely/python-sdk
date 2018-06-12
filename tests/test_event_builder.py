@@ -13,6 +13,7 @@
 
 import mock
 import unittest
+from operator import itemgetter
 
 from optimizely import event_builder
 from optimizely import exceptions
@@ -51,8 +52,10 @@ class EventBuilderTest(base.BaseTest):
 
     self.assertEqual(expected_url, event_obj.url)
 
-    expected_params['visitors'][0]['attributes'].sort()
-    event_obj.params['visitors'][0]['attributes'].sort()
+    expected_params['visitors'][0]['attributes'] = \
+      sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
+    event_obj.params['visitors'][0]['attributes'] = \
+      sorted(event_obj.params['visitors'][0]['attributes'], key=itemgetter('key'))
     self.assertEqual(expected_params, event_obj.params)
 
     self.assertEqual(expected_verb, event_obj.http_verb)
