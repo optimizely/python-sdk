@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
-This repository houses the Python SDK for Optimizely Full Stack.
+This repository houses the official Python SDK for Optimizely Full Stack.
 
 ## Getting Started
 
