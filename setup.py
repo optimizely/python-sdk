@@ -26,7 +26,7 @@ with open(os.path.join(here, 'CHANGELOG.md')) as _file:
 about_text = 'Optimizely X Full Stack is A/B testing and feature management for product development teams. ' \
              'Experiment in any application. Make every feature on your roadmap an opportunity to learn. ' \
              'Learn more at https://www.optimizely.com/products/full-stack/ or see our documentation at ' \
-             'https://developers.optimizely.com/x/solutions/sdks/reference/index.html?language=python'
+             'https://developers.optimizely.com/x/solutions/sdks/reference/index.html?language=python.'
 
 setup(
     name='optimizely-sdk',
