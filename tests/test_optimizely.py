@@ -1297,8 +1297,7 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0],
                                 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
-
-
+=
   def test_is_feature_enabled__returns_true_for_feature_rollout_if_feature_enabled(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout and
     the variation's featureEnabled property is True. Also confirm that no impression event is dispatched. """
