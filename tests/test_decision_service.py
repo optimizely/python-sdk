@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -171,9 +171,9 @@ class DecisionServiceTest(base.BaseTest):
     # Assert that stored variation is returned and bucketing service is not involved
     mock_get_forced_variation.assert_called_once_with(experiment, 'test_user')
     mock_lookup.assert_called_once_with('test_user')
-    mock_get_stored_variation.assert_called_once_with(experiment,
-                                                     user_profile.UserProfile('test_user',
-                                                                              {'111127': {'variation_id': '111128'}}))
+    mock_get_stored_variation.assert_called_once_with(
+      experiment, user_profile.UserProfile('test_user', {'111127': {'variation_id': '111128'}})
+    )
     self.assertEqual(0, mock_audience_check.call_count)
     self.assertEqual(0, mock_bucket.call_count)
     self.assertEqual(0, mock_save.call_count)
@@ -459,7 +459,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
        mock.call(enums.LogLevels.DEBUG, 'User "test_user" is not in the traffic group for the targeting else. '
                                         'Checking "Everyone Else" rule now.'),
        mock.call(enums.LogLevels.DEBUG, 'User "test_user" meets conditions for targeting rule "Everyone Else".')],
-       mock_logging.call_args_list)
+      mock_logging.call_args_list
+    )
 
   def test_get_variation_for_rollout__returns_none_for_user_not_in_rollout(self, mock_logging):
     """ Test that get_variation_for_rollout returns None for the user not in the associated rollout. """
@@ -604,11 +605,10 @@ class FeatureFlagDecisionTests(base.BaseTest):
     feature = self.project_config.get_feature_from_key('test_feature_in_group')
     feature.groupId = 'aabbccdd'
 
-    self.assertEqual(decision_service.Decision(None,
-                                               None,
-                                               decision_service.DECISION_SOURCE_EXPERIMENT),
-                       self.decision_service.get_variation_for_feature(feature, 'test_user')
-                    )
+    self.assertEqual(
+      decision_service.Decision(None, None, decision_service.DECISION_SOURCE_EXPERIMENT),
+      self.decision_service.get_variation_for_feature(feature, 'test_user')
+    )
     mock_logging.assert_called_with(enums.LogLevels.ERROR,
                                      enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
 

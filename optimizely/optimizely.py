@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -387,8 +387,7 @@ class Optimizely(object):
       return False
 
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
-    if decision.variation and decision.variation.featureEnabled:
-      self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+    if decision.variation:
       # Send event if Decision came from an experiment.
       if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
         self._send_impression_event(decision.experiment,
@@ -396,7 +395,12 @@ class Optimizely(object):
                                     user_id,
                                     attributes)
 
-      return True
+      if decision.variation.featureEnabled:
+        self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+        return True
+      else:
+        self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
+        return False
 
     self.logger.log(enums.LogLevels.INFO, 'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
     return False
