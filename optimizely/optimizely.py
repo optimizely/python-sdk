@@ -180,8 +180,8 @@ class Optimizely(object):
     try:
       self.event_dispatcher.dispatch_event(impression_event)
     except:
-      error = sys.exc_info()[1]
-      self.logger.log(enums.LogLevels.ERROR, 'Unable to dispatch impression event. Error: %s' % str(error))
+      self.logger.exception('Unable to dispatch impression event!')
+
     self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
                                                 experiment, user_id, attributes, variation, impression_event)
 
@@ -266,11 +266,11 @@ class Optimizely(object):
       return None
 
     if not validator.is_non_empty_string(experiment_key):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
       return None
 
     if not validator.is_non_empty_string(user_id):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
     variation_key = self.get_variation(experiment_key, user_id, attributes)
@@ -303,11 +303,11 @@ class Optimizely(object):
       return
 
     if not validator.is_non_empty_string(event_key):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('event_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('event_key'))
       return
 
     if not validator.is_non_empty_string(user_id):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return
 
     if not self._validate_user_inputs(attributes, event_tags):
@@ -359,11 +359,11 @@ class Optimizely(object):
       return None
 
     if not validator.is_non_empty_string(experiment_key):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
       return None
 
     if not validator.is_non_empty_string(user_id):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
@@ -401,11 +401,11 @@ class Optimizely(object):
       return False
 
     if not validator.is_non_empty_string(feature_key):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
       return False
 
     if not validator.is_non_empty_string(user_id):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return False
 
     feature = self.config.get_feature_from_key(feature_key)
@@ -444,7 +444,7 @@ class Optimizely(object):
       return enabled_features
 
     if not validator.is_non_empty_string(user_id):
-      self.logger.log(enums.LogLevels.ERROR, enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return enabled_features
 
     for feature in self.config.feature_key_map.values():

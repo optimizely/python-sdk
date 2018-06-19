@@ -1132,25 +1132,25 @@ class OptimizelyTest(base.BaseTest):
     """ Test that None is returned and expected log messages are logged during track \
     when exp_key is in invalid format. """
 
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
          mock.patch('optimizely.helpers.validator.is_non_empty_string', return_value=False) as mock_validator:
       self.assertIsNone(self.optimizely.track(99, 'test_user'))
 
     mock_validator.assert_any_call(99)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "event_key" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "event_key" is in an invalid format.')
 
   def test_track__invalid_user_id(self):
     """ Test that None is returned and expected log messages are logged during track \
     when user_id is in invalid format. """
 
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
          mock.patch('optimizely.helpers.validator.is_non_empty_string', side_effect=[True, False]) as mock_validator:
       self.assertIsNone(self.optimizely.track('test_event', 99))
 
     mock_validator.assert_any_call(99)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "user_id" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
   def test_get_variation__invalid_object(self):
     """ Test that get_variation logs error if Optimizely object is not created correctly. """
@@ -1176,24 +1176,24 @@ class OptimizelyTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger,\
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging,\
          mock.patch('optimizely.helpers.validator.is_non_empty_string', return_value=False) as mock_validator:
       self.assertFalse(opt_obj.is_feature_enabled(None, 'test_user'))
 
     mock_validator.assert_any_call(None)
-    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "feature_key" is in an invalid format.')
+    mock_client_logging.error.assert_called_with('Provided "feature_key" is in an invalid format.')
 
   def test_is_feature_enabled__returns_false_for_invalid_user_id(self):
     """ Test that is_feature_enabled returns false if the provided user ID is invalid. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logger,\
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging,\
          mock.patch('optimizely.helpers.validator.is_non_empty_string', side_effect=[True, False]) as mock_validator:
       self.assertFalse(opt_obj.is_feature_enabled('feature_key', 1.2))
 
     mock_validator.assert_any_call(1.2)
-    mock_logger.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "user_id" is in an invalid format.')
+    mock_client_logging.error.assert_called_with('Provided "user_id" is in an invalid format.')
 
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
@@ -1201,7 +1201,7 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
 
     self.assertFalse(mock_decision.called)
@@ -1441,12 +1441,12 @@ class OptimizelyTest(base.BaseTest):
     mock_is_feature_enabled.assert_any_call('test_feature_in_experiment_and_rollout', 'user_1', None)
 
   def test_get_enabled_features_invalid_user_id(self):
-    with mock.patch('optimizely.logger.NoOpLogger.log') as mock_logging, \
-         mock.patch('optimizely.helpers.validator.is_non_empty_string', return_value=False) as mock_validator:
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
+            mock.patch('optimizely.helpers.validator.is_non_empty_string', return_value=False) as mock_validator:
       self.optimizely.get_enabled_features(1.2)
 
     mock_validator.assert_any_call(1.2)
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "user_id" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
   def test_get_enabled_features__invalid_object(self):
     """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
@@ -1806,6 +1806,7 @@ class OptimizelyTest(base.BaseTest):
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
@@ -1837,6 +1838,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
 
 
 class OptimizelyWithLoggingTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(
@@ -1991,47 +1993,47 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     """ Test that None is returned and expected log messages are logged during get_variation \
     when exp_key is in invalid format. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging,\
          mock.patch('optimizely.helpers.validator.is_non_empty_string', return_value=False) as mock_validator:
       self.assertIsNone(self.optimizely.get_variation(99, 'test_user'))
 
     mock_validator.assert_any_call(99)
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "experiment_key" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "experiment_key" is in an invalid format.')
 
   def test_get_variation__invalid_user_id(self):
     """ Test that None is returned and expected log messages are logged during get_variation \
     when user_id is in invalid format. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging,\
          mock.patch('optimizely.helpers.validator.is_non_empty_string', side_effect=[True, False]) as mock_validator:
       self.assertIsNone(self.optimizely.get_variation('test_experiment', 99))
 
     mock_validator.assert_any_call(99)
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "user_id" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
   def test_activate__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during activate \
     when exp_key is in invalid format. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging,\
          mock.patch('optimizely.helpers.validator.is_non_empty_string', return_value=False) as mock_validator:
       self.assertIsNone(self.optimizely.activate(99, 'test_user'))
 
     mock_validator.assert_any_call(99)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "experiment_key" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "experiment_key" is in an invalid format.')
 
   def test_activate__invalid_user_id(self):
     """ Test that None is returned and expected log messages are logged during activate \
     when user_id is in invalid format. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging, \
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging,\
          mock.patch('optimizely.helpers.validator.is_non_empty_string', side_effect=[True, False]) as mock_validator:
       self.assertIsNone(self.optimizely.activate('test_experiment', 99))
 
     mock_validator.assert_any_call(99)
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Provided "user_id" is in an invalid format.')
+    mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
   def test_activate__invalid_attributes(self):
     """ Test that expected log messages are logged during activate when attributes are in invalid format. """
