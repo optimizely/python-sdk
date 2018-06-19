@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,9 +80,10 @@ class Bucketer(object):
 
     bucketing_key = BUCKETING_ID_TEMPLATE.format(bucketing_id=bucketing_id, parent_id=parent_id)
     bucketing_number = self._generate_bucket_value(bucketing_key)
-    self.config.logger.log(enums.LogLevels.DEBUG,
-                           'Assigned bucket %s to user with bucketing ID "%s".' % (bucketing_number,
-                                                                                   bucketing_id))
+    self.config.logger.debug('Assigned bucket %s to user with bucketing ID "%s".' % (
+      bucketing_number,
+      bucketing_id
+    ))
 
     for traffic_allocation in traffic_allocations:
       current_end_of_range = traffic_allocation.get('endOfRange')
@@ -115,24 +116,33 @@ class Bucketer(object):
 
       user_experiment_id = self.find_bucket(bucketing_id, experiment.groupId, group.trafficAllocation)
       if not user_experiment_id:
-        self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no experiment.' % user_id)
+        self.config.logger.info('User "%s" is in no experiment.' % user_id)
         return None
 
       if user_experiment_id != experiment.id:
-        self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is not in experiment "%s" of group %s.' %
-                               (user_id, experiment.key, experiment.groupId))
+        self.config.logger.info('User "%s" is not in experiment "%s" of group %s.' % (
+          user_id,
+          experiment.key,
+          experiment.groupId
+        ))
         return None
 
-      self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in experiment %s of group %s.' %
-                             (user_id, experiment.key, experiment.groupId))
+      self.config.logger.info('User "%s" is in experiment %s of group %s.' % (
+        user_id,
+        experiment.key,
+        experiment.groupId
+      ))
 
     # Bucket user if not in white-list and in group (if any)
     variation_id = self.find_bucket(bucketing_id, experiment.id, experiment.trafficAllocation)
     if variation_id:
       variation = self.config.get_variation_from_id(experiment.key, variation_id)
-      self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in variation "%s" of experiment %s.' %
-                             (user_id, variation.key, experiment.key))
+      self.config.logger.info('User "%s" is in variation "%s" of experiment %s.' % (
+        user_id,
+        variation.key,
+        experiment.key
+      ))
       return variation
 
-    self.config.logger.log(enums.LogLevels.INFO, 'User "%s" is in no variation.' % user_id)
+    self.config.logger.info('User "%s" is in no variation.' % user_id)
     return None
