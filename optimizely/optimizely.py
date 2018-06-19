@@ -398,10 +398,10 @@ class Optimizely(object):
 
       if decision.variation.featureEnabled:
         self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+        return True
       else:
         self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
-
-      return decision.variation.featureEnabled
+        return False
 
     self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
     return False
