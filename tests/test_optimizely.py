@@ -1181,10 +1181,9 @@ class OptimizelyTest(base.BaseTest):
     # Check that no event is sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-  def test_is_feature_enabled__returns_true_for_feature_experiment_if_property_featureEnabled_is_true(self):
+  def test_is_feature_enabled__returns_true_for_feature_experiment_if_feature_enabled_for_variation(self):
     """ Test that the feature is enabled for the user if bucketed into variation of an experiment and
-    the variation's featureEnabled property is True.
-    Also confirm that impression event is dispatched. """
+    the variation's featureEnabled property is True. Also confirm that impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1240,10 +1239,9 @@ class OptimizelyTest(base.BaseTest):
                                 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_is_feature_enabled__returns_false_for_feature_experiment_if_property_featureEnabled_is_false(self):
+  def test_is_feature_enabled__returns_false_for_feature_experiment_if_feature_disabled_for_variation(self):
     """ Test that the feature is disabled for the user if bucketed into variation of an experiment and
-    the variation's featureEnabled property is False.
-    Also confirm that impression event is not dispatched. """
+    the variation's featureEnabled property is False. Also confirm that impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1268,13 +1266,42 @@ class OptimizelyTest(base.BaseTest):
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
 
-    # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    # Check that impression event is sent
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111111',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111128',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42000,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated',
+          }]
+        }]
+      }],
+      'client_version': version.__version__,
+      'client_name': 'python-sdk',
+      'anonymize_ip': False,
+      'revision': '1'
+    }
+    # Check that impression event is sent
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0],
+                                'https://logx.optimizely.com/v1/events',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
 
-  def test_is_feature_enabled__returns_true_for_feature_rollout_if_property_featureEnabled_is_true(self):
+
+  def test_is_feature_enabled__returns_true_for_feature_rollout_if_feature_enabled(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout and
-    the variation's featureEnabled property is True.
-    Also confirm that no impression event is dispatched. """
+    the variation's featureEnabled property is True. Also confirm that no impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1302,10 +1329,9 @@ class OptimizelyTest(base.BaseTest):
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-  def test_is_feature_enabled__returns_false_for_feature_rollout_if_property_featureEnabled_is_false(self):
+  def test_is_feature_enabled__returns_false_for_feature_rollout_if_feature_disabled(self):
     """ Test that the feature is disabled for the user if bucketed into variation of a rollout and
-    the variation's featureEnabled property is False.
-    Also confirm that no impression event is dispatched. """
+    the variation's featureEnabled property is False. Also confirm that no impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
