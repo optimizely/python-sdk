@@ -113,5 +113,5 @@ def adapt_logger(logger):
   if isinstance(logger, (SimpleLogger, NoOpLogger)):
     return logger.logger
 
-  # Otherwise, return a default logger instance.
+  # Otherwise, return whatever we were given because we can't adapt.
   return logger
