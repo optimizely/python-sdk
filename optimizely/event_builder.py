@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,6 +49,15 @@ class BaseEventBuilder(object):
     """
 
     return self.config.get_project_id()
+
+  def _get_revision(self):
+    """ Get revision.
+
+    Returns:
+      Revision of the datafile.
+    """
+
+    return self.config.get_revision()
 
   def _get_account_id(self):
     """ Get account ID.
@@ -113,6 +122,7 @@ class BaseEventBuilder(object):
     commonParams[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
     commonParams[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
     commonParams[self.EventParams.ANONYMIZE_IP] = self._get_anonymize_ip()
+    commonParams[self.EventParams.REVISION] = self._get_revision()
 
     return commonParams
 
@@ -146,6 +156,7 @@ class EventBuilder(BaseEventBuilder):
     SOURCE_SDK_VERSION = 'client_version'
     CUSTOM = 'custom'
     ANONYMIZE_IP = 'anonymize_ip'
+    REVISION = 'revision'
 
   def _get_attributes(self, attributes):
     """ Get attribute(s) information.
