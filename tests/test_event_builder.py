@@ -15,9 +15,7 @@ import mock
 import unittest
 
 from optimizely import event_builder
-from optimizely import exceptions
 from optimizely import version
-from optimizely.helpers import enums
 from . import base
 
 
