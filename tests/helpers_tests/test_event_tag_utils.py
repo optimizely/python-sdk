@@ -168,9 +168,9 @@ class EventTagUtilsTest(unittest.TestCase):
     """ Test that numeric value is not returned when value event tag has invalid data type. """
     call1 = mock.call(enums.LogLevels.DEBUG, 'Numeric metric value is not in integer, float, or string form.')
     call2 = mock.call(
-        enums.LogLevels.WARNING,
-            'The provided numeric metric value None is in an invalid format and will not be sent to results.'
-        )
+      enums.LogLevels.WARNING,
+      'The provided numeric metric value None is in an invalid format and will not be sent to results.'
+    )
     call3 = mock.call(enums.LogLevels.DEBUG, 'Provided numeric value is a boolean, which is an invalid format.')
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logger:
         self.assertIsNone(event_tag_utils.get_numeric_value({'value': None}, logger=logger.SimpleLogger()))
@@ -216,9 +216,10 @@ class EventTagUtilsTest(unittest.TestCase):
             max_float,
             event_tag_utils.get_numeric_value({'value': max_float}, logger=logger.SimpleLogger())
         )
-    mock_logger.assert_called_once_with(enums.LogLevels.INFO,
-                 'The numeric metric value {} will be sent to results.'
-                 .format(max_float))
+    mock_logger.assert_called_once_with(
+      enums.LogLevels.INFO,
+      'The numeric metric value {} will be sent to results.'.format(max_float)
+    )
 
     min_float = sys.float_info.min
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logger:
@@ -226,9 +227,10 @@ class EventTagUtilsTest(unittest.TestCase):
             min_float,
             event_tag_utils.get_numeric_value({'value': min_float}, logger=logger.SimpleLogger())
         )
-    mock_logger.assert_called_once_with(enums.LogLevels.INFO,
-                 'The numeric metric value {} will be sent to results.'
-                 .format(min_float))
+    mock_logger.assert_called_once_with(
+      enums.LogLevels.INFO,
+      'The numeric metric value {} will be sent to results.'.format(min_float)
+    )
 
     with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logger:
         self.assertEqual(0.0, event_tag_utils.get_numeric_value({'value': 0.0}, logger=logger.SimpleLogger()))
@@ -281,5 +283,7 @@ class EventTagUtilsTest(unittest.TestCase):
             logger=logger.SimpleLogger()
         )
         self.assertIsNone(numeric_value_neg_inf, 'Negative infinity numeric value is {}'.format(numeric_value_neg_inf))
-    mock_logger.assert_has_calls([call1, call2, call3, call2, call6, call2, call3, call2, call3,
-        call2, call3, call2, call5, call2, call4, call2, call4, call2, call7, call2])
+        mock_logger.assert_has_calls([
+          call1, call2, call3, call2, call6, call2, call3, call2, call3, call2,
+          call3, call2, call5, call2, call4, call2, call4, call2, call7, call2
+        ])
