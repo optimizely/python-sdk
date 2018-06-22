@@ -10,8 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
-
 from . import decision_service
 from . import entities
 from . import event_builder
@@ -399,9 +397,6 @@ class Optimizely(object):
       if decision.variation.featureEnabled:
         self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
         return True
-      else:
-        self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
-        return False
 
     self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
     return False

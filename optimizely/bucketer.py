@@ -17,7 +17,6 @@ try:
 except ImportError:
   from .lib import pymmh3 as mmh3
 
-from .helpers import enums
 
 MAX_TRAFFIC_VALUE = 10000
 UNSIGNED_MAX_32_BIT_VALUE = 0xFFFFFFFF

@@ -24,9 +24,8 @@ from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
-from optimizely.logger import SimpleLogger
-from optimizely.notification_center import NotificationCenter
 from optimizely.helpers import enums
+from optimizely.notification_center import NotificationCenter
 from . import base
 
 
