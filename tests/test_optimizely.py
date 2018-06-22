@@ -1292,7 +1292,12 @@ class OptimizelyTest(base.BaseTest):
       'project_id': '111111',
       'visitors': [{
         'visitor_id': 'test_user',
-        'attributes': [],
+        'attributes': [{
+          'type': 'custom',
+          'value': True,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
         'snapshots': [{
           'decisions': [{
             'variation_id': '111128',
