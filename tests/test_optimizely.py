@@ -1705,22 +1705,30 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       # Check for booleans
       self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', 'variable_key', None))
+      self.assertIsNone(opt_obj.get_feature_variable_boolean('feature_key', 'variable_key', ''))
       mock_client_logger.error.assert_called_with(enums.Errors.INVALID_USER_ID_ERROR)
+      self.assertEqual(2, mock_client_logger.error.call_count)
       mock_client_logger.reset_mock()
 
       # Check for doubles
       self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', 'variable_key', None))
+      self.assertIsNone(opt_obj.get_feature_variable_double('feature_key', 'variable_key', ''))
       mock_client_logger.error.assert_called_with(enums.Errors.INVALID_USER_ID_ERROR)
+      self.assertEqual(2, mock_client_logger.error.call_count)
       mock_client_logger.reset_mock()
 
       # Check for integers
       self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', 'variable_key', None))
+      self.assertIsNone(opt_obj.get_feature_variable_integer('feature_key', 'variable_key', ''))
       mock_client_logger.error.assert_called_with(enums.Errors.INVALID_USER_ID_ERROR)
+      self.assertEqual(2, mock_client_logger.error.call_count)
       mock_client_logger.reset_mock()
 
       # Check for strings
       self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', None))
+      self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', ''))
       mock_client_logger.error.assert_called_with(enums.Errors.INVALID_USER_ID_ERROR)
+      self.assertEqual(2, mock_client_logger.error.call_count)
       mock_client_logger.reset_mock()
 
   def test_get_feature_variable__returns_none_if_invalid_feature_key(self):
