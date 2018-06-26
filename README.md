@@ -1,7 +1,8 @@
 # Optimizely Python SDK
+[![PyPI version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
 [![Build Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
-[![Apache 2.0](https://img.shields.io/github/license/nebula-plugins/gradle-extra-configurations-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 This repository houses the Python SDK for Optimizely Full Stack.
 
@@ -15,6 +16,9 @@ The SDK is available through [PyPi](https://pypi.python.org/pypi?name=optimizely
 pip install optimizely-sdk
 ```
 
+### Feature Management Access
+To access the Feature Management configuration in the Optimizely dashboard, please contact your Optimizely account executive.
+
 ### Using the SDK
 See the Optimizely Full Stack [developer documentation](http://developers.optimizely.com/server/reference/index.html) to learn how to set up your first Python project and use the SDK.
 
@@ -22,23 +26,20 @@ See the Optimizely Full Stack [developer documentation](http://developers.optimi
 
 ### Building the SDK
 
-Build the SDK using the following command:
+Build and install the SDK with pip, using the following command:
 
 ```
-python setup.py sdist
-```
-
-This will create a tarball under `dist/`
-
-You can then install the SDK and its dependencies with:
-
-```
-pip install dist/optimizely-sdk-{VERSION}.tar.gz
+pip install -e .
 ```
 
 ### Unit tests
 
 ##### Running all tests
+
+To get test dependencies installed, use a modified version of the install command:
+```
+pip install -e .[test]
+```
 You can run all unit tests with:
 
 ```

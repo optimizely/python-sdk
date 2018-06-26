@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,8 +62,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '111129',
           'endOfRange': 9000
-        }],
-      '111182'),
+        }], '111182'),
       'group_exp_1': entities.Experiment(
         '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',
@@ -425,8 +424,7 @@ class ConfigTest(base.BaseTest):
         }, {
           'entityId': '111129',
           'endOfRange': 9000
-        }],
-      '111182'),
+        }], '111182'),
       'group_exp_1': entities.Experiment(
         '32222', 'group_exp_1', 'Running', [], [{
           'key': 'group_exp_1_control',
@@ -616,6 +614,8 @@ class ConfigTest(base.BaseTest):
         '129': entities.Variation.VariableUsage('129', '112'),
         '130': entities.Variation.VariableUsage('130', '1.211')
       },
+      '28905': {},
+      '28906': {},
       '211113': {
         '131': entities.Variation.VariableUsage('131', '15')
       }
@@ -885,6 +885,17 @@ class ConfigTest(base.BaseTest):
     }])
     self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
+  def test_get_rollout_from_id__invalid_rollout_id(self):
+    """ Test that None is returned for an unknown Rollout ID """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features),
+                                    logger=logger.NoOpLogger())
+    project_config = opt_obj.config
+    with mock.patch.object(project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(project_config.get_rollout_from_id('aabbccdd'))
+
+    mock_config_logging.error.assert_called_once_with('Rollout with ID "aabbccdd" is not in datafile.')
+
   def test_get_variable_value_for_variation__returns_valid_value(self):
     """ Test that the right value is returned. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -969,6 +980,30 @@ class ConfigTest(base.BaseTest):
     self.assertIsNone(self.project_config.get_forced_variation(None, 'test_user'))
     self.assertIsNone(self.project_config.get_forced_variation('', 'test_user'))
 
+  def test_get_forced_variation_with_none_set_for_user(self):
+    """ Test get_forced_variation when none set for user ID in forced variation map. """
+    self.project_config.forced_variation_map = {}
+    self.project_config.forced_variation_map['test_user'] = {}
+
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
+    mock_config_logging.debug.assert_called_once_with(
+      'No experiment "test_experiment" mapped to user "test_user" in the forced variation map.'
+    )
+
+  def test_get_forced_variation_missing_variation_mapped_to_experiment(self):
+    """ Test get_forced_variation when no variation found against given experiment for the user. """
+    self.project_config.forced_variation_map = {}
+    self.project_config.forced_variation_map['test_user'] = {}
+    self.project_config.forced_variation_map['test_user']['test_experiment'] = None
+
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
+
+    mock_config_logging.debug.assert_called_once_with(
+      'No variation mapped to experiment "test_experiment" in the forced variation map.'
+    )
+
   # set_forced_variation tests
   def test_set_forced_variation__invalid_user_id(self):
     """ Test invalid user IDs set fail to set a forced variation """
@@ -1015,6 +1050,28 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
     self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
 
+  def test_set_forced_variation_when_called_to_remove_forced_variation(self):
+    """ Test set_forced_variation when no variation is given. """
+    # Test case where both user and experiment are present in the forced variation map
+    self.project_config.forced_variation_map = {}
+    self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
+
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
+    mock_config_logging.debug.assert_called_once_with(
+      'Variation mapped to experiment "test_experiment" has been removed for user "test_user".'
+    )
+
+    # Test case where user is present in the forced variation map, but the given experiment isn't
+    self.project_config.forced_variation_map = {}
+    self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
+
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user', None))
+    mock_config_logging.debug.assert_called_once_with(
+      'Nothing to remove. Variation mapped to experiment "group_exp_1" for user "test_user" does not exist.'
+    )
+
 
 class ConfigLoggingTest(base.BaseTest):
   def setUp(self):
@@ -1026,74 +1083,74 @@ class ConfigLoggingTest(base.BaseTest):
   def test_get_experiment_from_key__invalid_key(self):
     """ Test that message is logged when provided experiment key is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_experiment_from_key('invalid_key')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Experiment key "invalid_key" is not in datafile.')
 
   def test_get_audience__invalid_id(self):
     """ Test that message is logged when provided audience ID is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_audience('42')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Audience ID "42" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Audience ID "42" is not in datafile.')
 
   def test_get_variation_from_key__invalid_experiment_key(self):
     """ Test that message is logged when provided experiment key is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_variation_from_key('invalid_key', 'control')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Experiment key "invalid_key" is not in datafile.')
 
   def test_get_variation_from_key__invalid_variation_key(self):
     """ Test that message is logged when provided variation key is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_variation_from_key('test_experiment', 'invalid_key')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation key "invalid_key" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Variation key "invalid_key" is not in datafile.')
 
   def test_get_variation_from_id__invalid_experiment_key(self):
     """ Test that message is logged when provided experiment key is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_variation_from_id('invalid_key', '111128')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Experiment key "invalid_key" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Experiment key "invalid_key" is not in datafile.')
 
   def test_get_variation_from_id__invalid_variation_id(self):
     """ Test that message is logged when provided variation ID is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_variation_from_id('test_experiment', '42')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Variation ID "42" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Variation ID "42" is not in datafile.')
 
   def test_get_event__invalid_key(self):
     """ Test that message is logged when provided event key is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_event('invalid_key')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Event "invalid_key" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Event "invalid_key" is not in datafile.')
 
   def test_get_attribute__invalid_key(self):
     """ Test that message is logged when provided attribute key is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_attribute('invalid_key')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Attribute "invalid_key" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Attribute "invalid_key" is not in datafile.')
 
   def test_get_group__invalid_id(self):
     """ Test that message is logged when provided group ID is invalid. """
 
-    with mock.patch('optimizely.logger.SimpleLogger.log') as mock_logging:
+    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.project_config.get_group('42')
 
-    mock_logging.assert_called_once_with(enums.LogLevels.ERROR, 'Group ID "42" is not in datafile.')
+    mock_config_logging.error.assert_called_once_with('Group ID "42" is not in datafile.')
 
 
 class ConfigExceptionTest(base.BaseTest):

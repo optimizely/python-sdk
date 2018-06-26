@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,6 +80,7 @@ class EventBuilderTest(base.BaseTest):
       'client_name': 'python-sdk',
       'client_version': version.__version__,
       'anonymize_ip': False,
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -125,7 +126,8 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -166,7 +168,8 @@ class EventBuilderTest(base.BaseTest):
         }],
         'client_name': 'python-sdk',
         'client_version': version.__version__,
-        'anonymize_ip': False
+        'anonymize_ip': False,
+        'revision': '42'
       }
 
       with mock.patch('time.time', return_value=42.123), \
@@ -207,7 +210,8 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -252,7 +256,8 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -304,7 +309,8 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
@@ -358,7 +364,8 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
-      'anonymize_ip': False
+      'anonymize_ip': False,
+      'revision': '42'
     }
 
     with mock.patch('time.time', return_value=42.123), \
