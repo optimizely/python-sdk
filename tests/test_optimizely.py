@@ -13,6 +13,7 @@
 
 import json
 import mock
+from operator import itemgetter
 
 from optimizely import decision_service
 from optimizely import entities
@@ -52,6 +53,11 @@ class OptimizelyTest(base.BaseTest):
     """ Helper method to validate properties of the event object. """
 
     self.assertEqual(expected_url, event_obj.url)
+
+    expected_params['visitors'][0]['attributes'] = \
+      sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
+    event_obj.params['visitors'][0]['attributes'] = \
+      sorted(event_obj.params['visitors'][0]['attributes'], key=itemgetter('key'))
     self.assertEqual(expected_params, event_obj.params)
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
@@ -606,6 +612,11 @@ class OptimizelyTest(base.BaseTest):
         'visitor_id': 'test_user',
         'attributes': [{
           'type': 'custom',
+          'value': 'user_bucket_value',
+          'entity_id': '$opt_bucketing_id',
+          'key': '$opt_bucketing_id'
+        }, {
+          'type': 'custom',
           'value': 'test_value',
           'entity_id': '111094',
           'key': 'test_attribute'
@@ -773,6 +784,11 @@ class OptimizelyTest(base.BaseTest):
       'visitors': [{
         'visitor_id': 'test_user',
         'attributes': [{
+          'type': 'custom',
+          'value': 'user_bucket_value',
+          'entity_id': '$opt_bucketing_id',
+          'key': '$opt_bucketing_id'
+        }, {
           'type': 'custom',
           'value': 'test_value',
           'entity_id': '111094',
@@ -1212,7 +1228,12 @@ class OptimizelyTest(base.BaseTest):
       'project_id': '111111',
       'visitors': [{
         'visitor_id': 'test_user',
-        'attributes': [],
+        'attributes': [{
+          'type': 'custom',
+          'value': True,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
         'snapshots': [{
           'decisions': [{
             'variation_id': '111129',
@@ -1271,7 +1292,12 @@ class OptimizelyTest(base.BaseTest):
       'project_id': '111111',
       'visitors': [{
         'visitor_id': 'test_user',
-        'attributes': [],
+        'attributes': [{
+          'type': 'custom',
+          'value': True,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
         'snapshots': [{
           'decisions': [{
             'variation_id': '111128',
@@ -1794,6 +1820,7 @@ class OptimizelyTest(base.BaseTest):
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
@@ -1825,6 +1852,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
 
 
 class OptimizelyWithLoggingTest(base.BaseTest):
+
   def setUp(self):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(

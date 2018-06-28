@@ -1,4 +1,4 @@
-# Copyright 2017, Optimizely
+# Copyright 2017-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,7 +23,6 @@ from .user_profile import UserProfile
 Decision = namedtuple('Decision', 'experiment variation source')
 DECISION_SOURCE_EXPERIMENT = 'experiment'
 DECISION_SOURCE_ROLLOUT = 'rollout'
-RESERVED_BUCKETING_ID_ATTRIBUTE = '$opt_bucketing_id'
 
 
 class DecisionService(object):
@@ -48,7 +47,7 @@ class DecisionService(object):
     """
 
     attributes = attributes or {}
-    return attributes.get(RESERVED_BUCKETING_ID_ATTRIBUTE, user_id)
+    return attributes.get(enums.ControlAttributes.BUCKETING_ID, user_id)
 
   def get_forced_variation(self, experiment, user_id):
     """ Determine if a user is forced into a variation for the given experiment and return that variation.
