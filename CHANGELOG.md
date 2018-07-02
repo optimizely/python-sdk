@@ -1,3 +1,9 @@
+## 2.1.0
+July 2nd, 2018
+
+- Introduced support for bot filtering ([#121](https://github.com/optimizely/python-sdk/pull/121)).
+- Overhauled logging to use standard Python logging ([#123](https://github.com/optimizely/python-sdk/pull/123)).
+
 ## 2.0.1
 June 19th, 2018
 
