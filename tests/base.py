@@ -145,6 +145,7 @@ class BaseTest(unittest.TestCase):
       'accountId': '12001',
       'projectId': '111111',
       'version': '4',
+      'botFiltering': True,
       'events': [{
         'key': 'test_event',
         'experimentIds': ['111127'],
