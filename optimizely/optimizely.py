@@ -206,8 +206,8 @@ class Optimizely(object):
       self.logger.error(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
       return None
 
-    if user_id is None:
-      self.logger.error(enums.Errors.NONE_USER_ID_PARAMETER)
+    if not user_id:
+      self.logger.error(enums.Errors.INVALID_USER_ID_ERROR)
       return None
 
     feature_flag = self.config.get_feature_from_key(feature_key)
@@ -291,6 +291,10 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_DATAFILE.format('track'))
       return
 
+    if not user_id:
+      self.logger.error(enums.Errors.INVALID_USER_ID_ERROR)
+      return None
+
     if not self._validate_user_inputs(attributes, event_tags):
       return
 
@@ -339,6 +343,10 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
       return None
 
+    if not user_id:
+      self.logger.error(enums.Errors.INVALID_USER_ID_ERROR)
+      return None
+
     experiment = self.config.get_experiment_from_key(experiment_key)
 
     if not experiment:
@@ -373,12 +381,12 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
       return False
 
-    if feature_key is None:
+    if not feature_key:
       self.logger.error(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
       return False
 
-    if user_id is None:
-      self.logger.error(enums.Errors.NONE_USER_ID_PARAMETER)
+    if not user_id:
+      self.logger.error(enums.Errors.INVALID_USER_ID_ERROR)
       return False
 
     feature = self.config.get_feature_from_key(feature_key)
