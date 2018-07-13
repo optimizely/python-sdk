@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,11 +13,10 @@
 
 import mock
 import unittest
+from operator import itemgetter
 
 from optimizely import event_builder
-from optimizely import exceptions
 from optimizely import version
-from optimizely.helpers import enums
 from . import base
 
 
@@ -50,7 +49,13 @@ class EventBuilderTest(base.BaseTest):
     """ Helper method to validate properties of the event object. """
 
     self.assertEqual(expected_url, event_obj.url)
+
+    expected_params['visitors'][0]['attributes'] = \
+      sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
+    event_obj.params['visitors'][0]['attributes'] = \
+      sorted(event_obj.params['visitors'][0]['attributes'], key=itemgetter('key'))
     self.assertEqual(expected_params, event_obj.params)
+
     self.assertEqual(expected_verb, event_obj.http_verb)
     self.assertEqual(expected_headers, event_obj.headers)
 
@@ -184,6 +189,166 @@ class EventBuilderTest(base.BaseTest):
                                   event_builder.EventBuilder.HTTP_VERB,
                                   event_builder.EventBuilder.HTTP_HEADERS)
 
+  def test_create_impression_event__with_user_agent_when_bot_filtering_is_enabled(self):
+    """ Test that create_impression_event creates Event object
+    with right params when user agent attribute is provided and
+    bot filtering is enabled """
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'Edge',
+          'entity_id': '$opt_user_agent',
+          'key': '$opt_user_agent'
+        }, {
+          'type': 'custom',
+          'value': True,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
+         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', {'$opt_user_agent': 'Edge'}
+      )
+
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_impression_event__with_empty_attributes_when_bot_filtering_is_enabled(self):
+    """ Test that create_impression_event creates Event object
+    with right params when empty attributes are provided and
+    bot filtering is enabled """
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': True,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
+         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', None
+      )
+
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_impression_event__with_user_agent_when_bot_filtering_is_disabled(self):
+    """ Test that create_impression_event creates Event object
+    with right params when user agent attribute is provided and
+    bot filtering is disabled """
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'Chrome',
+          'entity_id': '$opt_user_agent',
+          'key': '$opt_user_agent'
+        }, {
+          'type': 'custom',
+          'value': False,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
+         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=False):
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', {'$opt_user_agent': 'Chrome'}
+      )
+
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
   def test_create_conversion_event(self):
     """ Test that create_conversion_event creates Event object
     with right params when no attributes are provided. """
@@ -265,6 +430,114 @@ class EventBuilderTest(base.BaseTest):
       event_obj = self.event_builder.create_conversion_event(
         'test_event', 'test_user', {'test_attribute': 'test_value'}, None, [('111127', '111129')]
       )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_conversion_event__with_user_agent_when_bot_filtering_is_enabled(self):
+    """ Test that create_conversion_event creates Event object
+    with right params when user agent attribute is provided and
+    bot filtering is enabled """
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'Edge',
+          'entity_id': '$opt_user_agent',
+          'key': '$opt_user_agent'
+        }, {
+          'type': 'custom',
+          'value': True,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
+      event_obj = self.event_builder.create_conversion_event(
+       'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None, [('111127', '111129')]
+          )
+
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_conversion_event__with_user_agent_when_bot_filtering_is_disabled(self):
+    """ Test that create_conversion_event creates Event object
+    with right params when user agent attribute is provided and
+    bot filtering is disabled """
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': 'Chrome',
+          'entity_id': '$opt_user_agent',
+          'key': '$opt_user_agent'
+        }, {
+          'type': 'custom',
+          'value': False,
+          'entity_id': '$opt_bot_filtering',
+          'key': '$opt_bot_filtering'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42123,
+            'entity_id': '111095',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'test_event'
+          }]
+        }]
+      }],
+      'client_name': 'python-sdk',
+      'client_version': version.__version__,
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=False):
+      event_obj = self.event_builder.create_conversion_event(
+       'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None, [('111127', '111129')]
+          )
+
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
                                 expected_params,

@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,18 +13,16 @@
 
 import json
 import logging
-from os import environ
 import types
+from os import environ
+
 from flask import Flask
 from flask import request
-from optimizely import logger
-from optimizely import notification_center
-from optimizely import optimizely
-from optimizely.helpers import enums
-from optimizely import entities
-from optimizely import event_builder
 
 import user_profile_service
+from optimizely import logger
+from optimizely import optimizely
+from optimizely.helpers import enums
 
 app = Flask(__name__)
 

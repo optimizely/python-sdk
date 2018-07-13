@@ -1,3 +1,14 @@
+## 2.1.0
+July 2nd, 2018
+
+- Introduced support for bot filtering ([#121](https://github.com/optimizely/python-sdk/pull/121)).
+- Overhauled logging to use standard Python logging ([#123](https://github.com/optimizely/python-sdk/pull/123)).
+
+## 2.0.1
+June 19th, 2018
+
+- Fix: send impression event for Feature Test when Feature is disabled ([#128](https://github.com/optimizely/python-sdk/pull/128)).
+
 ## 2.0.0
 April 12th, 2018
 

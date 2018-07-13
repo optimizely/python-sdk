@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ from abc import abstractmethod
 from abc import abstractproperty
 
 from . import version
+from .helpers import enums
 from .helpers import event_tag_utils
 
 
@@ -80,10 +81,19 @@ class BaseEventBuilder(object):
     """ Get IP anonymization bool
 
     Returns:
-      bool 'anonymizeIP' value in the datafile.
+      Boolean representing whether IP anonymization is enabled or not.
     """
 
     return self.config.get_anonymize_ip_value()
+
+  def _get_bot_filtering(self):
+    """ Get bot filtering bool
+
+    Returns:
+      Boolean representing whether bot filtering is enabled or not.
+    """
+
+    return self.config.get_bot_filtering_value()
 
   @abstractmethod
   def _get_time(self):
@@ -169,21 +179,29 @@ class EventBuilder(BaseEventBuilder):
 
     params = []
 
-    if not attributes:
-      return []
+    if isinstance(attributes, dict):
+      for attribute_key in attributes.keys():
+        attribute_value = attributes.get(attribute_key)
+        # Omit falsy attribute values
+        if attribute_value:
+          attribute_id = self.config.get_attribute_id(attribute_key)
+          if attribute_id:
+            params.append({
+              'entity_id': attribute_id,
+              'key': attribute_key,
+              'type': self.EventParams.CUSTOM,
+              'value': attribute_value
+            })
 
-    for attribute_key in attributes.keys():
-      attribute_value = attributes.get(attribute_key)
-      # Omit falsy attribute values
-      if attribute_value:
-        attribute = self.config.get_attribute(attribute_key)
-        if attribute:
-          params.append({
-            self.EventParams.EVENT_ID: attribute.id,
-            'key': attribute_key,
-            'type': self.EventParams.CUSTOM,
-            'value': attribute_value,
-          })
+    # Append Bot Filtering Attribute
+    bot_filtering_value = self._get_bot_filtering()
+    if isinstance(bot_filtering_value, bool):
+      params.append({
+          'entity_id': enums.ControlAttributes.BOT_FILTERING,
+          'key': enums.ControlAttributes.BOT_FILTERING,
+          'type': self.EventParams.CUSTOM,
+          'value': bot_filtering_value
+      })
 
     return params
 

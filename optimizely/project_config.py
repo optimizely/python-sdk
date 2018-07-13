@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,8 @@ V2_CONFIG_VERSION = '2'
 
 SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
 UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
+
+RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
 
 class ProjectConfig(object):
@@ -56,6 +58,7 @@ class ProjectConfig(object):
     self.feature_flags = config.get('featureFlags', [])
     self.rollouts = config.get('rollouts', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
+    self.bot_filtering = config.get('botFiltering', None)
 
     # Utility maps for quick lookup
     self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -233,7 +236,7 @@ class ProjectConfig(object):
     if experiment:
       return experiment
 
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
+    self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
@@ -252,7 +255,7 @@ class ProjectConfig(object):
     if experiment:
       return experiment
 
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment ID "%s" is not in datafile.' % experiment_id)
+    self.logger.error('Experiment ID "%s" is not in datafile.' % experiment_id)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
@@ -271,7 +274,7 @@ class ProjectConfig(object):
     if group:
       return group
 
-    self.logger.log(enums.LogLevels.ERROR, 'Group ID "%s" is not in datafile.' % group_id)
+    self.logger.error('Group ID "%s" is not in datafile.' % group_id)
     self.error_handler.handle_error(exceptions.InvalidGroupException(enums.Errors.INVALID_GROUP_ID_ERROR))
     return None
 
@@ -289,7 +292,7 @@ class ProjectConfig(object):
     if audience:
       return audience
 
-    self.logger.log(enums.LogLevels.ERROR, 'Audience ID "%s" is not in datafile.' % audience_id)
+    self.logger.error('Audience ID "%s" is not in datafile.' % audience_id)
     self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE_ERROR)))
 
   def get_variation_from_key(self, experiment_key, variation_key):
@@ -310,11 +313,11 @@ class ProjectConfig(object):
       if variation:
         return variation
       else:
-        self.logger.log(enums.LogLevels.ERROR, 'Variation key "%s" is not in datafile.' % variation_key)
+        self.logger.error('Variation key "%s" is not in datafile.' % variation_key)
         self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION_ERROR))
         return None
 
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
+    self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
@@ -336,11 +339,11 @@ class ProjectConfig(object):
       if variation:
         return variation
       else:
-        self.logger.log(enums.LogLevels.ERROR, 'Variation ID "%s" is not in datafile.' % variation_id)
+        self.logger.error('Variation ID "%s" is not in datafile.' % variation_id)
         self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION_ERROR))
         return None
 
-    self.logger.log(enums.LogLevels.ERROR, 'Experiment key "%s" is not in datafile.' % experiment_key)
+    self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
     self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
     return None
 
@@ -359,26 +362,34 @@ class ProjectConfig(object):
     if event:
       return event
 
-    self.logger.log(enums.LogLevels.ERROR, 'Event "%s" is not in datafile.' % event_key)
+    self.logger.error('Event "%s" is not in datafile.' % event_key)
     self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
     return None
 
-  def get_attribute(self, attribute_key):
-    """ Get attribute for the provided attribute key.
+  def get_attribute_id(self, attribute_key):
+    """ Get attribute ID for the provided attribute key.
 
     Args:
       attribute_key: Attribute key for which attribute is to be fetched.
 
     Returns:
-      Attribute corresponding to the provided attribute key.
+      Attribute ID corresponding to the provided attribute key.
     """
 
     attribute = self.attribute_key_map.get(attribute_key)
+    has_reserved_prefix = attribute_key.startswith(RESERVED_ATTRIBUTE_PREFIX)
 
     if attribute:
-      return attribute
+      if has_reserved_prefix:
+        self.logger.warning(('Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
+                             'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)))
 
-    self.logger.log(enums.LogLevels.ERROR, 'Attribute "%s" is not in datafile.' % attribute_key)
+      return attribute.id
+
+    if has_reserved_prefix:
+      return attribute_key
+
+    self.logger.error('Attribute "%s" is not in datafile.' % attribute_key)
     self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
     return None
 
@@ -396,7 +407,7 @@ class ProjectConfig(object):
     if feature:
       return feature
 
-    self.logger.log(enums.LogLevels.ERROR, 'Feature "%s" is not in datafile.' % feature_key)
+    self.logger.error('Feature "%s" is not in datafile.' % feature_key)
     return None
 
   def get_rollout_from_id(self, rollout_id):
@@ -413,7 +424,7 @@ class ProjectConfig(object):
     if layer:
       return layer
 
-    self.logger.log(enums.LogLevels.ERROR, 'Rollout with ID "%s" is not in datafile.' % rollout_id)
+    self.logger.error('Rollout with ID "%s" is not in datafile.' % rollout_id)
     return None
 
   def get_variable_value_for_variation(self, variable, variation):
@@ -431,7 +442,7 @@ class ProjectConfig(object):
       return None
 
     if variation.id not in self.variation_variable_usage_map:
-      self.logger.log(enums.LogLevels.ERROR, 'Variation with ID "%s" is not in the datafile.' % variation.id)
+      self.logger.error('Variation with ID "%s" is not in the datafile.' % variation.id)
       return None
 
     # Get all variable usages for the given variation
@@ -444,19 +455,19 @@ class ProjectConfig(object):
 
     if variable_usage:
       variable_value = variable_usage.value
-      self.logger.log(
-        enums.LogLevels.INFO,
-        'Value for variable "%s" for variation "%s" is "%s".' % (
-          variable.key, variation.key, variable_value
-        ))
+      self.logger.info('Value for variable "%s" for variation "%s" is "%s".' % (
+        variable.key,
+        variation.key,
+        variable_value
+      ))
 
     else:
       variable_value = variable.defaultValue
-      self.logger.log(
-          enums.LogLevels.INFO,
-          'Variable "%s" is not used in variation "%s". Assinging default value "%s".' % (
-            variable.key, variation.key, variable_value
-          ))
+      self.logger.info('Variable "%s" is not used in variation "%s". Assigning default value "%s".' % (
+        variable.key,
+        variation.key,
+        variable_value
+      ))
 
     return variable_value
 
@@ -472,11 +483,11 @@ class ProjectConfig(object):
     """
     feature = self.feature_key_map.get(feature_key)
     if not feature:
-      self.logger.log(enums.LogLevels.ERROR, 'Feature with key "%s" not found in the datafile.' % feature_key)
+      self.logger.error('Feature with key "%s" not found in the datafile.' % feature_key)
       return None
 
     if variable_key not in feature.variables:
-      self.logger.log(enums.LogLevels.ERROR, 'Variable with key "%s" not found in the datafile.' % variable_key)
+      self.logger.error('Variable with key "%s" not found in the datafile.' % variable_key)
       return None
 
     return feature.variables.get(variable_key)
@@ -493,7 +504,7 @@ class ProjectConfig(object):
         A boolean value that indicates if the set completed successfully.
     """
     if not user_id:
-      self.logger.log(enums.LogLevels.DEBUG, 'User ID is invalid.')
+      self.logger.debug('User ID is invalid.')
       return False
 
     experiment = self.get_experiment_from_key(experiment_key)
@@ -507,16 +518,17 @@ class ProjectConfig(object):
         experiment_to_variation_map = self.forced_variation_map.get(user_id)
         if experiment_id in experiment_to_variation_map:
           del(self.forced_variation_map[user_id][experiment_id])
-          self.logger.log(enums.LogLevels.DEBUG,
-                          'Variation mapped to experiment "%s" has been removed for user "%s".'
-                          % (experiment_key, user_id))
+          self.logger.debug('Variation mapped to experiment "%s" has been removed for user "%s".' % (
+            experiment_key,
+            user_id
+          ))
         else:
-          self.logger.log(enums.LogLevels.DEBUG,
-                          'Nothing to remove. Variation mapped to experiment "%s" for user "%s" does not exist.'
-                          % (experiment_key, user_id))
+          self.logger.debug('Nothing to remove. Variation mapped to experiment "%s" for user "%s" does not exist.' % (
+            experiment_key,
+            user_id
+          ))
       else:
-        self.logger.log(enums.LogLevels.DEBUG,
-                        'Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
+        self.logger.debug('Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
       return True
 
     forced_variation = self.get_variation_from_key(experiment_key, variation_key)
@@ -531,9 +543,11 @@ class ProjectConfig(object):
     else:
       self.forced_variation_map[user_id][experiment_id] = variation_id
 
-    self.logger.log(enums.LogLevels.DEBUG,
-                    'Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.'
-                    % (variation_id, experiment_id, user_id))
+    self.logger.debug('Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.' % (
+      variation_id,
+      experiment_id,
+      user_id
+    ))
     return True
 
   def get_forced_variation(self, experiment_key, user_id):
@@ -547,11 +561,11 @@ class ProjectConfig(object):
         The variation which the given user and experiment should be forced into.
     """
     if not user_id:
-      self.logger.log(enums.LogLevels.DEBUG, 'User ID is invalid.')
+      self.logger.debug('User ID is invalid.')
       return None
 
     if user_id not in self.forced_variation_map:
-      self.logger.log(enums.LogLevels.DEBUG, 'User "%s" is not in the forced variation map.' % user_id)
+      self.logger.debug('User "%s" is not in the forced variation map.' % user_id)
       return None
 
     experiment = self.get_experiment_from_key(experiment_key)
@@ -562,23 +576,26 @@ class ProjectConfig(object):
     experiment_to_variation_map = self.forced_variation_map.get(user_id)
 
     if not experiment_to_variation_map:
-      self.logger.log(enums.LogLevels.DEBUG,
-                      'No experiment "%s" mapped to user "%s" in the forced variation map.'
-                      % (experiment_key, user_id))
+      self.logger.debug('No experiment "%s" mapped to user "%s" in the forced variation map.' % (
+        experiment_key,
+        user_id
+      ))
       return None
 
     variation_id = experiment_to_variation_map.get(experiment.id)
     if variation_id is None:
-      self.logger.log(enums.LogLevels.DEBUG,
-                      'No variation mapped to experiment "%s" in the forced variation map.'
-                      % experiment_key)
+      self.logger.debug(
+        'No variation mapped to experiment "%s" in the forced variation map.' % experiment_key
+      )
       return None
 
     variation = self.get_variation_from_id(experiment_key, variation_id)
 
-    self.logger.log(enums.LogLevels.DEBUG,
-                    'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map'
-                    % (variation.key, experiment_key, user_id))
+    self.logger.debug('Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map' % (
+      variation.key,
+      experiment_key,
+      user_id
+    ))
     return variation
 
   def get_anonymize_ip_value(self):
@@ -589,3 +606,12 @@ class ProjectConfig(object):
     """
 
     return self.anonymize_ip
+
+  def get_bot_filtering_value(self):
+    """ Gets the bot filtering value.
+
+      Returns:
+        A boolean value that indicates if bot filtering should be enabled.
+    """
+
+    return self.bot_filtering
