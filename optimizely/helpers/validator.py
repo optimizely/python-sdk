@@ -13,8 +13,8 @@
 
 import json
 import jsonschema
-import sys
 
+from six import string_types
 from optimizely.user_profile import UserProfile
 from . import constants
 
@@ -163,13 +163,6 @@ def is_non_empty_string(input):
   Returns:
     Boolean depending upon whether input is valid or not.
   """
-  PY3 = sys.version_info[0] == 3
-
-  if PY3:
-      string_types = str,
-  else:
-      string_types = basestring
-
   if isinstance(input, string_types) and input:
     return True
 
