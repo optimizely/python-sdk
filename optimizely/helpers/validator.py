@@ -154,16 +154,16 @@ def is_user_profile_valid(user_profile):
   return True
 
 
-def is_non_empty_string(input):
-  """ Determine if provided input is a non-empty string or not.
+def is_non_empty_string(input_id_key):
+  """ Determine if provided input_id_key is a non-empty string or not.
 
   Args:
-    input: Variable which needs to be validated.
+    input_id_key: Variable which needs to be validated.
 
   Returns:
     Boolean depending upon whether input is valid or not.
   """
-  if isinstance(input, string_types) and input:
+  if isinstance(input_id_key, string_types) and input_id_key:
     return True
 
   return False
