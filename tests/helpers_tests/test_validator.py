@@ -141,10 +141,10 @@ class ValidatorTest(base.BaseTest):
     self.assertFalse(validator.is_non_empty_string(1.2))
     self.assertFalse(validator.is_non_empty_string(True))
     self.assertFalse(validator.is_non_empty_string(False))
-    self.assertFalse(validator.is_non_empty_string(""))
+    self.assertFalse(validator.is_non_empty_string(''))
 
-    self.assertTrue(validator.is_non_empty_string("0"))
-    self.assertTrue(validator.is_non_empty_string("test_user"))
+    self.assertTrue(validator.is_non_empty_string('0'))
+    self.assertTrue(validator.is_non_empty_string('test_user'))
 
 
 class DatafileValidationTests(base.BaseTest):

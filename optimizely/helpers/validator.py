@@ -13,8 +13,8 @@
 
 import json
 import jsonschema
-
 from six import string_types
+
 from optimizely.user_profile import UserProfile
 from . import constants
 
@@ -163,7 +163,7 @@ def is_non_empty_string(input_id_key):
   Returns:
     Boolean depending upon whether input is valid or not.
   """
-  if isinstance(input_id_key, string_types) and input_id_key:
+  if input_id_key and isinstance(input_id_key, string_types):
     return True
 
   return False
