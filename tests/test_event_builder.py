@@ -679,10 +679,9 @@ class EventBuilderTest(base.BaseTest):
             'variation_id': '111129',
             'experiment_id': '111127',
             'campaign_id': '111182'
-          },
-          {
-            'experiment_id': '111130', 
-            'variation_id': '111131', 
+          }, {
+            'experiment_id': '111130',
+            'variation_id': '111131',
             'campaign_id': '111182'
           }
           ],
@@ -698,8 +697,7 @@ class EventBuilderTest(base.BaseTest):
             'value': 1.234,
             'key': 'test_event',
             'entity_id': '111095'
-          },
-          {
+          }, {
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
               'non-revenue': 'abc',

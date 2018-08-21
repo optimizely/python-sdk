@@ -374,7 +374,7 @@ class BaseTest(unittest.TestCase):
         'variables': [],
       }]
     }
-    
+
     self.config_dict_with_multiple_experiments = {
       'revision': '42',
       'version': '2',
@@ -414,8 +414,7 @@ class BaseTest(unittest.TestCase):
           'key': 'variation',
           'id': '111129'
         }]
-      },
-      {
+      }, {
         'key': 'test_experiment_2',
         'status': 'Running',
         'forcedVariations': {
@@ -521,7 +520,7 @@ class BaseTest(unittest.TestCase):
       }],
       'projectId': '111001'
     }
-    
+
     config = getattr(self, config_dict)
     self.optimizely = optimizely.Optimizely(json.dumps(config))
     self.project_config = self.optimizely.config
