@@ -660,9 +660,6 @@ class EventBuilderTest(base.BaseTest):
     """ Test that create_conversion_event creates Event object
     with right params when event tags are provided. """
 
-    # base.BaseTest.setUp(self)
-    # self.event_builder = self.optimizely.event_builder
-
     expected_params = {
       'client_version': version.__version__,
       'project_id': '111001',
@@ -683,21 +680,8 @@ class EventBuilderTest(base.BaseTest):
             'experiment_id': '111130',
             'variation_id': '111131',
             'campaign_id': '111182'
-          }
-          ],
+          }],
           'events': [{
-            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-            'tags': {
-              'non-revenue': 'abc',
-              'revenue': 4200,
-              'value': 1.234
-            },
-            'timestamp': 42123,
-            'revenue': 4200,
-            'value': 1.234,
-            'key': 'test_event',
-            'entity_id': '111095'
-          }, {
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
               'non-revenue': 'abc',
