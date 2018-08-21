@@ -244,12 +244,14 @@ class EventBuilder(BaseEventBuilder):
       Dict consisting of the decisions and events info for conversion event.
     """
     snapshot = {}
+    snapshot[self.EventParams.DECISIONS] = []
+
     for experiment_id, variation_id in decisions:
 
       experiment = self.config.get_experiment_from_id(experiment_id)
 
       if variation_id:
-        snapshot.setdefault(self.EventParams.DECISIONS, []).append({
+        snapshot[self.EventParams.DECISIONS].append({
           self.EventParams.EXPERIMENT_ID: experiment_id,
           self.EventParams.VARIATION_ID: variation_id,
           self.EventParams.CAMPAIGN_ID: experiment.layerId
@@ -274,7 +276,7 @@ class EventBuilder(BaseEventBuilder):
       if len(event_tags) > 0:
         event_dict[self.EventParams.TAGS] = event_tags
 
-    snapshot.setdefault(self.EventParams.EVENTS, []).append(event_dict)
+    snapshot[self.EventParams.EVENTS] = [event_dict]
     return snapshot
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
