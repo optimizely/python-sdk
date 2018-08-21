@@ -657,8 +657,8 @@ class EventBuilderTest(base.BaseTest):
                                 event_builder.EventBuilder.HTTP_HEADERS)
 
   def test_create_conversion_event__when_event_is_used_in_multiple_experiments(self):
-    """ Test that create_conversion_event creates Event object
-    with right params when event tags are provided. """
+    """ Test that create_conversion_event creates Event object with
+    right params when multiple experiments use the same event. """
 
     expected_params = {
       'client_version': version.__version__,
