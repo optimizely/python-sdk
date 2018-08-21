@@ -243,17 +243,18 @@ class EventBuilder(BaseEventBuilder):
     Returns:
       Dict consisting of the decisions and events info for conversion event.
     """
-
+    snapshot = {}
     for experiment_id, variation_id in decisions:
-      snapshot = {}
+
       experiment = self.config.get_experiment_from_id(experiment_id)
 
       if variation_id:
-        snapshot[self.EventParams.DECISIONS] = [{
+
+        snapshot.setdefault(self.EventParams.DECISIONS, []).append({
           self.EventParams.EXPERIMENT_ID: experiment_id,
           self.EventParams.VARIATION_ID: variation_id,
           self.EventParams.CAMPAIGN_ID: experiment.layerId
-        }]
+        })
 
         event_dict = {
           self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
@@ -273,10 +274,9 @@ class EventBuilder(BaseEventBuilder):
 
           if len(event_tags) > 0:
             event_dict[self.EventParams.TAGS] = event_tags
+        snapshot.setdefault(self.EventParams.EVENTS, []).append(event_dict)
 
-        snapshot[self.EventParams.EVENTS] = [event_dict]
-
-        return snapshot
+    return snapshot
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
@@ -319,7 +319,7 @@ class EventBuilder(BaseEventBuilder):
     conversion_params = self._get_required_params_for_conversion(event_key, event_tags, decisions)
 
     params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
-
+    print(params)
     return Event(self.EVENTS_URL,
                  params,
                  http_verb=self.HTTP_VERB,
