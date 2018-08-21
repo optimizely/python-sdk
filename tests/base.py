@@ -19,7 +19,7 @@ from optimizely import optimizely
 
 class BaseTest(unittest.TestCase):
 
-  def setUp(self):
+  def setUp(self, config_dict='config_dict'):
     self.config_dict = {
       'revision': '42',
       'version': '2',
@@ -375,5 +375,152 @@ class BaseTest(unittest.TestCase):
       }]
     }
 
-    self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict))
+    self.config_dict_with_multiple_experiments = {
+      'revision': '42',
+      'version': '2',
+      'events': [{
+        'key': 'test_event',
+        'experimentIds': ['111127', '111130'],
+        'id': '111095'
+      }, {
+        'key': 'Total Revenue',
+        'experimentIds': ['111127'],
+        'id': '111096'
+      }],
+      'experiments': [{
+        'key': 'test_experiment',
+        'status': 'Running',
+        'forcedVariations': {
+          'user_1': 'control',
+          'user_2': 'control'
+        },
+        'layerId': '111182',
+        'audienceIds': ['11154'],
+        'trafficAllocation': [{
+          'entityId': '111128',
+          'endOfRange': 4000
+        }, {
+          'entityId': '',
+          'endOfRange': 5000
+        }, {
+          'entityId': '111129',
+          'endOfRange': 9000
+        }],
+        'id': '111127',
+        'variations': [{
+          'key': 'control',
+          'id': '111128'
+        }, {
+          'key': 'variation',
+          'id': '111129'
+        }]
+      }, {
+        'key': 'test_experiment_2',
+        'status': 'Running',
+        'forcedVariations': {
+          'user_1': 'control',
+          'user_2': 'control'
+        },
+        'layerId': '111182',
+        'audienceIds': ['11154'],
+        'trafficAllocation': [{
+          'entityId': '111131',
+          'endOfRange': 4000
+        }, {
+          'entityId': '',
+          'endOfRange': 5000
+        }, {
+          'entityId': '111132',
+          'endOfRange': 9000
+        }],
+        'id': '111130',
+        'variations': [{
+          'key': 'control',
+          'id': '111133'
+        }, {
+          'key': 'variation',
+          'id': '111134'
+        }]
+      }],
+      'groups': [{
+        'id': '19228',
+        'policy': 'random',
+        'experiments': [{
+          'id': '32222',
+          'key': 'group_exp_1',
+          'status': 'Running',
+          'audienceIds': [],
+          'layerId': '111183',
+          'variations': [{
+            'key': 'group_exp_1_control',
+            'id': '28901'
+          }, {
+            'key': 'group_exp_1_variation',
+            'id': '28902'
+          }],
+          'forcedVariations': {
+            'user_1': 'group_exp_1_control',
+            'user_2': 'group_exp_1_control'
+          },
+          'trafficAllocation': [{
+            'entityId': '28901',
+            'endOfRange': 3000
+          }, {
+            'entityId': '28902',
+            'endOfRange': 9000
+          }]
+        }, {
+          'id': '32223',
+          'key': 'group_exp_2',
+          'status': 'Running',
+          'audienceIds': [],
+          'layerId': '111184',
+          'variations': [{
+            'key': 'group_exp_2_control',
+            'id': '28905'
+          }, {
+            'key': 'group_exp_2_variation',
+            'id': '28906'
+          }],
+          'forcedVariations': {
+            'user_1': 'group_exp_2_control',
+            'user_2': 'group_exp_2_control'
+          },
+          'trafficAllocation': [{
+            'entityId': '28905',
+            'endOfRange': 8000
+          }, {
+            'entityId': '28906',
+            'endOfRange': 10000
+          }]
+        }],
+        'trafficAllocation': [{
+          'entityId': '32222',
+          "endOfRange": 3000
+        }, {
+          'entityId': '32223',
+          'endOfRange': 7500
+        }]
+      }],
+      'accountId': '12001',
+      'attributes': [{
+        'key': 'test_attribute',
+        'id': '111094'
+      }],
+      'audiences': [{
+        'name': 'Test attribute users 1',
+        'conditions': '["and", ["or", ["or", '
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+        'id': '11154'
+      }, {
+        'name': 'Test attribute users 2',
+        'conditions': '["and", ["or", ["or", '
+                      '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
+        'id': '11159'
+      }],
+      'projectId': '111001'
+    }
+
+    config = getattr(self, config_dict)
+    self.optimizely = optimizely.Optimizely(json.dumps(config))
     self.project_config = self.optimizely.config
