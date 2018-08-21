@@ -1,3 +1,8 @@
+## 2.1.1
+August 21st, 2018
+
+- Fix: record conversions for all experiments using an event when using track([#136](https://github.com/optimizely/python-sdk/pull/136)).
+
 ## 2.1.0
 July 2nd, 2018
 
