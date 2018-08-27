@@ -42,7 +42,7 @@ class EventTest(unittest.TestCase):
 class EventBuilderTest(base.BaseTest):
 
   def setUp(self):
-    base.BaseTest.setUp(self)
+    base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
     self.event_builder = self.optimizely.event_builder
 
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
@@ -649,6 +649,67 @@ class EventBuilderTest(base.BaseTest):
         {'test_attribute': 'test_value'},
         {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
         [('111127', '111129')]
+      )
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
+  def test_create_conversion_event__when_event_is_used_in_multiple_experiments(self):
+    """ Test that create_conversion_event creates Event object with
+    right params when multiple experiments use the same event. """
+
+    expected_params = {
+      'client_version': version.__version__,
+      'project_id': '111001',
+      'visitors': [{
+        'attributes': [{
+          'entity_id': '111094',
+          'type': 'custom',
+          'value': 'test_value',
+          'key': 'test_attribute'
+        }],
+        'visitor_id': 'test_user',
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }, {
+            'experiment_id': '111130',
+            'variation_id': '111131',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'tags': {
+              'non-revenue': 'abc',
+              'revenue': 4200,
+              'value': 1.234
+            },
+            'timestamp': 42123,
+            'revenue': 4200,
+            'value': 1.234,
+            'key': 'test_event',
+            'entity_id': '111095'
+          }]
+        }]
+      }],
+      'account_id': '12001',
+      'client_name': 'python-sdk',
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
+      event_obj = self.event_builder.create_conversion_event(
+        'test_event',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
+        [('111127', '111129'), ('111130', '111131')]
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
