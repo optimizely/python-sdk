@@ -244,40 +244,41 @@ class EventBuilder(BaseEventBuilder):
     Returns:
       Dict consisting of the decisions and events info for conversion event.
     """
+    snapshot = {}
+    snapshot[self.EventParams.DECISIONS] = []
 
     for experiment_id, variation_id in decisions:
-      snapshot = {}
+
       experiment = self.config.get_experiment_from_id(experiment_id)
 
       if variation_id:
-        snapshot[self.EventParams.DECISIONS] = [{
+        snapshot[self.EventParams.DECISIONS].append({
           self.EventParams.EXPERIMENT_ID: experiment_id,
           self.EventParams.VARIATION_ID: variation_id,
           self.EventParams.CAMPAIGN_ID: experiment.layerId
-        }]
+        })
 
-        event_dict = {
-          self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
-          self.EventParams.TIME: self._get_time(),
-          self.EventParams.KEY: event_key,
-          self.EventParams.UUID: str(uuid.uuid4())
-        }
+    event_dict = {
+      self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
+      self.EventParams.TIME: self._get_time(),
+      self.EventParams.KEY: event_key,
+      self.EventParams.UUID: str(uuid.uuid4())
+    }
 
-        if event_tags:
-          revenue_value = event_tag_utils.get_revenue_value(event_tags, self.logger)
-          if revenue_value is not None:
-            event_dict[event_tag_utils.REVENUE_METRIC_TYPE] = revenue_value
+    if event_tags:
+      revenue_value = event_tag_utils.get_revenue_value(event_tags, self.logger)
+      if revenue_value is not None:
+        event_dict[event_tag_utils.REVENUE_METRIC_TYPE] = revenue_value
 
-          numeric_value = event_tag_utils.get_numeric_value(event_tags, self.logger)
-          if numeric_value is not None:
-            event_dict[event_tag_utils.NUMERIC_METRIC_TYPE] = numeric_value
+      numeric_value = event_tag_utils.get_numeric_value(event_tags, self.logger)
+      if numeric_value is not None:
+        event_dict[event_tag_utils.NUMERIC_METRIC_TYPE] = numeric_value
 
-          if len(event_tags) > 0:
-            event_dict[self.EventParams.TAGS] = event_tags
+      if len(event_tags) > 0:
+        event_dict[self.EventParams.TAGS] = event_tags
 
-        snapshot[self.EventParams.EVENTS] = [event_dict]
-
-        return snapshot
+    snapshot[self.EventParams.EVENTS] = [event_dict]
+    return snapshot
 
   def create_impression_event(self, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
@@ -320,7 +321,6 @@ class EventBuilder(BaseEventBuilder):
     conversion_params = self._get_required_params_for_conversion(event_key, event_tags, decisions)
 
     params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
-
     return Event(self.EVENTS_URL,
                  params,
                  http_verb=self.HTTP_VERB,
