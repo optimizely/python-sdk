@@ -436,10 +436,10 @@ class BaseTest(unittest.TestCase):
         'id': '111130',
         'variations': [{
           'key': 'control',
-          'id': '111133'
+          'id': '111131'
         }, {
           'key': 'variation',
-          'id': '111134'
+          'id': '111132'
         }]
       }],
       'groups': [{
