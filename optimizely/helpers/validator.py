@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,6 +13,7 @@
 
 import json
 import jsonschema
+from six import string_types
 
 from optimizely.user_profile import UserProfile
 from . import constants
@@ -151,3 +152,18 @@ def is_user_profile_valid(user_profile):
       return False
 
   return True
+
+
+def is_non_empty_string(input_id_key):
+  """ Determine if provided input_id_key is a non-empty string or not.
+
+  Args:
+    input_id_key: Variable which needs to be validated.
+
+  Returns:
+    Boolean depending upon whether input is valid or not.
+  """
+  if input_id_key and isinstance(input_id_key, string_types):
+    return True
+
+  return False
