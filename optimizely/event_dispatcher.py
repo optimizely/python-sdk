@@ -34,8 +34,11 @@ class EventDispatcher(object):
 
     try:
       if event.http_verb == enums.HTTPVerbs.GET:
-        requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT)
+        requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT).raise_for_status()
       elif event.http_verb == enums.HTTPVerbs.POST:
-        requests.post(event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT)
+        requests.post(
+          event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT
+        ).raise_for_status()
+
     except request_exception.RequestException as error:
       logging.error('Dispatch event failed. Error: %s' % str(error))
