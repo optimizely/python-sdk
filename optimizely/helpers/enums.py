@@ -44,8 +44,7 @@ class Errors(object):
   NONE_FEATURE_KEY_PARAMETER = '"None" is an invalid value for feature key.'
   NONE_USER_ID_PARAMETER = '"None" is an invalid value for user ID.'
   NONE_VARIABLE_KEY_PARAMETER = '"None" is an invalid value for variable key.'
-  UNSUPPORTED_DATAFILE_VERSION = 'Provided datafile has unsupported version. ' \
-                                 'Please use SDK version 1.1.0 or earlier for datafile version 1.'
+  UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
 
 
 class NotificationTypes(object):
@@ -65,3 +64,10 @@ class ControlAttributes(object):
   BOT_FILTERING = '$opt_bot_filtering'
   BUCKETING_ID = '$opt_bucketing_id'
   USER_AGENT = '$opt_user_agent'
+
+
+class DatafileVersions(object):
+  V1 = '1'
+  V2 = '2'
+  V3 = '3'
+  V4 = '4'

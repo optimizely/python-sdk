@@ -83,6 +83,26 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
+  def test_init__null_datafile__logs_error(self):
+    """ Test that null datafile logs error on init. """
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(None)
+
+    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
+  def test_init__empty_datafile__logs_error(self):
+    """ Test that empty datafile logs error on init. """
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely("")
+
+    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
   def test_init__invalid_event_dispatcher__logs_error(self):
     """ Test that invalid event_dispatcher logs error on init. """
 
@@ -125,15 +145,40 @@ class OptimizelyTest(base.BaseTest):
   def test_init__v1_datafile__logs_error(self):
     """ Test that v1 datafile logs error on init. """
 
-    self.config_dict['version'] = project_config.V1_CONFIG_VERSION
+    self.config_dict['version'] = enums.DatafileVersions.V1
     mock_client_logger = mock.MagicMock()
     with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
 
-    mock_client_logger.error.assert_called_once_with(
-      'Provided datafile has unsupported version. Please use SDK version 1.1.0 or earlier for datafile version 1.'
+    mock_client_logger.exception.assert_called_once_with(
+      'This version of the Python SDK does not support the given datafile version: "1".'
     )
     self.assertFalse(opt_obj.is_valid)
+
+  def test_init__unsupported_datafile_version__logs_error(self):
+    """ Test that datafile with unsupported version logs error on init. """
+
+    self.config_dict['version'] = '5'
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+
+    mock_client_logger.exception.assert_called_once_with(
+      'This version of the Python SDK does not support the given datafile version: "5".'
+    )
+    self.assertFalse(opt_obj.is_valid)
+
+  def test_init_with_supported_datafile_version(self):
+    """ Test that datafile with supported version works as expected. """
+
+    self.assertTrue(self.config_dict['version'] in project_config.SUPPORTED_VERSIONS)
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+
+    mock_client_logger.exception.assert_not_called()
+    self.assertTrue(opt_obj.is_valid)
 
   def test_skip_json_validation_true(self):
     """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """

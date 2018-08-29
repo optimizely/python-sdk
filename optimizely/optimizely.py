@@ -63,6 +63,14 @@ class Optimizely(object):
 
     try:
       self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+    except exceptions.UnsupportedDatafileVersionException as error:
+      self.is_valid = False
+      # We actually want to log this error to stderr, so make sure the logger
+      #   has a handler capable of doing that.
+      self.logger = _logging.reset_logger(self.logger_name)
+      self.logger.exception(str(error))
+      return
+
     except:
       self.is_valid = False
       self.config = None
@@ -70,13 +78,6 @@ class Optimizely(object):
       #   has a handler capable of doing that.
       self.logger = _logging.reset_logger(self.logger_name)
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
-      return
-
-    if not self.config.was_parsing_successful():
-      self.is_valid = False
-      # We actually want to log this error to stderr, so make sure the logger
-      #   has a handler capable of doing that.
-      self.logger.error(enums.Errors.UNSUPPORTED_DATAFILE_VERSION)
       return
 
     self.event_builder = event_builder.EventBuilder(self.config)

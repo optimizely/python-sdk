@@ -1,4 +1,4 @@
-# Copyright 2016-2017, Optimizely
+# Copyright 2016-2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -49,4 +49,9 @@ class InvalidInputException(Exception):
 
 class InvalidVariationException(Exception):
   """ Raised when provided variation is invalid. """
+  pass
+
+
+class UnsupportedDatafileVersionException(Exception):
+  """ Raised when provided version in datafile is not supported. """
   pass
