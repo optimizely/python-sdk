@@ -142,30 +142,24 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logger.exception.assert_called_once_with('Provided "error_handler" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
-  def test_init__v1_datafile__logs_error(self):
-    """ Test that v1 datafile logs error on init. """
-
-    self.config_dict['version'] = enums.DatafileVersions.V1
-    mock_client_logger = mock.MagicMock()
-    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
-      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
-
-    mock_client_logger.exception.assert_called_once_with(
-      'This version of the Python SDK does not support the given datafile version: "1".'
-    )
-    self.assertFalse(opt_obj.is_valid)
-
   def test_init__unsupported_datafile_version__logs_error(self):
     """ Test that datafile with unsupported version logs error on init. """
 
     self.config_dict['version'] = '5'
     mock_client_logger = mock.MagicMock()
-    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger),\
+      mock.patch('optimizely.error_handler.NoOpErrorHandler.handle_error') as mock_error_handler:
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
 
     mock_client_logger.exception.assert_called_once_with(
       'This version of the Python SDK does not support the given datafile version: "5".'
     )
+
+    args, kwargs = mock_error_handler.call_args
+    self.assertIsInstance(args[0], exceptions.UnsupportedDatafileVersionException)
+    self.assertEqual(args[0].args[0],
+                     'This version of the Python SDK does not support the given datafile version: "5".')
+
     self.assertFalse(opt_obj.is_valid)
 
   def test_init_with_supported_datafile_version(self):
@@ -193,18 +187,32 @@ class OptimizelyTest(base.BaseTest):
 
     # Not  JSON
     mock_client_logger = mock.MagicMock()
-    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
-      optimizely.Optimizely('invalid_json', skip_json_validation=True)
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger),\
+      mock.patch('optimizely.error_handler.NoOpErrorHandler.handle_error') as mock_error_handler:
+      opt_obj = optimizely.Optimizely('invalid_json', skip_json_validation=True)
 
-    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    args, kwargs = mock_error_handler.call_args
+    self.assertIsInstance(args[0], exceptions.InvalidInputException)
+    self.assertEqual(args[0].args[0],
+                     'Provided "datafile" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
     mock_client_logger.reset_mock()
+    mock_error_handler.reset_mock()
 
     # JSON having valid version, but entities have invalid format
-    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
-      optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
-                            skip_json_validation=True)
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger),\
+      mock.patch('optimizely.error_handler.NoOpErrorHandler.handle_error') as mock_error_handler:
+      opt_obj = optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
+                                      skip_json_validation=True)
 
-    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    args, kwargs = mock_error_handler.call_args
+    self.assertIsInstance(args[0], exceptions.InvalidInputException)
+    self.assertEqual(args[0].args[0],
+                     'Provided "datafile" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
