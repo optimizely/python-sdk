@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from collections import namedtuple
+from six import string_types
 
 from . import bucketer
 from .helpers import audience as audience_helper
@@ -34,8 +35,7 @@ class DecisionService(object):
     self.config = config
     self.logger = config.logger
 
-  @staticmethod
-  def _get_bucketing_id(user_id, attributes):
+  def _get_bucketing_id(self, user_id, attributes):
     """ Helper method to determine bucketing ID for the user.
 
     Args:
@@ -43,11 +43,20 @@ class DecisionService(object):
       attributes: Dict representing user attributes. May consist of bucketing ID to be used.
 
     Returns:
-      String representing bucketing ID for the user. Fallback to user's ID if not provided.
+      String representing bucketing ID for the user. Fallback to user's ID if not provided or is not a string.
     """
 
     attributes = attributes or {}
-    return attributes.get(enums.ControlAttributes.BUCKETING_ID, user_id)
+    bucketing_id =  attributes.get(enums.ControlAttributes.BUCKETING_ID, None)
+
+    if bucketing_id is not None:
+      if isinstance(bucketing_id, string_types):
+        self.logger.debug('Bucketing ID is valid: "%s".' %(bucketing_id))
+        return bucketing_id
+
+      self.logger.warning('Bucketing ID attribute is not a string. Defaulted to user_id.')
+
+    return user_id
 
   def get_forced_variation(self, experiment, user_id):
     """ Determine if a user is forced into a variation for the given experiment and return that variation.

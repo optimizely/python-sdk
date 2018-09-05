@@ -211,6 +211,9 @@ class Optimizely(object):
       self.logger.error(enums.Errors.NONE_USER_ID_PARAMETER)
       return None
 
+    if not self._validate_user_inputs(attributes):
+      return None
+
     feature_flag = self.config.get_feature_from_key(feature_key)
     if not feature_flag:
       return None
@@ -406,6 +409,9 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return False
 
+    if not self._validate_user_inputs(attributes):
+      return False
+
     feature = self.config.get_feature_from_key(feature_key)
     if not feature:
       return False
@@ -444,6 +450,9 @@ class Optimizely(object):
 
     if not validator.is_non_empty_string(user_id):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      return enabled_features
+
+    if not self._validate_user_inputs(attributes):
       return enabled_features
 
     for feature in self.config.feature_key_map.values():

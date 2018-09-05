@@ -44,6 +44,7 @@ class ValidatorTest(base.BaseTest):
     """ Test that invalid event_dispatcher returns False. """
 
     class CustomEventDispatcher(object):
+
       def some_other_method(self):
         pass
 
@@ -58,6 +59,7 @@ class ValidatorTest(base.BaseTest):
     """ Test that invalid logger returns False. """
 
     class CustomLogger(object):
+
       def some_other_method(self):
         pass
 
@@ -72,6 +74,7 @@ class ValidatorTest(base.BaseTest):
     """ Test that invalid error_handler returns False. """
 
     class CustomErrorHandler(object):
+
       def some_other_method(self):
         pass
 
@@ -81,6 +84,12 @@ class ValidatorTest(base.BaseTest):
     """ Test that valid attributes returns True. """
 
     self.assertTrue(validator.are_attributes_valid({'key': 'value'}))
+    # dict with integer value
+    self.assertTrue(validator.are_attributes_valid({'key': 5}))
+    # dict with float value
+    self.assertTrue(validator.are_attributes_valid({'key': 5.5}))
+    # dict with boolean value
+    self.assertTrue(validator.are_attributes_valid({'key': False}))
 
   def test_are_attributes_valid__returns_false(self):
     """ Test that invalid attributes returns False. """
@@ -88,6 +97,14 @@ class ValidatorTest(base.BaseTest):
     self.assertFalse(validator.are_attributes_valid('key:value'))
     self.assertFalse(validator.are_attributes_valid(['key', 'value']))
     self.assertFalse(validator.are_attributes_valid(42))
+    # dict with integer key
+    self.assertFalse(validator.are_attributes_valid({5: 'value'}))
+    # dict with float key
+    self.assertFalse(validator.are_attributes_valid({5.5: 'value'}))
+    # dict with boolean key
+    self.assertFalse(validator.are_attributes_valid({True: 'value'}))
+    # dict with both string and non-string keys
+    self.assertFalse(validator.are_attributes_valid({'key': 'value', 5: 'value'}))
 
   def test_are_event_tags_valid__returns_true(self):
     """ Test that valid event tags returns True. """

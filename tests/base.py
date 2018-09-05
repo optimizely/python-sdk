@@ -20,6 +20,7 @@ from optimizely import optimizely
 class BaseTest(unittest.TestCase):
 
   def setUp(self, config_dict='config_dict'):
+    self.maxDiff = None
     self.config_dict = {
       'revision': '42',
       'version': '2',
@@ -124,6 +125,15 @@ class BaseTest(unittest.TestCase):
       'attributes': [{
         'key': 'test_attribute',
         'id': '111094'
+      },{
+        'key': 'boolean_attribute',
+        'id': '111196'
+      },{
+        'key': 'integer_attribute',
+        'id': '111197'
+      },{
+        'key': 'double_attribute',
+        'id': '111198'
       }],
       'audiences': [{
         'name': 'Test attribute users 1',

@@ -544,6 +544,77 @@ class OptimizelyTest(base.BaseTest):
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
+  def test_activate__with_attributes_of_different_types(self):
+    """ Test that activate calls dispatch_event with right params and returns expected
+    variation when different types of attributes are provided and audience conditions are met. """
+
+    with mock.patch(
+        'optimizely.bucketer.Bucketer.bucket',
+        return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) \
+        as mock_bucket, \
+      mock.patch('time.time', return_value=42), \
+      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+
+      attributes = {
+          'test_attribute': 'test_value_1', 
+          'boolean_attribute': True,
+          'integer_attribute': 5,
+          'double_attribute': 5.5
+        }
+
+      self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user', attributes))
+
+    expected_params = {
+      'account_id': '12001',
+      'project_id': '111001',
+      'visitors': [{
+        'visitor_id': 'test_user',
+        'attributes': [{
+          'type': 'custom',
+          'value': True,
+          'entity_id': '111196',
+          'key': 'boolean_attribute'
+        },{
+          'type': 'custom',
+          'value': 5.5,
+          'entity_id': '111198',
+          'key': 'double_attribute'
+        },{
+          'type': 'custom',
+          'value': 5,
+          'entity_id': '111197',
+          'key': 'integer_attribute'
+        },{
+          'type': 'custom',
+          'value': 'test_value_1',
+          'entity_id': '111094',
+          'key': 'test_attribute'
+        }],
+        'snapshots': [{
+          'decisions': [{
+            'variation_id': '111129',
+            'experiment_id': '111127',
+            'campaign_id': '111182'
+          }],
+          'events': [{
+            'timestamp': 42000,
+            'entity_id': '111182',
+            'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+            'key': 'campaign_activated',
+          }]
+        }]
+      }],
+      'client_version': version.__version__,
+      'client_name': 'python-sdk',
+      'anonymize_ip': False,
+      'revision': '42'
+    }
+    
+    self.assertEqual(1, mock_dispatch_event.call_count)
+    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+                                expected_params, 'POST', {'Content-Type': 'application/json'})
+
   def test_activate__with_attributes__audience_match__forced_bucketing(self):
     """ Test that activate calls dispatch_event with right params and returns expected
     variation when attributes are provided and audience conditions are met after a
@@ -1210,6 +1281,17 @@ class OptimizelyTest(base.BaseTest):
     mock_validator.assert_any_call(1.2)
     mock_client_logging.error.assert_called_with('Provided "user_id" is in an invalid format.')
 
+  def test_is_feature_enabled__returns_false_for__invalid_attributes(self):
+    """ Test that is_feature_enabled returns false if attributes are in an invalid format. """
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging, \
+        mock.patch('optimizely.helpers.validator.are_attributes_valid', return_value=False) as mock_validator:
+      self.assertFalse(opt_obj.is_feature_enabled('feature_key', 'test_user', attributes='invalid'))
+
+    mock_validator.assert_called_once_with('invalid')
+    mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
 
@@ -1498,6 +1580,15 @@ class OptimizelyTest(base.BaseTest):
     mock_validator.assert_any_call(1.2)
     mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
+  def test_get_enabled_features__invalid_attributes(self):
+    """ Test that get_enabled_features returns empty list if attributes are in an invalid format. """
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
+        mock.patch('optimizely.helpers.validator.are_attributes_valid', return_value=False) as mock_validator:
+      self.assertEqual([], self.optimizely.get_enabled_features('test_user', attributes='invalid'))
+
+    mock_validator.assert_called_once_with('invalid')
+    mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+
   def test_get_enabled_features__invalid_object(self):
     """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
 
@@ -1774,6 +1865,51 @@ class OptimizelyTest(base.BaseTest):
       self.assertIsNone(opt_obj.get_feature_variable_string('feature_key', 'variable_key', None))
       mock_client_logger.error.assert_called_with(enums.Errors.NONE_USER_ID_PARAMETER)
       mock_client_logger.reset_mock()
+
+  def test_get_feature_variable__invalid_attributes(self):
+    """ Test that get_feature_variable_* returns None for invalid attributes. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging, \
+        mock.patch('optimizely.helpers.validator.are_attributes_valid', return_value=False) as mock_validator:
+
+      # get_feature_variable_boolean
+      self.assertIsNone(
+        opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user', attributes='invalid')
+        )
+      mock_validator.assert_called_once_with('invalid')
+      mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+      mock_validator.reset_mock()
+      mock_client_logging.reset_mock()
+
+      # get_feature_variable_double
+      self.assertIsNone(
+        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user', attributes='invalid')
+        )
+      mock_validator.assert_called_once_with('invalid')
+      mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+      mock_validator.reset_mock()
+      mock_client_logging.reset_mock()
+
+      # get_feature_variable_integer
+      self.assertIsNone(
+        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user', attributes='invalid')
+        )
+      mock_validator.assert_called_once_with('invalid')
+      mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+      mock_validator.reset_mock()
+      mock_client_logging.reset_mock()
+
+      # get_feature_variable_string
+      self.assertIsNone(
+        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user', attributes='invalid')
+        )
+      mock_validator.assert_called_once_with('invalid')
+      mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+      mock_validator.reset_mock()
+      mock_client_logging.reset_mock()
+
 
   def test_get_feature_variable__returns_none_if_invalid_feature_key(self):
     """ Test that get_feature_variable_* returns None for invalid feature key. """
