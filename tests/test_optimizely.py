@@ -145,11 +145,10 @@ class OptimizelyTest(base.BaseTest):
   def test_init__unsupported_datafile_version__logs_error(self):
     """ Test that datafile with unsupported version logs error on init. """
 
-    self.config_dict['version'] = '5'
     mock_client_logger = mock.MagicMock()
     with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger),\
       mock.patch('optimizely.error_handler.NoOpErrorHandler.handle_error') as mock_error_handler:
-      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_unsupported_version))
 
     mock_client_logger.exception.assert_called_once_with(
       'This version of the Python SDK does not support the given datafile version: "5".'
