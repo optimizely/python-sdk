@@ -54,19 +54,22 @@ class DecisionServiceTest(base.BaseTest):
       self.assertEqual('test_user',
                        self.decision_service._get_bucketing_id('test_user',
                                                                           {'$opt_bucketing_id': True}))
-      mock_decision_logging.warning.assert_called_once_with('Bucketing ID attribute is not a string. Defaulted to user_id.')
+      mock_decision_logging.warning.assert_called_once_with(
+        'Bucketing ID attribute is not a string. Defaulted to user_id.')
       mock_decision_logging.reset_mock()
 
       self.assertEqual('test_user',
                        self.decision_service._get_bucketing_id('test_user',
                                                                           {'$opt_bucketing_id': 5.9}))
-      mock_decision_logging.warning.assert_called_once_with('Bucketing ID attribute is not a string. Defaulted to user_id.')
+      mock_decision_logging.warning.assert_called_once_with(
+        'Bucketing ID attribute is not a string. Defaulted to user_id.')
       mock_decision_logging.reset_mock()
 
       self.assertEqual('test_user',
                        self.decision_service._get_bucketing_id('test_user',
                                                                           {'$opt_bucketing_id': 5}))
-      mock_decision_logging.warning.assert_called_once_with('Bucketing ID attribute is not a string. Defaulted to user_id.')
+      mock_decision_logging.warning.assert_called_once_with(
+        'Bucketing ID attribute is not a string. Defaulted to user_id.')
 
   def test_get_forced_variation__user_in_forced_variation(self):
     """ Test that expected variation is returned if user is forced in a variation. """
@@ -76,7 +79,7 @@ class DecisionServiceTest(base.BaseTest):
       self.assertEqual(entities.Variation('111128', 'control'),
                        self.decision_service.get_forced_variation(experiment, 'user_1'))
 
-    mock_decision_logging.info.assert_called_with(
+    mock_decision_logging.info.assert_called_once_with(
       'User "user_1" is forced in variation "control".'
     )
 

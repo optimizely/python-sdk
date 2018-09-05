@@ -47,11 +47,11 @@ class DecisionService(object):
     """
 
     attributes = attributes or {}
-    bucketing_id =  attributes.get(enums.ControlAttributes.BUCKETING_ID, None)
+    bucketing_id = attributes.get(enums.ControlAttributes.BUCKETING_ID)
 
     if bucketing_id is not None:
       if isinstance(bucketing_id, string_types):
-        self.logger.debug('Bucketing ID is valid: "%s".' %(bucketing_id))
+        self.logger.debug('Bucketing ID is valid: "%s".' % (bucketing_id))
         return bucketing_id
 
       self.logger.warning('Bucketing ID attribute is not a string. Defaulted to user_id.')

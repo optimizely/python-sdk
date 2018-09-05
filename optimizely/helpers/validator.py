@@ -115,7 +115,6 @@ def are_attributes_valid(attributes):
   return True
 
 
-
 def are_event_tags_valid(event_tags):
   """ Determine if event tags provided are dict or not.
 
