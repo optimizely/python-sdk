@@ -14,18 +14,16 @@
 import logging
 
 
-class HTTPVerbs(object):
-  GET = 'GET'
-  POST = 'POST'
+class ControlAttributes(object):
+  BOT_FILTERING = '$opt_bot_filtering'
+  BUCKETING_ID = '$opt_bucketing_id'
+  USER_AGENT = '$opt_user_agent'
 
 
-class LogLevels(object):
-  NOTSET = logging.NOTSET
-  DEBUG = logging.DEBUG
-  INFO = logging.INFO
-  WARNING = logging.WARNING
-  ERROR = logging.ERROR
-  CRITICAL = logging.CRITICAL
+class DatafileVersions(object):
+  V2 = '2'
+  V3 = '3'
+  V4 = '4'
 
 
 class Errors(object):
@@ -47,6 +45,20 @@ class Errors(object):
   UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
 
 
+class HTTPVerbs(object):
+  GET = 'GET'
+  POST = 'POST'
+
+
+class LogLevels(object):
+  NOTSET = logging.NOTSET
+  DEBUG = logging.DEBUG
+  INFO = logging.INFO
+  WARNING = logging.WARNING
+  ERROR = logging.ERROR
+  CRITICAL = logging.CRITICAL
+
+
 class NotificationTypes(object):
   """ NotificationTypes for the notification_center.NotificationCenter
       format is NOTIFICATION TYPE: list of parameters to callback.
@@ -58,15 +70,3 @@ class NotificationTypes(object):
   """
   ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
-
-
-class ControlAttributes(object):
-  BOT_FILTERING = '$opt_bot_filtering'
-  BUCKETING_ID = '$opt_bucketing_id'
-  USER_AGENT = '$opt_user_agent'
-
-
-class DatafileVersions(object):
-  V2 = '2'
-  V3 = '3'
-  V4 = '4'

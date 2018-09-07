@@ -63,7 +63,6 @@ class Optimizely(object):
 
     try:
       self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
-
     except Exception as error:
       self.is_valid = False
       # We actually want to log this error to stderr, so make sure the logger

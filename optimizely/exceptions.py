@@ -22,6 +22,11 @@ class InvalidAudienceException(Exception):
   pass
 
 
+class InvalidEventException(Exception):
+  """ Raised when provided event key is invalid. """
+  pass
+
+
 class InvalidEventTagException(Exception):
   """ Raised when provided event tag is invalid. """
   pass
@@ -29,11 +34,6 @@ class InvalidEventTagException(Exception):
 
 class InvalidExperimentException(Exception):
   """ Raised when provided experiment key is invalid. """
-  pass
-
-
-class InvalidEventException(Exception):
-  """ Raised when provided event key is invalid. """
   pass
 
 
