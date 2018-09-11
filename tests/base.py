@@ -521,6 +521,56 @@ class BaseTest(unittest.TestCase):
       'projectId': '111001'
     }
 
+    self.config_dict_with_unsupported_version = {
+      'version': '5',
+      'rollouts': [],
+      'projectId': '10431130345',
+      'variables': [],
+      'featureFlags': [],
+      'experiments': [
+        {
+          'status': 'Running',
+          'key': 'ab_running_exp_untargeted',
+          'layerId': '10417730432',
+          'trafficAllocation': [
+            {
+              'entityId': '10418551353',
+              'endOfRange': 10000
+            }
+          ],
+          'audienceIds': [],
+          'variations': [
+            {
+              'variables': [],
+              'id': '10418551353',
+              'key': 'all_traffic_variation'
+            },
+            {
+              'variables': [],
+              'id': '10418510624',
+              'key': 'no_traffic_variation'
+            }
+          ],
+          'forcedVariations': {},
+          'id': '10420810910'
+        }
+      ],
+      'audiences': [],
+      'groups': [],
+      'attributes': [],
+      'accountId': '10367498574',
+      'events': [
+        {
+          'experimentIds': [
+            '10420810910'
+          ],
+          'id': '10404198134',
+          'key': 'winning'
+        }
+      ],
+      'revision': '1337'
+    }
+
     config = getattr(self, config_dict)
     self.optimizely = optimizely.Optimizely(json.dumps(config))
     self.project_config = self.optimizely.config
