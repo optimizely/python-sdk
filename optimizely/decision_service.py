@@ -43,7 +43,7 @@ class DecisionService(object):
       attributes: Dict representing user attributes. May consist of bucketing ID to be used.
 
     Returns:
-      String representing bucketing ID for the user. Fallback to user's ID if not provided or is not a string.
+      String representing bucketing Id if it is a String type in attributes else return userId.
     """
 
     attributes = attributes or {}

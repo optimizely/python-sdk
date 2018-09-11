@@ -110,9 +110,9 @@ class ConfigTest(base.BaseTest):
       'Total Revenue': entities.Event('111096', 'Total Revenue', ['111127'])
     }
     expected_attribute_key_map = {
-      'boolean_attribute': entities.Attribute('111196', 'boolean_attribute'),
-      'double_attribute': entities.Attribute('111198', 'double_attribute'),
-      'integer_attribute': entities.Attribute('111197', 'integer_attribute'),
+      'boolean_key': entities.Attribute('111196', 'boolean_key'),
+      'double_key': entities.Attribute('111198', 'double_key'),
+      'integer_key': entities.Attribute('111197', 'integer_key'),
       'test_attribute': entities.Attribute('111094', 'test_attribute', segmentId='11133')
     }
     expected_audience_id_map = {

@@ -125,13 +125,13 @@ class BaseTest(unittest.TestCase):
         'key': 'test_attribute',
         'id': '111094'
       }, {
-        'key': 'boolean_attribute',
+        'key': 'boolean_key',
         'id': '111196'
       }, {
-        'key': 'integer_attribute',
+        'key': 'integer_key',
         'id': '111197'
       }, {
-        'key': 'double_attribute',
+        'key': 'double_key',
         'id': '111198'
       }],
       'audiences': [{

@@ -558,9 +558,9 @@ class OptimizelyTest(base.BaseTest):
 
       attributes = {
           'test_attribute': 'test_value_1',
-          'boolean_attribute': True,
-          'integer_attribute': 5,
-          'double_attribute': 5.5
+          'boolean_key': True,
+          'integer_key': 5,
+          'double_key': 5.5
         }
 
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user', attributes))
@@ -574,17 +574,17 @@ class OptimizelyTest(base.BaseTest):
           'type': 'custom',
           'value': True,
           'entity_id': '111196',
-          'key': 'boolean_attribute'
+          'key': 'boolean_key'
         }, {
           'type': 'custom',
           'value': 5.5,
           'entity_id': '111198',
-          'key': 'double_attribute'
+          'key': 'double_key'
         }, {
           'type': 'custom',
           'value': 5,
           'entity_id': '111197',
-          'key': 'integer_attribute'
+          'key': 'integer_key'
         }, {
           'type': 'custom',
           'value': 'test_value_1',
