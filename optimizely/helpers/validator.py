@@ -96,7 +96,7 @@ def is_error_handler_valid(error_handler):
 
 
 def are_attributes_valid(attributes):
-  """ Determine if attributes provided are dict with all keys of type str.
+  """ Determine if attributes provided are dict or not.
 
   Args:
     attributes: User attributes which need to be validated.
@@ -105,14 +105,7 @@ def are_attributes_valid(attributes):
     Boolean depending upon whether attributes are in valid format or not.
   """
 
-  if type(attributes) is not dict:
-    return False
-
-  for attr_key in attributes.keys():
-    if not isinstance(attr_key, string_types):
-      return False
-
-  return True
+  return type(attributes) is dict
 
 
 def are_event_tags_valid(event_tags):
