@@ -167,3 +167,28 @@ def is_non_empty_string(input_id_key):
     return True
 
   return False
+
+
+def is_attribute_valid(attribute_key, attribute_value):
+  """ Determine if given attribute is valid.
+
+  Args:
+    attribute_key: Variable which needs to be validated
+    attribute_value: Variable which needs to be validated
+
+  Returns:
+    False if attribute_key is not a string
+    False if attribute_value is not one of the supported attribute types
+    True otherwise
+  """
+
+  if not isinstance(attribute_key, string_types):
+    return False
+
+  if isinstance(attribute_value, string_types):
+    return True
+
+  if type(attribute_value) in (int, float, bool):
+    return True
+
+  return False

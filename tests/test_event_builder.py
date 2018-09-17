@@ -189,6 +189,75 @@ class EventBuilderTest(base.BaseTest):
                                   event_builder.EventBuilder.HTTP_VERB,
                                   event_builder.EventBuilder.HTTP_HEADERS)
 
+  def test_create_impression_event_calls_is_attribute_valid(self):
+    """ Test that create_impression_event calls is_attribute_valid and
+    creates Event object with only those attributes for which is_attribute_valid is True."""
+
+    expected_params = {
+        'account_id': '12001',
+        'project_id': '111001',
+        'visitors': [{
+            'visitor_id': 'test_user',
+            'attributes': [{
+                'type': 'custom',
+                'value': 5.5,
+                'entity_id': '111198',
+                'key': 'double_key'
+            }, {
+                'type': 'custom',
+                'value': True,
+                'entity_id': '111196',
+                'key': 'boolean_key'
+            }],
+            'snapshots': [{
+                'decisions': [{
+                    'variation_id': '111129',
+                    'experiment_id': '111127',
+                    'campaign_id': '111182'
+                }],
+                'events': [{
+                    'timestamp': 42123,
+                    'entity_id': '111182',
+                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                    'key': 'campaign_activated'
+                }]
+            }]
+        }],
+        'client_name': 'python-sdk',
+        'client_version': version.__version__,
+        'anonymize_ip': False,
+        'revision': '42'
+    }
+
+    def side_effect(*args, **kwargs):
+      attribute_key = args[0]
+      if attribute_key == 'boolean_key' or attribute_key == 'double_key':
+        return True
+
+      return False
+
+    attributes = {
+        'test_attribute': 'test_value',
+        'boolean_key': True,
+        'integer_key': 0,
+        'double_key': 5.5
+      }
+
+    with mock.patch('time.time', return_value=42.123), \
+         mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
+         mock.patch('optimizely.helpers.validator.is_attribute_valid', side_effect=side_effect):
+
+      event_obj = self.event_builder.create_impression_event(
+        self.project_config.get_experiment_from_key('test_experiment'),
+        '111129', 'test_user', attributes
+      )
+
+    self._validate_event_object(event_obj,
+                                event_builder.EventBuilder.EVENTS_URL,
+                                expected_params,
+                                event_builder.EventBuilder.HTTP_VERB,
+                                event_builder.EventBuilder.HTTP_HEADERS)
+
   def test_create_impression_event__with_user_agent_when_bot_filtering_is_enabled(self):
     """ Test that create_impression_event creates Event object
     with right params when user agent attribute is provided and
