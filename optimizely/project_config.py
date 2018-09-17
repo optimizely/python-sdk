@@ -18,12 +18,7 @@ from .helpers import enums
 from . import entities
 from . import exceptions
 
-REVENUE_GOAL_KEY = 'Total Revenue'
-V1_CONFIG_VERSION = '1'
-V2_CONFIG_VERSION = '2'
-
-SUPPORTED_VERSIONS = [V2_CONFIG_VERSION]
-UNSUPPORTED_VERSIONS = [V1_CONFIG_VERSION]
+SUPPORTED_VERSIONS = [enums.DatafileVersions.V2, enums.DatafileVersions.V3, enums.DatafileVersions.V4]
 
 RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
@@ -41,12 +36,14 @@ class ProjectConfig(object):
     """
 
     config = json.loads(datafile)
-    self.parsing_succeeded = False
     self.logger = logger
     self.error_handler = error_handler
     self.version = config.get('version')
-    if self.version in UNSUPPORTED_VERSIONS:
-      return
+    if self.version not in SUPPORTED_VERSIONS:
+      raise exceptions.UnsupportedDatafileVersionException(
+        enums.Errors.UNSUPPORTED_DATAFILE_VERSION.format(self.version)
+      )
+
     self.account_id = config.get('accountId')
     self.project_id = config.get('projectId')
     self.revision = config.get('revision')
@@ -108,8 +105,6 @@ class ProjectConfig(object):
           feature.groupId = experiment_in_feature.groupId
           # Experiments in feature can only belong to one mutex group
           break
-
-    self.parsing_succeeded = True
 
     # Map of user IDs to another map of experiments to variations.
     # This contains all the forced variations set by the user
@@ -175,15 +170,6 @@ class ProjectConfig(object):
       return float(value)
     else:
       return value
-
-  def was_parsing_successful(self):
-    """ Helper method to determine if parsing the datafile was successful.
-
-    Returns:
-      Boolean depending on whether parsing the datafile succeeded or not.
-    """
-
-    return self.parsing_succeeded
 
   def get_version(self):
     """ Get version of the datafile.
