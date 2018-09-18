@@ -43,7 +43,7 @@ class DecisionService(object):
       attributes: Dict representing user attributes. May consist of bucketing ID to be used.
 
     Returns:
-      String representing bucketing Id if it is a String type in attributes else return userId.
+      String representing bucketing ID if it is a String type in attributes else return user ID.
     """
 
     attributes = attributes or {}
@@ -51,7 +51,6 @@ class DecisionService(object):
 
     if bucketing_id is not None:
       if isinstance(bucketing_id, string_types):
-        self.logger.debug('Bucketing ID is valid: "%s".' % (bucketing_id))
         return bucketing_id
 
       self.logger.warning('Bucketing ID attribute is not a string. Defaulted to user_id.')

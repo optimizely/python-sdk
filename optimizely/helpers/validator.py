@@ -185,10 +185,7 @@ def is_attribute_valid(attribute_key, attribute_value):
   if not isinstance(attribute_key, string_types):
     return False
 
-  if isinstance(attribute_value, string_types):
-    return True
-
-  if type(attribute_value) in (int, float, bool):
+  if isinstance(attribute_value, string_types) or type(attribute_value) in (int, float, bool):
     return True
 
   return False

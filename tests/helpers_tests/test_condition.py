@@ -38,7 +38,7 @@ class ConditionEvaluatorTests(base.BaseTest):
 
     # string attribute value
     condition_list = [['test_attribute', ""]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'test_attribute': ""})
+    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'test_attribute': ''})
     self.assertTrue(self.condition_evaluator.evaluator(0))
 
     # boolean attribute value

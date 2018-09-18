@@ -46,7 +46,7 @@ class DecisionServiceTest(base.BaseTest):
       self.assertEqual('user_bucket_value',
                        self.decision_service._get_bucketing_id('test_user',
                                                                           {'$opt_bucketing_id': 'user_bucket_value'}))
-      mock_decision_logging.debug.assert_called_once_with('Bucketing ID is valid: "user_bucket_value".')
+      mock_decision_logging.debug.assert_not_called()
 
   def test_get_bucketing_id__bucketing_id_attribute_not_a_string(self):
     """ Test that _get_bucketing_id returns user ID as  bucketing ID when bucketing ID attribute is not a string"""
@@ -455,7 +455,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
     # Check all log messages
     mock_decision_logging.debug.assert_has_calls([
       mock.call('User "test_user" meets conditions for targeting rule 1.'),
-      mock.call('Bucketing ID is valid: "user_bucket_value".'),
       mock.call('User "test_user" is in variation 211129 of experiment 211127.')
     ])
     # Check that bucket is called with correct parameters
