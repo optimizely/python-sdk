@@ -19,6 +19,7 @@ from abc import abstractproperty
 from . import version
 from .helpers import enums
 from .helpers import event_tag_utils
+from .helpers import validator
 
 
 class Event(object):
@@ -182,8 +183,8 @@ class EventBuilder(BaseEventBuilder):
     if isinstance(attributes, dict):
       for attribute_key in attributes.keys():
         attribute_value = attributes.get(attribute_key)
-        # Omit falsy attribute values
-        if attribute_value:
+        # Omit attribute values that are not supported by the log endpoint.
+        if validator.is_attribute_valid(attribute_key, attribute_value):
           attribute_id = self.config.get_attribute_id(attribute_key)
           if attribute_id:
             params.append({

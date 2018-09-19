@@ -124,6 +124,15 @@ class BaseTest(unittest.TestCase):
       'attributes': [{
         'key': 'test_attribute',
         'id': '111094'
+      }, {
+        'key': 'boolean_key',
+        'id': '111196'
+      }, {
+        'key': 'integer_key',
+        'id': '111197'
+      }, {
+        'key': 'double_key',
+        'id': '111198'
       }],
       'audiences': [{
         'name': 'Test attribute users 1',
@@ -506,6 +515,15 @@ class BaseTest(unittest.TestCase):
       'attributes': [{
         'key': 'test_attribute',
         'id': '111094'
+      }, {
+        'key': 'boolean_key',
+        'id': '111196'
+      }, {
+        'key': 'integer_key',
+        'id': '111197'
+      }, {
+        'key': 'double_key',
+        'id': '111198'
       }],
       'audiences': [{
         'name': 'Test attribute users 1',

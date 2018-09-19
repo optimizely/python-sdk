@@ -146,6 +146,28 @@ class ValidatorTest(base.BaseTest):
     self.assertTrue(validator.is_non_empty_string('0'))
     self.assertTrue(validator.is_non_empty_string('test_user'))
 
+  def test_is_attribute_valid(self):
+    """ Test that non-string attribute key or unsupported attribute value returns False."""
+
+    # test invalid attribute keys
+    self.assertFalse(validator.is_attribute_valid(5, 'test_value'))
+    self.assertFalse(validator.is_attribute_valid(True, 'test_value'))
+    self.assertFalse(validator.is_attribute_valid(5.5, 'test_value'))
+
+    # test invalid attribute values
+    self.assertFalse(validator.is_attribute_valid('test_attribute', None))
+    self.assertFalse(validator.is_attribute_valid('test_attribute', {}))
+    self.assertFalse(validator.is_attribute_valid('test_attribute', []))
+    self.assertFalse(validator.is_attribute_valid('test_attribute', ()))
+
+    # test valid attribute values
+    self.assertTrue(validator.is_attribute_valid('test_attribute', False))
+    self.assertTrue(validator.is_attribute_valid('test_attribute', True))
+    self.assertTrue(validator.is_attribute_valid('test_attribute', 0))
+    self.assertTrue(validator.is_attribute_valid('test_attribute', 0.0))
+    self.assertTrue(validator.is_attribute_valid('test_attribute', ""))
+    self.assertTrue(validator.is_attribute_valid('test_attribute', 'test_value'))
+
 
 class DatafileValidationTests(base.BaseTest):
 

@@ -34,18 +34,42 @@ class DecisionServiceTest(base.BaseTest):
     """ Test that _get_bucketing_id returns correct bucketing ID when there is no bucketing ID attribute. """
 
     # No attributes
-    self.assertEqual('test_user', decision_service.DecisionService._get_bucketing_id('test_user', None))
+    self.assertEqual('test_user', self.decision_service._get_bucketing_id('test_user', None))
 
     # With attributes, but no bucketing ID
-    self.assertEqual('test_user', decision_service.DecisionService._get_bucketing_id('test_user',
+    self.assertEqual('test_user', self.decision_service._get_bucketing_id('test_user',
                                                                                      {'random_key': 'random_value'}))
 
   def test_get_bucketing_id__bucketing_id_attribute(self):
     """ Test that _get_bucketing_id returns correct bucketing ID when there is bucketing ID attribute. """
+    with mock.patch.object(self.decision_service, 'logger') as mock_decision_logging:
+      self.assertEqual('user_bucket_value',
+                       self.decision_service._get_bucketing_id('test_user',
+                                                                          {'$opt_bucketing_id': 'user_bucket_value'}))
+      mock_decision_logging.debug.assert_not_called()
 
-    self.assertEqual('user_bucket_value',
-                     decision_service.DecisionService._get_bucketing_id('test_user',
-                                                                        {'$opt_bucketing_id': 'user_bucket_value'}))
+  def test_get_bucketing_id__bucketing_id_attribute_not_a_string(self):
+    """ Test that _get_bucketing_id returns user ID as  bucketing ID when bucketing ID attribute is not a string"""
+    with mock.patch.object(self.decision_service, 'logger') as mock_decision_logging:
+      self.assertEqual('test_user',
+                       self.decision_service._get_bucketing_id('test_user',
+                                                                          {'$opt_bucketing_id': True}))
+      mock_decision_logging.warning.assert_called_once_with(
+        'Bucketing ID attribute is not a string. Defaulted to user_id.')
+      mock_decision_logging.reset_mock()
+
+      self.assertEqual('test_user',
+                       self.decision_service._get_bucketing_id('test_user',
+                                                                          {'$opt_bucketing_id': 5.9}))
+      mock_decision_logging.warning.assert_called_once_with(
+        'Bucketing ID attribute is not a string. Defaulted to user_id.')
+      mock_decision_logging.reset_mock()
+
+      self.assertEqual('test_user',
+                       self.decision_service._get_bucketing_id('test_user',
+                                                                          {'$opt_bucketing_id': 5}))
+      mock_decision_logging.warning.assert_called_once_with(
+        'Bucketing ID attribute is not a string. Defaulted to user_id.')
 
   def test_get_forced_variation__user_in_forced_variation(self):
     """ Test that expected variation is returned if user is forced in a variation. """
