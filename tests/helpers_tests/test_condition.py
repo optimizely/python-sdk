@@ -37,7 +37,7 @@ class ConditionEvaluatorTests(base.BaseTest):
     Also test that evaluator works for falsy values. """
 
     # string attribute value
-    condition_list = [['test_attribute', ""]]
+    condition_list = [['test_attribute', '']]
     condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'test_attribute': ''})
     self.assertTrue(self.condition_evaluator.evaluator(0))
 
