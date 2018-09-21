@@ -75,6 +75,6 @@ Contact
 If you have questions, please contact developers@optimizely.com.
 
 .. _Contributor License Agreement (CLA): https://docs.google.com/a/optimizely.com/forms/d/e/1FAIpQLSf9cbouWptIpMgukAKZZOIAhafvjFCV8hS00XJLWQnWDFtwtA/viewform
-.. _README: README.md
+.. _README: README.rst
 .. _deviations: https://github.com/optimizely/python-sdk/blob/master/tox.ini
 .. _Apache License v2.0: http://www.apache.org/licenses/LICENSE-2.0

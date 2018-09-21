@@ -1,5 +1,5 @@
 include LICENSE
-include CHANGELOG.md
-include README.md
+include CHANGELOG.rst
+include README.rst
 include requirements/*
 recursive-exclude tests *
