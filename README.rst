@@ -117,7 +117,7 @@ Please see `CONTRIBUTING`_.
 
 .. _PyPi: https://pypi.python.org/pypi?name=optimizely-sdk&:action=display
 .. _developer documentation: http://developers.optimizely.com/server/reference/index.html
-.. _CONTRIBUTING: CONTRIBUTING.md
+.. _CONTRIBUTING: CONTRIBUTING.rst
 
 .. |PyPI version| image:: https://badge.fury.io/py/optimizely-sdk.svg
    :target: https://pypi.org/project/optimizely-sdk
