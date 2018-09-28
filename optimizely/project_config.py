@@ -489,10 +489,6 @@ class ProjectConfig(object):
       Returns:
         A boolean value that indicates if the set completed successfully.
     """
-    if not user_id:
-      self.logger.debug('User ID is invalid.')
-      return False
-
     experiment = self.get_experiment_from_key(experiment_key)
     if not experiment:
       # The invalid experiment key will be logged inside this call.
@@ -546,9 +542,6 @@ class ProjectConfig(object):
       Returns:
         The variation which the given user and experiment should be forced into.
     """
-    if not user_id:
-      self.logger.debug('User ID is invalid.')
-      return None
 
     if user_id not in self.forced_variation_map:
       self.logger.debug('User "%s" is not in the forced variation map.' % user_id)
