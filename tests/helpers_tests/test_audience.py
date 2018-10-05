@@ -20,7 +20,7 @@ from optimizely.helpers import audience
 class AudienceTest(base.BaseTest):
 
   def test_is_match__audience_condition_matches(self):
-    """ Test that is_match returns True when audience conditions are met. """
+    """ Test that is_user_in_experiment returns True when audience conditions are met. """
 
     user_attributes = {
       'test_attribute': 'test_value_1',
@@ -28,10 +28,12 @@ class AudienceTest(base.BaseTest):
       'location': 'San Francisco'
     }
 
-    self.assertTrue(audience.is_match(self.optimizely.config.get_audience('11154'), user_attributes))
+    self.assertTrue(
+      audience.is_user_in_experiment(
+        self.project_config, self.project_config.get_experiment_from_key('test_experiment'), user_attributes))
 
-  def test_is_match__audience_condition_does_not_match(self):
-    """ Test that is_match returns False when audience conditions are not met. """
+  def test_is_user_in_experiment__audience_condition_does_not_match(self):
+    """ Test that is_user_in_experiment returns False when audience conditions are not met. """
 
     user_attributes = {
       'test_attribute': 'wrong_test_value',
@@ -39,7 +41,9 @@ class AudienceTest(base.BaseTest):
       'location': 'San Francisco'
     }
 
-    self.assertFalse(audience.is_match(self.optimizely.config.get_audience('11154'), user_attributes))
+    self.assertFalse(
+      audience.is_user_in_experiment(
+        self.project_config, self.project_config.get_experiment_from_key('test_experiment'), user_attributes))
 
   def test_is_user_in_experiment__no_audience(self):
     """ Test that is_user_in_experiment returns True when experiment is using no audience. """
@@ -54,7 +58,8 @@ class AudienceTest(base.BaseTest):
     self.assertTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes))
 
   def test_is_user_in_experiment__no_attributes(self):
-    """ Test that is_user_in_experiment returns True when experiment is using no audience. """
+    """ Test that is_user_in_experiment returns False when attributes are empty
+    and experiment has an audience. """
 
     self.assertFalse(audience.is_user_in_experiment(
       self.project_config, self.project_config.get_experiment_from_key('test_experiment'), None)
@@ -65,7 +70,7 @@ class AudienceTest(base.BaseTest):
     )
 
   def test_is_user_in_experiment__audience_conditions_are_met(self):
-    """ Test that is_user_in_experiment returns True when audience conditions are met. """
+    """ Test that is_user_in_experiment returns True when Condition Evaluator returns True."""
 
     user_attributes = {
       'test_attribute': 'test_value_1',
@@ -73,14 +78,14 @@ class AudienceTest(base.BaseTest):
       'location': 'San Francisco'
     }
 
-    with mock.patch('optimizely.helpers.audience.is_match', return_value=True) as mock_is_match:
+    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate', return_value=True) as mock_evaluate:
       self.assertTrue(audience.is_user_in_experiment(self.project_config,
                                                      self.project_config.get_experiment_from_key('test_experiment'),
                                                      user_attributes))
-    mock_is_match.assert_called_once_with(self.optimizely.config.get_audience('11154'), user_attributes)
+    mock_evaluate.assert_called_once_with(self.optimizely.config.get_audience('11154').conditionList)
 
   def test_is_user_in_experiment__audience_conditions_not_met(self):
-    """ Test that is_user_in_experiment returns False when audience conditions are not met. """
+    """ Test that is_user_in_experiment returns False when Condition Evaluator returns False. """
 
     user_attributes = {
       'test_attribute': 'wrong_test_value',
@@ -88,8 +93,8 @@ class AudienceTest(base.BaseTest):
       'location': 'San Francisco'
     }
 
-    with mock.patch('optimizely.helpers.audience.is_match', return_value=False) as mock_is_match:
+    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate', return_value=False) as mock_evaluate:
       self.assertFalse(audience.is_user_in_experiment(self.project_config,
                                                       self.project_config.get_experiment_from_key('test_experiment'),
                                                       user_attributes))
-    mock_is_match.assert_called_once_with(self.optimizely.config.get_audience('11154'), user_attributes)
+    mock_evaluate.assert_called_once_with(self.optimizely.config.get_audience('11154').conditionList)

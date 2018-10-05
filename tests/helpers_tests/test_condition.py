@@ -22,50 +22,51 @@ class ConditionEvaluatorTests(base.BaseTest):
 
   def setUp(self):
     base.BaseTest.setUp(self)
-    self.condition_structure, self.condition_list = condition_helper.loads(
+    self.condition_list = condition_helper.ConditionDecoder.deserialize_audience_conditions(
       self.config_dict['audiences'][0]['conditions']
     )
+
     attributes = {
       'test_attribute': 'test_value_1',
       'browser_type': 'firefox',
       'location': 'San Francisco'
     }
-    self.condition_evaluator = condition_helper.ConditionEvaluator(self.condition_list, attributes)
+    self.condition_evaluator = condition_helper.ConditionEvaluator(attributes)
 
   def test_evaluator__returns_true(self):
     """ Test that evaluator correctly returns True when there is an exact match.
     Also test that evaluator works for falsy values. """
 
     # string attribute value
-    condition_list = [['test_attribute', '']]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'test_attribute': ''})
-    self.assertTrue(self.condition_evaluator.evaluator(0))
+    condition_list = {'type': 'custom_attribute', 'name': 'test_attribute', 'value': ''}
+    condition_evaluator = condition_helper.ConditionEvaluator({'test_attribute': ''})
+    self.assertTrue(condition_evaluator.evaluator(condition_list))
 
     # boolean attribute value
-    condition_list = [['boolean_key', False]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'boolean_key': False})
-    self.assertTrue(condition_evaluator.evaluator(0))
+    condition_list = {'type': 'custom_attribute', 'name': 'boolean_key', 'value': False}
+    condition_evaluator = condition_helper.ConditionEvaluator({'boolean_key': False})
+    self.assertTrue(condition_evaluator.evaluator(condition_list))
 
     # integer attribute value
-    condition_list = [['integer_key', 0]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'integer_key': 0})
-    self.assertTrue(condition_evaluator.evaluator(0))
+    condition_list = {'type': 'custom_attribute', 'name': 'integer_key', 'value': 0}
+    condition_evaluator = condition_helper.ConditionEvaluator({'integer_key': 0})
+    self.assertTrue(condition_evaluator.evaluator(condition_list))
 
     # double attribute value
-    condition_list = [['double_key', 0.0]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'double_key': 0.0})
-    self.assertTrue(condition_evaluator.evaluator(0))
+    condition_list = {'type': 'custom_attribute', 'name': 'double_key', 'value': 0.0}
+    condition_evaluator = condition_helper.ConditionEvaluator({'double_key': 0.0})
+    self.assertTrue(condition_evaluator.evaluator(condition_list))
 
   def test_evaluator__returns_false(self):
     """ Test that evaluator correctly returns False when there is no match. """
-
+    condition_list = {'type': 'custom_attribute', 'name': 'browser_type', 'value': 'firefox'}
     attributes = {
       'browser_type': 'chrome',
       'location': 'San Francisco'
     }
-    self.condition_evaluator = condition_helper.ConditionEvaluator(self.condition_list, attributes)
+    condition_evaluator = condition_helper.ConditionEvaluator(attributes)
 
-    self.assertFalse(self.condition_evaluator.evaluator(0))
+    self.assertFalse(condition_evaluator.evaluator(condition_list))
 
   def test_and_evaluator__returns_true(self):
     """ Test that and_evaluator returns True when all conditions evaluate to True. """
@@ -121,23 +122,25 @@ class ConditionEvaluatorTests(base.BaseTest):
   def test_evaluate__returns_true(self):
     """ Test that evaluate returns True when conditions evaluate to True. """
 
-    self.assertTrue(self.condition_evaluator.evaluate(self.condition_structure))
+    self.assertTrue(self.condition_evaluator.evaluate(self.condition_list))
 
   def test_evaluate__returns_false(self):
     """ Test that evaluate returns False when conditions evaluate to False. """
 
-    condition_structure = ['and', ['or', ['not', 0]]]
+    condition_structure = {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_x"}
     self.assertFalse(self.condition_evaluator.evaluate(condition_structure))
 
 
 class ConditionDecoderTests(base.BaseTest):
 
-  def test_loads(self):
-    """ Test that loads correctly sets condition structure and list. """
+  def test_deserialize_audience_conditions(self):
+    """ Test that deserialize_audience_conditions correctly sets condition list. """
 
-    condition_structure, condition_list = condition_helper.loads(
+    condition_list = condition_helper.ConditionDecoder.deserialize_audience_conditions(
       self.config_dict['audiences'][0]['conditions']
     )
 
-    self.assertEqual(['and', ['or', ['or', 0]]], condition_structure)
-    self.assertEqual([['test_attribute', 'test_value_1']], condition_list)
+    self.assertEqual(
+      ['and', ['or', ['or', {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]],
+      condition_list
+    )

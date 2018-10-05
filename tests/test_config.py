@@ -119,14 +119,14 @@ class ConfigTest(base.BaseTest):
       '11154': entities.Audience(
         '11154', 'Test attribute users 1',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
-        conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_1']]
+        conditionList=["and", ["or", ["or", {"name": "test_attribute",
+                                             "type": "custom_attribute", "value": "test_value_1"}]]]
       ),
       '11159': entities.Audience(
         '11159', 'Test attribute users 2',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
-        conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_2']]
+        conditionList=["and", ["or", ["or", {"name": "test_attribute",
+                                             "type": "custom_attribute", "value": "test_value_2"}]]]
       )
     }
     expected_variation_key_map = {
@@ -520,8 +520,8 @@ class ConfigTest(base.BaseTest):
       '11154': entities.Audience(
         '11154', 'Test attribute users',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
-        conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value']]
+        conditionList=['and', ['or', ['or', {"name": "test_attribute",
+                                             "type": "custom_attribute", "value": "test_value"}]]]
       )
     }
     expected_variation_key_map = {
@@ -625,7 +625,6 @@ class ConfigTest(base.BaseTest):
         '131': entities.Variation.VariableUsage('131', '15')
       }
     }
-
     self.assertEqual(expected_variation_variable_usage_map['28901'],
                      project_config.variation_variable_usage_map['28901'])
     self.assertEqual(expected_group_id_map, project_config.group_id_map)

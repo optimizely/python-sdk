@@ -133,19 +133,18 @@ class ProjectConfig(object):
 
   @staticmethod
   def _deserialize_audience(audience_map):
-    """ Helper method to de-serialize and populate audience map with the condition list and structure.
+    """ Helper method to de-serialize and populate audience map with the condition list.
 
     Args:
       audience_map: Dict mapping audience ID to audience object.
 
     Returns:
-      Dict additionally consisting of condition list and structure on every audience object.
+      Dict additionally consisting of condition list.
     """
 
     for audience in audience_map.values():
-      condition_structure, condition_list = condition_helper.loads(audience.conditions)
+      condition_list = condition_helper.ConditionDecoder.deserialize_audience_conditions(audience.conditions)
       audience.__dict__.update({
-        'conditionStructure': condition_structure,
         'conditionList': condition_list
       })
 

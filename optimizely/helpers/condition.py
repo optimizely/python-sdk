@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016,2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -30,21 +30,20 @@ DEFAULT_OPERATOR_TYPES = [
 class ConditionEvaluator(object):
   """ Class encapsulating methods to be used in audience condition evaluation. """
 
-  def __init__(self, condition_data, attributes):
-    self.condition_data = condition_data
+  def __init__(self, attributes):
     self.attributes = attributes
 
   def evaluator(self, condition):
     """ Method to compare single audience condition against provided user data i.e. attributes.
 
     Args:
-      condition: Integer representing the index of condition_data that needs to be used for comparison.
+      condition: Dict representing audience condition name, value, type etc.
 
     Returns:
       Boolean indicating the result of comparing the condition value against the user attributes.
     """
 
-    return self.attributes.get(self.condition_data[condition][0]) == self.condition_data[condition][1]
+    return self.attributes.get(condition['name']) == condition['value']
 
   def and_evaluator(self, conditions):
     """ Evaluates a list of conditions as if the evaluator had been applied
@@ -124,64 +123,17 @@ class ConditionEvaluator(object):
 
 
 class ConditionDecoder(object):
-  """ Class which provides an object_hook method for decoding dict
-  objects into a list when given a condition_decoder. """
+  """ Class encapsulating methods to be used in audience condition decoding. """
 
-  def __init__(self, condition_decoder):
-    self.condition_list = []
-    self.index = -1
-    self.decoder = condition_decoder
-
-  def object_hook(self, object_dict):
-    """ Hook which when passed into a json.JSONDecoder will replace each dict
-    in a json string with its index and convert the dict to an object as defined
-    by the passed in condition_decoder. The newly created condition object is
-    appended to the conditions_list.
+  @staticmethod
+  def deserialize_audience_conditions(conditions_string):
+    """ Deserializes the conditions property into a list of structures and conditions.
 
     Args:
-      object_dict: Dict representing an object.
+      conditions_string: String defining valid and/or conditions.
 
     Returns:
-      An index which will be used as the placeholder in the condition_structure
+      list of conditions.
     """
-    instance = self.decoder(object_dict)
-    self.condition_list.append(instance)
-    self.index += 1
-    return self.index
 
-
-def _audience_condition_deserializer(obj_dict):
-  """ Deserializer defining how dict objects need to be decoded for audience conditions.
-
-  Args:
-    obj_dict: Dict representing one audience condition.
-
-  Returns:
-    List consisting of condition key and corresponding value.
-  """
-  return [obj_dict.get('name'), obj_dict.get('value')]
-
-
-def loads(conditions_string):
-  """ Deserializes the conditions property into its corresponding
-  components: the condition_structure and the condition_list.
-
-  Args:
-    conditions_string: String defining valid and/or conditions.
-
-  Returns:
-    A tuple of (condition_structure, condition_list).
-    condition_structure: nested list of operators and placeholders for operands.
-    condition_list: list of conditions whose index correspond to the values of the placeholders.
-  """
-  decoder = ConditionDecoder(_audience_condition_deserializer)
-
-  # Create a custom JSONDecoder using the ConditionDecoder's object_hook method
-  # to create the condition_structure as well as populate the condition_list
-  json_decoder = json.JSONDecoder(object_hook=decoder.object_hook)
-
-  # Perform the decoding
-  condition_structure = json_decoder.decode(conditions_string)
-  condition_list = decoder.condition_list
-
-  return (condition_structure, condition_list)
+    return json.loads(conditions_string)
