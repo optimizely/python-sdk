@@ -54,14 +54,27 @@ class AudienceTest(base.BaseTest):
     self.assertTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes))
 
   def test_is_user_in_experiment__no_attributes(self):
-    """ Test that is_user_in_experiment returns True when experiment is using no audience. """
+    """ Test that is_user_in_experiment defaults attributes to empty Dict and
+        is_match does get called with empty attributes. """
 
-    self.assertFalse(audience.is_user_in_experiment(
-      self.project_config, self.project_config.get_experiment_from_key('test_experiment'), None)
+    with mock.patch('optimizely.helpers.audience.is_match') as mock_is_match:
+      audience.is_user_in_experiment(
+        self.project_config,
+        self.project_config.get_experiment_from_key('test_experiment'), None
+      )
+      
+    mock_is_match.assert_called_once_with(
+      self.optimizely.config.get_audience('11154'), {}
     )
 
-    self.assertFalse(audience.is_user_in_experiment(
-      self.project_config, self.project_config.get_experiment_from_key('test_experiment'), {})
+    with mock.patch('optimizely.helpers.audience.is_match') as mock_is_match:
+      audience.is_user_in_experiment(
+        self.project_config,
+        self.project_config.get_experiment_from_key('test_experiment'), {}
+      )
+      
+    mock_is_match.assert_called_once_with(
+      self.optimizely.config.get_audience('11154'), {}
     )
 
   def test_is_user_in_experiment__audience_conditions_are_met(self):
