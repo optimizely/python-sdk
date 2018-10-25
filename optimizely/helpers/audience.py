@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -24,8 +24,16 @@ def is_match(audience, attributes):
   Return:
     Boolean representing if user satisfies audience conditions or not.
   """
-  condition_evaluator = condition_helper.ConditionEvaluator(audience.conditionList, attributes)
-  return condition_evaluator.evaluate(audience.conditionStructure)
+  condition_tree_evaluator = condition_helper.ConditionTreeEvaluator()
+  custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
+    audience.conditionList, attributes)
+
+  is_match = condition_tree_evaluator.evaluate(
+    audience.conditionStructure,
+    lambda index: custom_attr_condition_evaluator.evaluate(index)
+  )
+
+  return is_match or False
 
 
 def is_user_in_experiment(config, experiment, attributes):

@@ -19,6 +19,12 @@ from optimizely import optimizely
 
 class BaseTest(unittest.TestCase):
 
+  def assertStrictTrue(self, to_assert):
+    self.assertIs(to_assert, True)
+
+  def assertStrictFalse(self, to_assert):
+    self.assertIs(to_assert, False)
+
   def setUp(self, config_dict='config_dict'):
     self.config_dict = {
       'revision': '42',

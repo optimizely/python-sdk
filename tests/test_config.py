@@ -120,13 +120,13 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users 1',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_1']]
+        conditionList=[['test_attribute', 'test_value_1', 'custom_attribute', 'exact']]
       ),
       '11159': entities.Audience(
         '11159', 'Test attribute users 2',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_2']]
+        conditionList=[['test_attribute', 'test_value_2', 'custom_attribute', 'exact']]
       )
     }
     expected_variation_key_map = {
@@ -521,7 +521,7 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value']]
+        conditionList=[['test_attribute', 'test_value', 'custom_attribute', 'exact']]
       )
     }
     expected_variation_key_map = {
