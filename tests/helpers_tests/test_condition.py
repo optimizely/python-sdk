@@ -570,7 +570,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
   def test_less_than__returns_null__when_user_value_is_not_a_number(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      self.lt_condition_list, {'meters_travelled': 'a long way'}
+      self.lt_condition_list, {'meters_travelled': False}
     )
 
     self.assertIsNone(evaluator.evaluate(0))

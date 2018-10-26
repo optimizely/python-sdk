@@ -174,6 +174,10 @@ class CustomAttributeConditionEvaluator(object):
       # numbers.Integral instead of int to accomodate long integer in python 2
       return False
 
+    if isinstance(value, bool):
+      # bool is a subclass of int
+      return False
+
     if math.isnan(value) or math.isinf(value):
       return False
 
