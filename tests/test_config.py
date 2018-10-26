@@ -772,19 +772,19 @@ class ConfigTest(base.BaseTest):
     typed_audiences = self.config_dict_with_typed_audiences['typedAudiences']
 
     audience_3988293898 = {
-          'id': '3988293898',
-          'name': '$$dummySubstringString',
-          'conditions': '["and", ["or"]]',
-          'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
-        }
+      'id': '3988293898',
+      'name': '$$dummySubstringString',
+      'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
+    }
 
     self.assertTrue(audience_3988293898 in audiences)
 
     typed_audience_3988293898 = {
-          'id': '3988293898',
-          'name': 'substringString',
-          'conditions': '["and", ["or", ["or", {"name": "house", "type": "custom_attribute", "match":"substring", "value":"Slytherin"}]]]'
-        }
+      'id': '3988293898',
+      'name': 'substringString',
+      'conditions': '["and", ["or", ["or", '
+                    '{"name": "house", "type": "custom_attribute", "match":"substring", "value":"Slytherin"}]]]'
+    }
 
     self.assertTrue(typed_audience_3988293898 in typed_audiences)
 

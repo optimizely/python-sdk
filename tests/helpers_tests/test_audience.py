@@ -62,7 +62,7 @@ class AudienceTest(base.BaseTest):
         self.project_config,
         self.project_config.get_experiment_from_key('test_experiment'), None
       )
-      
+
     mock_is_match.assert_called_once_with(
       self.optimizely.config.get_audience('11154'), {}
     )
@@ -72,7 +72,7 @@ class AudienceTest(base.BaseTest):
         self.project_config,
         self.project_config.get_experiment_from_key('test_experiment'), {}
       )
-      
+
     mock_is_match.assert_called_once_with(
       self.optimizely.config.get_audience('11154'), {}
     )

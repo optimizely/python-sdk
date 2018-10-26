@@ -42,7 +42,7 @@ def is_user_in_experiment(config, experiment, attributes):
   Args:
     config: project_config.ProjectConfig object representing the project.
     experiment: Object representing the experiment.
-    attributes: Dict representing user attributes which will be used in determining 
+    attributes: Dict representing user attributes which will be used in determining
                 if the audience conditions are met. If not provided, default to an empty dict.
 
   Returns:

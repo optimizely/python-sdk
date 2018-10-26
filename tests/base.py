@@ -610,7 +610,8 @@ class BaseTest(unittest.TestCase):
                   'endOfRange': 10000
                 }
               ],
-              'audienceIds': ['3468206642', '3988293898', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
+              'audienceIds': ['3468206642', '3988293898', '3988293899', '3468206646',
+                              '3468206647', '3468206644', '3468206643'],
               'variations': [
                 {
                   'variables': [],
@@ -653,7 +654,7 @@ class BaseTest(unittest.TestCase):
           'id': '11638870867'
         }
       ],
-      'anonymizeIP':False,
+      'anonymizeIP': False,
       'projectId': '11624721371',
       'variables': [],
       'featureFlags': [
@@ -692,7 +693,8 @@ class BaseTest(unittest.TestCase):
               'endOfRange': 10000
             }
           ],
-          'audienceIds': ['3468206642', '3988293898', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
+          'audienceIds': ['3468206642', '3988293898', '3988293899', '3468206646',
+                          '3468206647', '3468206644', '3468206643'],
           'variations': [
             {
               'variables': [
@@ -703,7 +705,7 @@ class BaseTest(unittest.TestCase):
               ],
               'id': '11617170975',
               'key': 'variation_2',
-              'featureEnabled':True
+              'featureEnabled': True
             }
           ],
           'forcedVariations': {},
@@ -727,7 +729,8 @@ class BaseTest(unittest.TestCase):
               'endOfRange': 10000
             }
           ],
-          'audienceIds': ['3468206642', '3988293898', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
+          'audienceIds': ['3468206642', '3988293898', '3988293899', '3468206646',
+                          '3468206647', '3468206644', '3468206643'],
           'forcedVariations': {}
         }
       ],
@@ -740,7 +743,6 @@ class BaseTest(unittest.TestCase):
         {
           'id': '3988293898',
           'name': '$$dummySubstringString',
-          'conditions': '["and", ["or"]]',
           'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
         },
         {
@@ -773,32 +775,38 @@ class BaseTest(unittest.TestCase):
         {
           'id': '3988293898',
           'name': 'substringString',
-          'conditions': '["and", ["or", ["or", {"name": "house", "type": "custom_attribute", "match":"substring", "value":"Slytherin"}]]]'
+          'conditions': '["and", ["or", ["or", '
+          '{"name": "house", "type": "custom_attribute", "match":"substring", "value":"Slytherin"}]]]'
         },
         {
           'id': '3988293899',
           'name': 'exists',
-          'conditions': '["and", ["or", ["or", {"name": "favorite_ice_cream", "type": "custom_attribute", "match":"exists"}]]]'
+          'conditions': '["and", ["or", ["or", {"name": "favorite_ice_cream", "type": "custom_attribute",'
+                        '"match":"exists"}]]]'
         },
         {
           'id': '3468206646',
           'name': 'exactNumber',
-          'conditions': '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute", "match":"exact", "value": 45.5}]]]'
+          'conditions': '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute",'
+                        '"match":"exact", "value": 45.5}]]]'
         },
         {
           'id': '3468206647',
           'name': 'gtNumber',
-          'conditions': '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute", "match":"gt", "value": 70 }]]]'
+          'conditions': '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute",'
+                        '"match":"gt", "value": 70 }]]]'
         },
         {
           'id': '3468206644',
           'name': 'ltNumber',
-          'conditions': '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute", "match":"lt", "value": 1.0 }]]]'
+          'conditions': '["and", ["or", ["or", {"name": "lasers", "type": "custom_attribute",'
+                        '"match":"lt", "value": 1.0 }]]]'
         },
         {
           'id': '3468206643',
           'name': 'exactBoolean',
-          'conditions': '["and", ["or", ["or", {"name": "should_do_it", "type": "custom_attribute", "match":"exact", "value": true}]]]'
+          'conditions': '["and", ["or", ["or", {"name": "should_do_it", "type": "custom_attribute",'
+                        '"match":"exact", "value": true}]]]'
         }
       ],
       'groups': [],
@@ -820,7 +828,7 @@ class BaseTest(unittest.TestCase):
           'id': '594018'
         }
       ],
-      'botFiltering':False,
+      'botFiltering': False,
       'accountId': '4879520872',
       'events': [
         {
@@ -833,7 +841,7 @@ class BaseTest(unittest.TestCase):
         }
       ],
       'revision': '3'
-    };
+    }
 
     config = getattr(self, config_dict)
     self.optimizely = optimizely.Optimizely(json.dumps(config))
