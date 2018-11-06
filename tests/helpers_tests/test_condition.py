@@ -423,6 +423,12 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      self.exact_number_condition_list, {'lasers_count': 9000.0}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
   def test_exact_number__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -525,6 +531,12 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      self.gt_condition_list, {'meters_travelled': 49}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
   def test_greater_than__returns_false__when_user_value_not_greater_than_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -555,6 +567,12 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
       self.lt_condition_list, {'meters_travelled': 48.1}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      self.lt_condition_list, {'meters_travelled': 48}
     )
 
     self.assertStrictTrue(evaluator.evaluate(0))

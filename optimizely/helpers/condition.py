@@ -15,7 +15,7 @@ import json
 import math
 import numbers
 
-from six import string_types, PY2
+from six import string_types
 
 
 class ConditionOperatorTypes(object):
@@ -197,6 +197,35 @@ class CustomAttributeConditionEvaluator(object):
 
     return False
 
+  def are_values_same_type(self, first_val, second_val):
+    """ Method to verify that both values belong to same type. Float and integer are
+    considered as same type.
+
+    Args:
+      first_val: Value to validate
+      second_Val: Value to validate
+
+    Returns:
+      Boolean: True if both values belong to same type. Otherwise False
+    """
+
+    first_val_type = type(first_val)
+    second_val_type = type(second_val)
+
+    # use isinstance to accomodate Python 2 unicode and str types
+    if isinstance(first_val, string_types) and isinstance(second_val, string_types):
+      return True
+
+    # Compare types if one of the values is bool because bool is a subclass on Integer
+    if isinstance(first_val, bool) or isinstance(second_val, bool):
+      return first_val_type == second_val_type
+
+    # Treat ints and floats as same type
+    if isinstance(first_val, (numbers.Integral, float)) and isinstance(second_val, (numbers.Integral, float)):
+        return True
+
+    return False
+
   def exact_evaluator(self, index):
     """ Evaluate the given exact match condition for the user attributes
 
@@ -212,23 +241,12 @@ class CustomAttributeConditionEvaluator(object):
         - if there is a mismatch between the user attribute type and the condition value type
     """
     condition_value = self.condition_data[index][1]
-    if PY2 and isinstance(condition_value, unicode):
-      # str and unicode are used interchangeably in python 2.
-      # encode it to str to avoid type mismatch
-      condition_value = condition_value.encode()
-
-    condition_value_type = type(condition_value)
-
     user_value = self.attributes.get(self.condition_data[index][0])
-    if PY2 and isinstance(user_value, unicode):
-      user_value = user_value.encode()
-
-    user_value_type = type(user_value)
 
     if not self.is_value_valid_for_exact_conditions(condition_value) or \
        not self.is_value_valid_for_exact_conditions(user_value) or \
-            condition_value_type != user_value_type:
-      return None
+       not self.are_values_same_type(condition_value, user_value):
+        return None
 
     return condition_value == user_value
 
