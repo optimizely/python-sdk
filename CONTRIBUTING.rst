@@ -13,7 +13,7 @@ Development process
    ``git checkout -b YOUR_NAME/branch_name``.
 2. Commit your changes. We follow the `commit message guidelines`_ from Angular.
 3. Make sure to add tests!
-4. Run ``nosetests`` to ensure there are no lint errors.
+4. Run ``pep8`` to ensure there are no lint errors.
 5. ``git push`` your changes to GitHub.
 6. Make sure that all unit tests are passing and that there are no merge
    conflicts between your branch and ``master``.
