@@ -11,13 +11,14 @@ Development process
 
 1. Create a branch off of ``master``:
    ``git checkout -b YOUR_NAME/branch_name``.
-2. Commit your changes. Make sure to add tests!
-3. Lint your changes before submitting: ``pep8 YOUR_CHANGED_FILES.py``.
-4. ``git push`` your changes to GitHub.
-5. Make sure that all unit tests are passing and that there are no merge
+2. Commit your changes. We follow the `commit message guidelines`_ from Angular.
+3. Make sure to add tests!
+4. Run ``nosetests`` to ensure there are no lint errors.
+5. ``git push`` your changes to GitHub.
+6. Make sure that all unit tests are passing and that there are no merge
    conflicts between your branch and ``master``.
-6. Open a pull request from ``YOUR_NAME/branch_name`` to ``master``.
-7. A repository maintainer will review your pull request and, if all
+7. Open a pull request from ``YOUR_NAME/branch_name`` to ``master``.
+8. A repository maintainer will review your pull request and, if all
    goes well, squash and merge it!
 
 Pull request acceptance criteria
@@ -76,5 +77,6 @@ If you have questions, please contact developers@optimizely.com.
 
 .. _Contributor License Agreement (CLA): https://docs.google.com/a/optimizely.com/forms/d/e/1FAIpQLSf9cbouWptIpMgukAKZZOIAhafvjFCV8hS00XJLWQnWDFtwtA/viewform
 .. _README: README.rst
+.. _commit message guidelines: https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-guidelines
 .. _deviations: https://github.com/optimizely/python-sdk/blob/master/tox.ini
 .. _Apache License v2.0: http://www.apache.org/licenses/LICENSE-2.0
