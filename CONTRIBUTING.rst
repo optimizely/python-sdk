@@ -9,16 +9,16 @@ read the guidelines below for information on submitting your code.
 Development process
 -------------------
 
-1. Create a branch off of ``master``:
-   ``git checkout -b YOUR_NAME/branch_name``.
-2. Commit your changes. We follow the `commit message guidelines`_ from Angular.
+1. Fork the repository and create your branch from master.
+2. Please follow the `commit message guidelines`_ for each commit message.
 3. Make sure to add tests!
 4. Run ``pep8`` to ensure there are no lint errors.
 5. ``git push`` your changes to GitHub.
-6. Make sure that all unit tests are passing and that there are no merge
+6. Open a PR from your fork into the master branch of the original repo.
+7. Make sure that all unit tests are passing and that there are no merge
    conflicts between your branch and ``master``.
-7. Open a pull request from ``YOUR_NAME/branch_name`` to ``master``.
-8. A repository maintainer will review your pull request and, if all
+8. Open a pull request from ``YOUR_NAME/branch_name`` to ``master``.
+9. A repository maintainer will review your pull request and, if all
    goes well, squash and merge it!
 
 Pull request acceptance criteria
