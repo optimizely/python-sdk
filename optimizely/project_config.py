@@ -15,6 +15,7 @@ import json
 
 from .helpers import condition as condition_helper
 from .helpers import enums
+from .helpers import validator
 from . import entities
 from . import exceptions
 
@@ -499,7 +500,7 @@ class ProjectConfig(object):
       return False
 
     experiment_id = experiment.id
-    if not variation_key:
+    if variation_key is None:
       if user_id in self.forced_variation_map:
         experiment_to_variation_map = self.forced_variation_map.get(user_id)
         if experiment_id in experiment_to_variation_map:
@@ -516,6 +517,10 @@ class ProjectConfig(object):
       else:
         self.logger.debug('Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
       return True
+
+    if not validator.is_non_empty_string(variation_key):
+      self.logger.debug('Variation key is invalid.')
+      return False
 
     forced_variation = self.get_variation_from_key(experiment_key, variation_key)
     if not forced_variation:
