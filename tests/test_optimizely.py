@@ -2405,18 +2405,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
     mock_client_logging.error.assert_called_once_with('Provided "experiment_key" is in an invalid format.')
 
-  def test_set_forced_variation__invalid_variation_key(self):
-    """ Test that None is returned and expected log messages are logged during set_forced_variation \
-    when variation_key is in invalid format. """
-
-    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
-            mock.patch('optimizely.helpers.validator.is_non_empty_string', side_effect=[True, False]) as mock_validator:
-      self.assertFalse(self.optimizely.set_forced_variation('test_experiment', 'test_user', 99))
-
-    mock_validator.assert_any_call(99)
-
-    mock_client_logging.error.assert_called_once_with('Provided "variation_key" is in an invalid format.')
-
   def test_set_forced_variation__invalid_user_id(self):
     """ Test that None is returned and expected log messages are logged during set_forced_variation \
     when user_id is in invalid format. """
