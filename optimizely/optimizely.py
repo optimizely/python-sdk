@@ -565,10 +565,6 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return False
 
-    if not validator.is_non_empty_string(variation_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('variation_key'))
-      return False
-
     return self.config.set_forced_variation(experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
