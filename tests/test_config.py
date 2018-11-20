@@ -782,8 +782,8 @@ class ConfigTest(base.BaseTest):
     typed_audience_3988293898 = {
       'id': '3988293898',
       'name': 'substringString',
-      'conditions': '["and", ["or", ["or", '
-                    '{"name": "house", "type": "custom_attribute", "match":"substring", "value":"Slytherin"}]]]'
+      'conditions': ['and', ['or', ['or', {'name': 'house', 'type': 'custom_attribute',
+                     'match': 'substring', 'value': 'Slytherin'}]]]
     }
 
     self.assertTrue(typed_audience_3988293898 in typed_audiences)
@@ -793,8 +793,8 @@ class ConfigTest(base.BaseTest):
     self.assertEqual('3988293898', audience.id)
     self.assertEqual('substringString', audience.name)
     self.assertEqual(
-      '["and", ["or", ["or", {"name": "house", "type": "custom_attribute", '
-      '"match":"substring", "value":"Slytherin"}]]]',
+      '["and", ["or", ["or", {"match": "substring", "type": "custom_attribute",'
+      ' "name": "house", "value": "Slytherin"}]]]',
       audience.conditions
     )
 
