@@ -792,10 +792,13 @@ class ConfigTest(base.BaseTest):
 
     self.assertEqual('3988293898', audience.id)
     self.assertEqual('substringString', audience.name)
-    self.assertEqual(
+
+    # compare parsed JSON as conditions for typedAudiences is generated via json.dumps
+    # which can be different for python versions.
+    self.assertEqual(json.loads(
       '["and", ["or", ["or", {"match": "substring", "type": "custom_attribute",'
-      ' "name": "house", "value": "Slytherin"}]]]',
-      audience.conditions
+      ' "name": "house", "value": "Slytherin"}]]]'),
+      json.loads(audience.conditions)
     )
 
   def test_get_variation_from_key__valid_experiment_key(self):
