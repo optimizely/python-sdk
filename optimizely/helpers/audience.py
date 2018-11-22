@@ -53,7 +53,7 @@ def is_user_in_experiment(config, experiment, attributes):
   if not experiment.audienceIds:
     return True
 
-  if not attributes:
+  if attributes is None:
     attributes = {}
 
   # Return True if conditions for any one audience are met

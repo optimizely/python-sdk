@@ -764,7 +764,7 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_audience('42'))
 
-  def test_get_audience__retrieves_audiences_first_from_typedAudiences_before_audiences(self):
+  def test_get_audience__prefers_typedAudiences_over_audiences(self):
     opt = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
     config = opt.config
 
