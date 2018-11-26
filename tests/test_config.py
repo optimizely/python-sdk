@@ -1035,13 +1035,6 @@ class ConfigTest(base.BaseTest):
       'No variation mapped to experiment "test_experiment" in the forced variation map.'
     )
 
-  # set_forced_variation tests
-  def test_set_forced_variation__invalid_user_id(self):
-    """ Test invalid user IDs set fail to set a forced variation """
-
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', None, 'variation'))
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', '', 'variation'))
-
   def test_set_forced_variation__invalid_experiment_key(self):
     """ Test invalid experiment keys set fail to set a forced variation """
 
