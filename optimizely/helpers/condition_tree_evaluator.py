@@ -13,6 +13,12 @@
 
 from .condition import ConditionOperatorTypes
 
+OPERATOR_TYPES = [
+    ConditionOperatorTypes.AND,
+    ConditionOperatorTypes.OR,
+    ConditionOperatorTypes.NOT
+  ]
+
 
 def and_evaluator(conditions, leaf_evaluator):
   """ Evaluates a list of conditions as if the evaluator had been applied
@@ -108,7 +114,7 @@ def evaluate(conditions, leaf_evaluator):
   """
 
   if isinstance(conditions, list):
-    if conditions[0] in EVALUATORS_BY_OPERATOR_TYPE.keys():
+    if conditions[0] in OPERATOR_TYPES:
       return EVALUATORS_BY_OPERATOR_TYPE[conditions[0]](conditions[1:], leaf_evaluator)
     else:
       # assume OR when operator is not explicit
