@@ -12,10 +12,11 @@
 # limitations under the License.
 
 import json
-import math
 import numbers
 
 from six import string_types
+
+from .validator import is_finite_number, are_values_same_type
 
 
 class ConditionOperatorTypes(object):
@@ -32,156 +33,14 @@ class ConditionMatchTypes(object):
   SUBSTRING = 'substring'
 
 
-class ConditionTreeEvaluator(object):
-  """ Class encapsulating methods to be used in audience condition tree evaluation. """
-
-  def and_evaluator(self, conditions, leaf_evaluator):
-    """ Evaluates a list of conditions as if the evaluator had been applied
-    to each entry and the results AND-ed together
-
-    Args:
-      conditions: List of conditions ex: [operand_1, operand_2]
-      leaf_evaluator: Function which will be called to evaluate leaf condition values
-
-    Returns:
-      Boolean:
-        - True if all operands evaluate to True
-        - False if a single operand evaluates to False
-      None: if conditions couldn't be evaluated
-    """
-    saw_null_result = False
-
-    for condition in conditions:
-      result = self.evaluate(condition, leaf_evaluator)
-      if result is False:
-        return False
-      if result is None:
-        saw_null_result = True
-
-    return None if saw_null_result else True
-
-  def or_evaluator(self, conditions, leaf_evaluator):
-    """ Evaluates a list of conditions as if the evaluator had been applied
-    to each entry and the results OR-ed together
-
-    Args:
-      conditions: List of conditions ex: [operand_1, operand_2]
-      leaf_evaluator: Function which will be called to evaluate leaf condition values
-
-    Returns:
-      Boolean:
-        - True if any operand evaluates to True
-        - False if all operands evaluate to False
-      None: if conditions couldn't be evaluated
-
-    """
-    saw_null_result = False
-
-    for condition in conditions:
-      result = self.evaluate(condition, leaf_evaluator)
-      if result is True:
-        return True
-      if result is None:
-        saw_null_result = True
-
-    return None if saw_null_result else False
-
-  def not_evaluator(self, conditions, leaf_evaluator):
-    """ Evaluates a list of conditions as if the evaluator had been applied
-    to a single entry and NOT was applied to the result.
-
-    Args:
-      conditions: List of conditions ex: [operand_1, operand_2]
-      leaf_evaluator: Function which will be called to evaluate leaf condition values
-
-    Returns:
-      Boolean:
-        - True if the operand evaluates to False
-        - False if the operand evaluates to True
-      None: if conditions is empty or condition couldn't be evaluated
-
-    """
-    if not len(conditions) > 0:
-      return None
-
-    result = self.evaluate(conditions[0], leaf_evaluator)
-    return None if result is None else not result
-
-  DEFAULT_OPERATOR_TYPES = [
-    ConditionOperatorTypes.AND,
-    ConditionOperatorTypes.OR,
-    ConditionOperatorTypes.NOT
-  ]
-
-  EVALUATORS_BY_OPERATOR_TYPE = {
-    ConditionOperatorTypes.AND: and_evaluator,
-    ConditionOperatorTypes.OR: or_evaluator,
-    ConditionOperatorTypes.NOT: not_evaluator
-  }
-
-  def evaluate(self, conditions, leaf_evaluator):
-    """ Top level method to evaluate conditions
-
-    Args:
-      conditions: Nested array of and/or conditions, or a single leaf condition value of any type
-                  Example: ['and', '0', ['or', '1', '2']]
-      leaf_evaluator: Function which will be called to evaluate leaf condition values
-
-    Returns:
-      Boolean: Result of evaluating the conditions using the operator rules and the leaf evaluator.
-      None: if conditions couldn't be evaluated
-
-    """
-
-    if isinstance(conditions, list):
-      if conditions[0] in self.DEFAULT_OPERATOR_TYPES:
-        return self.EVALUATORS_BY_OPERATOR_TYPE[conditions[0]](self, conditions[1:], leaf_evaluator)
-      else:
-        # assume OR when operator is not explicit
-        return self.EVALUATORS_BY_OPERATOR_TYPE[ConditionOperatorTypes.OR](self, conditions, leaf_evaluator)
-
-    leaf_condition = conditions
-    return leaf_evaluator(leaf_condition)
-
-
 class CustomAttributeConditionEvaluator(object):
   """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
   CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
 
-  MATCH_TYPES = [
-    ConditionMatchTypes.EXACT,
-    ConditionMatchTypes.EXISTS,
-    ConditionMatchTypes.GREATER_THAN,
-    ConditionMatchTypes.LESS_THAN,
-    ConditionMatchTypes.SUBSTRING
-  ]
-
   def __init__(self, condition_data, attributes):
     self.condition_data = condition_data
     self.attributes = attributes or {}
-
-  def is_finite(self, value):
-    """ Method to validate if the given value is a number and not one of NAN, INF, -INF
-
-    Args:
-      value: Value to be validated
-
-    Returns:
-      Boolean: True if value is a number and not NAN, INF or -INF else False
-    """
-    if not isinstance(value, (numbers.Integral, float)):
-      # numbers.Integral instead of int to accomodate long integer in python 2
-      return False
-
-    if isinstance(value, bool):
-      # bool is a subclass of int
-      return False
-
-    if math.isnan(value) or math.isinf(value):
-      return False
-
-    return True
 
   def is_value_valid_for_exact_conditions(self, value):
     """ Method to validate if the value is valid for exact match type evaluation
@@ -192,37 +51,8 @@ class CustomAttributeConditionEvaluator(object):
     Returns:
       Boolean: True if value is a string type, or a boolean, or is finite. Otherwise False
     """
-    if isinstance(value, string_types) or isinstance(value, bool) or self.is_finite(value):
+    if isinstance(value, string_types) or isinstance(value, bool) or is_finite_number(value):
       return True
-
-    return False
-
-  def are_values_same_type(self, first_val, second_val):
-    """ Method to verify that both values belong to same type. Float and integer are
-    considered as same type.
-
-    Args:
-      first_val: Value to validate
-      second_Val: Value to validate
-
-    Returns:
-      Boolean: True if both values belong to same type. Otherwise False
-    """
-
-    first_val_type = type(first_val)
-    second_val_type = type(second_val)
-
-    # use isinstance to accomodate Python 2 unicode and str types
-    if isinstance(first_val, string_types) and isinstance(second_val, string_types):
-      return True
-
-    # Compare types if one of the values is bool because bool is a subclass on Integer
-    if isinstance(first_val, bool) or isinstance(second_val, bool):
-      return first_val_type == second_val_type
-
-    # Treat ints and floats as same type
-    if isinstance(first_val, (numbers.Integral, float)) and isinstance(second_val, (numbers.Integral, float)):
-        return True
 
     return False
 
@@ -245,7 +75,7 @@ class CustomAttributeConditionEvaluator(object):
 
     if not self.is_value_valid_for_exact_conditions(condition_value) or \
        not self.is_value_valid_for_exact_conditions(user_value) or \
-       not self.are_values_same_type(condition_value, user_value):
+       not are_values_same_type(condition_value, user_value):
         return None
 
     return condition_value == user_value
@@ -278,7 +108,7 @@ class CustomAttributeConditionEvaluator(object):
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(self.condition_data[index][0])
 
-    if not self.is_finite(condition_value) or not self.is_finite(user_value):
+    if not is_finite_number(condition_value) or not is_finite_number(user_value):
       return None
 
     return user_value > condition_value
@@ -298,7 +128,7 @@ class CustomAttributeConditionEvaluator(object):
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(self.condition_data[index][0])
 
-    if not self.is_finite(condition_value) or not self.is_finite(user_value):
+    if not is_finite_number(condition_value) or not is_finite_number(user_value):
       return None
 
     return user_value < condition_value
@@ -349,8 +179,10 @@ class CustomAttributeConditionEvaluator(object):
       return None
 
     condition_match = self.condition_data[index][3]
+    if condition_match is None:
+      condition_match = ConditionMatchTypes.EXACT
 
-    if condition_match not in self.MATCH_TYPES:
+    if condition_match not in self.EVALUATORS_BY_MATCH_TYPE:
       return None
 
     return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)
@@ -390,13 +222,13 @@ def _audience_condition_deserializer(obj_dict):
     obj_dict: Dict representing one audience condition.
 
   Returns:
-    List consisting of condition key and corresponding value.
+    List consisting of condition key with corresponding value, type and match.
   """
   return [
     obj_dict.get('name'),
     obj_dict.get('value'),
     obj_dict.get('type'),
-    obj_dict.get('match', ConditionMatchTypes.EXACT)
+    obj_dict.get('match')
   ]
 
 

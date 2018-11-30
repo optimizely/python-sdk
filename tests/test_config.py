@@ -120,13 +120,13 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users 1',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_1', 'custom_attribute', 'exact']]
+        conditionList=[['test_attribute', 'test_value_1', 'custom_attribute', None]]
       ),
       '11159': entities.Audience(
         '11159', 'Test attribute users 2',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_2', 'custom_attribute', 'exact']]
+        conditionList=[['test_attribute', 'test_value_2', 'custom_attribute', None]]
       )
     }
     expected_variation_key_map = {
@@ -521,7 +521,7 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value', 'custom_attribute', 'exact']]
+        conditionList=[['test_attribute', 'test_value', 'custom_attribute', None]]
       )
     }
     expected_variation_key_map = {
@@ -1071,13 +1071,6 @@ class ConfigTest(base.BaseTest):
     mock_config_logging.debug.assert_called_once_with(
       'No variation mapped to experiment "test_experiment" in the forced variation map.'
     )
-
-  # set_forced_variation tests
-  def test_set_forced_variation__invalid_user_id(self):
-    """ Test invalid user IDs set fail to set a forced variation """
-
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', None, 'variation'))
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', '', 'variation'))
 
   def test_set_forced_variation__invalid_experiment_key(self):
     """ Test invalid experiment keys set fail to set a forced variation """

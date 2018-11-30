@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from six import string_types
+
 from . import decision_service
 from . import entities
 from . import event_builder
@@ -200,16 +202,16 @@ class Optimizely(object):
       - Variable key is invalid.
       - Mismatch with type of variable.
     """
-    if feature_key is None:
-      self.logger.error(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+    if not validator.is_non_empty_string(feature_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
       return None
 
-    if variable_key is None:
-      self.logger.error(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+    if not validator.is_non_empty_string(variable_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('variable_key'))
       return None
 
-    if user_id is None:
-      self.logger.error(enums.Errors.NONE_USER_ID_PARAMETER)
+    if not isinstance(user_id, string_types):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
     if not self._validate_user_inputs(attributes):
@@ -271,7 +273,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
       return None
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
@@ -308,7 +310,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('event_key'))
       return
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return
 
@@ -364,7 +366,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
       return None
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
@@ -406,7 +408,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
       return False
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return False
 
@@ -449,7 +451,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
       return enabled_features
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return enabled_features
 
@@ -551,6 +553,18 @@ class Optimizely(object):
       A boolean value that indicates if the set completed successfully.
     """
 
+    if not self.is_valid:
+      self.logger.error(enums.Errors.INVALID_DATAFILE.format('set_forced_variation'))
+      return False
+
+    if not validator.is_non_empty_string(experiment_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      return False
+
+    if not isinstance(user_id, string_types):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      return False
+
     return self.config.set_forced_variation(experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
@@ -563,6 +577,18 @@ class Optimizely(object):
     Returns:
       The forced variation key. None if no forced variation key.
     """
+
+    if not self.is_valid:
+      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_forced_variation'))
+      return None
+
+    if not validator.is_non_empty_string(experiment_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      return None
+
+    if not isinstance(user_id, string_types):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      return None
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
     return forced_variation.key if forced_variation else None
