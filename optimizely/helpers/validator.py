@@ -202,7 +202,7 @@ def is_finite_number(value):
   Returns:
     Boolean: True if value is a number and not NAN, INF or -INF else False
   """
-  if not isinstance(value, (int, float)):
+  if not isinstance(value, (numbers.Integral, float)):
       # numbers.Integral instead of int to accomodate long integer in python 2
     return False
 

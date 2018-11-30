@@ -179,6 +179,8 @@ class CustomAttributeConditionEvaluator(object):
       return None
 
     condition_match = self.condition_data[index][3]
+    if condition_match is None:
+      condition_match = ConditionMatchTypes.EXACT
 
     if condition_match not in self.EVALUATORS_BY_MATCH_TYPE:
       return None
@@ -226,7 +228,7 @@ def _audience_condition_deserializer(obj_dict):
     obj_dict.get('name'),
     obj_dict.get('value'),
     obj_dict.get('type'),
-    obj_dict.get('match', ConditionMatchTypes.EXACT)
+    obj_dict.get('match')
   ]
 
 
