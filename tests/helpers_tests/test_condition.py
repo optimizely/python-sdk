@@ -12,11 +12,15 @@
 # limitations under the License.
 
 import mock
-from six import PY2
+from six import PY2, PY3
 
 from optimizely.helpers import condition as condition_helper
 
 from tests import base
+
+if PY3:
+  def long(a):
+    pass
 
 browserConditionSafari = ['browser_type', 'safari', 'custom_attribute', 'exact']
 booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
@@ -184,7 +188,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_int_condition_list, {'lasers_count': 9000L}
+        exact_int_condition_list, {'lasers_count': long(9000)}
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
@@ -205,7 +209,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_float_condition_list, {'lasers_count': 9000L}
+        exact_float_condition_list, {'lasers_count': long(9000)}
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
@@ -362,7 +366,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_int_condition_list, {'meters_travelled': 49L}
+        gt_int_condition_list, {'meters_travelled': long(49)}
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
@@ -383,7 +387,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_float_condition_list, {'meters_travelled': 49L}
+        gt_float_condition_list, {'meters_travelled': long(49)}
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
@@ -404,7 +408,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_int_condition_list, {'meters_travelled': 47L}
+        gt_int_condition_list, {'meters_travelled': long(47)}
       )
 
       self.assertStrictFalse(evaluator.evaluate(0))
@@ -425,7 +429,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_float_condition_list, {'meters_travelled': 48L}
+        gt_float_condition_list, {'meters_travelled': long(48)}
       )
 
       self.assertStrictFalse(evaluator.evaluate(0))
@@ -490,7 +494,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_int_condition_list, {'meters_travelled': 47L}
+        lt_int_condition_list, {'meters_travelled': long(47)}
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
@@ -511,7 +515,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_float_condition_list, {'meters_travelled': 48L}
+        lt_float_condition_list, {'meters_travelled': long(48)}
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
@@ -532,7 +536,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_int_condition_list, {'meters_travelled': 49L}
+        lt_int_condition_list, {'meters_travelled': long(49)}
       )
 
       self.assertStrictFalse(evaluator.evaluate(0))
@@ -553,7 +557,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     if PY2:
       evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_float_condition_list, {'meters_travelled': 49L}
+        lt_float_condition_list, {'meters_travelled': long(49)}
       )
 
       self.assertStrictFalse(evaluator.evaluate(0))
