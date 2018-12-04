@@ -20,7 +20,7 @@ from tests import base
 
 if PY3:
   def long(a):
-    pass
+    raise NotImplementedError('Tests should only call `long` if running in PY2')
 
 browserConditionSafari = ['browser_type', 'safari', 'custom_attribute', 'exact']
 booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
