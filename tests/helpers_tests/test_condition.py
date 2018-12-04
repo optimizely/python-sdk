@@ -12,10 +12,15 @@
 # limitations under the License.
 
 import mock
+from six import PY2, PY3
 
 from optimizely.helpers import condition as condition_helper
 
 from tests import base
+
+if PY3:
+  def long(a):
+    raise NotImplementedError('Tests should only call `long` if running in PY2')
 
 browserConditionSafari = ['browser_type', 'safari', 'custom_attribute', 'exact']
 booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
@@ -24,11 +29,14 @@ doubleCondition = ['pi_value', 3.14, 'custom_attribute', 'exact']
 
 exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
 exact_string_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
-exact_number_condition_list = [['lasers_count', 9000, 'custom_attribute', 'exact']]
+exact_int_condition_list = [['lasers_count', 9000, 'custom_attribute', 'exact']]
+exact_float_condition_list = [['lasers_count', 9000.0, 'custom_attribute', 'exact']]
 exact_bool_condition_list = [['did_register_user', False, 'custom_attribute', 'exact']]
 substring_condition_list = [['headline_text', 'buy now', 'custom_attribute', 'substring']]
-gt_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'gt']]
-lt_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
+gt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+gt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'gt']]
+lt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+lt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
 
 
 class CustomAttributeConditionEvaluator(base.BaseTest):
@@ -176,40 +184,104 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     self.assertIsNone(evaluator.evaluate(0))
 
-  def test_exact_number__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+  def test_exact_int__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_int_condition_list, {'lasers_count': long(9000)}
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      exact_number_condition_list, {'lasers_count': 9000}
-    )
+        exact_int_condition_list, {'lasers_count': 9000}
+      )
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      exact_number_condition_list, {'lasers_count': 9000.0}
+      exact_int_condition_list, {'lasers_count': 9000.0}
     )
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
-  def test_exact_number__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
+  def test_exact_float__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_float_condition_list, {'lasers_count': long(9000)}
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      exact_number_condition_list, {'lasers_count': 8000}
+        exact_float_condition_list, {'lasers_count': 9000}
+      )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': 9000.0}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_int__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 8000}
     )
 
     self.assertStrictFalse(evaluator.evaluate(0))
 
-  def test_exact_number__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
+  def test_exact_float__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      exact_number_condition_list, {'lasers_count': 'hi'}
+      exact_float_condition_list, {'lasers_count': 8000.0}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_exact_int__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 'hi'}
     )
 
     self.assertIsNone(evaluator.evaluate(0))
 
-  def test_exact_number__returns_null__when_no_user_provided_value(self):
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': True}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_float__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      exact_number_condition_list, {}
+      exact_float_condition_list, {'lasers_count': 'hi'}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': True}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_int__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_float__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {}
     )
 
     self.assertIsNone(evaluator.evaluate(0))
@@ -278,78 +350,246 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     self.assertIsNone(evaluator.evaluate(0))
 
-  def test_greater_than__returns_true__when_user_value_greater_than_condition_value(self):
+  def test_greater_than_int__returns_true__when_user_value_greater_than_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      gt_condition_list, {'meters_travelled': 48.3}
+      gt_int_condition_list, {'meters_travelled': 48.1}
     )
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      gt_condition_list, {'meters_travelled': 49}
+      gt_int_condition_list, {'meters_travelled': 49}
     )
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
-  def test_greater_than__returns_false__when_user_value_not_greater_than_condition_value(self):
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_int_condition_list, {'meters_travelled': long(49)}
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_true__when_user_value_greater_than_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      gt_condition_list, {'meters_travelled': 48.2}
+      gt_float_condition_list, {'meters_travelled': 48.3}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 49}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_float_condition_list, {'meters_travelled': long(49)}
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_false__when_user_value_not_greater_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 47.9}
     )
 
     self.assertStrictFalse(evaluator.evaluate(0))
 
-  def test_greater_than__returns_null__when_user_value_is_not_a_number(self):
-
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      gt_condition_list, {'meters_travelled': 'a long way'}
-    )
-
-    self.assertIsNone(evaluator.evaluate(0))
-
-  def test_greater_than__returns_null__when_no_user_provided_value(self):
-
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      gt_condition_list, {}
-    )
-
-    self.assertIsNone(evaluator.evaluate(0))
-
-  def test_less_than__returns_true__when_user_value_less_than_condition_value(self):
-
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      lt_condition_list, {'meters_travelled': 48.1}
-    )
-
-    self.assertStrictTrue(evaluator.evaluate(0))
-
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      lt_condition_list, {'meters_travelled': 48}
-    )
-
-    self.assertStrictTrue(evaluator.evaluate(0))
-
-  def test_less_than__returns_false__when_user_value_not_less_than_condition_value(self):
-
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      lt_condition_list, {'meters_travelled': 48.2}
+      gt_int_condition_list, {'meters_travelled': 47}
     )
 
     self.assertStrictFalse(evaluator.evaluate(0))
 
-  def test_less_than__returns_null__when_user_value_is_not_a_number(self):
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_int_condition_list, {'meters_travelled': long(47)}
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_false__when_user_value_not_greater_than_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      lt_condition_list, {'meters_travelled': False}
+      gt_float_condition_list, {'meters_travelled': 48.2}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 48}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_float_condition_list, {'meters_travelled': long(48)}
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 'a long way'}
     )
 
     self.assertIsNone(evaluator.evaluate(0))
 
-  def test_less_than__returns_null__when_no_user_provided_value(self):
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': False}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_null__when_user_value_is_not_a_number(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      lt_condition_list, {}
+      gt_float_condition_list, {'meters_travelled': 'a long way'}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': False}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_true__when_user_value_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47.9}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_int_condition_list, {'meters_travelled': long(47)}
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48.1}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48}
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_float_condition_list, {'meters_travelled': long(48)}
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_false__when_user_value_not_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 48.1}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 49}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_int_condition_list, {'meters_travelled': long(49)}
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_false__when_user_value_not_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48.2}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 49}
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_float_condition_list, {'meters_travelled': long(49)}
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': False}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': False}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {}
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {}
     )
 
     self.assertIsNone(evaluator.evaluate(0))
