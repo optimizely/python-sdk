@@ -47,7 +47,6 @@ class ValidatorTest(base.BaseTest):
     """ Test that invalid event_dispatcher returns False. """
 
     class CustomEventDispatcher(object):
-
       def some_other_method(self):
         pass
 
@@ -62,7 +61,6 @@ class ValidatorTest(base.BaseTest):
     """ Test that invalid logger returns False. """
 
     class CustomLogger(object):
-
       def some_other_method(self):
         pass
 
@@ -77,7 +75,6 @@ class ValidatorTest(base.BaseTest):
     """ Test that invalid error_handler returns False. """
 
     class CustomErrorHandler(object):
-
       def some_other_method(self):
         pass
 
