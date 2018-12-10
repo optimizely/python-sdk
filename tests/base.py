@@ -14,10 +14,16 @@
 import json
 import unittest
 
+from six import PY3
+
 from optimizely import optimizely
 
 
 class BaseTest(unittest.TestCase):
+
+  if PY3:
+    def long(a):
+        raise NotImplementedError('Tests should only call `long` if running in PY2')
 
   def setUp(self, config_dict='config_dict'):
     self.config_dict = {

@@ -13,6 +13,8 @@
 
 import json
 import jsonschema
+import math
+import numbers
 from six import string_types
 
 from optimizely.user_profile import UserProfile
@@ -185,7 +187,40 @@ def is_attribute_valid(attribute_key, attribute_value):
   if not isinstance(attribute_key, string_types):
     return False
 
-  if isinstance(attribute_value, string_types) or type(attribute_value) in (int, float, bool):
+  if isinstance(attribute_value, (string_types, bool)):
     return True
 
+  if isinstance(attribute_value, (numbers.Integral, float)):
+    return is_finite_number(attribute_value)
+
   return False
+
+
+def is_finite_number(value):
+  """ Validates if the given value is a number, enforces
+  limit of 1e53 for integers and restricts NAN, INF, -INF for doubles.
+
+  Args:
+    value: Value to be validated
+
+  Returns:
+    Boolean: True if value is a finite number else False
+  """
+
+  if not isinstance(value, (numbers.Integral, float)):
+      # numbers.Integral instead of int to accomodate long integer in python 2
+    return False
+
+  if isinstance(value, bool):
+    # bool is a subclass of int
+    return False
+
+  if isinstance(value, numbers.Integral):
+    if value > 1e53:
+      return False
+
+  if isinstance(value, float):
+    if math.isnan(value) or math.isinf(value):
+      return False
+
+  return True
