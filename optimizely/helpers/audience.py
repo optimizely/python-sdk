@@ -30,16 +30,13 @@ def is_user_in_experiment(config, experiment, attributes):
 
   # Return True in case there are no audiences
   audience_conditions = experiment.getAudienceConditionsOrIds()
-  if not audience_conditions:
+  if audience_conditions is None or audience_conditions == []:
     return True
 
   if attributes is None:
     attributes = {}
 
-  def evaluate_custom_attr(audienceIdToConditionIndexDict):
-    audienceId = list(audienceIdToConditionIndexDict.keys())[0]
-    index = audienceIdToConditionIndexDict[audienceId]
-
+  def evaluate_custom_attr(audienceId, index):
     audience = config.get_audience(audienceId)
     custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
       audience.conditionList, attributes)
@@ -49,14 +46,17 @@ def is_user_in_experiment(config, experiment, attributes):
   def evaluate_audience(audienceId):
     audience = config.get_audience(audienceId)
 
+    if audience is None:
+      return None
+
     return condition_tree_evaluator.evaluate(
       audience.conditionStructure,
-      lambda index: evaluate_custom_attr({audienceId: index})
+      lambda index: evaluate_custom_attr(audienceId, index)
     )
 
   eval_result = condition_tree_evaluator.evaluate(
     audience_conditions,
-    lambda audienceId: evaluate_audience(audienceId)
+    evaluate_audience
   )
 
   return eval_result or False
