@@ -194,13 +194,13 @@ def is_attribute_valid(attribute_key, attribute_value):
 
 
 def is_finite_number(value):
-  """ Method to validate if the given value is a number and not one of NAN, INF, -INF
+  """ Method to validate if the given value is a number and not one of NAN, INF, -INF.
 
   Args:
-    value: Value to be validated
+    value: Value to be validated.
 
   Returns:
-    Boolean: True if value is a number and not NAN, INF or -INF else False
+    Boolean: True if value is a number and not NAN, INF or -INF else False.
   """
   if not isinstance(value, (numbers.Integral, float)):
       # numbers.Integral instead of int to accomodate long integer in python 2
@@ -222,25 +222,25 @@ def are_values_same_type(first_val, second_val):
   considered as same type.
 
   Args:
-    first_val: Value to validate
-    second_Val: Value to validate
+    first_val: Value to validate.
+    second_Val: Value to validate.
 
   Returns:
-    Boolean: True if both values belong to same type. Otherwise False
+    Boolean: True if both values belong to same type. Otherwise False.
   """
 
   first_val_type = type(first_val)
   second_val_type = type(second_val)
 
-  # use isinstance to accomodate Python 2 unicode and str types
+  # use isinstance to accomodate Python 2 unicode and str types.
   if isinstance(first_val, string_types) and isinstance(second_val, string_types):
     return True
 
-  # Compare types if one of the values is bool because bool is a subclass on Integer
+  # Compare types if one of the values is bool because bool is a subclass on Integer.
   if isinstance(first_val, bool) or isinstance(second_val, bool):
     return first_val_type == second_val_type
 
-  # Treat ints and floats as same type
+  # Treat ints and floats as same type.
   if isinstance(first_val, (numbers.Integral, float)) and isinstance(second_val, (numbers.Integral, float)):
     return True
 
