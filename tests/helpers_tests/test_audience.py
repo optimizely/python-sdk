@@ -114,7 +114,7 @@ class AudienceTest(base.BaseTest):
 
       self.assertStrictFalse(audience.is_user_in_experiment(self.project_config, experiment, user_attributes))
 
-  def test_is_user_in_experiment__evaluates_audience_Ids(self):
+  def test_is_user_in_experiment__evaluates_audienceIds(self):
     """ Test that is_user_in_experiment correctly evaluates audience Ids and
         calls custom attribute evaluator for leaf nodes. """
 
