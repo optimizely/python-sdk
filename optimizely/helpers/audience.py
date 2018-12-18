@@ -42,7 +42,8 @@ def is_user_in_experiment(config, experiment, attributes):
   Args:
     config: project_config.ProjectConfig object representing the project.
     experiment: Object representing the experiment.
-    attributes: Dict representing user attributes which will be used in determining if the audience conditions are met.
+    attributes: Dict representing user attributes which will be used in determining
+                if the audience conditions are met. If not provided, default to an empty dict.
 
   Returns:
     Boolean representing if user satisfies audience conditions for any of the audiences or not.
@@ -52,9 +53,8 @@ def is_user_in_experiment(config, experiment, attributes):
   if not experiment.audienceIds:
     return True
 
-  # Return False if there are audiences, but no attributes
-  if not attributes:
-    return False
+  if attributes is None:
+    attributes = {}
 
   # Return True if conditions for any one audience are met
   for audience_id in experiment.audienceIds:
