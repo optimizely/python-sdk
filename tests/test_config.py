@@ -120,13 +120,13 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users 1',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_1']]
+        conditionList=[['test_attribute', 'test_value_1', 'custom_attribute', None]]
       ),
       '11159': entities.Audience(
         '11159', 'Test attribute users 2',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_2']]
+        conditionList=[['test_attribute', 'test_value_2', 'custom_attribute', None]]
       )
     }
     expected_variation_key_map = {
@@ -521,7 +521,7 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value']]
+        conditionList=[['test_attribute', 'test_value', 'custom_attribute', None]]
       )
     }
     expected_variation_key_map = {
@@ -763,6 +763,43 @@ class ConfigTest(base.BaseTest):
     """ Test that None is returned for an invalid audience ID. """
 
     self.assertIsNone(self.project_config.get_audience('42'))
+
+  def test_get_audience__prefers_typedAudiences_over_audiences(self):
+    opt = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+    config = opt.config
+
+    audiences = self.config_dict_with_typed_audiences['audiences']
+    typed_audiences = self.config_dict_with_typed_audiences['typedAudiences']
+
+    audience_3988293898 = {
+      'id': '3988293898',
+      'name': '$$dummySubstringString',
+      'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
+    }
+
+    self.assertTrue(audience_3988293898 in audiences)
+
+    typed_audience_3988293898 = {
+      'id': '3988293898',
+      'name': 'substringString',
+      'conditions': ['and', ['or', ['or', {'name': 'house', 'type': 'custom_attribute',
+                     'match': 'substring', 'value': 'Slytherin'}]]]
+    }
+
+    self.assertTrue(typed_audience_3988293898 in typed_audiences)
+
+    audience = config.get_audience('3988293898')
+
+    self.assertEqual('3988293898', audience.id)
+    self.assertEqual('substringString', audience.name)
+
+    # compare parsed JSON as conditions for typedAudiences is generated via json.dumps
+    # which can be different for python versions.
+    self.assertEqual(json.loads(
+      '["and", ["or", ["or", {"match": "substring", "type": "custom_attribute",'
+      ' "name": "house", "value": "Slytherin"}]]]'),
+      json.loads(audience.conditions)
+    )
 
   def test_get_variation_from_key__valid_experiment_key(self):
     """ Test that variation is retrieved correctly when valid experiment key and variation key are provided. """
