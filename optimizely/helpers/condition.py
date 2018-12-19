@@ -16,7 +16,7 @@ import numbers
 
 from six import string_types
 
-from .validator import is_finite_number, are_values_same_type
+from . import validator
 
 
 class ConditionOperatorTypes(object):
@@ -43,107 +43,107 @@ class CustomAttributeConditionEvaluator(object):
     self.attributes = attributes or {}
 
   def is_value_valid_for_exact_conditions(self, value):
-    """ Method to validate if the value is valid for exact match type evaluation
+    """ Method to validate if the value is valid for exact match type evaluation.
 
     Args:
-      value: Value to validate
+      value: Value to validate.
 
     Returns:
-      Boolean: True if value is a string type, or a boolean, or is finite. Otherwise False
+      Boolean: True if value is a string type, or a boolean, or is finite. Otherwise False.
     """
-    if isinstance(value, string_types) or isinstance(value, bool) or is_finite_number(value):
+    if isinstance(value, string_types) or isinstance(value, bool) or validator.is_finite_number(value):
       return True
 
     return False
 
   def exact_evaluator(self, index):
-    """ Evaluate the given exact match condition for the user attributes
+    """ Evaluate the given exact match condition for the user attributes.
 
     Args:
-      index: Index of the condition to be evaluated
+      index: Index of the condition to be evaluated.
 
     Returns:
       Boolean:
-        - True if the user attribute value is equal (===) to the condition value
-        - False if the user attribute value is not equal (!==) to the condition value
+        - True if the user attribute value is equal (===) to the condition value.
+        - False if the user attribute value is not equal (!==) to the condition value.
       None:
-        - if the condition value or user attribute value has an invalid type
-        - if there is a mismatch between the user attribute type and the condition value type
+        - if the condition value or user attribute value has an invalid type.
+        - if there is a mismatch between the user attribute type and the condition value type.
     """
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(self.condition_data[index][0])
 
     if not self.is_value_valid_for_exact_conditions(condition_value) or \
        not self.is_value_valid_for_exact_conditions(user_value) or \
-       not are_values_same_type(condition_value, user_value):
+       not validator.are_values_same_type(condition_value, user_value):
         return None
 
     return condition_value == user_value
 
   def exists_evaluator(self, index):
-    """ Evaluate the given exists match condition for the user attributes
+    """ Evaluate the given exists match condition for the user attributes.
 
       Args:
-        index: Index of the condition to be evaluated
+        index: Index of the condition to be evaluated.
 
       Returns:
         Boolean: True if the user attributes have a non-null value for the given condition,
-                 otherwise False
+                 otherwise False.
     """
     attr_name = self.condition_data[index][0]
     return self.attributes.get(attr_name) is not None
 
   def greater_than_evaluator(self, index):
-    """ Evaluate the given greater than match condition for the user attributes
+    """ Evaluate the given greater than match condition for the user attributes.
 
       Args:
-        index: Index of the condition to be evaluated
+        index: Index of the condition to be evaluated.
 
       Returns:
         Boolean:
-          - True if the user attribute value is greater than the condition value
-          - False if the user attribute value is less than or equal to the condition value
-        None: if the condition value isn't finite or the user attribute value isn't finite
+          - True if the user attribute value is greater than the condition value.
+          - False if the user attribute value is less than or equal to the condition value.
+        None: if the condition value isn't finite or the user attribute value isn't finite.
     """
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(self.condition_data[index][0])
 
-    if not is_finite_number(condition_value) or not is_finite_number(user_value):
+    if not validator.is_finite_number(condition_value) or not validator.is_finite_number(user_value):
       return None
 
     return user_value > condition_value
 
   def less_than_evaluator(self, index):
-    """ Evaluate the given less than match condition for the user attributes
+    """ Evaluate the given less than match condition for the user attributes.
 
     Args:
-      index: Index of the condition to be evaluated
+      index: Index of the condition to be evaluated.
 
     Returns:
       Boolean:
-        - True if the user attribute value is less than the condition value
-        - False if the user attribute value is greater than or equal to the condition value
-      None: if the condition value isn't finite or the user attribute value isn't finite
+        - True if the user attribute value is less than the condition value.
+        - False if the user attribute value is greater than or equal to the condition value.
+      None: if the condition value isn't finite or the user attribute value isn't finite.
     """
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(self.condition_data[index][0])
 
-    if not is_finite_number(condition_value) or not is_finite_number(user_value):
+    if not validator.is_finite_number(condition_value) or not validator.is_finite_number(user_value):
       return None
 
     return user_value < condition_value
 
   def substring_evaluator(self, index):
-    """ Evaluate the given substring match condition for the given user attributes
+    """ Evaluate the given substring match condition for the given user attributes.
 
     Args:
-      index: Index of the condition to be evaluated
+      index: Index of the condition to be evaluated.
 
     Returns:
       Boolean:
-        - True if the condition value is a substring of the user attribute value
-        - False if the condition value is not a substring of the user attribute value
-      None: if the condition value isn't a string or the user attribute value isn't a string
+        - True if the condition value is a substring of the user attribute value.
+        - False if the condition value is not a substring of the user attribute value.
+      None: if the condition value isn't a string or the user attribute value isn't a string.
     """
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(self.condition_data[index][0])
@@ -166,13 +166,13 @@ class CustomAttributeConditionEvaluator(object):
         condition against the attributes.
 
     Args:
-      index: Index of the condition to be evaluated
+      index: Index of the condition to be evaluated.
 
     Returns:
       Boolean:
-        - True if the user attributes match the given condition
-        - False if the user attributes don't match the given condition
-      None: if the user attributes and condition can't be evaluated
+        - True if the user attributes match the given condition.
+        - False if the user attributes don't match the given condition.
+      None: if the user attributes and condition can't be evaluated.
     """
 
     if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
