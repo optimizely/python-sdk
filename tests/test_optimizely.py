@@ -717,6 +717,51 @@ class OptimizelyTest(base.BaseTest):
                                                            {'house': 'Hufflepuff'}))
     self.assertEqual(0, mock_dispatch_event.call_count)
 
+  def test_activate__with_attributes__complex_audience_match(self):
+    """ Test that activate calls dispatch_event with right params and returns expected
+    variation when attributes are provided and complex audience conditions are met. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+       # Should be included via substring match string audience with id '3988293898', and
+       # exact match number audience with id '3468206646'
+      user_attr = {'house': 'Welcome to Slytherin!', 'lasers': 45.5}
+      self.assertEqual('A', opt_obj.activate('audience_combinations_experiment', 'test_user', user_attr))
+
+    expected_attr_1 = {
+        'type': 'custom',
+        'value': 'Welcome to Slytherin!',
+        'entity_id': '594015',
+        'key': 'house'
+      }
+
+    expected_attr_2 = {
+        'type': 'custom',
+        'value': 45.5,
+        'entity_id': '594016',
+        'key': 'lasers'
+      }
+
+    self.assertTrue(
+      expected_attr_1 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+    )
+
+    self.assertTrue(
+      expected_attr_2 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+    )
+
+  def test_activate__with_attributes__complex_audience_mismatch(self):
+    """ Test that activate returns None when complex audience conditions do not match. """
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+
+      user_attr = {'house': 'Hufflepuff', 'lasers': 45.5}
+      self.assertIsNone(opt_obj.activate('audience_combinations_experiment', 'test_user', user_attr))
+
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
   def test_activate__with_attributes__audience_match__forced_bucketing(self):
     """ Test that activate calls dispatch_event with right params and returns expected
     variation when attributes are provided and audience conditions are met after a
@@ -967,6 +1012,55 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       opt_obj.track('item_bought', 'test_user', {'house': 'Welcome to Hufflepuff!'})
+
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
+  def test_track__with_attributes__complex_audience_match(self):
+    """ Test that track calls dispatch_event with right params when attributes are provided
+    and it's a complex audience match. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      # Should be included via exact match string audience with id '3468206642', and
+      # exact match boolean audience with id '3468206643'
+      user_attr = {'house': 'Gryffindor', 'should_do_it': True}
+      opt_obj.track('user_signed_up', 'test_user', user_attr)
+
+    self.assertEqual(1, mock_dispatch_event.call_count)
+
+    expected_attr_1 = {
+        'type': 'custom',
+        'value': 'Gryffindor',
+        'entity_id': '594015',
+        'key': 'house'
+    }
+
+    self.assertTrue(
+      expected_attr_1 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+    )
+
+    expected_attr_2 = {
+        'type': 'custom',
+        'value': True,
+        'entity_id': '594017',
+        'key': 'should_do_it'
+    }
+
+    self.assertTrue(
+      expected_attr_2 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+    )
+
+  def test_track__with_attributes__complex_audience_mismatch(self):
+    """ Test that track does not call dispatch_event when complex audience conditions do not match. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      # Should be excluded - exact match boolean audience with id '3468206643' does not match,
+      # so the overall conditions fail
+      user_attr = {'house': 'Gryffindor', 'should_do_it': False}
+      opt_obj.track('user_signed_up', 'test_user', user_attr)
 
     self.assertEqual(0, mock_dispatch_event.call_count)
 
@@ -1440,6 +1534,24 @@ class OptimizelyTest(base.BaseTest):
       opt_obj.is_feature_enabled('feat', 'test_user', {}),
       False
     )
+
+  def test_is_feature_enabled__in_rollout__complex_audience_match(self):
+    """ Test that is_feature_enabled returns True for feature rollout with complex audience match. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    # Should be included via substring match string audience with id '3988293898', and
+    # exists audience with id '3988293899'
+    user_attr = {'house': '...Slytherinnn...sss.', 'favorite_ice_cream': 'matcha'}
+    self.assertStrictTrue(opt_obj.is_feature_enabled('feat2', 'test_user', user_attr))
+
+  def test_is_feature_enabled__in_rollout__complex_audience_mismatch(self):
+    """ Test that is_feature_enabled returns False for feature rollout with complex audience mismatch. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+    # Should be excluded - substring match string audience with id '3988293898' does not match,
+    # and no audience in the other branch of the 'and' matches either
+    self.assertStrictFalse(opt_obj.is_feature_enabled('feat2', 'test_user', {'house': 'Lannister'}))
 
   def test_is_feature_enabled__returns_false_for_invalid_feature(self):
     """ Test that the feature is not enabled for the user if the provided feature key is invalid. """
@@ -2163,6 +2275,30 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(
       'x',
       opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'lasers': 50})
+    )
+
+  def test_get_feature_variable_returns__variable_value__complex_audience_match(self):
+    """ Test that get_feature_variable_* return variable value with complex audience match. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    # Should be included via exact match string audience with id '3468206642', and
+    # greater than audience with id '3468206647'
+    user_attr = {'house': 'Gryffindor', 'lasers': 700}
+    self.assertEqual(
+      150,
+      opt_obj.get_feature_variable_integer('feat2_with_var', 'z', 'user1', user_attr)
+    )
+
+  def test_get_feature_variable_returns__default_value__complex_audience_match(self):
+    """ Test that get_feature_variable_* return default value with complex audience mismatch. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+
+    # Should be excluded - no audiences match with no attributes
+    self.assertEqual(
+      10,
+      opt_obj.get_feature_variable_integer('feat2_with_var', 'z', 'user1', {})
     )
 
 
