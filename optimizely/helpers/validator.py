@@ -187,26 +187,21 @@ def is_attribute_valid(attribute_key, attribute_value):
   if not isinstance(attribute_key, string_types):
     return False
 
-  if isinstance(attribute_value, (string_types, bool)):
+  if isinstance(attribute_value, string_types) or type(attribute_value) in (int, float, bool):
     return True
-
-  if isinstance(attribute_value, (numbers.Integral, float)):
-    return is_finite_number(attribute_value)
 
   return False
 
 
 def is_finite_number(value):
-  """ Validates if the given value is a number, enforces
-  limit of 1e53 for integers and restricts NAN, INF, -INF for doubles.
+  """ Method to validate if the given value is a number and not one of NAN, INF, -INF.
 
   Args:
-    value: Value to be validated
+    value: Value to be validated.
 
   Returns:
-    Boolean: True if value is a finite number else False
+    Boolean: True if value is a number and not NAN, INF or -INF else False.
   """
-
   if not isinstance(value, (numbers.Integral, float)):
       # numbers.Integral instead of int to accomodate long integer in python 2
     return False
@@ -215,12 +210,38 @@ def is_finite_number(value):
     # bool is a subclass of int
     return False
 
-  if isinstance(value, numbers.Integral):
-    if value > 1e53:
-      return False
-
   if isinstance(value, float):
     if math.isnan(value) or math.isinf(value):
       return False
 
   return True
+
+
+def are_values_same_type(first_val, second_val):
+  """ Method to verify that both values belong to same type. Float and integer are
+  considered as same type.
+
+  Args:
+    first_val: Value to validate.
+    second_Val: Value to validate.
+
+  Returns:
+    Boolean: True if both values belong to same type. Otherwise False.
+  """
+
+  first_val_type = type(first_val)
+  second_val_type = type(second_val)
+
+  # use isinstance to accomodate Python 2 unicode and str types.
+  if isinstance(first_val, string_types) and isinstance(second_val, string_types):
+    return True
+
+  # Compare types if one of the values is bool because bool is a subclass on Integer.
+  if isinstance(first_val, bool) or isinstance(second_val, bool):
+    return first_val_type == second_val_type
+
+  # Treat ints and floats as same type.
+  if isinstance(first_val, (numbers.Integral, float)) and isinstance(second_val, (numbers.Integral, float)):
+    return True
+
+  return False

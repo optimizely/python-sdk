@@ -53,6 +53,7 @@ class ProjectConfig(object):
     self.events = config.get('events', [])
     self.attributes = config.get('attributes', [])
     self.audiences = config.get('audiences', [])
+    self.typed_audiences = config.get('typedAudiences', [])
     self.feature_flags = config.get('featureFlags', [])
     self.rollouts = config.get('rollouts', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
@@ -63,7 +64,16 @@ class ProjectConfig(object):
     self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
+
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
+
+    # Conditions of audiences in typedAudiences are not expected
+    # to be string-encoded as they are in audiences.
+    for typed_audience in self.typed_audiences:
+      typed_audience['conditions'] = json.dumps(typed_audience['conditions'])
+    typed_audience_id_map = self._generate_key_map(self.typed_audiences, 'id', entities.Audience)
+    self.audience_id_map.update(typed_audience_id_map)
+
     self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
     for layer in self.rollout_id_map.values():
       for experiment in layer.experiments:
