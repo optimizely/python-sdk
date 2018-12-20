@@ -184,16 +184,17 @@ class ValidatorTest(base.BaseTest):
 
     is_finite.assert_called_once_with(5.5)
 
-    with mock.patch('optimizely.helpers.validator.is_finite_number',
-                    return_value='abc') as is_finite:
-      self.assertEqual('abc', validator.is_attribute_valid('test_attribute', 0))
+    if PY2:
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                      return_value=None) as is_finite:
+        self.assertIsNone(validator.is_attribute_valid('test_attribute', long(5)))
 
-    is_finite.assert_called_once_with(0)
+      is_finite.assert_called_once_with(long(5))
 
   def test_is_finite_number(self):
-    """ Test that it returns true if value is a number and is not more than 1e53 if an Integer,
-    and not one of NAN, INF or -INF if it's a double. """
-
+    """ Test that it returns true if value is a number and not NAN, INF, -INF or greater than 2^53.
+        Otherwise False.
+    """
     # test non number values
     self.assertFalse(validator.is_finite_number('HelloWorld'))
     self.assertFalse(validator.is_finite_number(True))
@@ -204,21 +205,26 @@ class ValidatorTest(base.BaseTest):
     self.assertFalse(validator.is_finite_number(()))
 
     # test invalid numbers
-    self.assertFalse(validator.is_finite_number((float('inf'))))
-    self.assertFalse(validator.is_finite_number((float('-inf'))))
-    self.assertFalse(validator.is_finite_number((float('nan'))))
-    self.assertFalse(validator.is_finite_number(int(1e53) + 1))
+    self.assertFalse(validator.is_finite_number(float('inf')))
+    self.assertFalse(validator.is_finite_number(float('-inf')))
+    self.assertFalse(validator.is_finite_number(float('nan')))
+    self.assertFalse(validator.is_finite_number(int(2**53) + 1))
+    self.assertFalse(validator.is_finite_number(-int(2**53) - 1))
+    self.assertFalse(validator.is_finite_number(float(2**53) + 2.0))
+    self.assertFalse(validator.is_finite_number(-float(2**53) - 2.0))
     if PY2:
-      self.assertFalse(validator.is_finite_number(long(1e53) + 1))
+      self.assertFalse(validator.is_finite_number(long(2**53) + 1))
+      self.assertFalse(validator.is_finite_number(-long(2**53) - 1))
 
     # test valid numbers
-    self.assertTrue(validator.is_finite_number((0)))
-    self.assertTrue(validator.is_finite_number((5)))
-    self.assertTrue(validator.is_finite_number((5.5)))
-    self.assertTrue(validator.is_finite_number((float(1e53) + 1)))
-    self.assertTrue(validator.is_finite_number((int(1e53))))
+    self.assertTrue(validator.is_finite_number(0))
+    self.assertTrue(validator.is_finite_number(5))
+    self.assertTrue(validator.is_finite_number(5.5))
+    self.assertTrue(validator.is_finite_number(float(2**53) + 1.0))
+    self.assertTrue(validator.is_finite_number(-float(2**53) - 1.0))
+    self.assertTrue(validator.is_finite_number(int(2**53)))
     if PY2:
-      self.assertTrue(validator.is_finite_number((long(1e53))))
+      self.assertTrue(validator.is_finite_number(long(2**53)))
 
 
 class DatafileValidationTests(base.BaseTest):

@@ -12,15 +12,11 @@
 # limitations under the License.
 
 import mock
-from six import PY2, PY3
+from six import PY2
 
 from optimizely.helpers import condition as condition_helper
 
 from tests import base
-
-if PY3:
-  def long(a):
-    raise NotImplementedError('Tests should only call `long` if running in PY2')
 
 browserConditionSafari = ['browser_type', 'safari', 'custom_attribute', 'exact']
 booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
@@ -205,6 +201,37 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     self.assertStrictTrue(evaluator.evaluate(0))
 
+  def test_exact_int__calls_is_finite_number(self):
+    """ Returns True if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_int_condition_list, {'lasers_count': long(9000)}
+      )
+
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                      return_value=True) as is_finite:
+        self.assertStrictTrue(evaluator.evaluate(0))
+      is_finite.assert_called_with(long(9000))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_int_condition_list, {'lasers_count': 9000}
+      )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=False) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_called_with(9000)
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 9000.0}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=False) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_called_with(9000.0)
+
   def test_exact_float__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
 
     if PY2:
@@ -225,6 +252,37 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     )
 
     self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_float__calls_is_finite_number(self):
+    """ Returns True if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_float_condition_list, {'lasers_count': long(9000)}
+      )
+
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                      return_value=True) as is_finite:
+        self.assertStrictTrue(evaluator.evaluate(0))
+      is_finite.assert_called_with(long(9000))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_float_condition_list, {'lasers_count': 9000}
+      )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=False) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_called_with(9000)
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': 9000.0}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=False) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_called_with(9000.0)
 
   def test_exact_int__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
 
@@ -371,6 +429,42 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
       self.assertStrictTrue(evaluator.evaluate(0))
 
+  def test_greater_than_int__calls_is_finite_number(self):
+    """ Returns True if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 48.1}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=True) as is_finite:
+      self.assertStrictTrue(evaluator.evaluate(0))
+    is_finite.assert_called_with(48.1)
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 49}
+    )
+
+    def side_effect(*args):
+      if args[0] == 49:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=side_effect) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_any_call(49)
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_int_condition_list, {'meters_travelled': long(49)}
+      )
+
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                       side_effect=side_effect) as is_finite:
+        self.assertIsNone(evaluator.evaluate(0))
+      is_finite.assert_called_with(long(49))
+
   def test_greater_than_float__returns_true__when_user_value_greater_than_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -391,6 +485,42 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_greater_than_float__calls_is_finite_number(self):
+    """ Returns True if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 48.3}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=True) as is_finite:
+      self.assertStrictTrue(evaluator.evaluate(0))
+    is_finite.assert_called_with(48.3)
+
+    def side_effect(*args):
+      if args[0] == 49:
+        return False
+      return True
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 49}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=side_effect) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_called_with(49)
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_float_condition_list, {'meters_travelled': long(49)}
+      )
+
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                      side_effect=side_effect) as is_finite:
+        self.assertIsNone(evaluator.evaluate(0))
+      is_finite.assert_called_with(long(49))
 
   def test_greater_than_int__returns_false__when_user_value_not_greater_than_condition_value(self):
 
@@ -499,6 +629,42 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
       self.assertStrictTrue(evaluator.evaluate(0))
 
+  def test_less_than_int__calls_is_finite_number(self):
+    """ Returns True if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47.9}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=True) as is_finite:
+      self.assertStrictTrue(evaluator.evaluate(0))
+    is_finite.assert_called_with(47.9)
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47}
+    )
+
+    def side_effect(*args):
+      if args[0] == 47:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=side_effect) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_any_call(47)
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_int_condition_list, {'meters_travelled': long(47)}
+      )
+
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                       side_effect=side_effect) as is_finite:
+        self.assertIsNone(evaluator.evaluate(0))
+      is_finite.assert_called_with(long(47))
+
   def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self):
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -519,6 +685,42 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
       )
 
       self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_less_than_float__calls_is_finite_number(self):
+    """ Returns True if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48.1}
+    )
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=True) as is_finite:
+      self.assertStrictTrue(evaluator.evaluate(0))
+    is_finite.assert_called_with(48.1)
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48}
+    )
+
+    def side_effect(*args):
+      if args[0] == 48:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=side_effect) as is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+    is_finite.assert_any_call(48)
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_float_condition_list, {'meters_travelled': long(48)}
+      )
+
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                       side_effect=side_effect) as is_finite:
+        self.assertIsNone(evaluator.evaluate(0))
+      is_finite.assert_called_with(long(48))
 
   def test_less_than_int__returns_false__when_user_value_not_less_than_condition_value(self):
 
