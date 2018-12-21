@@ -220,6 +220,7 @@ class ValidatorTest(base.BaseTest):
     self.assertTrue(validator.is_finite_number(0))
     self.assertTrue(validator.is_finite_number(5))
     self.assertTrue(validator.is_finite_number(5.5))
+    # float(2**53) + 1.0 evaluates to float(2**53)
     self.assertTrue(validator.is_finite_number(float(2**53) + 1.0))
     self.assertTrue(validator.is_finite_number(-float(2**53) - 1.0))
     self.assertTrue(validator.is_finite_number(int(2**53)))
