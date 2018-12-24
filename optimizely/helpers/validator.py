@@ -204,7 +204,8 @@ def is_finite_number(value):
     value: Value to be validated.
 
   Returns:
-    Boolean: True if value is a number and not NAN, INF, -INF or greater than 2^53 else False.
+    Boolean: True if value is a number and not NAN, INF, -INF or
+             greater than absolute limit of 2^53 else False.
   """
   if not isinstance(value, (numbers.Integral, float)):
       # numbers.Integral instead of int to accomodate long integer in python 2
