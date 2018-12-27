@@ -14,6 +14,11 @@ script: "nosetests --with-coverage --cover-package=optimizely"
 after_success:
   - coveralls
 
+# Integration tests need to run first to reset the PR build status to pending
+stages:
+  - 'Integration tests'
+  - 'Test'
+
 jobs:
   include:
     - stage: 'Integration tests'
