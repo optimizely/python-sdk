@@ -173,23 +173,23 @@ class ValidatorTest(base.BaseTest):
 
     # test if attribute value is a number, it calls is_finite_number and returns it's result
     with mock.patch('optimizely.helpers.validator.is_finite_number',
-                    return_value=True) as is_finite:
+                    return_value=True) as mock_is_finite:
       self.assertTrue(validator.is_attribute_valid('test_attribute', 5))
 
-    is_finite.assert_called_once_with(5)
+    mock_is_finite.assert_called_once_with(5)
 
     with mock.patch('optimizely.helpers.validator.is_finite_number',
-                    return_value=False) as is_finite:
+                    return_value=False) as mock_is_finite:
       self.assertFalse(validator.is_attribute_valid('test_attribute', 5.5))
 
-    is_finite.assert_called_once_with(5.5)
+    mock_is_finite.assert_called_once_with(5.5)
 
     if PY2:
       with mock.patch('optimizely.helpers.validator.is_finite_number',
-                      return_value=None) as is_finite:
+                      return_value=None) as mock_is_finite:
         self.assertIsNone(validator.is_attribute_valid('test_attribute', long(5)))
 
-      is_finite.assert_called_once_with(long(5))
+      mock_is_finite.assert_called_once_with(long(5))
 
   def test_is_finite_number(self):
     """ Test that it returns true if value is a number and not NAN, INF, -INF or greater than 2^53.

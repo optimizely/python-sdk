@@ -290,19 +290,27 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
         exact_int_condition_list, {'lasers_count': 9000}
       )
 
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
     with mock.patch('optimizely.helpers.validator.is_finite_number',
-                    return_value=True) as mock_is_finite:
-      self.assertTrue(evaluator.evaluate(0))
-    mock_is_finite.assert_called_with(9000)
-
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      exact_int_condition_list, {'lasers_count': 9000.0}
-    )
-
-    with mock.patch('optimizely.helpers.validator.is_finite_number',
-                    return_value=False) as mock_is_finite:
+                    side_effect=[False, True]) as mock_is_finite:
       self.assertIsNone(evaluator.evaluate(0))
-    mock_is_finite.assert_called_with(9000.0)
+
+    mock_is_finite.assert_called_once_with(9000)
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[True, False]) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
+
+    # assert CustomAttributeConditionEvaluator.evaluate returns True only when isFiniteNumber returns
+    # True both for condition and user values.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[True, True]) as mock_is_finite:
+      self.assertTrue(evaluator.evaluate(0))
+
+    mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
 
   def test_exact_bool__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
 
