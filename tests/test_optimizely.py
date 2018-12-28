@@ -2304,7 +2304,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     mock_client_logger = mock.patch.object(self.optimizely, 'logger')
 
     mock_conversion_event = event_builder.Event('logx.optimizely.com', {'event_key': event_key})
-    with mock.patch('optimizely.event_builder.EventBuilder.create_conversion_event', return_value=mock_conversion_event), \
+    with mock.patch('optimizely.event_builder.EventBuilder.create_conversion_event',
+                    return_value=mock_conversion_event), \
          mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
          mock_client_logger as mock_client_logging:
       self.optimizely.track(event_key, user_id)
