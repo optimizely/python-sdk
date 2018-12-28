@@ -322,28 +322,18 @@ class Optimizely(object):
       self.logger.info('Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
-    # Filter out experiments that are not running or that do not include the user in audience
-    # conditions and then determine the decision i.e. the corresponding variation
-    decisions = self._get_decisions(event, user_id, attributes)
-
-    # Create and dispatch conversion event if there are any decisions
-    if decisions:
-      conversion_event = self.event_builder.create_conversion_event(
-        event_key, user_id, attributes, event_tags, decisions
-      )
-      self.logger.info('Tracking event "%s" for user "%s".' % (event_key, user_id))
-      self.logger.debug('Dispatching conversion event to URL %s with params %s.' % (
-        conversion_event.url,
-        conversion_event.params
-      ))
-      try:
-        self.event_dispatcher.dispatch_event(conversion_event)
-      except:
-        self.logger.exception('Unable to dispatch conversion event!')
-      self.notification_center.send_notifications(enums.NotificationTypes.TRACK, event_key, user_id,
-                                                  attributes, event_tags, conversion_event)
-    else:
-      self.logger.info('There are no valid experiments for event "%s" to track.' % event_key)
+    conversion_event = self.event_builder.create_conversion_event(event_key, user_id, attributes, event_tags)
+    self.logger.info('Tracking event "%s" for user "%s".' % (event_key, user_id))
+    self.logger.debug('Dispatching conversion event to URL %s with params %s.' % (
+      conversion_event.url,
+      conversion_event.params
+    ))
+    try:
+      self.event_dispatcher.dispatch_event(conversion_event)
+    except:
+      self.logger.exception('Unable to dispatch conversion event!')
+    self.notification_center.send_notifications(enums.NotificationTypes.TRACK, event_key, user_id,
+                                                attributes, event_tags, conversion_event)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
