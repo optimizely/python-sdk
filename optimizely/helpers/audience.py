@@ -1,4 +1,4 @@
-# Copyright 2016, 2018, Optimizely
+# Copyright 2016, 2018-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -64,7 +64,7 @@ def is_user_in_experiment(config, experiment, attributes, logger):
 
     if audience is None:
       return None
-    
+
     logger.debug(logs.EVALUATING_AUDIENCE_WITH_CONDITIONS.format(audienceId, audience.conditions))
 
     result = condition_tree_evaluator.evaluate(
@@ -80,5 +80,10 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     audience_conditions,
     evaluate_audience
   )
+
+  logger.info(logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+      experiment.key,
+      str(eval_result)
+    ))
 
   return eval_result or False

@@ -1,4 +1,4 @@
-# Copyright 2016, 2018, Optimizely
+# Copyright 2016, 2018-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -44,6 +44,18 @@ class CustomAttributeConditionEvaluator(object):
     self.attributes = attributes or {}
     self.logger = logger
 
+  def _get_condition_log(self, index):
+
+   condition = self.condition_data[index]
+   condition_log = {
+    "name": condition[0],
+    "value": condition[1],
+    "type": condition[2],
+    "match": condition[3]
+   }
+
+   return json.dumps(condition_log)
+
   def is_value_valid_for_exact_conditions(self, value):
     """ Method to validate if the value is valid for exact match type evaluation.
 
@@ -72,27 +84,28 @@ class CustomAttributeConditionEvaluator(object):
         - if the condition value or user attribute value has an invalid type.
         - if there is a mismatch between the user attribute type and the condition value type.
     """
+    condition_name = self.condition_data[index][0]
     condition_value = self.condition_data[index][1]
-    user_value = self.attributes.get(self.condition_data[index][0])
+    user_value = self.attributes.get(condition_name)
 
     if not self.is_value_valid_for_exact_conditions(condition_value):
       return None
 
     if not self.is_value_valid_for_exact_conditions(user_value):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-          json.dumps(self.condition_data),
-          self.condition_data[index][0],
+          self._get_condition_log(index),
+          condition_name,
           user_value
       ))
       return None
 
     if not validator.are_values_same_type(condition_value, user_value):
       self.logger.debug(logs.MISMATCH_TYPE.format(
-            json.dumps(self.condition_data),
-            self.condition_data[index][0],
-            type(user_value),
-            type(condition_value)
-        ))
+        self._get_condition_log(index),
+        condition_name,
+        type(user_value),
+        type(condition_value)
+      ))
       return None
 
     return condition_value == user_value
@@ -122,16 +135,17 @@ class CustomAttributeConditionEvaluator(object):
           - False if the user attribute value is less than or equal to the condition value.
         None: if the condition value isn't finite or the user attribute value isn't finite.
     """
+    condition_name = self.condition_data[index][0]
     condition_value = self.condition_data[index][1]
-    user_value = self.attributes.get(self.condition_data[index][0])
+    user_value = self.attributes.get(condition_name)
 
     if not validator.is_finite_number(condition_value):
       return None
 
     if not validator.is_finite_number(user_value):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-        json.dumps(self.condition_data),
-        self.condition_data[index][0],
+        self._get_condition_log(index),
+        condition_name,
         user_value
       ))
       return None
@@ -150,16 +164,17 @@ class CustomAttributeConditionEvaluator(object):
         - False if the user attribute value is greater than or equal to the condition value.
       None: if the condition value isn't finite or the user attribute value isn't finite.
     """
+    condition_name = self.condition_data[index][0]
     condition_value = self.condition_data[index][1]
-    user_value = self.attributes.get(self.condition_data[index][0])
+    user_value = self.attributes.get(condition_name)
 
     if not validator.is_finite_number(condition_value):
       return None
 
     if not validator.is_finite_number(user_value):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-        json.dumps(self.condition_data),
-        self.condition_data[index][0],
+        self._get_condition_log(index),
+        condition_name,
         user_value
       ))
       return None
@@ -178,16 +193,17 @@ class CustomAttributeConditionEvaluator(object):
         - False if the condition value is not a substring of the user attribute value.
       None: if the condition value isn't a string or the user attribute value isn't a string.
     """
+    condition_name = self.condition_data[index][0]
     condition_value = self.condition_data[index][1]
-    user_value = self.attributes.get(self.condition_data[index][0])
+    user_value = self.attributes.get(condition_name)
 
     if not isinstance(condition_value, string_types):
       return None
 
     if not isinstance(user_value, string_types):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-        json.dumps(self.condition_data),
-        self.condition_data[index][0],
+        self._get_condition_log(index),
+        condition_name,
         user_value
       ))
       return None
@@ -217,7 +233,7 @@ class CustomAttributeConditionEvaluator(object):
     """
 
     if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
-      self.logger.debug(logs.UNKNOWN_CONDITION_TYPE.format(self.condition_data))
+      self.logger.warning(logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_log(index)))
       return None
 
     condition_match = self.condition_data[index][3]
@@ -225,7 +241,13 @@ class CustomAttributeConditionEvaluator(object):
       condition_match = ConditionMatchTypes.EXACT
 
     if condition_match not in self.EVALUATORS_BY_MATCH_TYPE:
-      self.logger.warning(logs.UNKNOWN_MATCH_TYPE.format(self.condition_data))
+      self.logger.warning(logs.UNKNOWN_MATCH_TYPE.format(self._get_condition_log(index)))
+      return None
+
+    attribute_key = self.condition_data[index][0]
+    user_value = self.attributes.get(attribute_key)
+    if user_value is None and condition_match is not ConditionMatchTypes.EXISTS:
+      self.logger.debug(logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_log(index), attribute_key))
       return None
 
     return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)

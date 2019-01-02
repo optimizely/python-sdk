@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -36,19 +36,22 @@ class AudienceTest(base.BaseTest):
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     experiment.audienceIds = []
     experiment.audienceConditions = []
-    self.assertStrictTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger))
+    self.assertStrictTrue(audience.is_user_in_experiment(self.project_config,
+                                                         experiment, user_attributes, self.mock_client_logger))
 
     # Audience Ids exist but Audience Conditions is Empty
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     experiment.audienceIds = ['11154']
     experiment.audienceConditions = []
-    self.assertStrictTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger))
+    self.assertStrictTrue(audience.is_user_in_experiment(self.project_config,
+                                                         experiment, user_attributes, self.mock_client_logger))
 
     # Audience Ids is Empty and  Audience Conditions is None
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     experiment.audienceIds = []
     experiment.audienceConditions = None
-    self.assertStrictTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger))
+    self.assertStrictTrue(audience.is_user_in_experiment(self.project_config,
+                                                         experiment, user_attributes, self.mock_client_logger))
 
   def test_is_user_in_experiment__with_audience(self):
     """ Test that is_user_in_experiment evaluates non-empty audience.
@@ -104,7 +107,8 @@ class AudienceTest(base.BaseTest):
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=True) as cond_tree_eval:
 
-      self.assertStrictTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger))
+      self.assertStrictTrue(audience.is_user_in_experiment(self.project_config,
+                                                           experiment, user_attributes, self.mock_client_logger))
 
   def test_is_user_in_experiment__returns_False__when_condition_tree_evaluator_returns_None_or_False(self):
     """ Test that is_user_in_experiment returns False when call to condition_tree_evaluator returns None or False. """
@@ -113,11 +117,13 @@ class AudienceTest(base.BaseTest):
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=None) as cond_tree_eval:
 
-      self.assertStrictFalse(audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger))
+      self.assertStrictFalse(audience.is_user_in_experiment(
+        self.project_config, experiment, user_attributes, self.mock_client_logger))
 
     with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=False) as cond_tree_eval:
 
-      self.assertStrictFalse(audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger))
+      self.assertStrictFalse(audience.is_user_in_experiment(
+        self.project_config, experiment, user_attributes, self.mock_client_logger))
 
   def test_is_user_in_experiment__evaluates_audienceIds(self):
     """ Test that is_user_in_experiment correctly evaluates audience Ids and
@@ -189,69 +195,85 @@ class AudienceTest(base.BaseTest):
     ], any_order=True)
 
 
-# class AudienceLoggingTest(base.BaseTest):
+class AudienceLoggingTest(base.BaseTest):
 
-#   def setUp(self):
-#     base.BaseTest.setUp(self)
-#     self.mock_client_logger = mock.MagicMock()
+  def setUp(self):
+    base.BaseTest.setUp(self)
+    self.mock_client_logger = mock.MagicMock()
 
-#   def test_is_user_in_experiment__logs_info__with_audienceIds_and_conditions(self):
-#     """ Test that is_user_in_experiment evaluates non-empty audience and logs audience conditions.
-#     """
-#     user_attributes = {'test_attribute': 'test_value_1'}
-#     experiment = self.project_config.get_experiment_from_key('test_experiment')
-#     experiment.audienceIds = ['11154']
+  def test_is_user_in_experiment__with_no_audience(self):
+    log_level = 'info'
+    experiment = self.project_config.get_experiment_from_key('test_experiment')
+    experiment.audienceIds = []
+    experiment.audienceConditions = []
 
-#     # Both Audience Ids and Conditions exist
-#     with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-#         experiment.audienceConditions =  ['and', ['or', '3468206642', '3988293898'], ['or', '3988293899',
-#                                        '3468206646', '3468206647', '3468206644', '3468206643']]
-#         audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger)
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      audience.is_user_in_experiment(self.project_config, experiment, {}, self.mock_client_logger)
 
-#     self.mock_client_logger.debug.assert_has_calls([
-#       mock.call(
-#         enums.AudienceEvaluationLogs.EVALUATING_AUDIENCES.format(
-#           experiment.key,
-#           json.dumps(experiment.audienceConditions)
-#         )
-#       ),
-#       mock.call(enums.AudienceEvaluationLogs.USER_ATTRIBUTES.format(json.dumps(user_attributes)))
-#     ])
-  
-#     self.mock_client_logger.info.assert_called_once_with(
-#       enums.AudienceEvaluationLogs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(experiment.key, None)
-#     )
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.NO_AUDIENCE_ATTACHED.format('test_experiment')
+    )
 
-#   def test_is_user_in_experiment__logs_info__with_audienceIds(self):
-#     """ Test that is_user_in_experiment evaluates non-empty audience and logs audience conditions.
-#     """
-#     user_attributes = {'test_attribute': 'test_value_1'}
-#     experiment = self.project_config.get_experiment_from_key('test_experiment')
-#     experiment.audienceIds = ['11154']
+  def test_is_user_in_experiment__evaluates_audienceIds(self):
+    user_attributes = {'test_attribute': 'test_value_1'}
+    experiment = self.project_config.get_experiment_from_key('test_experiment')
+    experiment.audienceIds = ['11154', '11159']
+    experiment.audienceConditions = None
+    audience_11154 = self.project_config.get_audience('11154')
+    audience_11159 = self.project_config.get_audience('11159')
 
-#     # Only Audience Ids and no Conditions exist
-#     with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-#         audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger)
+    with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate',
+                    side_effect=[False, True]),\
+      mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger)
 
-#     self.mock_client_logger.debug.assert_has_calls([
-#       mock.call(
-#         enums.AudienceEvaluationLogs.EVALUATING_AUDIENCES.format(
-#           experiment.key,
-#           json.dumps(experiment.audienceIds)
-#         )
-#       ),
-#       mock.call(enums.AudienceEvaluationLogs.USER_ATTRIBUTES.format(json.dumps(user_attributes))),
-#       mock.call(enums.AudienceEvaluationLogs.EVALUATING_AUDIENCE_WITH_CONDITIONS.format(
-#           '11154',
-#           json.dumps('["and", ["or", ["or", '
-#                       '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]')))
-#     ])
+    self.assertEqual(6, self.mock_client_logger.debug.call_count)
+    self.assertEqual(1, self.mock_client_logger.info.call_count)
 
-#     self.mock_client_logger.info.assert_has_calls([
-#       mock.call(enums.AudienceEvaluationLogs.AUDIENCE_EVALUATION_RESULT.format('11154', True)),
-#       mock.call(enums.AudienceEvaluationLogs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(experiment.key, True))
-#     ])
+    self.mock_client_logger.assert_has_calls([
+      mock.call.debug('Evaluating audiences for experiment test_experiment: "["11154", "11159"]".'),
+      mock.call.debug('User attributes: "' + json.dumps(user_attributes) + '".'),
+      mock.call.debug('Starting to evaluate audience "11154" with conditions: "' + audience_11154.conditions + '".'),
+      mock.call.debug('Audience "11154" evaluated as "False".'),
+      mock.call.debug('Starting to evaluate audience "11159" with conditions: "' + audience_11159.conditions + '".'),
+      mock.call.debug('Audience "11159" evaluated as "True".'),
+      mock.call.info('Audiences for experiment test_experiment collectively evaluated as True.')
+    ])
 
+  def test_is_user_in_experiment__evaluates_audience_conditions(self):
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+    project_config = opt_obj.config
+    experiment = project_config.get_experiment_from_key('audience_combinations_experiment')
+    experiment.audienceIds = []
+    experiment.audienceConditions = ['or', ['or', '3468206642', '3988293898', '3988293899']]
+    audience_3468206642 = project_config.get_audience('3468206642')
+    audience_3988293898 = project_config.get_audience('3988293898')
+    audience_3988293899 = project_config.get_audience('3988293899')
 
-    
+    # Only Audience Ids and no Conditions exist
+    with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate',
+                    side_effect=[False, None, True]),\
+      mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      audience.is_user_in_experiment(project_config, experiment, {}, self.mock_client_logger)
 
+    self.assertEqual(8, self.mock_client_logger.debug.call_count)
+    self.assertEqual(1, self.mock_client_logger.info.call_count)
+
+    self.mock_client_logger.assert_has_calls([
+      mock.call.debug(
+        'Evaluating audiences for experiment audience_combinations_experiment: "["or", ["or", "3468206642", '
+        '"3988293898", "3988293899"]]".'
+      ),
+      mock.call.debug('User attributes: "{}".'),
+      mock.call.debug('Starting to evaluate audience "3468206642" with conditions: "' +
+                      audience_3468206642.conditions + '".'),
+      mock.call.debug('Audience "3468206642" evaluated as "False".'),
+      mock.call.debug('Starting to evaluate audience "3988293898" with conditions: "' +
+                      audience_3988293898.conditions + '".'),
+      mock.call.debug('Audience "3988293898" evaluated as "None".'),
+      mock.call.debug('Starting to evaluate audience "3988293899" with conditions: "' +
+                      audience_3988293899.conditions + '".'),
+      mock.call.debug('Audience "3988293899" evaluated as "True".'),
+      mock.call.info('Audiences for experiment audience_combinations_experiment collectively evaluated as True.')
+    ])

@@ -1,4 +1,4 @@
-# Copyright 2017-2018, Optimizely
+# Copyright 2017-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -479,14 +479,19 @@ class FeatureFlagDecisionTests(base.BaseTest):
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check,\
       self.mock_decision_logger as mock_decision_logging, \
       mock.patch('optimizely.bucketer.Bucketer.bucket', side_effect=[None, variation_to_mock]):
-        self.assertEqual(
-          decision_service.Decision(everyone_else_exp, variation_to_mock, decision_service.DECISION_SOURCE_ROLLOUT),
-          self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
+      self.assertEqual(
+        decision_service.Decision(everyone_else_exp, variation_to_mock, decision_service.DECISION_SOURCE_ROLLOUT),
+        self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
 
     # Check that after first experiment, it skips to the last experiment to check
     self.assertEqual(
-      [mock.call(self.project_config, self.project_config.get_experiment_from_key('211127'), None, mock_decision_logging),
-       mock.call(self.project_config, self.project_config.get_experiment_from_key('211147'), None, mock_decision_logging)],
+      [mock.call(
+         self.project_config, self.project_config.get_experiment_from_key('211127'), None, mock_decision_logging
+        ),
+        mock.call(
+          self.project_config, self.project_config.get_experiment_from_key('211147'), None, mock_decision_logging
+        )
+       ],
       mock_audience_check.call_args_list
     )
 
@@ -510,9 +515,15 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
     # Check that all experiments in rollout layer were checked
     self.assertEqual(
-      [mock.call(self.project_config, self.project_config.get_experiment_from_key('211127'), None, mock_decision_logging),
-       mock.call(self.project_config, self.project_config.get_experiment_from_key('211137'), None, mock_decision_logging),
-       mock.call(self.project_config, self.project_config.get_experiment_from_key('211147'), None, mock_decision_logging)],
+      [mock.call(
+        self.project_config, self.project_config.get_experiment_from_key('211127'), None, mock_decision_logging
+       ),
+       mock.call(
+        self.project_config, self.project_config.get_experiment_from_key('211137'), None, mock_decision_logging
+       ),
+       mock.call(
+        self.project_config, self.project_config.get_experiment_from_key('211147'), None, mock_decision_logging
+       )],
       mock_audience_check.call_args_list
     )
 

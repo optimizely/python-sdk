@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -673,7 +673,6 @@ class OptimizelyTest(base.BaseTest):
   def test_activate__with_attributes__typed_audience_match(self):
     """ Test that activate calls dispatch_event with right params and returns expected
     variation when attributes are provided and typed audience conditions are met. """
-
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
     with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
@@ -870,7 +869,7 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
         self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
-                                                  attributes={'test_attribute': 'test_value'}))
+                                                   attributes={'test_attribute': 'test_value'}))
     mock_audience_check.assert_called_once_with(self.project_config,
                                                 self.project_config.get_experiment_from_key('test_experiment'),
                                                 {'test_attribute': 'test_value'},
