@@ -45,16 +45,23 @@ class CustomAttributeConditionEvaluator(object):
     self.logger = logger
 
   def _get_condition_log(self, index):
+    """ Method to generate json for logging audience condition.
 
-   condition = self.condition_data[index]
-   condition_log = {
-    "name": condition[0],
-    "value": condition[1],
-    "type": condition[2],
-    "match": condition[3]
-   }
+    Args:
+      index: Index of the condition.
 
-   return json.dumps(condition_log)
+    Returns:
+      String: Audience condition JSON.
+    """
+    condition = self.condition_data[index]
+    condition_log = {
+      "name": condition[0],
+      "value": condition[1],
+      "type": condition[2],
+      "match": condition[3]
+    }
+
+    return json.dumps(condition_log)
 
   def is_value_valid_for_exact_conditions(self, value):
     """ Method to validate if the value is valid for exact match type evaluation.

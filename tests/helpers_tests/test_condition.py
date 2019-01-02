@@ -785,7 +785,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_exact__user_value__missing(self):
-
     log_level = 'debug'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {}
@@ -812,7 +811,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_greater_than__user_value__missing(self):
-
     log_level = 'debug'
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {}
@@ -839,7 +837,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_less_than__user_value__missing(self):
-
     log_level = 'debug'
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {}
@@ -866,7 +863,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_substring__user_value__missing(self):
-
     log_level = 'debug'
     substring_condition_list = [['headline_text', 'buy now', 'custom_attribute', 'substring']]
     user_attributes = {}
@@ -893,7 +889,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_exists__user_value__missing(self):
-
     exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
     user_attributes = {}
 
@@ -914,7 +909,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     self.mock_client_logger.assert_not_called()
 
   def test_exact__user_value__unexpected_type(self):
-
     log_level = 'warning'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': {}}
@@ -941,7 +935,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_greater_than__user_value__unexpected_type(self):
-
     log_level = 'warning'
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {'meters_travelled': '48'}
@@ -968,7 +961,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_less_than__user_value__unexpected_type(self):
-
     log_level = 'warning'
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {'meters_travelled': True}
@@ -995,7 +987,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_substring__user_value__unexpected_type(self):
-
     log_level = 'warning'
     substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
     user_attributes = {'headline_text': 1234}

@@ -72,7 +72,8 @@ def is_user_in_experiment(config, experiment, attributes, logger):
       lambda index: evaluate_custom_attr(audienceId, index)
     )
 
-    logger.debug(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, str(result)))
+    result_log = str(result) if result is not None else 'UNKNOWN'
+    logger.debug(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_log))
 
     return result
 
@@ -81,9 +82,11 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     evaluate_audience
   )
 
+  eval_result = eval_result or False
+
   logger.info(logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
       experiment.key,
       str(eval_result)
     ))
 
-  return eval_result or False
+  return eval_result

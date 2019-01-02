@@ -202,7 +202,6 @@ class AudienceLoggingTest(base.BaseTest):
     self.mock_client_logger = mock.MagicMock()
 
   def test_is_user_in_experiment__with_no_audience(self):
-    log_level = 'info'
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     experiment.audienceIds = []
     experiment.audienceConditions = []
@@ -210,9 +209,8 @@ class AudienceLoggingTest(base.BaseTest):
     with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
       audience.is_user_in_experiment(self.project_config, experiment, {}, self.mock_client_logger)
 
-    mock_log = getattr(self.mock_client_logger, log_level)
-    mock_log.assert_called_once_with(
-      enums.AudienceEvaluationLogs.NO_AUDIENCE_ATTACHED.format('test_experiment')
+    self.mock_client_logger.info.assert_called_once_with(
+      'No Audience attached to experiment "test_experiment". Evaluated as True.'
     )
 
   def test_is_user_in_experiment__evaluates_audienceIds(self):
@@ -224,7 +222,7 @@ class AudienceLoggingTest(base.BaseTest):
     audience_11159 = self.project_config.get_audience('11159')
 
     with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate',
-                    side_effect=[False, True]),\
+                    side_effect=[None, None]),\
       mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
       audience.is_user_in_experiment(self.project_config, experiment, user_attributes, self.mock_client_logger)
 
@@ -232,13 +230,13 @@ class AudienceLoggingTest(base.BaseTest):
     self.assertEqual(1, self.mock_client_logger.info.call_count)
 
     self.mock_client_logger.assert_has_calls([
-      mock.call.debug('Evaluating audiences for experiment test_experiment: "["11154", "11159"]".'),
+      mock.call.debug('Evaluating audiences for experiment "test_experiment": "["11154", "11159"]".'),
       mock.call.debug('User attributes: "' + json.dumps(user_attributes) + '".'),
       mock.call.debug('Starting to evaluate audience "11154" with conditions: "' + audience_11154.conditions + '".'),
-      mock.call.debug('Audience "11154" evaluated as "False".'),
+      mock.call.debug('Audience "11154" evaluated as UNKNOWN.'),
       mock.call.debug('Starting to evaluate audience "11159" with conditions: "' + audience_11159.conditions + '".'),
-      mock.call.debug('Audience "11159" evaluated as "True".'),
-      mock.call.info('Audiences for experiment test_experiment collectively evaluated as True.')
+      mock.call.debug('Audience "11159" evaluated as UNKNOWN.'),
+      mock.call.info('Audiences for experiment test_experiment collectively evaluated as False.')
     ])
 
   def test_is_user_in_experiment__evaluates_audience_conditions(self):
@@ -251,29 +249,28 @@ class AudienceLoggingTest(base.BaseTest):
     audience_3988293898 = project_config.get_audience('3988293898')
     audience_3988293899 = project_config.get_audience('3988293899')
 
-    # Only Audience Ids and no Conditions exist
     with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate',
                     side_effect=[False, None, True]),\
       mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      audience.is_user_in_experiment(project_config, experiment, {}, self.mock_client_logger)
+        audience.is_user_in_experiment(project_config, experiment, {}, self.mock_client_logger)
 
     self.assertEqual(8, self.mock_client_logger.debug.call_count)
     self.assertEqual(1, self.mock_client_logger.info.call_count)
 
     self.mock_client_logger.assert_has_calls([
       mock.call.debug(
-        'Evaluating audiences for experiment audience_combinations_experiment: "["or", ["or", "3468206642", '
+        'Evaluating audiences for experiment "audience_combinations_experiment": "["or", ["or", "3468206642", '
         '"3988293898", "3988293899"]]".'
       ),
       mock.call.debug('User attributes: "{}".'),
       mock.call.debug('Starting to evaluate audience "3468206642" with conditions: "' +
                       audience_3468206642.conditions + '".'),
-      mock.call.debug('Audience "3468206642" evaluated as "False".'),
+      mock.call.debug('Audience "3468206642" evaluated as False.'),
       mock.call.debug('Starting to evaluate audience "3988293898" with conditions: "' +
                       audience_3988293898.conditions + '".'),
-      mock.call.debug('Audience "3988293898" evaluated as "None".'),
+      mock.call.debug('Audience "3988293898" evaluated as UNKNOWN.'),
       mock.call.debug('Starting to evaluate audience "3988293899" with conditions: "' +
                       audience_3988293899.conditions + '".'),
-      mock.call.debug('Audience "3988293899" evaluated as "True".'),
+      mock.call.debug('Audience "3988293899" evaluated as True.'),
       mock.call.info('Audiences for experiment audience_combinations_experiment collectively evaluated as True.')
     ])
