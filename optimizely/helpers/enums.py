@@ -14,6 +14,21 @@
 import logging
 
 
+class AudienceEvaluationLogs(object):
+  EVALUATING_AUDIENCE_WITH_CONDITIONS = 'Starting to evaluate audience "{}" with conditions: "{}".'
+  EVALUATING_AUDIENCES = 'Evaluating audiences for experiment {}: "{}".'
+  AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated as "{}".'
+  AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment {} collectively evaluated as {}.'
+  MISSING_ATTRIBUTE_VALUE = 'Audience condition {} evaluated as UNKNOWN because no user value was passed for attribute "{}".'
+  NO_AUDIENCE_ATTACHED = 'No Audience attached to experiment {}. Evaluated as True.'
+  UNEXPECTED_TYPE = 'Audience condition {} evaluated as UNKNOWN because the value for user attribute "{}" is inapplicable: "{}".'
+  MISMATCH_TYPE = '''Audience condition {} evaluated as UNKNOWN because the value for user attribute "{}" 
+                  is of type: "{}" while expected type is "{}".'''
+  UNKNOWN_CONDITION_TYPE = 'Audience condition "{}" has an unknown condition type.'
+  UNKNOWN_MATCH_TYPE = 'Audience condition "{}" uses an unknown match type.'
+  USER_ATTRIBUTES = 'User attributes: "{}".'
+
+
 class ControlAttributes(object):
   BOT_FILTERING = '$opt_bot_filtering'
   BUCKETING_ID = '$opt_bucketing_id'

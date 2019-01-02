@@ -869,11 +869,12 @@ class OptimizelyTest(base.BaseTest):
     """ Test that activate returns None when audience conditions do not match. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
-      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
-                                                 attributes={'test_attribute': 'test_value'}))
+        self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
+                                                  attributes={'test_attribute': 'test_value'}))
     mock_audience_check.assert_called_once_with(self.project_config,
                                                 self.project_config.get_experiment_from_key('test_experiment'),
-                                                {'test_attribute': 'test_value'})
+                                                {'test_attribute': 'test_value'},
+                                                self.optimizely.logger)
 
   def test_activate__with_attributes__invalid_attributes(self):
     """ Test that activate returns None and does not bucket or dispatch event when attributes are invalid. """
@@ -2430,7 +2431,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     mock_config_logging.debug.assert_called_once_with(
       'User "test_user" is not in the forced variation map.'
     )
-    mock_decision_logging.info.assert_called_once_with(
+    mock_decision_logging.info.assert_called_with(
       'User "test_user" does not meet conditions to be in experiment "test_experiment".'
     )
     mock_client_logging.info.assert_called_once_with('Not activating user "test_user".')
@@ -2588,7 +2589,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     mock_config_logging.debug.assert_called_once_with(
       'User "test_user" is not in the forced variation map.'
     )
-    mock_decision_logging.info.assert_called_once_with(
+    mock_decision_logging.info.assert_called_with(
       'User "test_user" does not meet conditions to be in experiment "test_experiment".'
     )
 

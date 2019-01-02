@@ -11,11 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
 from . import condition as condition_helper
 from . import condition_tree_evaluator
+from .enums import AudienceEvaluationLogs as logs
 
 
-def is_user_in_experiment(config, experiment, attributes):
+def is_user_in_experiment(config, experiment, attributes, logger):
   """ Determine for given experiment if user satisfies the audiences for the experiment.
 
   Args:
@@ -23,6 +26,7 @@ def is_user_in_experiment(config, experiment, attributes):
     experiment: Object representing the experiment.
     attributes: Dict representing user attributes which will be used in determining
                 if the audience conditions are met. If not provided, default to an empty dict.
+    logger: Provides a logger to send log messages to.
 
   Returns:
     Boolean representing if user satisfies audience conditions for any of the audiences or not.
@@ -30,8 +34,20 @@ def is_user_in_experiment(config, experiment, attributes):
 
   # Return True in case there are no audiences
   audience_conditions = experiment.getAudienceConditionsOrIds()
+
   if audience_conditions is None or audience_conditions == []:
+    logger.info(logs.NO_AUDIENCE_ATTACHED.format(
+      experiment.key
+    ))
+
     return True
+
+  logger.debug(logs.EVALUATING_AUDIENCES.format(
+    experiment.key,
+    json.dumps(audience_conditions)
+  ))
+
+  logger.debug(logs.USER_ATTRIBUTES.format(json.dumps(attributes)))
 
   if attributes is None:
     attributes = {}
@@ -39,7 +55,7 @@ def is_user_in_experiment(config, experiment, attributes):
   def evaluate_custom_attr(audienceId, index):
     audience = config.get_audience(audienceId)
     custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      audience.conditionList, attributes)
+      audience.conditionList, attributes, logger)
 
     return custom_attr_condition_evaluator.evaluate(index)
 
@@ -48,11 +64,17 @@ def is_user_in_experiment(config, experiment, attributes):
 
     if audience is None:
       return None
+    
+    logger.debug(logs.EVALUATING_AUDIENCE_WITH_CONDITIONS.format(audienceId, audience.conditions))
 
-    return condition_tree_evaluator.evaluate(
+    result = condition_tree_evaluator.evaluate(
       audience.conditionStructure,
       lambda index: evaluate_custom_attr(audienceId, index)
     )
+
+    logger.debug(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, str(result)))
+
+    return result
 
   eval_result = condition_tree_evaluator.evaluate(
     audience_conditions,
