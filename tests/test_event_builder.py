@@ -84,6 +84,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -131,6 +132,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -173,6 +175,7 @@ class EventBuilderTest(base.BaseTest):
         }],
         'client_name': 'python-sdk',
         'client_version': version.__version__,
+        'enrich_decisions': True,
         'anonymize_ip': False,
         'revision': '42'
       }
@@ -225,6 +228,7 @@ class EventBuilderTest(base.BaseTest):
         }],
         'client_name': 'python-sdk',
         'client_version': version.__version__,
+        'enrich_decisions': True,
         'anonymize_ip': False,
         'revision': '42'
     }
@@ -295,6 +299,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -345,6 +350,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -400,6 +406,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -429,7 +436,6 @@ class EventBuilderTest(base.BaseTest):
         'visitor_id': 'test_user',
         'attributes': [],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -440,6 +446,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -471,7 +478,6 @@ class EventBuilderTest(base.BaseTest):
           'key': 'test_attribute'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -482,6 +488,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -519,7 +526,6 @@ class EventBuilderTest(base.BaseTest):
           'key': '$opt_bot_filtering'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -530,6 +536,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -569,7 +576,6 @@ class EventBuilderTest(base.BaseTest):
           'key': '$opt_bot_filtering'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -580,6 +586,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -613,7 +620,6 @@ class EventBuilderTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
@@ -631,6 +637,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -665,7 +672,6 @@ class EventBuilderTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -681,6 +687,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -715,7 +722,6 @@ class EventBuilderTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
@@ -733,6 +739,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }

@@ -130,6 +130,7 @@ class BaseEventBuilder(object):
     commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
 
     commonParams[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
+    commonParams[self.EventParams.ENRICH_DECISIONS] = True
     commonParams[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
     commonParams[self.EventParams.ANONYMIZE_IP] = self._get_anonymize_ip()
     commonParams[self.EventParams.REVISION] = self._get_revision()
@@ -152,6 +153,7 @@ class EventBuilder(BaseEventBuilder):
     CAMPAIGN_ID = 'campaign_id'
     VARIATION_ID = 'variation_id'
     END_USER_ID = 'visitor_id'
+    ENRICH_DECISIONS = 'enrich_decisions'
     EVENTS = 'events'
     EVENT_ID = 'entity_id'
     ATTRIBUTES = 'attributes'
@@ -244,7 +246,6 @@ class EventBuilder(BaseEventBuilder):
       Dict consisting of the decisions and events info for conversion event.
     """
     snapshot = {}
-    snapshot[self.EventParams.DECISIONS] = []
 
     event_dict = {
       self.EventParams.EVENT_ID: self.config.get_event(event_key).id,

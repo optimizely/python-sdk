@@ -246,6 +246,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -587,6 +588,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -659,6 +661,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -801,6 +804,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -855,6 +859,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -954,7 +959,6 @@ class OptimizelyTest(base.BaseTest):
           'key': 'test_attribute'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42000,
             'entity_id': '111095',
@@ -965,6 +969,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -1081,7 +1086,6 @@ class OptimizelyTest(base.BaseTest):
           'key': 'test_attribute'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42000,
             'entity_id': '111095',
@@ -1092,6 +1096,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -1139,7 +1144,6 @@ class OptimizelyTest(base.BaseTest):
           'key': 'test_attribute'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'entity_id': '111095',
             'key': 'test_event',
@@ -1157,6 +1161,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -1184,7 +1189,6 @@ class OptimizelyTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'entity_id': '111095',
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
@@ -1201,6 +1205,7 @@ class OptimizelyTest(base.BaseTest):
       'client_name': 'python-sdk',
       'project_id': '111001',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'account_id': '12001',
       'anonymize_ip': False,
       'revision': '42'
@@ -1256,7 +1261,6 @@ class OptimizelyTest(base.BaseTest):
           'key': 'test_attribute'
         }],
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'entity_id': '111095',
             'key': 'test_event',
@@ -1274,6 +1278,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -1302,7 +1307,6 @@ class OptimizelyTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [],
           'events': [{
             'timestamp': 42000,
             'entity_id': '111095',
@@ -1318,6 +1322,7 @@ class OptimizelyTest(base.BaseTest):
       'client_name': 'python-sdk',
       'project_id': '111001',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'account_id': '12001',
       'anonymize_ip': False,
       'revision': '42'
@@ -1549,6 +1554,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '1'
     }
@@ -1613,6 +1619,7 @@ class OptimizelyTest(base.BaseTest):
       }],
       'client_version': version.__version__,
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '1'
     }
