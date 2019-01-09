@@ -897,16 +897,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
         exists_condition_list, user_attributes, self.mock_client_logger
       )
 
-    expected_condition_log = {
-      "name": 'input_value',
-      "value": None,
-      "type": 'custom_attribute',
-      "match": 'exists'
-    }
-
     self.assertStrictFalse(evaluator.evaluate(0))
 
-    self.mock_client_logger.assert_not_called()
+    self.mock_client_logger.debug.assert_not_called()
 
   def test_exact__user_value__unexpected_type(self):
     log_level = 'warning'
