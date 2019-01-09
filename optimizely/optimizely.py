@@ -133,31 +133,6 @@ class Optimizely(object):
 
     return True
 
-  def _get_decisions(self, event, user_id, attributes):
-    """ Helper method to retrieve decisions for the user for experiment(s) using the provided event.
-
-    Args:
-      event: The event which needs to be recorded.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      List of tuples representing valid experiment IDs and variation IDs into which the user is bucketed.
-    """
-    decisions = []
-    for experiment_id in event.experimentIds:
-      experiment = self.config.get_experiment_from_id(experiment_id)
-      variation_key = self.get_variation(experiment.key, user_id, attributes)
-
-      if not variation_key:
-        self.logger.info('Not tracking user "%s" for experiment "%s".' % (user_id, experiment.key))
-        continue
-
-      variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      decisions.append((experiment_id, variation.id))
-
-    return decisions
-
   def _send_impression_event(self, experiment, variation, user_id, attributes):
     """ Helper method to send impression event.
 
