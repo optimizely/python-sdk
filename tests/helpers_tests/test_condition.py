@@ -901,6 +901,123 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     self.mock_client_logger.debug.assert_not_called()
 
+  def test_exact__user_value__None(self):
+    log_level = 'warning'
+    exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': None}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
+        json.dumps(expected_condition_log), 'favorite_constellation', None
+      )
+    )
+
+  def test_greater_than__user_value__None(self):
+    log_level = 'warning'
+    gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+    user_attributes = {'meters_travelled': None}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
+        json.dumps(expected_condition_log), 'meters_travelled', None
+      )
+    )
+
+  def test_less_than__user_value__None(self):
+    log_level = 'warning'
+    lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+    user_attributes = {'meters_travelled': None}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
+        json.dumps(expected_condition_log), 'meters_travelled', None
+      )
+    )
+
+  def test_substring__user_value__None(self):
+    log_level = 'warning'
+    substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
+    user_attributes = {'headline_text': None}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        substring_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'headline_text',
+      "value": '12',
+      "type": 'custom_attribute',
+      "match": 'substring'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
+        json.dumps(expected_condition_log), 'headline_text', None
+      )
+    )
+
+  def test_exists__user_value__None(self):
+    exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
+    user_attributes = {'input_value': None}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exists_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    self.mock_client_logger.debug.assert_not_called()
+
   def test_exact__user_value__unexpected_type(self):
     log_level = 'warning'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]

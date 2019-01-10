@@ -252,8 +252,7 @@ class CustomAttributeConditionEvaluator(object):
       return None
 
     attribute_key = self.condition_data[index][0]
-    user_value = self.attributes.get(attribute_key)
-    if user_value is None and condition_match != ConditionMatchTypes.EXISTS:
+    if attribute_key not in self.attributes and condition_match != ConditionMatchTypes.EXISTS:
       self.logger.debug(logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_log(index), attribute_key))
       return None
 
