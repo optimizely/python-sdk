@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,7 +14,6 @@
 import json
 import mock
 
-from optimizely import entities
 from optimizely import optimizely
 from optimizely.helpers import audience
 from tests import base
@@ -97,7 +96,7 @@ class AudienceTest(base.BaseTest):
 
     user_attributes = {'test_attribute': 'test_value_1'}
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=True) as cond_tree_eval:
+    with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=True):
 
       self.assertStrictTrue(audience.is_user_in_experiment(self.project_config, experiment, user_attributes))
 
@@ -106,11 +105,11 @@ class AudienceTest(base.BaseTest):
 
     user_attributes = {'test_attribute': 'test_value_1'}
     experiment = self.project_config.get_experiment_from_key('test_experiment')
-    with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=None) as cond_tree_eval:
+    with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=None):
 
       self.assertStrictFalse(audience.is_user_in_experiment(self.project_config, experiment, user_attributes))
 
-    with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=False) as cond_tree_eval:
+    with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=False):
 
       self.assertStrictFalse(audience.is_user_in_experiment(self.project_config, experiment, user_attributes))
 
@@ -118,7 +117,6 @@ class AudienceTest(base.BaseTest):
     """ Test that is_user_in_experiment correctly evaluates audience Ids and
         calls custom attribute evaluator for leaf nodes. """
 
-    user_attributes = {'test_attribute': 'test_value_1'}
     experiment = self.project_config.get_experiment_from_key('test_experiment')
     experiment.audienceIds = ['11154', '11159']
     experiment.audienceConditions = None

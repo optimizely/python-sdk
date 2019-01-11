@@ -37,7 +37,7 @@ Pull request acceptance criteria
 Style
 -----
 
-We enforce PEP-8 rules with a few minor `deviations`_.
+We enforce Flake8 rules with a few minor `deviations`_.
 
 License
 -------

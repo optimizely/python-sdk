@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -230,6 +230,7 @@ def run_benchmarking_tests():
         all_test_results_median[experiment_count][test_name] = time_in_milliseconds_median
 
   display_results(all_test_results_average, all_test_results_median)
+
 
 if __name__ == '__main__':
   run_benchmarking_tests()

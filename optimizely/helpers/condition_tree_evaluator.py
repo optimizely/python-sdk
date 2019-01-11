@@ -1,4 +1,4 @@
-# Copyright 2018, Optimizely
+# Copyright 2018-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -85,6 +85,7 @@ def not_evaluator(conditions, leaf_evaluator):
 
   result = evaluate(conditions[0], leaf_evaluator)
   return None if result is None else not result
+
 
 EVALUATORS_BY_OPERATOR_TYPE = {
   ConditionOperatorTypes.AND: and_evaluator,

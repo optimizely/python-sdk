@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -371,7 +371,6 @@ class OptimizelyTest(base.BaseTest):
 
   def test_add_invalid_listener(self):
     """ Test adding a invalid listener """
-    not_a_listener = "This is not a listener"
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
 
   def test_add_multi_listener(self):
@@ -455,7 +454,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
-                    )) as mock_get_variation, \
+                    )), \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -470,7 +469,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
-                    )) as mock_get_variation, \
+                    )), \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
@@ -505,7 +504,7 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
@@ -2629,7 +2628,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
   def test_get_variation__user_profile__forced_bucketing(self):
     """ Test that the expected forced variation is called if a user profile exists """
     with mock.patch('optimizely.decision_service.DecisionService.get_stored_variation',
-                    return_value=entities.Variation('111128', 'control')) as mock_get_stored_variation:
+                    return_value=entities.Variation('111128', 'control')):
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
       self.assertEqual('variation', self.optimizely.get_forced_variation('test_experiment', 'test_user'))
       variation_key = self.optimizely.get_variation('test_experiment',
