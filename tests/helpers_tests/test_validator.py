@@ -12,6 +12,9 @@
 # limitations under the License.
 
 import json
+import mock
+
+from six import PY2
 
 from optimizely import error_handler
 from optimizely import event_dispatcher
@@ -167,6 +170,62 @@ class ValidatorTest(base.BaseTest):
     self.assertTrue(validator.is_attribute_valid('test_attribute', 0.0))
     self.assertTrue(validator.is_attribute_valid('test_attribute', ""))
     self.assertTrue(validator.is_attribute_valid('test_attribute', 'test_value'))
+
+    # test if attribute value is a number, it calls is_finite_number and returns it's result
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=True) as mock_is_finite:
+      self.assertTrue(validator.is_attribute_valid('test_attribute', 5))
+
+    mock_is_finite.assert_called_once_with(5)
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    return_value=False) as mock_is_finite:
+      self.assertFalse(validator.is_attribute_valid('test_attribute', 5.5))
+
+    mock_is_finite.assert_called_once_with(5.5)
+
+    if PY2:
+      with mock.patch('optimizely.helpers.validator.is_finite_number',
+                      return_value=None) as mock_is_finite:
+        self.assertIsNone(validator.is_attribute_valid('test_attribute', long(5)))
+
+      mock_is_finite.assert_called_once_with(long(5))
+
+  def test_is_finite_number(self):
+    """ Test that it returns true if value is a number and not NAN, INF, -INF or greater than 2^53.
+        Otherwise False.
+    """
+    # test non number values
+    self.assertFalse(validator.is_finite_number('HelloWorld'))
+    self.assertFalse(validator.is_finite_number(True))
+    self.assertFalse(validator.is_finite_number(False))
+    self.assertFalse(validator.is_finite_number(None))
+    self.assertFalse(validator.is_finite_number({}))
+    self.assertFalse(validator.is_finite_number([]))
+    self.assertFalse(validator.is_finite_number(()))
+
+    # test invalid numbers
+    self.assertFalse(validator.is_finite_number(float('inf')))
+    self.assertFalse(validator.is_finite_number(float('-inf')))
+    self.assertFalse(validator.is_finite_number(float('nan')))
+    self.assertFalse(validator.is_finite_number(int(2**53) + 1))
+    self.assertFalse(validator.is_finite_number(-int(2**53) - 1))
+    self.assertFalse(validator.is_finite_number(float(2**53) + 2.0))
+    self.assertFalse(validator.is_finite_number(-float(2**53) - 2.0))
+    if PY2:
+      self.assertFalse(validator.is_finite_number(long(2**53) + 1))
+      self.assertFalse(validator.is_finite_number(-long(2**53) - 1))
+
+    # test valid numbers
+    self.assertTrue(validator.is_finite_number(0))
+    self.assertTrue(validator.is_finite_number(5))
+    self.assertTrue(validator.is_finite_number(5.5))
+    # float(2**53) + 1.0 evaluates to float(2**53)
+    self.assertTrue(validator.is_finite_number(float(2**53) + 1.0))
+    self.assertTrue(validator.is_finite_number(-float(2**53) - 1.0))
+    self.assertTrue(validator.is_finite_number(int(2**53)))
+    if PY2:
+      self.assertTrue(validator.is_finite_number(long(2**53)))
 
 
 class DatafileValidationTests(base.BaseTest):

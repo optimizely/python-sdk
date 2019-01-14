@@ -187,20 +187,25 @@ def is_attribute_valid(attribute_key, attribute_value):
   if not isinstance(attribute_key, string_types):
     return False
 
-  if isinstance(attribute_value, string_types) or type(attribute_value) in (int, float, bool):
+  if isinstance(attribute_value, (string_types, bool)):
     return True
+
+  if isinstance(attribute_value, (numbers.Integral, float)):
+    return is_finite_number(attribute_value)
 
   return False
 
 
 def is_finite_number(value):
-  """ Method to validate if the given value is a number and not one of NAN, INF, -INF.
+  """ Validates if the given value is a number, enforces
+   absolute limit of 2^53 and restricts NAN, INF, -INF.
 
   Args:
     value: Value to be validated.
 
   Returns:
-    Boolean: True if value is a number and not NAN, INF or -INF else False.
+    Boolean: True if value is a number and not NAN, INF, -INF or
+             greater than absolute limit of 2^53 else False.
   """
   if not isinstance(value, (numbers.Integral, float)):
       # numbers.Integral instead of int to accomodate long integer in python 2
@@ -213,6 +218,9 @@ def is_finite_number(value):
   if isinstance(value, float):
     if math.isnan(value) or math.isinf(value):
       return False
+
+  if abs(value) > (2**53):
+    return False
 
   return True
 

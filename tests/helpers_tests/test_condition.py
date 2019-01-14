@@ -12,15 +12,11 @@
 # limitations under the License.
 
 import mock
-from six import PY2, PY3
+from six import PY2
 
 from optimizely.helpers import condition as condition_helper
 
 from tests import base
-
-if PY3:
-  def long(a):
-    raise NotImplementedError('Tests should only call `long` if running in PY2')
 
 browserConditionSafari = ['browser_type', 'safari', 'custom_attribute', 'exact']
 booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
@@ -285,6 +281,36 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     )
 
     self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact__given_number_values__calls_is_finite_number(self):
+    """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_int_condition_list, {'lasers_count': 9000}
+      )
+
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[False, True]) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    mock_is_finite.assert_called_once_with(9000)
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[True, False]) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
+
+    # assert CustomAttributeConditionEvaluator.evaluate returns True only when isFiniteNumber returns
+    # True both for condition and user values.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[True, True]) as mock_is_finite:
+      self.assertTrue(evaluator.evaluate(0))
+
+    mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
 
   def test_exact_bool__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
 
@@ -593,6 +619,84 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     )
 
     self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than__calls_is_finite_number(self):
+    """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 48.1}
+    )
+
+    def is_finite_number__rejecting_condition_value(value):
+      if value == 48:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_condition_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+    mock_is_finite.assert_called_once_with(48)
+
+    def is_finite_number__rejecting_user_attribute_value(value):
+      if value == 48.1:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_user_attribute_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    mock_is_finite.assert_has_calls([mock.call(48), mock.call(48.1)])
+
+    def is_finite_number__accepting_both_values(value):
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__accepting_both_values):
+      self.assertTrue(evaluator.evaluate(0))
+
+  def test_less_than__calls_is_finite_number(self):
+    """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47}
+    )
+
+    def is_finite_number__rejecting_condition_value(value):
+      if value == 48:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_condition_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+    mock_is_finite.assert_called_once_with(48)
+
+    def is_finite_number__rejecting_user_attribute_value(value):
+      if value == 47:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_user_attribute_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    mock_is_finite.assert_has_calls([mock.call(48), mock.call(47)])
+
+    def is_finite_number__accepting_both_values(value):
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__accepting_both_values):
+      self.assertTrue(evaluator.evaluate(0))
 
 
 class ConditionDecoderTests(base.BaseTest):
