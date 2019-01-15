@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -130,6 +130,7 @@ class BaseEventBuilder(object):
     commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
 
     commonParams[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
+    commonParams[self.EventParams.ENRICH_DECISIONS] = True
     commonParams[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
     commonParams[self.EventParams.ANONYMIZE_IP] = self._get_anonymize_ip()
     commonParams[self.EventParams.REVISION] = self._get_revision()
@@ -152,6 +153,7 @@ class EventBuilder(BaseEventBuilder):
     CAMPAIGN_ID = 'campaign_id'
     VARIATION_ID = 'variation_id'
     END_USER_ID = 'visitor_id'
+    ENRICH_DECISIONS = 'enrich_decisions'
     EVENTS = 'events'
     EVENT_ID = 'entity_id'
     ATTRIBUTES = 'attributes'
@@ -233,30 +235,17 @@ class EventBuilder(BaseEventBuilder):
 
     return snapshot
 
-  def _get_required_params_for_conversion(self, event_key, event_tags, decisions):
+  def _get_required_params_for_conversion(self, event_key, event_tags):
     """ Get parameters that are required for the conversion event to register.
 
     Args:
       event_key: Key representing the event which needs to be recorded.
       event_tags: Dict representing metadata associated with the event.
-      decisions: List of tuples representing valid experiments IDs and variation IDs.
 
     Returns:
       Dict consisting of the decisions and events info for conversion event.
     """
     snapshot = {}
-    snapshot[self.EventParams.DECISIONS] = []
-
-    for experiment_id, variation_id in decisions:
-
-      experiment = self.config.get_experiment_from_id(experiment_id)
-
-      if variation_id:
-        snapshot[self.EventParams.DECISIONS].append({
-          self.EventParams.EXPERIMENT_ID: experiment_id,
-          self.EventParams.VARIATION_ID: variation_id,
-          self.EventParams.CAMPAIGN_ID: experiment.layerId
-        })
 
     event_dict = {
       self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
@@ -303,7 +292,7 @@ class EventBuilder(BaseEventBuilder):
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
 
-  def create_conversion_event(self, event_key, user_id, attributes, event_tags, decisions):
+  def create_conversion_event(self, event_key, user_id, attributes, event_tags):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
@@ -311,14 +300,13 @@ class EventBuilder(BaseEventBuilder):
       user_id: ID for user.
       attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
-      decisions: List of tuples representing experiments IDs and variation IDs.
 
     Returns:
       Event object encapsulating the conversion event.
     """
 
     params = self._get_common_params(user_id, attributes)
-    conversion_params = self._get_required_params_for_conversion(event_key, event_tags, decisions)
+    conversion_params = self._get_required_params_for_conversion(event_key, event_tags)
 
     params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
     return Event(self.EVENTS_URL,

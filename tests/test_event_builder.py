@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -84,6 +84,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -131,6 +132,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -173,6 +175,7 @@ class EventBuilderTest(base.BaseTest):
         }],
         'client_name': 'python-sdk',
         'client_version': version.__version__,
+        'enrich_decisions': True,
         'anonymize_ip': False,
         'revision': '42'
       }
@@ -225,6 +228,7 @@ class EventBuilderTest(base.BaseTest):
         }],
         'client_name': 'python-sdk',
         'client_version': version.__version__,
+        'enrich_decisions': True,
         'anonymize_ip': False,
         'revision': '42'
     }
@@ -295,6 +299,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -345,6 +350,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -400,6 +406,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -429,11 +436,6 @@ class EventBuilderTest(base.BaseTest):
         'visitor_id': 'test_user',
         'attributes': [],
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -444,6 +446,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -451,7 +454,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', None, None, [('111127', '111129')]
+        'test_event', 'test_user', None, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -475,11 +478,6 @@ class EventBuilderTest(base.BaseTest):
           'key': 'test_attribute'
         }],
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -490,6 +488,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -497,7 +496,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, None, [('111127', '111129')]
+        'test_event', 'test_user', {'test_attribute': 'test_value'}, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -527,11 +526,6 @@ class EventBuilderTest(base.BaseTest):
           'key': '$opt_bot_filtering'
         }],
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -542,6 +536,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -550,7 +545,7 @@ class EventBuilderTest(base.BaseTest):
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
          mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
       event_obj = self.event_builder.create_conversion_event(
-       'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None, [('111127', '111129')]
+       'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None
           )
 
     self._validate_event_object(event_obj,
@@ -581,11 +576,6 @@ class EventBuilderTest(base.BaseTest):
           'key': '$opt_bot_filtering'
         }],
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -596,6 +586,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'client_name': 'python-sdk',
       'client_version': version.__version__,
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -604,8 +595,8 @@ class EventBuilderTest(base.BaseTest):
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
          mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=False):
       event_obj = self.event_builder.create_conversion_event(
-       'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None, [('111127', '111129')]
-          )
+        'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None
+      )
 
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -629,11 +620,6 @@ class EventBuilderTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
@@ -651,6 +637,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -661,8 +648,7 @@ class EventBuilderTest(base.BaseTest):
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
-        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
-        [('111127', '111129')]
+        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'}
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -686,11 +672,6 @@ class EventBuilderTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111095',
@@ -706,6 +687,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -716,8 +698,7 @@ class EventBuilderTest(base.BaseTest):
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
-        {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
-        [('111127', '111129')]
+        {'revenue': '4200', 'value': True, 'non-revenue': 'abc'}
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -741,15 +722,6 @@ class EventBuilderTest(base.BaseTest):
         }],
         'visitor_id': 'test_user',
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }, {
-            'experiment_id': '111130',
-            'variation_id': '111131',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
             'tags': {
@@ -767,6 +739,7 @@ class EventBuilderTest(base.BaseTest):
       }],
       'account_id': '12001',
       'client_name': 'python-sdk',
+      'enrich_decisions': True,
       'anonymize_ip': False,
       'revision': '42'
     }
@@ -777,8 +750,7 @@ class EventBuilderTest(base.BaseTest):
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
-        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
-        [('111127', '111129'), ('111130', '111131')]
+        {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'}
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
