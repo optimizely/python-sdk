@@ -109,30 +109,6 @@ class Optimizely(object):
     if not validator.is_error_handler_valid(self.error_handler):
       raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
 
-  def _validate_user_inputs(self, attributes=None, event_tags=None):
-    """ Helper method to validate user inputs.
-
-    Args:
-      attributes: Dict representing user attributes.
-      event_tags: Dict representing metadata associated with an event.
-
-    Returns:
-      Boolean True if inputs are valid. False otherwise.
-
-    """
-
-    if attributes and not validator.are_attributes_valid(attributes):
-      self.logger.error('Provided attributes are in an invalid format.')
-      self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_FORMAT))
-      return False
-
-    if event_tags and not validator.are_event_tags_valid(event_tags):
-      self.logger.error('Provided event tags are in an invalid format.')
-      self.error_handler.handle_error(exceptions.InvalidEventTagException(enums.Errors.INVALID_EVENT_TAG_FORMAT))
-      return False
-
-    return True
-
   def _send_impression_event(self, experiment, variation, user_id, attributes):
     """ Helper method to send impression event.
 
@@ -161,6 +137,7 @@ class Optimizely(object):
     self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
                                                 experiment, user_id, attributes, variation, impression_event)
 
+  @validator.validate_inputs(return_value=None)
   def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
     """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
@@ -177,20 +154,6 @@ class Optimizely(object):
       - Variable key is invalid.
       - Mismatch with type of variable.
     """
-    if not validator.is_non_empty_string(feature_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
-      return None
-
-    if not validator.is_non_empty_string(variable_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('variable_key'))
-      return None
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return None
-
-    if not self._validate_user_inputs(attributes):
-      return None
 
     feature_flag = self.config.get_feature_from_key(feature_key)
     if not feature_flag:
@@ -227,6 +190,7 @@ class Optimizely(object):
 
     return actual_value
 
+  @validator.validate_inputs(return_value=None)
   def activate(self, experiment_key, user_id, attributes=None):
     """ Buckets visitor and sends impression event to Optimizely.
 
@@ -239,19 +203,6 @@ class Optimizely(object):
       Variation key representing the variation the user will be bucketed in.
       None if user is not in experiment or if experiment is not Running.
     """
-
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('activate'))
-      return None
-
-    if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
-      return None
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return None
-
     variation_key = self.get_variation(experiment_key, user_id, attributes)
 
     if not variation_key:
@@ -267,6 +218,7 @@ class Optimizely(object):
 
     return variation.key
 
+  @validator.validate_inputs(return_value=None)
   def track(self, event_key, user_id, attributes=None, event_tags=None):
     """ Send conversion event to Optimizely.
 
@@ -276,22 +228,6 @@ class Optimizely(object):
       attributes: Dict representing visitor attributes and values which need to be recorded.
       event_tags: Dict representing metadata associated with the event.
     """
-
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('track'))
-      return
-
-    if not validator.is_non_empty_string(event_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('event_key'))
-      return
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return
-
-    if not self._validate_user_inputs(attributes, event_tags):
-      return
-
     event = self.config.get_event(event_key)
     if not event:
       self.logger.info('Not tracking user "%s" for event "%s".' % (user_id, event_key))
@@ -310,6 +246,7 @@ class Optimizely(object):
     self.notification_center.send_notifications(enums.NotificationTypes.TRACK, event_key, user_id,
                                                 attributes, event_tags, conversion_event)
 
+  @validator.validate_inputs(return_value=None)
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
 
@@ -322,19 +259,6 @@ class Optimizely(object):
       Variation key representing the variation the user will be bucketed in.
       None if user is not in experiment or if experiment is not Running.
     """
-
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
-      return None
-
-    if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
-      return None
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return None
-
     experiment = self.config.get_experiment_from_key(experiment_key)
 
     if not experiment:
@@ -344,15 +268,13 @@ class Optimizely(object):
       ))
       return None
 
-    if not self._validate_user_inputs(attributes):
-      return None
-
     variation = self.decision_service.get_variation(experiment, user_id, attributes)
     if variation:
       return variation.key
 
     return None
 
+  @validator.validate_inputs(return_value=False)
   def is_feature_enabled(self, feature_key, user_id, attributes=None):
     """ Returns true if the feature is enabled for the given user.
 
@@ -364,21 +286,6 @@ class Optimizely(object):
     Returns:
       True if the feature is enabled for the user. False otherwise.
     """
-
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
-      return False
-
-    if not validator.is_non_empty_string(feature_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
-      return False
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return False
-
-    if not self._validate_user_inputs(attributes):
-      return False
 
     feature = self.config.get_feature_from_key(feature_key)
     if not feature:
@@ -400,6 +307,7 @@ class Optimizely(object):
     self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
     return False
 
+  @validator.validate_inputs(return_value=[])
   def get_enabled_features(self, user_id, attributes=None):
     """ Returns the list of features that are enabled for the user.
 
@@ -412,16 +320,6 @@ class Optimizely(object):
     """
 
     enabled_features = []
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
-      return enabled_features
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return enabled_features
-
-    if not self._validate_user_inputs(attributes):
-      return enabled_features
 
     for feature in self.config.feature_key_map.values():
       if self.is_feature_enabled(feature.key, user_id, attributes):
@@ -505,6 +403,7 @@ class Optimizely(object):
     variable_type = entities.Variable.Type.STRING
     return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
 
+  @validator.validate_inputs(return_value=False)
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.
 
@@ -518,20 +417,9 @@ class Optimizely(object):
       A boolean value that indicates if the set completed successfully.
     """
 
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('set_forced_variation'))
-      return False
-
-    if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
-      return False
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return False
-
     return self.config.set_forced_variation(experiment_key, user_id, variation_key)
 
+  @validator.validate_inputs(return_value=None)
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
 
@@ -542,18 +430,6 @@ class Optimizely(object):
     Returns:
       The forced variation key. None if no forced variation key.
     """
-
-    if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_forced_variation'))
-      return None
-
-    if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
-      return None
-
-    if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
-      return None
 
     forced_variation = self.config.get_forced_variation(experiment_key, user_id)
     return forced_variation.key if forced_variation else None

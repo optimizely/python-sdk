@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,14 +11,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import functools
+import inspect
 import json
 import jsonschema
 import math
 import numbers
 from six import string_types
 
+from optimizely import exceptions
 from optimizely.user_profile import UserProfile
 from . import constants
+from . import enums
 
 
 def is_datafile_valid(datafile):
@@ -98,7 +102,7 @@ def is_error_handler_valid(error_handler):
 
 
 def are_attributes_valid(attributes):
-  """ Determine if attributes provided are dict or not.
+  """ Determine if attributes provided are dict if not None.
 
   Args:
     attributes: User attributes which need to be validated.
@@ -107,11 +111,11 @@ def are_attributes_valid(attributes):
     Boolean depending upon whether attributes are in valid format or not.
   """
 
-  return type(attributes) is dict
+  return attributes is None or type(attributes) is dict
 
 
 def are_event_tags_valid(event_tags):
-  """ Determine if event tags provided are dict or not.
+  """ Determine if event tags provided are dict if not None.
 
   Args:
     event_tags: Event tags which need to be validated.
@@ -120,7 +124,7 @@ def are_event_tags_valid(event_tags):
     Boolean depending upon whether event_tags are in valid format or not.
   """
 
-  return type(event_tags) is dict
+  return event_tags is None or type(event_tags) is dict
 
 
 def is_user_profile_valid(user_profile):
@@ -253,3 +257,62 @@ def are_values_same_type(first_val, second_val):
     return True
 
   return False
+
+
+def validate_inputs(return_value):
+  """ Method to decorate a function by performing argument validation
+  before executing the function.
+
+  Args:
+    return_value: Value to return if argument validation fails.
+
+  Returns:
+    Function: The decorated function.
+  """
+  validators = {}
+  validators['attributes'] = are_attributes_valid
+  validators['event_key'] = is_non_empty_string
+  validators['event_tags'] = are_event_tags_valid
+  validators['experiment_key'] = is_non_empty_string
+  validators['feature_key'] = is_non_empty_string
+  validators['user_id'] = lambda user_id: isinstance(user_id, string_types)
+  validators['variable_key'] = is_non_empty_string
+
+  exceptions_dict = {}
+  exceptions_dict['attributes'] = exceptions.InvalidAttributeException
+  exceptions_dict['event_tags'] = exceptions.InvalidEventTagException
+
+  def call_error_handler(self, key):
+    exception_to_handle = exceptions_dict.get(key)
+    if exception_to_handle is not None:
+      self.error_handler.handle_error(
+        exception_to_handle(enums.Errors.INVALID_INPUT_ERROR.format(key))
+      )
+
+  def wrapper_decorator(func):
+    args_keys = inspect.getargspec(func).args
+    # ignore self
+    args_keys = args_keys[1:]
+
+    @functools.wraps(func)
+    def wrapper_inner(self, *args, **kwargs):
+      if not self.is_valid:
+        self.logger.error(enums.Errors.INVALID_DATAFILE.format(func.__name__))
+        return return_value
+
+      # Add positional args in kwargs
+      for i in range(len(args)):
+        kwargs[args_keys[i]] = args[i]
+
+      for arg_key in kwargs:
+        if arg_key in validators:
+          if not validators[arg_key](kwargs[arg_key]):
+            self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format(arg_key))
+            call_error_handler(self, arg_key)
+            return return_value
+
+      return func(self, **kwargs)
+
+    return wrapper_inner
+
+  return wrapper_decorator
