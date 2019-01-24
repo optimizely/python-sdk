@@ -47,8 +47,6 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     json.dumps(audience_conditions)
   ))
 
-  logger.debug(logs.USER_ATTRIBUTES.format(json.dumps(attributes)))
-
   if attributes is None:
     attributes = {}
 
@@ -72,8 +70,8 @@ def is_user_in_experiment(config, experiment, attributes, logger):
       lambda index: evaluate_custom_attr(audienceId, index)
     )
 
-    result_log = str(result) if result is not None else 'UNKNOWN'
-    logger.debug(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_log))
+    result_str = str(result) if result is not None else 'UNKNOWN'
+    logger.debug(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
 
     return result
 

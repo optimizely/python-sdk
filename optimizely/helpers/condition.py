@@ -98,20 +98,12 @@ class CustomAttributeConditionEvaluator(object):
     if not self.is_value_valid_for_exact_conditions(condition_value):
       return None
 
-    if not self.is_value_valid_for_exact_conditions(user_value):
+    if not self.is_value_valid_for_exact_conditions(user_value) or \
+       not validator.are_values_same_type(condition_value, user_value):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
           self._get_condition_log(index),
-          condition_name,
-          user_value
-      ))
-      return None
-
-    if not validator.are_values_same_type(condition_value, user_value):
-      self.logger.debug(logs.MISMATCH_TYPE.format(
-        self._get_condition_log(index),
-        condition_name,
-        type(user_value),
-        type(condition_value)
+          type(user_value),
+          condition_name
       ))
       return None
 
@@ -151,9 +143,9 @@ class CustomAttributeConditionEvaluator(object):
 
     if not validator.is_finite_number(user_value):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-        self._get_condition_log(index),
-        condition_name,
-        user_value
+          self._get_condition_log(index),
+          type(user_value),
+          condition_name
       ))
       return None
 
@@ -180,9 +172,9 @@ class CustomAttributeConditionEvaluator(object):
 
     if not validator.is_finite_number(user_value):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-        self._get_condition_log(index),
-        condition_name,
-        user_value
+          self._get_condition_log(index),
+          type(user_value),
+          condition_name
       ))
       return None
 
@@ -209,9 +201,9 @@ class CustomAttributeConditionEvaluator(object):
 
     if not isinstance(user_value, string_types):
       self.logger.warning(logs.UNEXPECTED_TYPE.format(
-        self._get_condition_log(index),
-        condition_name,
-        user_value
+          self._get_condition_log(index),
+          type(user_value),
+          condition_name
       ))
       return None
 
@@ -251,10 +243,15 @@ class CustomAttributeConditionEvaluator(object):
       self.logger.warning(logs.UNKNOWN_MATCH_TYPE.format(self._get_condition_log(index)))
       return None
 
-    attribute_key = self.condition_data[index][0]
-    if attribute_key not in self.attributes and condition_match != ConditionMatchTypes.EXISTS:
-      self.logger.debug(logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_log(index), attribute_key))
-      return None
+    if condition_match != ConditionMatchTypes.EXISTS:
+      attribute_key = self.condition_data[index][0]
+      if attribute_key not in self.attributes:
+        self.logger.debug(logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_log(index), attribute_key))
+        return None
+
+      if self.attributes.get(attribute_key) is None:
+        self.logger.warning(logs.NULL_ATTRIBUTE_VALUE.format(self._get_condition_log(index), attribute_key))
+        return None
 
     return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)
 

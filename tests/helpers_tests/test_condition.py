@@ -922,8 +922,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
-      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'favorite_constellation', None
+      enums.AudienceEvaluationLogs.NULL_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), 'favorite_constellation'
       )
     )
 
@@ -948,8 +948,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
-      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'meters_travelled', None
+      enums.AudienceEvaluationLogs.NULL_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), 'meters_travelled'
       )
     )
 
@@ -974,8 +974,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
-      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'meters_travelled', None
+      enums.AudienceEvaluationLogs.NULL_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), 'meters_travelled'
       )
     )
 
@@ -1000,8 +1000,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
-      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'headline_text', None
+      enums.AudienceEvaluationLogs.NULL_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), 'headline_text'
       )
     )
 
@@ -1040,7 +1040,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
       enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'favorite_constellation', {}
+        json.dumps(expected_condition_log), type({}), 'favorite_constellation'
       )
     )
 
@@ -1066,7 +1066,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
       enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'meters_travelled', '48'
+        json.dumps(expected_condition_log), type('48'), 'meters_travelled'
       )
     )
 
@@ -1092,7 +1092,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
       enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'meters_travelled', True
+        json.dumps(expected_condition_log), type(True), 'meters_travelled'
       )
     )
 
@@ -1118,12 +1118,12 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
       enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
-        json.dumps(expected_condition_log), 'headline_text', 1234
+        json.dumps(expected_condition_log), type(1234), 'headline_text'
       )
     )
 
   def test_exact__user_value_type_mismatch(self):
-    log_level = 'debug'
+    log_level = 'warning'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': 5}
 
@@ -1143,7 +1143,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with(
-      enums.AudienceEvaluationLogs.MISMATCH_TYPE.format(
-        json.dumps(expected_condition_log), 'favorite_constellation', type(5), type('Lacerta')
+      enums.AudienceEvaluationLogs.UNEXPECTED_TYPE.format(
+        json.dumps(expected_condition_log), type(5), 'favorite_constellation',
       )
     )

@@ -15,21 +15,22 @@ import logging
 
 
 class AudienceEvaluationLogs(object):
-  AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated as {}.'
-  AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment {} collectively evaluated as {}.'
+  AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
+  AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
   EVALUATING_AUDIENCES = 'Evaluating audiences for experiment "{}": "{}".'
   EVALUATING_AUDIENCE_WITH_CONDITIONS = 'Starting to evaluate audience "{}" with conditions: "{}".'
-  MISMATCH_TYPE = 'Audience condition {} evaluated as UNKNOWN because the value for user attribute "{}" '\
-                  'is "{}" while expected is "{}".'
-  MISSING_ATTRIBUTE_VALUE = 'Audience condition {} evaluated as UNKNOWN because no user value was passed for '\
-                            'attribute "{}".'
-  NO_AUDIENCE_ATTACHED = 'No Audience attached to experiment "{}". Evaluated as True.'
-  UNEXPECTED_TYPE = 'Audience condition {} evaluated as UNKNOWN because the value for user attribute "{}" is '\
-                    'inapplicable: "{}".'
+  MISSING_ATTRIBUTE_VALUE = 'Audience condition {} evaluated to UNKNOWN because no value was passed for '\
+                            'user attribute "{}".'
+  NO_AUDIENCE_ATTACHED = 'No Audience attached to experiment "{}". Evaluated to True.'
+  NULL_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because a null value was passed '\
+                         'for user attribute "{}".'
+  UNEXPECTED_TYPE = 'Audience condition {} evaluated to UNKNOWN because a value of type "{}" was passed '\
+                    'for user attribute "{}".'
 
-  UNKNOWN_CONDITION_TYPE = 'Audience condition "{}" has an unknown condition type.'
-  UNKNOWN_MATCH_TYPE = 'Audience condition "{}" uses an unknown match type.'
-  USER_ATTRIBUTES = 'User attributes: "{}".'
+  UNKNOWN_CONDITION_TYPE = 'Audience condition "{}" uses an unknown condition type. You may need to upgrade to a'\
+                           'newer release of the Optimizely SDK.'
+  UNKNOWN_MATCH_TYPE = 'Audience condition "{}" uses an unknown match type. You may need to upgrade to a '\
+                       'newer release of the Optimizely SDK.'
 
 
 class ControlAttributes(object):
