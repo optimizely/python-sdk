@@ -19,6 +19,8 @@ class AudienceEvaluationLogs(object):
   AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
   EVALUATING_AUDIENCES = 'Evaluating audiences for experiment "{}": "{}".'
   EVALUATING_AUDIENCE_WITH_CONDITIONS = 'Starting to evaluate audience "{}" with conditions: "{}".'
+  INFINITE_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because the number value ' \
+                         'for user attribute "{}" is not in the range [-2^53, +2^53].'
   MISSING_ATTRIBUTE_VALUE = 'Audience condition {} evaluated to UNKNOWN because no value was passed for '\
                             'user attribute "{}".'
   NO_AUDIENCE_ATTACHED = 'No Audience attached to experiment "{}". Evaluated to True.'
@@ -28,6 +30,8 @@ class AudienceEvaluationLogs(object):
                     'for user attribute "{}".'
 
   UNKNOWN_CONDITION_TYPE = 'Audience condition "{}" uses an unknown condition type. You may need to upgrade to a'\
+                           'newer release of the Optimizely SDK.'
+  UNKNOWN_CONDITION_VALUE = 'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a'\
                            'newer release of the Optimizely SDK.'
   UNKNOWN_MATCH_TYPE = 'Audience condition "{}" uses an unknown match type. You may need to upgrade to a '\
                        'newer release of the Optimizely SDK.'

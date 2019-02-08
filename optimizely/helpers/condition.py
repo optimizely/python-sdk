@@ -96,11 +96,15 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not self.is_value_valid_for_exact_conditions(condition_value):
+      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_log(index),
+        condition_value
+      ))
       return None
 
     if not self.is_value_valid_for_exact_conditions(user_value) or \
        not validator.are_values_same_type(condition_value, user_value):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.debug(logs.UNEXPECTED_TYPE.format(
           self._get_condition_log(index),
           type(user_value),
           condition_name
@@ -139,10 +143,14 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not validator.is_finite_number(condition_value):
+      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_log(index),
+        condition_value
+      ))
       return None
 
     if not validator.is_finite_number(user_value):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.debug(logs.UNEXPECTED_TYPE.format(
           self._get_condition_log(index),
           type(user_value),
           condition_name
@@ -168,10 +176,14 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not validator.is_finite_number(condition_value):
+      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_log(index),
+        condition_value
+      ))
       return None
 
     if not validator.is_finite_number(user_value):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.debug(logs.UNEXPECTED_TYPE.format(
           self._get_condition_log(index),
           type(user_value),
           condition_name
@@ -197,10 +209,14 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not isinstance(condition_value, string_types):
+      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_log(index),
+        condition_value
+      ))
       return None
 
     if not isinstance(user_value, string_types):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.debug(logs.UNEXPECTED_TYPE.format(
           self._get_condition_log(index),
           type(user_value),
           condition_name

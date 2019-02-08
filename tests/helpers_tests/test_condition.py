@@ -289,7 +289,10 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     """ Test that CustomAttributeConditionEvaluator.evaluate returns True
         if is_finite_number returns True. Returns None if is_finite_number returns False. """
 
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+    log_level = 'warning'
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
         exact_int_condition_list, {'lasers_count': 9000}, self.mock_client_logger
       )
 
@@ -299,6 +302,20 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
       self.assertIsNone(evaluator.evaluate(0))
 
     mock_is_finite.assert_called_once_with(9000)
+
+    expected_condition_log = {
+      "name": 'lasers_count',
+      "value": 9000,
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNKNOWN_CONDITION_VALUE.format(
+        json.dumps(expected_condition_log)
+      )
+    )
 
     # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
     with mock.patch('optimizely.helpers.validator.is_finite_number',
@@ -370,6 +387,31 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     )
 
     self.assertIsNone(evaluator.evaluate(0))
+
+  def test_substring__returns_null__when_condition_value_not_a_string(self):
+
+    log_level = 'warning'
+    substring_condition_list = [['headline_text', 5, 'custom_attribute', 'substring']]
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        substring_condition_list, {'headline_text': 'Limited time, buy now!'}, self.mock_client_logger
+      )
+
+    self.assertIsNone(evaluator.evaluate(0))
+    expected_condition_log = {
+      "name": 'headline_text',
+      "value": 5,
+      "type": 'custom_attribute',
+      "match": 'substring'
+    }
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNKNOWN_CONDITION_VALUE.format(
+        json.dumps(expected_condition_log)
+      )
+    )
 
   def test_substring__returns_null__when_no_user_provided_value(self):
 
@@ -627,9 +669,12 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     """ Test that CustomAttributeConditionEvaluator.evaluate returns True
         if is_finite_number returns True. Returns None if is_finite_number returns False. """
 
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      gt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
-    )
+    log_level = 'warning'
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+      )
 
     def is_finite_number__rejecting_condition_value(value):
       if value == 48:
@@ -642,6 +687,20 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
     mock_is_finite.assert_called_once_with(48)
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNKNOWN_CONDITION_VALUE.format(
+        json.dumps(expected_condition_log)
+      )
+    )
 
     def is_finite_number__rejecting_user_attribute_value(value):
       if value == 48.1:
@@ -666,9 +725,12 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
     """ Test that CustomAttributeConditionEvaluator.evaluate returns True
         if is_finite_number returns True. Returns None if is_finite_number returns False. """
 
-    evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      lt_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
-    )
+    log_level = 'warning'
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+      )
 
     def is_finite_number__rejecting_condition_value(value):
       if value == 48:
@@ -681,6 +743,20 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
     # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
     mock_is_finite.assert_called_once_with(48)
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.UNKNOWN_CONDITION_VALUE.format(
+        json.dumps(expected_condition_log)
+      )
+    )
 
     def is_finite_number__rejecting_user_attribute_value(value):
       if value == 47:
@@ -1019,7 +1095,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     self.mock_client_logger.debug.assert_not_called()
 
   def test_exact__user_value__unexpected_type(self):
-    log_level = 'warning'
+    log_level = 'debug'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': {}}
 
@@ -1045,7 +1121,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_greater_than__user_value__unexpected_type(self):
-    log_level = 'warning'
+    log_level = 'debug'
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {'meters_travelled': '48'}
 
@@ -1071,7 +1147,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_less_than__user_value__unexpected_type(self):
-    log_level = 'warning'
+    log_level = 'debug'
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {'meters_travelled': True}
 
@@ -1097,7 +1173,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_substring__user_value__unexpected_type(self):
-    log_level = 'warning'
+    log_level = 'debug'
     substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
     user_attributes = {'headline_text': 1234}
 
@@ -1123,7 +1199,7 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     )
 
   def test_exact__user_value_type_mismatch(self):
-    log_level = 'warning'
+    log_level = 'debug'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': 5}
 
