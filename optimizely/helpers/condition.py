@@ -95,6 +95,14 @@ class CustomAttributeConditionEvaluator(object):
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(condition_name)
 
+    if isinstance(user_value, (numbers.Integral, float)) and \
+       abs(user_value) > (2**53):
+      self.logger.debug(logs.INFINITE_ATTRIBUTE_VALUE.format(
+        self._get_condition_log(index),
+        user_value
+      ))
+      return None
+
     if not self.is_value_valid_for_exact_conditions(condition_value):
       self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
         self._get_condition_log(index),
@@ -142,6 +150,14 @@ class CustomAttributeConditionEvaluator(object):
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(condition_name)
 
+    if isinstance(user_value, (numbers.Integral, float)) and \
+            abs(user_value) > (2**53):
+      self.logger.debug(logs.INFINITE_ATTRIBUTE_VALUE.format(
+        self._get_condition_log(index),
+        user_value
+      ))
+      return None
+
     if not validator.is_finite_number(condition_value):
       self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
         self._get_condition_log(index),
@@ -174,6 +190,14 @@ class CustomAttributeConditionEvaluator(object):
     condition_name = self.condition_data[index][0]
     condition_value = self.condition_data[index][1]
     user_value = self.attributes.get(condition_name)
+
+    if isinstance(user_value, (numbers.Integral, float)) and \
+      abs(user_value) > (2**53):
+      self.logger.debug(logs.INFINITE_ATTRIBUTE_VALUE.format(
+        self._get_condition_log(index),
+        user_value
+      ))
+      return None
 
     if not validator.is_finite_number(condition_value):
       self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(

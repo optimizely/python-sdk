@@ -1198,6 +1198,84 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
       )
     )
 
+  def test_exact__user_value__infinite(self):
+    log_level = 'debug'
+    exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': int(2**53) + 1}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.INFINITE_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), int(2**53) + 1
+      )
+    )
+
+  def test_greater_than__user_value__infinite(self):
+    log_level = 'debug'
+    gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+    user_attributes = {'meters_travelled': int(2**53) + 1}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.INFINITE_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), int(2**53) + 1
+      )
+    )
+
+  def test_less_than__user_value__infinite(self):
+    log_level = 'debug'
+    lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+    user_attributes = {'meters_travelled': int(2**53) + 1}
+
+    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_condition_list, user_attributes, self.mock_client_logger
+      )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with(
+      enums.AudienceEvaluationLogs.INFINITE_ATTRIBUTE_VALUE.format(
+        json.dumps(expected_condition_log), int(2**53) + 1
+      )
+    )
+
   def test_exact__user_value_type_mismatch(self):
     log_level = 'debug'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
