@@ -32,20 +32,21 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     Boolean representing if user satisfies audience conditions for any of the audiences or not.
   """
 
-  # Return True in case there are no audiences
   audience_conditions = experiment.getAudienceConditionsOrIds()
 
-  if audience_conditions is None or audience_conditions == []:
-    logger.info(logs.NO_AUDIENCE_ATTACHED.format(
-      experiment.key
-    ))
-
-    return True
-
-  logger.debug(logs.EVALUATING_AUDIENCES.format(
+  logger.debug(logs.EVALUATING_AUDIENCES_COMBINED.format(
     experiment.key,
     json.dumps(audience_conditions)
   ))
+
+  # Return True in case there are no audiences
+  if audience_conditions is None or audience_conditions == []:
+    logger.info(logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+      experiment.key,
+      'TRUE'
+    ))
+
+    return True
 
   if attributes is None:
     attributes = {}
@@ -63,15 +64,15 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     if audience is None:
       return None
 
-    logger.debug(logs.EVALUATING_AUDIENCE_WITH_CONDITIONS.format(audienceId, audience.conditions))
+    logger.debug(logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
 
     result = condition_tree_evaluator.evaluate(
       audience.conditionStructure,
       lambda index: evaluate_custom_attr(audienceId, index)
     )
 
-    result_str = str(result) if result is not None else 'UNKNOWN'
-    logger.debug(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
+    result_str = str(result).upper() if result is not None else 'UNKNOWN'
+    logger.info(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
 
     return result
 
@@ -84,7 +85,7 @@ def is_user_in_experiment(config, experiment, attributes, logger):
 
   logger.info(logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
       experiment.key,
-      str(eval_result)
+      str(eval_result).upper()
     ))
 
   return eval_result
