@@ -1037,8 +1037,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with((
-      'Audience condition "{}" evaluated to UNKNOWN because a value of type "<type \'dict\'>" was passed for '
-      'user attribute "favorite_constellation".').format(json.dumps(expected_condition_log)))
+      'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
+      'user attribute "favorite_constellation".').format(json.dumps(expected_condition_log), type({})))
 
   def test_greater_than__user_value__unexpected_type(self):
     log_level = 'warning'
@@ -1062,8 +1062,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with((
       'Audience condition "{}"'
-      ' evaluated to UNKNOWN because a value of type "<type \'str\'>" was passed for user attribute '
-      '"meters_travelled".').format(json.dumps(expected_condition_log)))
+      ' evaluated to UNKNOWN because a value of type "{}" was passed for user attribute '
+      '"meters_travelled".').format(json.dumps(expected_condition_log), type('48')))
 
   def test_less_than__user_value__unexpected_type(self):
     log_level = 'warning'
@@ -1087,8 +1087,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with((
       'Audience condition "{}"'
-      ' evaluated to UNKNOWN because a value of type "<type \'bool\'>" was passed for user attribute '
-      '"meters_travelled".').format(json.dumps(expected_condition_log)))
+      ' evaluated to UNKNOWN because a value of type "{}" was passed for user attribute '
+      '"meters_travelled".').format(json.dumps(expected_condition_log), type(True)))
 
   def test_substring__user_value__unexpected_type(self):
     log_level = 'warning'
@@ -1111,8 +1111,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with((
-      'Audience condition "{}" evaluated to UNKNOWN because a value of type "<type \'int\'>" was passed for '
-      'user attribute "headline_text".').format(json.dumps(expected_condition_log)))
+      'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
+      'user attribute "headline_text".').format(json.dumps(expected_condition_log), type(1234)))
 
   def test_exact__user_value__infinite(self):
     log_level = 'warning'
@@ -1210,5 +1210,5 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
     mock_log = getattr(self.mock_client_logger, log_level)
     mock_log.assert_called_once_with((
-      'Audience condition "{}" evaluated to UNKNOWN because a value of type "<type \'int\'>" was passed for '
-      'user attribute "favorite_constellation".').format(json.dumps(expected_condition_log)))
+      'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
+      'user attribute "favorite_constellation".').format(json.dumps(expected_condition_log), type(5)))
