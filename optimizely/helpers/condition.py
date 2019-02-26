@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import json
-import numbers
 
 from six import string_types
 

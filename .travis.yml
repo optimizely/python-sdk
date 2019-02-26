@@ -8,26 +8,31 @@ python:
   - "pypy"
   - "pypy3"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
-before_script: "pep8"
 addons:
   srcclr: true
 script: "nosetests --with-coverage --cover-package=optimizely"
 after_success:
   - coveralls
 
-# Integration tests need to run first to reset the PR build status to pending
+# Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
+  - 'Linting'
   - 'Integration tests'
   - 'Test'
 
 jobs:
   include:
-    - stage: 'Integration tests'
+    - stage: 'Linting'
+      language: python
+      python: "2.7"
+      install: "pip install flake8"
+      script: "flake8"
+      after_success: travis_terminate 0
+    - stage: 'Integration Tests'
       merge_mode: replace
       env: SDK=python
       cache: false
       language: python
-      before_install: skip
       install:
         - "pip install awscli"
       before_script:
