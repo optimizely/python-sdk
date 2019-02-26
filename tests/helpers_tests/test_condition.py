@@ -16,7 +16,6 @@ import mock
 from six import PY2
 
 from optimizely.helpers import condition as condition_helper
-from optimizely.helpers import enums
 
 from tests import base
 
@@ -288,8 +287,6 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
   def test_exact__given_number_values__calls_is_finite_number(self):
     """ Test that CustomAttributeConditionEvaluator.evaluate returns True
         if is_finite_number returns True. Returns None if is_finite_number returns False. """
-
-    log_level = 'warning'
 
     evaluator = condition_helper.CustomAttributeConditionEvaluator(
       exact_int_condition_list, {'lasers_count': 9000}, self.mock_client_logger

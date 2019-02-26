@@ -16,7 +16,6 @@ import mock
 
 from optimizely import optimizely
 from optimizely.helpers import audience
-from optimizely.helpers import enums
 from tests import base
 
 
@@ -260,14 +259,14 @@ class AudienceLoggingTest(base.BaseTest):
         'Evaluating audiences for experiment "audience_combinations_experiment": ["or", ["or", "3468206642", '
         '"3988293898", "3988293899"]].'
       ),
-      mock.call.debug('Starting to evaluate audience "3468206642" with conditions: "' +
-                      audience_3468206642.conditions + '".'),
+      mock.call.debug('Starting to evaluate audience "3468206642" with conditions: '
+                      '"' + audience_3468206642.conditions + '".'),
       mock.call.info('Audience "3468206642" evaluated to FALSE.'),
-      mock.call.debug('Starting to evaluate audience "3988293898" with conditions: "' +
-                      audience_3988293898.conditions + '".'),
+      mock.call.debug('Starting to evaluate audience "3988293898" with conditions: '
+                      '"' + audience_3988293898.conditions + '".'),
       mock.call.info('Audience "3988293898" evaluated to UNKNOWN.'),
-      mock.call.debug('Starting to evaluate audience "3988293899" with conditions: "' +
-                      audience_3988293899.conditions + '".'),
+      mock.call.debug('Starting to evaluate audience "3988293899" with conditions: '
+                      '"' + audience_3988293899.conditions + '".'),
       mock.call.info('Audience "3988293899" evaluated to TRUE.'),
       mock.call.info('Audiences for experiment "audience_combinations_experiment" collectively evaluated to TRUE.')
     ])
