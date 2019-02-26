@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -3280,6 +3280,7 @@ def create_optimizely_object(datafile):
     pass
 
   return optimizely.Optimizely(datafile, event_dispatcher=NoOpEventDispatcher)
+
 
 optimizely_obj_10_exp = create_optimizely_object(json.dumps(datafiles.get(10)))
 optimizely_obj_25_exp = create_optimizely_object(json.dumps(datafiles.get(25)))
