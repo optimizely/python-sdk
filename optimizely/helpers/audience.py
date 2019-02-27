@@ -15,7 +15,7 @@ import json
 
 from . import condition as condition_helper
 from . import condition_tree_evaluator
-from .enums import AudienceEvaluationLogs as logs
+from .enums import AudienceEvaluationLogs as audience_logs
 
 
 def is_user_in_experiment(config, experiment, attributes, logger):
@@ -34,14 +34,14 @@ def is_user_in_experiment(config, experiment, attributes, logger):
 
   audience_conditions = experiment.getAudienceConditionsOrIds()
 
-  logger.debug(logs.EVALUATING_AUDIENCES_COMBINED.format(
+  logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(
     experiment.key,
     json.dumps(audience_conditions)
   ))
 
   # Return True in case there are no audiences
   if audience_conditions is None or audience_conditions == []:
-    logger.info(logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
       experiment.key,
       'TRUE'
     ))
@@ -64,7 +64,7 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     if audience is None:
       return None
 
-    logger.debug(logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
+    logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
 
     result = condition_tree_evaluator.evaluate(
       audience.conditionStructure,
@@ -72,7 +72,7 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     )
 
     result_str = str(result).upper() if result is not None else 'UNKNOWN'
-    logger.info(logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
+    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
 
     return result
 
@@ -83,7 +83,7 @@ def is_user_in_experiment(config, experiment, attributes, logger):
 
   eval_result = eval_result or False
 
-  logger.info(logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+  logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
       experiment.key,
       str(eval_result).upper()
     ))

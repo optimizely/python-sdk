@@ -736,10 +736,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'regex']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -761,10 +760,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     condition_list = [['favorite_constellation', 'Lacerta', 'sdk_version', 'exact']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -785,10 +783,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -809,10 +806,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -833,10 +829,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -857,10 +852,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     substring_condition_list = [['headline_text', 'buy now', 'custom_attribute', 'substring']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        substring_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'headline_text',
@@ -880,24 +874,24 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
     user_attributes = {}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exists_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, user_attributes, self.mock_client_logger
+    )
 
     self.assertStrictFalse(evaluator.evaluate(0))
 
     self.mock_client_logger.debug.assert_not_called()
+    self.mock_client_logger.info.assert_not_called()
+    self.mock_client_logger.warning.assert_not_called()
 
   def test_exact__user_value__None(self):
     log_level = 'debug'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': None}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -918,10 +912,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {'meters_travelled': None}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -942,10 +935,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {'meters_travelled': None}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -966,10 +958,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
     user_attributes = {'headline_text': None}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        substring_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'headline_text',
@@ -989,24 +980,24 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
     user_attributes = {'input_value': None}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exists_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, user_attributes, self.mock_client_logger
+    )
 
     self.assertStrictFalse(evaluator.evaluate(0))
 
     self.mock_client_logger.debug.assert_not_called()
+    self.mock_client_logger.info.assert_not_called()
+    self.mock_client_logger.warning.assert_not_called()
 
   def test_exact__user_value__unexpected_type(self):
     log_level = 'warning'
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': {}}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -1027,10 +1018,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {'meters_travelled': '48'}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -1052,10 +1042,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {'meters_travelled': True}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -1077,10 +1066,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
     user_attributes = {'headline_text': 1234}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        substring_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'headline_text',
@@ -1101,10 +1089,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exact_condition_list = [['meters_travelled', 48, 'custom_attribute', 'exact']]
     user_attributes = {'meters_travelled': float("inf")}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     self.assertIsNone(evaluator.evaluate(0))
 
@@ -1126,10 +1113,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
     user_attributes = {'meters_travelled': float("nan")}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -1151,10 +1137,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
     user_attributes = {'meters_travelled': float('-inf')}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        lt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -1176,10 +1161,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': 5}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -1200,10 +1184,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exact_condition_list = [['favorite_constellation', {}, 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': 'Lacerta'}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -1224,10 +1207,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     exact_condition_list = [['favorite_constellation', float('inf'), 'custom_attribute', 'exact']]
     user_attributes = {'favorite_constellation': 'Lacerta'}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        exact_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'favorite_constellation',
@@ -1248,10 +1230,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     gt_condition_list = [['meters_travelled', True, 'custom_attribute', 'gt']]
     user_attributes = {'meters_travelled': 48}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -1272,10 +1253,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     gt_condition_list = [['meters_travelled', float('nan'), 'custom_attribute', 'lt']]
     user_attributes = {'meters_travelled': 48}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        gt_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'meters_travelled',
@@ -1296,10 +1276,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     substring_condition_list = [['headline_text', False, 'custom_attribute', 'substring']]
     user_attributes = {'headline_text': 'breaking news'}
 
-    with mock.patch('optimizely.logger.reset_logger', return_value=self.mock_client_logger):
-      evaluator = condition_helper.CustomAttributeConditionEvaluator(
-        substring_condition_list, user_attributes, self.mock_client_logger
-      )
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
 
     expected_condition_log = {
       "name": 'headline_text',

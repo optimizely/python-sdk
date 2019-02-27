@@ -17,7 +17,7 @@ import logging
 class AudienceEvaluationLogs(object):
   AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
   AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
-  EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: "{}".'
+  EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: {}.'
   EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for experiment "{}": {}.'
   INFINITE_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because the number value ' \
                          'for user attribute "{}" is not in the range [-2^53, +2^53].'

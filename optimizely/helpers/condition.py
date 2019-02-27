@@ -17,7 +17,7 @@ import numbers
 from six import string_types
 
 from . import validator
-from .enums import AudienceEvaluationLogs as logs
+from .enums import AudienceEvaluationLogs as audience_logs
 
 
 class ConditionOperatorTypes(object):
@@ -70,7 +70,7 @@ class CustomAttributeConditionEvaluator(object):
       value: Value to validate.
 
     Returns:
-      Boolean: True if value is a string type, or a boolean, or is a number. Otherwise False.
+      Boolean: True if value is a string, boolean, or number. Otherwise False.
     """
     # No need to check for bool since bool is a subclass of int
     if isinstance(value, string_types) or isinstance(value, (numbers.Integral, float)):
@@ -103,16 +103,15 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not self.is_value_type_valid_for_exact_conditions(condition_value) or \
-        self.is_value_a_number(condition_value) and \
-            not validator.is_finite_number(condition_value):
-              self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
-                self._get_condition_json(index)
-              ))
-              return None
+       (self.is_value_a_number(condition_value) and not validator.is_finite_number(condition_value)):
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_json(index)
+      ))
+      return None
 
     if not self.is_value_type_valid_for_exact_conditions(user_value) or \
        not validator.are_values_same_type(condition_value, user_value):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
           self._get_condition_json(index),
           type(user_value),
           condition_name
@@ -121,7 +120,7 @@ class CustomAttributeConditionEvaluator(object):
 
     if self.is_value_a_number(user_value) and \
        not validator.is_finite_number(user_value):
-        self.logger.warning(logs.INFINITE_ATTRIBUTE_VALUE.format(
+        self.logger.warning(audience_logs.INFINITE_ATTRIBUTE_VALUE.format(
           self._get_condition_json(index),
           condition_name
         ))
@@ -159,13 +158,13 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not validator.is_finite_number(condition_value):
-      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
         self._get_condition_json(index)
       ))
       return None
 
     if not self.is_value_a_number(user_value):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
           self._get_condition_json(index),
           type(user_value),
           condition_name
@@ -173,7 +172,7 @@ class CustomAttributeConditionEvaluator(object):
       return None
 
     if not validator.is_finite_number(user_value):
-      self.logger.warning(logs.INFINITE_ATTRIBUTE_VALUE.format(
+      self.logger.warning(audience_logs.INFINITE_ATTRIBUTE_VALUE.format(
         self._get_condition_json(index),
         condition_name
       ))
@@ -198,13 +197,13 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not validator.is_finite_number(condition_value):
-      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
         self._get_condition_json(index)
       ))
       return None
 
     if not self.is_value_a_number(user_value):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
           self._get_condition_json(index),
           type(user_value),
           condition_name
@@ -212,7 +211,7 @@ class CustomAttributeConditionEvaluator(object):
       return None
 
     if not validator.is_finite_number(user_value):
-      self.logger.warning(logs.INFINITE_ATTRIBUTE_VALUE.format(
+      self.logger.warning(audience_logs.INFINITE_ATTRIBUTE_VALUE.format(
         self._get_condition_json(index),
         condition_name
       ))
@@ -237,13 +236,13 @@ class CustomAttributeConditionEvaluator(object):
     user_value = self.attributes.get(condition_name)
 
     if not isinstance(condition_value, string_types):
-      self.logger.warning(logs.UNKNOWN_CONDITION_VALUE.format(
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
         self._get_condition_json(index),
       ))
       return None
 
     if not isinstance(user_value, string_types):
-      self.logger.warning(logs.UNEXPECTED_TYPE.format(
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
           self._get_condition_json(index),
           type(user_value),
           condition_name
@@ -275,7 +274,7 @@ class CustomAttributeConditionEvaluator(object):
     """
 
     if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
-      self.logger.warning(logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_json(index)))
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_json(index)))
       return None
 
     condition_match = self.condition_data[index][3]
@@ -283,17 +282,17 @@ class CustomAttributeConditionEvaluator(object):
       condition_match = ConditionMatchTypes.EXACT
 
     if condition_match not in self.EVALUATORS_BY_MATCH_TYPE:
-      self.logger.warning(logs.UNKNOWN_MATCH_TYPE.format(self._get_condition_json(index)))
+      self.logger.warning(audience_logs.UNKNOWN_MATCH_TYPE.format(self._get_condition_json(index)))
       return None
 
     if condition_match != ConditionMatchTypes.EXISTS:
       attribute_key = self.condition_data[index][0]
       if attribute_key not in self.attributes:
-        self.logger.debug(logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_json(index), attribute_key))
+        self.logger.debug(audience_logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_json(index), attribute_key))
         return None
 
       if self.attributes.get(attribute_key) is None:
-        self.logger.debug(logs.NULL_ATTRIBUTE_VALUE.format(self._get_condition_json(index), attribute_key))
+        self.logger.debug(audience_logs.NULL_ATTRIBUTE_VALUE.format(self._get_condition_json(index), attribute_key))
         return None
 
     return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)
