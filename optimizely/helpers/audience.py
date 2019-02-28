@@ -1,4 +1,4 @@
-# Copyright 2016, 2018, Optimizely
+# Copyright 2016, 2018-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,11 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
 from . import condition as condition_helper
 from . import condition_tree_evaluator
+from .enums import AudienceEvaluationLogs as audience_logs
 
 
-def is_user_in_experiment(config, experiment, attributes):
+def is_user_in_experiment(config, experiment, attributes, logger):
   """ Determine for given experiment if user satisfies the audiences for the experiment.
 
   Args:
@@ -23,14 +26,26 @@ def is_user_in_experiment(config, experiment, attributes):
     experiment: Object representing the experiment.
     attributes: Dict representing user attributes which will be used in determining
                 if the audience conditions are met. If not provided, default to an empty dict.
+    logger: Provides a logger to send log messages to.
 
   Returns:
     Boolean representing if user satisfies audience conditions for any of the audiences or not.
   """
 
-  # Return True in case there are no audiences
   audience_conditions = experiment.getAudienceConditionsOrIds()
+
+  logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(
+    experiment.key,
+    json.dumps(audience_conditions)
+  ))
+
+  # Return True in case there are no audiences
   if audience_conditions is None or audience_conditions == []:
+    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+      experiment.key,
+      'TRUE'
+    ))
+
     return True
 
   if attributes is None:
@@ -39,7 +54,7 @@ def is_user_in_experiment(config, experiment, attributes):
   def evaluate_custom_attr(audienceId, index):
     audience = config.get_audience(audienceId)
     custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      audience.conditionList, attributes)
+      audience.conditionList, attributes, logger)
 
     return custom_attr_condition_evaluator.evaluate(index)
 
@@ -49,14 +64,28 @@ def is_user_in_experiment(config, experiment, attributes):
     if audience is None:
       return None
 
-    return condition_tree_evaluator.evaluate(
+    logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
+
+    result = condition_tree_evaluator.evaluate(
       audience.conditionStructure,
       lambda index: evaluate_custom_attr(audienceId, index)
     )
+
+    result_str = str(result).upper() if result is not None else 'UNKNOWN'
+    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
+
+    return result
 
   eval_result = condition_tree_evaluator.evaluate(
     audience_conditions,
     evaluate_audience
   )
 
-  return eval_result or False
+  eval_result = eval_result or False
+
+  logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+      experiment.key,
+      str(eval_result).upper()
+    ))
+
+  return eval_result

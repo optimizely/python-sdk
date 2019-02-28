@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,6 +12,28 @@
 # limitations under the License.
 
 import logging
+
+
+class AudienceEvaluationLogs(object):
+  AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
+  AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
+  EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: {}.'
+  EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for experiment "{}": {}.'
+  INFINITE_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because the number value ' \
+                         'for user attribute "{}" is not in the range [-2^53, +2^53].'
+  MISSING_ATTRIBUTE_VALUE = 'Audience condition {} evaluated to UNKNOWN because no value was passed for '\
+                            'user attribute "{}".'
+  NULL_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because a null value was passed '\
+                         'for user attribute "{}".'
+  UNEXPECTED_TYPE = 'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed '\
+                    'for user attribute "{}".'
+
+  UNKNOWN_CONDITION_TYPE = 'Audience condition "{}" uses an unknown condition type. You may need to upgrade to a '\
+                           'newer release of the Optimizely SDK.'
+  UNKNOWN_CONDITION_VALUE = 'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '\
+                           'newer release of the Optimizely SDK.'
+  UNKNOWN_MATCH_TYPE = 'Audience condition "{}" uses an unknown match type. You may need to upgrade to a '\
+                       'newer release of the Optimizely SDK.'
 
 
 class ControlAttributes(object):
