@@ -35,12 +35,11 @@ jobs:
       env: SDK=python
       cache: false
       language: python
-      install:
-        - "pip install awscli"
+      install: skip
       before_script:
-        - "aws s3 cp s3://optimizely-travisci-artifacts/ci/trigger_fullstack-sdk-compat.sh ci/ && chmod u+x ci/trigger_fullstack-sdk-compat.sh"
+        - mkdir travis-ci-tools && pushd travis-ci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git master && popd
       script:
-        - "ci/trigger_fullstack-sdk-compat.sh"
+        - "travis-ci-tools/fsc-trigger/trigger_fullstack-sdk-compat.sh"
       after_success: travis_terminate 0
     - stage: 'Test'
       dist: xenial
