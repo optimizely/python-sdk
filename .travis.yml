@@ -34,12 +34,12 @@ jobs:
       merge_mode: replace
       env: SDK=python
       cache: false
-      language: python
+      language: minimal
       install: skip
       before_script:
-        - mkdir travis-ci-tools && pushd travis-ci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git master && popd
+        - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git && popd
       script:
-        - "travis-ci-tools/fsc-trigger/trigger_fullstack-sdk-compat.sh"
+        - "$HOME/travisci-tools/fsc-trigger/trigger_fullstack-sdk-compat.sh"
       after_success: travis_terminate 0
     - stage: 'Test'
       dist: xenial
