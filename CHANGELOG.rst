@@ -14,10 +14,13 @@ New Features:
       *unconditionally*, without first determining whether the user is
       targeted by a known experiment that uses the event. This may
       increase outbound network traffic.
-   -  In Optimizely results, conversion events sent by 3.0 SDKs are
-      automatically attributed to variations that the user has
-      previously seen, as long as our backend has actually received the
-      impression events for those variations.
+   -  In Optimizely results, conversion events sent by 3.0 SDKs don't
+      explicitly name the experiments and variations that are currently
+      targeted to the user. Instead, conversions are automatically
+      attributed to variations that the user has previously seen, as long
+      as those variations were served via 3.0 SDKs or by other clients
+      capable of automatic attribution, and as long as our backend
+      actually received the impression events for those variations.
    -  Altogether, this allows you to track conversion events and
       attribute them to variations even when you don’t know all of a
       user’s attribute values, and even if the user’s attribute values
@@ -70,6 +73,10 @@ New Features:
 Breaking Changes:
 ~~~~~~~~~~~~~~~~~
 
+-  Conversion events sent by 3.0 SDKs don't explicitly name the experiments
+   and variations that are currently targeted to the user, so these events
+   are unattributed in raw events data export. You must use the new _results_
+   export to determine the variations to which events have been attributed.
 -  Previously, notification listeners were only given string-valued user
    attributes because only strings could be passed into various method
    calls. That is no longer the case. You may pass non-string attribute
