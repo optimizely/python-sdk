@@ -2148,6 +2148,74 @@ class OptimizelyTest(base.BaseTest):
       mock.call('Variable with key "invalid_variable" not found in the datafile.')
     ])
 
+  def test_get_feature_variable__returns_default_value_if_feature_not_enabled(self):
+    """ Test that get_feature_variable_* returns default value if feature is not enabled for the user. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111128')
+
+    # Boolean
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)):
+      self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
+
+    # Double
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)):
+      self.assertEqual(10.99,
+                       opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
+
+    # Integer
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)):
+      self.assertEqual(999,
+                       opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
+
+    # String
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)):
+      self.assertEqual('devel',
+                       opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
+
+  def test_get_feature_variable__returns_default_value_if_feature_not_enabled_in_rollout(self):
+    """ Test that get_feature_variable_* returns default value if feature is not enabled for the user. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
+    mock_variation = opt_obj.config.get_variation_from_id('211127', '211229')
+
+    # Boolean
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)):
+      self.assertFalse(opt_obj.get_feature_variable_boolean('test_feature_in_rollout', 'is_running', 'test_user'))
+
+    # Double
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)):
+      self.assertEqual(99.99,
+                       opt_obj.get_feature_variable_double('test_feature_in_rollout', 'price', 'test_user'))
+
+    # Integer
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)):
+      self.assertEqual(999,
+                       opt_obj.get_feature_variable_integer('test_feature_in_rollout', 'count', 'test_user'))
+
+    # String
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)):
+      self.assertEqual('Hello',
+                       opt_obj.get_feature_variable_string('test_feature_in_rollout', 'message', 'test_user'))
+
   def test_get_feature_variable__returns_none_if_type_mismatch(self):
     """ Test that get_feature_variable_* returns None if type mismatch. """
 
