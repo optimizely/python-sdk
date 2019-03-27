@@ -22,8 +22,8 @@ from .helpers import validator
 from .user_profile import UserProfile
 
 Decision = namedtuple('Decision', 'experiment variation source')
-DECISION_SOURCE_EXPERIMENT = 'experiment'
-DECISION_SOURCE_ROLLOUT = 'rollout'
+DECISION_SOURCE_EXPERIMENT = 'EXPERIMENT'
+DECISION_SOURCE_ROLLOUT = 'ROLLOUT'
 
 
 class DecisionService(object):
@@ -296,6 +296,7 @@ class DecisionService(object):
               variation.key,
               experiment.key
             ))
+            return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
       else:
         self.logger.error(enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
 
@@ -312,10 +313,11 @@ class DecisionService(object):
             variation.key,
             experiment.key
           ))
+          return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
 
     # Next check if user is part of a rollout
-    if not variation and feature.rolloutId:
+    if feature.rolloutId:
       rollout = self.config.get_rollout_from_id(feature.rolloutId)
       return self.get_variation_for_rollout(rollout, user_id, attributes)
-
-    return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
+    else:
+      return Decision(None, None, DECISION_SOURCE_ROLLOUT)

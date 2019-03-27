@@ -384,21 +384,43 @@ class Optimizely(object):
     if not feature:
       return False
 
+    experiment_key = None
+    feature_enabled = False
+    variation_key = None
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
+    is_source_experiment = decision.source == decision_service.DECISION_SOURCE_EXPERIMENT
+
     if decision.variation:
+      feature_enabled = decision.variation.featureEnabled
       # Send event if Decision came from an experiment.
-      if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
+      if is_source_experiment:
+        experiment_key = decision.experiment.key
+        variation_key = decision.variation.key
         self._send_impression_event(decision.experiment,
                                     decision.variation,
                                     user_id,
                                     attributes)
 
-      if decision.variation.featureEnabled:
-        self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
-        return True
+    if feature_enabled:
+      self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+    else:
+      self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
 
-    self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
-    return False
+    self.notification_center.send_notifications(
+        enums.NotificationTypes.DECISION,
+        enums.DecisionInfoTypes.FEATURE,
+        user_id,
+        attributes or {},
+        {
+          'feature_key': feature_key,
+          'feature_enabled': feature_enabled,
+          'source': decision.source,
+          'source_experiment_key': experiment_key,
+          'source_variation_key': variation_key
+        }
+    )
+
+    return feature_enabled
 
   def get_enabled_features(self, user_id, attributes=None):
     """ Returns the list of features that are enabled for the user.
