@@ -75,7 +75,7 @@ Breaking Changes:
 
 -  Conversion events sent by 3.0 SDKs don't explicitly name the experiments
    and variations that are currently targeted to the user, so these events
-   are unattributed in raw events data export. You must use the new _results_
+   are unattributed in raw events data export. You must use the new *results*
    export to determine the variations to which events have been attributed.
 -  Previously, notification listeners were only given string-valued user
    attributes because only strings could be passed into various method
