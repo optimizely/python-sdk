@@ -92,3 +92,8 @@ class NotificationTypes(object):
   """
   ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
+  DECISION = "DECISION:type, user_id, attributes, decision_info"
+
+
+class DecisionInfoTypes(object):
+  FEATURE_VARIABLE = "feature_variable"

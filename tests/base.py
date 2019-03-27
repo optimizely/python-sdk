@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -307,7 +307,29 @@ class BaseTest(unittest.TestCase):
           'variations': [{
             'key': '211129',
             'id': '211129',
-            'featureEnabled': True
+            'featureEnabled': True,
+            'variables': [{
+               'id': '132', 'value': 'true'
+             }, {
+               'id': '133', 'value': 'Hello audience'
+             }, {
+               'id': '134', 'value': '39.99'
+             }, {
+               'id': '135', 'value': '399'
+             }]
+          }, {
+            'key': '211229',
+            'id': '211229',
+            'featureEnabled': False,
+            'variables': [{
+               'id': '132', 'value': 'true'
+             }, {
+               'id': '133', 'value': 'environment'
+             }, {
+               'id': '134', 'value': '49.99'
+             }, {
+               'id': '135', 'value': '499'
+             }]
           }]
         }, {
           'id': '211137',
@@ -379,7 +401,27 @@ class BaseTest(unittest.TestCase):
         'key': 'test_feature_in_rollout',
         'experimentIds': [],
         'rolloutId': '211111',
-        'variables': [],
+        'variables': [{
+            'id': '132',
+            'key': 'is_running',
+            'defaultValue': 'false',
+            'type': 'boolean'
+          }, {
+            'id': '133',
+            'key': 'message',
+            'defaultValue': 'Hello',
+            'type': 'string'
+          }, {
+            'id': '134',
+            'key': 'price',
+            'defaultValue': '99.99',
+            'type': 'double'
+          }, {
+            'id': '135',
+            'key': 'count',
+            'defaultValue': '999',
+            'type': 'integer'
+          }]
       }, {
         'id': '91113',
         'key': 'test_feature_in_group',

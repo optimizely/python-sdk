@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -885,7 +885,19 @@ class ConfigTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
 
-    expected_feature = entities.FeatureFlag('91112', 'test_feature_in_rollout', [], '211111', {})
+    expected_feature = entities.FeatureFlag(
+      '91112',
+      'test_feature_in_rollout',
+      [],
+      '211111',
+      {
+        'is_running': entities.Variable('132', 'is_running', 'boolean', 'false'),
+        'message': entities.Variable('133', 'message', 'string', 'Hello'),
+        'price': entities.Variable('134', 'price', 'double', '99.99'),
+        'count': entities.Variable('135', 'count', 'integer', '999')
+      }
+    )
+
     self.assertEqual(expected_feature, project_config.get_feature_from_key('test_feature_in_rollout'))
 
   def test_get_feature_from_key__invalid_feature_key(self):
@@ -916,7 +928,29 @@ class ConfigTest(base.BaseTest):
       'variations': [{
         'key': '211129',
         'id': '211129',
-        'featureEnabled': True
+        'featureEnabled': True,
+        'variables': [{
+           'id': '132', 'value': 'true'
+         }, {
+           'id': '133', 'value': 'Hello audience'
+         }, {
+           'id': '134', 'value': '39.99'
+         }, {
+           'id': '135', 'value': '399'
+         }]
+      }, {
+        'key': '211229',
+        'id': '211229',
+        'featureEnabled': False,
+        'variables': [{
+           'id': '132', 'value': 'true'
+         }, {
+           'id': '133', 'value': 'environment'
+         }, {
+           'id': '134', 'value': '49.99'
+         }, {
+           'id': '135', 'value': '499'
+         }]
       }]
     }, {
       'id': '211137',
