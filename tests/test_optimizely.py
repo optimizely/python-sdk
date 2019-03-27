@@ -398,42 +398,92 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
     self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
 
-  def test_activate_listener(self):
-    """ Test that activate calls broadcast activate with proper parameters. """
+  def test_activate_and_decision_listener(self):
+    """ Test that activate calls broadcast activate and decision with proper parameters. """
 
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_activate:
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
-    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
-                                                    self.project_config.get_experiment_from_key('test_experiment'),
-                                                    'test_user', None,
-                                                    self.project_config.get_variation_from_id('test_experiment',
-                                                                                              '111129'),
-                                                    mock_dispatch.call_args[0][0])
+    self.assertEqual(mock_broadcast.call_count, 2)
 
-  def test_activate_listener_with_attr(self):
-    """ Test that activate calls broadcast activate with proper parameters. """
+    mock_broadcast.assert_has_calls([
+      mock.call(
+        enums.NotificationTypes.DECISION,
+        'experiment',
+        'test_user',
+        {},
+        {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
+      ),
+      mock.call(
+        enums.NotificationTypes.ACTIVATE,
+        self.project_config.get_experiment_from_key('test_experiment'),
+        'test_user', None,
+        self.project_config.get_variation_from_id('test_experiment', '111129'),
+        mock_dispatch.call_args[0][0]
+      )
+    ])
+
+  def test_activate_and_decision_listener_with_attr(self):
+    """ Test that activate calls broadcast activate and decision with proper parameters. """
 
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
-      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_activate:
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
 
-    mock_broadcast_activate.assert_called_once_with(enums.NotificationTypes.ACTIVATE,
-                                                    self.project_config.get_experiment_from_key('test_experiment'),
-                                                    'test_user', {'test_attribute': 'test_value'},
-                                                    self.project_config.get_variation_from_id(
-                                                      'test_experiment', '111129'
-                                                    ),
-                                                    mock_dispatch.call_args[0][0]
-                                                    )
+    self.assertEqual(mock_broadcast.call_count, 2)
+
+    mock_broadcast.assert_has_calls([
+      mock.call(
+        enums.NotificationTypes.DECISION,
+        'experiment',
+        'test_user',
+        {'test_attribute': 'test_value'},
+        {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
+      ),
+      mock.call(
+        enums.NotificationTypes.ACTIVATE,
+        self.project_config.get_experiment_from_key('test_experiment'),
+        'test_user', {'test_attribute': 'test_value'},
+        self.project_config.get_variation_from_id('test_experiment', '111129'),
+        mock_dispatch.call_args[0][0]
+      )
+    ])
+
+  def test_decision_listener__user_not_in_experiment(self):
+    """ Test that activate calls broadcast decision with variation_key 'None' \
+    when user not in experiment. """
+
+    with mock.patch(
+        'optimizely.decision_service.DecisionService.get_variation',
+        return_value=None), \
+      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
+      self.assertEqual(None, self.optimizely.activate('test_experiment', 'test_user'))
+
+    mock_broadcast_decision.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'experiment',
+      'test_user',
+      {},
+      {
+        'experiment_key': 'test_experiment',
+        'variation_key': None
+      }
+     )
 
   def test_track_listener(self):
     """ Test that track calls notification broadcaster. """
@@ -1394,6 +1444,50 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.assertIsNone(self.optimizely.track('test_event', 99))
     mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
+
+  def test_get_variation(self):
+    """ Test that get_variation returns valid variation and broadcasts decision with proper parameters. """
+
+    with mock.patch(
+        'optimizely.decision_service.DecisionService.get_variation',
+        return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
+      self.assertEqual('variation', self.optimizely.get_variation('test_experiment', 'test_user'))
+
+    self.assertEqual(mock_broadcast.call_count, 1)
+
+    mock_broadcast.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'experiment',
+      'test_user',
+      {},
+      {
+        'experiment_key': 'test_experiment',
+        'variation_key': 'variation'
+      }
+    )
+
+  def test_get_variation__returns_none(self):
+    """ Test that get_variation returns no variation and broadcasts decision with proper parameters. """
+
+    with mock.patch(
+        'optimizely.decision_service.DecisionService.get_variation', return_value=None), \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
+      self.assertEqual(None, self.optimizely.get_variation('test_experiment', 'test_user',
+                                                            attributes={'test_attribute': 'test_value'}))
+
+    self.assertEqual(mock_broadcast.call_count, 1)
+
+    mock_broadcast.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'experiment',
+      'test_user',
+      {'test_attribute': 'test_value'},
+      {
+        'experiment_key': 'test_experiment',
+        'variation_key': None
+      }
+    )
 
   def test_get_variation__invalid_object(self):
     """ Test that get_variation logs error if Optimizely object is not created correctly. """
