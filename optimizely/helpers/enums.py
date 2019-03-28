@@ -89,11 +89,14 @@ class NotificationTypes(object):
       Experiment experiment, str user_id, dict attributes (can be None), Variation variation, Event event
       TRACK notification listener has the following parameters:
       str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
+      DECISION notification listener has the following parameters:
+      DecisionInfoTypes type, str user_id, dict attributes (can be None), dict decision_info
   """
   ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
-  TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
   DECISION = "DECISION:type, user_id, attributes, decision_info"
+  TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
 
 
 class DecisionInfoTypes(object):
+  EXPERIMENT = "experiment"
   FEATURE_VARIABLE = "feature_variable"

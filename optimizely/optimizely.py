@@ -361,6 +361,7 @@ class Optimizely(object):
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
+    variation_key = None
 
     if not experiment:
       self.logger.info('Experiment key "%s" is invalid. Not activating user "%s".' % (
@@ -374,9 +375,20 @@ class Optimizely(object):
 
     variation = self.decision_service.get_variation(experiment, user_id, attributes)
     if variation:
-      return variation.key
+      variation_key = variation.key
 
-    return None
+    self.notification_center.send_notifications(
+      enums.NotificationTypes.DECISION,
+      enums.DecisionInfoTypes.EXPERIMENT,
+      user_id,
+      attributes or {},
+      {
+         'experiment_key': experiment_key,
+         'variation_key': variation_key
+      }
+    )
+
+    return variation_key
 
   def is_feature_enabled(self, feature_key, user_id, attributes=None):
     """ Returns true if the feature is enabled for the given user.
