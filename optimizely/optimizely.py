@@ -403,7 +403,8 @@ class Optimizely(object):
     is_source_experiment = decision.source == decision_service.DECISION_SOURCE_EXPERIMENT
 
     if decision.variation:
-      feature_enabled = decision.variation.featureEnabled
+      if decision.variation.featureEnabled is True:
+        feature_enabled = True
       # Send event if Decision came from an experiment.
       if is_source_experiment:
         experiment_key = decision.experiment.key
