@@ -2242,6 +2242,122 @@ class OptimizelyTest(base.BaseTest):
       mock.call('Variable with key "invalid_variable" not found in the datafile.')
     ])
 
+  def test_get_feature_variable__returns_default_value_if_feature_not_enabled(self):
+    """ Test that get_feature_variable_* returns default value if feature is not enabled for the user. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111128')
+
+    # Boolean
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+
+      self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+      'Returning the default variable value "true".'
+    )
+
+    # Double
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(10.99,
+                       opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+      'Returning the default variable value "10.99".'
+    )
+
+    # Integer
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(999,
+                       opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+      'Returning the default variable value "999".'
+    )
+
+    # String
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual('devel',
+                       opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+      'Returning the default variable value "devel".'
+    )
+
+  def test_get_feature_variable__returns_default_value_if_feature_not_enabled_in_rollout(self):
+    """ Test that get_feature_variable_* returns default value if feature is not enabled for the user. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
+    mock_variation = opt_obj.config.get_variation_from_id('211127', '211229')
+
+    # Boolean
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertFalse(opt_obj.get_feature_variable_boolean('test_feature_in_rollout', 'is_running', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+      'Returning the default variable value "false".'
+    )
+
+    # Double
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(99.99,
+                       opt_obj.get_feature_variable_double('test_feature_in_rollout', 'price', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+      'Returning the default variable value "99.99".'
+    )
+
+    # Integer
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(999,
+                       opt_obj.get_feature_variable_integer('test_feature_in_rollout', 'count', 'test_user'))
+
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+      'Returning the default variable value "999".'
+    )
+
+    # String
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+         mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual('Hello',
+                       opt_obj.get_feature_variable_string('test_feature_in_rollout', 'message', 'test_user'))
+    mock_client_logger.info.assert_called_once_with(
+      'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+      'Returning the default variable value "Hello".'
+    )
+
   def test_get_feature_variable__returns_none_if_type_mismatch(self):
     """ Test that get_feature_variable_* returns None if type mismatch. """
 
@@ -2284,15 +2400,25 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
     # Should be included in the feature test via greater-than match audience with id '3468206647'
-    self.assertEqual(
-      'xyz',
-      opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'lasers': 71})
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(
+        'xyz',
+        opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'lasers': 71})
+      )
+
+    mock_client_logger.info.assert_called_once_with(
+      'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
     )
 
     # Should be included in the feature test via exact match boolean audience with id '3468206643'
-    self.assertEqual(
-      'xyz',
-      opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'should_do_it': True})
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(
+        'xyz',
+        opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'should_do_it': True})
+      )
+
+    mock_client_logger.info.assert_called_once_with(
+      'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
     )
 
   def test_get_feature_variable_returns__default_value__typed_audience_match(self):
