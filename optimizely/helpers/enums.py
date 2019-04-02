@@ -93,9 +93,10 @@ class NotificationTypes(object):
       DecisionInfoTypes type, str user_id, dict attributes (can be None), dict decision_info
   """
   ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
+  DECISION = "DECISION:type, user_id, attributes, decision_info"
   TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
-  DECISION = "DECISON:type, user_id, attributes, decision_info"
 
 
 class DecisionInfoTypes(object):
-  EXPERIMENT = "experiment"
+    EXPERIMENT = "experiment"
+    FEATURE = "feature"

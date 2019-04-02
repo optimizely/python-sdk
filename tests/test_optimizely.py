@@ -1595,7 +1595,8 @@ class OptimizelyTest(base.BaseTest):
 
   def test_is_feature_enabled__returns_true_for_feature_experiment_if_feature_enabled_for_variation(self):
     """ Test that the feature is enabled for the user if bucketed into variation of an experiment and
-    the variation's featureEnabled property is True. Also confirm that impression event is dispatched. """
+    the variation's featureEnabled property is True. Also confirm that impression event is dispatched and
+    decision listener is called with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1614,12 +1615,26 @@ class OptimizelyTest(base.BaseTest):
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
 
+    mock_broadcast_decision.assert_called_with(
+      enums.NotificationTypes.DECISION,
+      'feature',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': True,
+        'source': 'EXPERIMENT',
+        'source_experiment_key': 'test_experiment',
+        'source_variation_key': 'variation'
+      }
+    )
     expected_params = {
       'account_id': '12001',
       'project_id': '111111',
@@ -1659,7 +1674,8 @@ class OptimizelyTest(base.BaseTest):
 
   def test_is_feature_enabled__returns_false_for_feature_experiment_if_feature_disabled_for_variation(self):
     """ Test that the feature is disabled for the user if bucketed into variation of an experiment and
-    the variation's featureEnabled property is False. Also confirm that impression event is dispatched. """
+    the variation's featureEnabled property is False. Also confirm that impression event is dispatched and
+    decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1678,12 +1694,26 @@ class OptimizelyTest(base.BaseTest):
                       decision_service.DECISION_SOURCE_EXPERIMENT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
 
+    mock_broadcast_decision.assert_called_with(
+      enums.NotificationTypes.DECISION,
+      'feature',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': False,
+        'source': 'EXPERIMENT',
+        'source_experiment_key': 'test_experiment',
+        'source_variation_key': 'control'
+      }
+    )
     # Check that impression event is sent
     expected_params = {
       'account_id': '12001',
@@ -1724,7 +1754,8 @@ class OptimizelyTest(base.BaseTest):
 
   def test_is_feature_enabled__returns_true_for_feature_rollout_if_feature_enabled(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout and
-    the variation's featureEnabled property is True. Also confirm that no impression event is dispatched. """
+    the variation's featureEnabled property is True. Also confirm that no impression event is dispatched and
+    decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1743,18 +1774,34 @@ class OptimizelyTest(base.BaseTest):
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
 
+    mock_broadcast_decision.assert_called_with(
+      enums.NotificationTypes.DECISION,
+      'feature',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': True,
+        'source': 'ROLLOUT',
+        'source_experiment_key': None,
+        'source_variation_key': None
+      }
+    )
+
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_is_feature_enabled__returns_false_for_feature_rollout_if_feature_disabled(self):
     """ Test that the feature is disabled for the user if bucketed into variation of a rollout and
-    the variation's featureEnabled property is False. Also confirm that no impression event is dispatched. """
+    the variation's featureEnabled property is False. Also confirm that no impression event is dispatched and
+    decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
@@ -1773,11 +1820,26 @@ class OptimizelyTest(base.BaseTest):
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(feature, 'test_user', None)
+
+    mock_broadcast_decision.assert_called_with(
+      enums.NotificationTypes.DECISION,
+      'feature',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': False,
+        'source': 'ROLLOUT',
+        'source_experiment_key': None,
+        'source_variation_key': None
+      }
+    )
 
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -1790,24 +1852,6 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
-    # Test with decision_service.DECISION_SOURCE_EXPERIMENT
-    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
-                    return_value=decision_service.Decision(
-                      None,
-                      None,
-                      decision_service.DECISION_SOURCE_EXPERIMENT
-                    )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('time.time', return_value=42):
-      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
-
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
-
-    # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
-
-    # Test with decision_service.DECISION_SOURCE_ROLLOUT
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(
                       None,
@@ -1815,11 +1859,29 @@ class OptimizelyTest(base.BaseTest):
                       decision_service.DECISION_SOURCE_ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
+    # Check that impression event is not sent
+    self.assertEqual(0, mock_dispatch_event.call_count)
+
     mock_decision.assert_called_once_with(feature, 'test_user', None)
+
+    mock_broadcast_decision.assert_called_with(
+      enums.NotificationTypes.DECISION,
+      'feature',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': False,
+        'source': 'ROLLOUT',
+        'source_experiment_key': None,
+        'source_variation_key': None
+      }
+    )
 
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -1860,6 +1922,99 @@ class OptimizelyTest(base.BaseTest):
     mock_is_feature_enabled.assert_any_call('test_feature_in_rollout', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_group', 'user_1', None)
     mock_is_feature_enabled.assert_any_call('test_feature_in_experiment_and_rollout', 'user_1', None)
+
+  def test_get_enabled_features__broadcasts_decision_for_each_feature(self):
+    """ Test that get_enabled_features only returns features that are enabled for the specified user \
+    and broadcasts decision for each feature. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_variation_2 = opt_obj.config.get_variation_from_id('test_experiment', '111128')
+
+    def side_effect(*args, **kwargs):
+      feature = args[0]
+      if feature.key == 'test_feature_in_experiment':
+        return decision_service.Decision(mock_experiment, mock_variation,
+                                         decision_service.DECISION_SOURCE_EXPERIMENT
+                                         )
+      elif feature.key == 'test_feature_in_rollout':
+        return decision_service.Decision(mock_experiment, mock_variation,
+                                         decision_service.DECISION_SOURCE_ROLLOUT
+                                         )
+      elif feature.key == 'test_feature_in_experiment_and_rollout':
+        return decision_service.Decision(mock_experiment, mock_variation_2,
+                                         decision_service.DECISION_SOURCE_EXPERIMENT
+                                         )
+      else:
+        return decision_service.Decision(mock_experiment, mock_variation_2,
+                                         decision_service.DECISION_SOURCE_ROLLOUT
+                                         )
+
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                        side_effect=side_effect),\
+        mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') \
+            as mock_broadcast_decision:
+      received_features = opt_obj.get_enabled_features('user_1')
+
+    expected_enabled_features = ['test_feature_in_experiment', 'test_feature_in_rollout']
+
+    self.assertEqual(sorted(expected_enabled_features), sorted(received_features))
+
+    mock_broadcast_decision.assert_has_calls([
+      mock.call(
+        enums.NotificationTypes.DECISION,
+        'feature',
+        'user_1',
+        {},
+        {
+          'feature_key': 'test_feature_in_experiment',
+          'feature_enabled': True,
+          'source': 'EXPERIMENT',
+          'source_experiment_key': 'test_experiment',
+          'source_variation_key': 'variation'
+        }
+      ),
+      mock.call(
+       enums.NotificationTypes.DECISION,
+       'feature',
+       'user_1',
+       {},
+       {
+          'feature_key': 'test_feature_in_group',
+          'feature_enabled': False,
+          'source': 'ROLLOUT',
+          'source_experiment_key': None,
+          'source_variation_key': None
+       }
+      ),
+      mock.call(
+       enums.NotificationTypes.DECISION,
+       'feature',
+       'user_1',
+       {},
+       {
+         'feature_key': 'test_feature_in_rollout',
+         'feature_enabled': True,
+         'source': 'ROLLOUT',
+         'source_experiment_key': None,
+         'source_variation_key': None
+       }
+      ),
+      mock.call(
+       enums.NotificationTypes.DECISION,
+       'feature',
+       'user_1',
+       {},
+       {
+         'feature_key': 'test_feature_in_experiment_and_rollout',
+         'feature_enabled': False,
+         'source': 'EXPERIMENT',
+         'source_experiment_key': 'test_experiment',
+         'source_variation_key': 'control'
+       }
+      )
+    ], any_order=True)
 
   def test_get_enabled_features_invalid_user_id(self):
     with mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
