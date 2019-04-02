@@ -208,12 +208,25 @@ class Optimizely(object):
       )
       return None
 
+    variable_value = variable.defaultValue
+
     decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
     if decision.variation:
-      variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
 
+      feature_enabled = decision.variation.featureEnabled
+      if feature_enabled:
+        variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
+        self.logger.info(
+          'Got variable value "%s" for variable "%s" of feature flag "%s".' % (
+            variable_value, variable_key, feature_key
+          )
+        )
+      else:
+        self.logger.info(
+          'Feature "%s" for variation "%s" is not enabled. '
+          'Returning the default variable value "%s".' % (feature_key, decision.variation.key, variable_value)
+        )
     else:
-      variable_value = variable.defaultValue
       self.logger.info(
         'User "%s" is not in any variation or rollout rule. '
         'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
