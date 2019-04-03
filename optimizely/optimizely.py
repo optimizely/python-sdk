@@ -209,13 +209,24 @@ class Optimizely(object):
       return None
 
     feature_enabled = False
-
+    variable_value = variable.defaultValue
     decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
     if decision.variation:
-      variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
+
       feature_enabled = decision.variation.featureEnabled
+      if feature_enabled:
+        variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
+        self.logger.info(
+          'Got variable value "%s" for variable "%s" of feature flag "%s".' % (
+            variable_value, variable_key, feature_key
+          )
+        )
+      else:
+        self.logger.info(
+          'Feature "%s" for variation "%s" is not enabled. '
+          'Returning the default variable value "%s".' % (feature_key, decision.variation.key, variable_value)
+        )
     else:
-      variable_value = variable.defaultValue
       self.logger.info(
         'User "%s" is not in any variation or rollout rule. '
         'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
@@ -421,21 +432,44 @@ class Optimizely(object):
     if not feature:
       return False
 
+    experiment_key = None
+    feature_enabled = False
+    variation_key = None
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
+    is_source_experiment = decision.source == decision_service.DECISION_SOURCE_EXPERIMENT
+
     if decision.variation:
+      if decision.variation.featureEnabled is True:
+        feature_enabled = True
       # Send event if Decision came from an experiment.
-      if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
+      if is_source_experiment:
+        experiment_key = decision.experiment.key
+        variation_key = decision.variation.key
         self._send_impression_event(decision.experiment,
                                     decision.variation,
                                     user_id,
                                     attributes)
 
-      if decision.variation.featureEnabled:
-        self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
-        return True
+    if feature_enabled:
+      self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+    else:
+      self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
 
-    self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
-    return False
+    self.notification_center.send_notifications(
+        enums.NotificationTypes.DECISION,
+        enums.DecisionInfoTypes.FEATURE,
+        user_id,
+        attributes or {},
+        {
+          'feature_key': feature_key,
+          'feature_enabled': feature_enabled,
+          'source': decision.source,
+          'source_experiment_key': experiment_key,
+          'source_variation_key': variation_key
+        }
+    )
+
+    return feature_enabled
 
   def get_enabled_features(self, user_id, attributes=None):
     """ Returns the list of features that are enabled for the user.

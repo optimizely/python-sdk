@@ -99,4 +99,5 @@ class NotificationTypes(object):
 
 class DecisionInfoTypes(object):
   EXPERIMENT = "experiment"
+  FEATURE = "feature"
   FEATURE_VARIABLE = "feature_variable"
