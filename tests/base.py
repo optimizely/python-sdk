@@ -311,11 +311,11 @@ class BaseTest(unittest.TestCase):
             'variables': [{
                'id': '132', 'value': 'true'
              }, {
-               'id': '135', 'value': '395'
+               'id': '133', 'value': 'Hello audience'
              }, {
                'id': '134', 'value': '39.99'
              }, {
-               'id': '133', 'value': 'Hello audience'
+               'id': '135', 'value': '399'
              }]
           }, {
             'key': '211229',
@@ -323,12 +323,12 @@ class BaseTest(unittest.TestCase):
             'featureEnabled': False,
             'variables': [{
                'id': '132', 'value': 'true'
-              }, {
-               'id': '135', 'value': '395'
              }, {
-               'id': '134', 'value': '39.99'
+               'id': '133', 'value': 'environment'
              }, {
-               'id': '133', 'value': 'Hello audience'
+               'id': '134', 'value': '49.99'
+             }, {
+               'id': '135', 'value': '499'
              }]
           }]
         }, {

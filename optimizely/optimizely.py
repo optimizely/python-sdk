@@ -208,8 +208,8 @@ class Optimizely(object):
       )
       return None
 
+    feature_enabled = False
     variable_value = variable.defaultValue
-
     decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
     if decision.variation:
 
@@ -232,12 +232,35 @@ class Optimizely(object):
         'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
       )
 
+    experiment_key = None
+    variation_key = None
+
+    if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
+      experiment_key = decision.experiment.key
+      variation_key = decision.variation.key
+
     try:
       actual_value = self.config.get_typecast_value(variable_value, variable_type)
     except:
       self.logger.error('Unable to cast value. Returning None.')
       actual_value = None
 
+    self.notification_center.send_notifications(
+      enums.NotificationTypes.DECISION,
+      enums.DecisionInfoTypes.FEATURE_VARIABLE,
+      user_id,
+      attributes or {},
+      {
+        'feature_key': feature_key,
+        'feature_enabled': feature_enabled,
+        'variable_key': variable_key,
+        'variable_value': actual_value,
+        'variable_type': variable_type,
+        'source': decision.source,
+        'source_experiment_key': experiment_key,
+        'source_variation_key': variation_key
+      }
+    )
     return actual_value
 
   def activate(self, experiment_key, user_id, attributes=None):
