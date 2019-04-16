@@ -5,9 +5,9 @@ Optimizely Python SDK
 
 This repository houses the official Python SDK for use with Optimizely Full Stack and Optimizely Rollouts.
 
-Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the [documentation](https://docs.developers.optimizely.com/full-stack/docs).
+Optimizely Full Stack is A/B testing and feature flag management for product development teams. Experiment in any application. Make every feature on your roadmap an opportunity to learn. Learn more at https://www.optimizely.com/platform/full-stack/, or see the `Full Stack documentation`_.
 
-Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the [documentation](https://docs.developers.optimizely.com/rollouts/docs).
+Optimizely Rollouts is free feature flags for development teams. Easily roll out and roll back features in any application without code deploys. Mitigate risk for every feature on your roadmap. Learn more at https://www.optimizely.com/rollouts/, or see the `Rollouts documentation`_.
 
 Getting Started
 ---------------
@@ -30,7 +30,7 @@ dashboard, please contact your Optimizely account executive.
 Using the SDK
 ~~~~~~~~~~~~~
 
-See the Optimizely Full Stack `developer documentation`_ to learn how to
+See the Optimizely `Full Stack documentation`_ to learn how to
 set up your first Python project and use the SDK.
 
 Development
@@ -120,7 +120,8 @@ Contributing
 Please see `CONTRIBUTING`_.
 
 .. _PyPi: https://pypi.python.org/pypi?name=optimizely-sdk&:action=display
-.. _developer documentation: http://developers.optimizely.com/server/reference/index.html
+.. _Full Stack documentation: https://docs.developers.optimizely.com/full-stack/docs
+.. _Rollouts documentation: https://docs.developers.optimizely.com/rollouts/docs
 .. _CONTRIBUTING: CONTRIBUTING.rst
 
 .. |PyPI version| image:: https://badge.fury.io/py/optimizely-sdk.svg
