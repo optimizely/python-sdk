@@ -209,6 +209,7 @@ class Optimizely(object):
       return None
 
     feature_enabled = False
+    source_info = {}
     variable_value = variable.defaultValue
     decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
     if decision.variation:
@@ -232,12 +233,11 @@ class Optimizely(object):
         'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
       )
 
-    experiment_key = None
-    variation_key = None
-
-    if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
-      experiment_key = decision.experiment.key
-      variation_key = decision.variation.key
+    if decision.source == enums.DecisionSources.FEATURE_TEST:
+      source_info = {
+        'experiment_key': decision.experiment.key,
+        'variation_key': decision.variation.key
+      }
 
     try:
       actual_value = self.config.get_typecast_value(variable_value, variable_type)
@@ -247,18 +247,17 @@ class Optimizely(object):
 
     self.notification_center.send_notifications(
       enums.NotificationTypes.DECISION,
-      enums.DecisionInfoTypes.FEATURE_VARIABLE,
+      enums.DecisionNotificationTypes.FEATURE_VARIABLE,
       user_id,
       attributes or {},
       {
         'feature_key': feature_key,
         'feature_enabled': feature_enabled,
+        'source': decision.source,
         'variable_key': variable_key,
         'variable_value': actual_value,
         'variable_type': variable_type,
-        'source': decision.source,
-        'source_experiment_key': experiment_key,
-        'source_variation_key': variation_key
+        'source_info': source_info
       }
     )
     return actual_value
@@ -388,9 +387,14 @@ class Optimizely(object):
     if variation:
       variation_key = variation.key
 
+    if self.config.is_feature_experiment(experiment.id):
+      decision_notification_type = enums.DecisionNotificationTypes.FEATURE_TEST
+    else:
+      decision_notification_type = enums.DecisionNotificationTypes.AB_TEST
+
     self.notification_center.send_notifications(
       enums.NotificationTypes.DECISION,
-      enums.DecisionInfoTypes.EXPERIMENT,
+      decision_notification_type,
       user_id,
       attributes or {},
       {
@@ -432,19 +436,20 @@ class Optimizely(object):
     if not feature:
       return False
 
-    experiment_key = None
     feature_enabled = False
-    variation_key = None
+    source_info = {}
     decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
-    is_source_experiment = decision.source == decision_service.DECISION_SOURCE_EXPERIMENT
+    is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
 
     if decision.variation:
       if decision.variation.featureEnabled is True:
         feature_enabled = True
       # Send event if Decision came from an experiment.
       if is_source_experiment:
-        experiment_key = decision.experiment.key
-        variation_key = decision.variation.key
+        source_info = {
+          'experiment_key': decision.experiment.key,
+          'variation_key': decision.variation.key
+        }
         self._send_impression_event(decision.experiment,
                                     decision.variation,
                                     user_id,
@@ -457,15 +462,14 @@ class Optimizely(object):
 
     self.notification_center.send_notifications(
         enums.NotificationTypes.DECISION,
-        enums.DecisionInfoTypes.FEATURE,
+        enums.DecisionNotificationTypes.FEATURE,
         user_id,
         attributes or {},
         {
           'feature_key': feature_key,
           'feature_enabled': feature_enabled,
           'source': decision.source,
-          'source_experiment_key': experiment_key,
-          'source_variation_key': variation_key
+          'source_info': source_info
         }
     )
 

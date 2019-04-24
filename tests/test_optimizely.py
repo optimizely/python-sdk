@@ -413,7 +413,7 @@ class OptimizelyTest(base.BaseTest):
     mock_broadcast.assert_has_calls([
       mock.call(
         enums.NotificationTypes.DECISION,
-        'experiment',
+        'ab-test',
         'test_user',
         {},
         {
@@ -446,7 +446,7 @@ class OptimizelyTest(base.BaseTest):
     mock_broadcast.assert_has_calls([
       mock.call(
         enums.NotificationTypes.DECISION,
-        'experiment',
+        'ab-test',
         'test_user',
         {'test_attribute': 'test_value'},
         {
@@ -476,7 +476,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'experiment',
+      'ab-test',
       'test_user',
       {},
       {
@@ -553,7 +553,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       mock_experiment,
                       mock_variation,
-                      decision_service.DECISION_SOURCE_EXPERIMENT
+                      enums.DecisionSources.FEATURE_TEST
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
@@ -584,7 +584,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       mock_experiment,
                       mock_variation,
-                      decision_service.DECISION_SOURCE_ROLLOUT
+                      enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
@@ -1458,7 +1458,33 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'experiment',
+      'ab-test',
+      'test_user',
+      {},
+      {
+        'experiment_key': 'test_experiment',
+        'variation_key': 'variation'
+      }
+    )
+
+  def test_get_variation_with_experiment_in_feature(self):
+    """ Test that get_variation returns valid variation and broadcasts decision listener with type feature-test when
+     get_variation returns feature experiment variation."""
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+
+    with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=project_config.get_variation_from_id('test_experiment', '111129')), \
+         mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
+      self.assertEqual('variation', opt_obj.get_variation('test_experiment', 'test_user'))
+
+    self.assertEqual(mock_broadcast.call_count, 1)
+
+    mock_broadcast.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'feature-test',
       'test_user',
       {},
       {
@@ -1480,7 +1506,7 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'experiment',
+      'ab-test',
       'test_user',
       {'test_attribute': 'test_value'},
       {
@@ -1612,7 +1638,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       mock_experiment,
                       mock_variation,
-                      decision_service.DECISION_SOURCE_EXPERIMENT
+                      enums.DecisionSources.FEATURE_TEST
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
@@ -1630,9 +1656,11 @@ class OptimizelyTest(base.BaseTest):
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': True,
-        'source': 'EXPERIMENT',
-        'source_experiment_key': 'test_experiment',
-        'source_variation_key': 'variation'
+        'source': 'feature-test',
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
       }
     )
     expected_params = {
@@ -1691,7 +1719,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       mock_experiment,
                       mock_variation,
-                      decision_service.DECISION_SOURCE_EXPERIMENT
+                      enums.DecisionSources.FEATURE_TEST
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
@@ -1709,9 +1737,11 @@ class OptimizelyTest(base.BaseTest):
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
-        'source': 'EXPERIMENT',
-        'source_experiment_key': 'test_experiment',
-        'source_variation_key': 'control'
+        'source': 'feature-test',
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'control'
+        }
       }
     )
     # Check that impression event is sent
@@ -1771,7 +1801,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       mock_experiment,
                       mock_variation,
-                      decision_service.DECISION_SOURCE_ROLLOUT
+                      enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
@@ -1789,9 +1819,8 @@ class OptimizelyTest(base.BaseTest):
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': True,
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source': 'rollout',
+        'source_info': {}
       }
     )
 
@@ -1817,7 +1846,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       mock_experiment,
                       mock_variation,
-                      decision_service.DECISION_SOURCE_ROLLOUT
+                      enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
@@ -1835,9 +1864,8 @@ class OptimizelyTest(base.BaseTest):
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source': 'rollout',
+        'source_info': {}
       }
     )
 
@@ -1856,7 +1884,7 @@ class OptimizelyTest(base.BaseTest):
                     return_value=decision_service.Decision(
                       None,
                       None,
-                      decision_service.DECISION_SOURCE_ROLLOUT
+                      enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
@@ -1877,9 +1905,8 @@ class OptimizelyTest(base.BaseTest):
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source': 'rollout',
+        'source_info': {}
       }
     )
 
@@ -1936,19 +1963,19 @@ class OptimizelyTest(base.BaseTest):
       feature = args[0]
       if feature.key == 'test_feature_in_experiment':
         return decision_service.Decision(mock_experiment, mock_variation,
-                                         decision_service.DECISION_SOURCE_EXPERIMENT
+                                         enums.DecisionSources.FEATURE_TEST
                                          )
       elif feature.key == 'test_feature_in_rollout':
         return decision_service.Decision(mock_experiment, mock_variation,
-                                         decision_service.DECISION_SOURCE_ROLLOUT
+                                         enums.DecisionSources.ROLLOUT
                                          )
       elif feature.key == 'test_feature_in_experiment_and_rollout':
         return decision_service.Decision(mock_experiment, mock_variation_2,
-                                         decision_service.DECISION_SOURCE_EXPERIMENT
+                                         enums.DecisionSources.FEATURE_TEST
                                          )
       else:
         return decision_service.Decision(mock_experiment, mock_variation_2,
-                                         decision_service.DECISION_SOURCE_ROLLOUT
+                                         enums.DecisionSources.ROLLOUT
                                          )
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
@@ -1970,9 +1997,11 @@ class OptimizelyTest(base.BaseTest):
         {
           'feature_key': 'test_feature_in_experiment',
           'feature_enabled': True,
-          'source': 'EXPERIMENT',
-          'source_experiment_key': 'test_experiment',
-          'source_variation_key': 'variation'
+          'source': 'feature-test',
+          'source_info': {
+            'experiment_key': 'test_experiment',
+            'variation_key': 'variation'
+          }
         }
       ),
       mock.call(
@@ -1983,9 +2012,8 @@ class OptimizelyTest(base.BaseTest):
        {
           'feature_key': 'test_feature_in_group',
           'feature_enabled': False,
-          'source': 'ROLLOUT',
-          'source_experiment_key': None,
-          'source_variation_key': None
+          'source': 'rollout',
+          'source_info': {}
        }
       ),
       mock.call(
@@ -1996,9 +2024,8 @@ class OptimizelyTest(base.BaseTest):
        {
          'feature_key': 'test_feature_in_rollout',
          'feature_enabled': True,
-         'source': 'ROLLOUT',
-         'source_experiment_key': None,
-         'source_variation_key': None
+         'source': 'rollout',
+         'source_info': {}
        }
       ),
       mock.call(
@@ -2009,9 +2036,11 @@ class OptimizelyTest(base.BaseTest):
        {
          'feature_key': 'test_feature_in_experiment_and_rollout',
          'feature_enabled': False,
-         'source': 'EXPERIMENT',
-         'source_experiment_key': 'test_experiment',
-         'source_variation_key': 'control'
+         'source': 'feature-test',
+         'source_info': {
+           'experiment_key': 'test_experiment',
+           'variation_key': 'control'
+         }
        }
       )
     ], any_order=True)
@@ -2051,7 +2080,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
@@ -2062,18 +2091,20 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': True,
+        'source': 'feature-test',
         'variable_key': 'is_working',
         'variable_value': True,
         'variable_type': 'boolean',
-        'source': 'EXPERIMENT',
-        'source_experiment_key': 'test_experiment',
-        'source_variation_key': 'variation'
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
       }
     )
 
@@ -2087,7 +2118,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(10.02, opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
@@ -2098,18 +2129,20 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': True,
+        'source': 'feature-test',
         'variable_key': 'cost',
         'variable_value': 10.02,
         'variable_type': 'double',
-        'source': 'EXPERIMENT',
-        'source_experiment_key': 'test_experiment',
-        'source_variation_key': 'variation'
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
       }
     )
 
@@ -2123,7 +2156,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(4243, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
@@ -2134,18 +2167,20 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': True,
+        'source': 'feature-test',
         'variable_key': 'count',
         'variable_value': 4243,
         'variable_type': 'integer',
-        'source': 'EXPERIMENT',
-        'source_experiment_key': 'test_experiment',
-        'source_variation_key': 'variation'
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
       }
     )
 
@@ -2159,7 +2194,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(
@@ -2173,18 +2208,20 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': True,
+        'source': 'feature-test',
         'variable_key': 'environment',
         'variable_value': 'staging',
         'variable_type': 'string',
-        'source': 'EXPERIMENT',
-        'source_experiment_key': 'test_experiment',
-        'source_variation_key': 'variation'
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
       }
     )
 
@@ -2200,7 +2237,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_rollout', 'is_running', 'test_user',
@@ -2212,18 +2249,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {'test_attribute': 'test_value'},
       {
         'feature_key': 'test_feature_in_rollout',
         'feature_enabled': True,
+        'source': 'rollout',
         'variable_key': 'is_running',
         'variable_value': True,
         'variable_type': 'boolean',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2239,7 +2275,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_double('test_feature_in_rollout', 'price', 'test_user',
@@ -2251,18 +2287,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {'test_attribute': 'test_value'},
       {
         'feature_key': 'test_feature_in_rollout',
         'feature_enabled': True,
+        'source': 'rollout',
         'variable_key': 'price',
         'variable_value': 39.99,
         'variable_type': 'double',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2278,7 +2313,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_integer('test_feature_in_rollout', 'count', 'test_user',
@@ -2290,18 +2325,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {'test_attribute': 'test_value'},
       {
         'feature_key': 'test_feature_in_rollout',
         'feature_enabled': True,
+        'source': 'rollout',
         'variable_key': 'count',
         'variable_value': 399,
         'variable_type': 'integer',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2317,7 +2351,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_string('test_feature_in_rollout', 'message', 'test_user',
@@ -2329,18 +2363,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {'test_attribute': 'test_value'},
       {
         'feature_key': 'test_feature_in_rollout',
         'feature_enabled': True,
+        'source': 'rollout',
         'variable_key': 'message',
         'variable_value': 'Hello audience',
         'variable_type': 'string',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2357,7 +2390,7 @@ class OptimizelyTest(base.BaseTest):
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
@@ -2369,7 +2402,7 @@ class OptimizelyTest(base.BaseTest):
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertEqual(10.99,
                        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
@@ -2382,7 +2415,7 @@ class OptimizelyTest(base.BaseTest):
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
@@ -2395,7 +2428,7 @@ class OptimizelyTest(base.BaseTest):
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
       self.assertEqual('devel',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
@@ -2414,7 +2447,7 @@ class OptimizelyTest(base.BaseTest):
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(None, None,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
@@ -2426,18 +2459,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
+        'source': 'rollout',
         'variable_key': 'is_working',
         'variable_value': True,
         'variable_type': 'boolean',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2446,7 +2478,7 @@ class OptimizelyTest(base.BaseTest):
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(None, None,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(10.99,
@@ -2459,18 +2491,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
+        'source': 'rollout',
         'variable_key': 'cost',
         'variable_value': 10.99,
         'variable_type': 'double',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2479,7 +2510,7 @@ class OptimizelyTest(base.BaseTest):
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(None, None,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(999,
@@ -2492,18 +2523,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
+        'source': 'rollout',
         'variable_key': 'count',
         'variable_value': 999,
         'variable_type': 'integer',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2512,7 +2542,7 @@ class OptimizelyTest(base.BaseTest):
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(None, None,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual('devel',
@@ -2525,18 +2555,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_broadcast_decision.assert_called_once_with(
       enums.NotificationTypes.DECISION,
-      'feature_variable',
+      'feature-variable',
       'test_user',
       {},
       {
         'feature_key': 'test_feature_in_experiment',
         'feature_enabled': False,
+        'source': 'rollout',
         'variable_key': 'environment',
         'variable_value': 'devel',
         'variable_type': 'string',
-        'source': 'ROLLOUT',
-        'source_experiment_key': None,
-        'source_variation_key': None
+        'source_info': {}
       }
     )
 
@@ -2714,7 +2743,7 @@ class OptimizelyTest(base.BaseTest):
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
 
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
@@ -2727,7 +2756,7 @@ class OptimizelyTest(base.BaseTest):
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(10.99,
                        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
@@ -2740,7 +2769,7 @@ class OptimizelyTest(base.BaseTest):
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
@@ -2753,7 +2782,7 @@ class OptimizelyTest(base.BaseTest):
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual('devel',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
@@ -2773,7 +2802,7 @@ class OptimizelyTest(base.BaseTest):
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertFalse(opt_obj.get_feature_variable_boolean('test_feature_in_rollout', 'is_running', 'test_user'))
 
@@ -2785,7 +2814,7 @@ class OptimizelyTest(base.BaseTest):
     # Double
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(99.99,
                        opt_obj.get_feature_variable_double('test_feature_in_rollout', 'price', 'test_user'))
@@ -2798,7 +2827,7 @@ class OptimizelyTest(base.BaseTest):
     # Integer
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_rollout', 'count', 'test_user'))
@@ -2811,7 +2840,7 @@ class OptimizelyTest(base.BaseTest):
     # String
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                           decision_service.DECISION_SOURCE_ROLLOUT)), \
+                                                           enums.DecisionSources.ROLLOUT)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual('Hello',
                        opt_obj.get_feature_variable_string('test_feature_in_rollout', 'message', 'test_user'))
@@ -2829,7 +2858,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       # "is_working" is boolean variable and we are using double method on it.
       self.assertIsNone(opt_obj.get_feature_variable_double('test_feature_in_experiment', 'is_working', 'test_user'))
@@ -2848,7 +2877,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
-                                                           decision_service.DECISION_SOURCE_EXPERIMENT)), \
+                                                           enums.DecisionSources.FEATURE_TEST)), \
          mock.patch('optimizely.project_config.ProjectConfig.get_typecast_value',
                     side_effect=ValueError()),\
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:

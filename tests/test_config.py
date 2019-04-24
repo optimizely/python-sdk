@@ -626,6 +626,11 @@ class ConfigTest(base.BaseTest):
       }
     }
 
+    expected_experiment_feature_map = {
+      '111127': ['91111'],
+      '32222': ['91113']
+    }
+
     self.assertEqual(expected_variation_variable_usage_map['28901'],
                      project_config.variation_variable_usage_map['28901'])
     self.assertEqual(expected_group_id_map, project_config.group_id_map)
@@ -639,6 +644,7 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_feature_key_map, project_config.feature_key_map)
     self.assertEqual(expected_rollout_id_map, project_config.rollout_id_map)
     self.assertEqual(expected_variation_variable_usage_map, project_config.variation_variable_usage_map)
+    self.assertEqual(expected_experiment_feature_map, project_config.experiment_feature_map)
 
   def test_variation_has_featureEnabled_false_if_prop_undefined(self):
     """ Test that featureEnabled property by default is set to False, when not given in the data file"""
@@ -1333,3 +1339,15 @@ class ConfigExceptionTest(base.BaseTest):
     self.assertRaisesRegexp(exceptions.InvalidGroupException,
                             enums.Errors.INVALID_GROUP_ID_ERROR,
                             self.project_config.get_group, '42')
+
+  def test_is_feature_experiment(self):
+    """ Test that a true is returned if experiment is a feature test, false otherwise. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+
+    experiment = project_config.get_experiment_from_key('test_experiment2')
+    feature_experiment = project_config.get_experiment_from_key('test_experiment')
+
+    self.assertStrictFalse(project_config.is_feature_experiment(experiment.id))
+    self.assertStrictTrue(project_config.is_feature_experiment(feature_experiment.id))

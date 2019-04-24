@@ -22,8 +22,6 @@ from .helpers import validator
 from .user_profile import UserProfile
 
 Decision = namedtuple('Decision', 'experiment variation source')
-DECISION_SOURCE_EXPERIMENT = 'EXPERIMENT'
-DECISION_SOURCE_ROLLOUT = 'ROLLOUT'
 
 
 class DecisionService(object):
@@ -215,7 +213,7 @@ class DecisionService(object):
             variation.key,
             experiment.key
           ))
-          return Decision(experiment, variation, DECISION_SOURCE_ROLLOUT)
+          return Decision(experiment, variation, enums.DecisionSources.ROLLOUT)
         else:
           # Evaluate no further rules
           self.logger.debug('User "%s" is not in the traffic group for the targeting else. '
@@ -233,9 +231,9 @@ class DecisionService(object):
         variation = self.bucketer.bucket(everyone_else_experiment, user_id, bucketing_id)
         if variation:
           self.logger.debug('User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
-          return Decision(everyone_else_experiment, variation, DECISION_SOURCE_ROLLOUT)
+          return Decision(everyone_else_experiment, variation, enums.DecisionSources.ROLLOUT)
 
-    return Decision(None, None, DECISION_SOURCE_ROLLOUT)
+    return Decision(None, None, enums.DecisionSources.ROLLOUT)
 
   def get_experiment_in_group(self, group, bucketing_id):
     """ Determine which experiment in the group the user is bucketed into.
@@ -296,7 +294,7 @@ class DecisionService(object):
               variation.key,
               experiment.key
             ))
-            return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
+            return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)
       else:
         self.logger.error(enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
 
@@ -313,11 +311,11 @@ class DecisionService(object):
             variation.key,
             experiment.key
           ))
-          return Decision(experiment, variation, DECISION_SOURCE_EXPERIMENT)
+          return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)
 
     # Next check if user is part of a rollout
     if feature.rolloutId:
       rollout = self.config.get_rollout_from_id(feature.rolloutId)
       return self.get_variation_for_rollout(rollout, user_id, attributes)
     else:
-      return Decision(None, None, DECISION_SOURCE_ROLLOUT)
+      return Decision(None, None, enums.DecisionSources.ROLLOUT)

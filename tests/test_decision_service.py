@@ -411,7 +411,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
     with self.mock_config_logger as mock_logging:
       no_experiment_rollout = self.project_config.get_rollout_from_id('201111')
       self.assertEqual(
-        decision_service.Decision(None, None, decision_service.DECISION_SOURCE_ROLLOUT),
+        decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
         self.decision_service.get_variation_for_rollout(no_experiment_rollout, 'test_user')
       )
 
@@ -430,7 +430,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                    return_value=self.project_config.get_variation_from_id('211127', '211129')) as mock_bucket:
       self.assertEqual(decision_service.Decision(self.project_config.get_experiment_from_id('211127'),
                                                  self.project_config.get_variation_from_id('211127', '211129'),
-                                                 decision_service.DECISION_SOURCE_ROLLOUT),
+                                                 enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
 
     # Check all log messages
@@ -453,7 +453,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                    return_value=self.project_config.get_variation_from_id('211127', '211129')) as mock_bucket:
       self.assertEqual(decision_service.Decision(self.project_config.get_experiment_from_id('211127'),
                                                  self.project_config.get_variation_from_id('211127', '211129'),
-                                                 decision_service.DECISION_SOURCE_ROLLOUT),
+                                                 enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_rollout(rollout,
                                                                        'test_user',
                                                                        {'$opt_bucketing_id': 'user_bucket_value'}))
@@ -480,7 +480,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
       self.mock_decision_logger as mock_decision_logging, \
       mock.patch('optimizely.bucketer.Bucketer.bucket', side_effect=[None, variation_to_mock]):
       self.assertEqual(
-        decision_service.Decision(everyone_else_exp, variation_to_mock, decision_service.DECISION_SOURCE_ROLLOUT),
+        decision_service.Decision(everyone_else_exp, variation_to_mock, enums.DecisionSources.ROLLOUT),
         self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
 
     # Check that after first experiment, it skips to the last experiment to check
@@ -510,7 +510,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check, \
             self.mock_decision_logger as mock_decision_logging:
-      self.assertEqual(decision_service.Decision(None, None, decision_service.DECISION_SOURCE_ROLLOUT),
+      self.assertEqual(decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_rollout(rollout, 'test_user'))
 
     # Check that all experiments in rollout layer were checked
@@ -547,7 +547,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
     with decision_patch as mock_decision, self.mock_decision_logger as mock_decision_logging:
       self.assertEqual(decision_service.Decision(expected_experiment,
                                                  expected_variation,
-                                                 decision_service.DECISION_SOURCE_EXPERIMENT),
+                                                 enums.DecisionSources.FEATURE_TEST),
                        self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
     mock_decision.assert_called_once_with(
@@ -596,12 +596,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
       mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=expected_variation):
       self.assertEqual(decision_service.Decision(expected_experiment,
                                                  expected_variation,
-                                                 decision_service.DECISION_SOURCE_ROLLOUT),
+                                                 enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
     self.assertEqual(2, mock_audience_check.call_count)
     mock_audience_check.assert_any_call(self.project_config,
-                                        self.project_config.get_experiment_from_key('test_experiment'), None,
+                                        self.project_config.get_experiment_from_key('group_exp_2'), None,
                                         mock_decision_logging)
     mock_audience_check.assert_any_call(self.project_config,
                                         self.project_config.get_experiment_from_key('211127'), None,
@@ -622,7 +622,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                  return_value=expected_variation) as mock_decision:
       self.assertEqual(decision_service.Decision(expected_experiment,
                                                  expected_variation,
-                                                 decision_service.DECISION_SOURCE_EXPERIMENT),
+                                                 enums.DecisionSources.FEATURE_TEST),
                        self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
     mock_get_experiment_in_group.assert_called_once_with(self.project_config.get_group('19228'), 'test_user')
@@ -637,7 +637,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_experiment_in_group',
                     return_value=None) as mock_get_experiment_in_group, \
       mock.patch('optimizely.decision_service.DecisionService.get_variation') as mock_decision:
-      self.assertEqual(decision_service.Decision(None, None, decision_service.DECISION_SOURCE_ROLLOUT),
+      self.assertEqual(decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
     mock_get_experiment_in_group.assert_called_once_with(self.project_config.get_group('19228'), 'test_user')
@@ -651,7 +651,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation', return_value=None) as mock_decision:
       self.assertEqual(decision_service.Decision(None,
                                                  None,
-                                                 decision_service.DECISION_SOURCE_ROLLOUT),
+                                                 enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
     mock_decision.assert_called_once_with(
@@ -666,7 +666,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
     with self.mock_decision_logger as mock_decision_logging:
       self.assertEqual(
-        decision_service.Decision(None, None, decision_service.DECISION_SOURCE_ROLLOUT),
+        decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
         self.decision_service.get_variation_for_feature(feature, 'test_user')
       )
     mock_decision_logging.error.assert_called_once_with(
@@ -683,7 +683,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     return_value=self.project_config.get_experiment_from_key('group_exp_2')) as mock_decision:
       self.assertEqual(decision_service.Decision(None,
                                                  None,
-                                                 decision_service.DECISION_SOURCE_ROLLOUT),
+                                                 enums.DecisionSources.ROLLOUT),
                        self.decision_service.get_variation_for_feature(feature, 'test_user'))
 
     mock_decision.assert_called_once_with(self.project_config.get_group('19228'), 'test_user')
