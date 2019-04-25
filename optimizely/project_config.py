@@ -107,7 +107,7 @@ class ProjectConfig(object):
 
     self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
-    # Hash containing experiment Ids that exist in any feature
+    # Dict containing map of experiment ID to feature ID.
     # for checking that experiment is a feature experiment or not.
     self.experiment_feature_map = {}
     for feature in self.feature_key_map.values():
