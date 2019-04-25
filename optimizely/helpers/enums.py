@@ -48,6 +48,18 @@ class DatafileVersions(object):
   V4 = '4'
 
 
+class DecisionNotificationTypes(object):
+  AB_TEST = 'ab-test'
+  FEATURE = 'feature'
+  FEATURE_TEST = 'feature-test'
+  FEATURE_VARIABLE = 'feature-variable'
+
+
+class DecisionSources(object):
+  FEATURE_TEST = 'feature-test'
+  ROLLOUT = 'rollout'
+
+
 class Errors(object):
   INVALID_ATTRIBUTE_ERROR = 'Provided attribute is not in datafile.'
   INVALID_ATTRIBUTE_FORMAT = 'Attributes provided are in an invalid format.'
@@ -90,14 +102,8 @@ class NotificationTypes(object):
       TRACK notification listener has the following parameters:
       str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
       DECISION notification listener has the following parameters:
-      DecisionInfoTypes type, str user_id, dict attributes (can be None), dict decision_info
+      DecisionNotificationTypes type, str user_id, dict attributes, dict decision_info
   """
-  ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
-  DECISION = "DECISION:type, user_id, attributes, decision_info"
-  TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
-
-
-class DecisionInfoTypes(object):
-  EXPERIMENT = "experiment"
-  FEATURE = "feature"
-  FEATURE_VARIABLE = "feature_variable"
+  ACTIVATE = 'ACTIVATE:experiment, user_id, attributes, variation, event'
+  DECISION = 'DECISION:type, user_id, attributes, decision_info'
+  TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'

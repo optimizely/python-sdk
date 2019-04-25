@@ -212,6 +212,41 @@ class BaseTest(unittest.TestCase):
             'id': '130', 'value': '4243'
           }]
         }]
+      }, {
+        'key': 'test_experiment2',
+        'status': 'Running',
+        'layerId': '5',
+        'audienceIds': [],
+        'id': '111133',
+        'forcedVariations': {},
+        'trafficAllocation': [{
+          'entityId': '122239',
+          'endOfRange': 5000
+        }, {
+          'entityId': '122240',
+          'endOfRange': 10000
+        }],
+        'variations': [{
+          'id': '122239',
+          'key': 'control',
+          'featureEnabled': True,
+          'variables': [
+            {
+              'id': '155551',
+              'value': '42.42'
+            }
+          ]
+        }, {
+          'id': '122240',
+          'key': 'variation',
+          'featureEnabled': True,
+          'variables': [
+            {
+              'id': '155551',
+              'value': '13.37'
+            }
+          ]
+        }]
       }],
       'groups': [{
         'id': '19228',
@@ -431,7 +466,7 @@ class BaseTest(unittest.TestCase):
       }, {
         'id': '91114',
         'key': 'test_feature_in_experiment_and_rollout',
-        'experimentIds': ['111127'],
+        'experimentIds': ['32223'],
         'rolloutId': '211111',
         'variables': [],
       }]

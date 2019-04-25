@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -106,12 +106,19 @@ class ProjectConfig(object):
         )
 
     self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
+
+    # Dict containing map of experiment ID to feature ID.
+    # for checking that experiment is a feature experiment or not.
+    self.experiment_feature_map = {}
     for feature in self.feature_key_map.values():
       feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
-      # Check if any of the experiments are in a group and add the group id for faster bucketing later on
       for exp_id in feature.experimentIds:
+        # Add this experiment in experiment-feature map.
+        self.experiment_feature_map[exp_id] = [feature.id]
+
         experiment_in_feature = self.experiment_id_map[exp_id]
+        # Check if any of the experiments are in a group and add the group id for faster bucketing later on
         if experiment_in_feature.groupId:
           feature.groupId = experiment_in_feature.groupId
           # Experiments in feature can only belong to one mutex group
@@ -609,3 +616,15 @@ class ProjectConfig(object):
     """
 
     return self.bot_filtering
+
+  def is_feature_experiment(self, experiment_id):
+    """ Determines if given experiment is a feature test.
+
+      Args:
+        experiment_id: Experiment ID for which feature test is to be determined.
+
+      Returns:
+        A boolean value that indicates if given experiment is a feature test.
+    """
+
+    return experiment_id in self.experiment_feature_map
