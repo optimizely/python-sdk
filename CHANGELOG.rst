@@ -6,7 +6,7 @@ May 2nd, 2019
 New Features:
 ~~~~~~~~~~~~~
 
-- Introduced Decision notification listener to be able to record:
+-  Introduced Decision notification listener to be able to record:
 
    -  Variation assignments for users activated in an experiment.
    -  Feature access for users.
