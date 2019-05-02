@@ -7,10 +7,9 @@ New Features:
 ~~~~~~~~~~~~~
 
 - Introduced Decision notification listener to be able to record:
-
-    - Variation assignments for users activated in an experiment.
-    - Feature access for users.
-    - Feature variable value for users.
+  -  Variation assignments for users activated in an experiment.
+  - Feature access for users.
+  - Feature variable value for users.
 
 Bug Fixes:
 ~~~~~~~~~~
