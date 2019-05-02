@@ -19,6 +19,13 @@ Bug Fixes:
 
 .. _#171: https://github.com/optimizely/python-sdk/pull/171
 
+Deprecated:
+~~~~~~~~~~~
+
+- Activate notification listener is deprecated as of this release.
+  Recommendation is to use the new Decision notification listener.
+  Activate notification listener will be removed in the next major release.
+
 3.0.0
 -----
 
