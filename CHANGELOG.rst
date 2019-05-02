@@ -1,3 +1,24 @@
+3.1.0
+-----
+
+May 2nd, 2019
+
+New Features:
+~~~~~~~~~~~~~
+
+- Introduced Decision notification listener to be able to record:
+
+    - Variation assignments for users activated in an experiment.
+    - Feature access for users.
+    - Feature variable value for users.
+
+Bug Fixes:
+~~~~~~~~~~
+
+-  Feature variable APIs now return default variable value when featureEnabled property is false. (`#171`_)
+
+.. _#171: https://github.com/optimizely/python-sdk/pull/171
+
 3.0.0
 -----
 
