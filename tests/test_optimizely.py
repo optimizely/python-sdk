@@ -22,7 +22,7 @@ from optimizely import event_builder
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
-from optimizely import project_config
+from optimizely import config_manager
 from optimizely import version
 from optimizely.helpers import enums
 from optimizely.notification_center import NotificationCenter
@@ -164,7 +164,7 @@ class OptimizelyTest(base.BaseTest):
   def test_init_with_supported_datafile_version(self):
     """ Test that datafile with supported version works as expected. """
 
-    self.assertTrue(self.config_dict['version'] in project_config.SUPPORTED_VERSIONS)
+    self.assertTrue(self.config_dict['version'] in config_manager.SUPPORTED_VERSIONS)
 
     mock_client_logger = mock.MagicMock()
     with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
