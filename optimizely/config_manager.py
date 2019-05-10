@@ -12,23 +12,37 @@
 # limitations under the License.
 
 
-import asyncio
 import http
 import requests
+import threading
 
-from .base import BaseDatafileManager
+from . import project_config
 
 
 DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
 
 
-class PollingDatafileManager(BaseDatafileManager):
+class BaseConfigManager(object):
+  def get_config(self, *args, **kwargs):
+    raise NotImplementedError
 
-  def __init__(self,
-               sdk_key=None,
-               url=None,
-               url_template=None):
+
+class StaticDatafileManager(BaseConfigManager):
+
+  def __init__(self, datafile):
+    self.datafile = datafile
+
+  def get_config(self, *args, **kwargs):
+    return project_config.ProjectConfig(self.datafile, *args, **kwargs)
+
+
+class PollingConfigManager(BaseConfigManager):
+
+  def __init__(self, **kwargs):
     self.is_started = False
+    sdk_key = kwargs.get('sdk_key')
+    url = kwargs.get('url')
+    url_template = kwargs.get('url_template')
     assert sdk_key is not None or url is not None, 'Must provide at least one of sdk_key or url.'
     datafile_url_template = url_template or DATAFILE_URL_TEMPLATE
     if url is None:
@@ -37,9 +51,8 @@ class PollingDatafileManager(BaseDatafileManager):
       self.datafile_url = url
     self.datafile = None
     self.last_modified = None
-
-  def __del__(self):
-    self.stop()
+    self.polling_thread = threading.Thread(target=self.fetch_datafile)
+    self._is_running = False
 
   def set_last_modified(self, response):
     self.last_modified = response.headers['Last-Modified']
@@ -65,8 +78,8 @@ class PollingDatafileManager(BaseDatafileManager):
       await asyncio.sleep(5)
 
   def start(self):
-    if not self.is_started:
-      self.is_started = True
+    if not self._is_running:
+      self._is_running= True
       event_loop = asyncio.get_event_loop()
       event_loop.run_until_complete(self._run())
 
@@ -75,6 +88,3 @@ class PollingDatafileManager(BaseDatafileManager):
       self.is_started = False
       event_loop = asyncio.get_event_loop()
       event_loop.close()
-
-  def get_datafile(self):
-    return self.datafile
