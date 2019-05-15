@@ -251,7 +251,7 @@ class OptimizelyTest(base.BaseTest):
       'revision': '42'
     }
     mock_decision.assert_called_once_with(
-      self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
+      self.project_config, self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
     )
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
@@ -560,7 +560,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
     self.assertTrue(access_callback[0])
 
   def test_is_feature_enabled_rollout_callback_listener(self):
@@ -591,7 +591,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(project_config, feature, 'test_user', None)
 
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -641,7 +641,8 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+    mock_get_variation.assert_called_once_with(self.project_config,
+                                               self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
@@ -716,7 +717,7 @@ class OptimizelyTest(base.BaseTest):
     }
 
     mock_bucket.assert_called_once_with(
-      self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
+      self.project_config, self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
     )
     self.assertEqual(1, mock_dispatch_event.call_count)
     self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
@@ -911,7 +912,8 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    mock_get_variation.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+    mock_get_variation.assert_called_once_with(self.project_config,
+                                               self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value',
                                                              '$opt_bucketing_id': 'user_bucket_value'})
     self.assertEqual(1, mock_dispatch_event.call_count)
@@ -973,7 +975,8 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
-    mock_bucket.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'),
+    mock_bucket.assert_called_once_with(self.project_config,
+                                        self.project_config.get_experiment_from_key('test_experiment'),
                                         'test_user',
                                         'test_user')
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -1646,7 +1649,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1727,7 +1730,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1809,7 +1812,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1854,7 +1857,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1895,7 +1898,7 @@ class OptimizelyTest(base.BaseTest):
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-    mock_decision.assert_called_once_with(feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1960,23 +1963,23 @@ class OptimizelyTest(base.BaseTest):
     mock_variation_2 = opt_obj.config.get_variation_from_id('test_experiment', '111128')
 
     def side_effect(*args, **kwargs):
-      feature = args[0]
+      feature = args[1]
       if feature.key == 'test_feature_in_experiment':
-        return decision_service.Decision(mock_experiment, mock_variation,
-                                         enums.DecisionSources.FEATURE_TEST
-                                         )
+        return decision_service.Decision(
+          mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST
+        )
       elif feature.key == 'test_feature_in_rollout':
-        return decision_service.Decision(mock_experiment, mock_variation,
-                                         enums.DecisionSources.ROLLOUT
-                                         )
+        return decision_service.Decision(
+          mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT
+        )
       elif feature.key == 'test_feature_in_experiment_and_rollout':
-        return decision_service.Decision(mock_experiment, mock_variation_2,
-                                         enums.DecisionSources.FEATURE_TEST
-                                         )
+        return decision_service.Decision(
+          mock_experiment, mock_variation_2, enums.DecisionSources.FEATURE_TEST
+        )
       else:
-        return decision_service.Decision(mock_experiment, mock_variation_2,
-                                         enums.DecisionSources.ROLLOUT
-                                         )
+        return decision_service.Decision(
+          mock_experiment, mock_variation_2, enums.DecisionSources.ROLLOUT
+        )
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                         side_effect=side_effect),\
