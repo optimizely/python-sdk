@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -27,9 +27,9 @@ from . import base
 
 class BucketerTest(base.BaseTest):
 
-  def setUp(self):
+  def setUp(self, *args, **kwargs):
     base.BaseTest.setUp(self)
-    self.bucketer = bucketer.Bucketer(self.project_config)
+    self.bucketer = bucketer.Bucketer()
 
   def test_bucket(self):
     """ Test that for provided bucket value correct variation ID is returned. """
@@ -40,6 +40,7 @@ class BucketerTest(base.BaseTest):
       self.assertEqual(
         entities.Variation('111128', 'control'),
         self.bucketer.bucket(
+          self.project_config,
           self.project_config.get_experiment_from_key('test_experiment'),
           'test_user', 'test_user'
         ))
@@ -49,6 +50,7 @@ class BucketerTest(base.BaseTest):
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     return_value=4242) as mock_generate_bucket_value:
       self.assertIsNone(self.bucketer.bucket(
+        self.project_config,
         self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
       ))
     mock_generate_bucket_value.assert_called_once_with('test_user111127')
@@ -59,6 +61,7 @@ class BucketerTest(base.BaseTest):
       self.assertEqual(
         entities.Variation('111129', 'variation'),
         self.bucketer.bucket(
+          self.project_config,
           self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
         ))
     mock_generate_bucket_value.assert_called_once_with('test_user111127')
@@ -66,17 +69,23 @@ class BucketerTest(base.BaseTest):
     # No matching variation
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     return_value=424242) as mock_generate_bucket_value:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
-                                             'test_user',
-                                             'test_user'))
+      self.assertIsNone(self.bucketer.bucket(
+        self.project_config,
+        self.project_config.get_experiment_from_key('test_experiment'),
+        'test_user',
+        'test_user')
+      )
     mock_generate_bucket_value.assert_called_once_with('test_user111127')
 
   def test_bucket__invalid_experiment(self):
     """ Test that bucket returns None for unknown experiment. """
 
-    self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('invalid_experiment'),
-                                           'test_user',
-                                           'test_user'))
+    self.assertIsNone(self.bucketer.bucket(
+      self.project_config,
+      self.project_config.get_experiment_from_key('invalid_experiment'),
+      'test_user',
+      'test_user')
+    )
 
   def test_bucket__invalid_group(self):
     """ Test that bucket returns None for unknown group. """
@@ -84,11 +93,14 @@ class BucketerTest(base.BaseTest):
     project_config = self.project_config
     experiment = project_config.get_experiment_from_key('group_exp_1')
     # Set invalid group ID for the experiment
-    experiment.groupId = 'aabbcc'
+    experiment.groupId = 'invalid_group_id'
 
-    self.assertIsNone(self.bucketer.bucket(experiment,
-                                           'test_user',
-                                           'test_user'))
+    self.assertIsNone(self.bucketer.bucket(
+      self.project_config,
+      experiment,
+      'test_user',
+      'test_user')
+    )
 
   def test_bucket__experiment_in_group(self):
     """ Test that for provided bucket values correct variation ID is returned. """
@@ -97,7 +109,8 @@ class BucketerTest(base.BaseTest):
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 4242]) as mock_generate_bucket_value:
       self.assertEqual(entities.Variation('28902', 'group_exp_1_variation'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_1'),
+                       self.bucketer.bucket(self.project_config,
+                                            self.project_config.get_experiment_from_key('group_exp_1'),
                                             'test_user',
                                             'test_user'))
 
@@ -107,7 +120,8 @@ class BucketerTest(base.BaseTest):
     # In group, no matching experiment
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 9500]) as mock_generate_bucket_value:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_1'),
+      self.assertIsNone(self.bucketer.bucket(self.project_config,
+                                             self.project_config.get_experiment_from_key('group_exp_1'),
                                              'test_user',
                                              'test_user'))
     self.assertEqual([mock.call('test_user19228'), mock.call('test_user32222')],
@@ -116,7 +130,8 @@ class BucketerTest(base.BaseTest):
     # In group, experiment does not match
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 4242]) as mock_generate_bucket_value:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_2'),
+      self.assertIsNone(self.bucketer.bucket(self.project_config,
+                                             self.project_config.get_experiment_from_key('group_exp_2'),
                                              'test_user',
                                              'test_user'))
     mock_generate_bucket_value.assert_called_once_with('test_user19228')
@@ -124,7 +139,8 @@ class BucketerTest(base.BaseTest):
     # In group no matching variation
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 424242]) as mock_generate_bucket_value:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_1'),
+      self.assertIsNone(self.bucketer.bucket(self.project_config,
+                                             self.project_config.get_experiment_from_key('group_exp_1'),
                                              'test_user',
                                              'test_user'))
     self.assertEqual([mock.call('test_user19228'), mock.call('test_user32222')],
@@ -153,22 +169,27 @@ class BucketerTest(base.BaseTest):
 
 
 class BucketerWithLoggingTest(base.BaseTest):
-  def setUp(self):
+  def setUp(self, *args, **kwargs):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
-    self.bucketer = bucketer.Bucketer(self.optimizely.config)
+    self.bucketer = bucketer.Bucketer()
 
   def test_bucket(self):
     """ Test that expected log messages are logged during bucketing. """
 
     # Variation 1
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=42),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
-      self.assertEqual(entities.Variation('111128', 'control'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
-                                            'test_user',
-                                            'test_user'))
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertEqual(
+        entities.Variation('111128', 'control'),
+        self.bucketer.bucket(
+          self.project_config,
+          self.project_config.get_experiment_from_key('test_experiment'),
+          'test_user',
+          'test_user'
+        )
+      )
 
     mock_config_logging.debug.assert_called_once_with('Assigned bucket 42 to user with bucketing ID "test_user".')
     mock_config_logging.info.assert_called_once_with(
@@ -177,9 +198,9 @@ class BucketerWithLoggingTest(base.BaseTest):
 
     # Empty entity ID
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4242), \
-         mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
+         mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.assertIsNone(self.bucketer.bucket(
-        self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
+        self.project_config, self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
       ))
 
     mock_config_logging.debug.assert_called_once_with('Assigned bucket 4242 to user with bucketing ID "test_user".')
@@ -187,9 +208,10 @@ class BucketerWithLoggingTest(base.BaseTest):
 
     # Variation 2
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.assertEqual(entities.Variation('111129', 'variation'),
-                       self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
+                       self.bucketer.bucket(self.project_config,
+                                            self.project_config.get_experiment_from_key('test_experiment'),
                                             'test_user',
                                             'test_user'))
 
@@ -200,10 +222,13 @@ class BucketerWithLoggingTest(base.BaseTest):
 
     # No matching variation
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=424242),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('test_experiment'),
-                                             'test_user',
-                                             'test_user'))
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(self.bucketer.bucket(
+        self.project_config,
+        self.project_config.get_experiment_from_key('test_experiment'),
+        'test_user',
+        'test_user')
+      )
 
     mock_config_logging.debug.assert_called_once_with('Assigned bucket 424242 to user with bucketing ID "test_user".')
     mock_config_logging.info.assert_called_once_with('User "test_user" is in no variation.')
@@ -214,10 +239,11 @@ class BucketerWithLoggingTest(base.BaseTest):
     # In group, matching experiment and variation
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 4242]),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.assertEqual(
         entities.Variation('28902', 'group_exp_1_variation'),
         self.bucketer.bucket(
+          self.project_config,
           self.project_config.get_experiment_from_key('group_exp_1'),
           'test_user',
           'test_user'
@@ -235,8 +261,9 @@ class BucketerWithLoggingTest(base.BaseTest):
     # In group, but in no experiment
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[8400, 9500]),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_1'),
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(self.bucketer.bucket(self.project_config,
+                                             self.project_config.get_experiment_from_key('group_exp_1'),
                                              'test_user',
                                              'test_user'))
     mock_config_logging.debug.assert_called_once_with('Assigned bucket 8400 to user with bucketing ID "test_user".')
@@ -245,9 +272,10 @@ class BucketerWithLoggingTest(base.BaseTest):
     # In group, no matching experiment
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 9500]),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
       self.assertIsNone(self.bucketer.bucket(
-        self.project_config.get_experiment_from_key('group_exp_1'), 'test_user', 'test_user'))
+        self.project_config, self.project_config.get_experiment_from_key('group_exp_1'), 'test_user', 'test_user')
+      )
     mock_config_logging.debug.assert_has_calls([
       mock.call('Assigned bucket 42 to user with bucketing ID "test_user".'),
       mock.call('Assigned bucket 9500 to user with bucketing ID "test_user".')
@@ -260,8 +288,9 @@ class BucketerWithLoggingTest(base.BaseTest):
     # In group, experiment does not match
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 4242]),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_2'),
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(self.bucketer.bucket(self.project_config,
+                                             self.project_config.get_experiment_from_key('group_exp_2'),
                                              'test_user',
                                              'test_user'))
     mock_config_logging.debug.assert_called_once_with('Assigned bucket 42 to user with bucketing ID "test_user".')
@@ -272,8 +301,9 @@ class BucketerWithLoggingTest(base.BaseTest):
     # In group no matching variation
     with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value',
                     side_effect=[42, 424242]),\
-      mock.patch.object(self.bucketer.config, 'logger') as mock_config_logging:
-      self.assertIsNone(self.bucketer.bucket(self.project_config.get_experiment_from_key('group_exp_1'),
+      mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+      self.assertIsNone(self.bucketer.bucket(self.project_config,
+                                             self.project_config.get_experiment_from_key('group_exp_1'),
                                              'test_user',
                                              'test_user'))
 

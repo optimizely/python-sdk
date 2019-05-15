@@ -32,7 +32,7 @@ class ProjectConfig(object):
 
     Args:
       datafile: JSON string representing the project.
-      logger: Provides a log message to send log messages to.
+      logger: Provides a logger instance.
       error_handler: Provides a handle_error method to handle exceptions.
     """
 

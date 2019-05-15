@@ -82,8 +82,8 @@ class Optimizely(object):
         self.error_handler.handle_error(error_to_handle)
         return
 
-    self.event_builder = event_builder.EventBuilder(self.config)
-    self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
+    self.event_builder = event_builder.EventBuilder()
+    self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
     self.notification_center = notification_center(self.logger)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
@@ -143,10 +143,13 @@ class Optimizely(object):
       attributes: Dict representing user attributes and values which need to be recorded.
     """
 
-    impression_event = self.event_builder.create_impression_event(experiment,
-                                                                  variation.id,
-                                                                  user_id,
-                                                                  attributes)
+    impression_event = self.event_builder.create_impression_event(
+      self.config,
+      experiment,
+      variation.id,
+      user_id,
+      attributes
+    )
 
     self.logger.debug('Dispatching impression event to URL %s with params %s.' % (
       impression_event.url,
@@ -211,7 +214,7 @@ class Optimizely(object):
     feature_enabled = False
     source_info = {}
     variable_value = variable.defaultValue
-    decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+    decision = self.decision_service.get_variation_for_feature(self.config, feature_flag, user_id, attributes)
     if decision.variation:
 
       feature_enabled = decision.variation.featureEnabled
@@ -332,7 +335,13 @@ class Optimizely(object):
       self.logger.info('Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
-    conversion_event = self.event_builder.create_conversion_event(event_key, user_id, attributes, event_tags)
+    conversion_event = self.event_builder.create_conversion_event(
+      self.config,
+      event_key,
+      user_id,
+      attributes,
+      event_tags
+    )
     self.logger.info('Tracking event "%s" for user "%s".' % (event_key, user_id))
     self.logger.debug('Dispatching conversion event to URL %s with params %s.' % (
       conversion_event.url,
@@ -383,7 +392,7 @@ class Optimizely(object):
     if not self._validate_user_inputs(attributes):
       return None
 
-    variation = self.decision_service.get_variation(experiment, user_id, attributes)
+    variation = self.decision_service.get_variation(self.config, experiment, user_id, attributes)
     if variation:
       variation_key = variation.key
 
@@ -438,7 +447,7 @@ class Optimizely(object):
 
     feature_enabled = False
     source_info = {}
-    decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
+    decision = self.decision_service.get_variation_for_feature(self.config, feature, user_id, attributes)
     is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
 
     if decision.variation:

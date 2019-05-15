@@ -41,7 +41,7 @@ class EventTest(unittest.TestCase):
 
 class EventBuilderTest(base.BaseTest):
 
-  def setUp(self):
+  def setUp(self, *args, **kwargs):
     base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
     self.event_builder = self.optimizely.event_builder
 
@@ -93,7 +93,7 @@ class EventBuilderTest(base.BaseTest):
          mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
+        self.project_config, self.project_config.get_experiment_from_key('test_experiment'), '111129', 'test_user', None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -140,7 +140,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
+        self.project_config, self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', {'test_attribute': 'test_value'}
       )
     self._validate_event_object(event_obj,
@@ -183,7 +183,7 @@ class EventBuilderTest(base.BaseTest):
       with mock.patch('time.time', return_value=42.123), \
            mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
         event_obj = self.event_builder.create_impression_event(
-          self.project_config.get_experiment_from_key('test_experiment'),
+          self.project_config, self.project_config.get_experiment_from_key('test_experiment'),
           '111129', 'test_user', {'do_you_know_me': 'test_value'}
         )
       self._validate_event_object(event_obj,
@@ -252,7 +252,7 @@ class EventBuilderTest(base.BaseTest):
          mock.patch('optimizely.helpers.validator.is_attribute_valid', side_effect=side_effect):
 
       event_obj = self.event_builder.create_impression_event(
-        self.project_config.get_experiment_from_key('test_experiment'),
+        self.project_config, self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', attributes
       )
 
@@ -306,8 +306,9 @@ class EventBuilderTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
-         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
+         mock.patch('optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=True):
       event_obj = self.event_builder.create_impression_event(
+        self.project_config,
         self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', {'$opt_user_agent': 'Edge'}
       )
@@ -357,8 +358,9 @@ class EventBuilderTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
-         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
+         mock.patch('optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=True):
       event_obj = self.event_builder.create_impression_event(
+        self.project_config,
         self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', None
       )
@@ -413,8 +415,9 @@ class EventBuilderTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'),\
-         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=False):
+         mock.patch('optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=False):
       event_obj = self.event_builder.create_impression_event(
+        self.project_config,
         self.project_config.get_experiment_from_key('test_experiment'),
         '111129', 'test_user', {'$opt_user_agent': 'Chrome'}
       )
@@ -454,7 +457,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', None, None
+        self.project_config, 'test_event', 'test_user', None, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -496,7 +499,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'test_attribute': 'test_value'}, None
+        self.project_config, 'test_event', 'test_user', {'test_attribute': 'test_value'}, None
       )
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -543,10 +546,10 @@ class EventBuilderTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=True):
+         mock.patch('optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=True):
       event_obj = self.event_builder.create_conversion_event(
-       'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None
-          )
+       self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None
+      )
 
     self._validate_event_object(event_obj,
                                 event_builder.EventBuilder.EVENTS_URL,
@@ -593,9 +596,9 @@ class EventBuilderTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-         mock.patch('optimizely.event_builder.EventBuilder._get_bot_filtering', return_value=False):
+         mock.patch('optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=False):
       event_obj = self.event_builder.create_conversion_event(
-        'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None
+        self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None
       )
 
     self._validate_event_object(event_obj,
@@ -645,6 +648,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
+        self.project_config,
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
@@ -695,6 +699,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
+        self.project_config,
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
@@ -747,6 +752,7 @@ class EventBuilderTest(base.BaseTest):
     with mock.patch('time.time', return_value=42.123), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
       event_obj = self.event_builder.create_conversion_event(
+        self.project_config,
         'test_event',
         'test_user',
         {'test_attribute': 'test_value'},
