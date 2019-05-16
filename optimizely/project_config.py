@@ -13,11 +13,11 @@
 
 import json
 
-from optimizely.helpers import condition as condition_helper
-from optimizely.helpers import enums
-from optimizely.helpers import validator
-from optimizely import entities
-from optimizely import exceptions
+from .helpers import condition as condition_helper
+from .helpers import enums
+from .helpers import validator
+from . import entities
+from . import exceptions
 
 SUPPORTED_VERSIONS = [enums.DatafileVersions.V2, enums.DatafileVersions.V3, enums.DatafileVersions.V4]
 
