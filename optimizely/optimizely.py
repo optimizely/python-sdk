@@ -12,7 +12,6 @@
 # limitations under the License.
 from six import string_types
 
-from . import config_manager
 from . import decision_service
 from . import entities
 from . import event_builder

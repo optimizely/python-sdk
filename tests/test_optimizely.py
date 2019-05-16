@@ -12,17 +12,18 @@
 # limitations under the License.
 
 import json
-import mock
 from operator import itemgetter
 
-from optimizely import decision_service
+import mock
+
+import optimizely.config_manager
+from optimizely import decision_service, config_manager
 from optimizely import entities
 from optimizely import error_handler
 from optimizely import event_builder
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
-from optimizely import config_manager
 from optimizely import version
 from optimizely.helpers import enums
 from optimizely.notification_center import NotificationCenter
