@@ -16,8 +16,8 @@ from . import decision_service
 from . import entities
 from . import event_builder
 from . import exceptions
-from . import project_config
 from . import logger as _logging
+from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
