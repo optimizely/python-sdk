@@ -12,7 +12,6 @@
 # limitations under the License.
 from six import string_types
 
-from . import config_manager
 from . import decision_service
 from . import entities
 from . import event_builder
@@ -59,7 +58,7 @@ class Optimizely(object):
     except exceptions.InvalidInputException as error:
       self.is_valid = False
       # We actually want to log this error to stderr, so make sure the logger
-      #   has a handler capable of doing that.
+      # has a handler capable of doing that.
       self.logger = _logging.reset_logger(self.logger_name)
       self.logger.exception(str(error))
       return

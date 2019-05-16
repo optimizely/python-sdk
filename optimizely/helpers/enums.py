@@ -36,6 +36,14 @@ class AudienceEvaluationLogs(object):
                        'newer release of the Optimizely SDK.'
 
 
+class ConfigManager(object):
+  DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
+  # Default config update interval of 5 minutes
+  DEFAULT_UPDATE_INTERVAL = 5 * 60
+  # Minimum config update interval of 1 second
+  MIN_UPDATE_INTERVAL = 1
+
+
 class ControlAttributes(object):
   BOT_FILTERING = '$opt_bot_filtering'
   BUCKETING_ID = '$opt_bucketing_id'

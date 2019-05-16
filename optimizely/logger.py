@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2018, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -46,8 +46,8 @@ def reset_logger(name, level=None, handler=None):
   handler.setFormatter(logging.Formatter(_DEFAULT_LOG_FORMAT))
 
   # We don't use ``.addHandler``, since this logger may have already been
-  #   instantiated elsewhere with a different handler. It should only ever
-  #   have one, not many.
+  # instantiated elsewhere with a different handler. It should only ever
+  # have one, not many.
   logger.handlers = [handler]
   return logger
 
