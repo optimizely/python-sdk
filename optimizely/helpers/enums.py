@@ -79,6 +79,11 @@ class Errors(object):
   UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
 
 
+class HTTPHeaders(object):
+  IF_MODIFIED_SINCE = 'If-Modified-Since'
+  LAST_MODIFIED = 'Last-Modified'
+
+
 class HTTPVerbs(object):
   GET = 'GET'
   POST = 'POST'
