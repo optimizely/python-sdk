@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,13 +15,13 @@ ALLOWED_EXPERIMENT_STATUS = ['Running']
 
 
 def is_experiment_running(experiment):
-  """ Determine for given experiment if experiment is running.
+    """ Determine for given experiment if experiment is running.
 
-  Args:
-    experiment: Object representing the experiment.
+    Args:
+      experiment: Object representing the experiment.
 
-  Returns:
-    Boolean representing if experiment is running or not.
-  """
+    Returns:
+      Boolean representing if experiment is running or not.
+    """
 
-  return experiment.status in ALLOWED_EXPERIMENT_STATUS
+    return experiment.status in ALLOWED_EXPERIMENT_STATUS

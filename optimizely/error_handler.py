@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,21 +13,21 @@
 
 
 class BaseErrorHandler(object):
-  """ Class encapsulating exception handling functionality.
-  Override with your own exception handler providing handle_error method. """
+    """ Class encapsulating exception handling functionality.
+    Override with your own exception handler providing handle_error method. """
 
-  @staticmethod
-  def handle_error(*args):
-    pass
+    @staticmethod
+    def handle_error(*args):
+        pass
 
 
 class NoOpErrorHandler(BaseErrorHandler):
-  """ Class providing handle_error method which suppresses the error. """
+    """ Class providing handle_error method which suppresses the error. """
 
 
 class RaiseExceptionErrorHandler(BaseErrorHandler):
-  """ Class providing handle_error method which raises provided exception. """
+    """ Class providing handle_error method which raises provided exception. """
 
-  @staticmethod
-  def handle_error(error):
-    raise error
+    @staticmethod
+    def handle_error(error):
+        raise error

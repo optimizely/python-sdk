@@ -19,73 +19,73 @@ from .enums import AudienceEvaluationLogs as audience_logs
 
 
 def is_user_in_experiment(config, experiment, attributes, logger):
-  """ Determine for given experiment if user satisfies the audiences for the experiment.
+    """ Determine for given experiment if user satisfies the audiences for the experiment.
 
-  Args:
-    config: project_config.ProjectConfig object representing the project.
-    experiment: Object representing the experiment.
-    attributes: Dict representing user attributes which will be used in determining
-                if the audience conditions are met. If not provided, default to an empty dict.
-    logger: Provides a logger to send log messages to.
+    Args:
+      config: project_config.ProjectConfig object representing the project.
+      experiment: Object representing the experiment.
+      attributes: Dict representing user attributes which will be used in determining
+                  if the audience conditions are met. If not provided, default to an empty dict.
+      logger: Provides a logger to send log messages to.
 
-  Returns:
-    Boolean representing if user satisfies audience conditions for any of the audiences or not.
-  """
+    Returns:
+      Boolean representing if user satisfies audience conditions for any of the audiences or not.
+    """
 
-  audience_conditions = experiment.getAudienceConditionsOrIds()
+    audience_conditions = experiment.getAudienceConditionsOrIds()
 
-  logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(
-    experiment.key,
-    json.dumps(audience_conditions)
-  ))
-
-  # Return True in case there are no audiences
-  if audience_conditions is None or audience_conditions == []:
-    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
-      experiment.key,
-      'TRUE'
+    logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(
+        experiment.key,
+        json.dumps(audience_conditions)
     ))
 
-    return True
+    # Return True in case there are no audiences
+    if audience_conditions is None or audience_conditions == []:
+        logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+            experiment.key,
+            'TRUE'
+        ))
 
-  if attributes is None:
-    attributes = {}
+        return True
 
-  def evaluate_custom_attr(audienceId, index):
-    audience = config.get_audience(audienceId)
-    custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
-      audience.conditionList, attributes, logger)
+    if attributes is None:
+        attributes = {}
 
-    return custom_attr_condition_evaluator.evaluate(index)
+    def evaluate_custom_attr(audienceId, index):
+        audience = config.get_audience(audienceId)
+        custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            audience.conditionList, attributes, logger)
 
-  def evaluate_audience(audienceId):
-    audience = config.get_audience(audienceId)
+        return custom_attr_condition_evaluator.evaluate(index)
 
-    if audience is None:
-      return None
+    def evaluate_audience(audienceId):
+        audience = config.get_audience(audienceId)
 
-    logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
+        if audience is None:
+            return None
 
-    result = condition_tree_evaluator.evaluate(
-      audience.conditionStructure,
-      lambda index: evaluate_custom_attr(audienceId, index)
+        logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
+
+        result = condition_tree_evaluator.evaluate(
+            audience.conditionStructure,
+            lambda index: evaluate_custom_attr(audienceId, index)
+        )
+
+        result_str = str(result).upper() if result is not None else 'UNKNOWN'
+        logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
+
+        return result
+
+    eval_result = condition_tree_evaluator.evaluate(
+        audience_conditions,
+        evaluate_audience
     )
 
-    result_str = str(result).upper() if result is not None else 'UNKNOWN'
-    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
+    eval_result = eval_result or False
 
-    return result
-
-  eval_result = condition_tree_evaluator.evaluate(
-    audience_conditions,
-    evaluate_audience
-  )
-
-  eval_result = eval_result or False
-
-  logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
-      experiment.key,
-      str(eval_result).upper()
+    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(
+        experiment.key,
+        str(eval_result).upper()
     ))
 
-  return eval_result
+    return eval_result

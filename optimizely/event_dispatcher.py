@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,22 +23,21 @@ REQUEST_TIMEOUT = 10
 
 
 class EventDispatcher(object):
+    @staticmethod
+    def dispatch_event(event):
+        """ Dispatch the event being represented by the Event object.
 
-  @staticmethod
-  def dispatch_event(event):
-    """ Dispatch the event being represented by the Event object.
+        Args:
+          event: Object holding information about the request to be dispatched to the Optimizely backend.
+        """
 
-    Args:
-      event: Object holding information about the request to be dispatched to the Optimizely backend.
-    """
+        try:
+            if event.http_verb == enums.HTTPVerbs.GET:
+                requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT).raise_for_status()
+            elif event.http_verb == enums.HTTPVerbs.POST:
+                requests.post(
+                    event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT
+                ).raise_for_status()
 
-    try:
-      if event.http_verb == enums.HTTPVerbs.GET:
-        requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT).raise_for_status()
-      elif event.http_verb == enums.HTTPVerbs.POST:
-        requests.post(
-          event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT
-        ).raise_for_status()
-
-    except request_exception.RequestException as error:
-      logging.error('Dispatch event failed. Error: %s' % str(error))
+        except request_exception.RequestException as error:
+            logging.error('Dispatch event failed. Error: %s' % str(error))
