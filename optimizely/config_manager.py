@@ -19,7 +19,7 @@ import time
 from requests import exceptions as requests_exceptions
 
 from optimizely import exceptions
-from optimizely import logger as _logging
+from optimizely import logger as optimizely_logger
 from optimizely import project_config
 from optimizely.error_handler import NoOpErrorHandler as noop_error_handler
 from optimizely.helpers import enums
@@ -41,7 +41,7 @@ class StaticConfigManager(BaseConfigManager):
                datafile,
                logger=None,
                error_handler=None):
-    self.logger = logger or _logging.adapt_logger(logger or _logging.NoOpLogger())
+    self.logger = logger or optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
     self.error_handler = error_handler or noop_error_handler
     self._datafile = datafile
     self._config = project_config.ProjectConfig(self._datafile, self.logger, self.error_handler)
@@ -77,14 +77,15 @@ class PollingConfigManager(BaseConfigManager):
       logger: Provides a logger instance.
       error_handler: Provides a handle_error method to handle exceptions.
     """
-    self.datafile_url = self.get_datafile_url(sdk_key, url, url_template)
+    self.datafile_url = self.get_datafile_url(sdk_key, url, url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)
     self.update_interval = self.get_update_interval(update_interval)
     self.last_modified = None
     self._datafile = None
     self._config = None
     self._polling_thread = threading.Thread(target=self._run)
     self.is_running = False
-    self.logger = logger or _logging.adapt_logger(logger or _logging.SimpleLogger(min_level=enums.LogLevels.DEBUG))
+    self.logger = logger or optimizely_logger.adapt_logger(
+      logger or optimizely_logger.SimpleLogger(min_level=enums.LogLevels.DEBUG))
     self.error_handler = error_handler or noop_error_handler
 
   @staticmethod
@@ -104,8 +105,6 @@ class PollingConfigManager(BaseConfigManager):
     if sdk_key is None and url is None:
       raise exceptions.InvalidInputException('Must provide at least one of sdk_key or url.')
 
-    url_template = url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE
-
     # Return URL if one is provided or use template and SDK key to get it.
     if url is None:
       return url_template.format(sdk_key=sdk_key)
@@ -118,7 +117,7 @@ class PollingConfigManager(BaseConfigManager):
     Args:
       update_interval: Time in seconds optionally sent in by the user.
     """
-    polling_interval = update_interval or enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+    update_interval = update_interval or enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
     # If polling interval is less than minimum allowed interval then set it to default update interval.
     if update_interval < enums.ConfigManager.MIN_UPDATE_INTERVAL:
@@ -126,9 +125,9 @@ class PollingConfigManager(BaseConfigManager):
         update_interval,
         enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
       )
-      polling_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+      update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
-    return polling_interval
+    return update_interval
 
   def set_last_modified(self, response):
     """ Looks up and sets last modified time based on Last-Modified header in the response.
@@ -144,18 +143,6 @@ class PollingConfigManager(BaseConfigManager):
      Args:
        response: requests.Response
      """
-    try:
-      response.raise_for_status()
-    except requests_exceptions.HTTPError as err:
-      self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
-      return
-
-    # Leave datafile and config unchanged if it has not been modified.
-    if response.status_code == http.HTTPStatus.NOT_MODIFIED:
-      self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
-      return
-
-    self.set_last_modified(response)
     # TODO(ali): Add validation here to make sure that we do not update datafile and config if not a valid datafile.
     self._datafile = response.text
     # TODO(ali): Add notification listener.
@@ -170,6 +157,26 @@ class PollingConfigManager(BaseConfigManager):
     """
     return self._config
 
+  def _handle_response(self, response):
+    """ Helper method to handle response containing datafile.
+
+    Args:
+        response: requests.Response
+    """
+    try:
+      response.raise_for_status()
+    except requests_exceptions.HTTPError as err:
+      self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+      return
+
+    # Leave datafile and config unchanged if it has not been modified.
+    if response.status_code == http.HTTPStatus.NOT_MODIFIED:
+      self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
+      return
+
+    self.set_last_modified(response)
+    self.set_config(response)
+
   def fetch_datafile(self):
     """ Fetch datafile and set ProjectConfig. """
 
@@ -178,7 +185,7 @@ class PollingConfigManager(BaseConfigManager):
       request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
     response = requests.get(self.datafile_url, headers=request_headers)
-    self.set_config(response)
+    self._handle_response(response)
 
   def _run(self):
     """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
