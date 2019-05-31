@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
 
 # Unless required by applicable law or agreed to in writing, software
@@ -166,7 +166,7 @@ class PollingConfigManagerTest(unittest.TestCase):
         project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
         self.assertFalse(project_config_manager.is_running)
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile, \
-            mock.patch('time.sleep') as mock_sleep:
+             mock.patch('time.sleep') as mock_sleep:
             project_config_manager.start()
             self.assertTrue(project_config_manager.is_running)
 
@@ -178,7 +178,7 @@ class PollingConfigManagerTest(unittest.TestCase):
         project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
         self.assertFalse(project_config_manager._polling_thread.is_alive())
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile, \
-            mock.patch('time.sleep') as mock_sleep:
+             mock.patch('time.sleep') as mock_sleep:
             project_config_manager.start()
             self.assertTrue(project_config_manager._polling_thread.is_alive())
 
