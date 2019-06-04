@@ -36,6 +36,16 @@ class AudienceEvaluationLogs(object):
                        'newer release of the Optimizely SDK.'
 
 
+class ConfigManager(object):
+  DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
+  # Default config update interval of 5 minutes
+  DEFAULT_UPDATE_INTERVAL = 5 * 60
+  # Minimum config update interval of 1 second
+  MIN_UPDATE_INTERVAL = 1
+  # Time in seconds before which request for datafile times out
+  REQUEST_TIMEOUT = 10
+
+
 class ControlAttributes(object):
   BOT_FILTERING = '$opt_bot_filtering'
   BUCKETING_ID = '$opt_bucketing_id'
@@ -77,6 +87,11 @@ class Errors(object):
   NONE_USER_ID_PARAMETER = '"None" is an invalid value for user ID.'
   NONE_VARIABLE_KEY_PARAMETER = '"None" is an invalid value for variable key.'
   UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
+
+
+class HTTPHeaders(object):
+  IF_MODIFIED_SINCE = 'If-Modified-Since'
+  LAST_MODIFIED = 'Last-Modified'
 
 
 class HTTPVerbs(object):
