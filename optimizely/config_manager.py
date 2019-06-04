@@ -208,7 +208,7 @@ class PollingConfigManager(BaseConfigManager):
             return
 
         self.set_last_modified(response.headers)
-        self.set_config(response.text)
+        self.set_config(str.encode(response.text))
 
     def fetch_datafile(self):
         """ Fetch datafile and set ProjectConfig. """
