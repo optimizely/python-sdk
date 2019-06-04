@@ -991,6 +991,17 @@ class OptimizelyTest(base.BaseTest):
 
     mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "activate".')
 
+  def test_activate__invalid_project_config(self):
+    """ Test that activate logs error and returns None if ProjectConfig is None. """
+
+    with mock.patch.object(self.optimizely.config_manager, 'get_config', return_value=None), \
+      mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
+      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with(
+      'Invalid config. Optimizely instance is not valid. Failing "activate".'
+    )
+
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
 

@@ -297,15 +297,15 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return None
 
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
+      return None
+
     variation_key = self.get_variation(experiment_key, user_id, attributes)
 
     if not variation_key:
       self.logger.info('Not activating user "%s".' % user_id)
-      return None
-
-    project_config = self.config_manager.get_config()
-    if not project_config:
-      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
       return None
 
     experiment = project_config.get_experiment_from_key(experiment_key)
