@@ -568,7 +568,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
   def setUp(self):
     base.BaseTest.setUp(self)
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    self.project_config = opt_obj.config
+    self.project_config = opt_obj.config_manager.get_config()
     self.decision_service = opt_obj.decision_service
     self.mock_decision_logger = mock.patch.object(self.decision_service, 'logger')
     self.mock_config_logger = mock.patch.object(self.project_config, 'logger')
@@ -856,7 +856,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
       )
     mock_decision_service_logging.error.assert_called_once_with(
       enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature')
-    )
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(self):
     """ Test that if a user is in the mutex group but the experiment is
