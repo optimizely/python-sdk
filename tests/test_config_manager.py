@@ -148,7 +148,9 @@ class PollingConfigManagerTest(unittest.TestCase):
         with mock.patch('requests.get', return_value=test_response) as mock_requests:
             project_config_manager.fetch_datafile()
 
-        mock_requests.assert_called_once_with(expected_datafile_url, headers={})
+        mock_requests.assert_called_once_with(expected_datafile_url,
+                                              headers={},
+                                              timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
@@ -157,7 +159,8 @@ class PollingConfigManagerTest(unittest.TestCase):
             project_config_manager.fetch_datafile()
 
         mock_requests.assert_called_once_with(expected_datafile_url,
-                                              headers={'If-Modified-Since': test_headers['Last-Modified']})
+                                              headers={'If-Modified-Since': test_headers['Last-Modified']},
+                                              timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 

@@ -33,8 +33,7 @@ class BaseConfigManager(ABC):
 
     def __init__(self,
                  logger=None,
-                 error_handler=None,
-                 **kwargs):
+                 error_handler=None):
         """ Initialize config manager.
 
         Args:
@@ -94,6 +93,7 @@ class PollingConfigManager(BaseConfigManager):
 
         Args:
           sdk_key: Optional string uniquely identifying the datafile.
+          datafile: Optional JSON string representing the project.
           update_interval: Optional floating point number representing time interval in seconds
                            at which to request datafile and set ProjectConfig.
           url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
@@ -147,7 +147,11 @@ class PollingConfigManager(BaseConfigManager):
         return url
 
     def set_update_interval(self, update_interval):
-        """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated. """
+        """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
+
+        Args:
+          update_interval: Time in seconds after which to update datafile.
+        """
         self.update_interval = update_interval or enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
         # If polling interval is less than minimum allowed interval then set it to default update interval.
@@ -176,7 +180,7 @@ class PollingConfigManager(BaseConfigManager):
         self._datafile = datafile
         # TODO(ali): Add notification listener.
         self._config = project_config.ProjectConfig(self._datafile, self.logger, self.error_handler)
-        self.logger.info('Received new datafile and updated config.')
+        self.logger.debug('Received new datafile and updated config.')
 
     def get_config(self):
         """ Returns instance of ProjectConfig.
@@ -213,7 +217,9 @@ class PollingConfigManager(BaseConfigManager):
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
-        response = requests.get(self.datafile_url, headers=request_headers)
+        response = requests.get(self.datafile_url,
+                                headers=request_headers,
+                                timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         self._handle_response(response)
 
     @property
