@@ -168,22 +168,18 @@ class PollingConfigManagerTest(unittest.TestCase):
         """ Test is_running before and after starting thread. """
         project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
         self.assertFalse(project_config_manager.is_running)
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile, \
-             mock.patch('time.sleep') as mock_sleep:
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile:
             project_config_manager.start()
             self.assertTrue(project_config_manager.is_running)
 
         mock_fetch_datafile.assert_called_with()
-        mock_sleep.assert_called_with(enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
 
     def test_start(self):
         """ Test that calling start starts the polling thread. """
         project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
         self.assertFalse(project_config_manager._polling_thread.is_alive())
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile, \
-             mock.patch('time.sleep') as mock_sleep:
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile:
             project_config_manager.start()
             self.assertTrue(project_config_manager._polling_thread.is_alive())
 
         mock_fetch_datafile.assert_called_with()
-        mock_sleep.assert_called_with(enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
