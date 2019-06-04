@@ -208,7 +208,7 @@ class PollingConfigManager(BaseConfigManager):
             return
 
         self.set_last_modified(response.headers)
-        self.set_config(str.encode(response.text))
+        self.set_config(response.text)
 
     def fetch_datafile(self):
         """ Fetch datafile and set ProjectConfig. """
@@ -220,6 +220,7 @@ class PollingConfigManager(BaseConfigManager):
         response = requests.get(self.datafile_url,
                                 headers=request_headers,
                                 timeout=enums.ConfigManager.REQUEST_TIMEOUT)
+        response.encoding = 'utf-8'
         self._handle_response(response)
 
     @property
