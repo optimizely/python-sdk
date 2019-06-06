@@ -74,7 +74,6 @@ class Errors(object):
   INVALID_ATTRIBUTE = 'Provided attribute is not in datafile.'
   INVALID_ATTRIBUTE_FORMAT = 'Attributes provided are in an invalid format.'
   INVALID_AUDIENCE = 'Provided audience is not in datafile.'
-  INVALID_DATAFILE = 'Datafile has invalid format. Failing "{}".'
   INVALID_EVENT_TAG_FORMAT = 'Event tags provided are in an invalid format.'
   INVALID_EXPERIMENT_KEY = 'Provided experiment is not in datafile.'
   INVALID_EVENT_KEY = 'Provided event is not in datafile.'

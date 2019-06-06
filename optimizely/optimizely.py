@@ -60,19 +60,8 @@ class Optimizely(object):
     self.error_handler = error_handler or noop_error_handler
     self.config_manager = config_manager
 
-    if self.config_manager is None:
-      if sdk_key:
-        self.config_manager = PollingConfigManager(sdk_key=sdk_key,
-                                                   datafile=datafile,
-                                                   logger=self.logger,
-                                                   error_handler=self.error_handler)
-      else:
-        self.config_manager = StaticConfigManager(datafile=datafile,
-                                                  logger=self.logger,
-                                                  error_handler=self.error_handler)
-
     try:
-      self._validate_instantiation_options(datafile, skip_json_validation)
+      self._validate_instantiation_options()
     except exceptions.InvalidInputException as error:
       self.is_valid = False
       # We actually want to log this error to stderr, so make sure the logger
@@ -81,23 +70,32 @@ class Optimizely(object):
       self.logger.exception(str(error))
       return
 
+    if not self.config_manager:
+      if sdk_key:
+        self.config_manager = PollingConfigManager(sdk_key=sdk_key,
+                                                   datafile=datafile,
+                                                   logger=self.logger,
+                                                   error_handler=self.error_handler,
+                                                   skip_json_validation=skip_json_validation)
+      else:
+        self.config_manager = StaticConfigManager(datafile=datafile,
+                                                  logger=self.logger,
+                                                  error_handler=self.error_handler,
+                                                  skip_json_validation=skip_json_validation)
+
     self.event_builder = event_builder.EventBuilder()
     self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
     self.notification_center = notification_center(self.logger)
 
-  def _validate_instantiation_options(self, datafile, skip_json_validation):
+  def _validate_instantiation_options(self):
     """ Helper method to validate all instantiation parameters.
-
-    Args:
-      datafile: JSON string representing the project.
-      skip_json_validation: Boolean representing whether JSON schema validation needs to be skipped or not.
 
     Raises:
       Exception if provided instantiation options are valid.
     """
 
-    if not skip_json_validation and not validator.is_datafile_valid(datafile):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('datafile'))
+    if self.config_manager and not validator.is_config_manager_valid(self.config_manager):
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('config_manager'))
 
     if not validator.is_event_dispatcher_valid(self.event_dispatcher):
       raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_dispatcher'))

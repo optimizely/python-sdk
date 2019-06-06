@@ -58,6 +58,32 @@ def _has_method(obj, method):
   return getattr(obj, method, None) is not None
 
 
+def is_config_manager_valid(config_manager):
+  """ Given a config_manager determine if it is valid or not i.e. provides a get_config method.
+
+  Args:
+    config_manager: Provides a get_config method to handle exceptions.
+
+  Returns:
+    Boolean depending upon whether config_manager is valid or not.
+  """
+
+  return _has_method(config_manager, 'get_config')
+
+
+def is_error_handler_valid(error_handler):
+  """ Given a error_handler determine if it is valid or not i.e. provides a handle_error method.
+
+  Args:
+    error_handler: Provides a handle_error method to handle exceptions.
+
+  Returns:
+    Boolean depending upon whether error_handler is valid or not.
+  """
+
+  return _has_method(error_handler, 'handle_error')
+
+
 def is_event_dispatcher_valid(event_dispatcher):
   """ Given a event_dispatcher determine if it is valid or not i.e. provides a dispatch_event method.
 
@@ -82,19 +108,6 @@ def is_logger_valid(logger):
   """
 
   return _has_method(logger, 'log')
-
-
-def is_error_handler_valid(error_handler):
-  """ Given a error_handler determine if it is valid or not i.e. provides a handle_error method.
-
-  Args:
-    error_handler: Provides a handle_error method to handle exceptions.
-
-  Returns:
-    Boolean depending upon whether error_handler is valid or not.
-  """
-
-  return _has_method(error_handler, 'handle_error')
 
 
 def are_attributes_valid(attributes):

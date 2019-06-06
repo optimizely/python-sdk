@@ -989,18 +989,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "activate".')
-
-  def test_activate__invalid_project_config(self):
-    """ Test that activate logs error and returns None if ProjectConfig is None. """
-
-    with mock.patch.object(self.optimizely.config_manager, 'get_config', return_value=None), \
-      mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
-      self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user'))
-
-    mock_client_logging.error.assert_called_once_with(
-      'Invalid config. Optimizely instance is not valid. Failing "activate".'
-    )
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "activate".')
 
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
@@ -1437,7 +1427,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       opt_obj.track('test_event', 'test_user')
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "track".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "track".')
 
   def test_track__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during track \
@@ -1537,7 +1528,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_variation".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "get_variation".')
 
   def test_get_variation_unknown_experiment_key(self):
     """ Test that get_variation retuns None when invalid experiment key is given. """
@@ -1936,7 +1928,8 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "is_feature_enabled".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "is_feature_enabled".')
 
     # Check that no event is sent
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -2082,7 +2075,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertEqual([], opt_obj.get_enabled_features('user_1'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_enabled_features".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "get_enabled_features".')
 
   def test_get_feature_variable_boolean(self):
     """ Test that get_feature_variable_boolean returns Boolean value as expected \
@@ -3304,7 +3298,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertFalse(opt_obj.set_forced_variation('test_experiment', 'test_user', 'test_variation'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "set_forced_variation".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "set_forced_variation".')
 
   def test_set_forced_variation__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during set_forced_variation \
@@ -3334,7 +3329,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.get_forced_variation('test_experiment', 'test_user'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_forced_variation".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "get_forced_variation".')
 
   def test_get_forced_variation__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during get_forced_variation \
