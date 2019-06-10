@@ -15,6 +15,7 @@ import json
 import mock
 from operator import itemgetter
 
+from optimizely import config_manager
 from optimizely import decision_service
 from optimizely import entities
 from optimizely import error_handler
@@ -103,6 +104,19 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
     self.assertIsNone(opt_obj.config_manager.get_config())
 
+  def test_init__invalid_config_manager__logs_error(self):
+    """ Test that invalid config_manager logs error on init. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    mock_client_logger.exception.assert_called_once_with('Provided "config_manager" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
   def test_init__invalid_event_dispatcher__logs_error(self):
     """ Test that invalid event_dispatcher logs error on init. """
 
@@ -171,6 +185,30 @@ class OptimizelyTest(base.BaseTest):
 
     mock_client_logger.exception.assert_not_called()
     self.assertTrue(opt_obj.is_valid)
+
+  def test_init__datafile_only(self):
+    """ Test that if only datafile is provided then StaticConfigManager is used. """
+
+    opt_obj = optimizely.Optimizely(datafile=json.dumps(self.config_dict))
+    self.assertIs(type(opt_obj.config_manager), config_manager.StaticConfigManager)
+
+  def test_init__sdk_key_only(self):
+    """ Test that if only sdk_key is provided then PollingConfigManager is used. """
+
+    with mock.patch('optimizely.config_manager.PollingConfigManager.set_config'), \
+      mock.patch('threading.Thread.start'):
+      opt_obj = optimizely.Optimizely(sdk_key='test_sdk_key')
+
+    self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
+
+  def test_init__sdk_key_and_datafile(self):
+    """ Test that if both sdk_key and datafile is provided then PollingConfigManager is used. """
+
+    with mock.patch('optimizely.config_manager.PollingConfigManager.set_config'), \
+      mock.patch('threading.Thread.start'):
+      opt_obj = optimizely.Optimizely(datafile=json.dumps(self.config_dict), sdk_key='test_sdk_key')
+
+    self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
 
   def test_skip_json_validation_true(self):
     """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
