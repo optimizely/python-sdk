@@ -145,13 +145,14 @@ class PollingConfigManager(StaticConfigManager):
                                   JSON schema validation will be performed.
 
         """
-        super(PollingConfigManager, self).__init__(logger=logger, error_handler=error_handler)
+        super(PollingConfigManager, self).__init__(logger=logger,
+                                                   error_handler=error_handler,
+                                                   skip_json_validation=skip_json_validation)
         self.datafile_url = self.get_datafile_url(sdk_key, url,
                                                   url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)
         self.set_update_interval(update_interval)
         self.last_modified = None
         self._config = None
-        self.validate_schema = not skip_json_validation
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
         if datafile:

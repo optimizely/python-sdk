@@ -210,14 +210,6 @@ class OptimizelyTest(base.BaseTest):
 
     self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
 
-  def test_skip_json_validation_true(self):
-    """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
-
-    with mock.patch('optimizely.helpers.validator.is_datafile_valid') as mock_datafile_validation:
-      optimizely.Optimizely(json.dumps(self.config_dict), skip_json_validation=True)
-
-    self.assertEqual(0, mock_datafile_validation.call_count)
-
   def test_invalid_json_raises_schema_validation_off(self):
     """ Test that invalid JSON logs error if schema validation is turned off. """
 
