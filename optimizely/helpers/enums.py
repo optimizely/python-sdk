@@ -80,6 +80,7 @@ class Errors(object):
   INVALID_FEATURE_KEY = 'Provided feature key is not in the datafile.'
   INVALID_GROUP_ID = 'Provided group is not in datafile.'
   INVALID_INPUT = 'Provided "{}" is in an invalid format.'
+  INVALID_OPTIMIZELY = 'Optimizely instance is not valid. Failing "{}".'
   INVALID_PROJECT_CONFIG = 'Invalid config. Optimizely instance is not valid. Failing "{}".'
   INVALID_VARIATION = 'Provided variation is not in datafile.'
   INVALID_VARIABLE_KEY = 'Provided variable key is not in the feature flag.'

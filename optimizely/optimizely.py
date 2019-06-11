@@ -284,7 +284,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('activate'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('activate'))
       return None
 
     if not validator.is_non_empty_string(experiment_key):
@@ -326,7 +326,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('track'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('track'))
       return
 
     if not validator.is_non_empty_string(event_key):
@@ -383,7 +383,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_variation'))
       return None
 
     if not validator.is_non_empty_string(experiment_key):
@@ -447,7 +447,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('is_feature_enabled'))
       return False
 
     if not validator.is_non_empty_string(feature_key):
@@ -523,7 +523,7 @@ class Optimizely(object):
 
     enabled_features = []
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_enabled_features'))
       return enabled_features
 
     if not isinstance(user_id, string_types):
@@ -662,7 +662,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('set_forced_variation'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('set_forced_variation'))
       return False
 
     if not validator.is_non_empty_string(experiment_key):
@@ -692,7 +692,7 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_forced_variation'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_forced_variation'))
       return None
 
     if not validator.is_non_empty_string(experiment_key):

@@ -1011,7 +1011,20 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_activate__invalid_object(self):
-    """ Test that activate logs error if Optimizely object is not created correctly. """
+    """ Test that activate logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "activate".')
+
+  def test_activate__invalid_config(self):
+    """ Test that activate logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
@@ -1449,7 +1462,20 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(1, mock_dispatch_event.call_count)
 
   def test_track__invalid_object(self):
-    """ Test that track logs error if Optimizely object is not created correctly. """
+    """ Test that track logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.track('test_event', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "track".')
+
+  def test_track__invalid_config(self):
+    """ Test that track logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
@@ -1550,7 +1576,20 @@ class OptimizelyTest(base.BaseTest):
     )
 
   def test_get_variation__invalid_object(self):
-    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+    """ Test that get_variation logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "get_variation".')
+
+  def test_get_variation__invalid_config(self):
+    """ Test that get_variation logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
@@ -1949,7 +1988,20 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_is_feature_enabled__invalid_object(self):
-    """ Test that is_feature_enabled returns False if Optimizely object is not valid. """
+    """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "is_feature_enabled".')
+
+  def test_is_feature_enabled__invalid_config(self):
+    """ Test that is_feature_enabled returns False if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
@@ -2097,7 +2149,21 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
 
   def test_get_enabled_features__invalid_object(self):
-    """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
+    """ Test that get_enabled_features returns empty list if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertEqual([], opt_obj.get_enabled_features('test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. '
+                                                      'Failing "get_enabled_features".')
+
+  def test_get_enabled_features__invalid_config(self):
+    """ Test that get_enabled_features returns empty list if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
@@ -3320,7 +3386,21 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     self.assertEqual('variation', variation_key)
 
   def test_set_forced_variation__invalid_object(self):
-    """ Test that set_forced_variation logs error if Optimizely object is not created correctly. """
+    """ Test that set_forced_variation logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertFalse(opt_obj.set_forced_variation('test_experiment', 'test_user', 'test_variation'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. '
+                                                      'Failing "set_forced_variation".')
+
+  def test_set_forced_variation__invalid_config(self):
+    """ Test that set_forced_variation logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
@@ -3351,7 +3431,21 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
   def test_get_forced_variation__invalid_object(self):
-    """ Test that get_forced_variation logs error if Optimizely object is not created correctly. """
+    """ Test that get_forced_variation logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.get_forced_variation('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. '
+                                                      'Failing "get_forced_variation".')
+
+  def test_get_forced_variation__invalid_config(self):
+    """ Test that get_forced_variation logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
