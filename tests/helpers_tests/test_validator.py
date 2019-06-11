@@ -28,13 +28,13 @@ from tests import base
 class ValidatorTest(base.BaseTest):
 
   def test_is_config_manager_valid__returns_true(self):
-    """ Test that valid config_manager returns True. """
+    """ Test that valid config_manager returns True for valid config manager implementation. """
 
     self.assertTrue(validator.is_config_manager_valid(config_manager.StaticConfigManager))
     self.assertTrue(validator.is_config_manager_valid(config_manager.PollingConfigManager))
 
   def test_is_config_manager_valid__returns_false(self):
-    """ Test that invalid config_manager returns False. """
+    """ Test that invalid config_manager returns False for invalid config manager implementation. """
 
     class CustomConfigManager(object):
       def some_other_method(self):
