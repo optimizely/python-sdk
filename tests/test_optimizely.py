@@ -3057,11 +3057,9 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     """ Test that expected log messages are logged during activate when audience conditions are not met. """
 
     mock_client_logger = mock.patch.object(self.optimizely, 'logger')
-    mock_config_logger = mock.patch.object(self.optimizely.config, 'logger')
     mock_decision_logger = mock.patch.object(self.optimizely.decision_service, 'logger')
 
     with mock_decision_logger as mock_decision_logging, \
-         mock_config_logger as mock_config_logging, \
          mock_client_logger as mock_client_logging:
       self.optimizely.activate(
         'test_experiment',
@@ -3069,7 +3067,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         attributes={'test_attribute': 'wrong_test_value'}
       )
 
-    mock_config_logging.debug.assert_called_once_with(
+    mock_decision_logging.debug.assert_any_call(
       'User "test_user" is not in the forced variation map.'
     )
     mock_decision_logging.info.assert_called_with(
@@ -3217,17 +3215,15 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     experiment_key = 'test_experiment'
     user_id = 'test_user'
 
-    mock_config_logger = mock.patch.object(self.optimizely.config, 'logger')
     mock_decision_logger = mock.patch.object(self.optimizely.decision_service, 'logger')
-    with mock_decision_logger as mock_decision_logging, \
-           mock_config_logger as mock_config_logging:
+    with mock_decision_logger as mock_decision_logging:
       self.optimizely.get_variation(
         experiment_key,
         user_id,
         attributes={'test_attribute': 'wrong_test_value'}
       )
 
-    mock_config_logging.debug.assert_called_once_with(
+    mock_decision_logging.debug.assert_any_call(
       'User "test_user" is not in the forced variation map.'
     )
     mock_decision_logging.info.assert_called_with(
