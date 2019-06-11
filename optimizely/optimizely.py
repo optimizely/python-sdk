@@ -614,7 +614,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return False
 
-    return self.config.set_forced_variation(experiment_key, user_id, variation_key)
+    return self.decision_service.set_forced_variation(self.config, experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
@@ -639,5 +639,5 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
-    forced_variation = self.config.get_forced_variation(experiment_key, user_id)
+    forced_variation = self.decision_service.get_forced_variation(self.config, experiment_key, user_id)
     return forced_variation.key if forced_variation else None

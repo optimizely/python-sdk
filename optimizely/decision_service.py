@@ -32,6 +32,12 @@ class DecisionService(object):
     self.logger = logger
     self.user_profile_service = user_profile_service
 
+    # Map of user IDs to another map of experiments to variations.
+    # This contains all the forced variations set by the user
+    # by calling set_forced_variation (it is not the same as the
+    # whitelisting forcedVariations data structure).
+    self.forced_variation_map = {}
+
   def _get_bucketing_id(self, user_id, attributes):
     """ Helper method to determine bucketing ID for the user.
 
@@ -54,8 +60,114 @@ class DecisionService(object):
 
     return user_id
 
-  def get_forced_variation(self, project_config, experiment, user_id):
-    """ Determine if a user is forced into a variation for the given experiment and return that variation.
+  def set_forced_variation(self, project_config, experiment_key, user_id, variation_key):
+    """ Sets users to a map of experiments to forced variations.
+
+      Args:
+        project_config: Instance of ProjectConfig.
+        experiment_key: Key for experiment.
+        user_id: The user ID.
+        variation_key: Key for variation. If None, then clear the existing experiment-to-variation mapping.
+
+      Returns:
+        A boolean value that indicates if the set completed successfully.
+    """
+    experiment = project_config.get_experiment_from_key(experiment_key)
+    if not experiment:
+      # The invalid experiment key will be logged inside this call.
+      return False
+
+    experiment_id = experiment.id
+    if variation_key is None:
+      if user_id in self.forced_variation_map:
+        experiment_to_variation_map = self.forced_variation_map.get(user_id)
+        if experiment_id in experiment_to_variation_map:
+          del(self.forced_variation_map[user_id][experiment_id])
+          self.logger.debug('Variation mapped to experiment "%s" has been removed for user "%s".' % (
+            experiment_key,
+            user_id
+          ))
+        else:
+          self.logger.debug('Nothing to remove. Variation mapped to experiment "%s" for user "%s" does not exist.' % (
+            experiment_key,
+            user_id
+          ))
+      else:
+        self.logger.debug('Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
+      return True
+
+    if not validator.is_non_empty_string(variation_key):
+      self.logger.debug('Variation key is invalid.')
+      return False
+
+    forced_variation = project_config.get_variation_from_key(experiment_key, variation_key)
+    if not forced_variation:
+      # The invalid variation key will be logged inside this call.
+      return False
+
+    variation_id = forced_variation.id
+
+    if user_id not in self.forced_variation_map:
+      self.forced_variation_map[user_id] = {experiment_id: variation_id}
+    else:
+      self.forced_variation_map[user_id][experiment_id] = variation_id
+
+    self.logger.debug('Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.' % (
+      variation_id,
+      experiment_id,
+      user_id
+    ))
+    return True
+
+  def get_forced_variation(self, project_config, experiment_key, user_id):
+    """ Gets the forced variation key for the given user and experiment.
+
+      Args:
+        project_config: Instance of ProjectConfig.
+        experiment_key: Key for experiment.
+        user_id: The user ID.
+
+      Returns:
+        The variation which the given user and experiment should be forced into.
+    """
+
+    if user_id not in self.forced_variation_map:
+      self.logger.debug('User "%s" is not in the forced variation map.' % user_id)
+      return None
+
+    experiment = project_config.get_experiment_from_key(experiment_key)
+    if not experiment:
+      # The invalid experiment key will be logged inside this call.
+      return None
+
+    experiment_to_variation_map = self.forced_variation_map.get(user_id)
+
+    if not experiment_to_variation_map:
+      self.logger.debug('No experiment "%s" mapped to user "%s" in the forced variation map.' % (
+        experiment_key,
+        user_id
+      ))
+      return None
+
+    variation_id = experiment_to_variation_map.get(experiment.id)
+    if variation_id is None:
+      self.logger.debug(
+        'No variation mapped to experiment "%s" in the forced variation map.' % experiment_key
+      )
+      return None
+
+    variation = project_config.get_variation_from_id(experiment_key, variation_id)
+
+    self.logger.debug('Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map' % (
+      variation.key,
+      experiment_key,
+      user_id
+    ))
+    return variation
+
+  def get_whitelisted_variation(self, project_config, experiment, user_id):
+    """ Determine if a user is forced into a variation (through whitelisting)
+        for the given experiment and return that variation.
 
     Args:
       project_config: Instance of ProjectConfig.
@@ -129,12 +241,12 @@ class DecisionService(object):
       return None
 
     # Check if the user is forced into a variation
-    variation = project_config.get_forced_variation(experiment.key, user_id)
+    variation = self.get_forced_variation(project_config, experiment.key, user_id)
     if variation:
       return variation
 
     # Check to see if user is white-listed for a certain variation
-    variation = self.get_forced_variation(project_config, experiment, user_id)
+    variation = self.get_whitelisted_variation(project_config, experiment, user_id)
     if variation:
       return variation
 
