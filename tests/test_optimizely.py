@@ -15,6 +15,7 @@ import json
 import mock
 from operator import itemgetter
 
+from optimizely import config_manager
 from optimizely import decision_service
 from optimizely import entities
 from optimizely import error_handler
@@ -79,8 +80,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely('invalid_datafile')
 
-    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
-    self.assertFalse(opt_obj.is_valid)
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    self.assertIsNone(opt_obj.config_manager.get_config())
 
   def test_init__null_datafile__logs_error(self):
     """ Test that null datafile logs error on init. """
@@ -89,8 +90,8 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely(None)
 
-    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
-    self.assertFalse(opt_obj.is_valid)
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    self.assertIsNone(opt_obj.config_manager.get_config())
 
   def test_init__empty_datafile__logs_error(self):
     """ Test that empty datafile logs error on init. """
@@ -99,7 +100,20 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
       opt_obj = optimizely.Optimizely("")
 
-    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    self.assertIsNone(opt_obj.config_manager.get_config())
+
+  def test_init__invalid_config_manager__logs_error(self):
+    """ Test that invalid config_manager logs error on init. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    mock_client_logger.exception.assert_called_once_with('Provided "config_manager" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
   def test_init__invalid_event_dispatcher__logs_error(self):
@@ -149,7 +163,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('optimizely.error_handler.NoOpErrorHandler.handle_error') as mock_error_handler:
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_unsupported_version))
 
-    mock_client_logger.exception.assert_called_once_with(
+    mock_client_logger.error.assert_called_once_with(
       'This version of the Python SDK does not support the given datafile version: "5".'
     )
 
@@ -157,8 +171,7 @@ class OptimizelyTest(base.BaseTest):
     self.assertIsInstance(args[0], exceptions.UnsupportedDatafileVersionException)
     self.assertEqual(args[0].args[0],
                      'This version of the Python SDK does not support the given datafile version: "5".')
-
-    self.assertFalse(opt_obj.is_valid)
+    self.assertIsNone(opt_obj.config_manager.get_config())
 
   def test_init_with_supported_datafile_version(self):
     """ Test that datafile with supported version works as expected. """
@@ -172,13 +185,29 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logger.exception.assert_not_called()
     self.assertTrue(opt_obj.is_valid)
 
-  def test_skip_json_validation_true(self):
-    """ Test that on setting skip_json_validation to true, JSON schema validation is not performed. """
+  def test_init__datafile_only(self):
+    """ Test that if only datafile is provided then StaticConfigManager is used. """
 
-    with mock.patch('optimizely.helpers.validator.is_datafile_valid') as mock_datafile_validation:
-      optimizely.Optimizely(json.dumps(self.config_dict), skip_json_validation=True)
+    opt_obj = optimizely.Optimizely(datafile=json.dumps(self.config_dict))
+    self.assertIs(type(opt_obj.config_manager), config_manager.StaticConfigManager)
 
-    self.assertEqual(0, mock_datafile_validation.call_count)
+  def test_init__sdk_key_only(self):
+    """ Test that if only sdk_key is provided then PollingConfigManager is used. """
+
+    with mock.patch('optimizely.config_manager.PollingConfigManager._set_config'), \
+      mock.patch('threading.Thread.start'):
+      opt_obj = optimizely.Optimizely(sdk_key='test_sdk_key')
+
+    self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
+
+  def test_init__sdk_key_and_datafile(self):
+    """ Test that if both sdk_key and datafile is provided then PollingConfigManager is used. """
+
+    with mock.patch('optimizely.config_manager.PollingConfigManager._set_config'), \
+      mock.patch('threading.Thread.start'):
+      opt_obj = optimizely.Optimizely(datafile=json.dumps(self.config_dict), sdk_key='test_sdk_key')
+
+    self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
 
   def test_invalid_json_raises_schema_validation_off(self):
     """ Test that invalid JSON logs error if schema validation is turned off. """
@@ -189,12 +218,12 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('optimizely.error_handler.NoOpErrorHandler.handle_error') as mock_error_handler:
       opt_obj = optimizely.Optimizely('invalid_json', skip_json_validation=True)
 
-    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
     args, kwargs = mock_error_handler.call_args
     self.assertIsInstance(args[0], exceptions.InvalidInputException)
     self.assertEqual(args[0].args[0],
                      'Provided "datafile" is in an invalid format.')
-    self.assertFalse(opt_obj.is_valid)
+    self.assertIsNone(opt_obj.config_manager.get_config())
 
     mock_client_logger.reset_mock()
     mock_error_handler.reset_mock()
@@ -205,12 +234,12 @@ class OptimizelyTest(base.BaseTest):
       opt_obj = optimizely.Optimizely({'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'},
                                       skip_json_validation=True)
 
-    mock_client_logger.exception.assert_called_once_with('Provided "datafile" is in an invalid format.')
+    mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
     args, kwargs = mock_error_handler.call_args
     self.assertIsInstance(args[0], exceptions.InvalidInputException)
     self.assertEqual(args[0].args[0],
                      'Provided "datafile" is in an invalid format.')
-    self.assertFalse(opt_obj.is_valid)
+    self.assertIsNone(opt_obj.config_manager.get_config())
 
   def test_activate(self):
     """ Test that activate calls dispatch_event with right params and returns expected variation. """
@@ -456,7 +485,7 @@ class OptimizelyTest(base.BaseTest):
     Also confirm that impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     access_callback = [False]
@@ -480,7 +509,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
     self.assertTrue(access_callback[0])
 
   def test_is_feature_enabled_rollout_callback_listener(self):
@@ -488,7 +517,7 @@ class OptimizelyTest(base.BaseTest):
     Also confirm that no impression event is dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     access_callback = [False]
@@ -902,14 +931,28 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_activate__invalid_object(self):
-    """ Test that activate logs error if Optimizely object is not created correctly. """
+    """ Test that activate logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "activate".')
+
+  def test_activate__invalid_config(self):
+    """ Test that activate logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.activate('test_experiment', 'test_user'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "activate".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "activate".')
 
   def test_track__with_attributes(self):
     """ Test that track calls dispatch_event with right params when attributes are provided. """
@@ -1339,14 +1382,28 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(1, mock_dispatch_event.call_count)
 
   def test_track__invalid_object(self):
-    """ Test that track logs error if Optimizely object is not created correctly. """
+    """ Test that track logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.track('test_event', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "track".')
+
+  def test_track__invalid_config(self):
+    """ Test that track logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       opt_obj.track('test_event', 'test_user')
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "track".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "track".')
 
   def test_track__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during track \
@@ -1395,7 +1452,7 @@ class OptimizelyTest(base.BaseTest):
      get_variation returns feature experiment variation."""
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation',
@@ -1439,14 +1496,28 @@ class OptimizelyTest(base.BaseTest):
     )
 
   def test_get_variation__invalid_object(self):
-    """ Test that get_variation logs error if Optimizely object is not created correctly. """
+    """ Test that get_variation logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "get_variation".')
+
+  def test_get_variation__invalid_config(self):
+    """ Test that get_variation logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.get_variation('test_experiment', 'test_user'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_variation".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "get_variation".')
 
   def test_get_variation_unknown_experiment_key(self):
     """ Test that get_variation retuns None when invalid experiment key is given. """
@@ -1548,7 +1619,7 @@ class OptimizelyTest(base.BaseTest):
     decision listener is called with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
@@ -1569,7 +1640,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1629,7 +1700,7 @@ class OptimizelyTest(base.BaseTest):
     decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
@@ -1650,7 +1721,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1711,7 +1782,7 @@ class OptimizelyTest(base.BaseTest):
     decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
@@ -1732,7 +1803,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1756,7 +1827,7 @@ class OptimizelyTest(base.BaseTest):
     decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
     mock_experiment = project_config.get_experiment_from_key('test_experiment')
@@ -1777,7 +1848,7 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1801,7 +1872,7 @@ class OptimizelyTest(base.BaseTest):
     Also confirm that impression event is not dispatched. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     feature = project_config.get_feature_from_key('test_feature_in_experiment')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(
@@ -1818,7 +1889,7 @@ class OptimizelyTest(base.BaseTest):
     # Check that impression event is not sent
     self.assertEqual(0, mock_dispatch_event.call_count)
 
-    mock_decision.assert_called_once_with(opt_obj.config, feature, 'test_user', None)
+    mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
     mock_broadcast_decision.assert_called_with(
       enums.NotificationTypes.DECISION,
@@ -1837,7 +1908,20 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, mock_dispatch_event.call_count)
 
   def test_is_feature_enabled__invalid_object(self):
-    """ Test that is_feature_enabled returns False if Optimizely object is not valid. """
+    """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. Failing "is_feature_enabled".')
+
+  def test_is_feature_enabled__invalid_config(self):
+    """ Test that is_feature_enabled returns False if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
@@ -1845,7 +1929,8 @@ class OptimizelyTest(base.BaseTest):
       mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'user_1'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "is_feature_enabled".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "is_feature_enabled".')
 
     # Check that no event is sent
     self.assertEqual(0, mock_dispatch_event.call_count)
@@ -1878,9 +1963,9 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision for each feature. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
-    mock_variation_2 = opt_obj.config.get_variation_from_id('test_experiment', '111128')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
+    mock_variation_2 = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111128')
 
     def side_effect(*args, **kwargs):
       feature = args[1]
@@ -1984,27 +2069,42 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
 
   def test_get_enabled_features__invalid_object(self):
-    """ Test that get_enabled_features returns empty list if Optimizely object is not valid. """
+    """ Test that get_enabled_features returns empty list if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertEqual([], opt_obj.get_enabled_features('test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. '
+                                                      'Failing "get_enabled_features".')
+
+  def test_get_enabled_features__invalid_config(self):
+    """ Test that get_enabled_features returns empty list if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_file')
 
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertEqual([], opt_obj.get_enabled_features('user_1'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_enabled_features".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "get_enabled_features".')
 
   def test_get_feature_variable_boolean(self):
     """ Test that get_feature_variable_boolean returns Boolean value as expected \
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
@@ -2036,13 +2136,13 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(10.02, opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
 
@@ -2074,13 +2174,13 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(4243, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
@@ -2112,13 +2212,13 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(
         'staging',
@@ -2153,15 +2253,15 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
-    mock_variation = opt_obj.config.get_variation_from_id('211127', '211129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211129')
     user_attributes = {'test_attribute': 'test_value'}
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.ROLLOUT)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_rollout', 'is_running', 'test_user',
                                                             attributes=user_attributes))
@@ -2191,15 +2291,15 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
-    mock_variation = opt_obj.config.get_variation_from_id('211127', '211129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211129')
     user_attributes = {'test_attribute': 'test_value'}
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.ROLLOUT)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_double('test_feature_in_rollout', 'price', 'test_user',
                                                             attributes=user_attributes))
@@ -2229,15 +2329,15 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
-    mock_variation = opt_obj.config.get_variation_from_id('211127', '211129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211129')
     user_attributes = {'test_attribute': 'test_value'}
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.ROLLOUT)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_integer('test_feature_in_rollout', 'count', 'test_user',
                                                             attributes=user_attributes))
@@ -2267,15 +2367,15 @@ class OptimizelyTest(base.BaseTest):
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
-    mock_variation = opt_obj.config.get_variation_from_id('211127', '211129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211129')
     user_attributes = {'test_attribute': 'test_value'}
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
                                                            enums.DecisionSources.ROLLOUT)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, \
          mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertTrue(opt_obj.get_feature_variable_string('test_feature_in_rollout', 'message', 'test_user',
                                                             attributes=user_attributes))
@@ -2304,17 +2404,17 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns default value if variable usage not present in variation. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
 
     # Empty variable usage map for the mocked variation
-    opt_obj.config.variation_variable_usage_map['111129'] = None
+    opt_obj.config_manager.get_config().variation_variable_usage_map['111129'] = None
 
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
       self.assertTrue(opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user'))
 
     mock_config_logger.info.assert_called_once_with(
@@ -2326,7 +2426,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
       self.assertEqual(10.99,
                        opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'))
 
@@ -2339,7 +2439,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
       self.assertEqual(999,
                        opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
 
@@ -2352,7 +2452,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment, mock_variation,
                                                            enums.DecisionSources.FEATURE_TEST)), \
-         mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
+         mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
       self.assertEqual('devel',
                        opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'))
 
@@ -2617,7 +2717,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns None for invalid feature key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
+    with mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean('invalid_feature', 'is_working', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable_double('invalid_feature', 'cost', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable_integer('invalid_feature', 'count', 'test_user'))
@@ -2635,7 +2735,7 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns None for invalid variable key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    with mock.patch.object(opt_obj.config, 'logger') as mock_config_logger:
+    with mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
       self.assertIsNone(opt_obj.get_feature_variable_boolean('test_feature_in_experiment',
                                                              'invalid_variable',
                                                              'test_user'))
@@ -2660,8 +2760,8 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns default value if feature is not enabled for the user. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111128')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111128')
 
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
@@ -2719,8 +2819,8 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns default value if feature is not enabled for the user. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('211127')
-    mock_variation = opt_obj.config.get_variation_from_id('211127', '211229')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211229')
 
     # Boolean
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
@@ -2776,8 +2876,8 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns None if type mismatch. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
@@ -2795,8 +2895,8 @@ class OptimizelyTest(base.BaseTest):
     """ Test that get_feature_variable_* returns None if unable_to_cast_value """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
-    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('test_experiment', '111129')
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
                     return_value=decision_service.Decision(mock_experiment,
                                                            mock_variation,
@@ -2910,7 +3010,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
       json.dumps(self.config_dict),
       logger=logger.SimpleLogger()
     )
-    self.project_config = self.optimizely.config
+    self.project_config = self.optimizely.config_manager.get_config()
 
   def test_activate(self):
     """ Test that expected log messages are logged during activate. """
@@ -3206,14 +3306,29 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     self.assertEqual('variation', variation_key)
 
   def test_set_forced_variation__invalid_object(self):
-    """ Test that set_forced_variation logs error if Optimizely object is not created correctly. """
+    """ Test that set_forced_variation logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertFalse(opt_obj.set_forced_variation('test_experiment', 'test_user', 'test_variation'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. '
+                                                      'Failing "set_forced_variation".')
+
+  def test_set_forced_variation__invalid_config(self):
+    """ Test that set_forced_variation logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertFalse(opt_obj.set_forced_variation('test_experiment', 'test_user', 'test_variation'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "set_forced_variation".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "set_forced_variation".')
 
   def test_set_forced_variation__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during set_forced_variation \
@@ -3236,14 +3351,29 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
   def test_get_forced_variation__invalid_object(self):
-    """ Test that get_forced_variation logs error if Optimizely object is not created correctly. """
+    """ Test that get_forced_variation logs error if Optimizely instance is invalid. """
+
+    class InvalidConfigManager(object):
+      pass
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+      self.assertIsNone(opt_obj.get_forced_variation('test_experiment', 'test_user'))
+
+    mock_client_logging.error.assert_called_once_with('Optimizely instance is not valid. '
+                                                      'Failing "get_forced_variation".')
+
+  def test_get_forced_variation__invalid_config(self):
+    """ Test that get_forced_variation logs error if config is invalid. """
 
     opt_obj = optimizely.Optimizely('invalid_datafile')
 
     with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
       self.assertIsNone(opt_obj.get_forced_variation('test_experiment', 'test_user'))
 
-    mock_client_logging.error.assert_called_once_with('Datafile has invalid format. Failing "get_forced_variation".')
+    mock_client_logging.error.assert_called_once_with('Invalid config. Optimizely instance is not valid. '
+                                                      'Failing "get_forced_variation".')
 
   def test_get_forced_variation__invalid_experiment_key(self):
     """ Test that None is returned and expected log messages are logged during get_forced_variation \
