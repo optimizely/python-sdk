@@ -23,7 +23,7 @@ from . import logger as optimizely_logger
 from . import project_config
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .helpers import enums
-
+from .helpers import validator
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -56,29 +56,75 @@ class StaticConfigManager(BaseConfigManager):
     def __init__(self,
                  datafile=None,
                  logger=None,
-                 error_handler=None):
+                 error_handler=None,
+                 skip_json_validation=False):
         """ Initialize config manager. Datafile has to be provided to use.
 
         Args:
             datafile: JSON string representing the Optimizely project.
             logger: Provides a logger instance.
             error_handler: Provides a handle_error method to handle exceptions.
+            skip_json_validation: Optional boolean param which allows skipping JSON schema
+                                  validation upon object invocation. By default
+                                  JSON schema validation will be performed.
         """
         super(StaticConfigManager, self).__init__(logger=logger, error_handler=error_handler)
         self._config = None
-        if datafile:
-          self._config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+        self.validate_schema = not skip_json_validation
+        self._set_config(datafile)
+
+    def _set_config(self, datafile):
+        """ Looks up and sets datafile and config based on response body.
+
+         Args:
+           datafile: JSON string representing the Optimizely project.
+         """
+
+        if self.validate_schema:
+            if not validator.is_datafile_valid(datafile):
+                self.logger.error(enums.Errors.INVALID_INPUT.format('datafile'))
+                return
+
+        error_msg = None
+        error_to_handle = None
+        config = None
+
+        try:
+            config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+        except optimizely_exceptions.UnsupportedDatafileVersionException as error:
+            error_msg = error.args[0]
+            error_to_handle = error
+        except:
+            error_msg = enums.Errors.INVALID_INPUT.format('datafile')
+            error_to_handle = optimizely_exceptions.InvalidInputException(error_msg)
+        finally:
+            if error_msg:
+                self.logger.error(error_msg)
+                self.error_handler.handle_error(error_to_handle)
+                return
+
+        previous_revision = self._config.get_revision() if self._config else None
+
+        if previous_revision == config.get_revision():
+            return
+
+        # TODO(ali): Add notification listener.
+        self._config = config
+        self.logger.debug(
+            'Received new datafile and updated config. '
+            'Old revision number: {}. New revision number: {}.'.format(previous_revision, config.get_revision())
+        )
 
     def get_config(self):
         """ Returns instance of ProjectConfig.
 
         Returns:
-          ProjectConfig.
+            ProjectConfig. None if not set.
         """
         return self._config
 
 
-class PollingConfigManager(BaseConfigManager):
+class PollingConfigManager(StaticConfigManager):
     """ Config manager that polls for the datafile and updated ProjectConfig based on an update interval. """
 
     def __init__(self,
@@ -88,31 +134,38 @@ class PollingConfigManager(BaseConfigManager):
                  url=None,
                  url_template=None,
                  logger=None,
-                 error_handler=None):
+                 error_handler=None,
+                 skip_json_validation=False):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
         Args:
-          sdk_key: Optional string uniquely identifying the datafile.
-          datafile: Optional JSON string representing the project.
-          update_interval: Optional floating point number representing time interval in seconds
-                           at which to request datafile and set ProjectConfig.
-          url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
-          url_template: Optional string template which in conjunction with sdk_key
-                        determines URL from where to fetch the datafile.
-          logger: Provides a logger instance.
-          error_handler: Provides a handle_error method to handle exceptions.
+            sdk_key: Optional string uniquely identifying the datafile.
+            datafile: Optional JSON string representing the project.
+            update_interval: Optional floating point number representing time interval in seconds
+                             at which to request datafile and set ProjectConfig.
+            url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
+            url_template: Optional string template which in conjunction with sdk_key
+                          determines URL from where to fetch the datafile.
+            logger: Provides a logger instance.
+            error_handler: Provides a handle_error method to handle exceptions.
+            skip_json_validation: Optional boolean param which allows skipping JSON schema
+                                  validation upon object invocation. By default
+                                  JSON schema validation will be performed.
+
         """
-        super(PollingConfigManager, self).__init__(logger=logger, error_handler=error_handler)
+        super(PollingConfigManager, self).__init__(logger=logger,
+                                                   error_handler=error_handler,
+                                                   skip_json_validation=skip_json_validation)
         self.datafile_url = self.get_datafile_url(sdk_key, url,
                                                   url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)
         self.set_update_interval(update_interval)
         self.last_modified = None
-        self._datafile = datafile
         self._config = None
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
-        if self._datafile:
-          self.set_config(self._datafile)
+        if datafile:
+            self._set_config(datafile)
+        self._polling_thread.start()
 
     @staticmethod
     def get_datafile_url(sdk_key, url, url_template):
@@ -166,29 +219,9 @@ class PollingConfigManager(BaseConfigManager):
         """ Looks up and sets last modified time based on Last-Modified header in the response.
 
          Args:
-           response_headers: requests.Response.headers
+             response_headers: requests.Response.headers
          """
         self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
-
-    def set_config(self, datafile):
-        """ Looks up and sets datafile and config based on response body.
-
-         Args:
-           datafile: JSON string representing the Optimizely project.
-         """
-        # TODO(ali): Add validation here to make sure that we do not update datafile and config if not a valid datafile.
-        self._datafile = datafile
-        # TODO(ali): Add notification listener.
-        self._config = project_config.ProjectConfig(self._datafile, self.logger, self.error_handler)
-        self.logger.debug('Received new datafile and updated config.')
-
-    def get_config(self):
-        """ Returns instance of ProjectConfig.
-
-        Returns:
-          ProjectConfig.
-        """
-        return self._config
 
     def _handle_response(self, response):
         """ Helper method to handle response containing datafile.
@@ -208,7 +241,7 @@ class PollingConfigManager(BaseConfigManager):
             return
 
         self.set_last_modified(response.headers)
-        self.set_config(response.content)
+        self._set_config(response.content)
 
     def fetch_datafile(self):
         """ Fetch datafile and set ProjectConfig. """
