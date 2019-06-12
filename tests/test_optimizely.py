@@ -195,7 +195,7 @@ class OptimizelyTest(base.BaseTest):
   def test_init__sdk_key_only(self):
     """ Test that if only sdk_key is provided then PollingConfigManager is used. """
 
-    with mock.patch('optimizely.config_manager.PollingConfigManager.set_config'), \
+    with mock.patch('optimizely.config_manager.PollingConfigManager._set_config'), \
       mock.patch('threading.Thread.start'):
       opt_obj = optimizely.Optimizely(sdk_key='test_sdk_key')
 
@@ -204,7 +204,7 @@ class OptimizelyTest(base.BaseTest):
   def test_init__sdk_key_and_datafile(self):
     """ Test that if both sdk_key and datafile is provided then PollingConfigManager is used. """
 
-    with mock.patch('optimizely.config_manager.PollingConfigManager.set_config'), \
+    with mock.patch('optimizely.config_manager.PollingConfigManager._set_config'), \
       mock.patch('threading.Thread.start'):
       opt_obj = optimizely.Optimizely(datafile=json.dumps(self.config_dict), sdk_key='test_sdk_key')
 

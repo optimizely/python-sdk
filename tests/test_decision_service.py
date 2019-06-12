@@ -855,7 +855,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
         self.decision_service.get_variation_for_feature(self.project_config, feature, 'test_user')
       )
     mock_decision_service_logging.error.assert_called_once_with(
-      enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature')
+      enums.Errors.INVALID_GROUP_ID.format('_get_variation_for_feature')
+    )
 
   def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(self):
     """ Test that if a user is in the mutex group but the experiment is

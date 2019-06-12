@@ -71,9 +71,9 @@ class StaticConfigManager(BaseConfigManager):
         super(StaticConfigManager, self).__init__(logger=logger, error_handler=error_handler)
         self._config = None
         self.validate_schema = not skip_json_validation
-        self.set_config(datafile)
+        self._set_config(datafile)
 
-    def set_config(self, datafile):
+    def _set_config(self, datafile):
         """ Looks up and sets datafile and config based on response body.
 
          Args:
@@ -103,9 +103,17 @@ class StaticConfigManager(BaseConfigManager):
                 self.error_handler.handle_error(error_to_handle)
                 return
 
+        previous_revision = self._config.get_revision() if self._config else None
+
+        if previous_revision == config.get_revision():
+            return
+
         # TODO(ali): Add notification listener.
         self._config = config
-        self.logger.debug('Received new datafile and updated config.')
+        self.logger.debug(
+            'Received new datafile and updated config. '
+            'Old revision number: {}. New revision number: {}.'.format(previous_revision, config.get_revision())
+        )
 
     def get_config(self):
         """ Returns instance of ProjectConfig.
@@ -156,7 +164,7 @@ class PollingConfigManager(StaticConfigManager):
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
         if datafile:
-            self.set_config(datafile)
+            self._set_config(datafile)
         self._polling_thread.start()
 
     @staticmethod
@@ -233,7 +241,7 @@ class PollingConfigManager(StaticConfigManager):
             return
 
         self.set_last_modified(response.headers)
-        self.set_config(response.content)
+        self._set_config(response.content)
 
     def fetch_datafile(self):
         """ Fetch datafile and set ProjectConfig. """
