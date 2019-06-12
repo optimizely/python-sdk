@@ -198,7 +198,8 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_fetch_datafile(self, _):
         """ Test that fetch_datafile sets config and last_modified based on response. """
-        project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+          project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
         expected_datafile_url = 'https://cdn.optimizely.com/datafiles/some_key.json'
         test_headers = {
             'Last-Modified': 'New Time'
