@@ -23,7 +23,7 @@ from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
 from .helpers import validator
-from .notification_center import NotificationCenter as notification_center
+from .notification_center import NotificationCenter
 
 
 class Optimizely(object):
@@ -70,22 +70,25 @@ class Optimizely(object):
       self.logger.exception(str(error))
       return
 
+    self.notification_center = NotificationCenter(self.logger)
+
     if not self.config_manager:
       if sdk_key:
         self.config_manager = PollingConfigManager(sdk_key=sdk_key,
                                                    datafile=datafile,
                                                    logger=self.logger,
                                                    error_handler=self.error_handler,
+                                                   notification_center=self.notification_center,
                                                    skip_json_validation=skip_json_validation)
       else:
         self.config_manager = StaticConfigManager(datafile=datafile,
                                                   logger=self.logger,
                                                   error_handler=self.error_handler,
+                                                  notification_center=self.notification_center,
                                                   skip_json_validation=skip_json_validation)
 
     self.event_builder = event_builder.EventBuilder()
     self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
-    self.notification_center = notification_center(self.logger)
 
   def _validate_instantiation_options(self):
     """ Helper method to validate all instantiation parameters.

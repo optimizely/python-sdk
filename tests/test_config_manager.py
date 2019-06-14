@@ -28,34 +28,45 @@ class StaticConfigManagerTest(base.BaseTest):
         """ Test set_config when datafile is valid. """
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
+        mock_notification_center = mock.Mock()
         project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger)
+                                                                    logger=mock_logger,
+                                                                    notification_center=mock_notification_center)
 
         project_config_manager._set_config(test_datafile)
         mock_logger.debug.assert_called_with('Received new datafile and updated config. '
                                              'Old revision number: None. New revision number: 1.')
+        mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
 
     def test_set_config__twice(self):
         """ Test calling set_config twice with same content to ensure config is not updated. """
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
+        mock_notification_center = mock.Mock()
         project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger)
+                                                                    logger=mock_logger,
+                                                                    notification_center=mock_notification_center)
 
         project_config_manager._set_config(test_datafile)
         mock_logger.debug.assert_called_with('Received new datafile and updated config. '
                                              'Old revision number: None. New revision number: 1.')
         self.assertEqual(1, mock_logger.debug.call_count)
+        mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
+
+        mock_logger.reset_mock()
+        mock_notification_center.reset_mock()
 
         # Call set config again and confirm that no new log message denoting config update is there
         project_config_manager._set_config(test_datafile)
-        self.assertEqual(1, mock_logger.debug.call_count)
+        self.assertEqual(0, mock_logger.debug.call_count)
+        self.assertEqual(0, mock_notification_center.call_count)
 
     def test_set_config__schema_validation(self):
         """ Test set_config calls or does not call schema validation based on skip_json_validation value. """
 
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
+        mock_notification_center = mock.Mock()
 
         # Test that schema is validated.
         # Note: set_config is called in __init__ itself.
@@ -78,9 +89,11 @@ class StaticConfigManagerTest(base.BaseTest):
 
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
+        mock_notification_center = mock.Mock()
 
         project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger)
+                                                                    logger=mock_logger,
+                                                                    notification_center=mock_notification_center)
 
         invalid_version_datafile = self.config_dict_with_features.copy()
         invalid_version_datafile['version'] = 'invalid_version'
@@ -90,19 +103,23 @@ class StaticConfigManagerTest(base.BaseTest):
         project_config_manager._set_config(test_datafile)
         mock_logger.error.assert_called_once_with('This version of the Python SDK does not support '
                                                   'the given datafile version: "invalid_version".')
+        self.assertEqual(0, mock_notification_center.call_count)
 
     def test_set_config__invalid_datafile(self):
         """ Test set_config when datafile is invalid. """
 
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
+        mock_notification_center = mock.Mock()
 
         project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger)
+                                                                    logger=mock_logger,
+                                                                    notification_center=mock_notification_center)
 
         # Call set_config with invalid content
         project_config_manager._set_config('invalid_datafile')
         mock_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+        self.assertEqual(0, mock_notification_center.call_count)
 
     def test_get_config(self):
         """ Test get_config. """
