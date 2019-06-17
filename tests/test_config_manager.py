@@ -66,7 +66,6 @@ class StaticConfigManagerTest(base.BaseTest):
 
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
-        mock_notification_center = mock.Mock()
 
         # Test that schema is validated.
         # Note: set_config is called in __init__ itself.
