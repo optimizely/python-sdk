@@ -21,7 +21,8 @@ from requests import exceptions as requests_exceptions
 from . import exceptions as optimizely_exceptions
 from . import logger as optimizely_logger
 from . import project_config
-from .error_handler import NoOpErrorHandler as noop_error_handler
+from .error_handler import NoOpErrorHandler
+from .notification_center import NotificationCenter
 from .helpers import enums
 from .helpers import validator
 
@@ -41,7 +42,7 @@ class BaseConfigManager(ABC):
             error_handler: Provides a handle_error method to handle exceptions.
         """
         self.logger = logger or optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
-        self.error_handler = error_handler or noop_error_handler
+        self.error_handler = error_handler or NoOpErrorHandler()
 
     @abc.abstractmethod
     def get_config(self):
@@ -57,6 +58,7 @@ class StaticConfigManager(BaseConfigManager):
                  datafile=None,
                  logger=None,
                  error_handler=None,
+                 notification_center=None,
                  skip_json_validation=False):
         """ Initialize config manager. Datafile has to be provided to use.
 
@@ -64,11 +66,13 @@ class StaticConfigManager(BaseConfigManager):
             datafile: JSON string representing the Optimizely project.
             logger: Provides a logger instance.
             error_handler: Provides a handle_error method to handle exceptions.
+            notification_center: Notification center to generate config update notification.
             skip_json_validation: Optional boolean param which allows skipping JSON schema
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
         """
         super(StaticConfigManager, self).__init__(logger=logger, error_handler=error_handler)
+        self.notification_center = notification_center or NotificationCenter(self.logger)
         self._config = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
@@ -108,8 +112,8 @@ class StaticConfigManager(BaseConfigManager):
         if previous_revision == config.get_revision():
             return
 
-        # TODO(ali): Add notification listener.
         self._config = config
+        self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
             'Old revision number: {}. New revision number: {}.'.format(previous_revision, config.get_revision())
@@ -135,6 +139,7 @@ class PollingConfigManager(StaticConfigManager):
                  url_template=None,
                  logger=None,
                  error_handler=None,
+                 notification_center=None,
                  skip_json_validation=False):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
@@ -148,6 +153,7 @@ class PollingConfigManager(StaticConfigManager):
                           determines URL from where to fetch the datafile.
             logger: Provides a logger instance.
             error_handler: Provides a handle_error method to handle exceptions.
+            notification_center: Notification center to generate config update notification.
             skip_json_validation: Optional boolean param which allows skipping JSON schema
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
@@ -155,6 +161,7 @@ class PollingConfigManager(StaticConfigManager):
         """
         super(PollingConfigManager, self).__init__(logger=logger,
                                                    error_handler=error_handler,
+                                                   notification_center=notification_center,
                                                    skip_json_validation=skip_json_validation)
         self.datafile_url = self.get_datafile_url(sdk_key, url,
                                                   url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)

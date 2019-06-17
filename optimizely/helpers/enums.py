@@ -119,9 +119,12 @@ class NotificationTypes(object):
       DECISION notification listener has the following parameters:
       DecisionNotificationTypes type, str user_id, dict attributes, dict decision_info
 
+      OPTIMIZELY_CONFIG_UPDATE notification listener has no associated parameters.
+
       TRACK notification listener has the following parameters:
       str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
   """
   ACTIVATE = 'ACTIVATE:experiment, user_id, attributes, variation, event'
   DECISION = 'DECISION:type, user_id, attributes, decision_info'
+  OPTIMIZELY_CONFIG_UPDATE = 'OPTIMIZELY_CONFIG_UPDATE'
   TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'
