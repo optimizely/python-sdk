@@ -25,7 +25,6 @@ from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
 from optimizely.helpers import enums
-from optimizely.notification_center import NotificationCenter
 from . import base
 
 
@@ -281,9 +280,11 @@ class OptimizelyTest(base.BaseTest):
 
     self.assertEqual(True, callbackhit[0])
     self.optimizely.notification_center.remove_notification_listener(notification_id)
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
+    self.assertEqual(0,
+                     len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]))
     self.optimizely.notification_center.clear_all_notifications()
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
+    self.assertEqual(0,
+                     len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]))
 
   def test_add_track_remove_clear_listener(self):
     """ Test adding a listener tract passes correctly and gets called"""
@@ -311,92 +312,11 @@ class OptimizelyTest(base.BaseTest):
 
     self.assertEqual(True, callback_hit[0])
 
-    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+    self.assertEqual(1, len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
     self.optimizely.notification_center.remove_notification_listener(note_id)
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
+    self.assertEqual(0, len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
     self.optimizely.notification_center.clear_all_notifications()
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-
-  def test_add_same_listener(self):
-    """ Test adding a same listener """
-
-    def on_track(event_key, user_id, attributes, event_tags, event):
-      print('event_key={}', event_key)
-
-    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
-
-    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-
-    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
-
-    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-
-  def test_add_listener_custom_type(self):
-    """ Test adding a same listener """
-    custom_type = "custom_notification_type"
-    custom_called = [False]
-
-    def on_custom_event(test_string):
-      custom_called[0] = True
-      print('Custom notification event tracked with parameter test_string={}', test_string)
-
-    notification_id = self.optimizely.notification_center.add_notification_listener(custom_type, on_custom_event)
-
-    self.assertEqual(1, len(self.optimizely.notification_center.notifications[custom_type]))
-
-    self.optimizely.notification_center.send_notifications(custom_type, "test")
-
-    self.assertTrue(custom_called[0])
-
-    self.optimizely.notification_center.remove_notification_listener(notification_id)
-
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[custom_type]))
-
-    self.optimizely.notification_center.clear_notifications(custom_type)
-
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[custom_type]))
-
-  def test_invalid_notification_send(self):
-    """ Test adding a same listener """
-    custom_type = "custom_notification_type"
-    custom_called = [False]
-
-    def on_custom_event(test_string):
-      custom_called[0] = True
-      print('Custom notification event tracked with parameter test_string={}', test_string)
-    mock_logger = mock.Mock()
-    notification_center = NotificationCenter(mock_logger)
-    notification_center.add_notification_listener(custom_type, on_custom_event)
-    notification_center.send_notifications(custom_type, 1, 2, "5", 6)
-    mock_logger.exception.assert_called_once_with('Problem calling notify callback!')
-
-  def test_add_invalid_listener(self):
-    """ Test adding a invalid listener """
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-
-  def test_add_multi_listener(self):
-    """ Test adding a 2 listeners """
-    def on_track(event_key, *args):
-      print("on track 1 called")
-
-    def on_track2(event_key, *args):
-      print("on track 2 called")
-
-    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track)
-
-    self.assertEqual(1, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-    self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track2)
-
-    self.assertEqual(2, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-
-    self.optimizely.notification_center.clear_all_notifications()
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-
-  def test_remove_listener(self):
-    """ Test remove listener that isn't added"""
-    self.optimizely.notification_center.remove_notification_listener(5)
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.TRACK]))
-    self.assertEqual(0, len(self.optimizely.notification_center.notifications[enums.NotificationTypes.ACTIVATE]))
+    self.assertEqual(0, len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
 
   def test_activate_and_decision_listener(self):
     """ Test that activate calls broadcast activate and decision with proper parameters. """

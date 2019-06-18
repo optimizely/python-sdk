@@ -1,4 +1,4 @@
-# Copyright 2017, Optimizely
+# Copyright 2017-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,46 +11,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import reduce
-
 from .helpers import enums
+from . import logger as optimizely_logger
+
+
+NOTIFICATION_TYPES = tuple(getattr(enums.NotificationTypes, attr)
+                           for attr in dir(enums.NotificationTypes)
+                           if not attr.startswith('__'))
 
 
 class NotificationCenter(object):
-  """ Class encapsulating Broadcast Notifications. The enums.NotifcationTypes includes predefined notifications."""
+  """ Class encapsulating methods to manage notifications and their listeners.
+  The enums.NotificationTypes includes predefined notifications."""
 
-  def __init__(self, logger):
-    self.notification_id = 1
-    self.notifications = {}
-    for (attr, value) in enums.NotificationTypes.__dict__.items():
-      self.notifications[value] = []
-    self.logger = logger
+  def __init__(self, logger=None):
+    self.listener_id = 1
+    self.notification_listeners = {}
+    for notification_type in NOTIFICATION_TYPES:
+      self.notification_listeners[notification_type] = []
+    self.logger = optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
 
   def add_notification_listener(self, notification_type, notification_callback):
-    """ Add a notification callback to the notification center.
+    """ Add a notification callback to the notification center for a given notification type.
 
     Args:
-      notification_type: A string representing the notification type from .helpers.enums.NotificationTypes
-      notification_callback: closure of function to call when event is triggered.
+      notification_type: A string representing the notification type from helpers.enums.NotificationTypes
+      notification_callback: Closure of function to call when event is triggered.
 
     Returns:
-      Integer notification id used to remove the notification or -1 if the notification has already been added.
+      Integer notification ID used to remove the notification or
+      -1 if the notification listener has already been added or
+      if the notification type is invalid.
     """
 
-    if notification_type not in self.notifications:
-      self.notifications[notification_type] = [(self.notification_id, notification_callback)]
-    else:
-      if reduce(lambda a, b: a + 1,
-                filter(lambda tup: tup[1] == notification_callback, self.notifications[notification_type]),
-                0) > 0:
-          return -1
-      self.notifications[notification_type].append((self.notification_id, notification_callback))
+    if notification_type not in NOTIFICATION_TYPES:
+      self.logger.error('Invalid notification_type: {} provided. Not adding listener.'.format(notification_type))
+      return -1
 
-    ret_val = self.notification_id
+    for _, listener in self.notification_listeners[notification_type]:
+      if listener == notification_callback:
+        self.logger.error('Listener has already been added. Not adding it again.')
+        return -1
 
-    self.notification_id += 1
+    self.notification_listeners[notification_type].append((self.listener_id, notification_callback))
+    current_listener_id = self.listener_id
+    self.listener_id += 1
 
-    return ret_val
+    return current_listener_id
 
   def remove_notification_listener(self, notification_id):
     """ Remove a previously added notification callback.
@@ -62,27 +69,43 @@ class NotificationCenter(object):
       The function returns boolean true if found and removed, false otherwise.
     """
 
-    for v in self.notifications.values():
-      toRemove = list(filter(lambda tup: tup[0] == notification_id, v))
-      if len(toRemove) > 0:
-        v.remove(toRemove[0])
+    for listener in self.notification_listeners.values():
+      listener_to_remove = list(filter(lambda tup: tup[0] == notification_id, listener))
+      if len(listener_to_remove) > 0:
+        listener.remove(listener_to_remove[0])
         return True
 
     return False
 
-  def clear_all_notifications(self):
-    """ Remove all notifications """
-    for key in self.notifications.keys():
-      self.notifications[key] = []
+  def clear_notification_listeners(self, notification_type):
+    """ Remove notification listeners for a certain notification type.
+
+    Args:
+      notification_type: String denoting notification type.
+    """
+
+    if notification_type not in NOTIFICATION_TYPES:
+      self.logger.error('Invalid notification_type: {} provided. Not removing any listener.'.format(notification_type))
+    self.notification_listeners[notification_type] = []
 
   def clear_notifications(self, notification_type):
-    """ Remove notifications for a certain notification type
+    """ (DEPRECATED since 3.2.0, use clear_notification_listeners)
+    Remove notification listeners for a certain notification type.
 
     Args:
       notification_type: key to the list of notifications .helpers.enums.NotificationTypes
     """
+    self.clear_notification_listeners(notification_type)
 
-    self.notifications[notification_type] = []
+  def clear_all_notification_listeners(self):
+    """ Remove all notification listeners. """
+    for notification_type in self.notification_listeners.keys():
+      self.clear_notification_listeners(notification_type)
+
+  def clear_all_notifications(self):
+    """ (DEPRECATED since 3.2.0, use clear_all_notification_listeners)
+    Remove all notification listeners. """
+    self.clear_all_notification_listeners()
 
   def send_notifications(self, notification_type, *args):
     """ Fires off the notification for the specific event.  Uses var args to pass in a
@@ -90,12 +113,17 @@ class NotificationCenter(object):
 
     Args:
       notification_type: Type of notification to fire (String from .helpers.enums.NotificationTypes)
-      args: variable list of arguments to the callback.
+      args: Variable list of arguments to the callback.
     """
 
-    if notification_type in self.notifications:
-      for notification_id, callback in self.notifications[notification_type]:
+    if notification_type not in NOTIFICATION_TYPES:
+      self.logger.error('Invalid notification_type: {} provided. '
+                        'Not triggering any notification.'.format(notification_type))
+      return
+
+    if notification_type in self.notification_listeners:
+      for notification_id, callback in self.notification_listeners[notification_type]:
         try:
           callback(*args)
         except:
-          self.logger.exception('Problem calling notify callback!')
+          self.logger.exception('Unknown problem when sending "{}" type notification.'.format(notification_type))
