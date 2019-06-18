@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import reduce
-
 from .helpers import enums
 from . import logger as optimizely_logger
 
