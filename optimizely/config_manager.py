@@ -41,7 +41,7 @@ class BaseConfigManager(ABC):
             logger: Provides a logger instance.
             error_handler: Provides a handle_error method to handle exceptions.
         """
-        self.logger = logger or optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
+        self.logger = optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
         self.error_handler = error_handler or NoOpErrorHandler()
 
     @abc.abstractmethod
