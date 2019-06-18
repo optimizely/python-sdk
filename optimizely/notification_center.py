@@ -50,10 +50,10 @@ class NotificationCenter(object):
       self.logger.error('Invalid notification_type: {} provided. Not adding listener.'.format(notification_type))
       return -1
 
-    if reduce(lambda a, b: a + 1, filter(lambda tup: tup[1] == notification_callback,
-                                         self.notification_listeners[notification_type]), 0) > 0:
-      self.logger.error('Listener has already been added. Not adding it again.')
-      return -1
+    for _, listener in self.notification_listeners[notification_type]:
+      if listener == notification_callback:
+        self.logger.error('Listener has already been added. Not adding it again.')
+        return -1
 
     self.notification_listeners[notification_type].append((self.listener_id, notification_callback))
     current_listener_id = self.listener_id
