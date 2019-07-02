@@ -188,6 +188,11 @@ class PollingConfigManagerTest(base.BaseTest):
         """ Test set_update_interval with different inputs. """
         project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
+        # Assert that if invalid update_interval is set, then exception is raised.
+        with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
+                                     'Invalid update_interval "invalid interval" provided.'):
+            project_config_manager.set_update_interval('invalid interval')
+
         # Assert that update_interval cannot be set to less than allowed minimum and instead is set to default value.
         project_config_manager.set_update_interval(0.42)
         self.assertEqual(enums.ConfigManager.DEFAULT_UPDATE_INTERVAL, project_config_manager.update_interval)

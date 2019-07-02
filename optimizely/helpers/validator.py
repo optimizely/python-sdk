@@ -221,7 +221,7 @@ def is_finite_number(value):
              greater than absolute limit of 2^53 else False.
   """
   if not isinstance(value, (numbers.Integral, float)):
-      # numbers.Integral instead of int to accomodate long integer in python 2
+      # numbers.Integral instead of int to accommodate long integer in python 2
     return False
 
   if isinstance(value, bool):
@@ -244,7 +244,7 @@ def are_values_same_type(first_val, second_val):
 
   Args:
     first_val: Value to validate.
-    second_Val: Value to validate.
+    second_val: Value to validate.
 
   Returns:
     Boolean: True if both values belong to same type. Otherwise False.
