@@ -212,15 +212,24 @@ class PollingConfigManager(StaticConfigManager):
         Args:
           update_interval: Time in seconds after which to update datafile.
         """
-        self.update_interval = update_interval or enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+        if not update_interval:
+            update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+            self.logger.debug('Set config update interval to default value {}.'.format(update_interval))
+
+        if not isinstance(update_interval, (int, float)):
+            raise optimizely_exceptions.InvalidInputException(
+                'Invalid update_interval "{}" provided.'.format(update_interval)
+            )
 
         # If polling interval is less than minimum allowed interval then set it to default update interval.
-        if self.update_interval < enums.ConfigManager.MIN_UPDATE_INTERVAL:
-            self.logger.debug('Invalid update_interval {} provided. Defaulting to {}'.format(
+        if update_interval < enums.ConfigManager.MIN_UPDATE_INTERVAL:
+            self.logger.debug('update_interval value {} too small. Defaulting to {}'.format(
                 update_interval,
                 enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
             )
-            self.update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+            update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+
+        self.update_interval = update_interval
 
     def set_last_modified(self, response_headers):
         """ Looks up and sets last modified time based on Last-Modified header in the response.
@@ -269,9 +278,14 @@ class PollingConfigManager(StaticConfigManager):
 
     def _run(self):
         """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
-        while self.is_running:
-            self.fetch_datafile()
-            time.sleep(self.update_interval)
+        try:
+          while self.is_running:
+              self.fetch_datafile()
+              time.sleep(self.update_interval)
+        except (OSError, OverflowError) as err:
+            self.logger.error('Error in time.sleep. '
+                              'Provided update_interval value may be too big. Error: {}'.format(str(err)))
+            raise
 
     def start(self):
         """ Start the config manager and the thread to periodically fetch datafile. """
