@@ -155,6 +155,19 @@ class OptimizelyTest(base.BaseTest):
     mock_client_logger.exception.assert_called_once_with('Provided "error_handler" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
+  def test_init__invalid_notification_center__logs_error(self):
+    """ Test that invalid notification_center logs error on init. """
+
+    class InvalidNotificationCenter(object):
+      pass
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), notification_center=InvalidNotificationCenter())
+
+    mock_client_logger.exception.assert_called_once_with('Provided "notification_center" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
   def test_init__unsupported_datafile_version__logs_error(self):
     """ Test that datafile with unsupported version logs error on init. """
 

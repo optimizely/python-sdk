@@ -37,7 +37,8 @@ class Optimizely(object):
                skip_json_validation=False,
                user_profile_service=None,
                sdk_key=None,
-               config_manager=None):
+               config_manager=None,
+               notification_center=None):
     """ Optimizely init method for managing Custom projects.
 
     Args:
@@ -52,6 +53,9 @@ class Optimizely(object):
       sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment combination.
                Must provide at least one of datafile or sdk_key.
       config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
+      notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
+                           config_manager.BaseConfigManager implementation which can be using the
+                           same NotificationCenter instance.
     """
     self.logger_name = '.'.join([__name__, self.__class__.__name__])
     self.is_valid = True
@@ -59,6 +63,7 @@ class Optimizely(object):
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.error_handler = error_handler or noop_error_handler
     self.config_manager = config_manager
+    self.notification_center = notification_center or NotificationCenter(self.logger)
 
     try:
       self._validate_instantiation_options()
@@ -69,8 +74,6 @@ class Optimizely(object):
       self.logger = _logging.reset_logger(self.logger_name)
       self.logger.exception(str(error))
       return
-
-    self.notification_center = NotificationCenter(self.logger)
 
     if not self.config_manager:
       if sdk_key:
@@ -96,7 +99,6 @@ class Optimizely(object):
     Raises:
       Exception if provided instantiation options are valid.
     """
-
     if self.config_manager and not validator.is_config_manager_valid(self.config_manager):
       raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('config_manager'))
 
@@ -108,6 +110,9 @@ class Optimizely(object):
 
     if not validator.is_error_handler_valid(self.error_handler):
       raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('error_handler'))
+
+    if not validator.is_notification_center_valid(self.notification_center):
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('notification_center'))
 
   def _validate_user_inputs(self, attributes=None, event_tags=None):
     """ Helper method to validate user inputs.
