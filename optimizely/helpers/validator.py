@@ -17,6 +17,7 @@ import math
 import numbers
 from six import string_types
 
+from optimizely.notification_center import NotificationCenter
 from optimizely.user_profile import UserProfile
 from . import constants
 
@@ -108,6 +109,19 @@ def is_logger_valid(logger):
   """
 
   return _has_method(logger, 'log')
+
+
+def is_notification_center_valid(notification_center):
+  """ Given notification_center determine if it is valid or not.
+
+  Args:
+    notification_center: Instance of notification_center.NotificationCenter
+
+  Returns:
+    Boolean denoting instance is valid or not.
+  """
+
+  return isinstance(notification_center, NotificationCenter)
 
 
 def are_attributes_valid(attributes):

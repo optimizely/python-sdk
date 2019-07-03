@@ -34,15 +34,34 @@ class BaseConfigManager(ABC):
 
     def __init__(self,
                  logger=None,
-                 error_handler=None):
+                 error_handler=None,
+                 notification_center=None):
         """ Initialize config manager.
 
         Args:
             logger: Provides a logger instance.
             error_handler: Provides a handle_error method to handle exceptions.
+            notification_center: Provides instance of notification_center.NotificationCenter.
         """
         self.logger = optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
         self.error_handler = error_handler or NoOpErrorHandler()
+        self.notification_center = notification_center or NotificationCenter(self.logger)
+        self._validate_instantiation_options()
+
+    def _validate_instantiation_options(self):
+        """ Helper method to validate all parameters.
+
+        Raises:
+            Exception if provided options are invalid.
+        """
+        if not validator.is_logger_valid(self.logger):
+            raise optimizely_exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('logger'))
+
+        if not validator.is_error_handler_valid(self.error_handler):
+            raise optimizely_exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('error_handler'))
+
+        if not validator.is_notification_center_valid(self.notification_center):
+            raise optimizely_exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('notification_center'))
 
     @abc.abstractmethod
     def get_config(self):
@@ -71,8 +90,9 @@ class StaticConfigManager(BaseConfigManager):
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
         """
-        super(StaticConfigManager, self).__init__(logger=logger, error_handler=error_handler)
-        self.notification_center = notification_center or NotificationCenter(self.logger)
+        super(StaticConfigManager, self).__init__(logger=logger,
+                                                  error_handler=error_handler,
+                                                  notification_center=notification_center)
         self._config = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
@@ -159,7 +179,8 @@ class PollingConfigManager(StaticConfigManager):
                                   JSON schema validation will be performed.
 
         """
-        super(PollingConfigManager, self).__init__(logger=logger,
+        super(PollingConfigManager, self).__init__(datafile=datafile,
+                                                   logger=logger,
                                                    error_handler=error_handler,
                                                    notification_center=notification_center,
                                                    skip_json_validation=skip_json_validation)
@@ -167,11 +188,8 @@ class PollingConfigManager(StaticConfigManager):
                                                   url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)
         self.set_update_interval(update_interval)
         self.last_modified = None
-        self._config = None
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
-        if datafile:
-            self._set_config(datafile)
         self._polling_thread.start()
 
     @staticmethod

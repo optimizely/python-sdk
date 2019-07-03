@@ -24,14 +24,40 @@ from . import base
 
 
 class StaticConfigManagerTest(base.BaseTest):
+    def test_init__invalid_logger_fails(self):
+        """ Test that initialization fails if logger is invalid. """
+        class InvalidLogger(object):
+            pass
+        with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
+                                     'Provided "logger" is in an invalid format.'):
+            config_manager.StaticConfigManager(logger=InvalidLogger())
+
+    def test_init__invalid_error_handler_fails(self):
+        """ Test that initialization fails if error_handler is invalid. """
+        class InvalidErrorHandler(object):
+            pass
+        with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
+                                     'Provided "error_handler" is in an invalid format.'):
+            config_manager.StaticConfigManager(error_handler=InvalidErrorHandler())
+
+    def test_init__invalid_notification_center_fails(self):
+        """ Test that initialization fails if notification_center is invalid. """
+        class InvalidNotificationCenter(object):
+            pass
+        with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
+                                     'Provided "notification_center" is in an invalid format.'):
+            config_manager.StaticConfigManager(notification_center=InvalidNotificationCenter())
+
     def test_set_config__success(self):
         """ Test set_config when datafile is valid. """
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
         mock_notification_center = mock.Mock()
-        project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger,
-                                                                    notification_center=mock_notification_center)
+
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
+                                                                        logger=mock_logger,
+                                                                        notification_center=mock_notification_center)
 
         project_config_manager._set_config(test_datafile)
         mock_logger.debug.assert_called_with('Received new datafile and updated config. '
@@ -43,9 +69,11 @@ class StaticConfigManagerTest(base.BaseTest):
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
         mock_notification_center = mock.Mock()
-        project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger,
-                                                                    notification_center=mock_notification_center)
+
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
+                                                                        logger=mock_logger,
+                                                                        notification_center=mock_notification_center)
 
         project_config_manager._set_config(test_datafile)
         mock_logger.debug.assert_called_with('Received new datafile and updated config. '
@@ -71,16 +99,16 @@ class StaticConfigManagerTest(base.BaseTest):
         # Note: set_config is called in __init__ itself.
         with mock.patch('optimizely.helpers.validator.is_datafile_valid',
                         return_value=True) as mock_validate_datafile:
-          config_manager.StaticConfigManager(datafile=test_datafile,
-                                             logger=mock_logger)
+            config_manager.StaticConfigManager(datafile=test_datafile,
+                                               logger=mock_logger)
         mock_validate_datafile.assert_called_once_with(test_datafile)
 
         # Test that schema is not validated if skip_json_validation option is set to True.
         with mock.patch('optimizely.helpers.validator.is_datafile_valid',
                         return_value=True) as mock_validate_datafile:
-          config_manager.StaticConfigManager(datafile=test_datafile,
-                                             logger=mock_logger,
-                                             skip_json_validation=True)
+            config_manager.StaticConfigManager(datafile=test_datafile,
+                                               logger=mock_logger,
+                                               skip_json_validation=True)
         mock_validate_datafile.assert_not_called()
 
     def test_set_config__unsupported_datafile_version(self):
@@ -90,9 +118,10 @@ class StaticConfigManagerTest(base.BaseTest):
         mock_logger = mock.Mock()
         mock_notification_center = mock.Mock()
 
-        project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger,
-                                                                    notification_center=mock_notification_center)
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
+                                                                        logger=mock_logger,
+                                                                        notification_center=mock_notification_center)
 
         invalid_version_datafile = self.config_dict_with_features.copy()
         invalid_version_datafile['version'] = 'invalid_version'
@@ -111,9 +140,10 @@ class StaticConfigManagerTest(base.BaseTest):
         mock_logger = mock.Mock()
         mock_notification_center = mock.Mock()
 
-        project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
-                                                                    logger=mock_logger,
-                                                                    notification_center=mock_notification_center)
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.StaticConfigManager(datafile=test_datafile,
+                                                                        logger=mock_logger,
+                                                                        notification_center=mock_notification_center)
 
         # Call set_config with invalid content
         project_config_manager._set_config('invalid_datafile')
@@ -220,7 +250,7 @@ class PollingConfigManagerTest(base.BaseTest):
     def test_fetch_datafile(self, _):
         """ Test that fetch_datafile sets config and last_modified based on response. """
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
-          project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+            project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
         expected_datafile_url = 'https://cdn.optimizely.com/datafiles/some_key.json'
         test_headers = {
             'Last-Modified': 'New Time'
@@ -249,6 +279,6 @@ class PollingConfigManagerTest(base.BaseTest):
     def test_is_running(self, _):
         """ Test that polling thread is running after instance of PollingConfigManager is created. """
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile:
-          project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
-          self.assertTrue(project_config_manager.is_running)
+            project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+            self.assertTrue(project_config_manager.is_running)
         mock_fetch_datafile.assert_called_with()
