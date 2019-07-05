@@ -17,7 +17,8 @@ after_success:
 # Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
   - 'Linting'
-  - 'Integration tests'
+  - 'Integration Tests'
+  - 'Benchmarking Tests'
   - 'Test'
 
 jobs:
@@ -30,17 +31,21 @@ jobs:
       install: "pip install flake8==3.6.0" 
       script: "flake8"
       after_success: travis_terminate 0
-    - stage: 'Integration Tests'
+    - &integrationtest
+      stage: 'Integration Tests'
       merge_mode: replace
       env: SDK=python
       cache: false
       language: minimal
       install: skip
       before_script:
-        - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git && popd
+        - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git sohail/refactorscript && popd
       script:
-        - "$HOME/travisci-tools/fsc-trigger/trigger_fullstack-sdk-compat.sh"
+        - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
       after_success: travis_terminate 0
+    - <<: integrationtest
+      stage: 'Benchmarking Tests'
+      env: SDK=python REPO_SLUG=Benchmarking
     - stage: 'Test'
       dist: xenial
       python: "3.7"
