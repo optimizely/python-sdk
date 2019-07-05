@@ -43,7 +43,7 @@ jobs:
       script:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
       after_success: travis_terminate 0
-    - <<: integrationtest
+    - <<: *integrationtest
       stage: 'Benchmarking Tests'
       env: SDK=python REPO_SLUG=Benchmarking
     - stage: 'Test'
