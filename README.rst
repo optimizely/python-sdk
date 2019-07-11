@@ -104,7 +104,7 @@ The following properties can be set to override the default
 configurations for PollingConfigManager.
 
 ================ ======================================================== =====================================================================================
-**Property Name** **Default Value**                                        **Description**
+**PropertyName** **Default Value**                                        **Description**
 ================ ======================================================== =====================================================================================
 update_interval  5 minutes                                                Fixed delay between fetches for the datafile
 sdk_key          None                                                     Optimizely project SDK key
