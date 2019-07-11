@@ -46,6 +46,8 @@ jobs:
     - <<: *integrationtest
       stage: 'Benchmarking Tests'
       env: SDK=python REPO_SLUG=Benchmarking
+      script:
+        - "$HOME/travisci-tools/trigger-script-with-status-update.sh yasir/bench-exp-support"
     - stage: 'Test'
       dist: xenial
       python: "3.7"
