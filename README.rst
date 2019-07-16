@@ -30,7 +30,7 @@ dashboard, please contact your Optimizely account executive.
 Using the SDK
 ~~~~~~~~~~~~~
 
-You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing a Config Manager. Each method is described below. 
+You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing a `ConfigManager`_. Each method is described below. 
 
 1. Initialize Optimizely with a datafile. This datafile will be used as
    ProjectConfig throughout the life of Optimizely instance.
@@ -42,7 +42,7 @@ You can initialize the Optimizely instance in three ways: with a datafile, by pr
 
 2. Initialize Optimizely by providing an 'sdk_key'. This will initialize
    a PollingConfigManager that makes an HTTP GET request to the URL (formed 
-    using your provided `sdk key` and the default datafile CDN url
+    using your provided `sdk key` and the default datafile CDN URL
    template) to asynchronously download the project datafile at regular
    intervals and update ProjectConfig when a new datafile is recieved. A
    hard-coded datafile can also be provided along with the `sdk_key` that
@@ -50,12 +50,10 @@ You can initialize the Optimizely instance in three ways: with a datafile, by pr
    ::
 
       optimizely.Optimizely(
-        datafile=None,
         sdk_key='put_your_sdk_key_here'
       )
 
-3. Initialize Optimizely by providing a Config Manager that implements a
-   'get_config' method. You may use our `PollingConfigManager` as needed.
+3. Initialize Optimizely by providing a ConfigManager that implements `BaseConfigManager`_. You may use our `PollingConfigManager` as needed.
    ::
 
       optimizely.Optimizely(
@@ -112,7 +110,7 @@ datafile         None                                                     Initia
 
 A notification signal will be triggered whenever a *new* datafile is
 fetched and Project Config is updated. To subscribe to these
-notifications, use the
+notifications, use:
 
 ``notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)``
 
@@ -210,6 +208,8 @@ Please see `CONTRIBUTING`_.
 .. _Full Stack documentation: https://docs.developers.optimizely.com/full-stack/docs
 .. _Rollouts documentation: https://docs.developers.optimizely.com/rollouts/docs
 .. _CONTRIBUTING: CONTRIBUTING.rst
+.. _ConfigManager: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py
+.. _BaseConfigManager: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32
 
 .. |PyPI version| image:: https://badge.fury.io/py/optimizely-sdk.svg
    :target: https://pypi.org/project/optimizely-sdk
