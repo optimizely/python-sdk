@@ -17,8 +17,8 @@ after_success:
 # Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
   - 'Linting'
-  - 'Integration Tests'
-  - 'Benchmarking Tests'
+  - 'Integration tests'
+  - 'Benchmarking tests'
   - 'Test'
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
       script: "flake8"
       after_success: travis_terminate 0
     - &integrationtest
-      stage: 'Integration Tests'
+      stage: 'Integration tests'
       merge_mode: replace
       env: SDK=python
       cache: false
@@ -44,7 +44,7 @@ jobs:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh"
       after_success: travis_terminate 0
     - <<: *integrationtest
-      stage: 'Benchmarking Tests'
+      stage: 'Benchmarking tests'
       env: SDK=python FULLSTACK_TEST_REPO=Benchmarking
       script:
         - "$HOME/travisci-tools/trigger-script-with-status-update.sh yasir/bench-exp-support"
