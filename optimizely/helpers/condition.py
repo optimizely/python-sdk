@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2018-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,115 +12,290 @@
 # limitations under the License.
 
 import json
+import numbers
+
+from six import string_types
+
+from . import validator
+from .enums import AudienceEvaluationLogs as audience_logs
 
 
-class ConditionalOperatorTypes(object):
+class ConditionOperatorTypes(object):
   AND = 'and'
   OR = 'or'
   NOT = 'not'
 
 
-DEFAULT_OPERATOR_TYPES = [
-  ConditionalOperatorTypes.AND,
-  ConditionalOperatorTypes.OR,
-  ConditionalOperatorTypes.NOT
-]
+class ConditionMatchTypes(object):
+  EXACT = 'exact'
+  EXISTS = 'exists'
+  GREATER_THAN = 'gt'
+  LESS_THAN = 'lt'
+  SUBSTRING = 'substring'
 
 
-class ConditionEvaluator(object):
-  """ Class encapsulating methods to be used in audience condition evaluation. """
+class CustomAttributeConditionEvaluator(object):
+  """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
-  def __init__(self, condition_data, attributes):
+  CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
+
+  def __init__(self, condition_data, attributes, logger):
     self.condition_data = condition_data
-    self.attributes = attributes
+    self.attributes = attributes or {}
+    self.logger = logger
 
-  def evaluator(self, condition):
-    """ Method to compare single audience condition against provided user data i.e. attributes.
-
-    Args:
-      condition: Integer representing the index of condition_data that needs to be used for comparison.
-
-    Returns:
-      Boolean indicating the result of comparing the condition value against the user attributes.
-    """
-
-    return self.attributes.get(self.condition_data[condition][0]) == self.condition_data[condition][1]
-
-  def and_evaluator(self, conditions):
-    """ Evaluates a list of conditions as if the evaluator had been applied
-    to each entry and the results AND-ed together
+  def _get_condition_json(self, index):
+    """ Method to generate json for logging audience condition.
 
     Args:
-      conditions: List of conditions ex: [operand_1, operand_2]
+      index: Index of the condition.
 
     Returns:
-      Boolean: True if all operands evaluate to True
+      String: Audience condition JSON.
     """
+    condition = self.condition_data[index]
+    condition_log = {
+      'name': condition[0],
+      'value': condition[1],
+      'type': condition[2],
+      'match': condition[3]
+    }
 
-    for condition in conditions:
-      result = self.evaluate(condition)
-      if result is False:
-        return False
+    return json.dumps(condition_log)
 
-    return True
-
-  def or_evaluator(self, conditions):
-    """ Evaluates a list of conditions as if the evaluator had been applied
-    to each entry and the results OR-ed together
+  def is_value_type_valid_for_exact_conditions(self, value):
+    """ Method to validate if the value is valid for exact match type evaluation.
 
     Args:
-      conditions: List of conditions ex: [operand_1, operand_2]
+      value: Value to validate.
 
     Returns:
-      Boolean: True if any operand evaluates to True
+      Boolean: True if value is a string, boolean, or number. Otherwise False.
     """
-
-    for condition in conditions:
-      result = self.evaluate(condition)
-      if result is True:
-        return True
+    # No need to check for bool since bool is a subclass of int
+    if isinstance(value, string_types) or isinstance(value, (numbers.Integral, float)):
+      return True
 
     return False
 
-  def not_evaluator(self, single_condition):
-    """ Evaluates a list of conditions as if the evaluator had been applied
-    to a single entry and NOT was applied to the result.
+  def is_value_a_number(self, value):
+    if isinstance(value, (numbers.Integral, float)) and not isinstance(value, bool):
+      return True
+
+    return False
+
+  def exact_evaluator(self, index):
+    """ Evaluate the given exact match condition for the user attributes.
 
     Args:
-      single_condition: List of of a single condition ex: [operand_1]
+      index: Index of the condition to be evaluated.
 
     Returns:
-      Boolean: True if the operand evaluates to False
+      Boolean:
+        - True if the user attribute value is equal (===) to the condition value.
+        - False if the user attribute value is not equal (!==) to the condition value.
+      None:
+        - if the condition value or user attribute value has an invalid type.
+        - if there is a mismatch between the user attribute type and the condition value type.
     """
-    if len(single_condition) != 1:
-      return False
+    condition_name = self.condition_data[index][0]
+    condition_value = self.condition_data[index][1]
+    user_value = self.attributes.get(condition_name)
 
-    return not self.evaluate(single_condition[0])
+    if not self.is_value_type_valid_for_exact_conditions(condition_value) or \
+       (self.is_value_a_number(condition_value) and not validator.is_finite_number(condition_value)):
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_json(index)
+      ))
+      return None
 
-  OPERATORS = {
-    ConditionalOperatorTypes.AND: and_evaluator,
-    ConditionalOperatorTypes.OR: or_evaluator,
-    ConditionalOperatorTypes.NOT: not_evaluator
+    if not self.is_value_type_valid_for_exact_conditions(user_value) or \
+       not validator.are_values_same_type(condition_value, user_value):
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
+          self._get_condition_json(index),
+          type(user_value),
+          condition_name
+      ))
+      return None
+
+    if self.is_value_a_number(user_value) and \
+       not validator.is_finite_number(user_value):
+        self.logger.warning(audience_logs.INFINITE_ATTRIBUTE_VALUE.format(
+          self._get_condition_json(index),
+          condition_name
+        ))
+        return None
+
+    return condition_value == user_value
+
+  def exists_evaluator(self, index):
+    """ Evaluate the given exists match condition for the user attributes.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean: True if the user attributes have a non-null value for the given condition,
+                 otherwise False.
+    """
+    attr_name = self.condition_data[index][0]
+    return self.attributes.get(attr_name) is not None
+
+  def greater_than_evaluator(self, index):
+    """ Evaluate the given greater than match condition for the user attributes.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean:
+          - True if the user attribute value is greater than the condition value.
+          - False if the user attribute value is less than or equal to the condition value.
+        None: if the condition value isn't finite or the user attribute value isn't finite.
+    """
+    condition_name = self.condition_data[index][0]
+    condition_value = self.condition_data[index][1]
+    user_value = self.attributes.get(condition_name)
+
+    if not validator.is_finite_number(condition_value):
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_json(index)
+      ))
+      return None
+
+    if not self.is_value_a_number(user_value):
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
+          self._get_condition_json(index),
+          type(user_value),
+          condition_name
+      ))
+      return None
+
+    if not validator.is_finite_number(user_value):
+      self.logger.warning(audience_logs.INFINITE_ATTRIBUTE_VALUE.format(
+        self._get_condition_json(index),
+        condition_name
+      ))
+      return None
+
+    return user_value > condition_value
+
+  def less_than_evaluator(self, index):
+    """ Evaluate the given less than match condition for the user attributes.
+
+    Args:
+      index: Index of the condition to be evaluated.
+
+    Returns:
+      Boolean:
+        - True if the user attribute value is less than the condition value.
+        - False if the user attribute value is greater than or equal to the condition value.
+      None: if the condition value isn't finite or the user attribute value isn't finite.
+    """
+    condition_name = self.condition_data[index][0]
+    condition_value = self.condition_data[index][1]
+    user_value = self.attributes.get(condition_name)
+
+    if not validator.is_finite_number(condition_value):
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_json(index)
+      ))
+      return None
+
+    if not self.is_value_a_number(user_value):
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
+          self._get_condition_json(index),
+          type(user_value),
+          condition_name
+      ))
+      return None
+
+    if not validator.is_finite_number(user_value):
+      self.logger.warning(audience_logs.INFINITE_ATTRIBUTE_VALUE.format(
+        self._get_condition_json(index),
+        condition_name
+      ))
+      return None
+
+    return user_value < condition_value
+
+  def substring_evaluator(self, index):
+    """ Evaluate the given substring match condition for the given user attributes.
+
+    Args:
+      index: Index of the condition to be evaluated.
+
+    Returns:
+      Boolean:
+        - True if the condition value is a substring of the user attribute value.
+        - False if the condition value is not a substring of the user attribute value.
+      None: if the condition value isn't a string or the user attribute value isn't a string.
+    """
+    condition_name = self.condition_data[index][0]
+    condition_value = self.condition_data[index][1]
+    user_value = self.attributes.get(condition_name)
+
+    if not isinstance(condition_value, string_types):
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(
+        self._get_condition_json(index),
+      ))
+      return None
+
+    if not isinstance(user_value, string_types):
+      self.logger.warning(audience_logs.UNEXPECTED_TYPE.format(
+          self._get_condition_json(index),
+          type(user_value),
+          condition_name
+      ))
+      return None
+
+    return condition_value in user_value
+
+  EVALUATORS_BY_MATCH_TYPE = {
+    ConditionMatchTypes.EXACT: exact_evaluator,
+    ConditionMatchTypes.EXISTS: exists_evaluator,
+    ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
+    ConditionMatchTypes.LESS_THAN: less_than_evaluator,
+    ConditionMatchTypes.SUBSTRING: substring_evaluator
   }
 
-  def evaluate(self, conditions):
-    """ Top level method to evaluate audience conditions.
+  def evaluate(self, index):
+    """ Given a custom attribute audience condition and user attributes, evaluate the
+        condition against the attributes.
 
     Args:
-      conditions: Nested list of and/or conditions.
-                  Ex: ['and', operand_1, ['or', operand_2, operand_3]]
+      index: Index of the condition to be evaluated.
 
     Returns:
-      Boolean result of evaluating the conditions evaluate
+      Boolean:
+        - True if the user attributes match the given condition.
+        - False if the user attributes don't match the given condition.
+      None: if the user attributes and condition can't be evaluated.
     """
 
-    if isinstance(conditions, list):
-      if conditions[0] in DEFAULT_OPERATOR_TYPES:
-        return self.OPERATORS[conditions[0]](self, conditions[1:])
-      else:
-        return False
+    if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
+      self.logger.warning(audience_logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_json(index)))
+      return None
 
-    return self.evaluator(conditions)
+    condition_match = self.condition_data[index][3]
+    if condition_match is None:
+      condition_match = ConditionMatchTypes.EXACT
+
+    if condition_match not in self.EVALUATORS_BY_MATCH_TYPE:
+      self.logger.warning(audience_logs.UNKNOWN_MATCH_TYPE.format(self._get_condition_json(index)))
+      return None
+
+    if condition_match != ConditionMatchTypes.EXISTS:
+      attribute_key = self.condition_data[index][0]
+      if attribute_key not in self.attributes:
+        self.logger.debug(audience_logs.MISSING_ATTRIBUTE_VALUE.format(self._get_condition_json(index), attribute_key))
+        return None
+
+      if self.attributes.get(attribute_key) is None:
+        self.logger.debug(audience_logs.NULL_ATTRIBUTE_VALUE.format(self._get_condition_json(index), attribute_key))
+        return None
+
+    return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)
 
 
 class ConditionDecoder(object):
@@ -157,9 +332,14 @@ def _audience_condition_deserializer(obj_dict):
     obj_dict: Dict representing one audience condition.
 
   Returns:
-    List consisting of condition key and corresponding value.
+    List consisting of condition key with corresponding value, type and match.
   """
-  return [obj_dict.get('name'), obj_dict.get('value')]
+  return [
+    obj_dict.get('name'),
+    obj_dict.get('value'),
+    obj_dict.get('type'),
+    obj_dict.get('match')
+  ]
 
 
 def loads(conditions_string):

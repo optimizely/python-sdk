@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from six import string_types
+
 from . import decision_service
 from . import entities
 from . import event_builder
@@ -80,8 +82,8 @@ class Optimizely(object):
         self.error_handler.handle_error(error_to_handle)
         return
 
-    self.event_builder = event_builder.EventBuilder(self.config)
-    self.decision_service = decision_service.DecisionService(self.config, user_profile_service)
+    self.event_builder = event_builder.EventBuilder()
+    self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
     self.notification_center = notification_center(self.logger)
 
   def _validate_instantiation_options(self, datafile, skip_json_validation):
@@ -131,31 +133,6 @@ class Optimizely(object):
 
     return True
 
-  def _get_decisions(self, event, user_id, attributes):
-    """ Helper method to retrieve decisions for the user for experiment(s) using the provided event.
-
-    Args:
-      event: The event which needs to be recorded.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
-
-    Returns:
-      List of tuples representing valid experiment IDs and variation IDs into which the user is bucketed.
-    """
-    decisions = []
-    for experiment_id in event.experimentIds:
-      experiment = self.config.get_experiment_from_id(experiment_id)
-      variation_key = self.get_variation(experiment.key, user_id, attributes)
-
-      if not variation_key:
-        self.logger.info('Not tracking user "%s" for experiment "%s".' % (user_id, experiment.key))
-        continue
-
-      variation = self.config.get_variation_from_key(experiment.key, variation_key)
-      decisions.append((experiment_id, variation.id))
-
-    return decisions
-
   def _send_impression_event(self, experiment, variation, user_id, attributes):
     """ Helper method to send impression event.
 
@@ -166,10 +143,13 @@ class Optimizely(object):
       attributes: Dict representing user attributes and values which need to be recorded.
     """
 
-    impression_event = self.event_builder.create_impression_event(experiment,
-                                                                  variation.id,
-                                                                  user_id,
-                                                                  attributes)
+    impression_event = self.event_builder.create_impression_event(
+      self.config,
+      experiment,
+      variation.id,
+      user_id,
+      attributes
+    )
 
     self.logger.debug('Dispatching impression event to URL %s with params %s.' % (
       impression_event.url,
@@ -200,16 +180,16 @@ class Optimizely(object):
       - Variable key is invalid.
       - Mismatch with type of variable.
     """
-    if feature_key is None:
-      self.logger.error(enums.Errors.NONE_FEATURE_KEY_PARAMETER)
+    if not validator.is_non_empty_string(feature_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
       return None
 
-    if variable_key is None:
-      self.logger.error(enums.Errors.NONE_VARIABLE_KEY_PARAMETER)
+    if not validator.is_non_empty_string(variable_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('variable_key'))
       return None
 
-    if user_id is None:
-      self.logger.error(enums.Errors.NONE_USER_ID_PARAMETER)
+    if not isinstance(user_id, string_types):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
     if not self._validate_user_inputs(attributes):
@@ -231,16 +211,36 @@ class Optimizely(object):
       )
       return None
 
-    decision = self.decision_service.get_variation_for_feature(feature_flag, user_id, attributes)
+    feature_enabled = False
+    source_info = {}
+    variable_value = variable.defaultValue
+    decision = self.decision_service.get_variation_for_feature(self.config, feature_flag, user_id, attributes)
     if decision.variation:
-      variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
 
+      feature_enabled = decision.variation.featureEnabled
+      if feature_enabled:
+        variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
+        self.logger.info(
+          'Got variable value "%s" for variable "%s" of feature flag "%s".' % (
+            variable_value, variable_key, feature_key
+          )
+        )
+      else:
+        self.logger.info(
+          'Feature "%s" for variation "%s" is not enabled. '
+          'Returning the default variable value "%s".' % (feature_key, decision.variation.key, variable_value)
+        )
     else:
-      variable_value = variable.defaultValue
       self.logger.info(
         'User "%s" is not in any variation or rollout rule. '
         'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
       )
+
+    if decision.source == enums.DecisionSources.FEATURE_TEST:
+      source_info = {
+        'experiment_key': decision.experiment.key,
+        'variation_key': decision.variation.key
+      }
 
     try:
       actual_value = self.config.get_typecast_value(variable_value, variable_type)
@@ -248,6 +248,21 @@ class Optimizely(object):
       self.logger.error('Unable to cast value. Returning None.')
       actual_value = None
 
+    self.notification_center.send_notifications(
+      enums.NotificationTypes.DECISION,
+      enums.DecisionNotificationTypes.FEATURE_VARIABLE,
+      user_id,
+      attributes or {},
+      {
+        'feature_key': feature_key,
+        'feature_enabled': feature_enabled,
+        'source': decision.source,
+        'variable_key': variable_key,
+        'variable_value': actual_value,
+        'variable_type': variable_type,
+        'source_info': source_info
+      }
+    )
     return actual_value
 
   def activate(self, experiment_key, user_id, attributes=None):
@@ -271,7 +286,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
       return None
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
@@ -308,7 +323,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('event_key'))
       return
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return
 
@@ -320,28 +335,24 @@ class Optimizely(object):
       self.logger.info('Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
-    # Filter out experiments that are not running or that do not include the user in audience
-    # conditions and then determine the decision i.e. the corresponding variation
-    decisions = self._get_decisions(event, user_id, attributes)
-
-    # Create and dispatch conversion event if there are any decisions
-    if decisions:
-      conversion_event = self.event_builder.create_conversion_event(
-        event_key, user_id, attributes, event_tags, decisions
-      )
-      self.logger.info('Tracking event "%s" for user "%s".' % (event_key, user_id))
-      self.logger.debug('Dispatching conversion event to URL %s with params %s.' % (
-        conversion_event.url,
-        conversion_event.params
-      ))
-      try:
-        self.event_dispatcher.dispatch_event(conversion_event)
-      except:
-        self.logger.exception('Unable to dispatch conversion event!')
-      self.notification_center.send_notifications(enums.NotificationTypes.TRACK, event_key, user_id,
-                                                  attributes, event_tags, conversion_event)
-    else:
-      self.logger.info('There are no valid experiments for event "%s" to track.' % event_key)
+    conversion_event = self.event_builder.create_conversion_event(
+      self.config,
+      event_key,
+      user_id,
+      attributes,
+      event_tags
+    )
+    self.logger.info('Tracking event "%s" for user "%s".' % (event_key, user_id))
+    self.logger.debug('Dispatching conversion event to URL %s with params %s.' % (
+      conversion_event.url,
+      conversion_event.params
+    ))
+    try:
+      self.event_dispatcher.dispatch_event(conversion_event)
+    except:
+      self.logger.exception('Unable to dispatch conversion event!')
+    self.notification_center.send_notifications(enums.NotificationTypes.TRACK, event_key, user_id,
+                                                attributes, event_tags, conversion_event)
 
   def get_variation(self, experiment_key, user_id, attributes=None):
     """ Gets variation where user will be bucketed.
@@ -364,11 +375,12 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
       return None
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return None
 
     experiment = self.config.get_experiment_from_key(experiment_key)
+    variation_key = None
 
     if not experiment:
       self.logger.info('Experiment key "%s" is invalid. Not activating user "%s".' % (
@@ -380,11 +392,27 @@ class Optimizely(object):
     if not self._validate_user_inputs(attributes):
       return None
 
-    variation = self.decision_service.get_variation(experiment, user_id, attributes)
+    variation = self.decision_service.get_variation(self.config, experiment, user_id, attributes)
     if variation:
-      return variation.key
+      variation_key = variation.key
 
-    return None
+    if self.config.is_feature_experiment(experiment.id):
+      decision_notification_type = enums.DecisionNotificationTypes.FEATURE_TEST
+    else:
+      decision_notification_type = enums.DecisionNotificationTypes.AB_TEST
+
+    self.notification_center.send_notifications(
+      enums.NotificationTypes.DECISION,
+      decision_notification_type,
+      user_id,
+      attributes or {},
+      {
+         'experiment_key': experiment_key,
+         'variation_key': variation_key
+      }
+    )
+
+    return variation_key
 
   def is_feature_enabled(self, feature_key, user_id, attributes=None):
     """ Returns true if the feature is enabled for the given user.
@@ -406,7 +434,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
       return False
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return False
 
@@ -417,21 +445,44 @@ class Optimizely(object):
     if not feature:
       return False
 
-    decision = self.decision_service.get_variation_for_feature(feature, user_id, attributes)
+    feature_enabled = False
+    source_info = {}
+    decision = self.decision_service.get_variation_for_feature(self.config, feature, user_id, attributes)
+    is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
+
     if decision.variation:
+      if decision.variation.featureEnabled is True:
+        feature_enabled = True
       # Send event if Decision came from an experiment.
-      if decision.source == decision_service.DECISION_SOURCE_EXPERIMENT:
+      if is_source_experiment:
+        source_info = {
+          'experiment_key': decision.experiment.key,
+          'variation_key': decision.variation.key
+        }
         self._send_impression_event(decision.experiment,
                                     decision.variation,
                                     user_id,
                                     attributes)
 
-      if decision.variation.featureEnabled:
-        self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
-        return True
+    if feature_enabled:
+      self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+    else:
+      self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
 
-    self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
-    return False
+    self.notification_center.send_notifications(
+        enums.NotificationTypes.DECISION,
+        enums.DecisionNotificationTypes.FEATURE,
+        user_id,
+        attributes or {},
+        {
+          'feature_key': feature_key,
+          'feature_enabled': feature_enabled,
+          'source': decision.source,
+          'source_info': source_info
+        }
+    )
+
+    return feature_enabled
 
   def get_enabled_features(self, user_id, attributes=None):
     """ Returns the list of features that are enabled for the user.
@@ -449,7 +500,7 @@ class Optimizely(object):
       self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
       return enabled_features
 
-    if not validator.is_non_empty_string(user_id):
+    if not isinstance(user_id, string_types):
       self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
       return enabled_features
 
@@ -551,7 +602,19 @@ class Optimizely(object):
       A boolean value that indicates if the set completed successfully.
     """
 
-    return self.config.set_forced_variation(experiment_key, user_id, variation_key)
+    if not self.is_valid:
+      self.logger.error(enums.Errors.INVALID_DATAFILE.format('set_forced_variation'))
+      return False
+
+    if not validator.is_non_empty_string(experiment_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      return False
+
+    if not isinstance(user_id, string_types):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      return False
+
+    return self.decision_service.set_forced_variation(self.config, experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
@@ -564,5 +627,17 @@ class Optimizely(object):
       The forced variation key. None if no forced variation key.
     """
 
-    forced_variation = self.config.get_forced_variation(experiment_key, user_id)
+    if not self.is_valid:
+      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_forced_variation'))
+      return None
+
+    if not validator.is_non_empty_string(experiment_key):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      return None
+
+    if not isinstance(user_id, string_types):
+      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      return None
+
+    forced_variation = self.decision_service.get_forced_variation(self.config, experiment_key, user_id)
     return forced_variation.key if forced_variation else None

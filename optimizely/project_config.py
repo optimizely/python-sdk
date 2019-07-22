@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -31,7 +31,7 @@ class ProjectConfig(object):
 
     Args:
       datafile: JSON string representing the project.
-      logger: Provides a log message to send log messages to.
+      logger: Provides a logger instance.
       error_handler: Provides a handle_error method to handle exceptions.
     """
 
@@ -52,6 +52,7 @@ class ProjectConfig(object):
     self.events = config.get('events', [])
     self.attributes = config.get('attributes', [])
     self.audiences = config.get('audiences', [])
+    self.typed_audiences = config.get('typedAudiences', [])
     self.feature_flags = config.get('featureFlags', [])
     self.rollouts = config.get('rollouts', [])
     self.anonymize_ip = config.get('anonymizeIP', False)
@@ -62,7 +63,16 @@ class ProjectConfig(object):
     self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
     self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
     self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
+
     self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
+
+    # Conditions of audiences in typedAudiences are not expected
+    # to be string-encoded as they are in audiences.
+    for typed_audience in self.typed_audiences:
+      typed_audience['conditions'] = json.dumps(typed_audience['conditions'])
+    typed_audience_id_map = self._generate_key_map(self.typed_audiences, 'id', entities.Audience)
+    self.audience_id_map.update(typed_audience_id_map)
+
     self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
     for layer in self.rollout_id_map.values():
       for experiment in layer.experiments:
@@ -95,22 +105,23 @@ class ProjectConfig(object):
         )
 
     self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
+
+    # Dict containing map of experiment ID to feature ID.
+    # for checking that experiment is a feature experiment or not.
+    self.experiment_feature_map = {}
     for feature in self.feature_key_map.values():
       feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
-      # Check if any of the experiments are in a group and add the group id for faster bucketing later on
       for exp_id in feature.experimentIds:
+        # Add this experiment in experiment-feature map.
+        self.experiment_feature_map[exp_id] = [feature.id]
+
         experiment_in_feature = self.experiment_id_map[exp_id]
+        # Check if any of the experiments are in a group and add the group id for faster bucketing later on
         if experiment_in_feature.groupId:
           feature.groupId = experiment_in_feature.groupId
           # Experiments in feature can only belong to one mutex group
           break
-
-    # Map of user IDs to another map of experiments to variations.
-    # This contains all the forced variations set by the user
-    # by calling set_forced_variation (it is not the same as the
-    # whitelisting forcedVariations data structure).
-    self.forced_variation_map = {}
 
   @staticmethod
   def _generate_key_map(entity_list, key, entity_class):
@@ -478,112 +489,6 @@ class ProjectConfig(object):
 
     return feature.variables.get(variable_key)
 
-  def set_forced_variation(self, experiment_key, user_id, variation_key):
-    """ Sets users to a map of experiments to forced variations.
-
-      Args:
-        experiment_key: Key for experiment.
-        user_id: The user ID.
-        variation_key: Key for variation. If None, then clear the existing experiment-to-variation mapping.
-
-      Returns:
-        A boolean value that indicates if the set completed successfully.
-    """
-    if not user_id:
-      self.logger.debug('User ID is invalid.')
-      return False
-
-    experiment = self.get_experiment_from_key(experiment_key)
-    if not experiment:
-      # The invalid experiment key will be logged inside this call.
-      return False
-
-    experiment_id = experiment.id
-    if not variation_key:
-      if user_id in self.forced_variation_map:
-        experiment_to_variation_map = self.forced_variation_map.get(user_id)
-        if experiment_id in experiment_to_variation_map:
-          del(self.forced_variation_map[user_id][experiment_id])
-          self.logger.debug('Variation mapped to experiment "%s" has been removed for user "%s".' % (
-            experiment_key,
-            user_id
-          ))
-        else:
-          self.logger.debug('Nothing to remove. Variation mapped to experiment "%s" for user "%s" does not exist.' % (
-            experiment_key,
-            user_id
-          ))
-      else:
-        self.logger.debug('Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
-      return True
-
-    forced_variation = self.get_variation_from_key(experiment_key, variation_key)
-    if not forced_variation:
-      # The invalid variation key will be logged inside this call.
-      return False
-
-    variation_id = forced_variation.id
-
-    if user_id not in self.forced_variation_map:
-      self.forced_variation_map[user_id] = {experiment_id: variation_id}
-    else:
-      self.forced_variation_map[user_id][experiment_id] = variation_id
-
-    self.logger.debug('Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.' % (
-      variation_id,
-      experiment_id,
-      user_id
-    ))
-    return True
-
-  def get_forced_variation(self, experiment_key, user_id):
-    """ Gets the forced variation key for the given user and experiment.
-
-      Args:
-        experiment_key: Key for experiment.
-        user_id: The user ID.
-
-      Returns:
-        The variation which the given user and experiment should be forced into.
-    """
-    if not user_id:
-      self.logger.debug('User ID is invalid.')
-      return None
-
-    if user_id not in self.forced_variation_map:
-      self.logger.debug('User "%s" is not in the forced variation map.' % user_id)
-      return None
-
-    experiment = self.get_experiment_from_key(experiment_key)
-    if not experiment:
-      # The invalid experiment key will be logged inside this call.
-      return None
-
-    experiment_to_variation_map = self.forced_variation_map.get(user_id)
-
-    if not experiment_to_variation_map:
-      self.logger.debug('No experiment "%s" mapped to user "%s" in the forced variation map.' % (
-        experiment_key,
-        user_id
-      ))
-      return None
-
-    variation_id = experiment_to_variation_map.get(experiment.id)
-    if variation_id is None:
-      self.logger.debug(
-        'No variation mapped to experiment "%s" in the forced variation map.' % experiment_key
-      )
-      return None
-
-    variation = self.get_variation_from_id(experiment_key, variation_id)
-
-    self.logger.debug('Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map' % (
-      variation.key,
-      experiment_key,
-      user_id
-    ))
-    return variation
-
   def get_anonymize_ip_value(self):
     """ Gets the anonymize IP value.
 
@@ -601,3 +506,15 @@ class ProjectConfig(object):
     """
 
     return self.bot_filtering
+
+  def is_feature_experiment(self, experiment_id):
+    """ Determines if given experiment is a feature test.
+
+      Args:
+        experiment_id: Experiment ID for which feature test is to be determined.
+
+      Returns:
+        A boolean value that indicates if given experiment is a feature test.
+    """
+
+    return experiment_id in self.experiment_feature_map

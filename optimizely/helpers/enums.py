@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,6 +14,28 @@
 import logging
 
 
+class AudienceEvaluationLogs(object):
+  AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
+  AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
+  EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: {}.'
+  EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for experiment "{}": {}.'
+  INFINITE_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because the number value ' \
+                         'for user attribute "{}" is not in the range [-2^53, +2^53].'
+  MISSING_ATTRIBUTE_VALUE = 'Audience condition {} evaluated to UNKNOWN because no value was passed for '\
+                            'user attribute "{}".'
+  NULL_ATTRIBUTE_VALUE = 'Audience condition "{}" evaluated to UNKNOWN because a null value was passed '\
+                         'for user attribute "{}".'
+  UNEXPECTED_TYPE = 'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed '\
+                    'for user attribute "{}".'
+
+  UNKNOWN_CONDITION_TYPE = 'Audience condition "{}" uses an unknown condition type. You may need to upgrade to a '\
+                           'newer release of the Optimizely SDK.'
+  UNKNOWN_CONDITION_VALUE = 'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '\
+                           'newer release of the Optimizely SDK.'
+  UNKNOWN_MATCH_TYPE = 'Audience condition "{}" uses an unknown match type. You may need to upgrade to a '\
+                       'newer release of the Optimizely SDK.'
+
+
 class ControlAttributes(object):
   BOT_FILTERING = '$opt_bot_filtering'
   BUCKETING_ID = '$opt_bucketing_id'
@@ -24,6 +46,18 @@ class DatafileVersions(object):
   V2 = '2'
   V3 = '3'
   V4 = '4'
+
+
+class DecisionNotificationTypes(object):
+  AB_TEST = 'ab-test'
+  FEATURE = 'feature'
+  FEATURE_TEST = 'feature-test'
+  FEATURE_VARIABLE = 'feature-variable'
+
+
+class DecisionSources(object):
+  FEATURE_TEST = 'feature-test'
+  ROLLOUT = 'rollout'
 
 
 class Errors(object):
@@ -63,10 +97,15 @@ class NotificationTypes(object):
   """ NotificationTypes for the notification_center.NotificationCenter
       format is NOTIFICATION TYPE: list of parameters to callback.
 
-      ACTIVATE notification listener has the following parameters:
+      ACTIVATE (DEPRECATED since 3.1.0) notification listener has the following parameters:
       Experiment experiment, str user_id, dict attributes (can be None), Variation variation, Event event
+
+      DECISION notification listener has the following parameters:
+      DecisionNotificationTypes type, str user_id, dict attributes, dict decision_info
+
       TRACK notification listener has the following parameters:
       str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
   """
-  ACTIVATE = "ACTIVATE:experiment, user_id, attributes, variation, event"
-  TRACK = "TRACK:event_key, user_id, attributes, event_tags, event"
+  ACTIVATE = 'ACTIVATE:experiment, user_id, attributes, variation, event'
+  DECISION = 'DECISION:type, user_id, attributes, decision_info'
+  TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'

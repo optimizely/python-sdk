@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -120,13 +120,13 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users 1',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_1']]
+        conditionList=[['test_attribute', 'test_value_1', 'custom_attribute', None]]
       ),
       '11159': entities.Audience(
         '11159', 'Test attribute users 2',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value_2']]
+        conditionList=[['test_attribute', 'test_value_2', 'custom_attribute', None]]
       )
     }
     expected_variation_key_map = {
@@ -521,7 +521,7 @@ class ConfigTest(base.BaseTest):
         '11154', 'Test attribute users',
         '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
         conditionStructure=['and', ['or', ['or', 0]]],
-        conditionList=[['test_attribute', 'test_value']]
+        conditionList=[['test_attribute', 'test_value', 'custom_attribute', None]]
       )
     }
     expected_variation_key_map = {
@@ -626,6 +626,11 @@ class ConfigTest(base.BaseTest):
       }
     }
 
+    expected_experiment_feature_map = {
+      '111127': ['91111'],
+      '32222': ['91113']
+    }
+
     self.assertEqual(expected_variation_variable_usage_map['28901'],
                      project_config.variation_variable_usage_map['28901'])
     self.assertEqual(expected_group_id_map, project_config.group_id_map)
@@ -639,6 +644,7 @@ class ConfigTest(base.BaseTest):
     self.assertEqual(expected_feature_key_map, project_config.feature_key_map)
     self.assertEqual(expected_rollout_id_map, project_config.rollout_id_map)
     self.assertEqual(expected_variation_variable_usage_map, project_config.variation_variable_usage_map)
+    self.assertEqual(expected_experiment_feature_map, project_config.experiment_feature_map)
 
   def test_variation_has_featureEnabled_false_if_prop_undefined(self):
     """ Test that featureEnabled property by default is set to False, when not given in the data file"""
@@ -764,6 +770,43 @@ class ConfigTest(base.BaseTest):
 
     self.assertIsNone(self.project_config.get_audience('42'))
 
+  def test_get_audience__prefers_typedAudiences_over_audiences(self):
+    opt = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+    config = opt.config
+
+    audiences = self.config_dict_with_typed_audiences['audiences']
+    typed_audiences = self.config_dict_with_typed_audiences['typedAudiences']
+
+    audience_3988293898 = {
+      'id': '3988293898',
+      'name': '$$dummySubstringString',
+      'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }'
+    }
+
+    self.assertTrue(audience_3988293898 in audiences)
+
+    typed_audience_3988293898 = {
+      'id': '3988293898',
+      'name': 'substringString',
+      'conditions': ['and', ['or', ['or', {'name': 'house', 'type': 'custom_attribute',
+                     'match': 'substring', 'value': 'Slytherin'}]]]
+    }
+
+    self.assertTrue(typed_audience_3988293898 in typed_audiences)
+
+    audience = config.get_audience('3988293898')
+
+    self.assertEqual('3988293898', audience.id)
+    self.assertEqual('substringString', audience.name)
+
+    # compare parsed JSON as conditions for typedAudiences is generated via json.dumps
+    # which can be different for python versions.
+    self.assertEqual(json.loads(
+      '["and", ["or", ["or", {"match": "substring", "type": "custom_attribute",'
+      ' "name": "house", "value": "Slytherin"}]]]'),
+      json.loads(audience.conditions)
+    )
+
   def test_get_variation_from_key__valid_experiment_key(self):
     """ Test that variation is retrieved correctly when valid experiment key and variation key are provided. """
 
@@ -848,7 +891,19 @@ class ConfigTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config
 
-    expected_feature = entities.FeatureFlag('91112', 'test_feature_in_rollout', [], '211111', {})
+    expected_feature = entities.FeatureFlag(
+      '91112',
+      'test_feature_in_rollout',
+      [],
+      '211111',
+      {
+        'is_running': entities.Variable('132', 'is_running', 'boolean', 'false'),
+        'message': entities.Variable('133', 'message', 'string', 'Hello'),
+        'price': entities.Variable('134', 'price', 'double', '99.99'),
+        'count': entities.Variable('135', 'count', 'integer', '999')
+      }
+    )
+
     self.assertEqual(expected_feature, project_config.get_feature_from_key('test_feature_in_rollout'))
 
   def test_get_feature_from_key__invalid_feature_key(self):
@@ -879,7 +934,29 @@ class ConfigTest(base.BaseTest):
       'variations': [{
         'key': '211129',
         'id': '211129',
-        'featureEnabled': True
+        'featureEnabled': True,
+        'variables': [{
+           'id': '132', 'value': 'true'
+         }, {
+           'id': '133', 'value': 'Hello audience'
+         }, {
+           'id': '134', 'value': '39.99'
+         }, {
+           'id': '135', 'value': '399'
+         }]
+      }, {
+        'key': '211229',
+        'id': '211229',
+        'featureEnabled': False,
+        'variables': [{
+           'id': '132', 'value': 'true'
+         }, {
+           'id': '133', 'value': 'environment'
+         }, {
+           'id': '134', 'value': '49.99'
+         }, {
+           'id': '135', 'value': '499'
+         }]
       }]
     }, {
       'id': '211137',
@@ -992,116 +1069,6 @@ class ConfigTest(base.BaseTest):
     project_config = opt_obj.config
 
     self.assertIsNone(project_config.get_variable_for_feature('test_feature_in_experiment', 'invalid_variable_key'))
-
-  # get_forced_variation tests
-  def test_get_forced_variation__invalid_user_id(self):
-    """ Test invalid user IDs return a null variation. """
-    self.project_config.forced_variation_map['test_user'] = {}
-    self.project_config.forced_variation_map['test_user']['test_experiment'] = 'test_variation'
-
-    self.assertIsNone(self.project_config.get_forced_variation('test_experiment', None))
-    self.assertIsNone(self.project_config.get_forced_variation('test_experiment', ''))
-
-  def test_get_forced_variation__invalid_experiment_key(self):
-    """ Test invalid experiment keys return a null variation. """
-    self.project_config.forced_variation_map['test_user'] = {}
-    self.project_config.forced_variation_map['test_user']['test_experiment'] = 'test_variation'
-
-    self.assertIsNone(self.project_config.get_forced_variation('test_experiment_not_in_datafile', 'test_user'))
-    self.assertIsNone(self.project_config.get_forced_variation(None, 'test_user'))
-    self.assertIsNone(self.project_config.get_forced_variation('', 'test_user'))
-
-  def test_get_forced_variation_with_none_set_for_user(self):
-    """ Test get_forced_variation when none set for user ID in forced variation map. """
-    self.project_config.forced_variation_map = {}
-    self.project_config.forced_variation_map['test_user'] = {}
-
-    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-      self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
-    mock_config_logging.debug.assert_called_once_with(
-      'No experiment "test_experiment" mapped to user "test_user" in the forced variation map.'
-    )
-
-  def test_get_forced_variation_missing_variation_mapped_to_experiment(self):
-    """ Test get_forced_variation when no variation found against given experiment for the user. """
-    self.project_config.forced_variation_map = {}
-    self.project_config.forced_variation_map['test_user'] = {}
-    self.project_config.forced_variation_map['test_user']['test_experiment'] = None
-
-    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-      self.assertIsNone(self.project_config.get_forced_variation('test_experiment', 'test_user'))
-
-    mock_config_logging.debug.assert_called_once_with(
-      'No variation mapped to experiment "test_experiment" in the forced variation map.'
-    )
-
-  # set_forced_variation tests
-  def test_set_forced_variation__invalid_user_id(self):
-    """ Test invalid user IDs set fail to set a forced variation """
-
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', None, 'variation'))
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', '', 'variation'))
-
-  def test_set_forced_variation__invalid_experiment_key(self):
-    """ Test invalid experiment keys set fail to set a forced variation """
-
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment_not_in_datafile',
-                                                              'test_user', 'variation'))
-    self.assertFalse(self.project_config.set_forced_variation('', 'test_user', 'variation'))
-    self.assertFalse(self.project_config.set_forced_variation(None, 'test_user', 'variation'))
-
-  def test_set_forced_variation__invalid_variation_key(self):
-    """ Test invalid variation keys set fail to set a forced variation """
-
-    self.assertFalse(self.project_config.set_forced_variation('test_experiment', 'test_user',
-                                                              'variation_not_in_datafile'))
-    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', ''))
-    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
-
-  def test_set_forced_variation__multiple_sets(self):
-    """ Test multiple sets of experiments for one and multiple users work """
-
-    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user_1', 'variation'))
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'variation')
-    # same user, same experiment, different variation
-    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user_1', 'control'))
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
-    # same user, different experiment
-    self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user_1', 'group_exp_1_control'))
-    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
-
-    # different user
-    self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user_2', 'variation'))
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_2').key, 'variation')
-    # different user, different experiment
-    self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user_2', 'group_exp_1_control'))
-    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_2').key, 'group_exp_1_control')
-
-    # make sure the first user forced variations are still valid
-    self.assertEqual(self.project_config.get_forced_variation('test_experiment', 'test_user_1').key, 'control')
-    self.assertEqual(self.project_config.get_forced_variation('group_exp_1', 'test_user_1').key, 'group_exp_1_control')
-
-  def test_set_forced_variation_when_called_to_remove_forced_variation(self):
-    """ Test set_forced_variation when no variation is given. """
-    # Test case where both user and experiment are present in the forced variation map
-    self.project_config.forced_variation_map = {}
-    self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
-
-    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-      self.assertTrue(self.project_config.set_forced_variation('test_experiment', 'test_user', None))
-    mock_config_logging.debug.assert_called_once_with(
-      'Variation mapped to experiment "test_experiment" has been removed for user "test_user".'
-    )
-
-    # Test case where user is present in the forced variation map, but the given experiment isn't
-    self.project_config.forced_variation_map = {}
-    self.project_config.set_forced_variation('test_experiment', 'test_user', 'variation')
-
-    with mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-      self.assertTrue(self.project_config.set_forced_variation('group_exp_1', 'test_user', None))
-    mock_config_logging.debug.assert_called_once_with(
-      'Nothing to remove. Variation mapped to experiment "group_exp_1" for user "test_user" does not exist.'
-    )
 
 
 class ConfigLoggingTest(base.BaseTest):
@@ -1266,3 +1233,15 @@ class ConfigExceptionTest(base.BaseTest):
     self.assertRaisesRegexp(exceptions.InvalidGroupException,
                             enums.Errors.INVALID_GROUP_ID_ERROR,
                             self.project_config.get_group, '42')
+
+  def test_is_feature_experiment(self):
+    """ Test that a true is returned if experiment is a feature test, false otherwise. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    project_config = opt_obj.config
+
+    experiment = project_config.get_experiment_from_key('test_experiment2')
+    feature_experiment = project_config.get_experiment_from_key('test_experiment')
+
+    self.assertStrictFalse(project_config.is_feature_experiment(experiment.id))
+    self.assertStrictTrue(project_config.is_feature_experiment(feature_experiment.id))

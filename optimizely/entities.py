@@ -46,17 +46,22 @@ class Event(BaseEntity):
 class Experiment(BaseEntity):
 
   def __init__(self, id, key, status, audienceIds, variations, forcedVariations,
-               trafficAllocation, layerId, groupId=None, groupPolicy=None, **kwargs):
+               trafficAllocation, layerId, audienceConditions=None, groupId=None, groupPolicy=None, **kwargs):
     self.id = id
     self.key = key
     self.status = status
     self.audienceIds = audienceIds
+    self.audienceConditions = audienceConditions
     self.variations = variations
     self.forcedVariations = forcedVariations
     self.trafficAllocation = trafficAllocation
     self.layerId = layerId
     self.groupId = groupId
     self.groupPolicy = groupPolicy
+
+  def getAudienceConditionsOrIds(self):
+    """ Returns audienceConditions if present, otherwise audienceIds. """
+    return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
 
 
 class FeatureFlag(BaseEntity):

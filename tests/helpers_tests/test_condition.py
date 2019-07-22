@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,123 +11,694 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import mock
+from six import PY2
 
 from optimizely.helpers import condition as condition_helper
 
 from tests import base
 
+browserConditionSafari = ['browser_type', 'safari', 'custom_attribute', 'exact']
+booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
+integerCondition = ['num_users', 10, 'custom_attribute', 'exact']
+doubleCondition = ['pi_value', 3.14, 'custom_attribute', 'exact']
 
-class ConditionEvaluatorTests(base.BaseTest):
+exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
+exact_string_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+exact_int_condition_list = [['lasers_count', 9000, 'custom_attribute', 'exact']]
+exact_float_condition_list = [['lasers_count', 9000.0, 'custom_attribute', 'exact']]
+exact_bool_condition_list = [['did_register_user', False, 'custom_attribute', 'exact']]
+substring_condition_list = [['headline_text', 'buy now', 'custom_attribute', 'substring']]
+gt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+gt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'gt']]
+lt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+lt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
+
+
+class CustomAttributeConditionEvaluator(base.BaseTest):
 
   def setUp(self):
     base.BaseTest.setUp(self)
-    self.condition_structure, self.condition_list = condition_helper.loads(
-      self.config_dict['audiences'][0]['conditions']
+    self.condition_list = [browserConditionSafari, booleanCondition, integerCondition, doubleCondition]
+    self.mock_client_logger = mock.MagicMock()
+
+  def test_evaluate__returns_true__when_attributes_pass_audience_condition(self):
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      self.condition_list, {'browser_type': 'safari'}, self.mock_client_logger
     )
-    attributes = {
-      'test_attribute': 'test_value_1',
-      'browser_type': 'firefox',
-      'location': 'San Francisco'
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_evaluate__returns_false__when_attributes_fail_audience_condition(self):
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      self.condition_list, {'browser_type': 'chrome'}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_evaluate__evaluates__different_typed_attributes(self):
+    userAttributes = {
+      'browser_type': 'safari',
+      'is_firefox': True,
+      'num_users': 10,
+      'pi_value': 3.14,
     }
-    self.condition_evaluator = condition_helper.ConditionEvaluator(self.condition_list, attributes)
 
-  def test_evaluator__returns_true(self):
-    """ Test that evaluator correctly returns True when there is an exact match.
-    Also test that evaluator works for falsy values. """
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      self.condition_list, userAttributes, self.mock_client_logger
+    )
 
-    # string attribute value
-    condition_list = [['test_attribute', '']]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'test_attribute': ''})
-    self.assertTrue(self.condition_evaluator.evaluator(0))
+    self.assertStrictTrue(evaluator.evaluate(0))
+    self.assertStrictTrue(evaluator.evaluate(1))
+    self.assertStrictTrue(evaluator.evaluate(2))
+    self.assertStrictTrue(evaluator.evaluate(3))
 
-    # boolean attribute value
-    condition_list = [['boolean_key', False]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'boolean_key': False})
-    self.assertTrue(condition_evaluator.evaluator(0))
+  def test_evaluate__returns_null__when_condition_has_an_invalid_match_property(self):
 
-    # integer attribute value
-    condition_list = [['integer_key', 0]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'integer_key': 0})
-    self.assertTrue(condition_evaluator.evaluator(0))
+    condition_list = [['weird_condition', 'hi', 'custom_attribute', 'weird_match']]
 
-    # double attribute value
-    condition_list = [['double_key', 0.0]]
-    condition_evaluator = condition_helper.ConditionEvaluator(condition_list, {'double_key': 0.0})
-    self.assertTrue(condition_evaluator.evaluator(0))
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, {'weird_condition': 'hi'}, self.mock_client_logger
+    )
 
-  def test_evaluator__returns_false(self):
-    """ Test that evaluator correctly returns False when there is no match. """
+    self.assertIsNone(evaluator.evaluate(0))
 
-    attributes = {
-      'browser_type': 'chrome',
-      'location': 'San Francisco'
-    }
-    self.condition_evaluator = condition_helper.ConditionEvaluator(self.condition_list, attributes)
+  def test_evaluate__assumes_exact__when_condition_match_property_is_none(self):
 
-    self.assertFalse(self.condition_evaluator.evaluator(0))
+    condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', None]]
 
-  def test_and_evaluator__returns_true(self):
-    """ Test that and_evaluator returns True when all conditions evaluate to True. """
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, {'favorite_constellation': 'Lacerta'}, self.mock_client_logger
+    )
 
-    conditions = range(5)
+    self.assertStrictTrue(evaluator.evaluate(0))
 
-    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate', return_value=True):
-      self.assertTrue(self.condition_evaluator.and_evaluator(conditions))
+  def test_evaluate__returns_null__when_condition_has_an_invalid_type_property(self):
 
-  def test_and_evaluator__returns_false(self):
-    """ Test that and_evaluator returns False when any one condition evaluates to False. """
+    condition_list = [['weird_condition', 'hi', 'weird_type', 'exact']]
 
-    conditions = range(5)
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, {'weird_condition': 'hi'}, self.mock_client_logger
+    )
 
-    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate',
-                    side_effect=[True, True, False, True, True]):
-      self.assertFalse(self.condition_evaluator.and_evaluator(conditions))
+    self.assertIsNone(evaluator.evaluate(0))
 
-  def test_or_evaluator__returns_true(self):
-    """ Test that or_evaluator returns True when any one condition evaluates to True. """
+  def test_exists__returns_false__when_no_user_provided_value(self):
 
-    conditions = range(5)
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, {}, self.mock_client_logger
+    )
 
-    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate',
-                    side_effect=[False, False, True, False, False]):
-      self.assertTrue(self.condition_evaluator.or_evaluator(conditions))
+    self.assertStrictFalse(evaluator.evaluate(0))
 
-  def test_or_evaluator__returns_false(self):
-    """ Test that or_evaluator returns False when all conditions evaluator to False. """
+  def test_exists__returns_false__when_user_provided_value_is_null(self):
 
-    conditions = range(5)
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, {'input_value': None}, self.mock_client_logger
+    )
 
-    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate', return_value=False):
-      self.assertFalse(self.condition_evaluator.or_evaluator(conditions))
+    self.assertStrictFalse(evaluator.evaluate(0))
 
-  def test_not_evaluator__returns_true(self):
-    """ Test that not_evaluator returns True when condition evaluates to False. """
+  def test_exists__returns_true__when_user_provided_value_is_string(self):
 
-    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate', return_value=False):
-      self.assertTrue(self.condition_evaluator.not_evaluator([42]))
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, {'input_value': 'hi'}, self.mock_client_logger
+    )
 
-  def test_not_evaluator__returns_false(self):
-    """ Test that not_evaluator returns False when condition evaluates to True. """
+    self.assertStrictTrue(evaluator.evaluate(0))
 
-    with mock.patch('optimizely.helpers.condition.ConditionEvaluator.evaluate', return_value=True):
-      self.assertFalse(self.condition_evaluator.not_evaluator([42]))
+  def test_exists__returns_true__when_user_provided_value_is_number(self):
 
-  def test_not_evaluator__returns_false_more_than_one_condition(self):
-    """ Test that not_evaluator returns False when list has more than 1 condition. """
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, {'input_value': 10}, self.mock_client_logger
+    )
 
-    self.assertFalse(self.condition_evaluator.not_evaluator([42, 43]))
+    self.assertStrictTrue(evaluator.evaluate(0))
 
-  def test_evaluate__returns_true(self):
-    """ Test that evaluate returns True when conditions evaluate to True. """
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, {'input_value': 10.0}, self.mock_client_logger
+    )
 
-    self.assertTrue(self.condition_evaluator.evaluate(self.condition_structure))
+    self.assertStrictTrue(evaluator.evaluate(0))
 
-  def test_evaluate__returns_false(self):
-    """ Test that evaluate returns False when conditions evaluate to False. """
+  def test_exists__returns_true__when_user_provided_value_is_boolean(self):
 
-    condition_structure = ['and', ['or', ['not', 0]]]
-    self.assertFalse(self.condition_evaluator.evaluate(condition_structure))
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, {'input_value': False}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_string__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_string_condition_list, {'favorite_constellation': 'Lacerta'}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_string__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_string_condition_list, {'favorite_constellation': 'The Big Dipper'}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_exact_string__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_string_condition_list, {'favorite_constellation': False}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_string__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_string_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_int__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_int_condition_list, {'lasers_count': long(9000)}, self.mock_client_logger
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_int_condition_list, {'lasers_count': 9000}, self.mock_client_logger
+      )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 9000.0}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_float__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_float_condition_list, {'lasers_count': long(9000)}, self.mock_client_logger
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        exact_float_condition_list, {'lasers_count': 9000}, self.mock_client_logger
+      )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': 9000.0}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_int__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 8000}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_exact_float__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': 8000.0}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_exact_int__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 'hi'}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': True}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_float__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': 'hi'}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {'lasers_count': True}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_int__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_float__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_float_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact__given_number_values__calls_is_finite_number(self):
+    """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_int_condition_list, {'lasers_count': 9000}, self.mock_client_logger
+    )
+
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[False, True]) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    mock_is_finite.assert_called_once_with(9000)
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[True, False]) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
+
+    # assert CustomAttributeConditionEvaluator.evaluate returns True only when isFiniteNumber returns
+    # True both for condition and user values.
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=[True, True]) as mock_is_finite:
+      self.assertTrue(evaluator.evaluate(0))
+
+    mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
+
+  def test_exact_bool__returns_true__when_user_provided_value_is_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_bool_condition_list, {'did_register_user': False}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_exact_bool__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_bool_condition_list, {'did_register_user': True}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_exact_bool__returns_null__when_user_provided_value_is_different_type_from_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_bool_condition_list, {'did_register_user': 0}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_exact_bool__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_bool_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_substring__returns_true__when_condition_value_is_substring_of_user_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, {'headline_text': 'Limited time, buy now!'}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_substring__returns_false__when_condition_value_is_not_a_substring_of_user_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, {'headline_text': 'Breaking news!'}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_substring__returns_null__when_user_provided_value_not_a_string(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, {'headline_text': 10}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_substring__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_true__when_user_value_greater_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_true__when_user_value_greater_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_false__when_user_value_not_greater_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_false__when_user_value_not_greater_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 48.2}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 48}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        gt_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 'a long way'}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': False}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': 'a long way'}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {'meters_travelled': False}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_int__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than_float__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_float_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_true__when_user_value_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48}, self.mock_client_logger
+    )
+
+    self.assertStrictTrue(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger
+      )
+
+      self.assertStrictTrue(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_false__when_user_value_not_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_false__when_user_value_not_less_than_condition_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 48.2}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    if PY2:
+      evaluator = condition_helper.CustomAttributeConditionEvaluator(
+        lt_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger
+      )
+
+      self.assertStrictFalse(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': False}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_null__when_user_value_is_not_a_number(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {'meters_travelled': False}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_int__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_less_than_float__returns_null__when_no_user_provided_value(self):
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_float_condition_list, {}, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+  def test_greater_than__calls_is_finite_number(self):
+    """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+    )
+
+    def is_finite_number__rejecting_condition_value(value):
+      if value == 48:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_condition_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+    mock_is_finite.assert_called_once_with(48)
+
+    def is_finite_number__rejecting_user_attribute_value(value):
+      if value == 48.1:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_user_attribute_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    mock_is_finite.assert_has_calls([mock.call(48), mock.call(48.1)])
+
+    def is_finite_number__accepting_both_values(value):
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__accepting_both_values):
+      self.assertTrue(evaluator.evaluate(0))
+
+  def test_less_than__calls_is_finite_number(self):
+    """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+    )
+
+    def is_finite_number__rejecting_condition_value(value):
+      if value == 48:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_condition_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+    mock_is_finite.assert_called_once_with(48)
+
+    def is_finite_number__rejecting_user_attribute_value(value):
+      if value == 47:
+        return False
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__rejecting_user_attribute_value) as mock_is_finite:
+      self.assertIsNone(evaluator.evaluate(0))
+
+    # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+    mock_is_finite.assert_has_calls([mock.call(48), mock.call(47)])
+
+    def is_finite_number__accepting_both_values(value):
+      return True
+
+    with mock.patch('optimizely.helpers.validator.is_finite_number',
+                    side_effect=is_finite_number__accepting_both_values):
+      self.assertTrue(evaluator.evaluate(0))
 
 
 class ConditionDecoderTests(base.BaseTest):
@@ -140,4 +711,585 @@ class ConditionDecoderTests(base.BaseTest):
     )
 
     self.assertEqual(['and', ['or', ['or', 0]]], condition_structure)
-    self.assertEqual([['test_attribute', 'test_value_1']], condition_list)
+    self.assertEqual([['test_attribute', 'test_value_1', 'custom_attribute', None]], condition_list)
+
+  def test_audience_condition_deserializer_defaults(self):
+    """ Test that audience_condition_deserializer defaults to None."""
+
+    browserConditionSafari = {}
+
+    items = condition_helper._audience_condition_deserializer(browserConditionSafari)
+    self.assertIsNone(items[0])
+    self.assertIsNone(items[1])
+    self.assertIsNone(items[2])
+    self.assertIsNone(items[3])
+
+
+class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
+
+  def setUp(self):
+    base.BaseTest.setUp(self)
+    self.mock_client_logger = mock.MagicMock()
+
+  def test_evaluate__match_type__invalid(self):
+    log_level = 'warning'
+    condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'regex']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'regex'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" uses an unknown match '
+      'type. You may need to upgrade to a newer release of the Optimizely SDK.')
+        .format(json.dumps(expected_condition_log)))
+
+  def test_evaluate__condition_type__invalid(self):
+    log_level = 'warning'
+    condition_list = [['favorite_constellation', 'Lacerta', 'sdk_version', 'exact']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'sdk_version',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" uses an unknown condition type. '
+      'You may need to upgrade to a newer release of the Optimizely SDK.').format(json.dumps(expected_condition_log)))
+
+  def test_exact__user_value__missing(self):
+    log_level = 'debug'
+    exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition {} evaluated to UNKNOWN because '
+      'no value was passed for user attribute "favorite_constellation".').format(json.dumps(expected_condition_log)))
+
+  def test_greater_than__user_value__missing(self):
+    log_level = 'debug'
+    gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition {} evaluated to UNKNOWN because no value was passed for user '
+      'attribute "meters_travelled".').format(json.dumps(expected_condition_log)))
+
+  def test_less_than__user_value__missing(self):
+    log_level = 'debug'
+    lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition {} evaluated to UNKNOWN because no value was passed for user attribute '
+      '"meters_travelled".').format(json.dumps(expected_condition_log)))
+
+  def test_substring__user_value__missing(self):
+    log_level = 'debug'
+    substring_condition_list = [['headline_text', 'buy now', 'custom_attribute', 'substring']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'headline_text',
+      "value": 'buy now',
+      "type": 'custom_attribute',
+      "match": 'substring'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition {} evaluated to UNKNOWN because no value was passed for '
+      'user attribute "headline_text".').format(json.dumps(expected_condition_log)))
+
+  def test_exists__user_value__missing(self):
+    exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
+    user_attributes = {}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    self.mock_client_logger.debug.assert_not_called()
+    self.mock_client_logger.info.assert_not_called()
+    self.mock_client_logger.warning.assert_not_called()
+
+  def test_exact__user_value__None(self):
+    log_level = 'debug'
+    exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': None}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a null value was passed for user attribute '
+      '"favorite_constellation".').format(json.dumps(expected_condition_log)))
+
+  def test_greater_than__user_value__None(self):
+    log_level = 'debug'
+    gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+    user_attributes = {'meters_travelled': None}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a null value was passed for '
+      'user attribute "meters_travelled".').format(json.dumps(expected_condition_log)))
+
+  def test_less_than__user_value__None(self):
+    log_level = 'debug'
+    lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+    user_attributes = {'meters_travelled': None}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a null value was passed '
+      'for user attribute "meters_travelled".').format(json.dumps(expected_condition_log)))
+
+  def test_substring__user_value__None(self):
+    log_level = 'debug'
+    substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
+    user_attributes = {'headline_text': None}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'headline_text',
+      "value": '12',
+      "type": 'custom_attribute',
+      "match": 'substring'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a null value was '
+      'passed for user attribute "headline_text".').format(json.dumps(expected_condition_log)))
+
+  def test_exists__user_value__None(self):
+    exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
+    user_attributes = {'input_value': None}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exists_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    self.assertStrictFalse(evaluator.evaluate(0))
+
+    self.mock_client_logger.debug.assert_not_called()
+    self.mock_client_logger.info.assert_not_called()
+    self.mock_client_logger.warning.assert_not_called()
+
+  def test_exact__user_value__unexpected_type(self):
+    log_level = 'warning'
+    exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': {}}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
+      'user attribute "favorite_constellation".').format(json.dumps(expected_condition_log), type({})))
+
+  def test_greater_than__user_value__unexpected_type(self):
+    log_level = 'warning'
+    gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+    user_attributes = {'meters_travelled': '48'}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}"'
+      ' evaluated to UNKNOWN because a value of type "{}" was passed for user attribute '
+      '"meters_travelled".').format(json.dumps(expected_condition_log), type('48')))
+
+  def test_less_than__user_value__unexpected_type(self):
+    log_level = 'warning'
+    lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+    user_attributes = {'meters_travelled': True}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}"'
+      ' evaluated to UNKNOWN because a value of type "{}" was passed for user attribute '
+      '"meters_travelled".').format(json.dumps(expected_condition_log), type(True)))
+
+  def test_substring__user_value__unexpected_type(self):
+    log_level = 'warning'
+    substring_condition_list = [['headline_text', '12', 'custom_attribute', 'substring']]
+    user_attributes = {'headline_text': 1234}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'headline_text',
+      "value": '12',
+      "type": 'custom_attribute',
+      "match": 'substring'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
+      'user attribute "headline_text".').format(json.dumps(expected_condition_log), type(1234)))
+
+  def test_exact__user_value__infinite(self):
+    log_level = 'warning'
+    exact_condition_list = [['meters_travelled', 48, 'custom_attribute', 'exact']]
+    user_attributes = {'meters_travelled': float("inf")}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because the number value for '
+      'user attribute "meters_travelled" is not in the range [-2^53, +2^53].'
+    ).format(json.dumps(expected_condition_log)))
+
+  def test_greater_than__user_value__infinite(self):
+    log_level = 'warning'
+    gt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
+    user_attributes = {'meters_travelled': float("nan")}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" '
+      'evaluated to UNKNOWN because the number value for user attribute "meters_travelled" is not'
+      ' in the range [-2^53, +2^53].').format(json.dumps(expected_condition_log)))
+
+  def test_less_than__user_value__infinite(self):
+    log_level = 'warning'
+    lt_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
+    user_attributes = {'meters_travelled': float('-inf')}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      lt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": 48,
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" '
+      'evaluated to UNKNOWN because the number value for user attribute "meters_travelled" is not in '
+      'the range [-2^53, +2^53].').format(json.dumps(expected_condition_log)))
+
+  def test_exact__user_value_type_mismatch(self):
+    log_level = 'warning'
+    exact_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': 5}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": 'Lacerta',
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
+      'user attribute "favorite_constellation".').format(json.dumps(expected_condition_log), type(5)))
+
+  def test_exact__condition_value_invalid(self):
+    log_level = 'warning'
+    exact_condition_list = [['favorite_constellation', {}, 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': 'Lacerta'}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": {},
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
+      'newer release of the Optimizely SDK.').format(json.dumps(expected_condition_log)))
+
+  def test_exact__condition_value_infinite(self):
+    log_level = 'warning'
+    exact_condition_list = [['favorite_constellation', float('inf'), 'custom_attribute', 'exact']]
+    user_attributes = {'favorite_constellation': 'Lacerta'}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      exact_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'favorite_constellation',
+      "value": float('inf'),
+      "type": 'custom_attribute',
+      "match": 'exact'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
+      'newer release of the Optimizely SDK.').format(json.dumps(expected_condition_log)))
+
+  def test_greater_than__condition_value_invalid(self):
+    log_level = 'warning'
+    gt_condition_list = [['meters_travelled', True, 'custom_attribute', 'gt']]
+    user_attributes = {'meters_travelled': 48}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": True,
+      "type": 'custom_attribute',
+      "match": 'gt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
+      'newer release of the Optimizely SDK.').format(json.dumps(expected_condition_log)))
+
+  def test_less_than__condition_value_invalid(self):
+    log_level = 'warning'
+    gt_condition_list = [['meters_travelled', float('nan'), 'custom_attribute', 'lt']]
+    user_attributes = {'meters_travelled': 48}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      gt_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'meters_travelled',
+      "value": float('nan'),
+      "type": 'custom_attribute',
+      "match": 'lt'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
+      'newer release of the Optimizely SDK.').format(json.dumps(expected_condition_log)))
+
+  def test_substring__condition_value_invalid(self):
+    log_level = 'warning'
+    substring_condition_list = [['headline_text', False, 'custom_attribute', 'substring']]
+    user_attributes = {'headline_text': 'breaking news'}
+
+    evaluator = condition_helper.CustomAttributeConditionEvaluator(
+      substring_condition_list, user_attributes, self.mock_client_logger
+    )
+
+    expected_condition_log = {
+      "name": 'headline_text',
+      "value": False,
+      "type": 'custom_attribute',
+      "match": 'substring'
+    }
+
+    self.assertIsNone(evaluator.evaluate(0))
+
+    mock_log = getattr(self.mock_client_logger, log_level)
+    mock_log.assert_called_once_with((
+      'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
+      'newer release of the Optimizely SDK.').format(json.dumps(expected_condition_log)))

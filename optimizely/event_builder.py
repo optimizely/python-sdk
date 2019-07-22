@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -13,8 +13,6 @@
 
 import time
 import uuid
-from abc import abstractmethod
-from abc import abstractproperty
 
 from . import version
 from .helpers import enums
@@ -32,112 +30,7 @@ class Event(object):
     self.headers = headers
 
 
-class BaseEventBuilder(object):
-  """ Base class which encapsulates methods to build events for tracking impressions and conversions. """
-
-  def __init__(self, config):
-    self.config = config
-
-  @abstractproperty
-  class EventParams(object):
-    pass
-
-  def _get_project_id(self):
-    """ Get project ID.
-
-    Returns:
-      Project ID of the datafile.
-    """
-
-    return self.config.get_project_id()
-
-  def _get_revision(self):
-    """ Get revision.
-
-    Returns:
-      Revision of the datafile.
-    """
-
-    return self.config.get_revision()
-
-  def _get_account_id(self):
-    """ Get account ID.
-
-    Returns:
-      Account ID in the datafile.
-    """
-
-    return self.config.get_account_id()
-
-  @abstractmethod
-  def _get_attributes(self, attributes):
-    """ Get attribute(s) information.
-
-    Args:
-      attributes: Dict representing user attributes and values which need to be recorded.
-    """
-    pass
-
-  def _get_anonymize_ip(self):
-    """ Get IP anonymization bool
-
-    Returns:
-      Boolean representing whether IP anonymization is enabled or not.
-    """
-
-    return self.config.get_anonymize_ip_value()
-
-  def _get_bot_filtering(self):
-    """ Get bot filtering bool
-
-    Returns:
-      Boolean representing whether bot filtering is enabled or not.
-    """
-
-    return self.config.get_bot_filtering_value()
-
-  @abstractmethod
-  def _get_time(self):
-    """ Get time in milliseconds to be added.
-
-    Returns:
-      int Current time in milliseconds.
-    """
-
-    return int(round(time.time() * 1000))
-
-  def _get_common_params(self, user_id, attributes):
-    """ Get params which are used same in both conversion and impression events.
-
-    Args:
-      user_id: ID for user.
-      attributes: Dict representing user attributes and values which need to be recorded.
-
-    Returns:
-     Dict consisting of parameters common to both impression and conversion events.
-    """
-    commonParams = {}
-
-    commonParams[self.EventParams.PROJECT_ID] = self._get_project_id()
-    commonParams[self.EventParams.ACCOUNT_ID] = self._get_account_id()
-
-    visitor = {}
-    visitor[self.EventParams.END_USER_ID] = user_id
-    visitor[self.EventParams.SNAPSHOTS] = []
-
-    commonParams[self.EventParams.USERS] = []
-    commonParams[self.EventParams.USERS].append(visitor)
-    commonParams[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes(attributes)
-
-    commonParams[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
-    commonParams[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
-    commonParams[self.EventParams.ANONYMIZE_IP] = self._get_anonymize_ip()
-    commonParams[self.EventParams.REVISION] = self._get_revision()
-
-    return commonParams
-
-
-class EventBuilder(BaseEventBuilder):
+class EventBuilder(object):
   """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (batch). """
 
@@ -152,6 +45,7 @@ class EventBuilder(BaseEventBuilder):
     CAMPAIGN_ID = 'campaign_id'
     VARIATION_ID = 'variation_id'
     END_USER_ID = 'visitor_id'
+    ENRICH_DECISIONS = 'enrich_decisions'
     EVENTS = 'events'
     EVENT_ID = 'entity_id'
     ATTRIBUTES = 'attributes'
@@ -168,10 +62,11 @@ class EventBuilder(BaseEventBuilder):
     ANONYMIZE_IP = 'anonymize_ip'
     REVISION = 'revision'
 
-  def _get_attributes(self, attributes):
+  def _get_attributes_data(self, project_config, attributes):
     """ Get attribute(s) information.
 
     Args:
+      project_config: Instance of ProjectConfig.
       attributes: Dict representing user attributes and values which need to be recorded.
 
     Returns:
@@ -185,7 +80,7 @@ class EventBuilder(BaseEventBuilder):
         attribute_value = attributes.get(attribute_key)
         # Omit attribute values that are not supported by the log endpoint.
         if validator.is_attribute_valid(attribute_key, attribute_value):
-          attribute_id = self.config.get_attribute_id(attribute_key)
+          attribute_id = project_config.get_attribute_id(attribute_key)
           if attribute_id:
             params.append({
               'entity_id': attribute_id,
@@ -195,7 +90,7 @@ class EventBuilder(BaseEventBuilder):
             })
 
     # Append Bot Filtering Attribute
-    bot_filtering_value = self._get_bot_filtering()
+    bot_filtering_value = project_config.get_bot_filtering_value()
     if isinstance(bot_filtering_value, bool):
       params.append({
           'entity_id': enums.ControlAttributes.BOT_FILTERING,
@@ -205,6 +100,50 @@ class EventBuilder(BaseEventBuilder):
       })
 
     return params
+
+  def _get_time(self):
+    """ Get time in milliseconds to be added.
+
+    Returns:
+      int Current time in milliseconds.
+    """
+
+    return int(round(time.time() * 1000))
+
+  def _get_common_params(self, project_config, user_id, attributes):
+    """ Get params which are used same in both conversion and impression events.
+
+    Args:
+      project_config: Instance of ProjectConfig.
+      user_id: ID for user.
+      attributes: Dict representing user attributes and values which need to be recorded.
+
+    Returns:
+     Dict consisting of parameters common to both impression and conversion events.
+    """
+    common_params = {
+      self.EventParams.PROJECT_ID: project_config.get_project_id(),
+      self.EventParams.ACCOUNT_ID: project_config.get_account_id()
+    }
+
+    visitor = {
+      self.EventParams.END_USER_ID: user_id,
+      self.EventParams.SNAPSHOTS: []
+    }
+
+    common_params[self.EventParams.USERS] = []
+    common_params[self.EventParams.USERS].append(visitor)
+    common_params[self.EventParams.USERS][0][self.EventParams.ATTRIBUTES] = self._get_attributes_data(
+      project_config, attributes
+    )
+
+    common_params[self.EventParams.SOURCE_SDK_TYPE] = 'python-sdk'
+    common_params[self.EventParams.ENRICH_DECISIONS] = True
+    common_params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
+    common_params[self.EventParams.ANONYMIZE_IP] = project_config.get_anonymize_ip_value()
+    common_params[self.EventParams.REVISION] = project_config.get_revision()
+
+    return common_params
 
   def _get_required_params_for_impression(self, experiment, variation_id):
     """ Get parameters that are required for the impression event to register.
@@ -233,33 +172,21 @@ class EventBuilder(BaseEventBuilder):
 
     return snapshot
 
-  def _get_required_params_for_conversion(self, event_key, event_tags, decisions):
+  def _get_required_params_for_conversion(self, project_config, event_key, event_tags):
     """ Get parameters that are required for the conversion event to register.
 
     Args:
+      project_config: Instance of ProjectConfig.
       event_key: Key representing the event which needs to be recorded.
       event_tags: Dict representing metadata associated with the event.
-      decisions: List of tuples representing valid experiments IDs and variation IDs.
 
     Returns:
       Dict consisting of the decisions and events info for conversion event.
     """
     snapshot = {}
-    snapshot[self.EventParams.DECISIONS] = []
-
-    for experiment_id, variation_id in decisions:
-
-      experiment = self.config.get_experiment_from_id(experiment_id)
-
-      if variation_id:
-        snapshot[self.EventParams.DECISIONS].append({
-          self.EventParams.EXPERIMENT_ID: experiment_id,
-          self.EventParams.VARIATION_ID: variation_id,
-          self.EventParams.CAMPAIGN_ID: experiment.layerId
-        })
 
     event_dict = {
-      self.EventParams.EVENT_ID: self.config.get_event(event_key).id,
+      self.EventParams.EVENT_ID: project_config.get_event(event_key).id,
       self.EventParams.TIME: self._get_time(),
       self.EventParams.KEY: event_key,
       self.EventParams.UUID: str(uuid.uuid4())
@@ -270,7 +197,7 @@ class EventBuilder(BaseEventBuilder):
       if revenue_value is not None:
         event_dict[event_tag_utils.REVENUE_METRIC_TYPE] = revenue_value
 
-      numeric_value = event_tag_utils.get_numeric_value(event_tags, self.config.logger)
+      numeric_value = event_tag_utils.get_numeric_value(event_tags, project_config.logger)
       if numeric_value is not None:
         event_dict[event_tag_utils.NUMERIC_METRIC_TYPE] = numeric_value
 
@@ -280,10 +207,11 @@ class EventBuilder(BaseEventBuilder):
     snapshot[self.EventParams.EVENTS] = [event_dict]
     return snapshot
 
-  def create_impression_event(self, experiment, variation_id, user_id, attributes):
+  def create_impression_event(self, project_config, experiment, variation_id, user_id, attributes):
     """ Create impression Event to be sent to the logging endpoint.
 
     Args:
+      project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
       user_id: ID for user.
@@ -293,7 +221,7 @@ class EventBuilder(BaseEventBuilder):
       Event object encapsulating the impression event.
     """
 
-    params = self._get_common_params(user_id, attributes)
+    params = self._get_common_params(project_config, user_id, attributes)
     impression_params = self._get_required_params_for_impression(experiment, variation_id)
 
     params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
@@ -303,22 +231,22 @@ class EventBuilder(BaseEventBuilder):
                  http_verb=self.HTTP_VERB,
                  headers=self.HTTP_HEADERS)
 
-  def create_conversion_event(self, event_key, user_id, attributes, event_tags, decisions):
+  def create_conversion_event(self, project_config, event_key, user_id, attributes, event_tags):
     """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
+      project_config: Instance of ProjectConfig.
       event_key: Key representing the event which needs to be recorded.
       user_id: ID for user.
       attributes: Dict representing user attributes and values.
       event_tags: Dict representing metadata associated with the event.
-      decisions: List of tuples representing experiments IDs and variation IDs.
 
     Returns:
       Event object encapsulating the conversion event.
     """
 
-    params = self._get_common_params(user_id, attributes)
-    conversion_params = self._get_required_params_for_conversion(event_key, event_tags, decisions)
+    params = self._get_common_params(project_config, user_id, attributes)
+    conversion_params = self._get_required_params_for_conversion(project_config, event_key, event_tags)
 
     params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
     return Event(self.EVENTS_URL,
