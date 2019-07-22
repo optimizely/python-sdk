@@ -39,13 +39,13 @@ class EventEntitiesTest(base.BaseTest):
 
     result = {}
     for k, v in obj:
-      if v is None and k in ['revenue', 'value', 'tags']:
+      if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
         continue
       else:
         result[k] = v
     return result
 
-  def TestImpressionEventEqualsSerializedPayload(self):
+  def test_impression_event_equals_serialized_payload(self):
     expected_params = {
       'account_id': '12001',
       'project_id': '111001',
@@ -79,10 +79,10 @@ class EventEntitiesTest(base.BaseTest):
     }
 
     batch = event_batch.EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
-                                    False, True)
+                                   False, True)
     visitor_attr = visitor_attribute.VisitorAttribute("111094", "test_attribute", "custom", "test_value")
     event = snapshot_event.SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
-                                          42123)
+                                         42123)
     event_decision = decision.Decision("111182", "111127", "111129")
 
     snapshots = snapshot.Snapshot([event], [event_decision])
@@ -97,7 +97,7 @@ class EventEntitiesTest(base.BaseTest):
                                   object_pairs_hook=self.dict_clean
                                 ))
 
-  def TestConversionEventEqualsSerializedPayload(self):
+  def test_conversion_event_equals_serialized_payload(self):
     expected_params = {
       'account_id': '12001',
       'project_id': '111001',
@@ -115,11 +115,6 @@ class EventEntitiesTest(base.BaseTest):
           'key': 'test_attribute2'
         }],
         'snapshots': [{
-          'decisions': [{
-            'variation_id': '111129',
-            'experiment_id': '111127',
-            'campaign_id': '111182'
-          }],
           'events': [{
             'timestamp': 42123,
             'entity_id': '111182',
@@ -148,9 +143,8 @@ class EventEntitiesTest(base.BaseTest):
     visitor_attr_2 = visitor_attribute.VisitorAttribute("111095", "test_attribute2", "custom", "test_value2")
     event = snapshot_event.SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
                                           42123, 4200, 1.234, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
-    event_decision = decision.Decision("111182", "111127", "111129")
 
-    snapshots = snapshot.Snapshot([event], [event_decision])
+    snapshots = snapshot.Snapshot([event])
     user = visitor.Visitor([snapshots], [visitor_attr_1, visitor_attr_2], "test_user")
 
     batch.visitors = [user]
