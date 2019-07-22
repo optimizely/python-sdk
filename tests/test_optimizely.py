@@ -2148,6 +2148,142 @@ class OptimizelyTest(base.BaseTest):
       }
     )
 
+  def test_get_feature_variable(self):
+    """ Test that get_feature_variable returns variable value as expected \
+    and broadcasts decision with proper parameters. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+    mock_experiment = opt_obj.config.get_experiment_from_key('test_experiment')
+    mock_variation = opt_obj.config.get_variation_from_id('test_experiment', '111129')
+    # Boolean
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           enums.DecisionSources.FEATURE_TEST)), \
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
+      self.assertTrue(opt_obj.get_feature_variable('test_feature_in_experiment', 'is_working', 'test_user'))
+
+    mock_config_logging.info.assert_called_once_with(
+      'Value for variable "is_working" for variation "variation" is "true".'
+    )
+
+    mock_broadcast_decision.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'feature-variable',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': True,
+        'source': 'feature-test',
+        'variable_key': 'is_working',
+        'variable_value': True,
+        'variable_type': 'boolean',
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
+      }
+    )
+    # Double
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           enums.DecisionSources.FEATURE_TEST)), \
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
+      self.assertEqual(10.02, opt_obj.get_feature_variable('test_feature_in_experiment', 'cost', 'test_user'))
+
+    mock_config_logging.info.assert_called_once_with(
+      'Value for variable "cost" for variation "variation" is "10.02".'
+    )
+
+    mock_broadcast_decision.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'feature-variable',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': True,
+        'source': 'feature-test',
+        'variable_key': 'cost',
+        'variable_value': 10.02,
+        'variable_type': 'double',
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
+      }
+    )
+    # Integer
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           enums.DecisionSources.FEATURE_TEST)), \
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
+      self.assertEqual(4243, opt_obj.get_feature_variable('test_feature_in_experiment', 'count', 'test_user'))
+
+    mock_config_logging.info.assert_called_once_with(
+      'Value for variable "count" for variation "variation" is "4243".'
+    )
+
+    mock_broadcast_decision.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'feature-variable',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': True,
+        'source': 'feature-test',
+        'variable_key': 'count',
+        'variable_value': 4243,
+        'variable_type': 'integer',
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
+      }
+    )
+    # String
+    with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
+                    return_value=decision_service.Decision(mock_experiment,
+                                                           mock_variation,
+                                                           enums.DecisionSources.FEATURE_TEST)), \
+         mock.patch.object(opt_obj.config, 'logger') as mock_config_logging, \
+         mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
+      self.assertEqual(
+        'staging',
+        opt_obj.get_feature_variable('test_feature_in_experiment', 'environment', 'test_user')
+      )
+
+    mock_config_logging.info.assert_called_once_with(
+      'Value for variable "environment" for variation "variation" is "staging".'
+    )
+
+    mock_broadcast_decision.assert_called_once_with(
+      enums.NotificationTypes.DECISION,
+      'feature-variable',
+      'test_user',
+      {},
+      {
+        'feature_key': 'test_feature_in_experiment',
+        'feature_enabled': True,
+        'source': 'feature-test',
+        'variable_key': 'environment',
+        'variable_value': 'staging',
+        'variable_type': 'string',
+        'source_info': {
+          'experiment_key': 'test_experiment',
+          'variation_key': 'variation'
+        }
+      }
+    )
+  
+
   def test_get_feature_variable_boolean_for_feature_in_rollout(self):
     """ Test that get_feature_variable_boolean returns Boolean value as expected \
     and broadcasts decision with proper parameters. """
