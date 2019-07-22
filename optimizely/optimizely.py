@@ -203,7 +203,7 @@ class Optimizely(object):
     if not variable:
       return None
 
-    # Return None if type differs
+    # For non-typed method, use type of variable; else, return None if type differs
     if not variable.type:
       variableType = variable.type
     elif variable.type != variable_type:
@@ -516,7 +516,7 @@ class Optimizely(object):
     return enabled_features
 
   def get_feature_variable(self, feature_key, variable_key, user_id, attributes=None):
-    """ Returns value for a certain boolean variable attached to a feature flag.
+    """ Returns value for a variable attached to a feature flag.
 
     Args:
       feature_key: Key of the feature whose variable's value is being accessed.
@@ -525,10 +525,9 @@ class Optimizely(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      Boolean value of the variable. None if:
+      Value of the variable. None if:
       - Feature key is invalid.
       - Variable key is invalid.
-      - Mismatch with type of variable.
     """
 
     return self._get_feature_variable_for_type(feature_key, variable_key, None, user_id, attributes)
