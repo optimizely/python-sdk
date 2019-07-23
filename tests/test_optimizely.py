@@ -2282,7 +2282,6 @@ class OptimizelyTest(base.BaseTest):
         }
       }
     )
-  
 
   def test_get_feature_variable_boolean_for_feature_in_rollout(self):
     """ Test that get_feature_variable_boolean returns Boolean value as expected \
@@ -3108,7 +3107,6 @@ class OptimizelyTest(base.BaseTest):
       self.assertIsNone(opt_obj.get_feature_variable('invalid_feature', 'cost', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable('invalid_feature', 'count', 'test_user'))
       self.assertIsNone(opt_obj.get_feature_variable('invalid_feature', 'environment', 'test_user'))
-      
 
     self.assertEqual(8, mock_config_logger.error.call_count)
     mock_config_logger.error.assert_has_calls([
@@ -3142,7 +3140,7 @@ class OptimizelyTest(base.BaseTest):
       self.assertIsNone(opt_obj.get_feature_variable('test_feature_in_experiment',
                                                      'invalid_variable',
                                                      'test_user'))
-      
+
     self.assertEqual(5, mock_config_logger.error.call_count)
     mock_config_logger.error.assert_has_calls([
       mock.call('Variable with key "invalid_variable" not found in the datafile.'),
