@@ -2360,7 +2360,7 @@ class OptimizelyTest(base.BaseTest):
     )
 
   def test_get_feature_variable_integer_for_feature_in_rollout(self):
-    """ Test that get_feature_variable_double returns Double value as expected \
+    """ Test that get_feature_variable_integer returns Double value as expected \
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -2398,7 +2398,7 @@ class OptimizelyTest(base.BaseTest):
     )
 
   def test_get_feature_variable_string_for_feature_in_rollout(self):
-    """ Test that get_feature_variable_double returns Double value as expected \
+    """ Test that get_feature_variable_string returns String value as expected \
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -2436,7 +2436,7 @@ class OptimizelyTest(base.BaseTest):
     )
 
   def test_get_feature_variable_for_feature_in_rollout(self):
-    """ Test that get_feature_variable returns Double value as expected \
+    """ Test that get_feature_variable returns value as expected \
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -3395,6 +3395,7 @@ class OptimizelyTest(base.BaseTest):
                     side_effect=ValueError()),\
          mock.patch.object(opt_obj, 'logger') as mock_client_logger:
       self.assertEqual(None, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'))
+      self.assertEqual(None, opt_obj.get_feature_variable('test_feature_in_experiment', 'count', 'test_user'))
 
     mock_client_logger.error.assert_called_with('Unable to cast value. Returning None.')
 
@@ -3409,10 +3410,18 @@ class OptimizelyTest(base.BaseTest):
         'xyz',
         opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'lasers': 71})
       )
+      mock_client_logger.info.assert_called_once_with(
+        'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
+      )
 
-    mock_client_logger.info.assert_called_once_with(
-      'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
-    )
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(
+        'xyz',
+        opt_obj.get_feature_variable('feat_with_var', 'x', 'user1', {'lasers': 71})
+      )
+      mock_client_logger.info.assert_called_once_with(
+        'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
+      )
 
     # Should be included in the feature test via exact match boolean audience with id '3468206643'
     with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
@@ -3420,10 +3429,18 @@ class OptimizelyTest(base.BaseTest):
         'xyz',
         opt_obj.get_feature_variable_string('feat_with_var', 'x', 'user1', {'should_do_it': True})
       )
+      mock_client_logger.info.assert_called_once_with(
+        'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
+      )
 
-    mock_client_logger.info.assert_called_once_with(
-      'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
-    )
+    with mock.patch.object(opt_obj, 'logger') as mock_client_logger:
+      self.assertEqual(
+        'xyz',
+        opt_obj.get_feature_variable('feat_with_var', 'x', 'user1', {'should_do_it': True})
+      )
+      mock_client_logger.info.assert_called_once_with(
+        'Got variable value "xyz" for variable "x" of feature flag "feat_with_var".'
+      )
 
     """ Test that get_feature_variable_* return default value with typed audience mismatch. """
   def test_get_feature_variable_returns__default_value__typed_audience_match(self):
