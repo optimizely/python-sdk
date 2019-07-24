@@ -13,7 +13,7 @@
 
 
 class Decision(object):
-  def __init__(self, compaign_id, experiment_id, variation_id):
-    self.campaign_id = compaign_id
+  def __init__(self, campaign_id, experiment_id, variation_id):
+    self.campaign_id = campaign_id
     self.experiment_id = experiment_id
     self.variation_id = variation_id

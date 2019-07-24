@@ -17,6 +17,7 @@ class ConversionEvent(UserEvent):
   """ Class representing Conversion Event. """
 
   def __init__(self, event_context, event, user_id, visitor_attributes, event_tags, bot_filtering=None):
+    super(ConversionEvent, self).__init__(event_context)
     self.event_context = event_context
     self.event = event
     self.user_id = user_id
