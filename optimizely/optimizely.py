@@ -204,9 +204,8 @@ class Optimizely(object):
       return None
 
     # For non-typed method, use type of variable; else, return None if type differs
-    if not variable_type:
-      variable_type = variable.type
-    elif variable.type != variable_type:
+    variable_type = variable_type or variable.type
+    if variable.type != variable_type:
       self.logger.warning(
         'Requested variable type "%s", but variable is of type "%s". '
         'Use correct API to retrieve value. Returning None.' % (variable_type, variable.type)
