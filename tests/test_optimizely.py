@@ -2398,7 +2398,7 @@ class OptimizelyTest(base.BaseTest):
     )
 
   def test_get_feature_variable_string_for_feature_in_rollout(self):
-    """ Test that get_feature_variable_string returns String value as expected \
+    """ Test that get_feature_variable_double returns Double value as expected \
     and broadcasts decision with proper parameters. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -2800,6 +2800,8 @@ class OptimizelyTest(base.BaseTest):
         'source_info': {}
       }
     )
+
+    mock_client_logger.info.reset_mock()
 
     # Non-typed
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature',
