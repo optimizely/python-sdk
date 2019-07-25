@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-from more_itertools.more import always_iterable
 
 from .entity.conversion_event import ConversionEvent
 from .entity.decision import Decision
@@ -51,9 +50,12 @@ class EventFactory(object):
       LogEvent instance.
     """
 
+    if not isinstance(user_events, list):
+      user_events = [user_events]
+
     visitors = []
 
-    for user_event in always_iterable(user_events):
+    for user_event in user_events:
       visitors.append(cls._create_visitor(user_event, logger))
       user_context = user_event.event_context
 
