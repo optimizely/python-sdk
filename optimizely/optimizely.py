@@ -567,8 +567,12 @@ class Optimizely(object):
       - Feature key is invalid.
       - Variable key is invalid.
     """
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable'))
+      return None
 
-    return self._get_feature_variable_for_type(feature_key, variable_key, None, user_id, attributes)
+    return self._get_feature_variable_for_type(project_config, feature_key, variable_key, None, user_id, attributes)
 
   def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain boolean variable attached to a feature flag.
