@@ -14,11 +14,11 @@ script: "nosetests --with-coverage --cover-package=optimizely"
 after_success:
   - coveralls
 
-# Linting and Integration tests need to run first to reset the PR build status to pending.
+Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
   - 'Linting'
-  - 'Integration tests'
-  - 'Test'
+#   - 'Integration tests'
+#   - 'Test'
 
 jobs:
   include:
@@ -30,17 +30,17 @@ jobs:
       install: "pip install flake8==3.6.0" 
       script: "flake8"
       after_success: travis_terminate 0
-    - stage: 'Integration Tests'
-      merge_mode: replace
-      env: SDK=python
-      cache: false
-      language: minimal
-      install: skip
-      before_script:
-        - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git && popd
-      script:
-        - "$HOME/travisci-tools/fsc-trigger/trigger_fullstack-sdk-compat.sh"
-      after_success: travis_terminate 0
-    - stage: 'Test'
-      dist: xenial
-      python: "3.7"
+#     - stage: 'Integration Tests'
+#       merge_mode: replace
+#       env: SDK=python
+#       cache: false
+#       language: minimal
+#       install: skip
+#       before_script:
+#         - mkdir $HOME/travisci-tools && pushd $HOME/travisci-tools && git init && git pull https://$CI_USER_TOKEN@github.com/optimizely/travisci-tools.git && popd
+#       script:
+#         - "$HOME/travisci-tools/fsc-trigger/trigger_fullstack-sdk-compat.sh"
+#       after_success: travis_terminate 0
+#     - stage: 'Test'
+#       dist: xenial
+#       python: "3.7"
