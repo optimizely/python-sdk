@@ -8,8 +8,8 @@ python:
   - "pypy"
   - "pypy3"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
-addons:
-  srcclr: true
+# addons:
+#   srcclr: true
 script: "nosetests --with-coverage --cover-package=optimizely"
 after_success:
   - coveralls
