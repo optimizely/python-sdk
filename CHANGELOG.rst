@@ -6,13 +6,15 @@ July 26th, 2019
 New Features:
 ~~~~~~~~~~~~~
 
-- Added support for automatic datafile management via `PollingConfigManager`:
+-  Added support for automatic datafile management via `PollingConfigManager`_:
+
     - The `PollingConfigManager`_ is an implementation of the `BaseConfigManager`_.
     - Users may provide one of datafile or SDK key (sdk_key) or both to `optimizely.Optimizely`. Based on that the SDK will use the `StaticConfigManager`_ or the `PollingConfigManager`_. Refer to the README_ for more instructions.
     - An initial datafile can be provided to the `PollingConfigManager` to bootstrap before making HTTP requests for the hosted datafile.
     - Requests for the datafile are made in a separate thread and are scheduled with fixed delay.
     - Configuration updates can be subscribed to by adding .
-- Introduced `Optimizely.get_feature_variable` API. (`#191`_)
+
+-  Introduced `Optimizely.get_feature_variable` API. (`#191`_)
 
 Deprecated:
 ~~~~~~~~~~~
