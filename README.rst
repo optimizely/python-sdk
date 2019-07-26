@@ -44,12 +44,20 @@ You can initialize the Optimizely instance in three ways: with a datafile, by pr
    a PollingConfigManager that makes an HTTP GET request to the URL (formed 
     using your provided `sdk key` and the default datafile CDN URL
    template) to asynchronously download the project datafile at regular
-   intervals and update ProjectConfig when a new datafile is recieved. A
+   intervals and update ProjectConfig when a new datafile is received. A
    hard-coded datafile can also be provided along with the `sdk_key` that
    will be used initially before any update.
    ::
 
       optimizely.Optimizely(
+        sdk_key='put_your_sdk_key_here'
+      )
+
+   If providing a datafile, the initialization will look like:
+   ::
+
+      optimizely.Optimizely(
+        datafile=datafile,
         sdk_key='put_your_sdk_key_here'
       )
 
