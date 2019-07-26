@@ -1,3 +1,4 @@
+=====================
 Optimizely Python SDK
 =====================
 
@@ -30,7 +31,7 @@ dashboard, please contact your Optimizely account executive.
 Using the SDK
 ~~~~~~~~~~~~~
 
-You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing an implementation of `config_manager.BaseConfigManager`_. Each method is described below.
+You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing an implementation of `BaseConfigManager`_. Each method is described below.
 
 1. Initialize Optimizely with a datafile. This datafile will be used as
    ProjectConfig throughout the life of Optimizely instance.
@@ -41,9 +42,9 @@ You can initialize the Optimizely instance in three ways: with a datafile, by pr
       )
 
 2. Initialize Optimizely by providing an 'sdk_key'. This will initialize
-   a PollingConfigManager that makes an HTTP GET request to the URL (formed 
-    using your provided `sdk key` and the default datafile CDN URL
-   template) to asynchronously download the project datafile at regular
+   a PollingConfigManager that makes an HTTP GET request to the URL
+   (formed using your provided `sdk key` and the default datafile CDN URL template)
+   to asynchronously download the project datafile at regular
    intervals and update ProjectConfig when a new datafile is received. A
    hard-coded datafile can also be provided along with the `sdk_key` that
    will be used initially before any update.
@@ -101,7 +102,7 @@ You may also provide your own logger, error_handler, or
 notification_center.
 
 Advanced configuration
-''''''''''''''''''''''         
+''''''''''''''''''''''
 
 The following properties can be set to override the default
 configurations for `PollingConfigManager`.
@@ -216,7 +217,6 @@ Please see `CONTRIBUTING`_.
 .. _Full Stack documentation: https://docs.developers.optimizely.com/full-stack/docs
 .. _Rollouts documentation: https://docs.developers.optimizely.com/rollouts/docs
 .. _CONTRIBUTING: CONTRIBUTING.rst
-.. _config_manager.BaseConfigManager:: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32
 .. _BaseConfigManager: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32
 
 .. |PyPI version| image:: https://badge.fury.io/py/optimizely-sdk.svg
