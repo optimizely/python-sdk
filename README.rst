@@ -30,7 +30,7 @@ dashboard, please contact your Optimizely account executive.
 Using the SDK
 ~~~~~~~~~~~~~
 
-You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing a `ConfigManager`_. Each method is described below. 
+You can initialize the Optimizely instance in three ways: with a datafile, by providing an `sdk_key`, or by providing an implementation of `config_manager.BaseConfigManager`_. Each method is described below.
 
 1. Initialize Optimizely with a datafile. This datafile will be used as
    ProjectConfig throughout the life of Optimizely instance.
@@ -208,7 +208,7 @@ Please see `CONTRIBUTING`_.
 .. _Full Stack documentation: https://docs.developers.optimizely.com/full-stack/docs
 .. _Rollouts documentation: https://docs.developers.optimizely.com/rollouts/docs
 .. _CONTRIBUTING: CONTRIBUTING.rst
-.. _ConfigManager: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py
+.. _config_manager.BaseConfigManager:: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32
 .. _BaseConfigManager: https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32
 
 .. |PyPI version| image:: https://badge.fury.io/py/optimizely-sdk.svg
