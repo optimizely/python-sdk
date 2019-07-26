@@ -32,7 +32,7 @@ setup(
     name='optimizely-sdk',
     version=__version__,
     description='Python SDK for Optimizely X Full Stack.',
-    long_description=about_text + '\n\n# Readme: \n' + README + '\n\n# Change Log: \n' + CHANGELOG,
+    long_description=about_text,
     author='Optimizely',
     author_email='developers@optimizely.com',
     url='https://github.com/optimizely/python-sdk',
