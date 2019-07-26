@@ -17,28 +17,32 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
-from . import project_config
+from .config_manager import StaticConfigManager
+from .config_manager import PollingConfigManager
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums
 from .helpers import validator
-from .notification_center import NotificationCenter as notification_center
+from .notification_center import NotificationCenter
 
 
 class Optimizely(object):
   """ Class encapsulating all SDK functionality. """
 
   def __init__(self,
-               datafile,
+               datafile=None,
                event_dispatcher=None,
                logger=None,
                error_handler=None,
                skip_json_validation=False,
-               user_profile_service=None):
+               user_profile_service=None,
+               sdk_key=None,
+               config_manager=None,
+               notification_center=None):
     """ Optimizely init method for managing Custom projects.
 
     Args:
-      datafile: JSON string representing the project.
+      datafile: Optional JSON string representing the project. Must provide at least one of datafile or sdk_key.
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
       logger: Optional component which provides a log method to log messages. By default nothing would be logged.
       error_handler: Optional component which provides a handle_error method to handle exceptions.
@@ -46,68 +50,69 @@ class Optimizely(object):
       skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
                             By default JSON schema validation will be performed.
       user_profile_service: Optional component which provides methods to store and manage user profiles.
+      sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment combination.
+               Must provide at least one of datafile or sdk_key.
+      config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
+      notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
+                           config_manager.BaseConfigManager implementation which can be using the
+                           same NotificationCenter instance.
     """
     self.logger_name = '.'.join([__name__, self.__class__.__name__])
     self.is_valid = True
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.error_handler = error_handler or noop_error_handler
+    self.config_manager = config_manager
+    self.notification_center = notification_center or NotificationCenter(self.logger)
 
     try:
-      self._validate_instantiation_options(datafile, skip_json_validation)
+      self._validate_instantiation_options()
     except exceptions.InvalidInputException as error:
       self.is_valid = False
       # We actually want to log this error to stderr, so make sure the logger
-      #   has a handler capable of doing that.
+      # has a handler capable of doing that.
       self.logger = _logging.reset_logger(self.logger_name)
       self.logger.exception(str(error))
       return
 
-    error_msg = None
-    try:
-      self.config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
-    except exceptions.UnsupportedDatafileVersionException as error:
-      error_msg = error.args[0]
-      error_to_handle = error
-    except:
-      error_msg = enums.Errors.INVALID_INPUT_ERROR.format('datafile')
-      error_to_handle = exceptions.InvalidInputException(error_msg)
-    finally:
-      if error_msg:
-        self.is_valid = False
-        # We actually want to log this error to stderr, so make sure the logger
-        # has a handler capable of doing that.
-        self.logger = _logging.reset_logger(self.logger_name)
-        self.logger.exception(error_msg)
-        self.error_handler.handle_error(error_to_handle)
-        return
+    if not self.config_manager:
+      if sdk_key:
+        self.config_manager = PollingConfigManager(sdk_key=sdk_key,
+                                                   datafile=datafile,
+                                                   logger=self.logger,
+                                                   error_handler=self.error_handler,
+                                                   notification_center=self.notification_center,
+                                                   skip_json_validation=skip_json_validation)
+      else:
+        self.config_manager = StaticConfigManager(datafile=datafile,
+                                                  logger=self.logger,
+                                                  error_handler=self.error_handler,
+                                                  notification_center=self.notification_center,
+                                                  skip_json_validation=skip_json_validation)
 
     self.event_builder = event_builder.EventBuilder()
     self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
-    self.notification_center = notification_center(self.logger)
 
-  def _validate_instantiation_options(self, datafile, skip_json_validation):
+  def _validate_instantiation_options(self):
     """ Helper method to validate all instantiation parameters.
-
-    Args:
-      datafile: JSON string representing the project.
-      skip_json_validation: Boolean representing whether JSON schema validation needs to be skipped or not.
 
     Raises:
       Exception if provided instantiation options are valid.
     """
-
-    if not skip_json_validation and not validator.is_datafile_valid(datafile):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('datafile'))
+    if self.config_manager and not validator.is_config_manager_valid(self.config_manager):
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('config_manager'))
 
     if not validator.is_event_dispatcher_valid(self.event_dispatcher):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('event_dispatcher'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_dispatcher'))
 
     if not validator.is_logger_valid(self.logger):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('logger'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('logger'))
 
     if not validator.is_error_handler_valid(self.error_handler):
-      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT_ERROR.format('error_handler'))
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('error_handler'))
+
+    if not validator.is_notification_center_valid(self.notification_center):
+      raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('notification_center'))
 
   def _validate_user_inputs(self, attributes=None, event_tags=None):
     """ Helper method to validate user inputs.
@@ -133,10 +138,11 @@ class Optimizely(object):
 
     return True
 
-  def _send_impression_event(self, experiment, variation, user_id, attributes):
+  def _send_impression_event(self, project_config, experiment, variation, user_id, attributes):
     """ Helper method to send impression event.
 
     Args:
+      project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression event is being sent.
       variation: Variation picked for user for the given experiment.
       user_id: ID for user.
@@ -144,7 +150,7 @@ class Optimizely(object):
     """
 
     impression_event = self.event_builder.create_impression_event(
-      self.config,
+      project_config,
       experiment,
       variation.id,
       user_id,
@@ -164,10 +170,17 @@ class Optimizely(object):
     self.notification_center.send_notifications(enums.NotificationTypes.ACTIVATE,
                                                 experiment, user_id, attributes, variation, impression_event)
 
-  def _get_feature_variable_for_type(self, feature_key, variable_key, variable_type, user_id, attributes):
+  def _get_feature_variable_for_type(self,
+                                     project_config,
+                                     feature_key,
+                                     variable_key,
+                                     variable_type,
+                                     user_id,
+                                     attributes):
     """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
     Args:
+      project_config: Instance of ProjectConfig.
       feature_key: Key of the feature whose variable's value is being accessed.
       variable_key: Key of the variable whose value is to be accessed.
       variable_type: Type of variable which could be one of boolean/double/integer/string.
@@ -181,25 +194,25 @@ class Optimizely(object):
       - Mismatch with type of variable.
     """
     if not validator.is_non_empty_string(feature_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
       return None
 
     if not validator.is_non_empty_string(variable_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('variable_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('variable_key'))
       return None
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return None
 
     if not self._validate_user_inputs(attributes):
       return None
 
-    feature_flag = self.config.get_feature_from_key(feature_key)
+    feature_flag = project_config.get_feature_from_key(feature_key)
     if not feature_flag:
       return None
 
-    variable = self.config.get_variable_for_feature(feature_key, variable_key)
+    variable = project_config.get_variable_for_feature(feature_key, variable_key)
     if not variable:
       return None
 
@@ -215,12 +228,12 @@ class Optimizely(object):
     feature_enabled = False
     source_info = {}
     variable_value = variable.defaultValue
-    decision = self.decision_service.get_variation_for_feature(self.config, feature_flag, user_id, attributes)
+    decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id, attributes)
     if decision.variation:
 
       feature_enabled = decision.variation.featureEnabled
       if feature_enabled:
-        variable_value = self.config.get_variable_value_for_variation(variable, decision.variation)
+        variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
         self.logger.info(
           'Got variable value "%s" for variable "%s" of feature flag "%s".' % (
             variable_value, variable_key, feature_key
@@ -244,7 +257,7 @@ class Optimizely(object):
       }
 
     try:
-      actual_value = self.config.get_typecast_value(variable_value, variable_type)
+      actual_value = project_config.get_typecast_value(variable_value, variable_type)
     except:
       self.logger.error('Unable to cast value. Returning None.')
       actual_value = None
@@ -280,15 +293,20 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('activate'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('activate'))
       return None
 
     if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
       return None
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
+      return None
+
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
       return None
 
     variation_key = self.get_variation(experiment_key, user_id, attributes)
@@ -297,12 +315,12 @@ class Optimizely(object):
       self.logger.info('Not activating user "%s".' % user_id)
       return None
 
-    experiment = self.config.get_experiment_from_key(experiment_key)
-    variation = self.config.get_variation_from_key(experiment_key, variation_key)
+    experiment = project_config.get_experiment_from_key(experiment_key)
+    variation = project_config.get_variation_from_key(experiment_key, variation_key)
 
     # Create and dispatch impression event
     self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
-    self._send_impression_event(experiment, variation, user_id, attributes)
+    self._send_impression_event(project_config, experiment, variation, user_id, attributes)
 
     return variation.key
 
@@ -317,27 +335,32 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('track'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('track'))
       return
 
     if not validator.is_non_empty_string(event_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('event_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('event_key'))
       return
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return
 
     if not self._validate_user_inputs(attributes, event_tags):
       return
 
-    event = self.config.get_event(event_key)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('track'))
+      return
+
+    event = project_config.get_event(event_key)
     if not event:
       self.logger.info('Not tracking user "%s" for event "%s".' % (user_id, event_key))
       return
 
     conversion_event = self.event_builder.create_conversion_event(
-      self.config,
+      project_config,
       event_key,
       user_id,
       attributes,
@@ -369,18 +392,23 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_variation'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_variation'))
       return None
 
     if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
       return None
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return None
 
-    experiment = self.config.get_experiment_from_key(experiment_key)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_variation'))
+      return None
+
+    experiment = project_config.get_experiment_from_key(experiment_key)
     variation_key = None
 
     if not experiment:
@@ -393,11 +421,11 @@ class Optimizely(object):
     if not self._validate_user_inputs(attributes):
       return None
 
-    variation = self.decision_service.get_variation(self.config, experiment, user_id, attributes)
+    variation = self.decision_service.get_variation(project_config, experiment, user_id, attributes)
     if variation:
       variation_key = variation.key
 
-    if self.config.is_feature_experiment(experiment.id):
+    if project_config.is_feature_experiment(experiment.id):
       decision_notification_type = enums.DecisionNotificationTypes.FEATURE_TEST
     else:
       decision_notification_type = enums.DecisionNotificationTypes.AB_TEST
@@ -428,27 +456,32 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('is_feature_enabled'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('is_feature_enabled'))
       return False
 
     if not validator.is_non_empty_string(feature_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('feature_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
       return False
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return False
 
     if not self._validate_user_inputs(attributes):
       return False
 
-    feature = self.config.get_feature_from_key(feature_key)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('is_feature_enabled'))
+      return False
+
+    feature = project_config.get_feature_from_key(feature_key)
     if not feature:
       return False
 
     feature_enabled = False
     source_info = {}
-    decision = self.decision_service.get_variation_for_feature(self.config, feature, user_id, attributes)
+    decision = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
     is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
 
     if decision.variation:
@@ -460,7 +493,8 @@ class Optimizely(object):
           'experiment_key': decision.experiment.key,
           'variation_key': decision.variation.key
         }
-        self._send_impression_event(decision.experiment,
+        self._send_impression_event(project_config,
+                                    decision.experiment,
                                     decision.variation,
                                     user_id,
                                     attributes)
@@ -498,17 +532,22 @@ class Optimizely(object):
 
     enabled_features = []
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_enabled_features'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_enabled_features'))
       return enabled_features
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return enabled_features
 
     if not self._validate_user_inputs(attributes):
       return enabled_features
 
-    for feature in self.config.feature_key_map.values():
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_enabled_features'))
+      return enabled_features
+
+    for feature in project_config.feature_key_map.values():
       if self.is_feature_enabled(feature.key, user_id, attributes):
         enabled_features.append(feature.key)
 
@@ -528,8 +567,12 @@ class Optimizely(object):
       - Feature key is invalid.
       - Variable key is invalid.
     """
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable'))
+      return None
 
-    return self._get_feature_variable_for_type(feature_key, variable_key, None, user_id, attributes)
+    return self._get_feature_variable_for_type(project_config, feature_key, variable_key, None, user_id, attributes)
 
   def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain boolean variable attached to a feature flag.
@@ -548,7 +591,14 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.BOOLEAN
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_boolean'))
+      return None
+
+    return self._get_feature_variable_for_type(
+      project_config, feature_key, variable_key, variable_type, user_id, attributes
+    )
 
   def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain double variable attached to a feature flag.
@@ -567,7 +617,14 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.DOUBLE
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_double'))
+      return None
+
+    return self._get_feature_variable_for_type(
+      project_config, feature_key, variable_key, variable_type, user_id, attributes
+    )
 
   def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain integer variable attached to a feature flag.
@@ -586,7 +643,14 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.INTEGER
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_integer'))
+      return None
+
+    return self._get_feature_variable_for_type(
+      project_config, feature_key, variable_key, variable_type, user_id, attributes
+    )
 
   def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
     """ Returns value for a certain string variable attached to a feature.
@@ -605,7 +669,14 @@ class Optimizely(object):
     """
 
     variable_type = entities.Variable.Type.STRING
-    return self._get_feature_variable_for_type(feature_key, variable_key, variable_type, user_id, attributes)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_string'))
+      return None
+
+    return self._get_feature_variable_for_type(
+      project_config, feature_key, variable_key, variable_type, user_id, attributes
+    )
 
   def set_forced_variation(self, experiment_key, user_id, variation_key):
     """ Force a user into a variation for a given experiment.
@@ -621,18 +692,23 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('set_forced_variation'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('set_forced_variation'))
       return False
 
     if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
       return False
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return False
 
-    return self.decision_service.set_forced_variation(self.config, experiment_key, user_id, variation_key)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('set_forced_variation'))
+      return False
+
+    return self.decision_service.set_forced_variation(project_config, experiment_key, user_id, variation_key)
 
   def get_forced_variation(self, experiment_key, user_id):
     """ Gets the forced variation for a given user and experiment.
@@ -646,16 +722,21 @@ class Optimizely(object):
     """
 
     if not self.is_valid:
-      self.logger.error(enums.Errors.INVALID_DATAFILE.format('get_forced_variation'))
+      self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_forced_variation'))
       return None
 
     if not validator.is_non_empty_string(experiment_key):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('experiment_key'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
       return None
 
     if not isinstance(user_id, string_types):
-      self.logger.error(enums.Errors.INVALID_INPUT_ERROR.format('user_id'))
+      self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
       return None
 
-    forced_variation = self.decision_service.get_forced_variation(self.config, experiment_key, user_id)
+    project_config = self.config_manager.get_config()
+    if not project_config:
+      self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_forced_variation'))
+      return None
+
+    forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
     return forced_variation.key if forced_variation else None

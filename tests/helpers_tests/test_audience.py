@@ -148,7 +148,7 @@ class AudienceTest(base.BaseTest):
         calls custom attribute evaluator for leaf nodes. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     experiment = project_config.get_experiment_from_key('audience_combinations_experiment')
     experiment.audienceIds = []
     experiment.audienceConditions = ['or', ['or', '3468206642', '3988293898'], ['or', '3988293899', '3468206646', ]]
@@ -176,7 +176,7 @@ class AudienceTest(base.BaseTest):
     """ Test that is_user_in_experiment correctly evaluates leaf node in audienceConditions. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     experiment = project_config.get_experiment_from_key('audience_combinations_experiment')
     experiment.audienceConditions = '3468206645'
 
@@ -236,7 +236,7 @@ class AudienceLoggingTest(base.BaseTest):
 
   def test_is_user_in_experiment__evaluates_audience_conditions(self):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     experiment = project_config.get_experiment_from_key('audience_combinations_experiment')
     experiment.audienceIds = []
     experiment.audienceConditions = ['or', ['or', '3468206642', '3988293898', '3988293899']]
