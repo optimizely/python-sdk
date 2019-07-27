@@ -28,7 +28,7 @@ July 26th, 2019
         HTTP requests for the hosted datafile.
     -   Requests for the datafile are made in a separate thread and are
         scheduled with fixed delay.
-    -   Configuration updates can be subscribed to by adding .
+    -   Configuration updates can be subscribed to by adding the OPTIMIZELY_CONFIG_UPDATE notification listener.
 -   Introduced [Optimizely.get\_feature\_variable]{.title-ref} API.
     ([\#191](https://github.com/optimizely/python-sdk/pull/191))
 
