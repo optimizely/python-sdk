@@ -175,7 +175,7 @@ August 21st, 2018
     using
     track([\#136](https://github.com/optimizely/python-sdk/pull/136)).
 
-2.1.0 {#section-1}
+2.1.0
 -----
 
 July 2nd, 2018
@@ -185,7 +185,7 @@ July 2nd, 2018
 -   Overhauled logging to use standard Python logging
     ([\#123](https://github.com/optimizely/python-sdk/pull/123)).
 
-2.0.1 {#section-2}
+2.0.1
 -----
 
 June 19th, 2018
@@ -301,30 +301,30 @@ introduces some breaking changes listed below.
 -   Added support for bucketing ID.
 -   Updated mmh3 to handle installation failures on Windows 10.
 
-1.3.0 {#section-3}
+1.3.0
 -----
 
 -   Introduced support for forced bucketing.
 -   Introduced support for numeric metrics.
 -   Updated event builder to support new endpoint.
 
-1.2.1 {#section-4}
+1.2.1
 -----
 
 -   Removed older feature flag parsing.
 
-1.2.0 {#section-5}
+1.2.0
 -----
 
 -   Added user profile service.
 
-1.1.1 {#section-6}
+1.1.1
 -----
 
 -   Updated datafile parsing to be able to handle additional fields.
 -   Deprecated Classic project support.
 
-1.1.0 {#section-7}
+1.1.0
 -----
 
 -   Included datafile revision information in log events.
@@ -334,7 +334,7 @@ introduces some breaking changes listed below.
     use `event_tags` to pass in event value instead.
 -   Updated event logging endpoint to logx.optimizely.com.
 
-1.0.0 {#section-8}
+1.0.0
 -----
 
 -   Introduced support for Full Stack projects in Optimizely X. No
@@ -343,7 +343,7 @@ introduces some breaking changes listed below.
     core methods.
 -   Updated whitelisting to precede audience matching.
 
-0.1.3 {#section-9}
+0.1.3
 -----
 
 -   Added support for v2 endpoint and datafile.
@@ -359,12 +359,12 @@ introduces some breaking changes listed below.
 
 -   Updated requirements file.
 
-0.1.1 {#section-10}
+0.1.1
 -----
 
 -   Introduced option to skip JSON schema validation.
 
-0.1.0 {#section-11}
+0.1.0
 -----
 
 -   Beta release of the Python SDK for server-side testing.
