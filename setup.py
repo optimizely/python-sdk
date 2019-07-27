@@ -17,10 +17,10 @@ with open(os.path.join(here, 'requirements', 'test.txt')) as _file:
   TEST_REQUIREMENTS = _file.read().splitlines()
   TEST_REQUIREMENTS = list(set(REQUIREMENTS + TEST_REQUIREMENTS))
 
-with open(os.path.join(here, 'README.rst')) as _file:
+with open(os.path.join(here, 'README.md')) as _file:
   README = _file.read()
 
-with open(os.path.join(here, 'CHANGELOG.rst')) as _file:
+with open(os.path.join(here, 'CHANGELOG.md')) as _file:
   CHANGELOG = _file.read()
 
 about_text = 'Optimizely X Full Stack is A/B testing and feature management for product development teams. ' \
@@ -32,15 +32,16 @@ setup(
     name='optimizely-sdk',
     version=__version__,
     description='Python SDK for Optimizely X Full Stack.',
-    long_description=about_text,
+    long_description=about_text + README + CHANGELOG,
+    long_description_content_type='text/markdown',
     author='Optimizely',
     author_email='developers@optimizely.com',
     url='https://github.com/optimizely/python-sdk',
-    license=open('LICENSE').read(),
     classifiers=[
       'Development Status :: 5 - Production/Stable',
       'Environment :: Web Environment',
       'Intended Audience :: Developers',
+      'License :: OSI Approved :: Apache Software License',
       'Operating System :: OS Independent',
       'Programming Language :: Python',
       'Programming Language :: Python :: 2.7',
