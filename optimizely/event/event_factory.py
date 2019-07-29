@@ -85,13 +85,13 @@ class EventFactory(object):
 
     if isinstance(user_event, ImpressionEvent):
       decision = Decision(
-        user_event.experiment.layerId if hasattr(user_event, 'experiment') else None,
-        user_event.experiment.id if hasattr(user_event, 'experiment') else None,
-        user_event.variation.id if hasattr(user_event, 'variation') else None
+        user_event.experiment.layerId if user_event.experiment else None,
+        user_event.experiment.id if user_event.experiment else None,
+        user_event.variation.id if user_event.variation else None
       )
 
       snapshot_event = SnapshotEvent(
-        user_event.experiment.layerId if hasattr(user_event, 'experiment') else None,
+        user_event.experiment.layerId if user_event.experiment else None,
         user_event.uuid,
         cls.ACTIVATE_EVENT_KEY,
         user_event.timestamp
@@ -108,9 +108,9 @@ class EventFactory(object):
       value = event_tag_utils.get_numeric_value(user_event.event_tags, logger)
 
       snapshot_event = SnapshotEvent(
-        user_event.event.id if hasattr(user_event, 'event') else None,
+        user_event.event.id if user_event.event else None,
         user_event.uuid,
-        user_event.event.key if hasattr(user_event, 'event') else None,
+        user_event.event.key if user_event.event else None,
         user_event.timestamp,
         revenue,
         value,
