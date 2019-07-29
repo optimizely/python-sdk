@@ -234,7 +234,7 @@ class ProjectConfig(object):
       return experiment
 
     self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
     return None
 
   def get_experiment_from_id(self, experiment_id):
@@ -253,7 +253,7 @@ class ProjectConfig(object):
       return experiment
 
     self.logger.error('Experiment ID "%s" is not in datafile.' % experiment_id)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
     return None
 
   def get_group(self, group_id):
@@ -272,7 +272,7 @@ class ProjectConfig(object):
       return group
 
     self.logger.error('Group ID "%s" is not in datafile.' % group_id)
-    self.error_handler.handle_error(exceptions.InvalidGroupException(enums.Errors.INVALID_GROUP_ID_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidGroupException(enums.Errors.INVALID_GROUP_ID))
     return None
 
   def get_audience(self, audience_id):
@@ -290,7 +290,7 @@ class ProjectConfig(object):
       return audience
 
     self.logger.error('Audience ID "%s" is not in datafile.' % audience_id)
-    self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE_ERROR)))
+    self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE)))
 
   def get_variation_from_key(self, experiment_key, variation_key):
     """ Get variation given experiment and variation key.
@@ -311,11 +311,11 @@ class ProjectConfig(object):
         return variation
       else:
         self.logger.error('Variation key "%s" is not in datafile.' % variation_key)
-        self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION_ERROR))
+        self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
         return None
 
     self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
     return None
 
   def get_variation_from_id(self, experiment_key, variation_id):
@@ -337,11 +337,11 @@ class ProjectConfig(object):
         return variation
       else:
         self.logger.error('Variation ID "%s" is not in datafile.' % variation_id)
-        self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION_ERROR))
+        self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
         return None
 
     self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
-    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
     return None
 
   def get_event(self, event_key):
@@ -360,7 +360,7 @@ class ProjectConfig(object):
       return event
 
     self.logger.error('Event "%s" is not in datafile.' % event_key)
-    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY))
     return None
 
   def get_attribute_id(self, attribute_key):
@@ -387,7 +387,7 @@ class ProjectConfig(object):
       return attribute_key
 
     self.logger.error('Attribute "%s" is not in datafile.' % attribute_key)
-    self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE_ERROR))
+    self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE))
     return None
 
   def get_feature_from_key(self, feature_key):

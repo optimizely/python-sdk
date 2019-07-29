@@ -1078,4 +1078,4 @@ class BaseTest(unittest.TestCase):
 
     config = getattr(self, config_dict)
     self.optimizely = optimizely.Optimizely(json.dumps(config))
-    self.project_config = self.optimizely.config
+    self.project_config = self.optimizely.config_manager.get_config()
