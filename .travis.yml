@@ -14,7 +14,7 @@ script: "nosetests --with-coverage --cover-package=optimizely"
 after_success:
   - coveralls
 
-# Linting and Integration tests need to run first to reset the PR build status to pending.
+Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
   - 'Linting'
   - 'Integration tests'
