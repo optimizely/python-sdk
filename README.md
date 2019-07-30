@@ -96,9 +96,9 @@ requests.
         url=None, 
         url_template=None,
         logger=None, 
-        error\_handler=None, 
-        notification\_center=None,
-        skip\_json\_validation=False 
+        error_handler=None, 
+        notification_center=None,
+        skip_json_validation=False 
     )
 
 **Note**: You must provide either the sdk_key or URL. If
@@ -120,8 +120,8 @@ delay in seconds between consecutive HTTP requests for the datafile.
 so that this template along with the provided sdk key is
 used to form the target URL.
 
-You may also provide your own logger, error\_handler, or
-notification\_center.
+You may also provide your own logger, error_handler, or
+notification_center.
 
 #### Advanced configuration
 
