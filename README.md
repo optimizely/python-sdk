@@ -31,8 +31,8 @@ Getting Started
 
 ### Installing the SDK
 
-The SDK is available through
-[PyPi](https://pypi.python.org/pypi?name=optimizely-sdk&:action=display).
+The SDK is available through [PyPi](https://pypi.python.org/pypi?name=optimizely-sdk&:action=display).
+
 To install:
 
     pip install optimizely-sdk
@@ -44,26 +44,24 @@ dashboard, please contact your Optimizely account executive.
 
 ### Using the SDK
 
-You can initialize the Optimizely instance in three ways: with a
-datafile, by providing an [sdk\_key]{.title-ref}, or by providing an
-implementation of
+You can initialize the Optimizely instance in three ways: with a datafile, by providing an sdk_key, or by providing an implementation of
 [BaseConfigManager](https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32).
 Each method is described below.
 
 1.  Initialize Optimizely with a datafile. This datafile will be used as
-    ProjectConfig throughout the life of Optimizely instance. :
+    the source of ProjectConfig throughout the life of Optimizely instance. :
 
         optimizely.Optimizely(
           datafile
         )
 
-2.  Initialize Optimizely by providing an \'sdk\_key\'. This will
+2.  Initialize Optimizely by providing an \'sdk_key\'. This will
     initialize a PollingConfigManager that makes an HTTP GET request to
-    the URL (formed using your provided [sdk key]{.title-ref} and the
+    the URL (formed using your provided sdk key and the
     default datafile CDN URL template) to asynchronously download the
     project datafile at regular intervals and update ProjectConfig when
     a new datafile is received. A hard-coded datafile can also be
-    provided along with the [sdk\_key]{.title-ref} that will be used
+    provided along with the sdk_key that will be used
     initially before any update. :
 
         optimizely.Optimizely(
@@ -79,7 +77,7 @@ Each method is described below.
 
 3.  Initialize Optimizely by providing a ConfigManager that implements
     [BaseConfigManager](https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32).
-    You may use our [PollingConfigManager]{.title-ref} as needed. :
+    You may use our [PollingConfigManager](https://github.com/optimizely/python-sdk/blob/master/optimizely/config_manager.py#L151) as needed. :
 
         optimizely.Optimizely(
           config_manager=custom_config_manager
@@ -87,19 +85,26 @@ Each method is described below.
 
 #### PollingConfigManager
 
-The [PollingConfigManager]{.title-ref} asynchronously polls for
+The [PollingConfigManager](https://github.com/optimizely/python-sdk/blob/master/optimizely/config_manager.py#L151) asynchronously polls for
 datafiles from a specified URL at regular intervals by making HTTP
 requests.
 
-polling\_config\_manager = PollingConfigManager( sdk\_key=None,
-datafile=None, update\_interval=None, url=None, url\_template=None,
-logger=None, error\_handler=None, notification\_center=None,
-skip\_json\_validation=False )
+    polling_config_manager = PollingConfigManager(
+        sdk_key=None,
+        datafile=None, 
+        update_interval=None, 
+        url=None, 
+        url_template=None,
+        logger=None, 
+        error\_handler=None, 
+        notification\_center=None,
+        skip\_json\_validation=False 
+    )
 
-**Note**: You must provide either the [sdk\_key]{.title-ref} or URL. If
+**Note**: You must provide either the sdk_key or URL. If
 you provide both, the URL takes precedence.
 
-**sdk\_key** The [sdk\_key]{.title-ref} is used to compose the outbound
+**sdk_key** The sdk_key is used to compose the outbound
 HTTP request to the default datafile location on the Optimizely CDN.
 
 **datafile** You can provide an initial datafile to bootstrap the
@@ -108,11 +113,11 @@ datafile also serves as a fallback datafile if HTTP connection cannot be
 established. The initial datafile will be discarded after the first
 successful datafile poll.
 
-**update\_interval** The update\_interval is used to specify a fixed
+**update_interval** The update_interval is used to specify a fixed
 delay in seconds between consecutive HTTP requests for the datafile.
 
-**url\_template** A string with placeholder `{sdk_key}` can be provided
-so that this template along with the provided [sdk key]{.title-ref} is
+**url_template** A string with placeholder `{sdk_key}` can be provided
+so that this template along with the provided sdk key is
 used to form the target URL.
 
 You may also provide your own logger, error\_handler, or
@@ -125,11 +130,11 @@ configurations for [PollingConfigManager]{.title-ref}.
 
   **PropertyName**   **Default Value**                                           **Description**
   ------------------ ----------------------------------------------------------- --------------------------------------------------------------------------------------
-  update\_interval   5 minutes                                                   Fixed delay between fetches for the datafile
-  sdk\_key           None                                                        Optimizely project SDK key
-  url                None                                                        URL override location used to specify custom HTTP source for the Optimizely datafile
-  url\_template      <https://cdn.optimizely.com/datafiles/%7Bsdk_key%7D.json>   Parameterized datafile URL by SDK key
-  datafile           None                                                        Initial datafile, typically sourced from a local cached source
+  update_interval    5 minutes                                                    Fixed delay between fetches for the datafile
+  sdk_key            None                                                         Optimizely project SDK key
+  url                None                                                         URL override location used to specify custom HTTP source for the Optimizely datafile
+  url_template       https://cdn.optimizely.com/datafiles/{sdk_key}.json          Parameterized datafile URL by SDK key
+  datafile           None                                                         Initial datafile, typically sourced from a local cached source
 
 A notification signal will be triggered whenever a *new* datafile is
 fetched and Project Config is updated. To subscribe to these
@@ -137,9 +142,7 @@ notifications, use:
 
 `notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)`
 
-For Further details see the Optimizely [Full Stack
-documentation](https://docs.developers.optimizely.com/full-stack/docs)
-to learn how to set up your first Python project and use the SDK.
+For Further details see the Optimizely [Full Stack documentation](https://docs.developers.optimizely.com/full-stack/docs) to learn how to set up your first Python project and use the SDK.
 
 Development
 -----------

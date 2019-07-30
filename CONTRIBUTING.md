@@ -12,8 +12,7 @@ Development process
 -------------------
 
 1.  Fork the repository and create your branch from master.
-2.  Please follow the [commit message
-    guidelines](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-guidelines)
+2.  Please follow the [commit message guidelines](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-guidelines)
     for each commit message.
 3.  Make sure to add tests!
 4.  Run `pep8` to ensure there are no lint errors.
