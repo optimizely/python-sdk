@@ -385,7 +385,7 @@ class ConfigTest(base.BaseTest):
     }
 
     test_obj = optimizely.Optimizely(json.dumps(config_dict))
-    project_config = test_obj.config
+    project_config = test_obj.config_manager.get_config()
     self.assertEqual(config_dict['accountId'], project_config.account_id)
     self.assertEqual(config_dict['projectId'], project_config.project_id)
     self.assertEqual(config_dict['revision'], project_config.revision)
@@ -699,7 +699,7 @@ class ConfigTest(base.BaseTest):
 
     # Assert bot filtering is retrieved as provided in the data file
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     self.assertEqual(
         self.config_dict_with_features['botFiltering'],
         project_config.get_bot_filtering_value()
@@ -771,8 +771,8 @@ class ConfigTest(base.BaseTest):
     self.assertIsNone(self.project_config.get_audience('42'))
 
   def test_get_audience__prefers_typedAudiences_over_audiences(self):
-    opt = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
-    config = opt.config
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+    config = opt_obj.config_manager.get_config()
 
     audiences = self.config_dict_with_typed_audiences['audiences']
     typed_audiences = self.config_dict_with_typed_audiences['typedAudiences']
@@ -889,7 +889,7 @@ class ConfigTest(base.BaseTest):
   def test_get_feature_from_key__valid_feature_key(self):
     """ Test that a valid feature is returned given a valid feature key. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     expected_feature = entities.FeatureFlag(
       '91112',
@@ -910,7 +910,7 @@ class ConfigTest(base.BaseTest):
     """ Test that None is returned given an invalid feature key. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     self.assertIsNone(project_config.get_feature_from_key('invalid_feature_key'))
 
@@ -918,7 +918,7 @@ class ConfigTest(base.BaseTest):
     """ Test that a valid rollout is returned """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     expected_rollout = entities.Layer('211111', [{
       'id': '211127',
@@ -998,7 +998,7 @@ class ConfigTest(base.BaseTest):
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features),
                                     logger=logger.NoOpLogger())
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
     with mock.patch.object(project_config, 'logger') as mock_config_logging:
       self.assertIsNone(project_config.get_rollout_from_id('aabbccdd'))
 
@@ -1007,7 +1007,7 @@ class ConfigTest(base.BaseTest):
   def test_get_variable_value_for_variation__returns_valid_value(self):
     """ Test that the right value is returned. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
@@ -1019,7 +1019,7 @@ class ConfigTest(base.BaseTest):
     """ Test that an invalid variable key will return None. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     self.assertIsNone(project_config.get_variable_value_for_variation(None, variation))
@@ -1028,7 +1028,7 @@ class ConfigTest(base.BaseTest):
     """ Test that a variation with no variables will return None. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     variation = entities.Variation('1111281', 'invalid_variation', [])
     is_working_variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
@@ -1038,7 +1038,7 @@ class ConfigTest(base.BaseTest):
     """ Test that a variable with no usage will return default value for variable. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     variation = project_config.get_variation_from_id('test_experiment', '111128')
     variable_without_usage_variable = project_config.get_variable_for_feature('test_feature_in_experiment',
@@ -1049,7 +1049,7 @@ class ConfigTest(base.BaseTest):
     """ Test that the feature variable is returned. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     variable = project_config.get_variable_for_feature('test_feature_in_experiment', 'is_working')
     self.assertEqual(entities.Variable('127', 'is_working', 'boolean', 'true'), variable)
@@ -1058,7 +1058,7 @@ class ConfigTest(base.BaseTest):
     """ Test that an invalid feature key will return None. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     self.assertIsNone(project_config.get_variable_for_feature('invalid_feature', 'is_working'))
 
@@ -1066,7 +1066,7 @@ class ConfigTest(base.BaseTest):
     """ Test that an invalid variable key will return None. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     self.assertIsNone(project_config.get_variable_for_feature('test_feature_in_experiment', 'invalid_variable_key'))
 
@@ -1077,7 +1077,7 @@ class ConfigLoggingTest(base.BaseTest):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             logger=logger.SimpleLogger())
-    self.project_config = self.optimizely.config
+    self.project_config = self.optimizely.config_manager.get_config()
 
   def test_get_experiment_from_key__invalid_key(self):
     """ Test that message is logged when provided experiment key is invalid. """
@@ -1169,76 +1169,76 @@ class ConfigExceptionTest(base.BaseTest):
     base.BaseTest.setUp(self)
     self.optimizely = optimizely.Optimizely(json.dumps(self.config_dict),
                                             error_handler=error_handler.RaiseExceptionErrorHandler)
-    self.project_config = self.optimizely.config
+    self.project_config = self.optimizely.config_manager.get_config()
 
   def test_get_experiment_from_key__invalid_key(self):
     """ Test that exception is raised when provided experiment key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
+                            enums.Errors.INVALID_EXPERIMENT_KEY,
                             self.project_config.get_experiment_from_key, 'invalid_key')
 
   def test_get_audience__invalid_id(self):
     """ Test that message is logged when provided audience ID is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidAudienceException,
-                            enums.Errors.INVALID_AUDIENCE_ERROR,
+                            enums.Errors.INVALID_AUDIENCE,
                             self.project_config.get_audience, '42')
 
   def test_get_variation_from_key__invalid_experiment_key(self):
     """ Test that exception is raised when provided experiment key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
+                            enums.Errors.INVALID_EXPERIMENT_KEY,
                             self.project_config.get_variation_from_key, 'invalid_key', 'control')
 
   def test_get_variation_from_key__invalid_variation_key(self):
     """ Test that exception is raised when provided variation key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidVariationException,
-                            enums.Errors.INVALID_VARIATION_ERROR,
+                            enums.Errors.INVALID_VARIATION,
                             self.project_config.get_variation_from_key, 'test_experiment', 'invalid_key')
 
   def test_get_variation_from_id__invalid_experiment_key(self):
     """ Test that exception is raised when provided experiment key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidExperimentException,
-                            enums.Errors.INVALID_EXPERIMENT_KEY_ERROR,
+                            enums.Errors.INVALID_EXPERIMENT_KEY,
                             self.project_config.get_variation_from_id, 'invalid_key', '111128')
 
   def test_get_variation_from_id__invalid_variation_id(self):
     """ Test that exception is raised when provided variation ID is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidVariationException,
-                            enums.Errors.INVALID_VARIATION_ERROR,
+                            enums.Errors.INVALID_VARIATION,
                             self.project_config.get_variation_from_key, 'test_experiment', '42')
 
   def test_get_event__invalid_key(self):
     """ Test that exception is raised when provided event key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidEventException,
-                            enums.Errors.INVALID_EVENT_KEY_ERROR,
+                            enums.Errors.INVALID_EVENT_KEY,
                             self.project_config.get_event, 'invalid_key')
 
   def test_get_attribute_id__invalid_key(self):
     """ Test that exception is raised when provided attribute key is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidAttributeException,
-                            enums.Errors.INVALID_ATTRIBUTE_ERROR,
+                            enums.Errors.INVALID_ATTRIBUTE,
                             self.project_config.get_attribute_id, 'invalid_key')
 
   def test_get_group__invalid_id(self):
     """ Test that exception is raised when provided group ID is invalid. """
 
     self.assertRaisesRegexp(exceptions.InvalidGroupException,
-                            enums.Errors.INVALID_GROUP_ID_ERROR,
+                            enums.Errors.INVALID_GROUP_ID,
                             self.project_config.get_group, '42')
 
   def test_is_feature_experiment(self):
     """ Test that a true is returned if experiment is a feature test, false otherwise. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-    project_config = opt_obj.config
+    project_config = opt_obj.config_manager.get_config()
 
     experiment = project_config.get_experiment_from_key('test_experiment2')
     feature_experiment = project_config.get_experiment_from_key('test_experiment')

@@ -22,6 +22,10 @@ def on_activate_listener(*args):
     pass
 
 
+def on_config_update_listener(*args):
+    pass
+
+
 def on_decision_listener(*args):
     pass
 
@@ -44,10 +48,15 @@ class NotificationCenterTest(unittest.TestCase):
         )
         self.assertEqual(
             2,
+            test_notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+                                                               on_config_update_listener)
+        )
+        self.assertEqual(
+            3,
             test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         )
         self.assertEqual(
-            3, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+            4, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
         )
 
     def test_add_notification_listener__multiple_listeners(self):
@@ -167,6 +176,8 @@ class NotificationCenterTest(unittest.TestCase):
 
         # Add listeners
         test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
+        test_notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+                                                           on_config_update_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
 
@@ -195,6 +206,8 @@ class NotificationCenterTest(unittest.TestCase):
 
         # Add listeners
         test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
+        test_notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+                                                           on_config_update_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
 

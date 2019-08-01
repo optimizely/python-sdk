@@ -17,6 +17,7 @@ import math
 import numbers
 from six import string_types
 
+from optimizely.notification_center import NotificationCenter
 from optimizely.user_profile import UserProfile
 from . import constants
 
@@ -58,6 +59,32 @@ def _has_method(obj, method):
   return getattr(obj, method, None) is not None
 
 
+def is_config_manager_valid(config_manager):
+  """ Given a config_manager determine if it is valid or not i.e. provides a get_config method.
+
+  Args:
+    config_manager: Provides a get_config method to handle exceptions.
+
+  Returns:
+    Boolean depending upon whether config_manager is valid or not.
+  """
+
+  return _has_method(config_manager, 'get_config')
+
+
+def is_error_handler_valid(error_handler):
+  """ Given a error_handler determine if it is valid or not i.e. provides a handle_error method.
+
+  Args:
+    error_handler: Provides a handle_error method to handle exceptions.
+
+  Returns:
+    Boolean depending upon whether error_handler is valid or not.
+  """
+
+  return _has_method(error_handler, 'handle_error')
+
+
 def is_event_dispatcher_valid(event_dispatcher):
   """ Given a event_dispatcher determine if it is valid or not i.e. provides a dispatch_event method.
 
@@ -84,17 +111,17 @@ def is_logger_valid(logger):
   return _has_method(logger, 'log')
 
 
-def is_error_handler_valid(error_handler):
-  """ Given a error_handler determine if it is valid or not i.e. provides a handle_error method.
+def is_notification_center_valid(notification_center):
+  """ Given notification_center determine if it is valid or not.
 
   Args:
-    error_handler: Provides a handle_error method to handle exceptions.
+    notification_center: Instance of notification_center.NotificationCenter
 
   Returns:
-    Boolean depending upon whether error_handler is valid or not.
+    Boolean denoting instance is valid or not.
   """
 
-  return _has_method(error_handler, 'handle_error')
+  return isinstance(notification_center, NotificationCenter)
 
 
 def are_attributes_valid(attributes):
@@ -208,7 +235,7 @@ def is_finite_number(value):
              greater than absolute limit of 2^53 else False.
   """
   if not isinstance(value, (numbers.Integral, float)):
-      # numbers.Integral instead of int to accomodate long integer in python 2
+      # numbers.Integral instead of int to accommodate long integer in python 2
     return False
 
   if isinstance(value, bool):
@@ -231,7 +258,7 @@ def are_values_same_type(first_val, second_val):
 
   Args:
     first_val: Value to validate.
-    second_Val: Value to validate.
+    second_val: Value to validate.
 
   Returns:
     Boolean: True if both values belong to same type. Otherwise False.
