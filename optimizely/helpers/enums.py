@@ -36,6 +36,16 @@ class AudienceEvaluationLogs(object):
                        'newer release of the Optimizely SDK.'
 
 
+class ConfigManager(object):
+  DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
+  # Default config update interval of 5 minutes
+  DEFAULT_UPDATE_INTERVAL = 5 * 60
+  # Minimum config update interval of 1 second
+  MIN_UPDATE_INTERVAL = 1
+  # Time in seconds before which request for datafile times out
+  REQUEST_TIMEOUT = 10
+
+
 class ControlAttributes(object):
   BOT_FILTERING = '$opt_bot_filtering'
   BUCKETING_ID = '$opt_bucketing_id'
@@ -61,22 +71,28 @@ class DecisionSources(object):
 
 
 class Errors(object):
-  INVALID_ATTRIBUTE_ERROR = 'Provided attribute is not in datafile.'
+  INVALID_ATTRIBUTE = 'Provided attribute is not in datafile.'
   INVALID_ATTRIBUTE_FORMAT = 'Attributes provided are in an invalid format.'
-  INVALID_AUDIENCE_ERROR = 'Provided audience is not in datafile.'
-  INVALID_DATAFILE = 'Datafile has invalid format. Failing "{}".'
+  INVALID_AUDIENCE = 'Provided audience is not in datafile.'
   INVALID_EVENT_TAG_FORMAT = 'Event tags provided are in an invalid format.'
-  INVALID_EXPERIMENT_KEY_ERROR = 'Provided experiment is not in datafile.'
-  INVALID_EVENT_KEY_ERROR = 'Provided event is not in datafile.'
-  INVALID_FEATURE_KEY_ERROR = 'Provided feature key is not in the datafile.'
-  INVALID_GROUP_ID_ERROR = 'Provided group is not in datafile.'
-  INVALID_INPUT_ERROR = 'Provided "{}" is in an invalid format.'
-  INVALID_VARIATION_ERROR = 'Provided variation is not in datafile.'
-  INVALID_VARIABLE_KEY_ERROR = 'Provided variable key is not in the feature flag.'
+  INVALID_EXPERIMENT_KEY = 'Provided experiment is not in datafile.'
+  INVALID_EVENT_KEY = 'Provided event is not in datafile.'
+  INVALID_FEATURE_KEY = 'Provided feature key is not in the datafile.'
+  INVALID_GROUP_ID = 'Provided group is not in datafile.'
+  INVALID_INPUT = 'Provided "{}" is in an invalid format.'
+  INVALID_OPTIMIZELY = 'Optimizely instance is not valid. Failing "{}".'
+  INVALID_PROJECT_CONFIG = 'Invalid config. Optimizely instance is not valid. Failing "{}".'
+  INVALID_VARIATION = 'Provided variation is not in datafile.'
+  INVALID_VARIABLE_KEY = 'Provided variable key is not in the feature flag.'
   NONE_FEATURE_KEY_PARAMETER = '"None" is an invalid value for feature key.'
   NONE_USER_ID_PARAMETER = '"None" is an invalid value for user ID.'
   NONE_VARIABLE_KEY_PARAMETER = '"None" is an invalid value for variable key.'
   UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
+
+
+class HTTPHeaders(object):
+  IF_MODIFIED_SINCE = 'If-Modified-Since'
+  LAST_MODIFIED = 'Last-Modified'
 
 
 class HTTPVerbs(object):
@@ -103,9 +119,12 @@ class NotificationTypes(object):
       DECISION notification listener has the following parameters:
       DecisionNotificationTypes type, str user_id, dict attributes, dict decision_info
 
+      OPTIMIZELY_CONFIG_UPDATE notification listener has no associated parameters.
+
       TRACK notification listener has the following parameters:
       str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
   """
   ACTIVATE = 'ACTIVATE:experiment, user_id, attributes, variation, event'
   DECISION = 'DECISION:type, user_id, attributes, decision_info'
+  OPTIMIZELY_CONFIG_UPDATE = 'OPTIMIZELY_CONFIG_UPDATE'
   TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'

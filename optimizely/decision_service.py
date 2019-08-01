@@ -412,7 +412,7 @@ class DecisionService(object):
             ))
             return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)
       else:
-        self.logger.error(enums.Errors.INVALID_GROUP_ID_ERROR.format('_get_variation_for_feature'))
+        self.logger.error(enums.Errors.INVALID_GROUP_ID.format('_get_variation_for_feature'))
 
     # Next check if the feature is being experimented on
     elif feature.experimentIds:
