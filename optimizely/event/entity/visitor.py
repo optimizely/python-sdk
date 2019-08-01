@@ -17,3 +17,6 @@ class Visitor(object):
     self.snapshots = snapshots
     self.attributes = attributes
     self.visitor_id = visitor_id
+
+  def __str__(self):
+    return str(self.__class__) + ": " + str(self.__dict__)

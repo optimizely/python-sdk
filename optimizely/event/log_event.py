@@ -20,3 +20,6 @@ class LogEvent(object):
     self.params = params
     self.http_verb = http_verb or 'GET'
     self.headers = headers
+
+  def __str__(self):
+    return str(self.__class__) + ": " + str(self.__dict__)
