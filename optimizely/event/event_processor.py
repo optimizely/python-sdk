@@ -10,6 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import threading
 import time
 from datetime import timedelta
@@ -47,7 +48,7 @@ class BatchEventProcessor(EventProcessor):
   def __init__(self,
                 event_dispatcher,
                 logger,
-                start,
+                start=False,
                 event_queue=None,
                 batch_size=None,
                 flush_interval=None,
@@ -62,7 +63,7 @@ class BatchEventProcessor(EventProcessor):
     self._is_started = False
     self._current_batch = list()
 
-    if start:
+    if start is True:
       self.start()
 
   @property
