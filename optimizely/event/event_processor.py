@@ -153,7 +153,7 @@ class BatchEventProcessor(EventProcessor):
     self.event_queue.put(self._SHUTDOWN_SIGNAL)
     self.executor.join(self.timeout_interval.total_seconds())
 
-    if(self.executor.isAlive()):
+    if self.executor.isAlive():
       self.logger.error('Timeout exceeded while attempting to close for ' + self.timeout_interval + ' ms.')
 
     self._is_started = False
@@ -162,7 +162,7 @@ class BatchEventProcessor(EventProcessor):
   def process(self, user_event):
     self.logger.debug('Received user_event: ' + str(user_event))
 
-    if(self.disposed):
+    if self.disposed:
       self.logger.warning('Executor shutdown, not accepting tasks.')
       return
 
@@ -201,7 +201,7 @@ class BatchEventProcessor(EventProcessor):
     return False
 
   def dispose(self):
-    if(self.disposed):
+    if self.disposed:
       return
 
     self._disposed = True
