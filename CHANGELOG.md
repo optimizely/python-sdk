@@ -1,5 +1,11 @@
 # Optimizely Python SDK Changelog
 
+## [Unreleased]
+Changes that have landed but are not yet released.
+
+- Added non-typed `get_feature_variable` method ([#191](https://github.com/optimizely/python-sdk/pull/191)) as a more idiomatic approach to getting values of feature variables.
+  - Typed `get_feature_variable` methods will still be available for use.
+
 ## 3.2.0b1
 July 26th, 2019
 
