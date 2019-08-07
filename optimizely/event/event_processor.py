@@ -13,6 +13,7 @@
 
 import threading
 import time
+
 from datetime import timedelta
 from six.moves import queue
 
@@ -48,7 +49,7 @@ class BatchEventProcessor(EventProcessor):
   def __init__(self,
                 event_dispatcher,
                 logger,
-                start=False,
+                default_start=False,
                 event_queue=None,
                 batch_size=None,
                 flush_interval=None,
@@ -63,7 +64,7 @@ class BatchEventProcessor(EventProcessor):
     self._is_started = False
     self._current_batch = list()
 
-    if start is True:
+    if default_start is True:
       self.start()
 
   @property
