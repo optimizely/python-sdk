@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import abc
 import threading
 import time
 
@@ -20,14 +21,16 @@ from six.moves import queue
 from .entity.user_event import UserEvent
 from .event_factory import EventFactory
 
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
-class EventProcessor(object):
+
+class EventProcessor(ABC):
   """ Class encapsulating event_processor functionality. Override with your own processor
   providing process method. """
 
-  @staticmethod
+  @abc.abstractmethod
   def process(user_event):
-    pass  # pragma: no cover
+    pass
 
 
 class BatchEventProcessor(EventProcessor):
