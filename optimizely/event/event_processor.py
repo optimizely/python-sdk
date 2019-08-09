@@ -20,6 +20,7 @@ from six.moves import queue
 
 from .entity.user_event import UserEvent
 from .event_factory import EventFactory
+from ..closeable import Closeable
 from ..event_dispatcher import EventDispatcher as default_event_dispatcher
 from ..logger import NoOpLogger
 
@@ -35,7 +36,7 @@ class EventProcessor(ABC):
     pass
 
 
-class BatchEventProcessor(EventProcessor):
+class BatchEventProcessor(EventProcessor, Closeable):
   """
   BatchEventProcessor is a batched implementation of the EventProcessor.
   The BatchEventProcessor maintains a single consumer thread that pulls events off of
@@ -112,11 +113,11 @@ class BatchEventProcessor(EventProcessor):
           continue
 
         if item == self._SHUTDOWN_SIGNAL:
-          self.logger.log('Received shutdown signal.')
+          self.logger.debug('Received shutdown signal.')
           break
 
         if item == self._FLUSH_SIGNAL:
-          self.logger.log('Received flush signal.')
+          self.logger.debug('Received flush signal.')
           self._flush_queue()
           continue
 
@@ -152,20 +153,6 @@ class BatchEventProcessor(EventProcessor):
     except Exception, e:
       self.logger.error('Error dispatching event: ' + str(log_event) + ' ' + str(e))
 
-  def stop(self):
-    """ Stops batch event processor. """
-    if self.disposed:
-      return
-
-    self.event_queue.put(self._SHUTDOWN_SIGNAL)
-    self.executor.join(self.timeout_interval.total_seconds())
-
-    if self.executor.isAlive():
-      self.logger.error('Timeout exceeded while attempting to close for ' + self.timeout_interval + ' ms.')
-
-    self._is_started = False
-    self.logger.warning('Stopping Scheduler.')
-
   def process(self, user_event):
     if not isinstance(user_event, UserEvent):
       self.logger.error('Provided event is in an invalid format.')
@@ -173,14 +160,10 @@ class BatchEventProcessor(EventProcessor):
 
     self.logger.debug('Received user_event: ' + str(user_event))
 
-    if self.disposed:
-      self.logger.warning('Executor shutdown, not accepting tasks.')
-      return
-
     try:
       self.event_queue.put_nowait(user_event)
     except queue.Full:
-      self.logger.log('Payload not accepted by the queue.')
+      self.logger.log('Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize())))
 
   def _add_to_batch(self, user_event):
     if self._should_split(user_event):
@@ -212,8 +195,15 @@ class BatchEventProcessor(EventProcessor):
 
     return False
 
-  def dispose(self):
-    if self.disposed:
-      return
+  def close(self):
+    """ Stops and disposes batch event processor. """
+    self.logger.info('Start close.')
 
-    self._disposed = True
+    self.event_queue.put(self._SHUTDOWN_SIGNAL)
+    self.executor.join(self.timeout_interval.total_seconds())
+
+    if self.executor.isAlive():
+      self.logger.error('Timeout exceeded while attempting to close for ' + self.timeout_interval + ' ms.')
+
+    self._is_started = False
+    self.logger.warning('Stopping Scheduler.')
