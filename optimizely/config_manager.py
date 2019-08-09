@@ -65,9 +65,9 @@ class BaseConfigManager(ABC):
 
   @abc.abstractmethod
   def get_config(self):
-      """ Get config for use by optimizely.Optimizely.
-      The config should be an instance of project_config.ProjectConfig."""
-      pass
+    """ Get config for use by optimizely.Optimizely.
+    The config should be an instance of project_config.ProjectConfig."""
+    pass
 
 
 class StaticConfigManager(BaseConfigManager):
@@ -97,55 +97,55 @@ class StaticConfigManager(BaseConfigManager):
     self.validate_schema = not skip_json_validation
     self._set_config(datafile)
 
-    def _set_config(self, datafile):
-      """ Looks up and sets datafile and config based on response body.
+  def _set_config(self, datafile):
+    """ Looks up and sets datafile and config based on response body.
 
-       Args:
-         datafile: JSON string representing the Optimizely project.
-       """
+     Args:
+       datafile: JSON string representing the Optimizely project.
+     """
 
-      if self.validate_schema:
-          if not validator.is_datafile_valid(datafile):
-              self.logger.error(enums.Errors.INVALID_INPUT.format('datafile'))
-              return
+    if self.validate_schema:
+        if not validator.is_datafile_valid(datafile):
+            self.logger.error(enums.Errors.INVALID_INPUT.format('datafile'))
+            return
 
-      error_msg = None
-      error_to_handle = None
-      config = None
+    error_msg = None
+    error_to_handle = None
+    config = None
 
-      try:
-          config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
-      except optimizely_exceptions.UnsupportedDatafileVersionException as error:
-          error_msg = error.args[0]
-          error_to_handle = error
-      except:
-          error_msg = enums.Errors.INVALID_INPUT.format('datafile')
-          error_to_handle = optimizely_exceptions.InvalidInputException(error_msg)
-      finally:
-          if error_msg:
-              self.logger.error(error_msg)
-              self.error_handler.handle_error(error_to_handle)
-              return
+    try:
+        config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
+    except optimizely_exceptions.UnsupportedDatafileVersionException as error:
+        error_msg = error.args[0]
+        error_to_handle = error
+    except:
+        error_msg = enums.Errors.INVALID_INPUT.format('datafile')
+        error_to_handle = optimizely_exceptions.InvalidInputException(error_msg)
+    finally:
+        if error_msg:
+            self.logger.error(error_msg)
+            self.error_handler.handle_error(error_to_handle)
+            return
 
-      previous_revision = self._config.get_revision() if self._config else None
+    previous_revision = self._config.get_revision() if self._config else None
 
-      if previous_revision == config.get_revision():
-          return
+    if previous_revision == config.get_revision():
+        return
 
-      self._config = config
-      self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
-      self.logger.debug(
-          'Received new datafile and updated config. '
-          'Old revision number: {}. New revision number: {}.'.format(previous_revision, config.get_revision())
-      )
+    self._config = config
+    self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
+    self.logger.debug(
+        'Received new datafile and updated config. '
+        'Old revision number: {}. New revision number: {}.'.format(previous_revision, config.get_revision())
+    )
 
-    def get_config(self):
-      """ Returns instance of ProjectConfig.
+  def get_config(self):
+    """ Returns instance of ProjectConfig.
 
-      Returns:
-          ProjectConfig. None if not set.
-      """
-      return self._config
+    Returns:
+        ProjectConfig. None if not set.
+    """
+    return self._config
 
 
 class PollingConfigManager(StaticConfigManager):
@@ -192,120 +192,120 @@ class PollingConfigManager(StaticConfigManager):
     self._polling_thread.setDaemon(True)
     self._polling_thread.start()
 
-    @staticmethod
-    def get_datafile_url(sdk_key, url, url_template):
-      """ Helper method to determine URL from where to fetch the datafile.
+  @staticmethod
+  def get_datafile_url(sdk_key, url, url_template):
+    """ Helper method to determine URL from where to fetch the datafile.
 
-      Args:
-        sdk_key: Key uniquely identifying the datafile.
-        url: String representing URL from which to fetch the datafile.
-        url_template: String representing template which is filled in with
-                      SDK key to determine URL from which to fetch the datafile.
+    Args:
+      sdk_key: Key uniquely identifying the datafile.
+      url: String representing URL from which to fetch the datafile.
+      url_template: String representing template which is filled in with
+                    SDK key to determine URL from which to fetch the datafile.
 
-      Returns:
-        String representing URL to fetch datafile from.
+    Returns:
+      String representing URL to fetch datafile from.
 
-      Raises:
-        optimizely.exceptions.InvalidInputException if:
-        - One of sdk_key or url is not provided.
-        - url_template is invalid.
-      """
-      # Ensure that either is provided by the user.
-      if sdk_key is None and url is None:
-          raise optimizely_exceptions.InvalidInputException('Must provide at least one of sdk_key or url.')
+    Raises:
+      optimizely.exceptions.InvalidInputException if:
+      - One of sdk_key or url is not provided.
+      - url_template is invalid.
+    """
+    # Ensure that either is provided by the user.
+    if sdk_key is None and url is None:
+        raise optimizely_exceptions.InvalidInputException('Must provide at least one of sdk_key or url.')
 
-      # Return URL if one is provided or use template and SDK key to get it.
-      if url is None:
-          try:
-              return url_template.format(sdk_key=sdk_key)
-          except (AttributeError, KeyError):
-              raise optimizely_exceptions.InvalidInputException(
-                  'Invalid url_template {} provided.'.format(url_template))
+    # Return URL if one is provided or use template and SDK key to get it.
+    if url is None:
+        try:
+            return url_template.format(sdk_key=sdk_key)
+        except (AttributeError, KeyError):
+            raise optimizely_exceptions.InvalidInputException(
+                'Invalid url_template {} provided.'.format(url_template))
 
-      return url
+    return url
 
-    def set_update_interval(self, update_interval):
-      """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
+  def set_update_interval(self, update_interval):
+    """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
 
-      Args:
-        update_interval: Time in seconds after which to update datafile.
-      """
-      if not update_interval:
-          update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
-          self.logger.debug('Set config update interval to default value {}.'.format(update_interval))
+    Args:
+      update_interval: Time in seconds after which to update datafile.
+    """
+    if not update_interval:
+        update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+        self.logger.debug('Set config update interval to default value {}.'.format(update_interval))
 
-      if not isinstance(update_interval, (int, float)):
-          raise optimizely_exceptions.InvalidInputException(
-              'Invalid update_interval "{}" provided.'.format(update_interval)
-          )
+    if not isinstance(update_interval, (int, float)):
+        raise optimizely_exceptions.InvalidInputException(
+            'Invalid update_interval "{}" provided.'.format(update_interval)
+        )
 
-      # If polling interval is less than minimum allowed interval then set it to default update interval.
-      if update_interval < enums.ConfigManager.MIN_UPDATE_INTERVAL:
-          self.logger.debug('update_interval value {} too small. Defaulting to {}'.format(
-              update_interval,
-              enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
-          )
-          update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+    # If polling interval is less than minimum allowed interval then set it to default update interval.
+    if update_interval < enums.ConfigManager.MIN_UPDATE_INTERVAL:
+        self.logger.debug('update_interval value {} too small. Defaulting to {}'.format(
+            update_interval,
+            enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
+        )
+        update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
-      self.update_interval = update_interval
+    self.update_interval = update_interval
 
-    def set_last_modified(self, response_headers):
-      """ Looks up and sets last modified time based on Last-Modified header in the response.
+  def set_last_modified(self, response_headers):
+    """ Looks up and sets last modified time based on Last-Modified header in the response.
 
-       Args:
-           response_headers: requests.Response.headers
-       """
-      self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
+     Args:
+         response_headers: requests.Response.headers
+     """
+    self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
 
-    def _handle_response(self, response):
-      """ Helper method to handle response containing datafile.
+  def _handle_response(self, response):
+    """ Helper method to handle response containing datafile.
 
-      Args:
-          response: requests.Response
-      """
-      try:
-          response.raise_for_status()
-      except requests_exceptions.HTTPError as err:
-          self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
-          return
+    Args:
+        response: requests.Response
+    """
+    try:
+        response.raise_for_status()
+    except requests_exceptions.HTTPError as err:
+        self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+        return
 
-      # Leave datafile and config unchanged if it has not been modified.
-      if response.status_code == http_status_codes.not_modified:
-          self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
-          return
+    # Leave datafile and config unchanged if it has not been modified.
+    if response.status_code == http_status_codes.not_modified:
+        self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
+        return
 
-      self.set_last_modified(response.headers)
-      self._set_config(response.content)
+    self.set_last_modified(response.headers)
+    self._set_config(response.content)
 
-    def fetch_datafile(self):
-      """ Fetch datafile and set ProjectConfig. """
+  def fetch_datafile(self):
+    """ Fetch datafile and set ProjectConfig. """
 
-      request_headers = {}
-      if self.last_modified:
-          request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
+    request_headers = {}
+    if self.last_modified:
+        request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
-      response = requests.get(self.datafile_url,
-                              headers=request_headers,
-                              timeout=enums.ConfigManager.REQUEST_TIMEOUT)
-      self._handle_response(response)
+    response = requests.get(self.datafile_url,
+                            headers=request_headers,
+                            timeout=enums.ConfigManager.REQUEST_TIMEOUT)
+    self._handle_response(response)
 
-    @property
-    def is_running(self):
-      """ Check if polling thread is alive or not. """
-      return self._polling_thread.is_alive()
+  @property
+  def is_running(self):
+    """ Check if polling thread is alive or not. """
+    return self._polling_thread.is_alive()
 
-    def _run(self):
-      """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
-      try:
-        while self.is_running:
-            self.fetch_datafile()
-            time.sleep(self.update_interval)
-      except (OSError, OverflowError) as err:
-          self.logger.error('Error in time.sleep. '
-                            'Provided update_interval value may be too big. Error: {}'.format(str(err)))
-          raise
+  def _run(self):
+    """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
+    try:
+      while self.is_running:
+          self.fetch_datafile()
+          time.sleep(self.update_interval)
+    except (OSError, OverflowError) as err:
+        self.logger.error('Error in time.sleep. '
+                          'Provided update_interval value may be too big. Error: {}'.format(str(err)))
+        raise
 
-    def start(self):
-      """ Start the config manager and the thread to periodically fetch datafile. """
-      if not self.is_running:
-          self._polling_thread.start()
+  def start(self):
+    """ Start the config manager and the thread to periodically fetch datafile. """
+    if not self.is_running:
+        self._polling_thread.start()
