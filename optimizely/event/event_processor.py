@@ -205,5 +205,5 @@ class BatchEventProcessor(EventProcessor, Closeable):
     if self.executor.isAlive():
       self.logger.error('Timeout exceeded while attempting to close for ' + self.timeout_interval + ' ms.')
 
-    self._is_started = False
     self.logger.warning('Stopping Scheduler.')
+    self._is_started = False
