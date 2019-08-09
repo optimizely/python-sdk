@@ -20,6 +20,8 @@ from six.moves import queue
 
 from .entity.user_event import UserEvent
 from .event_factory import EventFactory
+from ..event_dispatcher import EventDispatcher as default_event_dispatcher
+from ..logger import NoOpLogger
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -57,8 +59,8 @@ class BatchEventProcessor(EventProcessor):
                 batch_size=None,
                 flush_interval=None,
                 timeout_interval=None):
-    self.event_dispatcher = event_dispatcher
-    self.logger = logger
+    self.event_dispatcher = event_dispatcher or default_event_dispatcher
+    self.logger = logger or NoOpLogger()
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
     self.batch_size = batch_size or self._DEFAULT_BATCH_SIZE
     self.flush_interval = flush_interval or self._DEFAULT_FLUSH_INTERVAL
@@ -165,6 +167,10 @@ class BatchEventProcessor(EventProcessor):
     self.logger.warning('Stopping Scheduler.')
 
   def process(self, user_event):
+    if not isinstance(user_event, UserEvent):
+      self.logger.error('Provided event is in an invalid format.')
+      return
+
     self.logger.debug('Received user_event: ' + str(user_event))
 
     if self.disposed:
@@ -183,7 +189,8 @@ class BatchEventProcessor(EventProcessor):
 
     # Reset the deadline if starting a new batch.
     if len(self._current_batch) == 0:
-      self.flushing_interval_deadline = self._get_time_in_ms() + self._get_time_in_ms(self.flush_interval.total_seconds())
+      self.flushing_interval_deadline = self._get_time_in_ms() + \
+        self._get_time_in_ms(self.flush_interval.total_seconds())
 
     with self.LOCK:
       self._current_batch.append(user_event)
