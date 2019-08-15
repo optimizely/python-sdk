@@ -108,7 +108,7 @@ class BatchEventProcessor(EventProcessor, Closeable):
           item = self.event_queue.get(True, 0.05)
 
         except queue.Empty:
-          self.logger.log('Empty queue, sleeping for 50ms.')
+          self.logger.debug('Empty queue, sleeping for 50ms.')
           time.sleep(0.05)
           continue
 
@@ -163,7 +163,7 @@ class BatchEventProcessor(EventProcessor, Closeable):
     try:
       self.event_queue.put_nowait(user_event)
     except queue.Full:
-      self.logger.log('Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize())))
+      self.logger.debug('Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize())))
 
   def _add_to_batch(self, user_event):
     if self._should_split(user_event):
