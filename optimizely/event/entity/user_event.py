@@ -27,3 +27,6 @@ class UserEvent(object):
 
   def _get_uuid(self):
     return str(uuid.uuid4())
+
+  def __str__(self):
+    return str(self.__class__) + ": " + str(self.__dict__)

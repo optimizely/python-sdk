@@ -11,12 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import abc
 
-class Visitor(object):
-  def __init__(self, snapshots, attributes, visitor_id):
-    self.snapshots = snapshots
-    self.attributes = attributes
-    self.visitor_id = visitor_id
+ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
-  def __str__(self):
-    return str(self.__class__) + ": " + str(self.__dict__)
+
+class Closeable(object):
+  """ Class encapsulating closing functionality. Override with your own implementation
+  for close method. """
+
+  @abc.abstractmethod
+  def close(self):
+    pass
