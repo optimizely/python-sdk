@@ -91,6 +91,9 @@ class BatchEventProcessor(EventProcessor, Closeable):
     return True
 
   def _get_time_in_ms(self, _time=None):
+    if _time == 0:
+      return 0
+
     return int(round((_time or time.time()) * 1000))
 
   def start(self):
