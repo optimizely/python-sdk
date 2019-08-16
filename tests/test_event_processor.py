@@ -143,7 +143,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event = self._build_conversion_event(self.event_name)
     self._event_processor.process(user_event)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     time.sleep(5)
@@ -159,7 +158,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event = self._build_conversion_event(self.event_name)
     self._event_processor.process(user_event)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     time.sleep(1.5)
@@ -176,7 +174,6 @@ class BatchEventProcessorTest(base.BaseTest):
     for i in range(0, self.MAX_BATCH_SIZE):
       user_event = self._build_conversion_event(self.event_name)
       self._event_processor.process(user_event)
-      mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
       event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     time.sleep(1)
@@ -192,12 +189,10 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event = self._build_conversion_event(self.event_name)
     self._event_processor.process(user_event)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
     self._event_processor.flush()
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     self._event_processor.process(user_event)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
     self._event_processor.flush()
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
@@ -217,7 +212,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event_1 = self._build_conversion_event(self.event_name, self.project_config)
     self._event_processor.process(user_event_1)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event_1))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     self.project_config.revision = 2
@@ -225,7 +219,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event_2 = self._build_conversion_event(self.event_name, self.project_config)
     self._event_processor.process(user_event_2)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event_2))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     time.sleep(1.5)
@@ -244,7 +237,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event_1 = self._build_conversion_event(self.event_name, self.project_config)
     self._event_processor.process(user_event_1)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event_1))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     self.project_config.revision = 1
@@ -252,7 +244,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event_2 = self._build_conversion_event(self.event_name, self.project_config)
     self._event_processor.process(user_event_2)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event_2))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     time.sleep(1.5)
@@ -268,7 +259,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     user_event = self._build_conversion_event(self.event_name, self.project_config)
     self._event_processor.process(user_event)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     time.sleep(1.5)
@@ -277,14 +267,12 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.close()
 
     self._event_processor.process(user_event)
-    mock_config_logging.debug.assert_called_with('Received user_event: ' + str(user_event))
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     self._event_processor.start()
     self.assertStrictTrue(self._event_processor.is_started)
 
     self._event_processor.close()
-    mock_config_logging.warning.assert_called_with('Stopping Scheduler.')
     self.assertStrictFalse(self._event_processor.is_started)
 
     self.assertEqual(0, self._event_processor.event_queue.qsize())
