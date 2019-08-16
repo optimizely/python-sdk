@@ -66,8 +66,8 @@ class BatchEventProcessor(EventProcessor, Closeable):
     self.batch_size = batch_size if batch_size is not None and batch_size > 0 else self._DEFAULT_BATCH_SIZE
     self.flush_interval = timedelta(milliseconds=flush_interval) if flush_interval is not None and flush_interval > 0 \
                             else self._DEFAULT_FLUSH_INTERVAL
-    self.timeout_interval = timedelta(milliseconds=timeout_interval) if timeout_interval is not None and timeout_interval > 0 \
-                            else self._DEFAULT_TIMEOUT_INTERVAL
+    self.timeout_interval = timedelta(milliseconds=timeout_interval) if timeout_interval is not None and \
+                            timeout_interval > 0 else self._DEFAULT_TIMEOUT_INTERVAL
     self._disposed = False
     self._is_started = False
     self._current_batch = list()
