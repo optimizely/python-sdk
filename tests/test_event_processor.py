@@ -130,8 +130,8 @@ class BatchEventProcessorTest(base.BaseTest):
                                                  True,
                                                  self.event_queue,
                                                  self.MAX_BATCH_SIZE,
-                                                 timedelta(milliseconds=self.MAX_DURATION_MS),
-                                                 timedelta(milliseconds=self.MAX_TIMEOUT_INTERVAL_MS)
+                                                 self.MAX_DURATION_MS,
+                                                 self.MAX_TIMEOUT_INTERVAL_MS
                                                 )
 
   def test_drain_on_close(self):
@@ -149,7 +149,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self.assertEqual(0, self._event_processor.event_queue.qsize())
-    mock_config_logging.debug.assert_called_with('Deadline exceeded; flushing current batch.')
 
   def test_flush_on_max_timeout(self):
     event_dispatcher = TestEventDispatcher()
