@@ -166,7 +166,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self.assertEqual(0, self._event_processor.event_queue.qsize())
-    mock_config_logging.debug.assert_called_with('Deadline exceeded; flushing current batch.')
 
   def test_flush_max_batch_size(self):
     event_dispatcher = TestEventDispatcher()

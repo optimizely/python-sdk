@@ -20,10 +20,10 @@ from six.moves import queue
 
 from .entity.user_event import UserEvent
 from .event_factory import EventFactory
-from ..closeable import Closeable
-from ..event_dispatcher import EventDispatcher as default_event_dispatcher
-from ..helpers import validator
-from .. import logger as _logging
+from optimizely import logger as _logging
+from optimizely.closeable import Closeable
+from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
+from optimizely.helpers import validator
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
