@@ -22,7 +22,8 @@ from .entity.user_event import UserEvent
 from .event_factory import EventFactory
 from ..closeable import Closeable
 from ..event_dispatcher import EventDispatcher as default_event_dispatcher
-from ..logger import NoOpLogger
+from ..helpers import validator
+from .. import logger as _logging
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -61,13 +62,13 @@ class BatchEventProcessor(EventProcessor, Closeable):
                 flush_interval=None,
                 timeout_interval=None):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
-    self.logger = logger or NoOpLogger()
+    self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
-    self.batch_size = batch_size if batch_size is not None and batch_size > 0 else self._DEFAULT_BATCH_SIZE
-    self.flush_interval = timedelta(milliseconds=flush_interval) if flush_interval is not None and flush_interval > 0 \
+    self.batch_size = batch_size if self._validate_intantiation_props(batch_size) else self._DEFAULT_BATCH_SIZE
+    self.flush_interval = timedelta(milliseconds=flush_interval) if self._validate_intantiation_props(flush_interval) \
                             else self._DEFAULT_FLUSH_INTERVAL
-    self.timeout_interval = timedelta(milliseconds=timeout_interval) if timeout_interval is not None and \
-                            timeout_interval > 0 else self._DEFAULT_TIMEOUT_INTERVAL
+    self.timeout_interval = timedelta(milliseconds=timeout_interval) \
+                              if self._validate_intantiation_props(timeout_interval) else self._DEFAULT_TIMEOUT_INTERVAL
     self._disposed = False
     self._is_started = False
     self._current_batch = list()
@@ -82,6 +83,12 @@ class BatchEventProcessor(EventProcessor, Closeable):
   @property
   def disposed(self):
     return self._disposed
+
+  def _validate_intantiation_props(self, prop):
+    if prop is None or prop < 0 or not validator.is_finite_number(prop):
+      return False
+
+    return True
 
   def _get_time_in_ms(self, _time=None):
     return int(round((_time or time.time()) * 1000))
@@ -103,7 +110,6 @@ class BatchEventProcessor(EventProcessor, Closeable):
     try:
       while True:
         if self._get_time_in_ms() > self.flushing_interval_deadline:
-          self.logger.debug('Deadline exceeded; flushing current batch.')
           self._flush_queue()
 
         try:
