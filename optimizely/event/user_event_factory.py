@@ -10,9 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .entity.impression_event import ImpressionEvent
-from .entity.conversion_event import ConversionEvent
-from .entity.event_context import EventContext
+
+from .user_event import EventContext, ConversionEvent, ImpressionEvent
 from .event_factory import EventFactory
 
 
