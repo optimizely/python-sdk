@@ -18,7 +18,7 @@ import time
 from datetime import timedelta
 from six.moves import queue
 
-from .entity.user_event import UserEvent
+from .user_event import UserEvent
 from .event_factory import EventFactory
 from optimizely import logger as _logging
 from optimizely.closeable import Closeable
@@ -64,11 +64,14 @@ class BatchEventProcessor(EventProcessor, Closeable):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
-    self.batch_size = batch_size if self._validate_intantiation_props(batch_size) else self._DEFAULT_BATCH_SIZE
-    self.flush_interval = timedelta(milliseconds=flush_interval) if self._validate_intantiation_props(flush_interval) \
+    self.batch_size = batch_size if self._validate_intantiation_props(batch_size, 'batch_size') \
+                        else self._DEFAULT_BATCH_SIZE
+    self.flush_interval = timedelta(milliseconds=flush_interval) \
+                            if self._validate_intantiation_props(flush_interval, 'flush_interval') \
                             else self._DEFAULT_FLUSH_INTERVAL
     self.timeout_interval = timedelta(milliseconds=timeout_interval) \
-                              if self._validate_intantiation_props(timeout_interval) else self._DEFAULT_TIMEOUT_INTERVAL
+                              if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
+                              else self._DEFAULT_TIMEOUT_INTERVAL
     self._disposed = False
     self._is_started = False
     self._current_batch = list()
@@ -84,17 +87,18 @@ class BatchEventProcessor(EventProcessor, Closeable):
   def disposed(self):
     return self._disposed
 
-  def _validate_intantiation_props(self, prop):
-    if prop is None or prop < 0 or not validator.is_finite_number(prop):
+  def _validate_intantiation_props(self, prop, prop_name):
+    if prop is None or prop < 1 or not isinstance(prop, int) or not validator.is_finite_number(prop):
+      self.logger.info('Using default value for {}.'.format(prop_name))
       return False
 
     return True
 
   def _get_time_in_ms(self, _time=None):
-    if _time == 0:
-      return 0
+    if _time is None:
+      return int(round(time.time() * 1000))
 
-    return int(round((_time or time.time()) * 1000))
+    return int(round(_time * 1000))
 
   def start(self):
     if self.is_started and not self.disposed:
@@ -135,7 +139,7 @@ class BatchEventProcessor(EventProcessor, Closeable):
         if isinstance(item, UserEvent):
           self._add_to_batch(item)
 
-    except Exception, exception:
+    except Exception as exception:
       self.logger.error('Uncaught exception processing buffer. Error: ' + str(exception))
 
     finally:
@@ -214,7 +218,7 @@ class BatchEventProcessor(EventProcessor, Closeable):
     self.executor.join(self.timeout_interval.total_seconds())
 
     if self.executor.isAlive():
-      self.logger.error('Timeout exceeded while attempting to close for ' + self.timeout_interval + ' ms.')
+      self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
 
     self.logger.warning('Stopping Scheduler.')
     self._is_started = False

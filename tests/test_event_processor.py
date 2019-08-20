@@ -19,8 +19,7 @@ from six.moves import queue
 
 from . import base
 from optimizely.logger import SimpleLogger
-from optimizely.event.entity.visitor import Visitor
-from optimizely.event.entity.decision import Decision
+from optimizely.event.event_payload import Decision, Visitor
 from optimizely.event.user_event_factory import UserEventFactory
 from optimizely.event.event_processor import BatchEventProcessor
 
@@ -277,92 +276,104 @@ class BatchEventProcessorTest(base.BaseTest):
 
     self.assertEqual(0, self._event_processor.event_queue.qsize())
 
-  def test_init__negative_batchsize(self):
+  def test_init__invalid_batch_size(self):
     event_dispatcher = TestEventDispatcher()
 
-    self._event_processor = BatchEventProcessor(event_dispatcher,
-                                                self.optimizely.logger,
-                                                True,
-                                                self.event_queue,
-                                                -5,
-                                                self.MAX_DURATION_MS,
-                                                self.MAX_TIMEOUT_INTERVAL_MS
-                                                )
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = BatchEventProcessor(event_dispatcher,
+                                                  self.optimizely.logger,
+                                                  True,
+                                                  self.event_queue,
+                                                  -5,
+                                                  self.MAX_DURATION_MS,
+                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  )
 
     # default batch size is 10.
     self.assertEqual(self._event_processor.batch_size, 10)
+    mock_config_logging.info.assert_called_with('Using default value for batch_size.')
 
-  def test_init__NaN_batchsize(self):
+  def test_init__NaN_batch_size(self):
     event_dispatcher = TestEventDispatcher()
 
-    self._event_processor = BatchEventProcessor(event_dispatcher,
-                                                self.optimizely.logger,
-                                                True,
-                                                self.event_queue,
-                                                'batch_size',
-                                                self.MAX_DURATION_MS,
-                                                self.MAX_TIMEOUT_INTERVAL_MS
-                                                )
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = BatchEventProcessor(event_dispatcher,
+                                                  self.optimizely.logger,
+                                                  True,
+                                                  self.event_queue,
+                                                  'batch_size',
+                                                  self.MAX_DURATION_MS,
+                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  )
 
     # default batch size is 10.
     self.assertEqual(self._event_processor.batch_size, 10)
+    mock_config_logging.info.assert_called_with('Using default value for batch_size.')
 
-  def test_init__negative_flush_interval(self):
+  def test_init__invalid_flush_interval(self):
     event_dispatcher = TestEventDispatcher()
 
-    self._event_processor = BatchEventProcessor(event_dispatcher,
-                                                self.optimizely.logger,
-                                                True,
-                                                self.event_queue,
-                                                self.MAX_BATCH_SIZE,
-                                                -100,
-                                                self.MAX_TIMEOUT_INTERVAL_MS
-                                                )
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = BatchEventProcessor(event_dispatcher,
+                                                  mock_config_logging,
+                                                  True,
+                                                  self.event_queue,
+                                                  self.MAX_BATCH_SIZE,
+                                                  0,
+                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  )
 
     # default flush interval is 30s.
     self.assertEqual(self._event_processor.flush_interval, timedelta(seconds=30))
+    mock_config_logging.info.assert_called_with('Using default value for flush_interval.')
 
   def test_init__NaN_flush_interval(self):
     event_dispatcher = TestEventDispatcher()
 
-    self._event_processor = BatchEventProcessor(event_dispatcher,
-                                                self.optimizely.logger,
-                                                True,
-                                                self.event_queue,
-                                                self.MAX_BATCH_SIZE,
-                                                True,
-                                                self.MAX_TIMEOUT_INTERVAL_MS
-                                                )
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = BatchEventProcessor(event_dispatcher,
+                                                  self.optimizely.logger,
+                                                  True,
+                                                  self.event_queue,
+                                                  self.MAX_BATCH_SIZE,
+                                                  True,
+                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  )
 
     # default flush interval is 30s.
     self.assertEqual(self._event_processor.flush_interval, timedelta(seconds=30))
+    mock_config_logging.info.assert_called_with('Using default value for flush_interval.')
 
-  def test_init__negative_timeout_interval(self):
+  def test_init__invalid_timeout_interval(self):
     event_dispatcher = TestEventDispatcher()
 
-    self._event_processor = BatchEventProcessor(event_dispatcher,
-                                                self.optimizely.logger,
-                                                True,
-                                                self.event_queue,
-                                                self.MAX_BATCH_SIZE,
-                                                self.MAX_DURATION_MS,
-                                                -100
-                                                )
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = BatchEventProcessor(event_dispatcher,
+                                                  self.optimizely.logger,
+                                                  True,
+                                                  self.event_queue,
+                                                  self.MAX_BATCH_SIZE,
+                                                  self.MAX_DURATION_MS,
+                                                  -100
+                                                  )
 
     # default timeout interval is 5s.
     self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
+    mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
 
   def test_init__NaN_timeout_interval(self):
     event_dispatcher = TestEventDispatcher()
 
-    self._event_processor = BatchEventProcessor(event_dispatcher,
-                                                self.optimizely.logger,
-                                                True,
-                                                self.event_queue,
-                                                self.MAX_BATCH_SIZE,
-                                                self.MAX_DURATION_MS,
-                                                False
-                                                )
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = BatchEventProcessor(event_dispatcher,
+                                                  self.optimizely.logger,
+                                                  True,
+                                                  self.event_queue,
+                                                  self.MAX_BATCH_SIZE,
+                                                  self.MAX_DURATION_MS,
+                                                  False
+                                                  )
 
     # default timeout interval is 5s.
     self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
+    mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
