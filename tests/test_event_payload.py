@@ -10,21 +10,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 
+import json
 from operator import itemgetter
 
 from optimizely import version
-from optimizely.event.entity import event_batch
-from optimizely.event.entity import visitor_attribute
-from optimizely.event.entity import snapshot_event
-from optimizely.event.entity import visitor
-from optimizely.event.entity import decision
-from optimizely.event.entity import snapshot
+from optimizely.event.event_payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
 from . import base
 
 
-class EventEntitiesTest(base.BaseTest):
+class EventPayloadTest(base.BaseTest):
   def _validate_event_object(self, expected_params, event_obj):
     """ Helper method to validate properties of the event object. """
 
@@ -34,7 +29,7 @@ class EventEntitiesTest(base.BaseTest):
       sorted(event_obj['visitors'][0]['attributes'], key=itemgetter('key'))
     self.assertEqual(expected_params, event_obj)
 
-  def dict_clean(self, obj):
+  def _dict_clean(self, obj):
     """ Helper method to remove keys from dictionary with None values. """
 
     result = {}
@@ -78,15 +73,15 @@ class EventEntitiesTest(base.BaseTest):
       'revision': '42'
     }
 
-    batch = event_batch.EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
+    batch = EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
                                    False, True)
-    visitor_attr = visitor_attribute.VisitorAttribute("111094", "test_attribute", "custom", "test_value")
-    event = snapshot_event.SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
+    visitor_attr = VisitorAttribute("111094", "test_attribute", "custom", "test_value")
+    event = SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
                                          42123)
-    event_decision = decision.Decision("111182", "111127", "111129")
+    event_decision = Decision("111182", "111127", "111129")
 
-    snapshots = snapshot.Snapshot([event], [event_decision])
-    user = visitor.Visitor([snapshots], [visitor_attr], "test_user")
+    snapshots = Snapshot([event], [event_decision])
+    user = Visitor([snapshots], [visitor_attr], "test_user")
 
     batch.visitors = [user]
 
@@ -94,7 +89,7 @@ class EventEntitiesTest(base.BaseTest):
     self._validate_event_object(expected_params,
                                 json.loads(
                                   json.dumps(batch.__dict__, default=lambda o: o.__dict__),
-                                  object_pairs_hook=self.dict_clean
+                                  object_pairs_hook=self._dict_clean
                                 ))
 
   def test_conversion_event_equals_serialized_payload(self):
@@ -137,20 +132,20 @@ class EventEntitiesTest(base.BaseTest):
       'revision': '42'
     }
 
-    batch = event_batch.EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
+    batch = EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
                                     False, True)
-    visitor_attr_1 = visitor_attribute.VisitorAttribute("111094", "test_attribute", "custom", "test_value")
-    visitor_attr_2 = visitor_attribute.VisitorAttribute("111095", "test_attribute2", "custom", "test_value2")
-    event = snapshot_event.SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
+    visitor_attr_1 = VisitorAttribute("111094", "test_attribute", "custom", "test_value")
+    visitor_attr_2 = VisitorAttribute("111095", "test_attribute2", "custom", "test_value2")
+    event = SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
                                           42123, 4200, 1.234, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
-    snapshots = snapshot.Snapshot([event])
-    user = visitor.Visitor([snapshots], [visitor_attr_1, visitor_attr_2], "test_user")
+    snapshots = Snapshot([event])
+    user = Visitor([snapshots], [visitor_attr_1, visitor_attr_2], "test_user")
 
     batch.visitors = [user]
 
     self._validate_event_object(expected_params,
                                 json.loads(
                                   json.dumps(batch.__dict__, default=lambda o: o.__dict__),
-                                  object_pairs_hook=self.dict_clean
+                                  object_pairs_hook=self._dict_clean
                                 ))
