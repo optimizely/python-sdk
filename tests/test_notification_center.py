@@ -34,6 +34,10 @@ def on_track_listener(*args):
     pass
 
 
+def on_log_event_listener(*args):
+    pass
+
+
 class NotificationCenterTest(unittest.TestCase):
 
     def test_add_notification_listener__valid_type(self):
@@ -57,6 +61,11 @@ class NotificationCenterTest(unittest.TestCase):
         )
         self.assertEqual(
             4, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+        )
+
+        self.assertEqual(
+            5, test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT,
+                                                                    on_log_event_listener)
         )
 
     def test_add_notification_listener__multiple_listeners(self):
@@ -138,6 +147,7 @@ class NotificationCenterTest(unittest.TestCase):
         self.assertEqual(2, len(test_notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]))
         self.assertEqual(1, len(test_notification_center.notification_listeners[enums.NotificationTypes.DECISION]))
         self.assertEqual(0, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
+        self.assertEqual(0, len(test_notification_center.notification_listeners[enums.NotificationTypes.LOG_EVENT]))
 
         # Remove one of the activate listeners and assert.
         self.assertTrue(test_notification_center.remove_notification_listener(3))
@@ -164,6 +174,10 @@ class NotificationCenterTest(unittest.TestCase):
             3, test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
                                                                   another_on_activate_listener)
         )
+        self.assertEqual(
+            4, test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT,
+                                                                  on_log_event_listener)
+        )
 
         # Try removing a listener which does not exist.
         self.assertFalse(test_notification_center.remove_notification_listener(42))
@@ -180,6 +194,7 @@ class NotificationCenterTest(unittest.TestCase):
                                                            on_config_update_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+        test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT, on_log_event_listener)
 
         # Assert all listeners are there:
         for notification_type in notification_center.NOTIFICATION_TYPES:
@@ -210,6 +225,7 @@ class NotificationCenterTest(unittest.TestCase):
                                                            on_config_update_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+        test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT, on_log_event_listener)
 
         # Assert all listeners are there:
         for notification_type in notification_center.NOTIFICATION_TYPES:
@@ -219,6 +235,7 @@ class NotificationCenterTest(unittest.TestCase):
         test_notification_center.clear_all_notification_listeners()
 
         for notification_type in notification_center.NOTIFICATION_TYPES:
+            print(notification_type)
             self.assertEqual(0, len(test_notification_center.notification_listeners[notification_type]))
 
     def set_listener_called_to_true(self):

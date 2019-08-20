@@ -23,7 +23,7 @@ from .event_factory import EventFactory
 from optimizely import logger as _logging
 from optimizely.closeable import Closeable
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
-from optimizely.helpers import validator
+from optimizely.helpers import validator, enums
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -40,6 +40,7 @@ class EventProcessor(ABC):
 class BatchEventProcessor(EventProcessor, Closeable):
   """
   BatchEventProcessor is a batched implementation of the EventProcessor.
+
   The BatchEventProcessor maintains a single consumer thread that pulls events off of
   the blocking queue and buffers them for either a configured batch size or for a
   maximum duration before the resulting LogEvent is sent to the EventDispatcher.
@@ -60,7 +61,8 @@ class BatchEventProcessor(EventProcessor, Closeable):
                 event_queue=None,
                 batch_size=None,
                 flush_interval=None,
-                timeout_interval=None):
+                timeout_interval=None,
+                notification_center=None):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
@@ -72,6 +74,8 @@ class BatchEventProcessor(EventProcessor, Closeable):
     self.timeout_interval = timedelta(milliseconds=timeout_interval) \
                               if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
                               else self._DEFAULT_TIMEOUT_INTERVAL
+
+    self.notification_center = notification_center
     self._disposed = False
     self._is_started = False
     self._current_batch = list()
@@ -162,6 +166,12 @@ class BatchEventProcessor(EventProcessor, Closeable):
       self._current_batch = list()
 
     log_event = EventFactory.create_log_event(to_process_batch, self.logger)
+
+    if self.notification_center is not None:
+      self.notification_center.send_notifications(
+        enums.NotificationTypes.LOG_EVENT,
+        log_event
+      )
 
     try:
       self.event_dispatcher.dispatch_event(log_event)
