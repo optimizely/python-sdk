@@ -10,19 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import json
 
-from .entity.conversion_event import ConversionEvent
-from .entity.decision import Decision
-from .entity.event_batch import EventBatch
-from .entity.impression_event import ImpressionEvent
-from .entity.snapshot import Snapshot
-from .entity.snapshot_event import SnapshotEvent
-from .entity.visitor import Visitor
+from .user_event import ConversionEvent, ImpressionEvent
+from .event_payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor
 from .log_event import LogEvent
-from ..helpers import event_tag_utils
-from ..helpers import enums
-from ..helpers import validator
+from optimizely.helpers import enums, event_tag_utils, validator
 
 CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
