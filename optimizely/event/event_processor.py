@@ -165,7 +165,7 @@ class BatchEventProcessor(EventProcessor, Closeable):
 
     try:
       self.event_dispatcher.dispatch_event(log_event)
-    except Exception, e:
+    except Exception as e:
       self.logger.error('Error dispatching event: ' + str(log_event) + ' ' + str(e))
 
   def process(self, user_event):
