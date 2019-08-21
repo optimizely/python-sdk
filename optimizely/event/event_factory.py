@@ -14,7 +14,7 @@
 import json
 
 from .user_event import ConversionEvent, ImpressionEvent
-from .event_payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor
+from .payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
 from .log_event import LogEvent
 from optimizely.helpers import enums, event_tag_utils, validator
 
@@ -145,21 +145,23 @@ class EventFactory(object):
         if validator.is_attribute_valid(attribute_key, attribute_value):
           attribute_id = project_config.get_attribute_id(attribute_key)
           if attribute_id:
-            attributes_list.append({
-              'entity_id': attribute_id,
-              'key': attribute_key,
-              'type': CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-              'value': attribute_value
-            })
+            attributes_list.append(
+              VisitorAttribute(
+                attribute_id,
+                attribute_key,
+                CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+                attribute_value)
+            )
 
     # Append Bot Filtering Attribute
     bot_filtering_value = project_config.get_bot_filtering_value()
     if isinstance(bot_filtering_value, bool):
-      attributes_list.append({
-          'entity_id': enums.ControlAttributes.BOT_FILTERING,
-          'key': enums.ControlAttributes.BOT_FILTERING,
-          'type': CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-          'value': bot_filtering_value
-      })
+      attributes_list.append(
+        VisitorAttribute(
+           enums.ControlAttributes.BOT_FILTERING,
+           enums.ControlAttributes.BOT_FILTERING,
+           CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+           bot_filtering_value)
+      )
 
     return attributes_list

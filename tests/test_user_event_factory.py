@@ -74,7 +74,7 @@ class UserEventFactoryTest(base.BaseTest):
     self.assertEqual(experiment, impression_event.experiment)
     self.assertEqual(variation, impression_event.variation)
     self.assertEqual(user_id, impression_event.user_id)
-    self.assertEqual(expected_attrs, impression_event.visitor_attributes)
+    self.assertEqual([x.__dict__ for x in expected_attrs], [x.__dict__ for x in impression_event.visitor_attributes])
 
   def test_conversion_event(self):
     project_config = self.project_config
@@ -102,7 +102,7 @@ class UserEventFactoryTest(base.BaseTest):
     self.assertEqual(self.project_config.bot_filtering, conversion_event.bot_filtering)
     self.assertEqual(self.project_config.get_event(event_key), conversion_event.event)
     self.assertEqual(user_id, conversion_event.user_id)
-    self.assertEqual(expected_attrs, conversion_event.visitor_attributes)
+    self.assertEqual([x.__dict__ for x in expected_attrs], [x.__dict__ for x in conversion_event.visitor_attributes])
 
   def test_conversion_event__with_event_tags(self):
     project_config = self.project_config
@@ -135,5 +135,5 @@ class UserEventFactoryTest(base.BaseTest):
     self.assertEqual(self.project_config.bot_filtering, conversion_event.bot_filtering)
     self.assertEqual(self.project_config.get_event(event_key), conversion_event.event)
     self.assertEqual(user_id, conversion_event.user_id)
-    self.assertEqual(expected_attrs, conversion_event.visitor_attributes)
+    self.assertEqual([x.__dict__ for x in expected_attrs], [x.__dict__ for x in conversion_event.visitor_attributes])
     self.assertEqual(event_tags, conversion_event.event_tags)
