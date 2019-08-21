@@ -11,34 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-from operator import itemgetter
-
 from optimizely import version
-from optimizely.event.event_payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
+from optimizely.event.payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
 from . import base
 
 
 class EventPayloadTest(base.BaseTest):
-  def _validate_event_object(self, expected_params, event_obj):
-    """ Helper method to validate properties of the event object. """
-
-    expected_params['visitors'][0]['attributes'] = \
-      sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
-    event_obj['visitors'][0]['attributes'] = \
-      sorted(event_obj['visitors'][0]['attributes'], key=itemgetter('key'))
-    self.assertEqual(expected_params, event_obj)
-
-  def _dict_clean(self, obj):
-    """ Helper method to remove keys from dictionary with None values. """
-
-    result = {}
-    for k, v in obj:
-      if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
-        continue
-      else:
-        result[k] = v
-    return result
 
   def test_impression_event_equals_serialized_payload(self):
     expected_params = {
@@ -73,24 +51,19 @@ class EventPayloadTest(base.BaseTest):
       'revision': '42'
     }
 
-    batch = EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
+    batch = EventBatch('12001', '111001', '42', 'python-sdk', version.__version__,
                                    False, True)
-    visitor_attr = VisitorAttribute("111094", "test_attribute", "custom", "test_value")
-    event = SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
+    visitor_attr = VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
+    event = SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated',
                                          42123)
-    event_decision = Decision("111182", "111127", "111129")
+    event_decision = Decision('111182', '111127', '111129')
 
     snapshots = Snapshot([event], [event_decision])
-    user = Visitor([snapshots], [visitor_attr], "test_user")
+    user = Visitor([snapshots], [visitor_attr], 'test_user')
 
     batch.visitors = [user]
 
-    self.maxDiff = None
-    self._validate_event_object(expected_params,
-                                json.loads(
-                                  json.dumps(batch.__dict__, default=lambda o: o.__dict__),
-                                  object_pairs_hook=self._dict_clean
-                                ))
+    self.assertEqual(batch, expected_params)
 
   def test_conversion_event_equals_serialized_payload(self):
     expected_params = {
@@ -132,20 +105,16 @@ class EventPayloadTest(base.BaseTest):
       'revision': '42'
     }
 
-    batch = EventBatch("12001", "111001", "42", "python-sdk", version.__version__,
-                                    False, True)
-    visitor_attr_1 = VisitorAttribute("111094", "test_attribute", "custom", "test_value")
-    visitor_attr_2 = VisitorAttribute("111095", "test_attribute2", "custom", "test_value2")
-    event = SnapshotEvent("111182", "a68cf1ad-0393-4e18-af87-efe8f01a7c9c", "campaign_activated",
+    batch = EventBatch('12001', '111001', '42', 'python-sdk', version.__version__,
+                                   False, True)
+    visitor_attr_1 = VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
+    visitor_attr_2 = VisitorAttribute('111095', 'test_attribute2', 'custom', 'test_value2')
+    event = SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated',
                                           42123, 4200, 1.234, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
     snapshots = Snapshot([event])
-    user = Visitor([snapshots], [visitor_attr_1, visitor_attr_2], "test_user")
+    user = Visitor([snapshots], [visitor_attr_1, visitor_attr_2], 'test_user')
 
     batch.visitors = [user]
 
-    self._validate_event_object(expected_params,
-                                json.loads(
-                                  json.dumps(batch.__dict__, default=lambda o: o.__dict__),
-                                  object_pairs_hook=self._dict_clean
-                                ))
+    self.assertEqual(batch, expected_params)

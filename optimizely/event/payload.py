@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
 
 class EventBatch(object):
   """ Class respresenting Event Batch. """
@@ -25,6 +27,26 @@ class EventBatch(object):
     self.anonymize_ip = anonymize_ip
     self.enrich_decisions = enrich_decisions
     self.visitors = visitors
+
+  def __eq__(self, other):
+    batch_obj = json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__),
+                            object_pairs_hook=self._dict_clean)
+
+    print(batch_obj)
+    print(other)
+
+    return batch_obj == other
+
+  def _dict_clean(self, obj):
+    """ Helper method to remove keys from dictionary with None values. """
+
+    result = {}
+    for k, v in obj:
+      if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
+        continue
+      else:
+        result[k] = v
+    return result
 
 
 class Decision(object):
@@ -69,8 +91,8 @@ class Visitor(object):
 class VisitorAttribute(object):
   """ Class representing Visitor Attribute. """
 
-  def __init__(self, entity_id, key, event_type, value):
+  def __init__(self, entity_id, key, attribute_type, value):
     self.entity_id = entity_id
     self.key = key
-    self.type = event_type
+    self.type = attribute_type
     self.value = value
