@@ -31,10 +31,6 @@ class EventBatch(object):
   def __eq__(self, other):
     batch_obj = json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__),
                             object_pairs_hook=self._dict_clean)
-
-    print(batch_obj)
-    print(other)
-
     return batch_obj == other
 
   def _dict_clean(self, obj):
