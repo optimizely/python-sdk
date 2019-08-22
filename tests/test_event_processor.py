@@ -17,7 +17,7 @@ from datetime import timedelta
 from six.moves import queue
 
 from . import base
-from optimizely.event.event_payload import Decision, Visitor
+from optimizely.event.payload import Decision, Visitor
 from optimizely.event.event_processor import BatchEventProcessor
 from optimizely.event.log_event import LogEvent
 from optimizely.event.user_event_factory import UserEventFactory
