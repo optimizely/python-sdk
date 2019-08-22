@@ -44,6 +44,17 @@ class EventFactory(object):
       LogEvent instance.
     """
 
+    def _dict_clean(obj):
+      """ Helper method to remove keys from dictionary with None values. """
+
+      result = {}
+      for k, v in obj:
+        if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
+          continue
+        else:
+          result[k] = v
+      return result
+
     if not isinstance(user_events, list):
       user_events = [user_events]
 
@@ -68,9 +79,12 @@ class EventFactory(object):
 
     event_batch.visitors = visitors
 
-    event_batch_json = json.dumps(event_batch.__dict__, default=lambda o: o.__dict__)
+    event_params = json.loads(
+        json.dumps(event_batch.__dict__, default=lambda o: o.__dict__),
+        object_pairs_hook=_dict_clean
+      )
 
-    return LogEvent(cls.EVENT_ENDPOINT, event_batch_json, cls.HTTP_VERB, cls.HTTP_HEADERS)
+    return LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
   @classmethod
   def _create_visitor(cls, user_event, logger):
