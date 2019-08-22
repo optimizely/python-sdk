@@ -16,7 +16,7 @@ import uuid
 
 from optimizely import version
 
-SDK_TYPE = 'python-sdk'
+CLIENT_NAME = 'python-sdk'
 
 
 class UserEvent(object):
@@ -67,6 +67,6 @@ class EventContext(object):
     self.account_id = account_id
     self.project_id = project_id
     self.revision = revision
-    self.client_name = SDK_TYPE
+    self.client_name = CLIENT_NAME
     self.client_version = version.__version__
     self.anonymize_ip = anonymize_ip

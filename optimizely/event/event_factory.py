@@ -14,7 +14,7 @@
 import json
 
 from .user_event import ConversionEvent, ImpressionEvent
-from .event_payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor
+from .payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
 from .log_event import LogEvent
 from optimizely.helpers import enums, event_tag_utils, validator
 
@@ -44,6 +44,17 @@ class EventFactory(object):
       LogEvent instance.
     """
 
+    def _dict_clean(obj):
+      """ Helper method to remove keys from dictionary with None values. """
+
+      result = {}
+      for k, v in obj:
+        if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
+          continue
+        else:
+          result[k] = v
+      return result
+
     if not isinstance(user_events, list):
       user_events = [user_events]
 
@@ -68,9 +79,12 @@ class EventFactory(object):
 
     event_batch.visitors = visitors
 
-    event_batch_json = json.dumps(event_batch.__dict__, default=lambda o: o.__dict__)
+    event_params = json.loads(
+        json.dumps(event_batch.__dict__, default=lambda o: o.__dict__),
+        object_pairs_hook=_dict_clean
+      )
 
-    return LogEvent(cls.EVENT_ENDPOINT, event_batch_json, cls.HTTP_VERB, cls.HTTP_HEADERS)
+    return LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
   @classmethod
   def _create_visitor(cls, user_event, logger):
@@ -145,21 +159,23 @@ class EventFactory(object):
         if validator.is_attribute_valid(attribute_key, attribute_value):
           attribute_id = project_config.get_attribute_id(attribute_key)
           if attribute_id:
-            attributes_list.append({
-              'entity_id': attribute_id,
-              'key': attribute_key,
-              'type': CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-              'value': attribute_value
-            })
+            attributes_list.append(
+              VisitorAttribute(
+                attribute_id,
+                attribute_key,
+                CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+                attribute_value)
+            )
 
     # Append Bot Filtering Attribute
     bot_filtering_value = project_config.get_bot_filtering_value()
     if isinstance(bot_filtering_value, bool):
-      attributes_list.append({
-          'entity_id': enums.ControlAttributes.BOT_FILTERING,
-          'key': enums.ControlAttributes.BOT_FILTERING,
-          'type': CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-          'value': bot_filtering_value
-      })
+      attributes_list.append(
+        VisitorAttribute(
+           enums.ControlAttributes.BOT_FILTERING,
+           enums.ControlAttributes.BOT_FILTERING,
+           CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+           bot_filtering_value)
+      )
 
     return attributes_list

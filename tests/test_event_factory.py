@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import mock
 from operator import itemgetter
 import time
@@ -53,23 +52,10 @@ class EventFactoryTest(base.BaseTest):
     self.uuid = str(uuid.uuid4())
     self.timestamp = int(round(time.time() * 1000))
 
-  def _dict_clean(self, obj):
-    """ Helper method to remove keys from dictionary with None values. """
-
-    result = {}
-    for k, v in obj:
-      if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
-        continue
-      else:
-        result[k] = v
-    return result
-
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
 
     self.assertEqual(expected_url, event_obj.url)
-
-    event_obj.params = json.loads(event_obj.params, object_pairs_hook=self._dict_clean)
 
     expected_params['visitors'][0]['attributes'] = \
       sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
