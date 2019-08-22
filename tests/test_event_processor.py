@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import mock
 import time
 from datetime import timedelta
@@ -70,7 +69,7 @@ class TestEventDispatcher(object):
 
   def dispatch_event(self, actual_log_event):
     visitors = []
-    log_event_params = json.loads(actual_log_event.params)
+    log_event_params = actual_log_event.params
 
     if 'visitors' in log_event_params:
 
