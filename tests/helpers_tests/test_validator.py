@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -20,6 +20,7 @@ from optimizely import config_manager
 from optimizely import error_handler
 from optimizely import event_dispatcher
 from optimizely import logger
+from optimizely.event import event_processor
 from optimizely.helpers import validator
 
 from tests import base
@@ -41,6 +42,20 @@ class ValidatorTest(base.BaseTest):
         pass
 
     self.assertFalse(validator.is_config_manager_valid(CustomConfigManager()))
+
+  def test_is_event_processor_valid__returns_true(self):
+    """ Test that valid event_processor returns True. """
+
+    self.assertTrue(validator.is_event_processor_valid(event_processor.ForwardingEventProcessor))
+
+  def test_is_event_processor_valid__returns_false(self):
+    """ Test that invalid event_processor returns False. """
+
+    class CustomEventProcessor(object):
+      def some_other_method(self):
+        pass
+
+    self.assertFalse(validator.is_event_processor_valid(CustomEventProcessor))
 
   def test_is_datafile_valid__returns_true(self):
     """ Test that valid datafile returns True. """

@@ -74,7 +74,6 @@ class BatchEventProcessor(EventProcessor, Closeable):
     self.timeout_interval = timedelta(milliseconds=timeout_interval) \
                               if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
                               else self._DEFAULT_TIMEOUT_INTERVAL
-
     self.notification_center = notification_center
     self._disposed = False
     self._is_started = False
@@ -232,3 +231,31 @@ class BatchEventProcessor(EventProcessor, Closeable):
 
     self.logger.warning('Stopping Scheduler.')
     self._is_started = False
+
+
+class ForwardingEventProcessor(EventProcessor):
+
+  def __init__(self, event_dispatcher, logger, notification_center=None):
+    self.event_dispatcher = event_dispatcher
+    self.logger = logger
+    self.notification_center = notification_center
+
+  def process(self, user_event):
+    if not isinstance(user_event, UserEvent):
+      self.logger.error('Provided event is in an invalid format.')
+      return
+
+    self.logger.debug('Received user_event: ' + str(user_event))
+
+    log_event = EventFactory.create_log_event(user_event, self.logger)
+
+    if self.notification_center is not None:
+      self.notification_center.send_notifications(
+        enums.NotificationTypes.LOG_EVENT,
+        log_event
+      )
+
+    try:
+      self.event_dispatcher.dispatch_event(log_event)
+    except Exception, e:
+      self.logger.exception('Error dispatching event: ' + str(log_event) + ' ' + str(e))

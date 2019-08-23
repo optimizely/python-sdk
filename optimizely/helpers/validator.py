@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -70,6 +70,19 @@ def is_config_manager_valid(config_manager):
   """
 
   return _has_method(config_manager, 'get_config')
+
+
+def is_event_processor_valid(event_processor):
+  """ Given an event_processor, determine if it is valid or not i.e. provides a process method.
+
+  Args:
+    event_processor: Provides a process method to create user events and then send requests.
+
+  Returns:
+    Boolean depending upon whether event_processor is valid or not.
+  """
+
+  return _has_method(event_processor, 'process')
 
 
 def is_error_handler_valid(error_handler):

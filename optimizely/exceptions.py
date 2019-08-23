@@ -43,7 +43,7 @@ class InvalidGroupException(Exception):
 
 
 class InvalidInputException(Exception):
-  """ Raised when provided datafile, event dispatcher, logger or error handler is invalid. """
+  """ Raised when provided datafile, event dispatcher, logger, event processor or error handler is invalid. """
   pass
 
 
