@@ -257,5 +257,5 @@ class ForwardingEventProcessor(EventProcessor):
 
     try:
       self.event_dispatcher.dispatch_event(log_event)
-    except Exception, e:
+    except Exception as e:
       self.logger.exception('Error dispatching event: ' + str(log_event) + ' ' + str(e))
