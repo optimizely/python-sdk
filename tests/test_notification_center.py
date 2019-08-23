@@ -235,7 +235,6 @@ class NotificationCenterTest(unittest.TestCase):
         test_notification_center.clear_all_notification_listeners()
 
         for notification_type in notification_center.NOTIFICATION_TYPES:
-            print(notification_type)
             self.assertEqual(0, len(test_notification_center.notification_listeners[notification_type]))
 
     def set_listener_called_to_true(self):
