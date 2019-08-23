@@ -434,6 +434,12 @@ class OptimizelyTest(base.BaseTest):
     self.optimizely.notification_center.add_notification_listener(
       enums.NotificationTypes.ACTIVATE, on_activate)
 
+    def on_activate(event_key, user_id, attributes, event_tags, event):
+      pass
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.ACTIVATE, on_activate)
+
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
@@ -3706,6 +3712,50 @@ class OptimizelyTest(base.BaseTest):
       10,
       opt_obj.get_feature_variable('feat2_with_var', 'z', 'user1', {})
     )
+
+  def test_close_invalidates_optimizely_object(self):
+    """ Test that close invalidates Optimizely instance. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+    opt_obj.close()
+
+    self.assertFalse(opt_obj.is_valid)
+
+  def test_close__disables_api_requests(self):
+    """ Test that close disables API requests and returns None. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+
+    activate_before_close = opt_obj.activate('test_experiment', 'user_1')
+    self.assertIsNotNone(activate_before_close)
+
+    opt_obj.close()
+
+    activate_after_close = opt_obj.activate('test_experiment', 'user_1')
+    self.assertIsNone(activate_after_close)
+
+  def test_close__also_closes_config_manager(self):
+    """ Test that close also closes config_manager. """
+
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), sdk_key='some_key')
+
+    opt_obj.close()
+
+    self.assertFalse(opt_obj.is_valid)
+    self.assertTrue(opt_obj.disposed)
+    self.assertTrue(opt_obj.config_manager.disposed)
+
+  def test_close__apis_do_not_crash_after_close(self):
+    opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+    opt_obj.close()
+
+    self.assertFalse(opt_obj.is_valid)
+    self.assertIsNone(opt_obj.activate('test_experiment', 'user_1'))
+    self.assertIsNone(opt_obj.get_variation('test_experiment', 'user_1'))
+    self.assertIsNone(opt_obj.track('test_event', 'user_1'))
+    # why do we not return none in this case?
+    self.assertEqual([], opt_obj.get_enabled_features('user_1'))
+    self.assertIsNone(opt_obj.get_feature_variable('feat2_with_var', 'z', 'user1', {}))
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):

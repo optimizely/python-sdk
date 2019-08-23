@@ -17,6 +17,7 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
+from .closeable import Closeable
 from .config_manager import StaticConfigManager, PollingConfigManager
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
@@ -97,6 +98,11 @@ class Optimizely(object):
 
     self.event_builder = event_builder.EventBuilder()
     self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
+    self._disposed = False
+
+  @property
+  def disposed(self):
+    return self._disposed
 
   def _validate_instantiation_options(self):
     """ Helper method to validate all instantiation parameters.
@@ -742,3 +748,23 @@ class Optimizely(object):
 
     forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
     return forced_variation.key if forced_variation else None
+
+  def close(self):
+    """ Checks if event_processor and config_manager are closeable and calls close on them. """
+
+    if self.disposed:
+      return
+
+    self._try_close(self.event_processor)
+    self._try_close(self.config_manager)
+
+    self.is_valid = False
+    self._disposed = True
+
+  def _try_close(self, obj):
+    """ Helper method which checks if obj implements close method and calls close() on it. """
+
+    if not isinstance(obj, Closeable):
+      return
+
+    obj.close()
