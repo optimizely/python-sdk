@@ -22,8 +22,11 @@ CLIENT_NAME = 'python-sdk'
 class UserEvent(object):
   """ Class respresenting User Event. """
 
-  def __init__(self, event_context):
+  def __init__(self, event_context, user_id, visitor_attributes, bot_filtering=None):
     self.event_context = event_context
+    self.user_id = user_id
+    self.visitor_attributes = visitor_attributes
+    self.bot_filtering = bot_filtering
     self.uuid = self._get_uuid()
     self.timestamp = self._get_time()
 
@@ -38,26 +41,18 @@ class ImpressionEvent(UserEvent):
   """ Class representing Impression Event. """
 
   def __init__(self, event_context, user_id, experiment, visitor_attributes, variation, bot_filtering=None):
-    super(ImpressionEvent, self).__init__(event_context)
-    self.event_context = event_context
-    self.user_id = user_id
+    super(ImpressionEvent, self).__init__(event_context, user_id, visitor_attributes, bot_filtering)
     self.experiment = experiment
-    self.visitor_attributes = visitor_attributes
     self.variation = variation
-    self.bot_filtering = bot_filtering
 
 
 class ConversionEvent(UserEvent):
   """ Class representing Conversion Event. """
 
   def __init__(self, event_context, event, user_id, visitor_attributes, event_tags, bot_filtering=None):
-    super(ConversionEvent, self).__init__(event_context)
-    self.event_context = event_context
+    super(ConversionEvent, self).__init__(event_context, user_id, visitor_attributes, bot_filtering)
     self.event = event
-    self.user_id = user_id
-    self.visitor_attributes = visitor_attributes
     self.event_tags = event_tags
-    self.bot_filtering = bot_filtering
 
 
 class EventContext(object):

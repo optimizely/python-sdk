@@ -18,7 +18,7 @@ class EventBatch(object):
   """ Class respresenting Event Batch. """
 
   def __init__(self, account_id, project_id, revision, client_name, client_version,
-               anonymize_ip, enrich_decisions, visitors=None):
+               anonymize_ip, enrich_decisions=True, visitors=None):
     self.account_id = account_id
     self.project_id = project_id
     self.revision = revision
@@ -26,7 +26,7 @@ class EventBatch(object):
     self.client_version = client_version
     self.anonymize_ip = anonymize_ip
     self.enrich_decisions = enrich_decisions
-    self.visitors = visitors
+    self.visitors = visitors or []
 
   def __eq__(self, other):
     batch_obj = json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__),
