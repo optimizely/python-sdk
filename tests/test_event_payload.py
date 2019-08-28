@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from optimizely import version
-from optimizely.event.payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
+from optimizely.event import payload
 from . import base
 
 
@@ -51,15 +51,15 @@ class EventPayloadTest(base.BaseTest):
       'revision': '42'
     }
 
-    batch = EventBatch('12001', '111001', '42', 'python-sdk', version.__version__,
+    batch = payload.EventBatch('12001', '111001', '42', 'python-sdk', version.__version__,
                                    False, True)
-    visitor_attr = VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
-    event = SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated',
+    visitor_attr = payload.VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
+    event = payload.SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated',
                                          42123)
-    event_decision = Decision('111182', '111127', '111129')
+    event_decision = payload.Decision('111182', '111127', '111129')
 
-    snapshots = Snapshot([event], [event_decision])
-    user = Visitor([snapshots], [visitor_attr], 'test_user')
+    snapshots = payload.Snapshot([event], [event_decision])
+    user = payload.Visitor([snapshots], [visitor_attr], 'test_user')
 
     batch.visitors = [user]
 
@@ -105,15 +105,15 @@ class EventPayloadTest(base.BaseTest):
       'revision': '42'
     }
 
-    batch = EventBatch('12001', '111001', '42', 'python-sdk', version.__version__,
+    batch = payload.EventBatch('12001', '111001', '42', 'python-sdk', version.__version__,
                                    False, True)
-    visitor_attr_1 = VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
-    visitor_attr_2 = VisitorAttribute('111095', 'test_attribute2', 'custom', 'test_value2')
-    event = SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated',
+    visitor_attr_1 = payload.VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
+    visitor_attr_2 = payload.VisitorAttribute('111095', 'test_attribute2', 'custom', 'test_value2')
+    event = payload.SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated',
                                           42123, 4200, 1.234, {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
-    snapshots = Snapshot([event])
-    user = Visitor([snapshots], [visitor_attr_1, visitor_attr_2], 'test_user')
+    snapshots = payload.Snapshot([event])
+    user = payload.Visitor([snapshots], [visitor_attr_1, visitor_attr_2], 'test_user')
 
     batch.visitors = [user]
 
