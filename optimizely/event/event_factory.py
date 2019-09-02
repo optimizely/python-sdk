@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-
 from .user_event import ConversionEvent, ImpressionEvent
 from .payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
 from .log_event import LogEvent
@@ -44,24 +42,17 @@ class EventFactory(object):
       LogEvent instance.
     """
 
-    def _dict_clean(obj):
-      """ Helper method to remove keys from dictionary with None values. """
-
-      result = {}
-      for k, v in obj:
-        if v is None and k in ['revenue', 'value', 'tags', 'decisions']:
-          continue
-        else:
-          result[k] = v
-      return result
-
     if not isinstance(user_events, list):
       user_events = [user_events]
 
     visitors = []
 
     for user_event in user_events:
-      visitors.append(cls._create_visitor(user_event, logger))
+      visitor = cls._create_visitor(user_event, logger)
+
+      if visitor:
+        visitors.append(visitor)
+
       user_context = user_event.event_context
 
       event_batch = EventBatch(
@@ -74,32 +65,28 @@ class EventFactory(object):
         True
       )
 
-    if len([x for x in visitors if x is not None]) == 0:
+    if len(visitors) == 0:
       return None
 
     event_batch.visitors = visitors
 
-    event_params = json.loads(
-        json.dumps(event_batch.__dict__, default=lambda o: o.__dict__),
-        object_pairs_hook=_dict_clean
-      )
+    event_params = event_batch.get_event_params()
 
     return LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
   @classmethod
   def _create_visitor(cls, user_event, logger):
-    if not user_event:
-      return None
+    """ Helper method to create Visitor instance for event_batch. """
 
     if isinstance(user_event, ImpressionEvent):
       decision = Decision(
-        user_event.experiment.layerId if user_event.experiment else None,
-        user_event.experiment.id if user_event.experiment else None,
-        user_event.variation.id if user_event.variation else None
+        user_event.experiment.layerId,
+        user_event.experiment.id,
+        user_event.variation.id,
       )
 
       snapshot_event = SnapshotEvent(
-        user_event.experiment.layerId if user_event.experiment else None,
+        user_event.experiment.layerId,
         user_event.uuid,
         cls.ACTIVATE_EVENT_KEY,
         user_event.timestamp
@@ -116,9 +103,9 @@ class EventFactory(object):
       value = event_tag_utils.get_numeric_value(user_event.event_tags, logger)
 
       snapshot_event = SnapshotEvent(
-        user_event.event.id if user_event.event else None,
+        user_event.event.id,
         user_event.uuid,
-        user_event.event.key if user_event.event else None,
+        user_event.event.key,
         user_event.timestamp,
         revenue,
         value,
@@ -132,15 +119,15 @@ class EventFactory(object):
       return visitor
 
     else:
-      # include log message for invalid event type
-      return
+      logger.error('Invalid user event.')
+      return None
 
   @staticmethod
   def build_attribute_list(attributes, project_config):
     """ Create Vistor Attribute List.
 
     Args:
-      attributes: Dict representing user attributes and values which need to be recorded.
+      attributes: Dict representing user attributes and values which need to be recorded or None.
       project_config: Instance of ProjectConfig.
 
     Returns:
