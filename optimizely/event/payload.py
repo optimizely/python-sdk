@@ -29,8 +29,7 @@ class EventBatch(object):
     self.visitors = visitors or []
 
   def __eq__(self, other):
-    batch_obj = json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__),
-                            object_pairs_hook=self._dict_clean)
+    batch_obj = self.get_event_params()
     return batch_obj == other
 
   def _dict_clean(self, obj):
@@ -43,6 +42,14 @@ class EventBatch(object):
       else:
         result[k] = v
     return result
+
+  def get_event_params(self):
+    """ Method to return valid params for LogEvent payload. """
+
+    return json.loads(
+        json.dumps(self.__dict__, default=lambda o: o.__dict__),
+        object_pairs_hook=self._dict_clean
+      )
 
 
 class Decision(object):
