@@ -30,10 +30,14 @@ class UserEventFactory(object):
       attributes: Dict representing user attributes and values which need to be recorded.
 
     Returns:
-      Event object encapsulating the impression event.
+      Event object encapsulating the impression event. None if:
+      - activated_experiment is None.
     """
 
-    experiment_key = activated_experiment.key if activated_experiment else None
+    if not activated_experiment:
+      return None
+
+    experiment_key = activated_experiment.key
     variation = project_config.get_variation_from_id(experiment_key, variation_id)
 
     event_context = EventContext(

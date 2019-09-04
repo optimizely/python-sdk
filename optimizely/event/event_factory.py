@@ -35,7 +35,7 @@ class EventFactory(object):
     """ Create LogEvent instance.
 
     Args:
-      user_events: An array of UserEvent instances.
+      user_events: A single UserEvent instance or a list of UserEvent instances.
       logger: Provides a logger instance.
 
     Returns:
@@ -76,7 +76,16 @@ class EventFactory(object):
 
   @classmethod
   def _create_visitor(cls, user_event, logger):
-    """ Helper method to create Visitor instance for event_batch. """
+    """ Helper method to create Visitor instance for event_batch.
+
+    Args:
+      user_event: Instance of UserEvent.
+      logger: Provides a logger instance.
+
+    Returns:
+      Instance of Visitor. None if:
+      - user_event is invalid.
+    """
 
     if isinstance(user_event, ImpressionEvent):
       decision = Decision(
