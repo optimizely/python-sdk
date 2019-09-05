@@ -287,7 +287,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   self.optimizely.logger,
                                                   True,
                                                   self.event_queue,
-                                                  -5,
+                                                  5.5,
                                                   self.MAX_DURATION_MS,
                                                   self.MAX_TIMEOUT_INTERVAL_MS
                                                   )
@@ -327,7 +327,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   )
 
     # default flush interval is 30s.
-    self.assertEqual(self._event_processor.flush_interval, timedelta(seconds=30))
+    self.assertEqual(self._event_processor.flush_interval, timedelta(milliseconds=30000))
     mock_config_logging.info.assert_called_with('Using default value for flush_interval.')
 
   def test_init__NaN_flush_interval(self):
@@ -344,7 +344,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   )
 
     # default flush interval is 30s.
-    self.assertEqual(self._event_processor.flush_interval, timedelta(seconds=30))
+    self.assertEqual(self._event_processor.flush_interval, timedelta(milliseconds=30000))
     mock_config_logging.info.assert_called_with('Using default value for flush_interval.')
 
   def test_init__invalid_timeout_interval(self):
@@ -361,7 +361,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   )
 
     # default timeout interval is 5s.
-    self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
+    self.assertEqual(self._event_processor.timeout_interval, timedelta(milliseconds=5000))
     mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
 
   def test_init__NaN_timeout_interval(self):
@@ -378,7 +378,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   )
 
     # default timeout interval is 5s.
-    self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
+    self.assertEqual(self._event_processor.timeout_interval, timedelta(milliseconds=5000))
     mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
 
   def test_notification_center(self):
