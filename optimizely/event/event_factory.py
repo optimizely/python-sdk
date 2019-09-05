@@ -143,10 +143,10 @@ class EventFactory(object):
       List consisting of valid attributes for the user. Empty otherwise.
     """
 
-    if project_config is None:
-      return None
-
     attributes_list = []
+
+    if project_config is None:
+      return attributes_list
 
     if isinstance(attributes, dict):
       for attribute_key in attributes.keys():
