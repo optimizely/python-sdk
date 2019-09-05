@@ -48,8 +48,8 @@ class BatchEventProcessor(EventProcessor, Closeable):
 
   _DEFAULT_QUEUE_CAPACITY = 1000
   _DEFAULT_BATCH_SIZE = 10
-  _DEFAULT_FLUSH_INTERVAL = timedelta(seconds=30)
-  _DEFAULT_TIMEOUT_INTERVAL = timedelta(seconds=5)
+  _DEFAULT_FLUSH_INTERVAL = timedelta(milliseconds=30000)
+  _DEFAULT_TIMEOUT_INTERVAL = timedelta(milliseconds=5000)
   _SHUTDOWN_SIGNAL = object()
   _FLUSH_SIGNAL = object()
   LOCK = threading.Lock()
@@ -91,7 +91,8 @@ class BatchEventProcessor(EventProcessor, Closeable):
     return self._disposed
 
   def _validate_intantiation_props(self, prop, prop_name):
-    if prop is None or not isinstance(prop, int) or prop < 1 or not validator.is_finite_number(prop):
+    if (prop_name == 'batch_size' and not isinstance(prop, int)) or prop is None or prop < 1 or \
+      not validator.is_finite_number(prop):
       self.logger.info('Using default value for {}.'.format(prop_name))
       return False
 
