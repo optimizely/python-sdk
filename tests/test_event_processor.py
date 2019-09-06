@@ -112,7 +112,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self.optimizely.logger = SimpleLogger()
 
   def tearDown(self):
-    self._event_processor.close()
+    self._event_processor.stop()
 
   def _build_conversion_event(self, event_name, project_config=None):
     config = project_config or self.project_config
@@ -128,7 +128,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                  self.MAX_TIMEOUT_INTERVAL_MS
                                                 )
 
-  def test_drain_on_close(self):
+  def test_drain_on_stop(self):
     event_dispatcher = TestEventDispatcher()
 
     with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
@@ -257,7 +257,7 @@ class BatchEventProcessorTest(base.BaseTest):
     time.sleep(1.5)
 
     self.assertStrictTrue(event_dispatcher.compare_events())
-    self._event_processor.close()
+    self._event_processor.stop()
 
     self._event_processor.process(user_event)
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
@@ -265,7 +265,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.start()
     self.assertStrictTrue(self._event_processor.is_started)
 
-    self._event_processor.close()
+    self._event_processor.stop()
     self.assertStrictFalse(self._event_processor.is_started)
 
     self.assertEqual(0, self._event_processor.event_queue.qsize())
