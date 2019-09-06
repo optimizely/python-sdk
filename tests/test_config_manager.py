@@ -224,7 +224,7 @@ class PollingConfigManagerTest(base.BaseTest):
             project_config_manager.set_update_interval('invalid interval')
 
         # Assert that update_interval cannot be set to less than allowed minimum and instead is set to default value.
-        project_config_manager.set_update_interval(0.42)
+        project_config_manager.set_update_interval(-4.2)
         self.assertEqual(enums.ConfigManager.DEFAULT_UPDATE_INTERVAL, project_config_manager.update_interval)
 
         # Assert that if no update_interval is provided, it is set to default value.
