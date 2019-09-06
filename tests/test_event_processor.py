@@ -37,12 +37,7 @@ class CanonicalEvent(object):
     if other is None:
       return False
 
-    return (self._experiment_id == other._experiment_id and
-                 self._variation_id == other._variation_id and
-                 self._event_name == other._event_name and
-                 self._visitor_id == other._visitor_id and
-                 self._attributes == other._attributes and
-                 self._tags == other._tags)
+    return self.__dict__ == other.__dict__
 
 
 class TestEventDispatcher(object):
