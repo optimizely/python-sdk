@@ -13,7 +13,7 @@
 
 
 class LogEvent(object):
-  """ Representation of an event which can be sent to the Optimizely logging endpoint. """
+  """ Representation of an event which can be sent to Optimizely events API. """
 
   def __init__(self, url, params, http_verb=None, headers=None):
     self.url = url
