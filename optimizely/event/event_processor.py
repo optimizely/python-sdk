@@ -235,8 +235,20 @@ class BatchEventProcessor(EventProcessor, Closeable):
 
 
 class ForwardingEventProcessor(EventProcessor):
+  """
+  ForwardingEventProcessor serves as the default EventProcessor.
+
+  The ForwardingEventProcessor sends the LogEvent to EventDispatcher as soon as it is received.
+  """
 
   def __init__(self, event_dispatcher, logger, notification_center=None):
+    """ ForwardingEventProcessor init method to configure event dispatching.
+
+    Args:
+      event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
+      logger: Optional component which provides a log method to log messages. By default nothing would be logged.
+      notification_center: Optional instance of notification_center.NotificationCenter.
+    """
     self.event_dispatcher = event_dispatcher
     self.logger = logger
     self.notification_center = notification_center

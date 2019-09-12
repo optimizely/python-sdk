@@ -17,7 +17,8 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
-from .config_manager import StaticConfigManager, PollingConfigManager
+from .config_manager import PollingConfigManager
+from .config_manager import StaticConfigManager
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
 from .event.event_processor import ForwardingEventProcessor
