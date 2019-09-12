@@ -23,7 +23,8 @@ from .event_factory import EventFactory
 from optimizely import logger as _logging
 from optimizely.closeable import Closeable
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
-from optimizely.helpers import validator, enums
+from optimizely.helpers import enums
+from optimizely.helpers import validator
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -63,6 +64,20 @@ class BatchEventProcessor(EventProcessor, Closeable):
                 flush_interval=None,
                 timeout_interval=None,
                 notification_center=None):
+    """ EventProcessor init method to configure event batching.
+    Args:
+      event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
+      logger: Provides a log method to log messages. By default nothing would be logged.
+      default_start: Optional boolean param which starts the consumer thread if set to True.
+                     By default thread does not start unless 'start' method is called.
+      event_queue: Optional component which accumulates the events until dispacthed.
+      batch_size: Optional param which defines the upper limit of the number of events in event_queue after which
+                  the event_queue will be flushed.
+      flush_interval: Optional param which defines the time in milliseconds after which event_queue will be flushed.
+      timeout_interval: Optional param which defines the time in milliseconds before joining the consumer
+                        thread.
+      notification_center: Optional instance of notification_center.NotificationCenter.
+    """
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
