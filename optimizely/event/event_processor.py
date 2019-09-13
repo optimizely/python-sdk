@@ -21,7 +21,6 @@ from six.moves import queue
 from .user_event import UserEvent
 from .event_factory import EventFactory
 from optimizely import logger as _logging
-from optimizely.closeable import Closeable
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
 from optimizely.helpers import enums
 from optimizely.helpers import validator
@@ -38,7 +37,7 @@ class EventProcessor(ABC):
     pass
 
 
-class BatchEventProcessor(EventProcessor, Closeable):
+class BatchEventProcessor(EventProcessor):
   """
   BatchEventProcessor is a batched implementation of the EventProcessor.
 
@@ -236,9 +235,8 @@ class BatchEventProcessor(EventProcessor, Closeable):
 
     return False
 
-  def close(self):
+  def stop(self):
     """ Stops and disposes batch event processor. """
-    self.logger.info('Start close.')
 
     self.event_queue.put(self._SHUTDOWN_SIGNAL)
     self.executor.join(self.timeout_interval.total_seconds())
