@@ -395,7 +395,7 @@ class BatchEventProcessorTest(base.BaseTest):
     user_event = self._build_conversion_event(self.event_name, self.project_config)
     self._event_processor.process(user_event)
 
-    self._event_processor.close()
+    self._event_processor.stop()
 
     self.assertEqual(True, callback_hit[0])
     self.assertEqual(1, len(self.optimizely.notification_center.notification_listeners[
