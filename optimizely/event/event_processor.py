@@ -113,18 +113,18 @@ class BatchEventProcessor(EventProcessor):
 
     return True
 
-  def _get_time_in_ms(self, _time=None):
+  def _get_time(self, _time=None):
     if _time is None:
-      return int(round(time.time() * 1000))
+      return int(round(time.time()))
 
-    return int(round(_time * 1000))
+    return int(round(_time))
 
   def start(self):
     if self.is_started and not self.disposed:
       self.logger.warning('Service already started')
       return
 
-    self.flushing_interval_deadline = self._get_time_in_ms() + self._get_time_in_ms(self.flush_interval.total_seconds())
+    self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
     self.executor = threading.Thread(target=self._run)
     self.executor.setDaemon(True)
     self.executor.start()
@@ -135,7 +135,7 @@ class BatchEventProcessor(EventProcessor):
     """ Scheduler method that periodically flushes events queue. """
     try:
       while True:
-        if self._get_time_in_ms() > self.flushing_interval_deadline:
+        if self._get_time() > self.flushing_interval_deadline:
           self._flush_queue()
 
         try:
@@ -212,8 +212,8 @@ class BatchEventProcessor(EventProcessor):
 
     # Reset the deadline if starting a new batch.
     if len(self._current_batch) == 0:
-      self.flushing_interval_deadline = self._get_time_in_ms() + \
-        self._get_time_in_ms(self.flush_interval.total_seconds())
+      self.flushing_interval_deadline = self._get_time() + \
+        self._get_time(self.flush_interval.total_seconds())
 
     with self.LOCK:
       self._current_batch.append(user_event)
