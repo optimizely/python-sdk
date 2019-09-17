@@ -283,6 +283,10 @@ class PollingConfigManagerTest(base.BaseTest):
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile',
                         side_effect=lambda: blocking_queue.put_nowait('fetch_datafile called')) as mock_fetch_datafile:
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
-            self.assertTrue(project_config_manager.is_running)
-            blocking_queue.get(True)
+
+        self.assertTrue(project_config_manager.is_running)
+        # Wait for 2 seconds before asserting mock
+        try:
+            blocking_queue.get(True, 2)
+        except queue.Empty:
             mock_fetch_datafile.assert_called_with()
