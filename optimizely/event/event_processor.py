@@ -67,13 +67,14 @@ class BatchEventProcessor(EventProcessor):
     Args:
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
       logger: Provides a log method to log messages. By default nothing would be logged.
-      default_start: Optional boolean param which starts the consumer thread if set to True.
+      start_on_init: Optional boolean param which starts the consumer thread if set to True.
                      By default thread does not start unless 'start' method is called.
       event_queue: Optional component which accumulates the events until dispacthed.
       batch_size: Optional param which defines the upper limit of the number of events in event_queue after which
                   the event_queue will be flushed.
-      flush_interval: Optional param which defines the time in milliseconds after which event_queue will be flushed.
-      timeout_interval: Optional param which defines the time in milliseconds before joining the consumer
+      flush_interval: Optional floating point number representing time interval in seconds after which event_queue will
+                      be flushed.
+      timeout_interval: Optional floating point number representing time interval in seconds before joining the consumer
                         thread.
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
