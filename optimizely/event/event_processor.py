@@ -48,8 +48,8 @@ class BatchEventProcessor(EventProcessor):
 
   _DEFAULT_QUEUE_CAPACITY = 1000
   _DEFAULT_BATCH_SIZE = 10
-  _DEFAULT_FLUSH_INTERVAL = timedelta(milliseconds=30000)
-  _DEFAULT_TIMEOUT_INTERVAL = timedelta(milliseconds=5000)
+  _DEFAULT_FLUSH_INTERVAL = timedelta(seconds=30)
+  _DEFAULT_TIMEOUT_INTERVAL = timedelta(seconds=5)
   _SHUTDOWN_SIGNAL = object()
   _FLUSH_SIGNAL = object()
   LOCK = threading.Lock()
@@ -57,7 +57,7 @@ class BatchEventProcessor(EventProcessor):
   def __init__(self,
                 event_dispatcher,
                 logger,
-                default_start=False,
+                start_on_init=False,
                 event_queue=None,
                 batch_size=None,
                 flush_interval=None,
@@ -82,10 +82,10 @@ class BatchEventProcessor(EventProcessor):
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
     self.batch_size = batch_size if self._validate_intantiation_props(batch_size, 'batch_size') \
                         else self._DEFAULT_BATCH_SIZE
-    self.flush_interval = timedelta(milliseconds=flush_interval) \
+    self.flush_interval = timedelta(seconds=flush_interval) \
                             if self._validate_intantiation_props(flush_interval, 'flush_interval') \
                             else self._DEFAULT_FLUSH_INTERVAL
-    self.timeout_interval = timedelta(milliseconds=timeout_interval) \
+    self.timeout_interval = timedelta(seconds=timeout_interval) \
                               if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
                               else self._DEFAULT_TIMEOUT_INTERVAL
 
@@ -94,7 +94,7 @@ class BatchEventProcessor(EventProcessor):
     self._is_started = False
     self._current_batch = list()
 
-    if default_start is True:
+    if start_on_init is True:
       self.start()
 
   @property

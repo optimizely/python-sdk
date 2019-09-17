@@ -103,8 +103,8 @@ class BatchEventProcessorTest(base.BaseTest):
 
   DEFAULT_QUEUE_CAPACITY = 1000
   MAX_BATCH_SIZE = 10
-  MAX_DURATION_MS = 1000
-  MAX_TIMEOUT_INTERVAL_MS = 5000
+  MAX_DURATION_SEC = 1
+  MAX_TIMEOUT_INTERVAL_SEC = 5
 
   def setUp(self, *args, **kwargs):
     base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
@@ -127,10 +127,10 @@ class BatchEventProcessorTest(base.BaseTest):
                                                  True,
                                                  self.event_queue,
                                                  self.MAX_BATCH_SIZE,
-                                                 self.MAX_DURATION_MS,
-                                                 self.MAX_TIMEOUT_INTERVAL_MS,
-                                                 self.optimizely.notification_center
-                                                )
+                                                 self.MAX_DURATION_SEC,
+                                                 self.MAX_TIMEOUT_INTERVAL_SEC,
+												 self.optimizely.notification_center
+												)
 
   def test_drain_on_stop(self):
     event_dispatcher = TestEventDispatcher()
@@ -283,8 +283,8 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   True,
                                                   self.event_queue,
                                                   5.5,
-                                                  self.MAX_DURATION_MS,
-                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  self.MAX_DURATION_SEC,
+                                                  self.MAX_TIMEOUT_INTERVAL_SEC
                                                   )
 
     # default batch size is 10.
@@ -300,8 +300,8 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   True,
                                                   self.event_queue,
                                                   'batch_size',
-                                                  self.MAX_DURATION_MS,
-                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  self.MAX_DURATION_SEC,
+                                                  self.MAX_TIMEOUT_INTERVAL_SEC
                                                   )
 
     # default batch size is 10.
@@ -318,11 +318,11 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   self.event_queue,
                                                   self.MAX_BATCH_SIZE,
                                                   0,
-                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  self.MAX_TIMEOUT_INTERVAL_SEC
                                                   )
 
     # default flush interval is 30s.
-    self.assertEqual(self._event_processor.flush_interval, timedelta(milliseconds=30000))
+    self.assertEqual(self._event_processor.flush_interval, timedelta(seconds=30))
     mock_config_logging.info.assert_called_with('Using default value for flush_interval.')
 
   def test_init__NaN_flush_interval(self):
@@ -335,11 +335,11 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   self.event_queue,
                                                   self.MAX_BATCH_SIZE,
                                                   True,
-                                                  self.MAX_TIMEOUT_INTERVAL_MS
+                                                  self.MAX_TIMEOUT_INTERVAL_SEC
                                                   )
 
     # default flush interval is 30s.
-    self.assertEqual(self._event_processor.flush_interval, timedelta(milliseconds=30000))
+    self.assertEqual(self._event_processor.flush_interval, timedelta(seconds=30))
     mock_config_logging.info.assert_called_with('Using default value for flush_interval.')
 
   def test_init__invalid_timeout_interval(self):
@@ -351,12 +351,12 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   True,
                                                   self.event_queue,
                                                   self.MAX_BATCH_SIZE,
-                                                  self.MAX_DURATION_MS,
+                                                  self.MAX_DURATION_SEC,
                                                   -100
                                                   )
 
     # default timeout interval is 5s.
-    self.assertEqual(self._event_processor.timeout_interval, timedelta(milliseconds=5000))
+    self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
     mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
 
   def test_init__NaN_timeout_interval(self):
@@ -368,12 +368,12 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   True,
                                                   self.event_queue,
                                                   self.MAX_BATCH_SIZE,
-                                                  self.MAX_DURATION_MS,
+                                                  self.MAX_DURATION_SEC,
                                                   False
                                                   )
 
     # default timeout interval is 5s.
-    self.assertEqual(self._event_processor.timeout_interval, timedelta(milliseconds=5000))
+    self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
     mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
 
   def test_notification_center(self):

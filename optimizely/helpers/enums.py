@@ -40,8 +40,6 @@ class ConfigManager(object):
   DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
   # Default config update interval of 5 minutes
   DEFAULT_UPDATE_INTERVAL = 5 * 60
-  # Minimum config update interval of 1 second
-  MIN_UPDATE_INTERVAL = 1
   # Time in seconds before which request for datafile times out
   REQUEST_TIMEOUT = 10
 
