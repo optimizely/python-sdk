@@ -129,8 +129,8 @@ class BatchEventProcessorTest(base.BaseTest):
                                                  self.MAX_BATCH_SIZE,
                                                  self.MAX_DURATION_SEC,
                                                  self.MAX_TIMEOUT_INTERVAL_SEC,
-												 self.optimizely.notification_center
-												)
+                                                 self.optimizely.notification_center
+                                                )
 
   def test_drain_on_stop(self):
     event_dispatcher = TestEventDispatcher()
