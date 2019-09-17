@@ -153,7 +153,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.process(user_event)
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-    time.sleep(5)
+    time.sleep(3)
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self.assertEqual(0, self._event_processor.event_queue.qsize())
@@ -189,7 +189,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.flush()
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-    time.sleep(5)
+    time.sleep(3)
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self.assertEqual(0, self._event_processor.event_queue.qsize())
@@ -214,7 +214,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.process(user_event_2)
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-    time.sleep(5)
+    time.sleep(3)
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self.assertEqual(0, self._event_processor.event_queue.qsize())
@@ -239,7 +239,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.process(user_event_2)
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-    time.sleep(5)
+    time.sleep(3)
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self.assertEqual(0, self._event_processor.event_queue.qsize())
@@ -254,7 +254,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.process(user_event)
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-    time.sleep(5)
+    time.sleep(3)
 
     self.assertStrictTrue(event_dispatcher.compare_events())
     self._event_processor.stop()
