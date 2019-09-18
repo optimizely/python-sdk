@@ -285,8 +285,8 @@ class PollingConfigManagerTest(base.BaseTest):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         self.assertTrue(project_config_manager.is_running)
-        # Wait for 5 seconds before asserting mock
+        # Wait for 10 seconds before asserting mock
         try:
-            blocking_queue.get(True, 5)
+            blocking_queue.get(True, 10)
         except queue.Empty:
             mock_fetch_datafile.assert_called_with()
