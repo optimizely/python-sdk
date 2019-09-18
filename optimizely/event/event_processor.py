@@ -266,7 +266,7 @@ class BatchEventProcessor(BaseEventProcessor):
     self._is_started = False
 
 
-class ForwardingEventProcessor(EventProcessor):
+class ForwardingEventProcessor(BaseEventProcessor):
   """
   ForwardingEventProcessor serves as the default EventProcessor.
 
