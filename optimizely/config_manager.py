@@ -299,7 +299,6 @@ class PollingConfigManager(StaticConfigManager):
         try:
           while self.is_running:
               self.fetch_datafile()
-              self.logger.debug("This thread is running")
               time.sleep(self.update_interval)
         except (OSError, OverflowError) as err:
             self.logger.error('Error in time.sleep. '
