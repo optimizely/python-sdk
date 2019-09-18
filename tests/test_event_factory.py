@@ -12,17 +12,17 @@
 # limitations under the License.
 
 import mock
-from operator import itemgetter
 import time
 import unittest
 import uuid
+from operator import itemgetter
 
-from . import base
 from optimizely import logger
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
 from optimizely.event.log_event import LogEvent
 from optimizely.event.user_event_factory import UserEventFactory
+from . import base
 
 
 class LogEventTest(unittest.TestCase):
