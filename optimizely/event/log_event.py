@@ -18,5 +18,5 @@ class LogEvent(object):
   def __init__(self, url, params, http_verb=None, headers=None):
     self.url = url
     self.params = params
-    self.http_verb = http_verb or 'GET'
+    self.http_verb = http_verb or 'POST'
     self.headers = headers

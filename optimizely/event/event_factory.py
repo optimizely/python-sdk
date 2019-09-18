@@ -11,10 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .user_event import ConversionEvent, ImpressionEvent
-from .payload import Decision, EventBatch, Snapshot, SnapshotEvent, Visitor, VisitorAttribute
-from .log_event import LogEvent
-from optimizely.helpers import enums, event_tag_utils, validator
+from optimizely.helpers import enums
+from optimizely.helpers import event_tag_utils
+from optimizely.helpers import validator
+from . import user_event
+from . import payload
+from . import log_event
 
 CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
@@ -47,15 +49,15 @@ class EventFactory(object):
 
     visitors = []
 
-    for user_event in user_events:
-      visitor = cls._create_visitor(user_event, logger)
+    for event in user_events:
+      visitor = cls._create_visitor(event, logger)
 
       if visitor:
         visitors.append(visitor)
 
-      user_context = user_event.event_context
+      user_context = event.event_context
 
-      event_batch = EventBatch(
+      event_batch = payload.EventBatch(
         user_context.account_id,
         user_context.project_id,
         user_context.revision,
@@ -72,58 +74,58 @@ class EventFactory(object):
 
     event_params = event_batch.get_event_params()
 
-    return LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
+    return log_event.LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
   @classmethod
-  def _create_visitor(cls, user_event, logger):
+  def _create_visitor(cls, event, logger):
     """ Helper method to create Visitor instance for event_batch.
 
     Args:
-      user_event: Instance of UserEvent.
+      event: Instance of UserEvent.
       logger: Provides a logger instance.
 
     Returns:
       Instance of Visitor. None if:
-      - user_event is invalid.
+      - event is invalid.
     """
 
-    if isinstance(user_event, ImpressionEvent):
-      decision = Decision(
-        user_event.experiment.layerId,
-        user_event.experiment.id,
-        user_event.variation.id,
+    if isinstance(event, user_event.ImpressionEvent):
+      decision = payload.Decision(
+        event.experiment.layerId,
+        event.experiment.id,
+        event.variation.id,
       )
 
-      snapshot_event = SnapshotEvent(
-        user_event.experiment.layerId,
-        user_event.uuid,
+      snapshot_event = payload.SnapshotEvent(
+        event.experiment.layerId,
+        event.uuid,
         cls.ACTIVATE_EVENT_KEY,
-        user_event.timestamp
+        event.timestamp
       )
 
-      snapshot = Snapshot([snapshot_event], [decision])
+      snapshot = payload.Snapshot([snapshot_event], [decision])
 
-      visitor = Visitor([snapshot], user_event.visitor_attributes, user_event.user_id)
+      visitor = payload.Visitor([snapshot], event.visitor_attributes, event.user_id)
 
       return visitor
 
-    elif isinstance(user_event, ConversionEvent):
-      revenue = event_tag_utils.get_revenue_value(user_event.event_tags)
-      value = event_tag_utils.get_numeric_value(user_event.event_tags, logger)
+    elif isinstance(event, user_event.ConversionEvent):
+      revenue = event_tag_utils.get_revenue_value(event.event_tags)
+      value = event_tag_utils.get_numeric_value(event.event_tags, logger)
 
-      snapshot_event = SnapshotEvent(
-        user_event.event.id,
-        user_event.uuid,
-        user_event.event.key,
-        user_event.timestamp,
+      snapshot_event = payload.SnapshotEvent(
+        event.event.id,
+        event.uuid,
+        event.event.key,
+        event.timestamp,
         revenue,
         value,
-        user_event.event_tags
+        event.event_tags
       )
 
-      snapshot = Snapshot([snapshot_event])
+      snapshot = payload.Snapshot([snapshot_event])
 
-      visitor = Visitor([snapshot], user_event.visitor_attributes, user_event.user_id)
+      visitor = payload.Visitor([snapshot], event.visitor_attributes, event.user_id)
 
       return visitor
 
@@ -156,22 +158,22 @@ class EventFactory(object):
           attribute_id = project_config.get_attribute_id(attribute_key)
           if attribute_id:
             attributes_list.append(
-              VisitorAttribute(
-                attribute_id,
-                attribute_key,
-                CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-                attribute_value)
+              payload.VisitorAttribute(
+                  attribute_id,
+                  attribute_key,
+                  CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+                  attribute_value)
             )
 
     # Append Bot Filtering Attribute
     bot_filtering_value = project_config.get_bot_filtering_value()
     if isinstance(bot_filtering_value, bool):
       attributes_list.append(
-        VisitorAttribute(
-           enums.ControlAttributes.BOT_FILTERING,
-           enums.ControlAttributes.BOT_FILTERING,
-           CUSTOM_ATTRIBUTE_FEATURE_TYPE,
-           bot_filtering_value)
+        payload.VisitorAttribute(
+            enums.ControlAttributes.BOT_FILTERING,
+            enums.ControlAttributes.BOT_FILTERING,
+            CUSTOM_ATTRIBUTE_FEATURE_TYPE,
+            bot_filtering_value)
       )
 
     return attributes_list
