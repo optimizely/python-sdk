@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .user_event import EventContext, ConversionEvent, ImpressionEvent
-from .event_factory import EventFactory
+from . import event_factory
+from . import user_event
 
 
 class UserEventFactory(object):
@@ -40,18 +40,18 @@ class UserEventFactory(object):
     experiment_key = activated_experiment.key
     variation = project_config.get_variation_from_id(experiment_key, variation_id)
 
-    event_context = EventContext(
+    event_context = user_event.EventContext(
       project_config.account_id,
       project_config.project_id,
       project_config.revision,
       project_config.anonymize_ip
     )
 
-    return ImpressionEvent(
+    return user_event.ImpressionEvent(
       event_context,
       user_id,
       activated_experiment,
-      EventFactory.build_attribute_list(user_attributes, project_config),
+      event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
       variation,
       project_config.get_bot_filtering_value()
     )
@@ -71,18 +71,18 @@ class UserEventFactory(object):
       Event object encapsulating the conversion event.
     """
 
-    event_context = EventContext(
+    event_context = user_event.EventContext(
       project_config.account_id,
       project_config.project_id,
       project_config.revision,
       project_config.anonymize_ip
     )
 
-    return ConversionEvent(
+    return user_event.ConversionEvent(
       event_context,
       project_config.get_event(event_key),
       user_id,
-      EventFactory.build_attribute_list(user_attributes, project_config),
+      event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
       event_tags,
       project_config.get_bot_filtering_value()
     )
