@@ -131,8 +131,9 @@ class StaticConfigManager(BaseConfigManager):
 
         if previous_revision == config.get_revision():
             return
-
+        self._condition.acquire()
         self._config = config
+        self._condition.notify()  # Notifies the consumer about the availability.
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
@@ -145,6 +146,9 @@ class StaticConfigManager(BaseConfigManager):
         Returns:
             ProjectConfig. None if not set.
         """
+        self._condition.acquire()
+        self._condition.wait(self.blocking_timeout)
+        self._condition.release()
         return self._config
 
 
@@ -155,6 +159,7 @@ class PollingConfigManager(StaticConfigManager):
                  sdk_key=None,
                  datafile=None,
                  update_interval=None,
+                 blocking_timeout=None,
                  url=None,
                  url_template=None,
                  logger=None,
@@ -168,6 +173,8 @@ class PollingConfigManager(StaticConfigManager):
             datafile: Optional JSON string representing the project.
             update_interval: Optional floating point number representing time interval in seconds
                              at which to request datafile and set ProjectConfig.
+            blocking_timeout: Optional Time in seconds to block the config call until config object
+                              has been initialized.
             url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
             url_template: Optional string template which in conjunction with sdk_key
                           determines URL from where to fetch the datafile.
@@ -187,10 +194,12 @@ class PollingConfigManager(StaticConfigManager):
         self.datafile_url = self.get_datafile_url(sdk_key, url,
                                                   url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)
         self.set_update_interval(update_interval)
+        self.set_blocking_timeout(blocking_timeout)
         self.last_modified = None
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
         self._polling_thread.start()
+        self._condition = threading.Condition()
 
     @staticmethod
     def get_datafile_url(sdk_key, url, url_template):
@@ -248,6 +257,31 @@ class PollingConfigManager(StaticConfigManager):
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
         self.update_interval = update_interval
+
+    def set_blocking_timeout(self, blocking_timeout):
+        """ Helper method to set time in seconds to block the config call until config has been initialized.
+
+        Args:
+          blocking_timeout: Time in seconds to block the config call.
+        """
+        if not blocking_timeout:
+            blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
+            self.logger.debug('Set config blocking timeout to default value {}.'.format(blocking_timeout))
+
+        if not isinstance(blocking_timeout, (int, float)):
+            raise optimizely_exceptions.InvalidInputException(
+                'Invalid blocking timeout "{}" provided.'.format(blocking_timeout)
+            )
+
+        # If blocking timeout is less than or equal to 0 then set it to default blocking timeout.
+        if blocking_timeout <= 0:
+            self.logger.debug('blocking timeout value {} too small. Defaulting to {}'.format(
+                blocking_timeout,
+                enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT)
+            )
+            blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
+
+        self.blocking_timeout = blocking_timeout
 
     def set_last_modified(self, response_headers):
         """ Looks up and sets last modified time based on Last-Modified header in the response.
