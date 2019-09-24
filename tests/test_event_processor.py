@@ -268,10 +268,10 @@ class BatchEventProcessorTest(base.BaseTest):
     event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
     self._event_processor.start()
-    self.assertStrictTrue(self._event_processor.is_started)
+    self.assertStrictTrue(self._event_processor.is_running)
 
     self._event_processor.stop()
-    self.assertStrictFalse(self._event_processor.is_started)
+    self.assertStrictFalse(self._event_processor.is_running)
 
     self.assertEqual(0, self._event_processor.event_queue.qsize())
 

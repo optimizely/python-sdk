@@ -22,8 +22,8 @@ from optimizely import logger as _logging
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
 from optimizely.helpers import enums
 from optimizely.helpers import validator
-from .user_event import UserEvent
 from .event_factory import EventFactory
+from .user_event import UserEvent
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -33,12 +33,16 @@ class BaseEventProcessor(ABC):
 
   @abc.abstractmethod
   def process(user_event):
+    """ Method to provide intermediary processing stage within event production.
+    Args:
+      user_event: UserEvent instance that needs to be processed and dispatched.
+    """
     pass
 
 
 class BatchEventProcessor(BaseEventProcessor):
   """
-  BatchEventProcessor is a batched implementation of the BaseEventProcessor.
+  BatchEventProcessor is an implementation of the BaseEventProcessor that batches events.
   The BatchEventProcessor maintains a single consumer thread that pulls events off of
   the blocking queue and buffers them for either a configured batch size or for a
   maximum duration before the resulting LogEvent is sent to the EventDispatcher.
@@ -89,17 +93,15 @@ class BatchEventProcessor(BaseEventProcessor):
                               if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
                               else self._DEFAULT_TIMEOUT_INTERVAL
     self.notification_center = notification_center
-
-    self._is_started = False
     self._current_batch = list()
 
     if start_on_init is True:
       self.start()
 
   @property
-  def is_started(self):
+  def is_running(self):
     """ Property to check if consumer thread is alive or not. """
-    return self._is_started
+    return self.executor.isAlive()
 
   def _validate_intantiation_props(self, prop, prop_name):
     """ Method to determine if instantiation properties like batch_size, flush_interval
@@ -137,16 +139,14 @@ class BatchEventProcessor(BaseEventProcessor):
 
   def start(self):
     """ Starts the batch processing thread to batch events. """
-    if self.is_started:
-      self.logger.warning('Service already started')
+    if hasattr(self, 'executor') and self.is_running:
+      self.logger.warning('BatchEventProcessor already started.')
       return
 
     self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
     self.executor = threading.Thread(target=self._run)
     self.executor.setDaemon(True)
     self.executor.start()
-
-    self._is_started = True
 
   def _run(self):
     """ Triggered as part of the thread which batches events or flushes event_queue and sleeps
@@ -212,6 +212,10 @@ class BatchEventProcessor(BaseEventProcessor):
       self.logger.error('Error dispatching event: ' + str(log_event) + ' ' + str(e))
 
   def process(self, user_event):
+    """ Method to process the user_event by putting it in event_queue.
+    Args:
+      user_event: UserEvent Instance.
+    """
     if not isinstance(user_event, UserEvent):
       self.logger.error('Provided event is in an invalid format.')
       return
@@ -255,15 +259,13 @@ class BatchEventProcessor(BaseEventProcessor):
 
   def stop(self):
     """ Stops and disposes batch event processor. """
-
     self.event_queue.put(self._SHUTDOWN_SIGNAL)
+    self.logger.warning('Stopping Scheduler.')
+
     self.executor.join(self.timeout_interval.total_seconds())
 
-    if self.executor.isAlive():
+    if self.is_running:
       self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
-
-    self.logger.warning('Stopping Scheduler.')
-    self._is_started = False
 
 
 class ForwardingEventProcessor(BaseEventProcessor):
@@ -286,6 +288,10 @@ class ForwardingEventProcessor(BaseEventProcessor):
     self.notification_center = notification_center
 
   def process(self, user_event):
+    """ Method to process the user_event by dispatching it.
+    Args:
+      user_event: UserEvent Instance.
+    """
     if not isinstance(user_event, UserEvent):
       self.logger.error('Provided event is in an invalid format.')
       return
