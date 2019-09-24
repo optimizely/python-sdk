@@ -278,7 +278,6 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_is_running(self, _):
         """ Test that polling thread is running after instance of PollingConfigManager is created. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile') as mock_fetch_datafile:
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
             self.assertTrue(project_config_manager.is_running)
-        mock_fetch_datafile.assert_called_with()

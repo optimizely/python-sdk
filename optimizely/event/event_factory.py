@@ -14,9 +14,9 @@
 from optimizely.helpers import enums
 from optimizely.helpers import event_tag_utils
 from optimizely.helpers import validator
-from . import user_event
-from . import payload
 from . import log_event
+from . import payload
+from . import user_event
 
 CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
