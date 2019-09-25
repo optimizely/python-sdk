@@ -300,8 +300,12 @@ class ForwardingEventProcessor(BaseEventProcessor):
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
     self.event_dispatcher = event_dispatcher
-    self.logger = logger
+    self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.notification_center = notification_center
+
+    if not validator.is_notification_center_valid(self.notification_center):
+      self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
+      self.notification_center = notification_center.NotificationCenter()
 
   def process(self, user_event):
     """ Method to process the user_event by dispatching it.
