@@ -95,6 +95,10 @@ class BatchEventProcessor(BaseEventProcessor):
     self.notification_center = notification_center
     self._current_batch = list()
 
+    if not validator.is_notification_center_valid(self.notification_center):
+      self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
+      self.notification_center = notification_center.NotificationCenter()
+
     if start_on_init is True:
       self.start()
 
