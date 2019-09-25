@@ -377,7 +377,7 @@ class BatchEventProcessorTest(base.BaseTest):
     self.assertEqual(self._event_processor.timeout_interval, timedelta(seconds=5))
     mock_config_logging.info.assert_called_with('Using default value for timeout_interval.')
 
-  def test_notification_center(self):
+  def test_notification_center__on_log_event(self):
 
     mock_event_dispatcher = mock.Mock()
     callback_hit = [False]
