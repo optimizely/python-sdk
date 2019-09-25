@@ -217,6 +217,10 @@ class BatchEventProcessor(BaseEventProcessor):
       self.logger.debug('Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize())))
 
   def _add_to_batch(self, user_event):
+    """ Method to append received user event to current batch.
+    Args:
+      user_event: UserEvent Instance.
+    """
     if self._should_split(user_event):
       self._flush_queue()
       self._current_batch = list()
@@ -232,6 +236,14 @@ class BatchEventProcessor(BaseEventProcessor):
       self._flush_queue()
 
   def _should_split(self, user_event):
+    """ Method to check if current event batch should split into two.
+    Args:
+      user_event: UserEvent Instance.
+    Return Value:
+      - True, if revision number and project_id of last event in current batch do not match received event's
+      revision number and project id respectively.
+      - False, otherwise.
+    """
     if len(self._current_batch) == 0:
       return False
 
