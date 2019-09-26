@@ -96,8 +96,7 @@ class StaticConfigManager(BaseConfigManager):
                                                   notification_center=notification_center)
         self._config = None
         self.validate_schema = not skip_json_validation
-        self.blocking_timeout = None
-        self._event = threading.Event()
+        self._configReadyEvent = threading.Event()
         self._set_config(datafile)
 
     def _set_config(self, datafile):
@@ -134,8 +133,9 @@ class StaticConfigManager(BaseConfigManager):
 
         if previous_revision == config.get_revision():
             return
+
         self._config = config
-        self._event.set()
+        self._configReadyEvent.set()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
@@ -148,8 +148,7 @@ class StaticConfigManager(BaseConfigManager):
         Returns:
             ProjectConfig. None if not set.
         """
-        if self.blocking_timeout is not None:
-            self._event.wait(self.blocking_timeout)
+
         return self._config
 
 
@@ -174,7 +173,7 @@ class PollingConfigManager(StaticConfigManager):
             datafile: Optional JSON string representing the project.
             update_interval: Optional floating point number representing time interval in seconds
                              at which to request datafile and set ProjectConfig.
-            blocking_timeout: Optional Time in seconds to block the config call until config object
+            blocking_timeout: Optional Time in seconds to block the get_config call until config object
                               has been initialized.
             url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
             url_template: Optional string template which in conjunction with sdk_key
@@ -233,6 +232,17 @@ class PollingConfigManager(StaticConfigManager):
 
         return url
 
+    def get_config(self):
+        """ Returns instance of ProjectConfig. Returns immediately if project config is ready otherwise
+        blocks maximum for value of blocking_timeout in seconds.
+
+        Returns:
+            ProjectConfig. None if not set.
+        """
+
+        self._configReadyEvent.wait(self.blocking_timeout)
+        return self._config
+
     def set_update_interval(self, update_interval):
         """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
 
@@ -268,7 +278,7 @@ class PollingConfigManager(StaticConfigManager):
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
             self.logger.debug('Set config blocking timeout to default value {}.'.format(blocking_timeout))
 
-        if not isinstance(blocking_timeout, (numbers.Integral, int)):
+        if not isinstance(blocking_timeout, (numbers.Integral, float)):
             raise optimizely_exceptions.InvalidInputException(
                 'Invalid blocking timeout "{}" provided.'.format(blocking_timeout)
             )
