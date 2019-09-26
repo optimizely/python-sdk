@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import abc
+import numbers
 import requests
 import threading
 import time
@@ -95,6 +96,8 @@ class StaticConfigManager(BaseConfigManager):
                                                   notification_center=notification_center)
         self._config = None
         self.validate_schema = not skip_json_validation
+        self.blocking_timeout = None
+        self._event = threading.Event()
         self._set_config(datafile)
 
     def _set_config(self, datafile):
@@ -131,9 +134,8 @@ class StaticConfigManager(BaseConfigManager):
 
         if previous_revision == config.get_revision():
             return
-        self._condition.acquire()
         self._config = config
-        self._condition.notify()  # Notifies the consumer about the availability.
+        self._event.set()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
@@ -146,9 +148,8 @@ class StaticConfigManager(BaseConfigManager):
         Returns:
             ProjectConfig. None if not set.
         """
-        self._condition.acquire()
-        self._condition.wait(self.blocking_timeout)
-        self._condition.release()
+        if self.blocking_timeout is not None:
+            self._event.wait(self.blocking_timeout)
         return self._config
 
 
@@ -199,7 +200,6 @@ class PollingConfigManager(StaticConfigManager):
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
         self._polling_thread.start()
-        self._condition = threading.Condition()
 
     @staticmethod
     def get_datafile_url(sdk_key, url, url_template):
@@ -239,7 +239,7 @@ class PollingConfigManager(StaticConfigManager):
         Args:
           update_interval: Time in seconds after which to update datafile.
         """
-        if not update_interval:
+        if update_interval is None:
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
             self.logger.debug('Set config update interval to default value {}.'.format(update_interval))
 
@@ -264,11 +264,11 @@ class PollingConfigManager(StaticConfigManager):
         Args:
           blocking_timeout: Time in seconds to block the config call.
         """
-        if not blocking_timeout:
+        if blocking_timeout is None:
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
             self.logger.debug('Set config blocking timeout to default value {}.'.format(blocking_timeout))
 
-        if not isinstance(blocking_timeout, (int, float)):
+        if not isinstance(blocking_timeout, (numbers.Integral, int)):
             raise optimizely_exceptions.InvalidInputException(
                 'Invalid blocking timeout "{}" provided.'.format(blocking_timeout)
             )

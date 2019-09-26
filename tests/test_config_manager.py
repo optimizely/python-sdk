@@ -14,6 +14,7 @@
 import json
 import mock
 import requests
+import time
 
 from optimizely import config_manager
 from optimizely import exceptions as optimizely_exceptions
@@ -234,6 +235,33 @@ class PollingConfigManagerTest(base.BaseTest):
         # Assert that if valid update_interval is provided, it is set to that value.
         project_config_manager.set_update_interval(42)
         self.assertEqual(42, project_config_manager.update_interval)
+
+    def test_set_blocking_timeout(self, _):
+        """ Test set_blocking_timeout with different inputs. """
+        project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+
+        # Assert that if invalid blocking_timeout is set, then exception is raised.
+        with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
+                                     'Invalid blocking timeout "invalid timeout" provided.'):
+            project_config_manager.set_blocking_timeout('invalid timeout')
+
+        # Assert that blocking_timeout cannot be set to less than allowed minimum and instead is set to default value.
+        project_config_manager.set_blocking_timeout(-4)
+        self.assertEqual(enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT, project_config_manager.blocking_timeout)
+
+        # Assert that if no blocking_timeout is provided, it is set to default value.
+        project_config_manager.set_blocking_timeout(None)
+        self.assertEqual(enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT, project_config_manager.blocking_timeout)
+
+        # Assert that if valid blocking_timeout is provided, it is set to that value.
+        project_config_manager.set_blocking_timeout(5)
+        self.assertEqual(5, project_config_manager.blocking_timeout)
+
+        # Assert get_config should block until blocking timeout.
+        start_time = time.time()
+        project_config_manager.get_config()
+        end_time = time.time()
+        self.assertEqual(5, round(end_time - start_time))
 
     def test_set_last_modified(self, _):
         """ Test that set_last_modified sets last_modified field based on header. """
