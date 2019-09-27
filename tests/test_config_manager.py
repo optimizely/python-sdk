@@ -249,6 +249,10 @@ class PollingConfigManagerTest(base.BaseTest):
         project_config_manager.set_blocking_timeout(-4)
         self.assertEqual(enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT, project_config_manager.blocking_timeout)
 
+        # Assert that blocking_timeout can be set to 0.
+        project_config_manager.set_blocking_timeout(0)
+        self.assertIs(0, project_config_manager.blocking_timeout)
+
         # Assert that if no blocking_timeout is provided, it is set to default value.
         project_config_manager.set_blocking_timeout(None)
         self.assertEqual(enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT, project_config_manager.blocking_timeout)
