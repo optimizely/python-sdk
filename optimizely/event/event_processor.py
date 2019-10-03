@@ -19,6 +19,7 @@ from datetime import timedelta
 from six.moves import queue
 
 from optimizely import logger as _logging
+from optimizely import notification_center as _notification_center
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
 from optimizely.helpers import enums
 from optimizely.helpers import validator
@@ -97,7 +98,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
     if not validator.is_notification_center_valid(self.notification_center):
       self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
-      self.notification_center = notification_center.NotificationCenter()
+      self.notification_center = _notification_center.NotificationCenter()
 
     if start_on_init is True:
       self.start()
