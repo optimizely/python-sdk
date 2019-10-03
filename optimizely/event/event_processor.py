@@ -306,7 +306,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
 
     if not validator.is_notification_center_valid(self.notification_center):
       self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
-      self.notification_center = notification_center.NotificationCenter()
+      self.notification_center = _notification_center.NotificationCenter()
 
   def process(self, user_event):
     """ Method to process the user_event by dispatching it.
