@@ -117,11 +117,11 @@ class BatchEventProcessor(BaseEventProcessor):
       prop_name: Property name.
 
     Returns:
-      False if property value is None or less than 1 or not a finite number.
+      False if property value is None or less than or equal to 0 or not a finite number.
       False if property name is batch_size and value is a floating point number.
       True otherwise.
     """
-    if (prop_name == 'batch_size' and not isinstance(prop, int)) or prop is None or prop < 1 or \
+    if (prop_name == 'batch_size' and not isinstance(prop, int)) or prop is None or prop <= 0 or \
       not validator.is_finite_number(prop):
       self.logger.info('Using default value for {}.'.format(prop_name))
       return False
@@ -159,11 +159,11 @@ class BatchEventProcessor(BaseEventProcessor):
     """
     try:
       while True:
-        if self._get_time() > self.flushing_interval_deadline:
+        if self._get_time() >= self.flushing_interval_deadline:
           self._flush_queue()
 
         try:
-          item = self.event_queue.get(True, 0.05)
+          item = self.event_queue.get(False)
 
         except queue.Empty:
           time.sleep(0.05)
