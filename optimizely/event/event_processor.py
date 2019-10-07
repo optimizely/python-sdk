@@ -292,7 +292,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
   The ForwardingEventProcessor sends the LogEvent to EventDispatcher as soon as it is received.
   """
 
-  def __init__(self, event_dispatcher, logger, notification_center=None):
+  def __init__(self, event_dispatcher, logger=None, notification_center=None):
     """ ForwardingEventProcessor init method to configure event dispatching.
 
     Args:
