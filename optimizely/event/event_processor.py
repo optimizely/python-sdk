@@ -19,7 +19,9 @@ from datetime import timedelta
 from six.moves import queue
 
 from optimizely import logger as _logging
+from optimizely import notification_center as _notification_center
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
+from optimizely.helpers import enums
 from optimizely.helpers import validator
 from .event_factory import EventFactory
 from .user_event import UserEvent
@@ -62,8 +64,10 @@ class BatchEventProcessor(BaseEventProcessor):
                event_queue=None,
                batch_size=None,
                flush_interval=None,
-               timeout_interval=None):
-    """ BatchEventProcessor init method to configure event batching.
+               timeout_interval=None,
+               notification_center=None):
+    """ EventProcessor init method to configure event batching.
+
     Args:
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
       logger: Provides a log method to log messages. By default nothing would be logged.
@@ -76,6 +80,7 @@ class BatchEventProcessor(BaseEventProcessor):
                       be flushed.
       timeout_interval: Optional floating point number representing time interval in seconds before joining the consumer
                         thread.
+      notification_center: Optional instance of notification_center.NotificationCenter.
     """
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
@@ -88,7 +93,12 @@ class BatchEventProcessor(BaseEventProcessor):
     self.timeout_interval = timedelta(seconds=timeout_interval) \
                               if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
                               else self._DEFAULT_TIMEOUT_INTERVAL
+    self.notification_center = notification_center
     self._current_batch = list()
+
+    if not validator.is_notification_center_valid(self.notification_center):
+      self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
+      self.notification_center = _notification_center.NotificationCenter()
 
     if start_on_init is True:
       self.start()
@@ -194,6 +204,12 @@ class BatchEventProcessor(BaseEventProcessor):
       self._current_batch = list()
 
     log_event = EventFactory.create_log_event(to_process_batch, self.logger)
+
+    if self.notification_center is not None:
+      self.notification_center.send_notifications(
+        enums.NotificationTypes.LOG_EVENT,
+        log_event
+      )
 
     try:
       self.event_dispatcher.dispatch_event(log_event)
