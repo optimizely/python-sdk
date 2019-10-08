@@ -123,8 +123,12 @@ class NotificationTypes(object):
 
       TRACK notification listener has the following parameters:
       str event_key, str user_id, dict attributes (can be None), event_tags (can be None), Event event
+
+      LOG_EVENT notification listener has the following parameter(s):
+      LogEvent log_event
   """
   ACTIVATE = 'ACTIVATE:experiment, user_id, attributes, variation, event'
   DECISION = 'DECISION:type, user_id, attributes, decision_info'
   OPTIMIZELY_CONFIG_UPDATE = 'OPTIMIZELY_CONFIG_UPDATE'
   TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'
+  LOG_EVENT = 'LOG_EVENT:log_event'
