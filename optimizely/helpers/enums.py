@@ -38,6 +38,8 @@ class AudienceEvaluationLogs(object):
 
 class ConfigManager(object):
   DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
+  # Default time in seconds to block the 'get_config' method call until 'config' instance has been initialized.
+  DEFAULT_BLOCKING_TIMEOUT = 10
   # Default config update interval of 5 minutes
   DEFAULT_UPDATE_INTERVAL = 5 * 60
   # Time in seconds before which request for datafile times out
