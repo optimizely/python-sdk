@@ -363,9 +363,7 @@ class OptimizelyTest(base.BaseTest):
       if event_tags is not None:
         self.assertTrue(isinstance(event_tags, dict))
 
-      # TODO: what should be done about passing dicts of class instances?
-      # self.assertTrue(isinstance(event, LogEvent))
-      print('Track event with event_key={0}'.format(event_key))
+      self.assertTrue(isinstance(event, dict))
       callback_hit[0] = True
 
     note_id = self.optimizely.notification_center.add_notification_listener(
