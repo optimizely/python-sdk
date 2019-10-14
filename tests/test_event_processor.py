@@ -18,7 +18,8 @@ from six.moves import queue
 
 from . import base
 from optimizely.event.payload import Decision, Visitor
-from optimizely.event.event_processor import BatchEventProcessor
+from optimizely.event.event_processor import BatchEventProcessor, ForwardingEventProcessor
+from optimizely.event.event_factory import EventFactory
 from optimizely.event.log_event import LogEvent
 from optimizely.event.user_event_factory import UserEventFactory
 from optimizely.helpers import enums
@@ -396,6 +397,84 @@ class BatchEventProcessorTest(base.BaseTest):
     self._event_processor.process(user_event)
 
     self._event_processor.stop()
+
+    self.assertEqual(True, callback_hit[0])
+    self.assertEqual(1, len(self.optimizely.notification_center.notification_listeners[
+      enums.NotificationTypes.LOG_EVENT
+    ]))
+
+
+class TestForwardingEventDispatcher(object):
+
+  def __init__(self, is_updated=False):
+    self.is_updated = is_updated
+
+  def dispatch_event(self, log_event):
+    if log_event.http_verb == 'POST' and log_event.url == EventFactory.EVENT_ENDPOINT:
+      self.is_updated = True
+    return self.is_updated
+
+
+class ForwardingEventProcessorTest(base.BaseTest):
+
+  def setUp(self, *args, **kwargs):
+    base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
+    self.test_user_id = 'test_user'
+    self.event_name = 'test_event'
+    self.optimizely.logger = SimpleLogger()
+    self.notification_center = self.optimizely.notification_center
+    self.event_dispatcher = TestForwardingEventDispatcher(is_updated=False)
+
+    with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+      self._event_processor = ForwardingEventProcessor(self.event_dispatcher,
+                                                        mock_config_logging,
+                                                        self.notification_center
+                                                       )
+
+  def _build_conversion_event(self, event_name):
+    return UserEventFactory.create_conversion_event(self.project_config,
+                                                    event_name,
+                                                    self.test_user_id,
+                                                    {},
+                                                    {}
+                                                    )
+
+  def test_event_processor__dispatch_raises_exception(self):
+    """ Test that process logs dispatch failure gracefully. """
+
+    user_event = self._build_conversion_event(self.event_name)
+    log_event = EventFactory.create_log_event(user_event, self.optimizely.logger)
+
+    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
+        mock.patch.object(self.event_dispatcher, 'dispatch_event',
+                          side_effect=Exception('Failed to send.')):
+
+      event_processor = ForwardingEventProcessor(self.event_dispatcher, mock_client_logging, self.notification_center)
+      event_processor.process(user_event)
+
+    mock_client_logging.exception.assert_called_once_with(
+      'Error dispatching event: ' + str(log_event) + ' Failed to send.'
+    )
+
+  def test_event_processor__with_test_event_dispatcher(self):
+    user_event = self._build_conversion_event(self.event_name)
+    self._event_processor.process(user_event)
+    self.assertStrictTrue(self.event_dispatcher.is_updated)
+
+  def test_notification_center(self):
+
+    callback_hit = [False]
+
+    def on_log_event(log_event):
+      self.assertStrictTrue(isinstance(log_event, LogEvent))
+      callback_hit[0] = True
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.LOG_EVENT, on_log_event
+    )
+
+    user_event = self._build_conversion_event(self.event_name)
+    self._event_processor.process(user_event)
 
     self.assertEqual(True, callback_hit[0])
     self.assertEqual(1, len(self.optimizely.notification_center.notification_listeners[

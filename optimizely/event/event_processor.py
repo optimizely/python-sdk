@@ -117,11 +117,11 @@ class BatchEventProcessor(BaseEventProcessor):
       prop_name: Property name.
 
     Returns:
-      False if property value is None or less than 1 or not a finite number.
+      False if property value is None or less than or equal to 0 or not a finite number.
       False if property name is batch_size and value is a floating point number.
       True otherwise.
     """
-    if (prop_name == 'batch_size' and not isinstance(prop, int)) or prop is None or prop < 1 or \
+    if (prop_name == 'batch_size' and not isinstance(prop, int)) or prop is None or prop <= 0 or \
       not validator.is_finite_number(prop):
       self.logger.info('Using default value for {}.'.format(prop_name))
       return False
@@ -159,11 +159,11 @@ class BatchEventProcessor(BaseEventProcessor):
     """
     try:
       while True:
-        if self._get_time() > self.flushing_interval_deadline:
+        if self._get_time() >= self.flushing_interval_deadline:
           self._flush_queue()
 
         try:
-          item = self.event_queue.get(True, 0.05)
+          item = self.event_queue.get(False)
 
         except queue.Empty:
           time.sleep(0.05)
@@ -283,3 +283,51 @@ class BatchEventProcessor(BaseEventProcessor):
 
     if self.is_running:
       self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
+
+
+class ForwardingEventProcessor(BaseEventProcessor):
+  """
+  ForwardingEventProcessor serves as the default EventProcessor.
+
+  The ForwardingEventProcessor sends the LogEvent to EventDispatcher as soon as it is received.
+  """
+
+  def __init__(self, event_dispatcher, logger=None, notification_center=None):
+    """ ForwardingEventProcessor init method to configure event dispatching.
+
+    Args:
+      event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
+      logger: Optional component which provides a log method to log messages. By default nothing would be logged.
+      notification_center: Optional instance of notification_center.NotificationCenter.
+    """
+    self.event_dispatcher = event_dispatcher
+    self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
+    self.notification_center = notification_center
+
+    if not validator.is_notification_center_valid(self.notification_center):
+      self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
+      self.notification_center = _notification_center.NotificationCenter()
+
+  def process(self, user_event):
+    """ Method to process the user_event by dispatching it.
+    Args:
+      user_event: UserEvent Instance.
+    """
+    if not isinstance(user_event, UserEvent):
+      self.logger.error('Provided event is in an invalid format.')
+      return
+
+    self.logger.debug('Received user_event: ' + str(user_event))
+
+    log_event = EventFactory.create_log_event(user_event, self.logger)
+
+    if self.notification_center is not None:
+      self.notification_center.send_notifications(
+        enums.NotificationTypes.LOG_EVENT,
+        log_event
+      )
+
+    try:
+      self.event_dispatcher.dispatch_event(log_event)
+    except Exception as e:
+      self.logger.exception('Error dispatching event: ' + str(log_event) + ' ' + str(e))

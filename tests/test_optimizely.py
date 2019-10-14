@@ -25,6 +25,7 @@ from optimizely import logger
 from optimizely import optimizely
 from optimizely import project_config
 from optimizely import version
+from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
 from . import base
 
@@ -52,25 +53,29 @@ class OptimizelyTest(base.BaseTest):
   def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
     """ Helper method to validate properties of the event object. """
 
-    self.assertEqual(expected_url, event_obj.url)
+    self.assertEqual(expected_url, event_obj.get('url'))
+
+    event_params = event_obj.get('params')
 
     expected_params['visitors'][0]['attributes'] = \
       sorted(expected_params['visitors'][0]['attributes'], key=itemgetter('key'))
-    event_obj.params['visitors'][0]['attributes'] = \
-      sorted(event_obj.params['visitors'][0]['attributes'], key=itemgetter('key'))
-    self.assertEqual(expected_params, event_obj.params)
-    self.assertEqual(expected_verb, event_obj.http_verb)
-    self.assertEqual(expected_headers, event_obj.headers)
+    event_params['visitors'][0]['attributes'] = \
+      sorted(event_params['visitors'][0]['attributes'], key=itemgetter('key'))
+    self.assertEqual(expected_params, event_params)
+    self.assertEqual(expected_verb, event_obj.get('http_verb'))
+    self.assertEqual(expected_headers, event_obj.get('headers'))
 
   def _validate_event_object_event_tags(self, event_obj, expected_event_metric_params, expected_event_features_params):
     """ Helper method to validate properties of the event object related to event tags. """
 
+    event_params = event_obj.get('params')
+
     # get event metrics from the created event object
-    event_metrics = event_obj.params['visitors'][0]['snapshots'][0]['events'][0]['tags']
+    event_metrics = event_params['visitors'][0]['snapshots'][0]['events'][0]['tags']
     self.assertEqual(expected_event_metric_params, event_metrics)
 
     # get event features from the created event object
-    event_features = event_obj.params['visitors'][0]['attributes'][0]
+    event_features = event_params['visitors'][0]['attributes'][0]
     self.assertEqual(expected_event_features_params, event_features)
 
   def test_init__invalid_datafile__logs_error(self):
@@ -127,6 +132,19 @@ class OptimizelyTest(base.BaseTest):
       opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), event_dispatcher=InvalidDispatcher)
 
     mock_client_logger.exception.assert_called_once_with('Provided "event_dispatcher" is in an invalid format.')
+    self.assertFalse(opt_obj.is_valid)
+
+  def test_init__invalid_event_processor__logs_error(self):
+    """ Test that invalid event_processor logs error on init. """
+
+    class InvalidProcessor(object):
+      pass
+
+    mock_client_logger = mock.MagicMock()
+    with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+      opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), event_processor=InvalidProcessor)
+
+    mock_client_logger.exception.assert_called_once_with('Provided "event_processor" is in an invalid format.')
     self.assertFalse(opt_obj.is_valid)
 
   def test_init__invalid_logger__logs_error(self):
@@ -255,14 +273,14 @@ class OptimizelyTest(base.BaseTest):
     self.assertIsNone(opt_obj.config_manager.get_config())
 
   def test_activate(self):
-    """ Test that activate calls dispatch_event with right params and returns expected variation. """
+    """ Test that activate calls process with right params and returns expected variation. """
 
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')) as mock_decision, \
       mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     expected_params = {
@@ -291,11 +309,16 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
     mock_decision.assert_called_once_with(
       self.project_config, self.project_config.get_experiment_from_key('test_experiment'), 'test_user', None
     )
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    self.assertEqual(1, mock_process.call_count)
+
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_add_activate_remove_clear_listener(self):
@@ -307,7 +330,7 @@ class OptimizelyTest(base.BaseTest):
       if attributes is not None:
         self.assertTrue(isinstance(attributes, dict))
       self.assertTrue(isinstance(variation, entities.Variation))
-      self.assertTrue(isinstance(event, event_builder.Event))
+      # self.assertTrue(isinstance(event, event_builder.Event))
       print("Activated experiment {0}".format(experiment.key))
       callbackhit[0] = True
 
@@ -317,7 +340,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'):
+         mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'):
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
     self.assertEqual(True, callbackhit[0])
@@ -329,7 +352,7 @@ class OptimizelyTest(base.BaseTest):
                      len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]))
 
   def test_add_track_remove_clear_listener(self):
-    """ Test adding a listener tract passes correctly and gets called"""
+    """ Test adding a listener track passes correctly and gets called"""
     callback_hit = [False]
 
     def on_track(event_key, user_id, attributes, event_tags, event):
@@ -339,8 +362,8 @@ class OptimizelyTest(base.BaseTest):
         self.assertTrue(isinstance(attributes, dict))
       if event_tags is not None:
         self.assertTrue(isinstance(event_tags, dict))
-      self.assertTrue(isinstance(event, event_builder.Event))
-      print('Track event with event_key={0}'.format(event_key))
+
+      self.assertTrue(isinstance(event, dict))
       callback_hit[0] = True
 
     note_id = self.optimizely.notification_center.add_notification_listener(
@@ -349,7 +372,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'):
+         mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'):
       self.optimizely.track('test_event', 'test_user')
 
     self.assertEqual(True, callback_hit[0])
@@ -363,12 +386,20 @@ class OptimizelyTest(base.BaseTest):
   def test_activate_and_decision_listener(self):
     """ Test that activate calls broadcast activate and decision with proper parameters. """
 
+    def on_activate(event_key, user_id, attributes, event_tags, event):
+      pass
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.ACTIVATE, on_activate)
+
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+       mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
 
     self.assertEqual(mock_broadcast.call_count, 2)
 
@@ -388,20 +419,28 @@ class OptimizelyTest(base.BaseTest):
         self.project_config.get_experiment_from_key('test_experiment'),
         'test_user', None,
         self.project_config.get_variation_from_id('test_experiment', '111129'),
-        mock_dispatch.call_args[0][0]
+        log_event.__dict__
       )
     ])
 
   def test_activate_and_decision_listener_with_attr(self):
     """ Test that activate calls broadcast activate and decision with proper parameters. """
 
+    def on_activate(event_key, user_id, attributes, event_tags, event):
+      pass
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.ACTIVATE, on_activate)
+
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=self.project_config.get_variation_from_id('test_experiment', '111129')), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
       self.assertEqual('variation',
                        self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}))
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
 
     self.assertEqual(mock_broadcast.call_count, 2)
 
@@ -421,7 +460,7 @@ class OptimizelyTest(base.BaseTest):
         self.project_config.get_experiment_from_key('test_experiment'),
         'test_user', {'test_attribute': 'test_value'},
         self.project_config.get_variation_from_id('test_experiment', '111129'),
-        mock_dispatch.call_args[0][0]
+        log_event.__dict__
       )
     ])
 
@@ -432,7 +471,7 @@ class OptimizelyTest(base.BaseTest):
     with mock.patch(
         'optimizely.decision_service.DecisionService.get_variation',
         return_value=None), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'), \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision:
       self.assertEqual(None, self.optimizely.activate('test_experiment', 'test_user'))
 
@@ -450,52 +489,76 @@ class OptimizelyTest(base.BaseTest):
   def test_track_listener(self):
     """ Test that track calls notification broadcaster. """
 
+    def on_track(event_key, user_id, attributes, event_tags, event):
+      pass
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.TRACK, on_track)
+
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+       mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user')
 
+      log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event",
-                                                 'test_user', None, None, mock_dispatch.call_args[0][0])
+                                                 'test_user', None, None, log_event.__dict__)
 
   def test_track_listener_with_attr(self):
     """ Test that track calls notification broadcaster. """
 
+    def on_track(event_key, user_id, attributes, event_tags, event):
+      pass
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.TRACK, on_track)
+
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
+      log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user',
                                                  {'test_attribute': 'test_value'},
-                                                 None, mock_dispatch.call_args[0][0])
+                                                 None, log_event.__dict__)
 
   def test_track_listener_with_attr_with_event_tags(self):
     """ Test that track calls notification broadcaster. """
 
+    def on_track(event_key, user_id, attributes, event_tags, event):
+      pass
+
+    self.optimizely.notification_center.add_notification_listener(
+      enums.NotificationTypes.TRACK, on_track)
+
     with mock.patch('optimizely.decision_service.DecisionService.get_variation',
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111128'
                     )), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_event_tracked:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
+      log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
       mock_event_tracked.assert_called_once_with(enums.NotificationTypes.TRACK, "test_event", 'test_user',
                                                  {'test_attribute': 'test_value'},
                                                  {'value': 1.234, 'non-revenue': 'abc'},
-                                                 mock_dispatch.call_args[0][0])
+                                                  log_event.__dict__)
 
   def test_is_feature_enabled__callback_listener(self):
     """ Test that the feature is enabled for the user if bucketed into variation of an experiment.
-    Also confirm that impression event is dispatched. """
+    Also confirm that impression event is processed. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config_manager.get_config()
@@ -517,9 +580,7 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       enums.DecisionSources.FEATURE_TEST
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
-      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('time.time', return_value=42):
+       mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'):
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
@@ -527,7 +588,7 @@ class OptimizelyTest(base.BaseTest):
 
   def test_is_feature_enabled_rollout_callback_listener(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
-    Also confirm that no impression event is dispatched. """
+    Also confirm that no impression event is processed. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config_manager.get_config()
@@ -548,19 +609,17 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
-      mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('time.time', return_value=42):
+       mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     mock_decision.assert_called_once_with(project_config, feature, 'test_user', None)
 
     # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
     self.assertEqual(False, access_callback[0])
 
   def test_activate__with_attributes__audience_match(self):
-    """ Test that activate calls dispatch_event with right params and returns expected
+    """ Test that activate calls process with right params and returns expected
     variation when attributes are provided and audience conditions are met. """
 
     with mock.patch(
@@ -569,7 +628,7 @@ class OptimizelyTest(base.BaseTest):
         as mock_get_variation, \
       mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
                                                              {'test_attribute': 'test_value'}))
     expected_params = {
@@ -603,15 +662,19 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
     mock_get_variation.assert_called_once_with(self.project_config,
                                                self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value'})
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes_of_different_types(self):
-    """ Test that activate calls dispatch_event with right params and returns expected
+    """ Test that activate calls process with right params and returns expected
     variation when different types of attributes are provided and audience conditions are met. """
 
     with mock.patch(
@@ -620,7 +683,7 @@ class OptimizelyTest(base.BaseTest):
         as mock_bucket, \
       mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+       mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
 
       attributes = {
           'test_attribute': 'test_value_1',
@@ -678,19 +741,22 @@ class OptimizelyTest(base.BaseTest):
       'revision': '42'
     }
 
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
     mock_bucket.assert_called_once_with(
       self.project_config, self.project_config.get_experiment_from_key('test_experiment'), 'test_user', 'test_user'
     )
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__typed_audience_match(self):
-    """ Test that activate calls dispatch_event with right params and returns expected
+    """ Test that activate calls process with right params and returns expected
     variation when attributes are provided and typed audience conditions are met. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
         # Should be included via exact match string audience with id '3468206642'
       self.assertEqual('A', opt_obj.activate('typed_audience_experiment', 'test_user',
                                                            {'house': 'Gryffindor'}))
@@ -702,12 +768,12 @@ class OptimizelyTest(base.BaseTest):
       }
 
     self.assertTrue(
-      expected_attr in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
-    mock_dispatch_event.reset()
+    mock_process.reset()
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       # Should be included via exact match number audience with id '3468206646'
       self.assertEqual('A', opt_obj.activate('typed_audience_experiment', 'test_user',
                                                            {'lasers': 45.5}))
@@ -719,25 +785,25 @@ class OptimizelyTest(base.BaseTest):
       }
 
     self.assertTrue(
-      expected_attr in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
   def test_activate__with_attributes__typed_audience_mismatch(self):
     """ Test that activate returns None when typed audience conditions do not match. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertIsNone(opt_obj.activate('typed_audience_experiment', 'test_user',
                                                            {'house': 'Hufflepuff'}))
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_activate__with_attributes__complex_audience_match(self):
-    """ Test that activate calls dispatch_event with right params and returns expected
+    """ Test that activate calls process with right params and returns expected
     variation when attributes are provided and complex audience conditions are met. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
        # Should be included via substring match string audience with id '3988293898', and
        # exact match number audience with id '3468206646'
       user_attr = {'house': 'Welcome to Slytherin!', 'lasers': 45.5}
@@ -758,32 +824,32 @@ class OptimizelyTest(base.BaseTest):
       }
 
     self.assertTrue(
-      expected_attr_1 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr_1 in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
     self.assertTrue(
-      expected_attr_2 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr_2 in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
   def test_activate__with_attributes__complex_audience_mismatch(self):
     """ Test that activate returns None when complex audience conditions do not match. """
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
 
       user_attr = {'house': 'Hufflepuff', 'lasers': 45.5}
       self.assertIsNone(opt_obj.activate('audience_combinations_experiment', 'test_user', user_attr))
 
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_activate__with_attributes__audience_match__forced_bucketing(self):
-    """ Test that activate calls dispatch_event with right params and returns expected
+    """ Test that activate calls process with right params and returns expected
     variation when attributes are provided and audience conditions are met after a
     set_forced_variation is called. """
 
     with mock.patch('time.time', return_value=42), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+         mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'control'))
       self.assertEqual('control', self.optimizely.activate('test_experiment', 'test_user',
                                                            {'test_attribute': 'test_value'}))
@@ -820,12 +886,15 @@ class OptimizelyTest(base.BaseTest):
       'revision': '42'
     }
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__audience_match__bucketing_id_provided(self):
-    """ Test that activate calls dispatch_event with right params and returns expected variation
+    """ Test that activate calls process with right params and returns expected variation
     when attributes (including bucketing ID) are provided and audience conditions are met. """
 
     with mock.patch(
@@ -834,7 +903,7 @@ class OptimizelyTest(base.BaseTest):
             as mock_get_variation, \
             mock.patch('time.time', return_value=42), \
             mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+           mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user',
                                                              {'test_attribute': 'test_value',
                                                               '$opt_bucketing_id': 'user_bucket_value'}))
@@ -874,12 +943,16 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
     mock_get_variation.assert_called_once_with(self.project_config,
                                                self.project_config.get_experiment_from_key('test_experiment'),
                                                'test_user', {'test_attribute': 'test_value',
                                                              '$opt_bucketing_id': 'user_bucket_value'})
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_activate__with_attributes__no_audience_match(self):
@@ -894,30 +967,30 @@ class OptimizelyTest(base.BaseTest):
                                                 self.optimizely.logger)
 
   def test_activate__with_attributes__invalid_attributes(self):
-    """ Test that activate returns None and does not bucket or dispatch event when attributes are invalid. """
+    """ Test that activate returns None and does not bucket or process event when attributes are invalid. """
 
     with mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user', attributes='invalid'))
 
     self.assertEqual(0, mock_bucket.call_count)
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_activate__experiment_not_running(self):
-    """ Test that activate returns None and does not dispatch event when experiment is not Running. """
+    """ Test that activate returns None and does not process event when experiment is not Running. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True) as mock_audience_check, \
       mock.patch('optimizely.helpers.experiment.is_experiment_running',
                  return_value=False) as mock_is_experiment_running, \
       mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
 
     mock_is_experiment_running.assert_called_once_with(self.project_config.get_experiment_from_key('test_experiment'))
     self.assertEqual(0, mock_audience_check.call_count)
     self.assertEqual(0, mock_bucket.call_count)
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_activate__whitelisting_overrides_audience_check(self):
     """ Test that during activate whitelist overrides audience check if user is in the whitelist. """
@@ -930,18 +1003,18 @@ class OptimizelyTest(base.BaseTest):
     self.assertEqual(0, mock_audience_check.call_count)
 
   def test_activate__bucketer_returns_none(self):
-    """ Test that activate returns None and does not dispatch event when user is in no variation. """
+    """ Test that activate returns None and does not process event when user is in no variation. """
 
     with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True), \
       mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None) as mock_bucket, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertIsNone(self.optimizely.activate('test_experiment', 'test_user',
                                                  attributes={'test_attribute': 'test_value'}))
     mock_bucket.assert_called_once_with(self.project_config,
                                         self.project_config.get_experiment_from_key('test_experiment'),
                                         'test_user',
                                         'test_user')
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_activate__invalid_object(self):
     """ Test that activate logs error if Optimizely instance is invalid. """
@@ -968,11 +1041,11 @@ class OptimizelyTest(base.BaseTest):
                                                       'Failing "activate".')
 
   def test_track__with_attributes(self):
-    """ Test that track calls dispatch_event with right params when attributes are provided. """
+    """ Test that track calls process with right params when attributes are provided. """
 
     with mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
     expected_params = {
@@ -1001,21 +1074,25 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_attributes__typed_audience_match(self):
-    """ Test that track calls dispatch_event with right params when attributes are provided
+    """ Test that track calls process with right params when attributes are provided
     and it's a typed audience match. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       # Should be included via substring match string audience with id '3988293898'
       opt_obj.track('item_bought', 'test_user', {'house': 'Welcome to Slytherin!'})
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
     expected_attr = {
         'type': 'custom',
@@ -1025,32 +1102,32 @@ class OptimizelyTest(base.BaseTest):
     }
 
     self.assertTrue(
-      expected_attr in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
   def test_track__with_attributes__typed_audience_mismatch(self):
-    """ Test that track calls dispatch_event even if audience conditions do not match. """
+    """ Test that track calls process even if audience conditions do not match. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       opt_obj.track('item_bought', 'test_user', {'house': 'Welcome to Hufflepuff!'})
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
   def test_track__with_attributes__complex_audience_match(self):
-    """ Test that track calls dispatch_event with right params when attributes are provided
+    """ Test that track calls process with right params when attributes are provided
     and it's a complex audience match. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       # Should be included via exact match string audience with id '3468206642', and
       # exact match boolean audience with id '3468206643'
       user_attr = {'house': 'Gryffindor', 'should_do_it': True}
       opt_obj.track('user_signed_up', 'test_user', user_attr)
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
     expected_attr_1 = {
         'type': 'custom',
@@ -1060,7 +1137,7 @@ class OptimizelyTest(base.BaseTest):
     }
 
     self.assertTrue(
-      expected_attr_1 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr_1 in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
     expected_attr_2 = {
@@ -1071,29 +1148,29 @@ class OptimizelyTest(base.BaseTest):
     }
 
     self.assertTrue(
-      expected_attr_2 in mock_dispatch_event.call_args[0][0].params['visitors'][0]['attributes']
+      expected_attr_2 in [x.__dict__ for x in mock_process.call_args[0][0].visitor_attributes]
     )
 
   def test_track__with_attributes__complex_audience_mismatch(self):
-    """ Test that track calls dispatch_event even when complex audience conditions do not match. """
+    """ Test that track calls process even when complex audience conditions do not match. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       # Should be excluded - exact match boolean audience with id '3468206643' does not match,
       # so the overall conditions fail
       user_attr = {'house': 'Gryffindor', 'should_do_it': False}
       opt_obj.track('user_signed_up', 'test_user', user_attr)
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
   def test_track__with_attributes__bucketing_id_provided(self):
-    """ Test that track calls dispatch_event with right params when
+    """ Test that track calls process with right params when
     attributes (including bucketing ID) are provided. """
 
     with mock.patch('time.time', return_value=42), \
          mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+         mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value',
                                                                    '$opt_bucketing_id': 'user_bucket_value'})
 
@@ -1128,35 +1205,39 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_attributes__no_audience_match(self):
-    """ Test that track calls dispatch_event even if audience conditions do not match. """
+    """ Test that track calls process even if audience conditions do not match. """
 
     with mock.patch('time.time', return_value=42), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'})
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
   def test_track__with_attributes__invalid_attributes(self):
-    """ Test that track does not bucket or dispatch event if attributes are invalid. """
+    """ Test that track does not bucket or process event if attributes are invalid. """
 
     with mock.patch('optimizely.bucketer.Bucketer.bucket') as mock_bucket, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+     mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
     self.assertEqual(0, mock_bucket.call_count)
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_track__with_event_tags(self):
-    """ Test that track calls dispatch_event with right params when event tags are provided. """
+    """ Test that track calls process with right params when event tags are provided. """
 
     with mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
 
@@ -1193,17 +1274,20 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_event_tags_revenue(self):
-    """ Test that track calls dispatch_event with right params when only revenue
+    """ Test that track calls process with right params when only revenue
         event tags are provided only. """
 
     with mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'non-revenue': 'abc'})
 
@@ -1238,15 +1322,19 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_event_tags_numeric_metric(self):
-    """ Test that track calls dispatch_event with right params when only numeric metric
+    """ Test that track calls process with right params when only numeric metric
         event tags are provided. """
 
-    with mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'value': 1.234, 'non-revenue': 'abc'})
 
@@ -1261,18 +1349,22 @@ class OptimizelyTest(base.BaseTest):
       'value': 'test_value',
       'key': 'test_attribute'
     }
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object_event_tags(mock_dispatch_event.call_args[0][0],
+
+    self.assertEqual(1, mock_process.call_count)
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self._validate_event_object_event_tags(log_event.__dict__,
                                            expected_event_metrics_params,
                                            expected_event_features_params)
 
   def test_track__with_event_tags__forced_bucketing(self):
-    """ Test that track calls dispatch_event with right params when event_value information is provided
+    """ Test that track calls process with right params when event_value information is provided
     after a forced bucket. """
 
     with mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'})
@@ -1311,17 +1403,19 @@ class OptimizelyTest(base.BaseTest):
       'revision': '42'
     }
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
 
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__with_invalid_event_tags(self):
-    """ Test that track calls dispatch_event with right params when invalid event tags are provided. """
+    """ Test that track calls process with right params when invalid event tags are provided. """
 
     with mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'},
                             event_tags={'revenue': '4200', 'value': True})
 
@@ -1355,31 +1449,35 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '42'
     }
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0], 'https://logx.optimizely.com/v1/events',
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
+                                'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_track__experiment_not_running(self):
-    """ Test that track calls dispatch_event even if experiment is not running. """
+    """ Test that track calls process even if experiment is not running. """
 
     with mock.patch('optimizely.helpers.experiment.is_experiment_running',
                     return_value=False) as mock_is_experiment_running, \
       mock.patch('time.time', return_value=42), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+       mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'test_user')
 
     # Assert that experiment is running is not performed
     self.assertEqual(0, mock_is_experiment_running.call_count)
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
   def test_track_invalid_event_key(self):
-    """ Test that track does not call dispatch_event when event does not exist. """
-    dispatch_event_patch = mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event')
-    with dispatch_event_patch as mock_dispatch_event, \
+    """ Test that track does not call process when event does not exist. """
+
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process,\
           mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.optimizely.track('aabbcc_event', 'test_user')
 
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
     mock_client_logging.info.assert_called_with(
       'Not tracking user "test_user" for event "aabbcc_event".'
     )
@@ -1389,10 +1487,10 @@ class OptimizelyTest(base.BaseTest):
 
     with mock.patch('time.time', return_value=42), \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.optimizely.track('test_event', 'user_1')
 
-    self.assertEqual(1, mock_dispatch_event.call_count)
+    self.assertEqual(1, mock_process.call_count)
 
   def test_track__invalid_object(self):
     """ Test that track logs error if Optimizely instance is invalid. """
@@ -1618,17 +1716,17 @@ class OptimizelyTest(base.BaseTest):
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
     with mock.patch('optimizely.decision_service.DecisionService.get_variation_for_feature') as mock_decision, \
-            mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event:
+            mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
       self.assertFalse(opt_obj.is_feature_enabled('invalid_feature', 'user1'))
 
     self.assertFalse(mock_decision.called)
 
     # Check that no event is sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_is_feature_enabled__returns_true_for_feature_experiment_if_feature_enabled_for_variation(self):
     """ Test that the feature is enabled for the user if bucketed into variation of an experiment and
-    the variation's featureEnabled property is True. Also confirm that impression event is dispatched and
+    the variation's featureEnabled property is True. Also confirm that impression event is processed and
     decision listener is called with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1647,7 +1745,7 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       enums.DecisionSources.FEATURE_TEST
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
@@ -1701,15 +1799,18 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '1'
     }
+
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
     # Check that impression event is sent
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0],
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
                                 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_is_feature_enabled__returns_false_for_feature_experiment_if_feature_disabled_for_variation(self):
     """ Test that the feature is disabled for the user if bucketed into variation of an experiment and
-    the variation's featureEnabled property is False. Also confirm that impression event is dispatched and
+    the variation's featureEnabled property is False. Also confirm that impression event is processed and
     decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1728,7 +1829,7 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       enums.DecisionSources.FEATURE_TEST
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
@@ -1783,15 +1884,17 @@ class OptimizelyTest(base.BaseTest):
       'anonymize_ip': False,
       'revision': '1'
     }
+    log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
     # Check that impression event is sent
-    self.assertEqual(1, mock_dispatch_event.call_count)
-    self._validate_event_object(mock_dispatch_event.call_args[0][0],
+    self.assertEqual(1, mock_process.call_count)
+    self._validate_event_object(log_event.__dict__,
                                 'https://logx.optimizely.com/v1/events',
                                 expected_params, 'POST', {'Content-Type': 'application/json'})
 
   def test_is_feature_enabled__returns_true_for_feature_rollout_if_feature_enabled(self):
     """ Test that the feature is enabled for the user if bucketed into variation of a rollout and
-    the variation's featureEnabled property is True. Also confirm that no impression event is dispatched and
+    the variation's featureEnabled property is True. Also confirm that no impression event is processed and
     decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1810,7 +1913,7 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
@@ -1832,11 +1935,11 @@ class OptimizelyTest(base.BaseTest):
     )
 
     # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_is_feature_enabled__returns_false_for_feature_rollout_if_feature_disabled(self):
     """ Test that the feature is disabled for the user if bucketed into variation of a rollout and
-    the variation's featureEnabled property is False. Also confirm that no impression event is dispatched and
+    the variation's featureEnabled property is False. Also confirm that no impression event is processed and
     decision is broadcasted with proper parameters """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1855,7 +1958,7 @@ class OptimizelyTest(base.BaseTest):
                       mock_variation,
                       enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
@@ -1877,12 +1980,12 @@ class OptimizelyTest(base.BaseTest):
     )
 
     # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_is_feature_enabled__returns_false_when_user_is_not_bucketed_into_any_variation(self):
     """ Test that the feature is not enabled for the user if user is neither bucketed for
     Feature Experiment nor for Feature Rollout.
-    Also confirm that impression event is not dispatched. """
+    Also confirm that impression event is not processed. """
 
     opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
     project_config = opt_obj.config_manager.get_config()
@@ -1893,14 +1996,14 @@ class OptimizelyTest(base.BaseTest):
                       None,
                       enums.DecisionSources.ROLLOUT
                     )) as mock_decision, \
-      mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event') as mock_dispatch_event, \
+      mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, \
       mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast_decision, \
       mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'), \
       mock.patch('time.time', return_value=42):
       self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
     # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
     mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
@@ -1918,7 +2021,7 @@ class OptimizelyTest(base.BaseTest):
     )
 
     # Check that impression event is not sent
-    self.assertEqual(0, mock_dispatch_event.call_count)
+    self.assertEqual(0, mock_process.call_count)
 
   def test_is_feature_enabled__invalid_object(self):
     """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
@@ -3656,17 +3759,12 @@ class OptimizelyWithLoggingTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111129')), \
          mock.patch('time.time', return_value=42), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+         mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'), \
          mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.assertEqual(variation_key, self.optimizely.activate(experiment_key, user_id))
 
     mock_client_logging.info.assert_called_once_with(
       'Activating user "test_user" in experiment "test_experiment".'
-    )
-    debug_message = mock_client_logging.debug.call_args_list[0][0][0]
-    self.assertRegexpMatches(
-      debug_message,
-      'Dispatching impression event to URL https://logx.optimizely.com/v1/events with params'
     )
 
   def test_track(self):
@@ -3676,19 +3774,13 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     event_key = 'test_event'
     mock_client_logger = mock.patch.object(self.optimizely, 'logger')
 
-    mock_conversion_event = event_builder.Event('logx.optimizely.com', {'event_key': event_key})
-    with mock.patch('optimizely.event_builder.EventBuilder.create_conversion_event',
-                    return_value=mock_conversion_event), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+    event_builder.Event('logx.optimizely.com', {'event_key': event_key})
+    with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'), \
          mock_client_logger as mock_client_logging:
       self.optimizely.track(event_key, user_id)
 
     mock_client_logging.info.assert_has_calls([
       mock.call('Tracking event "%s" for user "%s".' % (event_key, user_id)),
-    ])
-    mock_client_logging.debug.assert_has_calls([
-      mock.call('Dispatching conversion event to URL %s with params %s.' % (
-        mock_conversion_event.url, mock_conversion_event.params)),
     ])
 
   def test_activate__experiment_not_running(self):
@@ -3728,16 +3820,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     )
     mock_client_logging.info.assert_called_once_with('Not activating user "test_user".')
 
-  def test_activate__dispatch_raises_exception(self):
-    """ Test that activate logs dispatch failure gracefully. """
-
-    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event',
-                   side_effect=Exception('Failed to send')):
-      self.assertEqual('control', self.optimizely.activate('test_experiment', 'user_1'))
-
-    mock_client_logging.exception.assert_called_once_with('Unable to dispatch impression event!')
-
   def test_track__invalid_attributes(self):
     """ Test that expected log messages are logged during track when attributes are in invalid format. """
 
@@ -3762,15 +3844,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
       mock_client_logging.error.assert_called_once_with(
         'Provided event tags are in an invalid format.'
       )
-
-  def test_track__dispatch_raises_exception(self):
-    """ Test that track logs dispatch failure gracefully. """
-    with mock.patch.object(self.optimizely, 'logger') as mock_client_logging, \
-        mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event',
-                   side_effect=Exception('Failed to send')):
-      self.optimizely.track('test_event', 'user_1')
-
-    mock_client_logging.exception.assert_called_once_with('Unable to dispatch conversion event!')
 
   def test_get_variation__invalid_attributes(self):
     """ Test that expected log messages are logged during get variation when attributes are in invalid format. """
@@ -3830,17 +3903,12 @@ class OptimizelyWithLoggingTest(base.BaseTest):
                     return_value=self.project_config.get_variation_from_id(
                       'test_experiment', '111129')), \
          mock.patch('time.time', return_value=42), \
-         mock.patch('optimizely.event_dispatcher.EventDispatcher.dispatch_event'), \
+         mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'), \
          mock.patch.object(self.optimizely, 'logger') as mock_client_logging:
       self.assertEqual(variation_key, self.optimizely.activate(experiment_key, user_id))
 
     mock_client_logging.info.assert_called_once_with(
       'Activating user "" in experiment "test_experiment".'
-    )
-    debug_message = mock_client_logging.debug.call_args_list[0][0][0]
-    self.assertRegexpMatches(
-      debug_message,
-      'Dispatching impression event to URL https://logx.optimizely.com/v1/events with params'
     )
 
   def test_activate__invalid_attributes(self):

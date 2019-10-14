@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2019, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -43,7 +43,7 @@ class InvalidGroupException(Exception):
 
 
 class InvalidInputException(Exception):
-  """ Raised when provided datafile, event dispatcher, logger or error handler is invalid. """
+  """ Raised when provided datafile, event dispatcher, logger, event processor or error handler is invalid. """
   pass
 
 
