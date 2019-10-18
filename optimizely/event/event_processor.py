@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import abc
+import numbers
 import threading
 import time
 
@@ -100,13 +101,14 @@ class BatchEventProcessor(BaseEventProcessor):
       self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
       self.notification_center = _notification_center.NotificationCenter()
 
+    self.executor = None
     if start_on_init is True:
       self.start()
 
   @property
   def is_running(self):
     """ Property to check if consumer thread is alive or not. """
-    return self.executor.isAlive()
+    return self.executor.isAlive() if self.executor else False
 
   def _validate_intantiation_props(self, prop, prop_name):
     """ Method to determine if instantiation properties like batch_size, flush_interval
@@ -121,12 +123,18 @@ class BatchEventProcessor(BaseEventProcessor):
       False if property name is batch_size and value is a floating point number.
       True otherwise.
     """
-    if (prop_name == 'batch_size' and not isinstance(prop, int)) or prop is None or prop <= 0 or \
-      not validator.is_finite_number(prop):
-      self.logger.info('Using default value for {}.'.format(prop_name))
-      return False
+    is_valid = True
 
-    return True
+    if prop is None or not validator.is_finite_number(prop) or prop <= 0:
+      is_valid = False
+
+    if prop_name == 'batch_size' and not isinstance(prop, numbers.Integral):
+      is_valid = False
+
+    if is_valid is False:
+      self.logger.info('Using default value for {}.'.format(prop_name))
+
+    return is_valid
 
   def _get_time(self, _time=None):
     """ Method to return rounded off time as integer in seconds. If _time is None, uses current time.
@@ -279,7 +287,8 @@ class BatchEventProcessor(BaseEventProcessor):
     self.event_queue.put(self._SHUTDOWN_SIGNAL)
     self.logger.warning('Stopping Scheduler.')
 
-    self.executor.join(self.timeout_interval.total_seconds())
+    if self.executor:
+      self.executor.join(self.timeout_interval.total_seconds())
 
     if self.is_running:
       self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
