@@ -335,7 +335,7 @@ class BatchEventProcessorTest(base.BaseTest):
                                                   True,
                                                   self.event_queue,
                                                   self.MAX_BATCH_SIZE,
-                                                  True,
+                                                  "True",
                                                   self.MAX_TIMEOUT_INTERVAL_SEC
                                                   )
 
