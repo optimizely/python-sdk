@@ -87,17 +87,17 @@ class BatchEventProcessor(BaseEventProcessor):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
-    self.batch_size = batch_size if self._validate_intantiation_props(batch_size,
+    self.batch_size = batch_size if self._validate_instantiation_props(batch_size,
                                                                       'batch_size',
                                                                       self._DEFAULT_BATCH_SIZE) \
                         else self._DEFAULT_BATCH_SIZE
     self.flush_interval = timedelta(seconds=flush_interval) \
-                            if self._validate_intantiation_props(flush_interval,
+                            if self._validate_instantiation_props(flush_interval,
                                                                  'flush_interval',
                                                                  self._DEFAULT_FLUSH_INTERVAL) \
                             else timedelta(self._DEFAULT_FLUSH_INTERVAL)
     self.timeout_interval = timedelta(seconds=timeout_interval) \
-                              if self._validate_intantiation_props(timeout_interval,
+                              if self._validate_instantiation_props(timeout_interval,
                                                                    'timeout_interval',
                                                                    self._DEFAULT_TIMEOUT_INTERVAL) \
                               else timedelta(self._DEFAULT_TIMEOUT_INTERVAL)
@@ -119,7 +119,7 @@ class BatchEventProcessor(BaseEventProcessor):
     """ Property to check if consumer thread is alive or not. """
     return self.executor.isAlive() if self.executor else False
 
-  def _validate_intantiation_props(self, prop, prop_name, default_value):
+  def _validate_instantiation_props(self, prop, prop_name, default_value):
     """ Method to determine if instantiation properties like batch_size, flush_interval
     and timeout_interval are valid.
 
