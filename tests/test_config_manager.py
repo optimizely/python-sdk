@@ -159,6 +159,16 @@ class StaticConfigManagerTest(base.BaseTest):
         # Assert that config is set.
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
+    def test_get_config_blocks(self):
+        """ Test that get_config blocks until blocking timeout is hit. """
+        start_time = time.time()
+        project_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key',
+                                                                     blocking_timeout=5)
+        # Assert get_config should block until blocking timeout.
+        project_config_manager.get_config()
+        end_time = time.time()
+        self.assertEqual(5, round(end_time - start_time))
+
 
 @mock.patch('requests.get')
 class PollingConfigManagerTest(base.BaseTest):
@@ -217,7 +227,8 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_update_interval(self, _):
         """ Test set_update_interval with different inputs. """
-        project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+          project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         # Assert that if invalid update_interval is set, then exception is raised.
         with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
@@ -238,7 +249,8 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_blocking_timeout(self, _):
         """ Test set_blocking_timeout with different inputs. """
-        project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+          project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         # Assert that if invalid blocking_timeout is set, then exception is raised.
         with self.assertRaisesRegexp(optimizely_exceptions.InvalidInputException,
@@ -261,15 +273,10 @@ class PollingConfigManagerTest(base.BaseTest):
         project_config_manager.set_blocking_timeout(5)
         self.assertEqual(5, project_config_manager.blocking_timeout)
 
-        # Assert get_config should block until blocking timeout.
-        start_time = time.time()
-        project_config_manager.get_config()
-        end_time = time.time()
-        self.assertEqual(5, round(end_time - start_time))
-
     def test_set_last_modified(self, _):
         """ Test that set_last_modified sets last_modified field based on header. """
-        project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+          project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         last_modified_time = 'Test Last Modified Time'
         test_response_headers = {
