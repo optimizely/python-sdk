@@ -123,15 +123,16 @@ class BatchEventProcessorTest(base.BaseTest):
     return UserEventFactory.create_conversion_event(config, event_name, self.test_user_id, {}, {})
 
   def _set_event_processor(self, event_dispatcher, logger):
-    self.event_processor = BatchEventProcessor(event_dispatcher,
-                                                 logger,
-                                                 True,
-                                                 self.event_queue,
-                                                 self.MAX_BATCH_SIZE,
-                                                 self.MAX_DURATION_SEC,
-                                                 self.MAX_TIMEOUT_INTERVAL_SEC,
-                                                 self.optimizely.notification_center
-                                                )
+    self.event_processor = BatchEventProcessor(
+      event_dispatcher,
+      logger,
+      True,
+      self.event_queue,
+      self.MAX_BATCH_SIZE,
+      self.MAX_DURATION_SEC,
+      self.MAX_TIMEOUT_INTERVAL_SEC,
+      self.optimizely.notification_center
+    )
 
   def test_drain_on_stop(self):
     event_dispatcher = TestEventDispatcher()
@@ -450,18 +451,20 @@ class ForwardingEventProcessorTest(base.BaseTest):
     self.event_dispatcher = TestForwardingEventDispatcher(is_updated=False)
 
     with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
-      self.event_processor = ForwardingEventProcessor(self.event_dispatcher,
-                                                        mock_config_logging,
-                                                        self.notification_center
-                                                       )
+      self.event_processor = ForwardingEventProcessor(
+        self.event_dispatcher,
+        mock_config_logging,
+        self.notification_center
+      )
 
   def _build_conversion_event(self, event_name):
-    return UserEventFactory.create_conversion_event(self.project_config,
-                                                    event_name,
-                                                    self.test_user_id,
-                                                    {},
-                                                    {}
-                                                    )
+    return UserEventFactory.create_conversion_event(
+      self.project_config,
+      event_name,
+      self.test_user_id,
+      {},
+      {}
+    )
 
   def test_event_processor__dispatch_raises_exception(self):
     """ Test that process logs dispatch failure gracefully. """
