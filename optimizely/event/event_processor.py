@@ -45,6 +45,7 @@ class BaseEventProcessor(ABC):
 class BatchEventProcessor(BaseEventProcessor):
   """
   BatchEventProcessor is an implementation of the BaseEventProcessor that batches events.
+
   The BatchEventProcessor maintains a single consumer thread that pulls events off of
   the blocking queue and buffers them for either a configured batch size or for a
   maximum duration before the resulting LogEvent is sent to the EventDispatcher.

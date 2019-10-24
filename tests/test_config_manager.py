@@ -262,6 +262,7 @@ class PollingConfigManagerTest(base.BaseTest):
         self.assertEqual(5, project_config_manager.blocking_timeout)
 
         # Assert get_config should block until blocking timeout.
+        project_config_manager._config_ready_event.clear()
         start_time = time.time()
         project_config_manager.get_config()
         end_time = time.time()
