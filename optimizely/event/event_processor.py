@@ -34,7 +34,7 @@ class BaseEventProcessor(ABC):
   """ Class encapsulating event processing. Override with your own implementation. """
 
   @abc.abstractmethod
-  def process(user_event):
+  def process(self, user_event):
     """ Method to provide intermediary processing stage within event production.
     Args:
       user_event: UserEvent instance that needs to be processed and dispatched.
@@ -52,26 +52,26 @@ class BatchEventProcessor(BaseEventProcessor):
 
   _DEFAULT_QUEUE_CAPACITY = 1000
   _DEFAULT_BATCH_SIZE = 10
-  _DEFAULT_FLUSH_INTERVAL = timedelta(seconds=30)
-  _DEFAULT_TIMEOUT_INTERVAL = timedelta(seconds=5)
+  _DEFAULT_FLUSH_INTERVAL = 30
+  _DEFAULT_TIMEOUT_INTERVAL = 5
   _SHUTDOWN_SIGNAL = object()
   _FLUSH_SIGNAL = object()
   LOCK = threading.Lock()
 
   def __init__(self,
                event_dispatcher,
-               logger,
+               logger=None,
                start_on_init=False,
                event_queue=None,
                batch_size=None,
                flush_interval=None,
                timeout_interval=None,
                notification_center=None):
-    """ EventProcessor init method to configure event batching.
+    """ BatchEventProcessor init method to configure event batching.
 
     Args:
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
-      logger: Provides a log method to log messages. By default nothing would be logged.
+      logger: Optional component which provides a log method to log messages. By default nothing would be logged.
       start_on_init: Optional boolean param which starts the consumer thread if set to True.
                      Default value is False.
       event_queue: Optional component which accumulates the events until dispacthed.
@@ -86,20 +86,28 @@ class BatchEventProcessor(BaseEventProcessor):
     self.event_dispatcher = event_dispatcher or default_event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
-    self.batch_size = batch_size if self._validate_intantiation_props(batch_size, 'batch_size') \
+    self.batch_size = batch_size if self._validate_intantiation_props(batch_size,
+                                                                      'batch_size',
+                                                                      self._DEFAULT_BATCH_SIZE) \
                         else self._DEFAULT_BATCH_SIZE
     self.flush_interval = timedelta(seconds=flush_interval) \
-                            if self._validate_intantiation_props(flush_interval, 'flush_interval') \
-                            else self._DEFAULT_FLUSH_INTERVAL
+                            if self._validate_intantiation_props(flush_interval,
+                                                                 'flush_interval',
+                                                                 self._DEFAULT_FLUSH_INTERVAL) \
+                            else timedelta(self._DEFAULT_FLUSH_INTERVAL)
     self.timeout_interval = timedelta(seconds=timeout_interval) \
-                              if self._validate_intantiation_props(timeout_interval, 'timeout_interval') \
-                              else self._DEFAULT_TIMEOUT_INTERVAL
-    self.notification_center = notification_center
+                              if self._validate_intantiation_props(timeout_interval,
+                                                                   'timeout_interval',
+                                                                   self._DEFAULT_TIMEOUT_INTERVAL) \
+                              else timedelta(self._DEFAULT_TIMEOUT_INTERVAL)
+
+    self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
     self._current_batch = list()
 
     if not validator.is_notification_center_valid(self.notification_center):
       self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
-      self.notification_center = _notification_center.NotificationCenter()
+      self.logger.debug('Creating notification center for use.')
+      self.notification_center = _notification_center.NotificationCenter(self.logger)
 
     self.executor = None
     if start_on_init is True:
@@ -110,13 +118,14 @@ class BatchEventProcessor(BaseEventProcessor):
     """ Property to check if consumer thread is alive or not. """
     return self.executor.isAlive() if self.executor else False
 
-  def _validate_intantiation_props(self, prop, prop_name):
+  def _validate_intantiation_props(self, prop, prop_name, default_value):
     """ Method to determine if instantiation properties like batch_size, flush_interval
     and timeout_interval are valid.
 
     Args:
       prop: Property value that needs to be validated.
       prop_name: Property name.
+      default_value: Default value for property.
 
     Returns:
       False if property value is None or less than or equal to 0 or not a finite number.
@@ -132,7 +141,7 @@ class BatchEventProcessor(BaseEventProcessor):
       is_valid = False
 
     if is_valid is False:
-      self.logger.info('Using default value for {}.'.format(prop_name))
+      self.logger.info('Using default value {} for {}.'.format(default_value, prop_name))
 
     return is_valid
 
@@ -213,11 +222,10 @@ class BatchEventProcessor(BaseEventProcessor):
 
     log_event = EventFactory.create_log_event(to_process_batch, self.logger)
 
-    if self.notification_center is not None:
-      self.notification_center.send_notifications(
-        enums.NotificationTypes.LOG_EVENT,
-        log_event
-      )
+    self.notification_center.send_notifications(
+      enums.NotificationTypes.LOG_EVENT,
+      log_event
+    )
 
     try:
       self.event_dispatcher.dispatch_event(log_event)
@@ -226,6 +234,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
   def process(self, user_event):
     """ Method to process the user_event by putting it in event_queue.
+
     Args:
       user_event: UserEvent Instance.
     """
@@ -233,7 +242,9 @@ class BatchEventProcessor(BaseEventProcessor):
       self.logger.error('Provided event is in an invalid format.')
       return
 
-    self.logger.debug('Received user_event: ' + str(user_event))
+    self.logger.debug('Received event of type {} for user {}.'.format(
+      type(user_event).__name__, user_event.user_id)
+    )
 
     try:
       self.event_queue.put_nowait(user_event)
@@ -242,6 +253,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
   def _add_to_batch(self, user_event):
     """ Method to append received user event to current batch.
+
     Args:
       user_event: UserEvent Instance.
     """
@@ -261,9 +273,11 @@ class BatchEventProcessor(BaseEventProcessor):
 
   def _should_split(self, user_event):
     """ Method to check if current event batch should split into two.
+
     Args:
       user_event: UserEvent Instance.
-    Return Value:
+
+    Returns:
       - True, if revision number and project_id of last event in current batch do not match received event's
       revision number and project id respectively.
       - False, otherwise.
@@ -311,7 +325,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
     """
     self.event_dispatcher = event_dispatcher
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
-    self.notification_center = notification_center
+    self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
 
     if not validator.is_notification_center_valid(self.notification_center):
       self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
@@ -319,6 +333,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
 
   def process(self, user_event):
     """ Method to process the user_event by dispatching it.
+
     Args:
       user_event: UserEvent Instance.
     """
@@ -326,15 +341,16 @@ class ForwardingEventProcessor(BaseEventProcessor):
       self.logger.error('Provided event is in an invalid format.')
       return
 
-    self.logger.debug('Received user_event: ' + str(user_event))
+    self.logger.debug('Received event of type {} for user {}.'.format(
+      type(user_event).__name__, user_event.user_id)
+    )
 
     log_event = EventFactory.create_log_event(user_event, self.logger)
 
-    if self.notification_center is not None:
-      self.notification_center.send_notifications(
-        enums.NotificationTypes.LOG_EVENT,
-        log_event
-      )
+    self.notification_center.send_notifications(
+      enums.NotificationTypes.LOG_EVENT,
+      log_event
+    )
 
     try:
       self.event_dispatcher.dispatch_event(log_event)
