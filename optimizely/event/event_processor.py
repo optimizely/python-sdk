@@ -88,18 +88,18 @@ class BatchEventProcessor(BaseEventProcessor):
     self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
     self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
     self.batch_size = batch_size if self._validate_instantiation_props(batch_size,
-                                                                      'batch_size',
-                                                                      self._DEFAULT_BATCH_SIZE) \
+                                                                       'batch_size',
+                                                                       self._DEFAULT_BATCH_SIZE) \
                         else self._DEFAULT_BATCH_SIZE
     self.flush_interval = timedelta(seconds=flush_interval) \
                             if self._validate_instantiation_props(flush_interval,
-                                                                 'flush_interval',
-                                                                 self._DEFAULT_FLUSH_INTERVAL) \
+                                                                  'flush_interval',
+                                                                  self._DEFAULT_FLUSH_INTERVAL) \
                             else timedelta(self._DEFAULT_FLUSH_INTERVAL)
     self.timeout_interval = timedelta(seconds=timeout_interval) \
                               if self._validate_instantiation_props(timeout_interval,
-                                                                   'timeout_interval',
-                                                                   self._DEFAULT_TIMEOUT_INTERVAL) \
+                                                                    'timeout_interval',
+                                                                    self._DEFAULT_TIMEOUT_INTERVAL) \
                               else timedelta(self._DEFAULT_TIMEOUT_INTERVAL)
 
     self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
