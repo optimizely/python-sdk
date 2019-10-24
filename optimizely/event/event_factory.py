@@ -55,20 +55,19 @@ class EventFactory(object):
       if visitor:
         visitors.append(visitor)
 
-      user_context = event.event_context
-
-      event_batch = payload.EventBatch(
-        user_context.account_id,
-        user_context.project_id,
-        user_context.revision,
-        user_context.client_name,
-        user_context.client_version,
-        user_context.anonymize_ip,
-        True
-      )
-
     if len(visitors) == 0:
       return None
+
+    user_context = user_events[0].event_context
+    event_batch = payload.EventBatch(
+      user_context.account_id,
+      user_context.project_id,
+      user_context.revision,
+      user_context.client_name,
+      user_context.client_version,
+      user_context.anonymize_ip,
+      True
+    )
 
     event_batch.visitors = visitors
 
