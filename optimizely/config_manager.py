@@ -96,7 +96,6 @@ class StaticConfigManager(BaseConfigManager):
                                                   notification_center=notification_center)
         self._config = None
         self.validate_schema = not skip_json_validation
-        self._config_ready_event = threading.Event()
         self._set_config(datafile)
 
     def _set_config(self, datafile):
@@ -135,7 +134,6 @@ class StaticConfigManager(BaseConfigManager):
             return
 
         self._config = config
-        self._config_ready_event.set()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
@@ -186,6 +184,7 @@ class PollingConfigManager(StaticConfigManager):
                                   JSON schema validation will be performed.
 
         """
+        self._config_ready_event = threading.Event()
         super(PollingConfigManager, self).__init__(datafile=datafile,
                                                    logger=logger,
                                                    error_handler=error_handler,
@@ -231,6 +230,16 @@ class PollingConfigManager(StaticConfigManager):
                     'Invalid url_template {} provided.'.format(url_template))
 
         return url
+
+    def _set_config(self, datafile):
+        """ Looks up and sets datafile and config based on response body.
+
+         Args:
+           datafile: JSON string representing the Optimizely project.
+         """
+        if datafile or self._config_ready_event.is_set():
+          super(PollingConfigManager, self)._set_config(datafile=datafile)
+          self._config_ready_event.set()
 
     def get_config(self):
         """ Returns instance of ProjectConfig. Returns immediately if project config is ready otherwise

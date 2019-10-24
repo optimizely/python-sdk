@@ -58,7 +58,10 @@ class Optimizely(object):
       notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
                            config_manager.BaseConfigManager implementation which can be using the
                            same NotificationCenter instance.
-      event_processor: Processes the given event(s) by creating LogEvent(s) and then dispatching it.
+      event_processor: Optional component which processes the given event(s).
+                       By default optimizely.event.event_processor.ForwardingEventProcessor is used
+                       which simply forwards events to the event dispatcher.
+                       To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
     """
     self.logger_name = '.'.join([__name__, self.__class__.__name__])
     self.is_valid = True
@@ -68,8 +71,8 @@ class Optimizely(object):
     self.config_manager = config_manager
     self.notification_center = notification_center or NotificationCenter(self.logger)
     self.event_processor = event_processor or ForwardingEventProcessor(self.event_dispatcher,
-                                                                       self.logger,
-                                                                       self.notification_center)
+                                                                       logger=self.logger,
+                                                                       notification_center=self.notification_center)
 
     try:
       self._validate_instantiation_options()
