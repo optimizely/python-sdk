@@ -67,15 +67,13 @@ def get_numeric_value(event_tags, logger=None):
   numeric_metric_value = None
 
   if event_tags is None:
-    if logger:
-      logger.log(enums.LogLevels.ERROR, 'Event tags is undefined.')
-    return
+    return numeric_metric_value
   elif not isinstance(event_tags, dict):
     if logger:
       logger.log(enums.LogLevels.ERROR, 'Event tags is not a dictionary.')
-    return
+    return numeric_metric_value
   elif NUMERIC_METRIC_TYPE not in event_tags:
-    return
+    return numeric_metric_value
   else:
     numeric_metric_value = event_tags[NUMERIC_METRIC_TYPE]
     try:
