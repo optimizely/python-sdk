@@ -1,7 +1,7 @@
 # Optimizely Python SDK Changelog
 
 ## 3.3.0
-October 25th, 2019
+October 28th, 2019
 
 ### New Features:
 * Added support for event batching via the event processor.
@@ -10,6 +10,9 @@ October 25th, 2019
   * Event batching is disabled by default. You can pass in instance of `BatchEventProcessor` when creating `Optimizely` instance to enable event batching.
   * Users can subscribe to `LogEvent` notification to be notified of whenever a payload consisting of a batch of user events is handed off to the event dispatcher to send to Optimizely's backend.
 * Introduced blocking timeout in `PollingConfigManager`. By default, calls to `get_config` will block for maximum of 10 seconds until config is available. 
+
+### Bug Fixes:
+* Fixed incorrect log message when numeric metric is not used. ([#217](https://github.com/optimizely/python-sdk/pull/217))
 
 ## 3.2.0
 August 27th, 2019
