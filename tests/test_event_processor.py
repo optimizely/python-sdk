@@ -327,7 +327,7 @@ class BatchEventProcessorTest(base.BaseTest):
       )
 
     # default flush interval is 30s.
-    self.assertEqual(datetime.timedelta(30), self.event_processor.flush_interval)
+    self.assertEqual(datetime.timedelta(seconds=30), self.event_processor.flush_interval)
     mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
   def test_init__bool_flush_interval(self):
@@ -345,7 +345,7 @@ class BatchEventProcessorTest(base.BaseTest):
       )
 
     # default flush interval is 30s.
-    self.assertEqual(datetime.timedelta(30), self.event_processor.flush_interval)
+    self.assertEqual(datetime.timedelta(seconds=30), self.event_processor.flush_interval)
     mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
   def test_init__string_flush_interval(self):
@@ -363,7 +363,7 @@ class BatchEventProcessorTest(base.BaseTest):
       )
 
     # default flush interval is 30s.
-    self.assertEqual(datetime.timedelta(30), self.event_processor.flush_interval)
+    self.assertEqual(datetime.timedelta(seconds=30), self.event_processor.flush_interval)
     mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
   def test_init__invalid_timeout_interval(self):
@@ -381,7 +381,7 @@ class BatchEventProcessorTest(base.BaseTest):
       )
 
     # default timeout interval is 5s.
-    self.assertEqual(datetime.timedelta(5), self.event_processor.timeout_interval)
+    self.assertEqual(datetime.timedelta(seconds=5), self.event_processor.timeout_interval)
     mock_config_logging.info.assert_called_with('Using default value 5 for timeout_interval.')
 
   def test_init__NaN_timeout_interval(self):
@@ -399,7 +399,7 @@ class BatchEventProcessorTest(base.BaseTest):
       )
 
     # default timeout interval is 5s.
-    self.assertEqual(datetime.timedelta(5), self.event_processor.timeout_interval)
+    self.assertEqual(datetime.timedelta(seconds=5), self.event_processor.timeout_interval)
     mock_config_logging.info.assert_called_with('Using default value 5 for timeout_interval.')
 
   def test_notification_center__on_log_event(self):
