@@ -95,12 +95,12 @@ class BatchEventProcessor(BaseEventProcessor):
                             if self._validate_instantiation_props(flush_interval,
                                                                   'flush_interval',
                                                                   self._DEFAULT_FLUSH_INTERVAL) \
-                            else timedelta(self._DEFAULT_FLUSH_INTERVAL)
+                            else timedelta(seconds=self._DEFAULT_FLUSH_INTERVAL)
     self.timeout_interval = timedelta(seconds=timeout_interval) \
                               if self._validate_instantiation_props(timeout_interval,
                                                                     'timeout_interval',
                                                                     self._DEFAULT_TIMEOUT_INTERVAL) \
-                              else timedelta(self._DEFAULT_TIMEOUT_INTERVAL)
+                              else timedelta(seconds=self._DEFAULT_TIMEOUT_INTERVAL)
 
     self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
     self._current_batch = list()
