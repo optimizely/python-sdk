@@ -20,7 +20,7 @@ with open(os.path.join(here, 'requirements', 'test.txt')) as _file:
 with open(os.path.join(here, 'README.md')) as _file:
   README = _file.read()
 
-with open(os.path.join(here, 'CHANGELOG.md')) as _file:
+with open(os.path.join(here, 'CHANGELOG.md'), encoding="utf-8") as _file:
   CHANGELOG = _file.read()
 
 about_text = 'Optimizely X Full Stack is A/B testing and feature management for product development teams. ' \
