@@ -33,10 +33,7 @@ ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 class BaseConfigManager(ABC):
     """ Base class for Optimizely's config manager. """
 
-    def __init__(self,
-                 logger=None,
-                 error_handler=None,
-                 notification_center=None):
+    def __init__(self, logger=None, error_handler=None, notification_center=None):
         """ Initialize config manager.
 
         Args:
@@ -74,12 +71,9 @@ class BaseConfigManager(ABC):
 class StaticConfigManager(BaseConfigManager):
     """ Config manager that returns ProjectConfig based on provided datafile. """
 
-    def __init__(self,
-                 datafile=None,
-                 logger=None,
-                 error_handler=None,
-                 notification_center=None,
-                 skip_json_validation=False):
+    def __init__(
+        self, datafile=None, logger=None, error_handler=None, notification_center=None, skip_json_validation=False,
+    ):
         """ Initialize config manager. Datafile has to be provided to use.
 
         Args:
@@ -91,9 +85,9 @@ class StaticConfigManager(BaseConfigManager):
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
         """
-        super(StaticConfigManager, self).__init__(logger=logger,
-                                                  error_handler=error_handler,
-                                                  notification_center=notification_center)
+        super(StaticConfigManager, self).__init__(
+            logger=logger, error_handler=error_handler, notification_center=notification_center,
+        )
         self._config = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
@@ -153,17 +147,19 @@ class StaticConfigManager(BaseConfigManager):
 class PollingConfigManager(StaticConfigManager):
     """ Config manager that polls for the datafile and updated ProjectConfig based on an update interval. """
 
-    def __init__(self,
-                 sdk_key=None,
-                 datafile=None,
-                 update_interval=None,
-                 blocking_timeout=None,
-                 url=None,
-                 url_template=None,
-                 logger=None,
-                 error_handler=None,
-                 notification_center=None,
-                 skip_json_validation=False):
+    def __init__(
+        self,
+        sdk_key=None,
+        datafile=None,
+        update_interval=None,
+        blocking_timeout=None,
+        url=None,
+        url_template=None,
+        logger=None,
+        error_handler=None,
+        notification_center=None,
+        skip_json_validation=False,
+    ):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
         Args:
@@ -185,13 +181,16 @@ class PollingConfigManager(StaticConfigManager):
 
         """
         self._config_ready_event = threading.Event()
-        super(PollingConfigManager, self).__init__(datafile=datafile,
-                                                   logger=logger,
-                                                   error_handler=error_handler,
-                                                   notification_center=notification_center,
-                                                   skip_json_validation=skip_json_validation)
-        self.datafile_url = self.get_datafile_url(sdk_key, url,
-                                                  url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE)
+        super(PollingConfigManager, self).__init__(
+            datafile=datafile,
+            logger=logger,
+            error_handler=error_handler,
+            notification_center=notification_center,
+            skip_json_validation=skip_json_validation,
+        )
+        self.datafile_url = self.get_datafile_url(
+            sdk_key, url, url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE
+        )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
         self.last_modified = None
@@ -227,7 +226,8 @@ class PollingConfigManager(StaticConfigManager):
                 return url_template.format(sdk_key=sdk_key)
             except (AttributeError, KeyError):
                 raise optimizely_exceptions.InvalidInputException(
-                    'Invalid url_template {} provided.'.format(url_template))
+                    'Invalid url_template {} provided.'.format(url_template)
+                )
 
         return url
 
@@ -238,8 +238,8 @@ class PollingConfigManager(StaticConfigManager):
            datafile: JSON string representing the Optimizely project.
          """
         if datafile or self._config_ready_event.is_set():
-          super(PollingConfigManager, self)._set_config(datafile=datafile)
-          self._config_ready_event.set()
+            super(PollingConfigManager, self)._set_config(datafile=datafile)
+            self._config_ready_event.set()
 
     def get_config(self):
         """ Returns instance of ProjectConfig. Returns immediately if project config is ready otherwise
@@ -269,9 +269,10 @@ class PollingConfigManager(StaticConfigManager):
 
         # If polling interval is less than or equal to 0 then set it to default update interval.
         if update_interval <= 0:
-            self.logger.debug('update_interval value {} too small. Defaulting to {}'.format(
-                update_interval,
-                enums.ConfigManager.DEFAULT_UPDATE_INTERVAL)
+            self.logger.debug(
+                'update_interval value {} too small. Defaulting to {}'.format(
+                    update_interval, enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
+                )
             )
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
@@ -294,9 +295,10 @@ class PollingConfigManager(StaticConfigManager):
 
         # If blocking timeout is less than 0 then set it to default blocking timeout.
         if blocking_timeout < 0:
-            self.logger.debug('blocking timeout value {} too small. Defaulting to {}'.format(
-                blocking_timeout,
-                enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT)
+            self.logger.debug(
+                'blocking timeout value {} too small. Defaulting to {}'.format(
+                    blocking_timeout, enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
+                )
             )
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
 
@@ -337,9 +339,9 @@ class PollingConfigManager(StaticConfigManager):
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
-        response = requests.get(self.datafile_url,
-                                headers=request_headers,
-                                timeout=enums.ConfigManager.REQUEST_TIMEOUT)
+        response = requests.get(
+            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
         self._handle_response(response)
 
     @property
@@ -350,12 +352,13 @@ class PollingConfigManager(StaticConfigManager):
     def _run(self):
         """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
         try:
-          while self.is_running:
-              self.fetch_datafile()
-              time.sleep(self.update_interval)
+            while self.is_running:
+                self.fetch_datafile()
+                time.sleep(self.update_interval)
         except (OSError, OverflowError) as err:
-            self.logger.error('Error in time.sleep. '
-                              'Provided update_interval value may be too big. Error: {}'.format(str(err)))
+            self.logger.error(
+                'Error in time.sleep. ' 'Provided update_interval value may be too big. Error: {}'.format(str(err))
+            )
             raise
 
     def start(self):

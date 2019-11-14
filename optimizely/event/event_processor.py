@@ -31,19 +31,19 @@ ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
 
 class BaseEventProcessor(ABC):
-  """ Class encapsulating event processing. Override with your own implementation. """
+    """ Class encapsulating event processing. Override with your own implementation. """
 
-  @abc.abstractmethod
-  def process(self, user_event):
-    """ Method to provide intermediary processing stage within event production.
+    @abc.abstractmethod
+    def process(self, user_event):
+        """ Method to provide intermediary processing stage within event production.
     Args:
       user_event: UserEvent instance that needs to be processed and dispatched.
     """
-    pass
+        pass
 
 
 class BatchEventProcessor(BaseEventProcessor):
-  """
+    """
   BatchEventProcessor is an implementation of the BaseEventProcessor that batches events.
 
   The BatchEventProcessor maintains a single consumer thread that pulls events off of
@@ -51,24 +51,26 @@ class BatchEventProcessor(BaseEventProcessor):
   maximum duration before the resulting LogEvent is sent to the EventDispatcher.
   """
 
-  _DEFAULT_QUEUE_CAPACITY = 1000
-  _DEFAULT_BATCH_SIZE = 10
-  _DEFAULT_FLUSH_INTERVAL = 30
-  _DEFAULT_TIMEOUT_INTERVAL = 5
-  _SHUTDOWN_SIGNAL = object()
-  _FLUSH_SIGNAL = object()
-  LOCK = threading.Lock()
+    _DEFAULT_QUEUE_CAPACITY = 1000
+    _DEFAULT_BATCH_SIZE = 10
+    _DEFAULT_FLUSH_INTERVAL = 30
+    _DEFAULT_TIMEOUT_INTERVAL = 5
+    _SHUTDOWN_SIGNAL = object()
+    _FLUSH_SIGNAL = object()
+    LOCK = threading.Lock()
 
-  def __init__(self,
-               event_dispatcher,
-               logger=None,
-               start_on_init=False,
-               event_queue=None,
-               batch_size=None,
-               flush_interval=None,
-               timeout_interval=None,
-               notification_center=None):
-    """ BatchEventProcessor init method to configure event batching.
+    def __init__(
+        self,
+        event_dispatcher,
+        logger=None,
+        start_on_init=False,
+        event_queue=None,
+        batch_size=None,
+        flush_interval=None,
+        timeout_interval=None,
+        notification_center=None,
+    ):
+        """ BatchEventProcessor init method to configure event batching.
 
     Args:
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
@@ -84,43 +86,44 @@ class BatchEventProcessor(BaseEventProcessor):
                         thread.
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
-    self.event_dispatcher = event_dispatcher or default_event_dispatcher
-    self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
-    self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
-    self.batch_size = batch_size if self._validate_instantiation_props(batch_size,
-                                                                       'batch_size',
-                                                                       self._DEFAULT_BATCH_SIZE) \
-                        else self._DEFAULT_BATCH_SIZE
-    self.flush_interval = timedelta(seconds=flush_interval) \
-                            if self._validate_instantiation_props(flush_interval,
-                                                                  'flush_interval',
-                                                                  self._DEFAULT_FLUSH_INTERVAL) \
-                            else timedelta(seconds=self._DEFAULT_FLUSH_INTERVAL)
-    self.timeout_interval = timedelta(seconds=timeout_interval) \
-                              if self._validate_instantiation_props(timeout_interval,
-                                                                    'timeout_interval',
-                                                                    self._DEFAULT_TIMEOUT_INTERVAL) \
-                              else timedelta(seconds=self._DEFAULT_TIMEOUT_INTERVAL)
+        self.event_dispatcher = event_dispatcher or default_event_dispatcher
+        self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
+        self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
+        self.batch_size = (
+            batch_size
+            if self._validate_instantiation_props(batch_size, 'batch_size', self._DEFAULT_BATCH_SIZE)
+            else self._DEFAULT_BATCH_SIZE
+        )
+        self.flush_interval = (
+            timedelta(seconds=flush_interval)
+            if self._validate_instantiation_props(flush_interval, 'flush_interval', self._DEFAULT_FLUSH_INTERVAL)
+            else timedelta(seconds=self._DEFAULT_FLUSH_INTERVAL)
+        )
+        self.timeout_interval = (
+            timedelta(seconds=timeout_interval)
+            if self._validate_instantiation_props(timeout_interval, 'timeout_interval', self._DEFAULT_TIMEOUT_INTERVAL)
+            else timedelta(seconds=self._DEFAULT_TIMEOUT_INTERVAL)
+        )
 
-    self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
-    self._current_batch = list()
+        self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
+        self._current_batch = list()
 
-    if not validator.is_notification_center_valid(self.notification_center):
-      self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
-      self.logger.debug('Creating notification center for use.')
-      self.notification_center = _notification_center.NotificationCenter(self.logger)
+        if not validator.is_notification_center_valid(self.notification_center):
+            self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
+            self.logger.debug('Creating notification center for use.')
+            self.notification_center = _notification_center.NotificationCenter(self.logger)
 
-    self.executor = None
-    if start_on_init is True:
-      self.start()
+        self.executor = None
+        if start_on_init is True:
+            self.start()
 
-  @property
-  def is_running(self):
-    """ Property to check if consumer thread is alive or not. """
-    return self.executor.isAlive() if self.executor else False
+    @property
+    def is_running(self):
+        """ Property to check if consumer thread is alive or not. """
+        return self.executor.isAlive() if self.executor else False
 
-  def _validate_instantiation_props(self, prop, prop_name, default_value):
-    """ Method to determine if instantiation properties like batch_size, flush_interval
+    def _validate_instantiation_props(self, prop, prop_name, default_value):
+        """ Method to determine if instantiation properties like batch_size, flush_interval
     and timeout_interval are valid.
 
     Args:
@@ -133,21 +136,21 @@ class BatchEventProcessor(BaseEventProcessor):
       False if property name is batch_size and value is a floating point number.
       True otherwise.
     """
-    is_valid = True
+        is_valid = True
 
-    if prop is None or not validator.is_finite_number(prop) or prop <= 0:
-      is_valid = False
+        if prop is None or not validator.is_finite_number(prop) or prop <= 0:
+            is_valid = False
 
-    if prop_name == 'batch_size' and not isinstance(prop, numbers.Integral):
-      is_valid = False
+        if prop_name == 'batch_size' and not isinstance(prop, numbers.Integral):
+            is_valid = False
 
-    if is_valid is False:
-      self.logger.info('Using default value {} for {}.'.format(default_value, prop_name))
+        if is_valid is False:
+            self.logger.info('Using default value {} for {}.'.format(default_value, prop_name))
 
-    return is_valid
+        return is_valid
 
-  def _get_time(self, _time=None):
-    """ Method to return rounded off time as integer in seconds. If _time is None, uses current time.
+    def _get_time(self, _time=None):
+        """ Method to return rounded off time as integer in seconds. If _time is None, uses current time.
 
     Args:
       _time: time in seconds that needs to be rounded off.
@@ -155,125 +158,123 @@ class BatchEventProcessor(BaseEventProcessor):
     Returns:
       Integer time in seconds.
     """
-    if _time is None:
-      return int(round(time.time()))
+        if _time is None:
+            return int(round(time.time()))
 
-    return int(round(_time))
+        return int(round(_time))
 
-  def start(self):
-    """ Starts the batch processing thread to batch events. """
-    if hasattr(self, 'executor') and self.is_running:
-      self.logger.warning('BatchEventProcessor already started.')
-      return
+    def start(self):
+        """ Starts the batch processing thread to batch events. """
+        if hasattr(self, 'executor') and self.is_running:
+            self.logger.warning('BatchEventProcessor already started.')
+            return
 
-    self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
-    self.executor = threading.Thread(target=self._run)
-    self.executor.setDaemon(True)
-    self.executor.start()
+        self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
+        self.executor = threading.Thread(target=self._run)
+        self.executor.setDaemon(True)
+        self.executor.start()
 
-  def _run(self):
-    """ Triggered as part of the thread which batches events or flushes event_queue and sleeps
+    def _run(self):
+        """ Triggered as part of the thread which batches events or flushes event_queue and sleeps
     periodically if queue is empty.
     """
-    try:
-      while True:
-        if self._get_time() >= self.flushing_interval_deadline:
-          self._flush_queue()
+        try:
+            while True:
+                if self._get_time() >= self.flushing_interval_deadline:
+                    self._flush_queue()
+
+                try:
+                    item = self.event_queue.get(False)
+
+                except queue.Empty:
+                    time.sleep(0.05)
+                    continue
+
+                if item == self._SHUTDOWN_SIGNAL:
+                    self.logger.debug('Received shutdown signal.')
+                    break
+
+                if item == self._FLUSH_SIGNAL:
+                    self.logger.debug('Received flush signal.')
+                    self._flush_queue()
+                    continue
+
+                if isinstance(item, UserEvent):
+                    self._add_to_batch(item)
+
+        except Exception as exception:
+            self.logger.error('Uncaught exception processing buffer. Error: ' + str(exception))
+
+        finally:
+            self.logger.info('Exiting processing loop. Attempting to flush pending events.')
+            self._flush_queue()
+
+    def flush(self):
+        """ Adds flush signal to event_queue. """
+
+        self.event_queue.put(self._FLUSH_SIGNAL)
+
+    def _flush_queue(self):
+        """ Flushes event_queue by dispatching events. """
+
+        if len(self._current_batch) == 0:
+            return
+
+        with self.LOCK:
+            to_process_batch = list(self._current_batch)
+            self._current_batch = list()
+
+        log_event = EventFactory.create_log_event(to_process_batch, self.logger)
+
+        self.notification_center.send_notifications(enums.NotificationTypes.LOG_EVENT, log_event)
 
         try:
-          item = self.event_queue.get(False)
+            self.event_dispatcher.dispatch_event(log_event)
+        except Exception as e:
+            self.logger.error('Error dispatching event: ' + str(log_event) + ' ' + str(e))
 
-        except queue.Empty:
-          time.sleep(0.05)
-          continue
-
-        if item == self._SHUTDOWN_SIGNAL:
-          self.logger.debug('Received shutdown signal.')
-          break
-
-        if item == self._FLUSH_SIGNAL:
-          self.logger.debug('Received flush signal.')
-          self._flush_queue()
-          continue
-
-        if isinstance(item, UserEvent):
-          self._add_to_batch(item)
-
-    except Exception as exception:
-      self.logger.error('Uncaught exception processing buffer. Error: ' + str(exception))
-
-    finally:
-      self.logger.info('Exiting processing loop. Attempting to flush pending events.')
-      self._flush_queue()
-
-  def flush(self):
-    """ Adds flush signal to event_queue. """
-
-    self.event_queue.put(self._FLUSH_SIGNAL)
-
-  def _flush_queue(self):
-    """ Flushes event_queue by dispatching events. """
-
-    if len(self._current_batch) == 0:
-      return
-
-    with self.LOCK:
-      to_process_batch = list(self._current_batch)
-      self._current_batch = list()
-
-    log_event = EventFactory.create_log_event(to_process_batch, self.logger)
-
-    self.notification_center.send_notifications(
-      enums.NotificationTypes.LOG_EVENT,
-      log_event
-    )
-
-    try:
-      self.event_dispatcher.dispatch_event(log_event)
-    except Exception as e:
-      self.logger.error('Error dispatching event: ' + str(log_event) + ' ' + str(e))
-
-  def process(self, user_event):
-    """ Method to process the user_event by putting it in event_queue.
+    def process(self, user_event):
+        """ Method to process the user_event by putting it in event_queue.
 
     Args:
       user_event: UserEvent Instance.
     """
-    if not isinstance(user_event, UserEvent):
-      self.logger.error('Provided event is in an invalid format.')
-      return
+        if not isinstance(user_event, UserEvent):
+            self.logger.error('Provided event is in an invalid format.')
+            return
 
-    self.logger.debug('Received event of type {} for user {}.'.format(
-      type(user_event).__name__, user_event.user_id)
-    )
+        self.logger.debug(
+            'Received event of type {} for user {}.'.format(type(user_event).__name__, user_event.user_id)
+        )
 
-    try:
-      self.event_queue.put_nowait(user_event)
-    except queue.Full:
-      self.logger.debug('Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize())))
+        try:
+            self.event_queue.put_nowait(user_event)
+        except queue.Full:
+            self.logger.debug(
+                'Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize()))
+            )
 
-  def _add_to_batch(self, user_event):
-    """ Method to append received user event to current batch.
+    def _add_to_batch(self, user_event):
+        """ Method to append received user event to current batch.
 
     Args:
       user_event: UserEvent Instance.
     """
-    if self._should_split(user_event):
-      self._flush_queue()
-      self._current_batch = list()
+        if self._should_split(user_event):
+            self._flush_queue()
+            self._current_batch = list()
 
-    # Reset the deadline if starting a new batch.
-    if len(self._current_batch) == 0:
-      self.flushing_interval_deadline = self._get_time() + \
-        self._get_time(self.flush_interval.total_seconds())
+        # Reset the deadline if starting a new batch.
+        if len(self._current_batch) == 0:
+            self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
 
-    with self.LOCK:
-      self._current_batch.append(user_event)
-    if len(self._current_batch) >= self.batch_size:
-      self._flush_queue()
+        with self.LOCK:
+            self._current_batch.append(user_event)
+        if len(self._current_batch) >= self.batch_size:
+            self._flush_queue()
 
-  def _should_split(self, user_event):
-    """ Method to check if current event batch should split into two.
+    def _should_split(self, user_event):
+        """ Method to check if current event batch should split into two.
 
     Args:
       user_event: UserEvent Instance.
@@ -283,77 +284,74 @@ class BatchEventProcessor(BaseEventProcessor):
       revision number and project id respectively.
       - False, otherwise.
     """
-    if len(self._current_batch) == 0:
-      return False
+        if len(self._current_batch) == 0:
+            return False
 
-    current_context = self._current_batch[-1].event_context
-    new_context = user_event.event_context
+        current_context = self._current_batch[-1].event_context
+        new_context = user_event.event_context
 
-    if current_context.revision != new_context.revision:
-      return True
+        if current_context.revision != new_context.revision:
+            return True
 
-    if current_context.project_id != new_context.project_id:
-      return True
+        if current_context.project_id != new_context.project_id:
+            return True
 
-    return False
+        return False
 
-  def stop(self):
-    """ Stops and disposes batch event processor. """
-    self.event_queue.put(self._SHUTDOWN_SIGNAL)
-    self.logger.warning('Stopping Scheduler.')
+    def stop(self):
+        """ Stops and disposes batch event processor. """
+        self.event_queue.put(self._SHUTDOWN_SIGNAL)
+        self.logger.warning('Stopping Scheduler.')
 
-    if self.executor:
-      self.executor.join(self.timeout_interval.total_seconds())
+        if self.executor:
+            self.executor.join(self.timeout_interval.total_seconds())
 
-    if self.is_running:
-      self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
+        if self.is_running:
+            self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
 
 
 class ForwardingEventProcessor(BaseEventProcessor):
-  """
+    """
   ForwardingEventProcessor serves as the default EventProcessor.
 
   The ForwardingEventProcessor sends the LogEvent to EventDispatcher as soon as it is received.
   """
 
-  def __init__(self, event_dispatcher, logger=None, notification_center=None):
-    """ ForwardingEventProcessor init method to configure event dispatching.
+    def __init__(self, event_dispatcher, logger=None, notification_center=None):
+        """ ForwardingEventProcessor init method to configure event dispatching.
 
     Args:
       event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
       logger: Optional component which provides a log method to log messages. By default nothing would be logged.
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
-    self.event_dispatcher = event_dispatcher
-    self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
-    self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
+        self.event_dispatcher = event_dispatcher
+        self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
+        self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
 
-    if not validator.is_notification_center_valid(self.notification_center):
-      self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
-      self.notification_center = _notification_center.NotificationCenter()
+        if not validator.is_notification_center_valid(self.notification_center):
+            self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
+            self.notification_center = _notification_center.NotificationCenter()
 
-  def process(self, user_event):
-    """ Method to process the user_event by dispatching it.
+    def process(self, user_event):
+        """ Method to process the user_event by dispatching it.
 
     Args:
       user_event: UserEvent Instance.
     """
-    if not isinstance(user_event, UserEvent):
-      self.logger.error('Provided event is in an invalid format.')
-      return
+        if not isinstance(user_event, UserEvent):
+            self.logger.error('Provided event is in an invalid format.')
+            return
 
-    self.logger.debug('Received event of type {} for user {}.'.format(
-      type(user_event).__name__, user_event.user_id)
-    )
+        self.logger.debug(
+            'Received event of type {} for user {}.'.format(type(user_event).__name__, user_event.user_id)
+        )
 
-    log_event = EventFactory.create_log_event(user_event, self.logger)
+        log_event = EventFactory.create_log_event(user_event, self.logger)
 
-    self.notification_center.send_notifications(
-      enums.NotificationTypes.LOG_EVENT,
-      log_event
-    )
+        self.notification_center.send_notifications(enums.NotificationTypes.LOG_EVENT, log_event)
 
-    try:
-      self.event_dispatcher.dispatch_event(log_event)
-    except Exception as e:
-      self.logger.exception('Error dispatching event: ' + str(log_event) + ' ' + str(e))
+        try:
+            self.event_dispatcher.dispatch_event(log_event)
+        except Exception as e:
+            self.logger.exception('Error dispatching event: ' + str(log_event) + ' ' + str(e))

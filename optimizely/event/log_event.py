@@ -13,13 +13,13 @@
 
 
 class LogEvent(object):
-  """ Representation of an event which can be sent to Optimizely events API. """
+    """ Representation of an event which can be sent to Optimizely events API. """
 
-  def __init__(self, url, params, http_verb=None, headers=None):
-    self.url = url
-    self.params = params
-    self.http_verb = http_verb or 'POST'
-    self.headers = headers
+    def __init__(self, url, params, http_verb=None, headers=None):
+        self.url = url
+        self.params = params
+        self.http_verb = http_verb or 'POST'
+        self.headers = headers
 
-  def __str__(self):
-    return str(self.__class__) + ": " + str(self.__dict__)
+    def __str__(self):
+        return str(self.__class__) + ": " + str(self.__dict__)

@@ -13,109 +13,111 @@
 
 
 class BaseEntity(object):
-
-  def __eq__(self, other):
-    return self.__dict__ == other.__dict__
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 class Attribute(BaseEntity):
-
-  def __init__(self, id, key, **kwargs):
-    self.id = id
-    self.key = key
+    def __init__(self, id, key, **kwargs):
+        self.id = id
+        self.key = key
 
 
 class Audience(BaseEntity):
-
-  def __init__(self, id, name, conditions, conditionStructure=None, conditionList=None, **kwargs):
-    self.id = id
-    self.name = name
-    self.conditions = conditions
-    self.conditionStructure = conditionStructure
-    self.conditionList = conditionList
+    def __init__(self, id, name, conditions, conditionStructure=None, conditionList=None, **kwargs):
+        self.id = id
+        self.name = name
+        self.conditions = conditions
+        self.conditionStructure = conditionStructure
+        self.conditionList = conditionList
 
 
 class Event(BaseEntity):
-
-  def __init__(self, id, key, experimentIds, **kwargs):
-    self.id = id
-    self.key = key
-    self.experimentIds = experimentIds
+    def __init__(self, id, key, experimentIds, **kwargs):
+        self.id = id
+        self.key = key
+        self.experimentIds = experimentIds
 
 
 class Experiment(BaseEntity):
+    def __init__(
+        self,
+        id,
+        key,
+        status,
+        audienceIds,
+        variations,
+        forcedVariations,
+        trafficAllocation,
+        layerId,
+        audienceConditions=None,
+        groupId=None,
+        groupPolicy=None,
+        **kwargs
+    ):
+        self.id = id
+        self.key = key
+        self.status = status
+        self.audienceIds = audienceIds
+        self.audienceConditions = audienceConditions
+        self.variations = variations
+        self.forcedVariations = forcedVariations
+        self.trafficAllocation = trafficAllocation
+        self.layerId = layerId
+        self.groupId = groupId
+        self.groupPolicy = groupPolicy
 
-  def __init__(self, id, key, status, audienceIds, variations, forcedVariations,
-               trafficAllocation, layerId, audienceConditions=None, groupId=None, groupPolicy=None, **kwargs):
-    self.id = id
-    self.key = key
-    self.status = status
-    self.audienceIds = audienceIds
-    self.audienceConditions = audienceConditions
-    self.variations = variations
-    self.forcedVariations = forcedVariations
-    self.trafficAllocation = trafficAllocation
-    self.layerId = layerId
-    self.groupId = groupId
-    self.groupPolicy = groupPolicy
-
-  def getAudienceConditionsOrIds(self):
-    """ Returns audienceConditions if present, otherwise audienceIds. """
-    return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
+    def getAudienceConditionsOrIds(self):
+        """ Returns audienceConditions if present, otherwise audienceIds. """
+        return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
 
 
 class FeatureFlag(BaseEntity):
-
-  def __init__(self, id, key, experimentIds, rolloutId, variables, groupId=None, **kwargs):
-    self.id = id
-    self.key = key
-    self.experimentIds = experimentIds
-    self.rolloutId = rolloutId
-    self.variables = variables
-    self.groupId = groupId
+    def __init__(self, id, key, experimentIds, rolloutId, variables, groupId=None, **kwargs):
+        self.id = id
+        self.key = key
+        self.experimentIds = experimentIds
+        self.rolloutId = rolloutId
+        self.variables = variables
+        self.groupId = groupId
 
 
 class Group(BaseEntity):
-
-  def __init__(self, id, policy, experiments, trafficAllocation, **kwargs):
-    self.id = id
-    self.policy = policy
-    self.experiments = experiments
-    self.trafficAllocation = trafficAllocation
+    def __init__(self, id, policy, experiments, trafficAllocation, **kwargs):
+        self.id = id
+        self.policy = policy
+        self.experiments = experiments
+        self.trafficAllocation = trafficAllocation
 
 
 class Layer(BaseEntity):
-
-  def __init__(self, id, experiments, **kwargs):
-    self.id = id
-    self.experiments = experiments
+    def __init__(self, id, experiments, **kwargs):
+        self.id = id
+        self.experiments = experiments
 
 
 class Variable(BaseEntity):
+    class Type(object):
+        BOOLEAN = 'boolean'
+        DOUBLE = 'double'
+        INTEGER = 'integer'
+        STRING = 'string'
 
-  class Type(object):
-    BOOLEAN = 'boolean'
-    DOUBLE = 'double'
-    INTEGER = 'integer'
-    STRING = 'string'
-
-  def __init__(self, id, key, type, defaultValue, **kwargs):
-    self.id = id
-    self.key = key
-    self.type = type
-    self.defaultValue = defaultValue
+    def __init__(self, id, key, type, defaultValue, **kwargs):
+        self.id = id
+        self.key = key
+        self.type = type
+        self.defaultValue = defaultValue
 
 
 class Variation(BaseEntity):
+    class VariableUsage(BaseEntity):
+        def __init__(self, id, value, **kwards):
+            self.id = id
+            self.value = value
 
-  class VariableUsage(BaseEntity):
-
-    def __init__(self, id, value, **kwards):
-      self.id = id
-      self.value = value
-
-  def __init__(self, id, key, featureEnabled=False, variables=None, **kwargs):
-    self.id = id
-    self.key = key
-    self.featureEnabled = featureEnabled
-    self.variables = variables or []
+    def __init__(self, id, key, featureEnabled=False, variables=None, **kwargs):
+        self.id = id
+        self.key = key
+        self.featureEnabled = featureEnabled
+        self.variables = variables or []
