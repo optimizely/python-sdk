@@ -15,7 +15,7 @@ from .condition import ConditionOperatorTypes
 
 
 def and_evaluator(conditions, leaf_evaluator):
-  """ Evaluates a list of conditions as if the evaluator had been applied
+    """ Evaluates a list of conditions as if the evaluator had been applied
   to each entry and the results AND-ed together.
 
   Args:
@@ -28,20 +28,20 @@ def and_evaluator(conditions, leaf_evaluator):
       - False if a single operand evaluates to False.
     None: if conditions couldn't be evaluated.
   """
-  saw_null_result = False
+    saw_null_result = False
 
-  for condition in conditions:
-    result = evaluate(condition, leaf_evaluator)
-    if result is False:
-      return False
-    if result is None:
-      saw_null_result = True
+    for condition in conditions:
+        result = evaluate(condition, leaf_evaluator)
+        if result is False:
+            return False
+        if result is None:
+            saw_null_result = True
 
-  return None if saw_null_result else True
+    return None if saw_null_result else True
 
 
 def or_evaluator(conditions, leaf_evaluator):
-  """ Evaluates a list of conditions as if the evaluator had been applied
+    """ Evaluates a list of conditions as if the evaluator had been applied
   to each entry and the results OR-ed together.
 
   Args:
@@ -54,20 +54,20 @@ def or_evaluator(conditions, leaf_evaluator):
       - False if all operands evaluate to False.
     None: if conditions couldn't be evaluated.
   """
-  saw_null_result = False
+    saw_null_result = False
 
-  for condition in conditions:
-    result = evaluate(condition, leaf_evaluator)
-    if result is True:
-      return True
-    if result is None:
-      saw_null_result = True
+    for condition in conditions:
+        result = evaluate(condition, leaf_evaluator)
+        if result is True:
+            return True
+        if result is None:
+            saw_null_result = True
 
-  return None if saw_null_result else False
+    return None if saw_null_result else False
 
 
 def not_evaluator(conditions, leaf_evaluator):
-  """ Evaluates a list of conditions as if the evaluator had been applied
+    """ Evaluates a list of conditions as if the evaluator had been applied
   to a single entry and NOT was applied to the result.
 
   Args:
@@ -80,22 +80,22 @@ def not_evaluator(conditions, leaf_evaluator):
       - False if the operand evaluates to True.
     None: if conditions is empty or condition couldn't be evaluated.
   """
-  if not len(conditions) > 0:
-    return None
+    if not len(conditions) > 0:
+        return None
 
-  result = evaluate(conditions[0], leaf_evaluator)
-  return None if result is None else not result
+    result = evaluate(conditions[0], leaf_evaluator)
+    return None if result is None else not result
 
 
 EVALUATORS_BY_OPERATOR_TYPE = {
-  ConditionOperatorTypes.AND: and_evaluator,
-  ConditionOperatorTypes.OR: or_evaluator,
-  ConditionOperatorTypes.NOT: not_evaluator
+    ConditionOperatorTypes.AND: and_evaluator,
+    ConditionOperatorTypes.OR: or_evaluator,
+    ConditionOperatorTypes.NOT: not_evaluator,
 }
 
 
 def evaluate(conditions, leaf_evaluator):
-  """ Top level method to evaluate conditions.
+    """ Top level method to evaluate conditions.
 
   Args:
     conditions: Nested array of and/or conditions, or a single leaf condition value of any type.
@@ -108,12 +108,12 @@ def evaluate(conditions, leaf_evaluator):
 
   """
 
-  if isinstance(conditions, list):
-    if conditions[0] in list(EVALUATORS_BY_OPERATOR_TYPE.keys()):
-      return EVALUATORS_BY_OPERATOR_TYPE[conditions[0]](conditions[1:], leaf_evaluator)
-    else:
-      # assume OR when operator is not explicit.
-      return EVALUATORS_BY_OPERATOR_TYPE[ConditionOperatorTypes.OR](conditions, leaf_evaluator)
+    if isinstance(conditions, list):
+        if conditions[0] in list(EVALUATORS_BY_OPERATOR_TYPE.keys()):
+            return EVALUATORS_BY_OPERATOR_TYPE[conditions[0]](conditions[1:], leaf_evaluator)
+        else:
+            # assume OR when operator is not explicit.
+            return EVALUATORS_BY_OPERATOR_TYPE[ConditionOperatorTypes.OR](conditions, leaf_evaluator)
 
-  leaf_condition = conditions
-  return leaf_evaluator(leaf_condition)
+    leaf_condition = conditions
+    return leaf_evaluator(leaf_condition)

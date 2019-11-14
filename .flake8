@@ -1,0 +1,5 @@
+[flake8]
+# E722 - do not use bare 'except'
+ignore = E722
+exclude = optimizely/lib/pymmh3.py,*virtualenv*
+max-line-length = 120
