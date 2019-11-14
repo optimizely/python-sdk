@@ -138,7 +138,7 @@ class ValidatorTest(base.BaseTest):
         self.assertTrue(validator.is_user_profile_valid({'user_id': 'test_user', 'experiment_bucket_map': {}}))
         self.assertTrue(
             validator.is_user_profile_valid(
-                {'user_id': 'test_user', 'experiment_bucket_map': {'1234': {'variation_id': '5678'}},}
+                {'user_id': 'test_user', 'experiment_bucket_map': {'1234': {'variation_id': '5678'}}}
             )
         )
         self.assertTrue(
@@ -154,7 +154,7 @@ class ValidatorTest(base.BaseTest):
             validator.is_user_profile_valid(
                 {
                     'user_id': 'test_user',
-                    'experiment_bucket_map': {'1234': {'variation_id': '5678', 'additional_key': 'additional_value',}},
+                    'experiment_bucket_map': {'1234': {'variation_id': '5678', 'additional_key': 'additional_value'}},
                 }
             )
         )
@@ -170,13 +170,13 @@ class ValidatorTest(base.BaseTest):
             validator.is_user_profile_valid({'user_id': 'test_user', 'experiment_bucket_map': 'some_value'})
         )
         self.assertFalse(
-            validator.is_user_profile_valid({'user_id': 'test_user', 'experiment_bucket_map': {'1234': 'some_value'},})
+            validator.is_user_profile_valid({'user_id': 'test_user', 'experiment_bucket_map': {'1234': 'some_value'}})
         )
         self.assertFalse(
             validator.is_user_profile_valid(
                 {
                     'user_id': 'test_user',
-                    'experiment_bucket_map': {'1234': {'variation_id': '5678'}, '1235': {'some_key': 'some_value'},},
+                    'experiment_bucket_map': {'1234': {'variation_id': '5678'}, '1235': {'some_key': 'some_value'}},
                 }
             )
         )

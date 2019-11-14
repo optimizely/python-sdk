@@ -51,7 +51,7 @@ class BaseTest(unittest.TestCase):
                         {'entityId': '111129', 'endOfRange': 9000},
                     ],
                     'id': '111127',
-                    'variations': [{'key': 'control', 'id': '111128'}, {'key': 'variation', 'id': '111129'},],
+                    'variations': [{'key': 'control', 'id': '111128'}, {'key': 'variation', 'id': '111129'}],
                 }
             ],
             'groups': [
@@ -69,7 +69,7 @@ class BaseTest(unittest.TestCase):
                                 {'key': 'group_exp_1_control', 'id': '28901'},
                                 {'key': 'group_exp_1_variation', 'id': '28902'},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control',},
+                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
                             'trafficAllocation': [
                                 {'entityId': '28901', 'endOfRange': 3000},
                                 {'entityId': '28902', 'endOfRange': 9000},
@@ -85,7 +85,7 @@ class BaseTest(unittest.TestCase):
                                 {'key': 'group_exp_2_control', 'id': '28905'},
                                 {'key': 'group_exp_2_variation', 'id': '28906'},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control',},
+                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control'},
                             'trafficAllocation': [
                                 {'entityId': '28905', 'endOfRange': 8000},
                                 {'entityId': '28906', 'endOfRange': 10000},
@@ -209,7 +209,7 @@ class BaseTest(unittest.TestCase):
                                 {'key': 'group_exp_1_control', 'id': '28901'},
                                 {'key': 'group_exp_1_variation', 'id': '28902'},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control',},
+                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
                             'trafficAllocation': [
                                 {'entityId': '28901', 'endOfRange': 3000},
                                 {'entityId': '28902', 'endOfRange': 9000},
@@ -225,7 +225,7 @@ class BaseTest(unittest.TestCase):
                                 {'key': 'group_exp_2_control', 'id': '28905'},
                                 {'key': 'group_exp_2_variation', 'id': '28906'},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control',},
+                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control'},
                             'trafficAllocation': [
                                 {'entityId': '28905', 'endOfRange': 8000},
                                 {'entityId': '28906', 'endOfRange': 10000},
@@ -299,7 +299,7 @@ class BaseTest(unittest.TestCase):
                             'layerId': '211111',
                             'audienceIds': ['11159'],
                             'trafficAllocation': [{'entityId': '211139', 'endOfRange': 3000}],
-                            'variations': [{'key': '211139', 'id': '211139', 'featureEnabled': True,}],
+                            'variations': [{'key': '211139', 'id': '211139', 'featureEnabled': True}],
                         },
                         {
                             'id': '211147',
@@ -309,7 +309,7 @@ class BaseTest(unittest.TestCase):
                             'layerId': '211111',
                             'audienceIds': [],
                             'trafficAllocation': [{'entityId': '211149', 'endOfRange': 6000}],
-                            'variations': [{'key': '211149', 'id': '211149', 'featureEnabled': True,}],
+                            'variations': [{'key': '211149', 'id': '211149', 'featureEnabled': True}],
                         },
                     ],
                 },
@@ -321,11 +321,11 @@ class BaseTest(unittest.TestCase):
                     'experimentIds': ['111127'],
                     'rolloutId': '',
                     'variables': [
-                        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean',},
-                        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string',},
-                        {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double',},
-                        {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer',},
-                        {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer',},
+                        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean'},
+                        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
+                        {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double'},
+                        {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
+                        {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
                     ],
                 },
                 {
@@ -334,10 +334,10 @@ class BaseTest(unittest.TestCase):
                     'experimentIds': [],
                     'rolloutId': '211111',
                     'variables': [
-                        {'id': '132', 'key': 'is_running', 'defaultValue': 'false', 'type': 'boolean',},
-                        {'id': '133', 'key': 'message', 'defaultValue': 'Hello', 'type': 'string',},
-                        {'id': '134', 'key': 'price', 'defaultValue': '99.99', 'type': 'double',},
-                        {'id': '135', 'key': 'count', 'defaultValue': '999', 'type': 'integer',},
+                        {'id': '132', 'key': 'is_running', 'defaultValue': 'false', 'type': 'boolean'},
+                        {'id': '133', 'key': 'message', 'defaultValue': 'Hello', 'type': 'string'},
+                        {'id': '134', 'key': 'price', 'defaultValue': '99.99', 'type': 'double'},
+                        {'id': '135', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
                     ],
                 },
                 {
@@ -361,7 +361,7 @@ class BaseTest(unittest.TestCase):
             'revision': '42',
             'version': '2',
             'events': [
-                {'key': 'test_event', 'experimentIds': ['111127', '111130'], 'id': '111095',},
+                {'key': 'test_event', 'experimentIds': ['111127', '111130'], 'id': '111095'},
                 {'key': 'Total Revenue', 'experimentIds': ['111127'], 'id': '111096'},
             ],
             'experiments': [
@@ -377,7 +377,7 @@ class BaseTest(unittest.TestCase):
                         {'entityId': '111129', 'endOfRange': 9000},
                     ],
                     'id': '111127',
-                    'variations': [{'key': 'control', 'id': '111128'}, {'key': 'variation', 'id': '111129'},],
+                    'variations': [{'key': 'control', 'id': '111128'}, {'key': 'variation', 'id': '111129'}],
                 },
                 {
                     'key': 'test_experiment_2',
@@ -391,7 +391,7 @@ class BaseTest(unittest.TestCase):
                         {'entityId': '111132', 'endOfRange': 9000},
                     ],
                     'id': '111130',
-                    'variations': [{'key': 'control', 'id': '111131'}, {'key': 'variation', 'id': '111132'},],
+                    'variations': [{'key': 'control', 'id': '111131'}, {'key': 'variation', 'id': '111132'}],
                 },
             ],
             'groups': [
@@ -409,7 +409,7 @@ class BaseTest(unittest.TestCase):
                                 {'key': 'group_exp_1_control', 'id': '28901'},
                                 {'key': 'group_exp_1_variation', 'id': '28902'},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control',},
+                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
                             'trafficAllocation': [
                                 {'entityId': '28901', 'endOfRange': 3000},
                                 {'entityId': '28902', 'endOfRange': 9000},
@@ -425,7 +425,7 @@ class BaseTest(unittest.TestCase):
                                 {'key': 'group_exp_2_control', 'id': '28905'},
                                 {'key': 'group_exp_2_variation', 'id': '28906'},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control',},
+                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control'},
                             'trafficAllocation': [
                                 {'entityId': '28905', 'endOfRange': 8000},
                                 {'entityId': '28906', 'endOfRange': 10000},
@@ -476,8 +476,8 @@ class BaseTest(unittest.TestCase):
                     'trafficAllocation': [{'entityId': '10418551353', 'endOfRange': 10000}],
                     'audienceIds': [],
                     'variations': [
-                        {'variables': [], 'id': '10418551353', 'key': 'all_traffic_variation',},
-                        {'variables': [], 'id': '10418510624', 'key': 'no_traffic_variation',},
+                        {'variables': [], 'id': '10418551353', 'key': 'all_traffic_variation'},
+                        {'variables': [], 'id': '10418510624', 'key': 'no_traffic_variation'},
                     ],
                     'forcedVariations': {},
                     'id': '10420810910',
@@ -487,7 +487,7 @@ class BaseTest(unittest.TestCase):
             'groups': [],
             'attributes': [],
             'accountId': '10367498574',
-            'events': [{'experimentIds': ['10420810910'], 'id': '10404198134', 'key': 'winning',}],
+            'events': [{'experimentIds': ['10420810910'], 'id': '10404198134', 'key': 'winning'}],
             'revision': '1337',
         }
 
@@ -511,7 +511,7 @@ class BaseTest(unittest.TestCase):
                                 '3468206643',
                             ],
                             'variations': [
-                                {'variables': [], 'id': '11557362669', 'key': '11557362669', 'featureEnabled': True,}
+                                {'variables': [], 'id': '11557362669', 'key': '11557362669', 'featureEnabled': True}
                             ],
                             'forcedVariations': {},
                             'id': '11488548027',
@@ -528,7 +528,7 @@ class BaseTest(unittest.TestCase):
                             'trafficAllocation': [{'entityId': '11475708558', 'endOfRange': 0}],
                             'audienceIds': [],
                             'variations': [
-                                {'variables': [], 'id': '11475708558', 'key': '11475708558', 'featureEnabled': False,}
+                                {'variables': [], 'id': '11475708558', 'key': '11475708558', 'featureEnabled': False}
                             ],
                             'forcedVariations': {},
                             'id': '11630490911',
@@ -547,10 +547,10 @@ class BaseTest(unittest.TestCase):
                             'audienceConditions': [
                                 'and',
                                 ['or', '3468206642', '3988293898'],
-                                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643',],
+                                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
                             ],
                             'variations': [
-                                {'variables': [], 'id': '11557362670', 'key': '11557362670', 'featureEnabled': True,}
+                                {'variables': [], 'id': '11557362670', 'key': '11557362670', 'featureEnabled': True}
                             ],
                             'forcedVariations': {},
                             'id': '11488548028',
@@ -567,7 +567,7 @@ class BaseTest(unittest.TestCase):
                             'trafficAllocation': [{'entityId': '11475708559', 'endOfRange': 0}],
                             'audienceIds': [],
                             'variations': [
-                                {'variables': [], 'id': '11475708559', 'key': '11475708559', 'featureEnabled': False,}
+                                {'variables': [], 'id': '11475708559', 'key': '11475708559', 'featureEnabled': False}
                             ],
                             'forcedVariations': {},
                             'id': '11630490912',
@@ -580,11 +580,11 @@ class BaseTest(unittest.TestCase):
             'projectId': '11624721371',
             'variables': [],
             'featureFlags': [
-                {'experimentIds': [], 'rolloutId': '11551226731', 'variables': [], 'id': '11477755619', 'key': 'feat',},
+                {'experimentIds': [], 'rolloutId': '11551226731', 'variables': [], 'id': '11477755619', 'key': 'feat'},
                 {
                     'experimentIds': ['11564051718'],
                     'rolloutId': '11638870867',
-                    'variables': [{'defaultValue': 'x', 'type': 'string', 'id': '11535264366', 'key': 'x',}],
+                    'variables': [{'defaultValue': 'x', 'type': 'string', 'id': '11535264366', 'key': 'x'}],
                     'id': '11567102051',
                     'key': 'feat_with_var',
                 },
@@ -598,7 +598,7 @@ class BaseTest(unittest.TestCase):
                 {
                     'experimentIds': ['1323241599'],
                     'rolloutId': '11638870868',
-                    'variables': [{'defaultValue': '10', 'type': 'integer', 'id': '11535264367', 'key': 'z',}],
+                    'variables': [{'defaultValue': '10', 'type': 'integer', 'id': '11535264367', 'key': 'z'}],
                     'id': '11567102053',
                     'key': 'feat2_with_var',
                 },
@@ -658,7 +658,7 @@ class BaseTest(unittest.TestCase):
                     'audienceConditions': [
                         'and',
                         ['or', '3468206642', '3988293898'],
-                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643',],
+                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
                     ],
                     'forcedVariations': {},
                 },
@@ -680,7 +680,7 @@ class BaseTest(unittest.TestCase):
                     'audienceConditions': [
                         'and',
                         ['or', '3468206642', '3988293898'],
-                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643',],
+                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
                     ],
                     'forcedVariations': {},
                 },
@@ -689,47 +689,56 @@ class BaseTest(unittest.TestCase):
                 {
                     'id': '3468206642',
                     'name': 'exactString',
-                    'conditions': '["and", ["or", ["or", {"name": "house", "type": "custom_attribute", "value": "Gryffindor"}]]]',
+                    'conditions': '["and", ["or", ["or", {"name": "house", '
+                                  '"type": "custom_attribute", "value": "Gryffindor"}]]]',
                 },
                 {
                     'id': '3988293898',
                     'name': '$$dummySubstringString',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '3988293899',
                     'name': '$$dummyExists',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '3468206646',
                     'name': '$$dummyExactNumber',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '3468206647',
                     'name': '$$dummyGtNumber',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '3468206644',
                     'name': '$$dummyLtNumber',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '3468206643',
                     'name': '$$dummyExactBoolean',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '3468206645',
                     'name': '$$dummyMultipleCustomAttrs',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
                 {
                     'id': '0',
                     'name': '$$dummy',
-                    'conditions': '{ "type": "custom_attribute", "name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
                 },
             ],
             'typedAudiences': [
@@ -759,7 +768,7 @@ class BaseTest(unittest.TestCase):
                         'and',
                         [
                             'or',
-                            ['or', {'name': 'favorite_ice_cream', 'type': 'custom_attribute', 'match': 'exists',},],
+                            ['or', {'name': 'favorite_ice_cream', 'type': 'custom_attribute', 'match': 'exists'}],
                         ],
                     ],
                 },
@@ -770,7 +779,7 @@ class BaseTest(unittest.TestCase):
                         'and',
                         [
                             'or',
-                            ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'exact', 'value': 45.5,},],
+                            ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'exact', 'value': 45.5}],
                         ],
                     ],
                 },
@@ -779,7 +788,7 @@ class BaseTest(unittest.TestCase):
                     'name': 'gtNumber',
                     'conditions': [
                         'and',
-                        ['or', ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'gt', 'value': 70,},],],
+                        ['or', ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'gt', 'value': 70}]],
                     ],
                 },
                 {
@@ -787,7 +796,7 @@ class BaseTest(unittest.TestCase):
                     'name': 'ltNumber',
                     'conditions': [
                         'and',
-                        ['or', ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'lt', 'value': 1.0,},],],
+                        ['or', ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'lt', 'value': 1.0}]],
                     ],
                 },
                 {
@@ -799,7 +808,7 @@ class BaseTest(unittest.TestCase):
                             'or',
                             [
                                 'or',
-                                {'name': 'should_do_it', 'type': 'custom_attribute', 'match': 'exact', 'value': True,},
+                                {'name': 'should_do_it', 'type': 'custom_attribute', 'match': 'exact', 'value': True},
                             ],
                         ],
                     ],
@@ -813,8 +822,8 @@ class BaseTest(unittest.TestCase):
                             "or",
                             [
                                 "or",
-                                {"type": "custom_attribute", "name": "browser", "value": "chrome",},
-                                {"type": "custom_attribute", "name": "browser", "value": "firefox",},
+                                {"type": "custom_attribute", "name": "browser", "value": "chrome"},
+                                {"type": "custom_attribute", "name": "browser", "value": "firefox"},
                             ],
                         ],
                     ],
@@ -830,8 +839,8 @@ class BaseTest(unittest.TestCase):
             'botFiltering': False,
             'accountId': '4879520872',
             'events': [
-                {'key': 'item_bought', 'id': '594089', 'experimentIds': ['11564051718', '1323241597'],},
-                {'key': 'user_signed_up', 'id': '594090', 'experimentIds': ['1323241598', '1323241599'],},
+                {'key': 'item_bought', 'id': '594089', 'experimentIds': ['11564051718', '1323241597']},
+                {'key': 'user_signed_up', 'id': '594090', 'experimentIds': ['1323241598', '1323241599']},
             ],
             'revision': '3',
         }

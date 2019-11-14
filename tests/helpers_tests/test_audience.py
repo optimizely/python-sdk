@@ -69,7 +69,7 @@ class AudienceTest(base.BaseTest):
             experiment.audienceConditions = [
                 'and',
                 ['or', '3468206642', '3988293898'],
-                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643',],
+                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
             ]
             audience.is_user_in_experiment(
                 self.project_config, experiment, user_attributes, self.mock_client_logger,
@@ -119,7 +119,8 @@ class AudienceTest(base.BaseTest):
             )
 
     def test_is_user_in_experiment__returns_False__when_condition_tree_evaluator_returns_None_or_False(self,):
-        """ Test that is_user_in_experiment returns False when call to condition_tree_evaluator returns None or False. """
+        """ Test that is_user_in_experiment returns False
+        when call to condition_tree_evaluator returns None or False. """
 
         user_attributes = {'test_attribute': 'test_value_1'}
         experiment = self.project_config.get_experiment_from_key('test_experiment')
@@ -173,7 +174,7 @@ class AudienceTest(base.BaseTest):
         experiment.audienceConditions = [
             'or',
             ['or', '3468206642', '3988293898'],
-            ['or', '3988293899', '3468206646',],
+            ['or', '3988293899', '3468206646'],
         ]
 
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
@@ -297,7 +298,8 @@ class AudienceLoggingTest(base.BaseTest):
         self.mock_client_logger.assert_has_calls(
             [
                 mock.call.debug(
-                    'Evaluating audiences for experiment "audience_combinations_experiment": ["or", ["or", "3468206642", '
+                    'Evaluating audiences for experiment '
+                    '"audience_combinations_experiment": ["or", ["or", "3468206642", '
                     '"3988293898", "3988293899"]].'
                 ),
                 mock.call.debug(

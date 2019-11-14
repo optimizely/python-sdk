@@ -275,7 +275,7 @@ class OptimizelyTest(base.BaseTest):
             'optimizely.error_handler.NoOpErrorHandler.handle_error'
         ) as mock_error_handler:
             opt_obj = optimizely.Optimizely(
-                {'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value',}, skip_json_validation=True,
+                {'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'}, skip_json_validation=True,
             )
 
         mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
@@ -307,7 +307,7 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -675,12 +675,12 @@ class OptimizelyTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -749,15 +749,15 @@ class OptimizelyTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': False, 'entity_id': '111196', 'key': 'boolean_key',},
-                        {'type': 'custom', 'value': 0.0, 'entity_id': '111198', 'key': 'double_key',},
-                        {'type': 'custom', 'value': 0, 'entity_id': '111197', 'key': 'integer_key',},
-                        {'type': 'custom', 'value': 'test_value_1', 'entity_id': '111094', 'key': 'test_attribute',},
+                        {'type': 'custom', 'value': False, 'entity_id': '111196', 'key': 'boolean_key'},
+                        {'type': 'custom', 'value': 0.0, 'entity_id': '111198', 'key': 'double_key'},
+                        {'type': 'custom', 'value': 0, 'entity_id': '111197', 'key': 'integer_key'},
+                        {'type': 'custom', 'value': 'test_value_1', 'entity_id': '111094', 'key': 'test_attribute'},
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -901,12 +901,12 @@ class OptimizelyTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -955,7 +955,7 @@ class OptimizelyTest(base.BaseTest):
                 self.optimizely.activate(
                     'test_experiment',
                     'test_user',
-                    {'test_attribute': 'test_value', '$opt_bucketing_id': 'user_bucket_value',},
+                    {'test_attribute': 'test_value', '$opt_bucketing_id': 'user_bucket_value'},
                 ),
             )
         expected_params = {
@@ -971,12 +971,12 @@ class OptimizelyTest(base.BaseTest):
                             'entity_id': '$opt_bucketing_id',
                             'key': '$opt_bucketing_id',
                         },
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',},
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'},
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -1135,7 +1135,7 @@ class OptimizelyTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
@@ -1255,7 +1255,7 @@ class OptimizelyTest(base.BaseTest):
             self.optimizely.track(
                 'test_event',
                 'test_user',
-                attributes={'test_attribute': 'test_value', '$opt_bucketing_id': 'user_bucket_value',},
+                attributes={'test_attribute': 'test_value', '$opt_bucketing_id': 'user_bucket_value'},
             )
 
         expected_params = {
@@ -1271,7 +1271,7 @@ class OptimizelyTest(base.BaseTest):
                             'entity_id': '$opt_bucketing_id',
                             'key': '$opt_bucketing_id',
                         },
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',},
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'},
                     ],
                     'snapshots': [
                         {
@@ -1348,7 +1348,7 @@ class OptimizelyTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
@@ -1357,7 +1357,7 @@ class OptimizelyTest(base.BaseTest):
                                     'entity_id': '111095',
                                     'key': 'test_event',
                                     'revenue': 4200,
-                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234,},
+                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234},
                                     'timestamp': 42000,
                                     'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                                     'value': 1.234,
@@ -1402,7 +1402,7 @@ class OptimizelyTest(base.BaseTest):
             'visitors': [
                 {
                     'attributes': [
-                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute',}
+                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute'}
                     ],
                     'visitor_id': 'test_user',
                     'snapshots': [
@@ -1492,7 +1492,7 @@ class OptimizelyTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
@@ -1501,7 +1501,7 @@ class OptimizelyTest(base.BaseTest):
                                     'entity_id': '111095',
                                     'key': 'test_event',
                                     'revenue': 4200,
-                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234,},
+                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234},
                                     'timestamp': 42000,
                                     'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                                     'value': 1.234,
@@ -1546,7 +1546,7 @@ class OptimizelyTest(base.BaseTest):
             'visitors': [
                 {
                     'attributes': [
-                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute',}
+                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute'}
                     ],
                     'visitor_id': 'test_user',
                     'snapshots': [
@@ -1893,7 +1893,7 @@ class OptimizelyTest(base.BaseTest):
                 'feature_key': 'test_feature_in_experiment',
                 'feature_enabled': True,
                 'source': 'feature-test',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
         expected_params = {
@@ -1913,7 +1913,7 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -1986,7 +1986,7 @@ class OptimizelyTest(base.BaseTest):
                 'feature_key': 'test_feature_in_experiment',
                 'feature_enabled': False,
                 'source': 'feature-test',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'control',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'control'},
             },
         )
         # Check that impression event is sent
@@ -2007,7 +2007,7 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -2280,7 +2280,7 @@ class OptimizelyTest(base.BaseTest):
                         'feature_key': 'test_feature_in_experiment',
                         'feature_enabled': True,
                         'source': 'feature-test',
-                        'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                        'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
                     },
                 ),
                 mock.call(
@@ -2316,7 +2316,7 @@ class OptimizelyTest(base.BaseTest):
                         'feature_key': 'test_feature_in_experiment_and_rollout',
                         'feature_enabled': False,
                         'source': 'feature-test',
-                        'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'control',},
+                        'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'control'},
                     },
                 ),
             ],
@@ -2401,7 +2401,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'is_working',
                 'variable_value': True,
                 'variable_type': 'boolean',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
 
@@ -2438,7 +2438,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'cost',
                 'variable_value': 10.02,
                 'variable_type': 'double',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
 
@@ -2475,7 +2475,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'count',
                 'variable_value': 4243,
                 'variable_type': 'integer',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
 
@@ -2513,7 +2513,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'environment',
                 'variable_value': 'staging',
                 'variable_type': 'string',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
 
@@ -2549,7 +2549,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'is_working',
                 'variable_value': True,
                 'variable_type': 'boolean',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
         # Double
@@ -2579,7 +2579,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'cost',
                 'variable_value': 10.02,
                 'variable_type': 'double',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
         # Integer
@@ -2609,7 +2609,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'count',
                 'variable_value': 4243,
                 'variable_type': 'integer',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
         # String
@@ -2639,7 +2639,7 @@ class OptimizelyTest(base.BaseTest):
                 'variable_key': 'environment',
                 'variable_value': 'staging',
                 'variable_type': 'string',
-                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation',},
+                'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
 
@@ -4007,7 +4007,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.optimizely.track(event_key, user_id)
 
         mock_client_logging.info.assert_has_calls(
-            [mock.call('Tracking event "%s" for user "%s".' % (event_key, user_id)),]
+            [mock.call('Tracking event "%s" for user "%s".' % (event_key, user_id))]
         )
 
     def test_activate__experiment_not_running(self):

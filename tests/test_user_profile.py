@@ -38,7 +38,7 @@ class UserProfileTest(unittest.TestCase):
 
         self.profile.save_variation_for_experiment('1993412', '118822')
         self.assertEqual(
-            {'199912': {'variation_id': '14512525'}, '1993412': {'variation_id': '118822'},},
+            {'199912': {'variation_id': '14512525'}, '1993412': {'variation_id': '118822'}},
             self.profile.experiment_bucket_map,
         )
 

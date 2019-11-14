@@ -47,7 +47,7 @@ class ConfigTest(base.BaseTest):
                 'test_experiment',
                 'Running',
                 ['11154'],
-                [{'key': 'control', 'id': '111128'}, {'key': 'variation', 'id': '111129'},],
+                [{'key': 'control', 'id': '111128'}, {'key': 'variation', 'id': '111129'}],
                 {'user_1': 'control', 'user_2': 'control'},
                 [
                     {'entityId': '111128', 'endOfRange': 4000},
@@ -61,9 +61,9 @@ class ConfigTest(base.BaseTest):
                 'group_exp_1',
                 'Running',
                 [],
-                [{'key': 'group_exp_1_control', 'id': '28901'}, {'key': 'group_exp_1_variation', 'id': '28902'},],
+                [{'key': 'group_exp_1_control', 'id': '28901'}, {'key': 'group_exp_1_variation', 'id': '28902'}],
                 {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
-                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000},],
+                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000}],
                 '111183',
                 groupId='19228',
                 groupPolicy='random',
@@ -73,9 +73,9 @@ class ConfigTest(base.BaseTest):
                 'group_exp_2',
                 'Running',
                 [],
-                [{'key': 'group_exp_2_control', 'id': '28905'}, {'key': 'group_exp_2_variation', 'id': '28906'},],
+                [{'key': 'group_exp_2_control', 'id': '28905'}, {'key': 'group_exp_2_variation', 'id': '28906'}],
                 {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control'},
-                [{'entityId': '28905', 'endOfRange': 8000}, {'entityId': '28906', 'endOfRange': 10000},],
+                [{'entityId': '28905', 'endOfRange': 8000}, {'entityId': '28906', 'endOfRange': 10000}],
                 '111184',
                 groupId='19228',
                 groupPolicy='random',
@@ -100,14 +100,16 @@ class ConfigTest(base.BaseTest):
             '11154': entities.Audience(
                 '11154',
                 'Test attribute users 1',
-                '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+                '["and", ["or", ["or", {"name": "test_attribute", '
+                '"type": "custom_attribute", "value": "test_value_1"}]]]',
                 conditionStructure=['and', ['or', ['or', 0]]],
                 conditionList=[['test_attribute', 'test_value_1', 'custom_attribute', None]],
             ),
             '11159': entities.Audience(
                 '11159',
                 'Test attribute users 2',
-                '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
+                '["and", ["or", ["or", {"name": "test_attribute", '
+                '"type": "custom_attribute", "value": "test_value_2"}]]]',
                 conditionStructure=['and', ['or', ['or', 0]]],
                 conditionList=[['test_attribute', 'test_value_2', 'custom_attribute', None]],
             ),
@@ -177,8 +179,8 @@ class ConfigTest(base.BaseTest):
                     ],
                     'id': '111127',
                     'variations': [
-                        {'key': 'control', 'id': '111128', 'variables': [{'id': '127', 'value': 'false'}],},
-                        {'key': 'variation', 'id': '111129', 'variables': [{'id': '127', 'value': 'true'}],},
+                        {'key': 'control', 'id': '111128', 'variables': [{'id': '127', 'value': 'false'}]},
+                        {'key': 'variation', 'id': '111129', 'variables': [{'id': '127', 'value': 'true'}]},
                     ],
                 }
             ],
@@ -213,7 +215,7 @@ class ConfigTest(base.BaseTest):
                                     ],
                                 },
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control',},
+                            'forcedVariations': {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
                             'trafficAllocation': [
                                 {'entityId': '28901', 'endOfRange': 3000},
                                 {'entityId': '28902', 'endOfRange': 9000},
@@ -226,10 +228,10 @@ class ConfigTest(base.BaseTest):
                             'audienceIds': [],
                             'layerId': '111184',
                             'variations': [
-                                {'key': 'group_exp_2_control', 'id': '28905', 'variables': [],},
-                                {'key': 'group_exp_2_variation', 'id': '28906', 'variables': [],},
+                                {'key': 'group_exp_2_control', 'id': '28905', 'variables': []},
+                                {'key': 'group_exp_2_variation', 'id': '28906', 'variables': []},
                             ],
-                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control',},
+                            'forcedVariations': {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control'},
                             'trafficAllocation': [
                                 {'entityId': '28905', 'endOfRange': 8000},
                                 {'entityId': '28906', 'endOfRange': 10000},
@@ -265,7 +267,7 @@ class ConfigTest(base.BaseTest):
                             'trafficAllocation': [{'entityId': '211113', 'endOfRange': 10000}],
                             'id': '211112',
                             'variations': [
-                                {'id': '211113', 'key': '211113', 'variables': [{'id': '131', 'value': '15'}],}
+                                {'id': '211113', 'key': '211113', 'variables': [{'id': '131', 'value': '15'}]}
                             ],
                         }
                     ],
@@ -278,10 +280,10 @@ class ConfigTest(base.BaseTest):
                     'experimentIds': ['111127'],
                     'rolloutId': '',
                     'variables': [
-                        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean',},
-                        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string',},
-                        {'id': '129', 'key': 'number_of_days', 'defaultValue': '192', 'type': 'integer',},
-                        {'id': '130', 'key': 'significance_value', 'defaultValue': '0.00098', 'type': 'double',},
+                        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean'},
+                        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
+                        {'id': '129', 'key': 'number_of_days', 'defaultValue': '192', 'type': 'integer'},
+                        {'id': '130', 'key': 'significance_value', 'defaultValue': '0.00098', 'type': 'double'},
                     ],
                 },
                 {
@@ -289,7 +291,7 @@ class ConfigTest(base.BaseTest):
                     'key': 'test_feature_in_rollout',
                     'rolloutId': '211111',
                     'experimentIds': [],
-                    'variables': [{'id': '131', 'key': 'number_of_projects', 'defaultValue': '10', 'type': 'integer',}],
+                    'variables': [{'id': '131', 'key': 'number_of_projects', 'defaultValue': '10', 'type': 'integer'}],
                 },
                 {
                     'id': '91113',
@@ -326,8 +328,8 @@ class ConfigTest(base.BaseTest):
                 'Running',
                 ['11154'],
                 [
-                    {'key': 'control', 'id': '111128', 'variables': [{'id': '127', 'value': 'false'}],},
-                    {'key': 'variation', 'id': '111129', 'variables': [{'id': '127', 'value': 'true'}],},
+                    {'key': 'control', 'id': '111128', 'variables': [{'id': '127', 'value': 'false'}]},
+                    {'key': 'variation', 'id': '111129', 'variables': [{'id': '127', 'value': 'true'}]},
                 ],
                 {'user_1': 'control', 'user_2': 'control'},
                 [
@@ -363,7 +365,7 @@ class ConfigTest(base.BaseTest):
                     },
                 ],
                 {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
-                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000},],
+                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000}],
                 '111183',
                 groupId='19228',
                 groupPolicy='random',
@@ -378,7 +380,7 @@ class ConfigTest(base.BaseTest):
                     {'key': 'group_exp_2_variation', 'id': '28906', 'variables': []},
                 ],
                 {'user_1': 'group_exp_2_control', 'user_2': 'group_exp_2_control'},
-                [{'entityId': '28905', 'endOfRange': 8000}, {'entityId': '28906', 'endOfRange': 10000},],
+                [{'entityId': '28905', 'endOfRange': 8000}, {'entityId': '28906', 'endOfRange': 10000}],
                 '111184',
                 groupId='19228',
                 groupPolicy='random',
@@ -388,7 +390,7 @@ class ConfigTest(base.BaseTest):
                 '211112',
                 'Running',
                 ['11154'],
-                [{'id': '211113', 'key': '211113', 'variables': [{'id': '131', 'value': '15',}],}],
+                [{'id': '211113', 'key': '211113', 'variables': [{'id': '131', 'value': '15'}]}],
                 {},
                 [{'entityId': '211113', 'endOfRange': 10000}],
                 '211111',
@@ -411,7 +413,8 @@ class ConfigTest(base.BaseTest):
             '11154': entities.Audience(
                 '11154',
                 'Test attribute users',
-                '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value"}]]]',
+                '["and", ["or", ["or", {"name": "test_attribute", '
+                '"type": "custom_attribute", "value": "test_value"}]]]',
                 conditionStructure=['and', ['or', ['or', 0]]],
                 conditionList=[['test_attribute', 'test_value', 'custom_attribute', None]],
             )
@@ -436,7 +439,7 @@ class ConfigTest(base.BaseTest):
                     '28902',
                     'group_exp_1_variation',
                     False,
-                    [{'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'},],
+                    [{'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}],
                 ),
             },
             'group_exp_2': {
@@ -465,7 +468,7 @@ class ConfigTest(base.BaseTest):
                     '28902',
                     'group_exp_1_variation',
                     False,
-                    [{'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'},],
+                    [{'id': '128', 'value': 'stage'}, {'id': '129', 'value': '112'}, {'id': '130', 'value': '1.211'}],
                 ),
             },
             'group_exp_2': {
@@ -510,7 +513,7 @@ class ConfigTest(base.BaseTest):
                         'audienceIds': ['11154'],
                         'trafficAllocation': [{'entityId': '211113', 'endOfRange': 10000}],
                         'id': '211112',
-                        'variations': [{'id': '211113', 'key': '211113', 'variables': [{'id': '131', 'value': '15'}],}],
+                        'variations': [{'id': '211113', 'key': '211113', 'variables': [{'id': '131', 'value': '15'}]}],
                     }
                 ],
             )
@@ -616,9 +619,9 @@ class ConfigTest(base.BaseTest):
                 'group_exp_1',
                 'Running',
                 [],
-                [{'key': 'group_exp_1_control', 'id': '28901'}, {'key': 'group_exp_1_variation', 'id': '28902'},],
+                [{'key': 'group_exp_1_control', 'id': '28901'}, {'key': 'group_exp_1_variation', 'id': '28902'}],
                 {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
-                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000},],
+                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000}],
                 '111183',
                 groupId='19228',
                 groupPolicy='random',
@@ -640,9 +643,9 @@ class ConfigTest(base.BaseTest):
                 'group_exp_1',
                 'Running',
                 [],
-                [{'key': 'group_exp_1_control', 'id': '28901'}, {'key': 'group_exp_1_variation', 'id': '28902'},],
+                [{'key': 'group_exp_1_control', 'id': '28901'}, {'key': 'group_exp_1_variation', 'id': '28902'}],
                 {'user_1': 'group_exp_1_control', 'user_2': 'group_exp_1_control'},
-                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000},],
+                [{'entityId': '28901', 'endOfRange': 3000}, {'entityId': '28902', 'endOfRange': 9000}],
                 '111183',
                 groupId='19228',
                 groupPolicy='random',
@@ -689,7 +692,7 @@ class ConfigTest(base.BaseTest):
                 'and',
                 [
                     'or',
-                    ['or', {'name': 'house', 'type': 'custom_attribute', 'match': 'substring', 'value': 'Slytherin',},],
+                    ['or', {'name': 'house', 'type': 'custom_attribute', 'match': 'substring', 'value': 'Slytherin'}],
                 ],
             ],
         }

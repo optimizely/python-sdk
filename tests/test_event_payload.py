@@ -25,12 +25,12 @@ class EventPayloadTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -71,8 +71,8 @@ class EventPayloadTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',},
-                        {'type': 'custom', 'value': 'test_value2', 'entity_id': '111095', 'key': 'test_attribute2',},
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'},
+                        {'type': 'custom', 'value': 'test_value2', 'entity_id': '111095', 'key': 'test_attribute2'},
                     ],
                     'snapshots': [
                         {
@@ -83,7 +83,7 @@ class EventPayloadTest(base.BaseTest):
                                     'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                                     'key': 'campaign_activated',
                                     'revenue': 4200,
-                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234,},
+                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234},
                                     'value': 1.234,
                                 }
                             ]

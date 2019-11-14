@@ -67,7 +67,7 @@ class EventBuilderTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -117,12 +117,12 @@ class EventBuilderTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -175,7 +175,7 @@ class EventBuilderTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -225,13 +225,13 @@ class EventBuilderTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 5.5, 'entity_id': '111198', 'key': 'double_key',},
-                        {'type': 'custom', 'value': True, 'entity_id': '111196', 'key': 'boolean_key',},
+                        {'type': 'custom', 'value': 5.5, 'entity_id': '111198', 'key': 'double_key'},
+                        {'type': 'custom', 'value': True, 'entity_id': '111196', 'key': 'boolean_key'},
                     ],
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -298,7 +298,7 @@ class EventBuilderTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'Edge', 'entity_id': '$opt_user_agent', 'key': '$opt_user_agent',},
+                        {'type': 'custom', 'value': 'Edge', 'entity_id': '$opt_user_agent', 'key': '$opt_user_agent'},
                         {
                             'type': 'custom',
                             'value': True,
@@ -309,7 +309,7 @@ class EventBuilderTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -373,7 +373,7 @@ class EventBuilderTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -443,7 +443,7 @@ class EventBuilderTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
                             ],
                             'events': [
                                 {
@@ -542,7 +542,7 @@ class EventBuilderTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute',}
+                        {'type': 'custom', 'value': 'test_value', 'entity_id': '111094', 'key': 'test_attribute'}
                     ],
                     'snapshots': [
                         {
@@ -591,7 +591,7 @@ class EventBuilderTest(base.BaseTest):
                 {
                     'visitor_id': 'test_user',
                     'attributes': [
-                        {'type': 'custom', 'value': 'Edge', 'entity_id': '$opt_user_agent', 'key': '$opt_user_agent',},
+                        {'type': 'custom', 'value': 'Edge', 'entity_id': '$opt_user_agent', 'key': '$opt_user_agent'},
                         {
                             'type': 'custom',
                             'value': True,
@@ -710,7 +710,7 @@ class EventBuilderTest(base.BaseTest):
             'visitors': [
                 {
                     'attributes': [
-                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute',}
+                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute'}
                     ],
                     'visitor_id': 'test_user',
                     'snapshots': [
@@ -718,7 +718,7 @@ class EventBuilderTest(base.BaseTest):
                             'events': [
                                 {
                                     'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234,},
+                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234},
                                     'timestamp': 42123,
                                     'revenue': 4200,
                                     'value': 1.234,
@@ -765,7 +765,7 @@ class EventBuilderTest(base.BaseTest):
             'visitors': [
                 {
                     'attributes': [
-                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute',}
+                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute'}
                     ],
                     'visitor_id': 'test_user',
                     'snapshots': [
@@ -776,7 +776,7 @@ class EventBuilderTest(base.BaseTest):
                                     'entity_id': '111095',
                                     'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
                                     'key': 'test_event',
-                                    'tags': {'non-revenue': 'abc', 'revenue': '4200', 'value': True,},
+                                    'tags': {'non-revenue': 'abc', 'revenue': '4200', 'value': True},
                                 }
                             ]
                         }
@@ -818,7 +818,7 @@ class EventBuilderTest(base.BaseTest):
             'visitors': [
                 {
                     'attributes': [
-                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute',}
+                        {'entity_id': '111094', 'type': 'custom', 'value': 'test_value', 'key': 'test_attribute'}
                     ],
                     'visitor_id': 'test_user',
                     'snapshots': [
@@ -826,7 +826,7 @@ class EventBuilderTest(base.BaseTest):
                             'events': [
                                 {
                                     'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
-                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234,},
+                                    'tags': {'non-revenue': 'abc', 'revenue': 4200, 'value': 1.234},
                                     'timestamp': 42123,
                                     'revenue': 4200,
                                     'value': 1.234,
