@@ -16,11 +16,13 @@ from . import user_event
 
 
 class UserEventFactory(object):
-  """ UserEventFactory builds impression and conversion events from a given UserEvent. """
+    """ UserEventFactory builds impression and conversion events from a given UserEvent. """
 
-  @classmethod
-  def create_impression_event(cls, project_config, activated_experiment, variation_id, user_id, user_attributes):
-    """ Create impression Event to be sent to the logging endpoint.
+    @classmethod
+    def create_impression_event(
+        cls, project_config, activated_experiment, variation_id, user_id, user_attributes,
+    ):
+        """ Create impression Event to be sent to the logging endpoint.
 
     Args:
       project_config: Instance of ProjectConfig.
@@ -34,31 +36,28 @@ class UserEventFactory(object):
       - activated_experiment is None.
     """
 
-    if not activated_experiment:
-      return None
+        if not activated_experiment:
+            return None
 
-    experiment_key = activated_experiment.key
-    variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        experiment_key = activated_experiment.key
+        variation = project_config.get_variation_from_id(experiment_key, variation_id)
 
-    event_context = user_event.EventContext(
-      project_config.account_id,
-      project_config.project_id,
-      project_config.revision,
-      project_config.anonymize_ip
-    )
+        event_context = user_event.EventContext(
+            project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
+        )
 
-    return user_event.ImpressionEvent(
-      event_context,
-      user_id,
-      activated_experiment,
-      event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
-      variation,
-      project_config.get_bot_filtering_value()
-    )
+        return user_event.ImpressionEvent(
+            event_context,
+            user_id,
+            activated_experiment,
+            event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
+            variation,
+            project_config.get_bot_filtering_value(),
+        )
 
-  @classmethod
-  def create_conversion_event(cls, project_config, event_key, user_id, user_attributes, event_tags):
-    """ Create conversion Event to be sent to the logging endpoint.
+    @classmethod
+    def create_conversion_event(cls, project_config, event_key, user_id, user_attributes, event_tags):
+        """ Create conversion Event to be sent to the logging endpoint.
 
     Args:
       project_config: Instance of ProjectConfig.
@@ -71,18 +70,15 @@ class UserEventFactory(object):
       Event object encapsulating the conversion event.
     """
 
-    event_context = user_event.EventContext(
-      project_config.account_id,
-      project_config.project_id,
-      project_config.revision,
-      project_config.anonymize_ip
-    )
+        event_context = user_event.EventContext(
+            project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
+        )
 
-    return user_event.ConversionEvent(
-      event_context,
-      project_config.get_event(event_key),
-      user_id,
-      event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
-      event_tags,
-      project_config.get_bot_filtering_value()
-    )
+        return user_event.ConversionEvent(
+            event_context,
+            project_config.get_event(event_key),
+            user_id,
+            event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
+            event_tags,
+            project_config.get_bot_filtering_value(),
+        )
