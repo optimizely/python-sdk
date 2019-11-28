@@ -1,5 +1,11 @@
 # Optimizely Python SDK Changelog
 
+## 3.3.1
+December 2nd, 2019
+
+### Bug Fixes:
+* Fixed [installation issue](https://github.com/optimizely/python-sdk/issues/220) on Windows. ([#224](https://github.com/optimizely/python-sdk/pull/224))
+
 ## 3.3.0
 October 28th, 2019
 
