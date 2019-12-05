@@ -25,6 +25,7 @@ from .event.event_processor import ForwardingEventProcessor
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums, validator
 from .notification_center import NotificationCenter
+from .optimizely_config import OptimizelyConfigBuilder
 
 
 class Optimizely(object):
@@ -733,3 +734,16 @@ class Optimizely(object):
 
         forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
+
+
+    def get_optimizely_config():
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_optimizely_config'))
+            return None
+
+        project_config = self.config_manager.get_config()
+        if not project_config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_optimizely_config'))
+            return None
+
+        return OptimizelyConfigBuilder.get_config()
