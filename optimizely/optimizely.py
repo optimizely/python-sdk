@@ -735,7 +735,6 @@ class Optimizely(object):
         forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
 
-
     def get_optimizely_config(self):
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_optimizely_config'))
@@ -746,4 +745,4 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_optimizely_config'))
             return None
 
-        return OptimizelyConfigBuilder(project_config).get_optimizely_config()
+        return OptimizelyConfigBuilder(project_config).build()
