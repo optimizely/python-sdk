@@ -50,10 +50,10 @@ class OptimizelyVariable(object):
 class OptimizelyConfigBuilder(object):
 
     def __init__(self, project_config):
-        self.experiments = project_config.get('experiments', [])
-        self.feature_flags = project_config.get('featureFlags', [])
-        self.groups = config.get('groups', [])
-        self.revision = config.get('revision')
+        self.experiments = project_config.experiments
+        self.feature_flags = project_config.feature_flags
+        self.groups = project_config.groups
+        self.revision = project_config.revision
 
     def get_optimizely_config(self):
         experiments_map = self._get_experiments_map()
@@ -62,13 +62,13 @@ class OptimizelyConfigBuilder(object):
         return OptimizelyConfig(self.revision, experiments_map, features_map)
 
     def _get_feature_variable_by_id(self, variable_id, feature_flag):
-        for variable in feature_flag.get('variables', None):
+        for variable in feature_flag.get('variables', []):
             if variable_id == variable['id']:
                 return variable
         return None
 
-    def _get_featureflag_by_experiment_id(self, experiment_id, feature_flags):
-        for feature in feature_flags:
+    def _get_featureflag_by_experiment_id(self, experiment_id):
+        for feature in self.feature_flags:
             for id in feature['experimentIds']:
                 if id == experiment_id:
                     return feature
@@ -81,8 +81,8 @@ class OptimizelyConfigBuilder(object):
 
         return None
 
-    def _get_variables_map(self, variation, experiment, feature_flags):
-        feature_flag = self._get_featureflag_by_experiment_id(experiment['id'], feature_flags)
+    def _get_variables_map(self, variation, experiment):
+        feature_flag = self._get_featureflag_by_experiment_id(experiment['id'])
         if feature_flag is None:
             return {}
 
@@ -107,7 +107,7 @@ class OptimizelyConfigBuilder(object):
         variations_map = {}
 
         for variation in experiment.get('variations', []):
-            variables_map = self._get_variables_map(variation, experiment, self.feature_flags)
+            variables_map = self._get_variables_map(variation, experiment)
             feature_enabled = variation.get('featureEnabled', None)
 
             optly_variation = OptimizelyVariation(
@@ -167,26 +167,3 @@ class OptimizelyConfigBuilder(object):
 
         
         return features_map
-
-
-
-def _readfile():
-    with open('feature_variables.json', 'r') as datafile:
-      return datafile.read()
-
-
-datafile = _readfile()
-config = json.loads(datafile)
-
-opt_builder = OptimizelyConfigBuilder(config)
-
-response = opt_builder.get_optimizely_config()
-
-
-import pprint
-pp = pprint.PrettyPrinter(indent=2)
-pp.pprint(json.dumps(response.__dict__, default= lambda o: o.__dict__))
-
-
-# print(response.__dict__)
-
