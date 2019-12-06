@@ -11,53 +11,182 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-class OptimizelyConfig(object):
-    def __init__(self, project_config):
-        self.revision = None
-        self.experiments_map = None
-        self.features_map = None
+import json
 
-class OptimizelyConfigExperiment(object):
+class OptimizelyConfig(object):
+    def __init__(self, revision, experiments_map, features_map):
+        self.revision = revision
+        self.experimentsMap = experiments_map
+        self.featuresMap = features_map
+
+class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
         self.id = id
         self.key = key
-        self.variations_map = variations_map
+        self.variationsMap = variations_map
 
-class OptimizelyConfigFeature(object):
-    def __init__(self, id, key, experiments_map):
+class OptimizelyFeature(object):
+    def __init__(self, id, key, experiments_map, variables_map):
         self.id = id
         self.key = key
-        self.experiments_map = experiments_map
+        self.experimentsMap = experiments_map
+        self.variablesMap = variables_map
 
-class OptimizelyConfigVariation(object):
-    def __init__(self, id, key, variables_map):
+class OptimizelyVariation(object):
+    def __init__(self, id, key, feature_enabled, variables_map):
         self.id = id
         self.key = key
-        self.variables_map = 
+        self.featureEnabled = feature_enabled
+        self.variablesMap = variables_map
 
-class OptimizelyConfigVariable(object):
+class OptimizelyVariable(object):
     def __init__(self, id, key, type, value):
         self.id = id
         self.key = key
         self.type = type
         self.value = value
 
+
 class OptimizelyConfigBuilder(object):
 
-    @staticmethod
-    def get_config():
-    pass
+    def __init__(self, project_config):
+        self.experiments = project_config.get('experiments', [])
+        self.feature_flags = project_config.get('featureFlags', [])
+        self.groups = config.get('groups', [])
+        self.revision = config.get('revision')
 
-    @staticmethod
-    def _get_features_map():
-        pass
+    def get_optimizely_config(self):
+        experiments_map = self._get_experiments_map()
+        features_map = self._get_features_map(experiments_map)
 
-    @staticmethod
-    def _get_merged_variables_map():
-        pass
+        return OptimizelyConfig(self.revision, experiments_map, features_map)
 
-    @staticmethod
-    def _get_experiments_map()
-        pass
+    def _get_feature_variable_by_id(self, variable_id, feature_flag):
+        for variable in feature_flag.get('variables', None):
+            if variable_id == variable['id']:
+                return variable
+        return None
 
+    def _get_featureflag_by_experiment_id(self, experiment_id, feature_flags):
+        for feature in feature_flags:
+            for id in feature['experimentIds']:
+                if id == experiment_id:
+                    return feature
+        return None
+
+    def _get_experiment_by_id(self, experiment_id, experiments_map):
+        for experiment in experiments_map.values():
+            if experiment.id == experiment_id:
+                return experiment
+
+        return None
+
+    def _get_variables_map(self, variation, experiment, feature_flags):
+        feature_flag = self._get_featureflag_by_experiment_id(experiment['id'], feature_flags)
+        if feature_flag is None:
+            return {}
+
+        # set default variables for each variation
+        variables_map = {}
+        for variable in feature_flag.get('variables', []):
+            opt_variable = OptimizelyVariable(
+                variable['id'], variable['key'], variable['type'], variable['defaultValue']
+            )
+            variables_map[variable['key']] = opt_variable
+
+
+        # set variation specific variable value if any
+        if variation.get('featureEnabled', None):
+            for variable in variation.get('variables', []):
+                feature_variable = self._get_feature_variable_by_id(variable['id'], feature_flag)
+                variables_map[feature_variable['key']].value = variable['value']
+
+        return variables_map      
+
+    def _get_variations_map(self, experiment):
+        variations_map = {}
+
+        for variation in experiment.get('variations', []):
+            variables_map = self._get_variables_map(variation, experiment, self.feature_flags)
+            feature_enabled = variation.get('featureEnabled', None)
+
+            optly_variation = OptimizelyVariation(
+                variation['id'], variation['key'], feature_enabled, variables_map
+            )
+
+            variations_map[variation['key']] = optly_variation
+
+        return variations_map
+
+    def _get_all_experiments(self):
+        experiments = self.experiments
+
+        for group in self.groups:
+            experiments = experiments + group.experiments
+
+        return experiments
+
+    def _get_experiments_map(self):
+        experiments_map = {}
+        all_experiments = self._get_all_experiments()
+        
+        for exp in all_experiments:
+            optly_exp = OptimizelyExperiment(
+                exp['id'], exp['key'], self._get_variations_map(exp)
+            )
+
+            experiments_map[exp['key']] = optly_exp
+
+        return experiments_map
+
+    def _get_features_map(self, experiments_map):
+        features_map = {}
+
+        for feature in self.feature_flags:
+            exp_map = {}
+            for experiment_id in feature.get('experimentIds', []):
+                optly_exp = self._get_experiment_by_id(experiment_id, experiments_map)
+                exp_map[optly_exp.key] = optly_exp
+
+
+
+            variables_map = {}
+            for variable in feature['variables']:
+                optly_variable = OptimizelyVariable(
+                    variable['id'], variable['key'], variable['type'], variable['defaultValue']
+                )
+
+                variables_map[variable['key']] = optly_variable
+
+
+            optly_feature = OptimizelyFeature(
+                feature['id'], feature['key'], exp_map, variables_map
+            )
+
+            features_map[feature['key']] = optly_feature
+
+        
+        return features_map
+
+
+
+def _readfile():
+    with open('feature_variables.json', 'r') as datafile:
+      return datafile.read()
+
+
+datafile = _readfile()
+config = json.loads(datafile)
+
+opt_builder = OptimizelyConfigBuilder(config)
+
+response = opt_builder.get_optimizely_config()
+
+
+import pprint
+pp = pprint.PrettyPrinter(indent=2)
+pp.pprint(json.dumps(response.__dict__, default= lambda o: o.__dict__))
+
+
+# print(response.__dict__)
 
