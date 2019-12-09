@@ -52,15 +52,25 @@ class OptimizelyVariable(object):
         self.value = value
 
 
-class OptimizelyConfigBuilder(object):
+class OptimizelyConfigService(object):
+    """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
     def __init__(self, project_config):
+        """
+        Arguments:
+            project_config ProjectConfig
+        """
         self.experiments = project_config.experiments
         self.feature_flags = project_config.feature_flags
         self.groups = project_config.groups
         self.revision = project_config.revision
 
-    def build(self):
+    def get_optimizely_config(self):
+        """ Returns instance of OptimizelyConfig
+
+        Returns:
+            Optimizely Config instance.
+        """
         self._create_lookup_maps()
 
         experiments_key_map, experiments_id_map = self._get_experiments_maps()
@@ -69,6 +79,8 @@ class OptimizelyConfigBuilder(object):
         return OptimizelyConfig(self.revision, experiments_key_map, features_map)
 
     def _create_lookup_maps(self):
+        """ Creates lookup maps to avoid redundant iteration of config objects.  """
+
         self.exp_id_to_feature_map = {}
         for feature in self.feature_flags:
             for id in feature['experimentIds']:
@@ -90,6 +102,15 @@ class OptimizelyConfigBuilder(object):
             self.feature_key_variable_id_to_variable_map[feature['key']] = variables_id_map
 
     def _get_variables_map(self, variation, experiment):
+        """ Gets variables map for given variation and experiment.
+
+        Arguments:
+            variation dict
+            experiment dict
+
+        Returns:
+            dict - Map of variable key to OptimizelyVariable for the given variation.
+        """
         feature_flag = self.exp_id_to_feature_map.get(experiment['id'], None)
         if feature_flag is None:
             return {}
@@ -99,7 +120,7 @@ class OptimizelyConfigBuilder(object):
         variables_map = copy.deepcopy(self.feature_key_variable_key_to_variable_map[feature_flag['key']])
 
         # set variation specific variable value if any
-        if variation.get('featureEnabled', None):
+        if variation.get('featureEnabled'):
             for variable in variation.get('variables', []):
                 feature_variable = self.feature_key_variable_id_to_variable_map[feature_flag['key']][variable['id']]
                 variables_map[feature_variable.key].value = variable['value']
@@ -107,6 +128,14 @@ class OptimizelyConfigBuilder(object):
         return variables_map
 
     def _get_variations_map(self, experiment):
+        """ Gets variation map for the given experiment.
+
+        Arguments:
+            experiment dict
+
+        Returns:
+            dict -- Map of variation key to OptimizelyVariation.
+        """
         variations_map = {}
 
         for variation in experiment.get('variations', []):
@@ -122,18 +151,30 @@ class OptimizelyConfigBuilder(object):
         return variations_map
 
     def _get_all_experiments(self):
+        """ Gets all experiments in the project config.
+
+        Returns:
+            list -- List of dicts of experiments.
+        """
         experiments = self.experiments
 
         for group in self.groups:
-            experiments = experiments + group.experiments
+            experiments = experiments + group['experiments']
 
         return experiments
 
     def _get_experiments_maps(self):
-        experiments_key_map = {}
-        experiments_id_map = {}
-        all_experiments = self._get_all_experiments()
+        """ Gets maps for all the experiments in the project config.
 
+        Returns:
+            dict, dict -- experiment key/id to OptimizelyExperiment maps.
+        """
+        # Key map is required for the OptimizelyConfig response.
+        experiments_key_map = {}
+        # Id map comes in handy to figure out feature experiment.
+        experiments_id_map = {}
+
+        all_experiments = self._get_all_experiments()
         for exp in all_experiments:
             optly_exp = OptimizelyExperiment(
                 exp['id'], exp['key'], self._get_variations_map(exp)
@@ -145,6 +186,14 @@ class OptimizelyConfigBuilder(object):
         return experiments_key_map, experiments_id_map
 
     def _get_features_map(self, experiments_id_map):
+        """ Gets features map for the project config.
+
+        Arguments:
+            experiments_id_map dict -- experiment id to OptimizelyExperiment map
+
+        Returns:
+            dict -- feaure key to OptimizelyFeature map
+        """
         features_map = {}
 
         for feature in self.feature_flags:
