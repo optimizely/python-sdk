@@ -751,4 +751,4 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_optimizely_config'))
             return None
 
-        return OptimizelyConfigService(project_config).get_optimizely_config()
+        return OptimizelyConfigService(project_config).get_config()

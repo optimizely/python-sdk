@@ -45,10 +45,10 @@ class OptimizelyVariation(object):
 
 
 class OptimizelyVariable(object):
-    def __init__(self, id, key, type, value):
+    def __init__(self, id, key, variable_type, value):
         self.id = id
         self.key = key
-        self.type = type
+        self.type = variable_type
         self.value = value
 
 
@@ -57,7 +57,7 @@ class OptimizelyConfigService(object):
 
     def __init__(self, project_config):
         """
-        Arguments:
+        Args:
             project_config ProjectConfig
         """
         self.experiments = project_config.experiments
@@ -65,13 +65,14 @@ class OptimizelyConfigService(object):
         self.groups = project_config.groups
         self.revision = project_config.revision
 
-    def get_optimizely_config(self):
+        self._create_lookup_maps()
+
+    def get_config(self):
         """ Returns instance of OptimizelyConfig
 
         Returns:
             Optimizely Config instance.
         """
-        self._create_lookup_maps()
 
         experiments_key_map, experiments_id_map = self._get_experiments_maps()
         features_map = self._get_features_map(experiments_id_map)
@@ -104,7 +105,7 @@ class OptimizelyConfigService(object):
     def _get_variables_map(self, variation, experiment):
         """ Gets variables map for given variation and experiment.
 
-        Arguments:
+        Args:
             variation dict
             experiment dict
 
@@ -130,7 +131,7 @@ class OptimizelyConfigService(object):
     def _get_variations_map(self, experiment):
         """ Gets variation map for the given experiment.
 
-        Arguments:
+        Args:
             experiment dict
 
         Returns:
@@ -188,7 +189,7 @@ class OptimizelyConfigService(object):
     def _get_features_map(self, experiments_id_map):
         """ Gets features map for the project config.
 
-        Arguments:
+        Args:
             experiments_id_map dict -- experiment id to OptimizelyExperiment map
 
         Returns:
