@@ -182,14 +182,12 @@ class BaseTest(unittest.TestCase):
                         {
                             'id': '122239',
                             'key': 'control',
-                            'featureEnabled': True,
-                            'variables': [{'id': '155551', 'value': '42.42'}],
+                            'variables': [],
                         },
                         {
                             'id': '122240',
                             'key': 'variation',
-                            'featureEnabled': True,
-                            'variables': [{'id': '155551', 'value': '13.37'}],
+                            'variables': [],
                         },
                     ],
                 },
