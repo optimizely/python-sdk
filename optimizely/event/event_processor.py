@@ -182,7 +182,8 @@ class BatchEventProcessor(BaseEventProcessor):
             while True:
                 if self._get_time() >= self.flushing_interval_deadline:
                     self._flush_queue()
-                    self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
+                    self.flushing_interval_deadline = self._get_time() + \
+                        self._get_time(self.flush_interval.total_seconds())
 
                 try:
                     interval = self._get_time(self.flush_interval.total_seconds()) - self._get_time()
