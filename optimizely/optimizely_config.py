@@ -83,13 +83,13 @@ class OptimizelyConfigService(object):
         """ Creates lookup maps to avoid redundant iteration of config objects.  """
 
         self.exp_id_to_feature_map = {}
-        for feature in self.feature_flags:
-            for id in feature['experimentIds']:
-                self.exp_id_to_feature_map[id] = feature
-
         self.feature_key_variable_key_to_variable_map = {}
-        self.feature_key_variable_id_to_variable_map = {}
+        self.feature_key_variable_id_to_variable_map = {} 
+
         for feature in self.feature_flags:
+            for experiment_id in feature['experimentIds']:
+                self.exp_id_to_feature_map[experiment_id] = feature
+
             variables_key_map = {}
             variables_id_map = {}
             for variable in feature.get('variables', []):
