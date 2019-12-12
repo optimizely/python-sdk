@@ -84,7 +84,7 @@ class OptimizelyConfigService(object):
 
         self.exp_id_to_feature_map = {}
         self.feature_key_variable_key_to_variable_map = {}
-        self.feature_key_variable_id_to_variable_map = {} 
+        self.feature_key_variable_id_to_variable_map = {}
 
         for feature in self.feature_flags:
             for experiment_id in feature['experimentIds']:
