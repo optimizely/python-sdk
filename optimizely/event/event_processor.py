@@ -186,10 +186,13 @@ class BatchEventProcessor(BaseEventProcessor):
                         self._get_time(self.flush_interval.total_seconds())
 
                 try:
-                    interval = self._get_time(self.flush_interval.total_seconds()) - self._get_time()
+                    interval = self.flushing_interval_deadline - self._get_time()
                     item = self.event_queue.get(True, interval)
 
-                except item is None:
+                    if item is None:
+                        continue
+
+                except queue.Empty:
                     continue
 
                 if item == self._SHUTDOWN_SIGNAL:
