@@ -178,8 +178,6 @@ class BatchEventProcessorTest(base.BaseTest):
 
         self.optimizely.logger = SimpleLogger(enums.LogLevels.DEBUG)
 
-        mock_debug = mock.patch.object(self.optimizely.logger, 'debug')
-
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
 
