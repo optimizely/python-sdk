@@ -339,6 +339,41 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(datetime.timedelta(seconds=30), self.event_processor.flush_interval)
         mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
+    def test_init__float_flush_interval(self):
+        event_dispatcher = TestEventDispatcher()
+
+        with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+            self.event_processor = BatchEventProcessor(
+                event_dispatcher,
+                mock_config_logging,
+                True,
+                self.event_queue,
+                self.MAX_BATCH_SIZE,
+                0.5,
+                self.MAX_TIMEOUT_INTERVAL_SEC,
+            )
+
+        # default flush interval is 30s.
+        self.assertEqual(0.5, self.event_processor.flush_interval)
+        mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
+
+    def test_init__float_flush_interval(self):
+        event_dispatcher = TestEventDispatcher()
+
+        with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+            self.event_processor = BatchEventProcessor(
+                event_dispatcher,
+                mock_config_logging,
+                True,
+                self.event_queue,
+                self.MAX_BATCH_SIZE,
+                0.5,
+                self.MAX_TIMEOUT_INTERVAL_SEC,
+            )
+
+        # default flush interval is 30s.
+        self.assertTrue(isinstance(self.event_processor.flushing_interval_deadline, float))
+
     def test_init__bool_flush_interval(self):
         event_dispatcher = TestEventDispatcher()
 
