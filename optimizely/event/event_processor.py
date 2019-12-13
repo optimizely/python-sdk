@@ -159,9 +159,9 @@ class BatchEventProcessor(BaseEventProcessor):
       Integer time in seconds.
     """
         if _time is None:
-            return int(round(time.time()))
+            return time.time()
 
-        return int(round(_time))
+        return _time
 
     def start(self):
         """ Starts the batch processing thread to batch events. """
