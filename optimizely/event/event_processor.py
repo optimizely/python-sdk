@@ -184,6 +184,7 @@ class BatchEventProcessor(BaseEventProcessor):
                     self._flush_queue()
                     self.flushing_interval_deadline = self._get_time() + \
                         self._get_time(self.flush_interval.total_seconds())
+                    self.logger.debug('Flush interval deadline. Flushed queue.')
 
                 try:
                     interval = self.flushing_interval_deadline - self._get_time()
