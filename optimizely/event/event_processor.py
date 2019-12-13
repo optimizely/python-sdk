@@ -150,13 +150,13 @@ class BatchEventProcessor(BaseEventProcessor):
         return is_valid
 
     def _get_time(self, _time=None):
-        """ Method to return rounded off time as integer in seconds. If _time is None, uses current time.
+        """ Method to return time as float in seconds. If _time is None, uses current time.
 
     Args:
-      _time: time in seconds that needs to be rounded off.
+      _time: time in seconds.
 
     Returns:
-      Integer time in seconds.
+      Float time in seconds.
     """
         if _time is None:
             return time.time()
