@@ -169,7 +169,7 @@ class BatchEventProcessor(BaseEventProcessor):
             self.logger.warning('BatchEventProcessor already started.')
             return
 
-        self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
+        self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval)
         self.executor = threading.Thread(target=self._run)
         self.executor.setDaemon(True)
         self.executor.start()
@@ -183,7 +183,7 @@ class BatchEventProcessor(BaseEventProcessor):
                 if self._get_time() >= self.flushing_interval_deadline:
                     self._flush_queue()
                     self.flushing_interval_deadline = self._get_time() + \
-                        self._get_time(self.flush_interval.total_seconds())
+                        self._get_time(self.flush_interval)
                     self.logger.debug('Flush interval deadline. Flushed queue.')
 
                 try:
@@ -273,7 +273,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
         # Reset the deadline if starting a new batch.
         if len(self._current_batch) == 0:
-            self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
+            self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval)
 
         with self.LOCK:
             self._current_batch.append(user_event)
@@ -312,7 +312,7 @@ class BatchEventProcessor(BaseEventProcessor):
         self.logger.warning('Stopping Scheduler.')
 
         if self.executor:
-            self.executor.join(self.timeout_interval.total_seconds())
+            self.executor.join(self.timeout_interval)
 
         if self.is_running:
             self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
