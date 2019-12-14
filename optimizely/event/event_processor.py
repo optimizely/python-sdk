@@ -222,7 +222,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
     def _flush_queue(self):
         """ Flushes event_queue by dispatching events. """
-
+        self.logger.debug('Flushing the queue.')
         if len(self._current_batch) == 0:
             return
 
@@ -267,6 +267,7 @@ class BatchEventProcessor(BaseEventProcessor):
       user_event: UserEvent Instance.
     """
         if self._should_split(user_event):
+            self.logger.debug('Flush on split.')
             self._flush_queue()
             self._current_batch = list()
 
@@ -277,6 +278,7 @@ class BatchEventProcessor(BaseEventProcessor):
         with self.LOCK:
             self._current_batch.append(user_event)
         if len(self._current_batch) >= self.batch_size:
+            self.logger.debug('Flushing on batch size.')
             self._flush_queue()
 
     def _should_split(self, user_event):
