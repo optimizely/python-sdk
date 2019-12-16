@@ -222,9 +222,12 @@ class BatchEventProcessor(BaseEventProcessor):
 
     def _flush_queue(self):
         """ Flushes event_queue by dispatching events. """
-        self.logger.debug('Flushing the queue.')
-        if len(self._current_batch) == 0:
+        batch_len = len(self._current_batch)
+        if batch_len == 0:
+            self.logger.debug('Nothing to flush.')
             return
+
+        self.logger.debug('Flushing batch size ' + str(batch_len))
 
         with self.LOCK:
             to_process_batch = list(self._current_batch)

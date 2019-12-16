@@ -179,7 +179,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.optimizely.logger = SimpleLogger(enums.LogLevels.DEBUG)
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
-            self._set_event_processor(event_dispatcher, mock_config_logging)
+            self._set_event_processor(event_dispatcher, self.optimizely.logger)
 
         user_event = self._build_conversion_event(self.event_name)
         self.event_processor.process(user_event)
@@ -192,7 +192,8 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertTrue(mock_config_logging.debug.called)
         mock_config_logging.debug.assert_any_call('Received event of type ConversionEvent for user test_user.')
         mock_config_logging.debug.assert_any_call('Flush interval deadline. Flushed queue.')
-        self.assertTrue(mock_config_logging.debug.call_count == 2)
+        mock_config_logging.debug.assert_any_call('Flushing batch size 1')
+        self.assertTrue(mock_config_logging.debug.call_count == 3)
         self.optimizely.logger = SimpleLogger()
 
     def test_flush_max_batch_size(self):
