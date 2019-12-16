@@ -404,6 +404,12 @@ class OptimizelyConfigTest(base.BaseTest):
         self.assertIsInstance(self.actual_config, optimizely_config.OptimizelyConfig)
         self.assertEqual(self.expected_config, self.actual_config_dict)
 
+    def test__get_config__invalid_project_config(self):
+        """ Test that get_config returns None when invalid project config supplied. """
+
+        opt_service = optimizely_config.OptimizelyConfigService({"key": "invalid"})
+        self.assertIsNone(opt_service.get_config())
+
     def test__get_experiments_maps(self):
         """ Test that get_experiments_map returns expected experiment key and id maps. """
 

@@ -13,6 +13,8 @@
 
 import copy
 
+from .project_config import ProjectConfig
+
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map):
@@ -60,6 +62,12 @@ class OptimizelyConfigService(object):
         Args:
             project_config ProjectConfig
         """
+        self.is_valid = True
+
+        if not isinstance(project_config, ProjectConfig):
+            self.is_valid = False
+            return
+
         self.experiments = project_config.experiments
         self.feature_flags = project_config.feature_flags
         self.groups = project_config.groups
@@ -71,8 +79,11 @@ class OptimizelyConfigService(object):
         """ Returns instance of OptimizelyConfig
 
         Returns:
-            Optimizely Config instance.
+            Optimizely Config instance or None if OptimizelyConfigService is invalid.
         """
+
+        if not self.is_valid:
+            return None
 
         experiments_key_map, experiments_id_map = self._get_experiments_maps()
         features_map = self._get_features_map(experiments_id_map)
