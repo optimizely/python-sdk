@@ -191,8 +191,8 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
         self.assertTrue(mock_config_logging.debug.called)
         mock_config_logging.debug.assert_any_call('Received event of type ConversionEvent for user test_user.')
-        mock_config_logging.debug.assert_any_call('Flush interval deadline. Flushed queue.')
         mock_config_logging.debug.assert_any_call('Flushing batch size 1')
+        mock_config_logging.debug.assert_any_call('Flush interval deadline. Flushed batch.')
         self.assertTrue(mock_config_logging.debug.call_count == 3)
         self.optimizely.logger = SimpleLogger()
 
