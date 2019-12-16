@@ -175,8 +175,8 @@ class BatchEventProcessor(BaseEventProcessor):
         self.executor.start()
 
     def _run(self):
-        """ Triggered as part of the thread which batches events or flushes event_queue and sleeps
-    periodically if queue is empty.
+        """ Triggered as part of the thread which batches events or flushes event_queue and hangs on get
+    for flush interval if queue is empty.
     """
         try:
             while True:
@@ -221,7 +221,7 @@ class BatchEventProcessor(BaseEventProcessor):
         self.event_queue.put(self._FLUSH_SIGNAL)
 
     def _flush_batch(self):
-        """ Flushes event_queue by dispatching events. """
+        """ Flushes current batch by dispatching event. """
         batch_len = len(self._current_batch)
         if batch_len == 0:
             self.logger.debug('Nothing to flush.')
