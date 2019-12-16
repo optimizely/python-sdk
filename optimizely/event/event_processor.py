@@ -150,18 +150,18 @@ class BatchEventProcessor(BaseEventProcessor):
         return is_valid
 
     def _get_time(self, _time=None):
-        """ Method to return rounded off time as integer in seconds. If _time is None, uses current time.
+        """ Method to return time as float in seconds. If _time is None, uses current time.
 
     Args:
-      _time: time in seconds that needs to be rounded off.
+      _time: time in seconds.
 
     Returns:
-      Integer time in seconds.
+      Float time in seconds.
     """
         if _time is None:
-            return int(round(time.time()))
+            return time.time()
 
-        return int(round(_time))
+        return _time
 
     def start(self):
         """ Starts the batch processing thread to batch events. """
@@ -182,12 +182,18 @@ class BatchEventProcessor(BaseEventProcessor):
             while True:
                 if self._get_time() >= self.flushing_interval_deadline:
                     self._flush_queue()
+                    self.flushing_interval_deadline = self._get_time() + \
+                        self._get_time(self.flush_interval.total_seconds())
+                    self.logger.debug('Flush interval deadline. Flushed queue.')
 
                 try:
-                    item = self.event_queue.get(False)
+                    interval = self.flushing_interval_deadline - self._get_time()
+                    item = self.event_queue.get(True, interval)
+
+                    if item is None:
+                        continue
 
                 except queue.Empty:
-                    time.sleep(0.05)
                     continue
 
                 if item == self._SHUTDOWN_SIGNAL:
