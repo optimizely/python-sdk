@@ -6,6 +6,7 @@ December 16th, 2019
 ### Bug Fixes:
 * Fixed [installation issue](https://github.com/optimizely/python-sdk/issues/220) on Windows. ([#224](https://github.com/optimizely/python-sdk/pull/224))
 * Fixed batch event processor deadline reset issue. ([#227](https://github.com/optimizely/python-sdk/pull/227))
+* Added more batch event processor debug messages. ([#227](https://github.com/optimizely/python-sdk/pull/227))
 
 ## 3.3.0
 October 28th, 2019
