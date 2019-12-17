@@ -1,5 +1,13 @@
 # Optimizely Python SDK Changelog
 
+## 3.3.1
+December 16th, 2019
+
+### Bug Fixes:
+* Fixed [installation issue](https://github.com/optimizely/python-sdk/issues/220) on Windows. ([#224](https://github.com/optimizely/python-sdk/pull/224))
+* Fixed batch event processor deadline reset issue. ([#227](https://github.com/optimizely/python-sdk/pull/227))
+* Added more batch event processor debug messages. ([#227](https://github.com/optimizely/python-sdk/pull/227))
+
 ## 3.3.0
 October 28th, 2019
 
@@ -77,12 +85,12 @@ targeting functionality.
   * Note that for results segmentation in Optimizely results, the user attribute values from one event are automatically applied to all other events in the same session, as long as the events in question were actually received by our backend. This behavior was already in place and is not affected by the 3.0 release.
 * Support for all types of attribute values, not just strings.
   * All values are passed through to notification listeners.
-  * Strings, booleans, and valid numbers are passed to the event dispatcher and can be used for Optimizely results segmentation.  A valid number is a finite float or numbers.Integral in the inclusive range \[-2⁵³, 2⁵³\].
+  * Strings, booleans, and valid numbers are passed to the event dispatcher and can be used for Optimizely results segmentation.  A valid number is a finite float or numbers.Integral in the inclusive range \[-2 ^ 53, 2 ^ 53\].
   * Strings, booleans, and valid numbers are relevant for audience conditions.
 * Support for additional matchers in audience conditions:
   * An `exists` matcher that passes if the user has a non-null value for the targeted user attribute and fails otherwise.
   * A `substring` matcher that resolves if the user has a string value for the targeted attribute.
-    * `gt` (greater than) and `lt` (less than) matchers that resolve if the user has a valid number value for the targeted attribute.  A valid number is a finite float or numbers.Integral in the inclusive range \[-2⁵³, 2⁵³\].
+    * `gt` (greater than) and `lt` (less than) matchers that resolve if the user has a valid number value for the targeted attribute.  A valid number is a finite float or numbers.Integral in the inclusive range \[-2 ^ 53, 2 ^ 53\].
     * The original (`exact`) matcher can now be used to target booleans and valid numbers, not just strings.
 * Support for A/B tests, feature tests, and feature rollouts whose audiences are combined using `"and"` and `"not"` operators, not just the `"or"` operator.
 * Datafile-version compatibility check: The SDK will remain uninitialized (i.e., will gracefully fail to activate experiments and features) if given a datafile version greater than 4.

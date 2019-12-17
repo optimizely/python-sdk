@@ -39,7 +39,6 @@ def on_log_event_listener(*args):
 
 
 class NotificationCenterTest(unittest.TestCase):
-
     def test_add_notification_listener__valid_type(self):
         """ Test successfully adding a notification listener. """
 
@@ -48,24 +47,27 @@ class NotificationCenterTest(unittest.TestCase):
         # Test by adding different supported notification listeners.
         self.assertEqual(
             1,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener),
         )
         self.assertEqual(
             2,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-                                                               on_config_update_listener)
+            test_notification_center.add_notification_listener(
+                enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, on_config_update_listener,
+            ),
         )
         self.assertEqual(
             3,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener),
         )
         self.assertEqual(
-            4, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+            4, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener),
         )
 
         self.assertEqual(
-            5, test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT,
-                                                                    on_log_event_listener)
+            5,
+            test_notification_center.add_notification_listener(
+                enums.NotificationTypes.LOG_EVENT, on_log_event_listener
+            ),
         )
 
     def test_add_notification_listener__multiple_listeners(self):
@@ -79,11 +81,13 @@ class NotificationCenterTest(unittest.TestCase):
         # Test by adding multiple listeners of same type.
         self.assertEqual(
             1,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener),
         )
         self.assertEqual(
-            2, test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
-                                                                  another_on_activate_listener)
+            2,
+            test_notification_center.add_notification_listener(
+                enums.NotificationTypes.ACTIVATE, another_on_activate_listener
+            ),
         )
 
     def test_add_notification_listener__invalid_type(self):
@@ -96,11 +100,11 @@ class NotificationCenterTest(unittest.TestCase):
             pass
 
         self.assertEqual(
-            -1,
-            test_notification_center.add_notification_listener('invalid_notification_type', notif_listener)
+            -1, test_notification_center.add_notification_listener('invalid_notification_type', notif_listener),
         )
-        mock_logger.error.assert_called_once_with('Invalid notification_type: invalid_notification_type provided. '
-                                                  'Not adding listener.')
+        mock_logger.error.assert_called_once_with(
+            'Invalid notification_type: invalid_notification_type provided. ' 'Not adding listener.'
+        )
 
     def test_add_notification_listener__same_listener(self):
         """ Test that adding same listener again does nothing and returns -1. """
@@ -109,17 +113,19 @@ class NotificationCenterTest(unittest.TestCase):
         test_notification_center = notification_center.NotificationCenter(logger=mock_logger)
 
         self.assertEqual(
-            1,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+            1, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener),
         )
-        self.assertEqual(1, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
+        self.assertEqual(
+            1, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]),
+        )
 
         # Test that adding same listener again makes no difference.
         self.assertEqual(
-            -1,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
+            -1, test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener),
         )
-        self.assertEqual(1, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
+        self.assertEqual(
+            1, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]),
+        )
         mock_logger.error.assert_called_once_with('Listener has already been added. Not adding it again.')
 
     def test_remove_notification_listener__valid_listener(self):
@@ -133,25 +139,37 @@ class NotificationCenterTest(unittest.TestCase):
         # Add multiple notification listeners.
         self.assertEqual(
             1,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener),
         )
         self.assertEqual(
             2,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener),
         )
         self.assertEqual(
-            3, test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
-                                                                  another_on_activate_listener)
+            3,
+            test_notification_center.add_notification_listener(
+                enums.NotificationTypes.ACTIVATE, another_on_activate_listener
+            ),
         )
 
-        self.assertEqual(2, len(test_notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]))
-        self.assertEqual(1, len(test_notification_center.notification_listeners[enums.NotificationTypes.DECISION]))
-        self.assertEqual(0, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]))
-        self.assertEqual(0, len(test_notification_center.notification_listeners[enums.NotificationTypes.LOG_EVENT]))
+        self.assertEqual(
+            2, len(test_notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]),
+        )
+        self.assertEqual(
+            1, len(test_notification_center.notification_listeners[enums.NotificationTypes.DECISION]),
+        )
+        self.assertEqual(
+            0, len(test_notification_center.notification_listeners[enums.NotificationTypes.TRACK]),
+        )
+        self.assertEqual(
+            0, len(test_notification_center.notification_listeners[enums.NotificationTypes.LOG_EVENT]),
+        )
 
         # Remove one of the activate listeners and assert.
         self.assertTrue(test_notification_center.remove_notification_listener(3))
-        self.assertEqual(1, len(test_notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]))
+        self.assertEqual(
+            1, len(test_notification_center.notification_listeners[enums.NotificationTypes.ACTIVATE]),
+        )
 
     def test_remove_notification_listener__invalid_listener(self):
         """ Test that removing a invalid notification listener returns False. """
@@ -164,19 +182,23 @@ class NotificationCenterTest(unittest.TestCase):
         # Add multiple notification listeners.
         self.assertEqual(
             1,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener),
         )
         self.assertEqual(
             2,
-            test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
+            test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener),
         )
         self.assertEqual(
-            3, test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
-                                                                  another_on_activate_listener)
+            3,
+            test_notification_center.add_notification_listener(
+                enums.NotificationTypes.ACTIVATE, another_on_activate_listener
+            ),
         )
         self.assertEqual(
-            4, test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT,
-                                                                  on_log_event_listener)
+            4,
+            test_notification_center.add_notification_listener(
+                enums.NotificationTypes.LOG_EVENT, on_log_event_listener
+            ),
         )
 
         # Try removing a listener which does not exist.
@@ -190,19 +212,24 @@ class NotificationCenterTest(unittest.TestCase):
 
         # Add listeners
         test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
-        test_notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-                                                           on_config_update_listener)
+        test_notification_center.add_notification_listener(
+            enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, on_config_update_listener
+        )
         test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT, on_log_event_listener)
 
         # Assert all listeners are there:
         for notification_type in notification_center.NOTIFICATION_TYPES:
-            self.assertEqual(1, len(test_notification_center.notification_listeners[notification_type]))
+            self.assertEqual(
+                1, len(test_notification_center.notification_listeners[notification_type]),
+            )
 
         # Clear all of type DECISION.
         test_notification_center.clear_notification_listeners(enums.NotificationTypes.DECISION)
-        self.assertEqual(0, len(test_notification_center.notification_listeners[enums.NotificationTypes.DECISION]))
+        self.assertEqual(
+            0, len(test_notification_center.notification_listeners[enums.NotificationTypes.DECISION]),
+        )
 
     def test_clear_notification_listeners__invalid_type(self):
         """ Test that clear_notification_listener logs error if provided notification type is invalid. """
@@ -211,8 +238,9 @@ class NotificationCenterTest(unittest.TestCase):
         test_notification_center = notification_center.NotificationCenter(logger=mock_logger)
 
         test_notification_center.clear_notification_listeners('invalid_notification_type')
-        mock_logger.error.assert_called_once_with('Invalid notification_type: invalid_notification_type provided. '
-                                                  'Not removing any listener.')
+        mock_logger.error.assert_called_once_with(
+            'Invalid notification_type: invalid_notification_type provided. ' 'Not removing any listener.'
+        )
 
     def test_clear_all_notification_listeners(self):
         """ Test that all notification listeners are cleared on using the clear all API. """
@@ -221,21 +249,26 @@ class NotificationCenterTest(unittest.TestCase):
 
         # Add listeners
         test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate_listener)
-        test_notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-                                                           on_config_update_listener)
+        test_notification_center.add_notification_listener(
+            enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, on_config_update_listener
+        )
         test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION, on_decision_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.TRACK, on_track_listener)
         test_notification_center.add_notification_listener(enums.NotificationTypes.LOG_EVENT, on_log_event_listener)
 
         # Assert all listeners are there:
         for notification_type in notification_center.NOTIFICATION_TYPES:
-            self.assertEqual(1, len(test_notification_center.notification_listeners[notification_type]))
+            self.assertEqual(
+                1, len(test_notification_center.notification_listeners[notification_type]),
+            )
 
         # Clear all and assert again.
         test_notification_center.clear_all_notification_listeners()
 
         for notification_type in notification_center.NOTIFICATION_TYPES:
-            self.assertEqual(0, len(test_notification_center.notification_listeners[notification_type]))
+            self.assertEqual(
+                0, len(test_notification_center.notification_listeners[notification_type]),
+            )
 
     def set_listener_called_to_true(self):
         """ Helper method which sets the value of listener_called to True. Used to test sending of notifications."""
@@ -246,8 +279,9 @@ class NotificationCenterTest(unittest.TestCase):
 
         test_notification_center = notification_center.NotificationCenter()
         self.listener_called = False
-        test_notification_center.add_notification_listener(enums.NotificationTypes.DECISION,
-                                                           self.set_listener_called_to_true)
+        test_notification_center.add_notification_listener(
+            enums.NotificationTypes.DECISION, self.set_listener_called_to_true
+        )
         test_notification_center.send_notifications(enums.NotificationTypes.DECISION)
         self.assertTrue(self.listener_called)
 
@@ -257,8 +291,9 @@ class NotificationCenterTest(unittest.TestCase):
         mock_logger = mock.Mock()
         test_notification_center = notification_center.NotificationCenter(logger=mock_logger)
         test_notification_center.send_notifications('invalid_notification_type')
-        mock_logger.error.assert_called_once_with('Invalid notification_type: invalid_notification_type provided. '
-                                                  'Not triggering any notification.')
+        mock_logger.error.assert_called_once_with(
+            'Invalid notification_type: invalid_notification_type provided. ' 'Not triggering any notification.'
+        )
 
     def test_send_notifications__fails(self):
         """ Test that send_notifications logs exception when call back fails. """
@@ -269,10 +304,10 @@ class NotificationCenterTest(unittest.TestCase):
 
         mock_logger = mock.Mock()
         test_notification_center = notification_center.NotificationCenter(logger=mock_logger)
-        test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE,
-                                                           some_listener)
+        test_notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, some_listener)
 
         # Not providing any of the 2 expected arguments during send.
         test_notification_center.send_notifications(enums.NotificationTypes.ACTIVATE)
         mock_logger.exception.assert_called_once_with(
-            'Unknown problem when sending "{}" type notification.'.format(enums.NotificationTypes.ACTIVATE))
+            'Unknown problem when sending "{}" type notification.'.format(enums.NotificationTypes.ACTIVATE)
+        )
