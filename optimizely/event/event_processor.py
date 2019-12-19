@@ -260,7 +260,7 @@ class BatchEventProcessor(BaseEventProcessor):
             try:
                 self.start()
             except Exception as e:
-                self.logger.error('Error starting processing thread: ' + str(log_event) + ' ' + str(e))
+                self.logger.error('Error starting processing thread: ' + str(e))
 
         try:
             self.event_queue.put_nowait(user_event)
