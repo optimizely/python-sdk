@@ -256,6 +256,12 @@ class BatchEventProcessor(BaseEventProcessor):
             'Received event of type {} for user {}.'.format(type(user_event).__name__, user_event.user_id)
         )
 
+        if not self.is_running:
+            try:
+                self.start()
+            except Exception as e:
+                self.logger.error('Error starting processing thread: ' + str(log_event) + ' ' + str(e))
+
         try:
             self.event_queue.put_nowait(user_event)
         except queue.Full:
