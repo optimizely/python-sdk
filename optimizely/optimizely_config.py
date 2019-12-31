@@ -76,7 +76,7 @@ class OptimizelyConfigService(object):
         self._create_lookup_maps()
 
     def get_config(self):
-        """ Returns instance of OptimizelyConfig
+        """ Gets instance of OptimizelyConfig
 
         Returns:
             Optimizely Config instance or None if OptimizelyConfigService is invalid.
