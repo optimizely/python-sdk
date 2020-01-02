@@ -8,14 +8,13 @@ python:
   - "pypy"
   - "pypy3"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
-addons:
-  srcclr: true
 script: "nosetests --with-coverage --cover-package=optimizely"
 after_success:
   - coveralls
 
 # Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
+  - 'Lint markdown files'
   - 'Linting'
   - 'Integration tests'
   - 'Benchmarking tests'
@@ -23,6 +22,16 @@ stages:
 
 jobs:
   include:
+    - stage: 'Lint markdown files'
+      language: ruby
+      rvm: 2.4.1
+      os: linux
+      install: gem install awesome_bot
+      script:
+        - find . -type f -name '*.md' -exec awesome_bot {} \;
+      notifications:
+        email: false
+
     - stage: 'Linting'
       language: python
       python: "2.7"
@@ -47,5 +56,7 @@ jobs:
       stage: 'Benchmarking tests'
       env: SDK=python FULLSTACK_TEST_REPO=Benchmarking SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
     - stage: 'Test'
+      addons:
+        srcclr: true
       dist: xenial
       python: "3.7"
