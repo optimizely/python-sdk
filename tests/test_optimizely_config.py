@@ -461,7 +461,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         experiment = self.project_config.experiments[0]
         variation = experiment['variations'][0]
-        actual_variables_map = self.opt_config_service._get_variables_map(variation, experiment)
+        actual_variables_map = self.opt_config_service._get_variables_map(experiment, variation)
 
         expected_variations_map = self.expected_config['experiments_map']['test_experiment']['variations_map']
         expected_variables_map = expected_variations_map['control']['variables_map']

@@ -113,12 +113,12 @@ class OptimizelyConfigService(object):
             self.feature_key_variable_key_to_variable_map[feature['key']] = variables_key_map
             self.feature_key_variable_id_to_variable_map[feature['key']] = variables_id_map
 
-    def _get_variables_map(self, variation, experiment):
-        """ Gets variables map for given variation and experiment.
+    def _get_variables_map(self, experiment, variation):
+        """ Gets variables map for given experiment and variation.
 
         Args:
-            variation dict
-            experiment dict
+            experiment dict -- Experiment parsed from the datafile.
+            variation dict -- Variation of the given experiment.
 
         Returns:
             dict - Map of variable key to OptimizelyVariable for the given variation.
@@ -143,7 +143,7 @@ class OptimizelyConfigService(object):
         """ Gets variation map for the given experiment.
 
         Args:
-            experiment dict
+            experiment dict -- Experiment parsed from the datafile.
 
         Returns:
             dict -- Map of variation key to OptimizelyVariation.
@@ -151,7 +151,7 @@ class OptimizelyConfigService(object):
         variations_map = {}
 
         for variation in experiment.get('variations', []):
-            variables_map = self._get_variables_map(variation, experiment)
+            variables_map = self._get_variables_map(experiment, variation)
             feature_enabled = variation.get('featureEnabled', None)
 
             optly_variation = OptimizelyVariation(
