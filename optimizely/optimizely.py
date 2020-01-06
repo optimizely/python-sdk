@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -25,6 +25,7 @@ from .event.event_processor import ForwardingEventProcessor
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums, validator
 from .notification_center import NotificationCenter
+from .optimizely_config import OptimizelyConfigService
 
 
 class Optimizely(object):
@@ -733,3 +734,21 @@ class Optimizely(object):
 
         forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
+
+    def get_optimizely_config(self):
+        """ Gets OptimizelyConfig instance for the current project config.
+
+        Returns:
+            OptimizelyConfig instance. None if the optimizely instance is invalid or
+            project config isn't available.
+        """
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_optimizely_config'))
+            return None
+
+        project_config = self.config_manager.get_config()
+        if not project_config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_optimizely_config'))
+            return None
+
+        return OptimizelyConfigService(project_config).get_config()

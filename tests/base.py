@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -182,14 +182,12 @@ class BaseTest(unittest.TestCase):
                         {
                             'id': '122239',
                             'key': 'control',
-                            'featureEnabled': True,
-                            'variables': [{'id': '155551', 'value': '42.42'}],
+                            'variables': [],
                         },
                         {
                             'id': '122240',
                             'key': 'variation',
-                            'featureEnabled': True,
-                            'variables': [{'id': '155551', 'value': '13.37'}],
+                            'variables': [],
                         },
                     ],
                 },

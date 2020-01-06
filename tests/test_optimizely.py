@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -23,6 +23,7 @@ from optimizely import event_builder
 from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
+from optimizely import optimizely_config
 from optimizely import project_config
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
@@ -3910,6 +3911,39 @@ class OptimizelyTest(base.BaseTest):
         # Should be excluded - no audiences match with no attributes
         self.assertEqual(10, opt_obj.get_feature_variable_integer('feat2_with_var', 'z', 'user1', {}))
         self.assertEqual(10, opt_obj.get_feature_variable('feat2_with_var', 'z', 'user1', {}))
+
+    def test_get_optimizely_config__invalid_object(self):
+        """ Test that get_optimizely_config logs error if Optimizely instance is invalid. """
+
+        class InvalidConfigManager(object):
+            pass
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
+
+        with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+            self.assertIsNone(opt_obj.get_optimizely_config())
+
+        mock_client_logging.error.assert_called_once_with(
+            'Optimizely instance is not valid. Failing "get_optimizely_config".')
+
+    def test_get_optimizely_config__invalid_config(self):
+        """ Test that get_optimizely_config logs error if config is invalid. """
+
+        opt_obj = optimizely.Optimizely('invalid_datafile')
+
+        with mock.patch.object(opt_obj, 'logger') as mock_client_logging:
+            self.assertIsNone(opt_obj.get_optimizely_config())
+
+        mock_client_logging.error.assert_called_once_with(
+            'Invalid config. Optimizely instance is not valid. ' 'Failing "get_optimizely_config".'
+        )
+
+    def test_get_optimizely_config_returns_instance_of_optimizely_config(self):
+        """ Test that get_optimizely_config returns an instance of OptimizelyConfig. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        opt_config = opt_obj.get_optimizely_config()
+        self.assertIsInstance(opt_config, optimizely_config.OptimizelyConfig)
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
