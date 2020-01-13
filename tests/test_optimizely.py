@@ -3945,6 +3945,29 @@ class OptimizelyTest(base.BaseTest):
         opt_config = opt_obj.get_optimizely_config()
         self.assertIsInstance(opt_config, optimizely_config.OptimizelyConfig)
 
+    def test_get_optimizely_config_with_custom_config_manager(self):
+        """ Test that get_optimizely_config returns a valid instance of OptimizelyConfig
+        when a custom config manager is used. """
+
+        some_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        return_config = some_obj.config_manager.get_config()
+
+        class SomeConfigManager(object):
+            def get_config(self):
+                return return_config
+
+        opt_obj = optimizely.Optimizely(config_manager=SomeConfigManager())
+        self.assertIsInstance(
+            opt_obj.get_optimizely_config(),
+            optimizely_config.OptimizelyConfig
+        )
+
+        with mock.patch('optimizely.optimizely_config.OptimizelyConfigService.get_config') as mock_opt_service:
+            opt_obj = optimizely.Optimizely(config_manager=SomeConfigManager())
+            opt_obj.get_optimizely_config()
+
+        self.assertEqual(1, mock_opt_service.call_count)
+
 
 class OptimizelyWithExceptionTest(base.BaseTest):
     def setUp(self):
