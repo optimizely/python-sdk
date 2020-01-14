@@ -81,7 +81,7 @@ class StaticConfigManagerTest(base.BaseTest):
             optimizely_config.OptimizelyConfig
         )
 
-    def test_set_config__twice(self):
+    def test_set_config__twice__with_same_content(self):
         """ Test calling set_config twice with same content to ensure config is not updated. """
         test_datafile = json.dumps(self.config_dict_with_features)
         mock_logger = mock.Mock()
@@ -111,6 +111,37 @@ class StaticConfigManagerTest(base.BaseTest):
         self.assertEqual(0, mock_notification_center.call_count)
         # Assert that mock_opt_service is not called again.
         self.assertEqual(0, mock_opt_service.call_count)
+
+    def test_set_config__twice__with_diff_content(self):
+        """ Test calling set_config twice with different content to ensure config is updated. """
+        test_datafile = json.dumps(self.config_dict_with_features)
+        mock_logger = mock.Mock()
+        mock_notification_center = mock.Mock()
+
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.StaticConfigManager(
+                datafile=test_datafile, logger=mock_logger, notification_center=mock_notification_center,
+            )
+
+        mock_logger.debug.assert_called_with(
+            'Received new datafile and updated config. ' 'Old revision number: None. New revision number: 1.'
+        )
+        self.assertEqual(1, mock_logger.debug.call_count)
+        mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
+        self.assertEqual('1', project_config_manager.optimizely_config.revision)
+
+        mock_logger.reset_mock()
+        mock_notification_center.reset_mock()
+
+        # Call set config again
+        other_datafile = json.dumps(self.config_dict_with_multiple_experiments)
+        project_config_manager._set_config(other_datafile)
+        mock_logger.debug.assert_called_with(
+            'Received new datafile and updated config. ' 'Old revision number: 1. New revision number: 42.'
+        )
+        self.assertEqual(1, mock_logger.debug.call_count)
+        mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
+        self.assertEqual('42', project_config_manager.optimizely_config.revision)
 
     def test_set_config__schema_validation(self):
         """ Test set_config calls or does not call schema validation based on skip_json_validation value. """
