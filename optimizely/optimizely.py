@@ -751,4 +751,8 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_optimizely_config'))
             return None
 
+        # Customized Config Manager may not have optimizely_config defined.
+        if hasattr(self.config_manager, 'optimizely_config'):
+            return self.config_manager.optimizely_config
+
         return OptimizelyConfigService(project_config).get_config()
