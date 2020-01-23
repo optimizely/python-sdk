@@ -1,4 +1,4 @@
-# Copyright 2019, Optimizely
+# Copyright 2019-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -26,6 +26,7 @@ from .error_handler import NoOpErrorHandler
 from .notification_center import NotificationCenter
 from .helpers import enums
 from .helpers import validator
+from .optimizely_config import OptimizelyConfigService
 
 ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
@@ -89,6 +90,7 @@ class StaticConfigManager(BaseConfigManager):
             logger=logger, error_handler=error_handler, notification_center=notification_center,
         )
         self._config = None
+        self.optimizely_config = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
 
@@ -128,6 +130,7 @@ class StaticConfigManager(BaseConfigManager):
             return
 
         self._config = config
+        self.optimizely_config = OptimizelyConfigService(config).get_config()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
