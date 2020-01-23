@@ -1,4 +1,4 @@
-# Copyright 2019 Optimizely
+# Copyright 2019-2020 Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -335,7 +335,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
       logger: Optional component which provides a log method to log messages. By default nothing would be logged.
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
-        self.event_dispatcher = event_dispatcher
+        self.event_dispatcher = event_dispatcher or default_event_dispatcher
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
 

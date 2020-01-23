@@ -565,7 +565,7 @@ class ForwardingEventProcessorTest(base.BaseTest):
 
     def test_event_processor_defaults_to_default_event_dispatcher(self):
         event_processor = ForwardingEventProcessor(None)
-        self.assertIsInstance(
+        self.assertEqual(
             event_processor.event_dispatcher,
             default_event_dispatcher
         )
