@@ -1,4 +1,4 @@
-# Copyright 2019, Optimizely
+# Copyright 2019-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -24,6 +24,7 @@ from optimizely.event.event_processor import (
 from optimizely.event.event_factory import EventFactory
 from optimizely.event.log_event import LogEvent
 from optimizely.event.user_event_factory import UserEventFactory
+from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
 from optimizely.helpers import enums
 from optimizely.logger import SimpleLogger
 from . import base
@@ -560,4 +561,11 @@ class ForwardingEventProcessorTest(base.BaseTest):
         self.assertEqual(True, callback_hit[0])
         self.assertEqual(
             1, len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.LOG_EVENT]),
+        )
+
+    def test_event_processor_defaults_to_default_event_dispatcher(self):
+        event_processor = ForwardingEventProcessor(None)
+        self.assertIsInstance(
+            event_processor.event_dispatcher,
+            default_event_dispatcher
         )
