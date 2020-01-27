@@ -8,7 +8,7 @@ January 27th, 2020
   * Call `get_optimizely_config()` to get a snapshot copy of project configuration static data.
   * It returns an `OptimizelyConfig` instance which includes a datafile revision number, all experiments, and feature flags mapped by their key values.
   * Added caching for `get_optimizely_config()` - `OptimizelyConfig` object will be cached and reused for the lifetime of the datafile
-  * For details, refer to a documention page: https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python
+  * For details, refer to a documentation page: https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python
 
 
 ## 3.3.1
