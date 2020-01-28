@@ -1,5 +1,16 @@
 # Optimizely Python SDK Changelog
 
+## 3.4.0
+January 27th, 2020
+
+### New Features:
+* Added a new API to get project configuration static data.
+  * Call `get_optimizely_config()` to get a snapshot of project configuration static data.
+  * It returns an `OptimizelyConfig` instance which includes a datafile revision number, all experiments, and feature flags mapped by their key values.
+  * Added caching for `get_optimizely_config()` - `OptimizelyConfig` object will be cached and reused for the lifetime of the datafile.
+  * For details, refer to our documentation page: [https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python](https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python).
+
+
 ## 3.3.1
 December 16th, 2019
 
