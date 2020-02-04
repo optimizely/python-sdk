@@ -13,9 +13,16 @@ with open(os.path.join(here, 'optimizely', 'version.py')) as _file:
 with open(os.path.join(here, 'requirements', 'core.txt')) as _file:
     REQUIREMENTS = _file.read().splitlines()
 
-with open(os.path.join(here, 'requirements', 'test.txt')) as _file:
-    TEST_REQUIREMENTS = _file.read().splitlines()
-    TEST_REQUIREMENTS = list(set(REQUIREMENTS + TEST_REQUIREMENTS))
+EXTRAS = (
+    'test',
+    'django',
+)
+EXTRAS_REQUIRE = {}
+for extra in EXTRAS:
+    with open(os.path.join(here, 'requirements', '{}.txt'.format(extra))) as _file:
+        EXTRAS_REQUIRE[extra] = list(set(REQUIREMENTS + _file.read().splitlines()))
+
+EXTRAS_REQUIRE[':python_version < "3.4"'] = ('enum34',)
 
 with open(os.path.join(here, 'README.md')) as _file:
     README = _file.read()
@@ -52,8 +59,8 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     packages=find_packages(exclude=['tests']),
-    extras_require={'test': TEST_REQUIREMENTS},
+    extras_require=EXTRAS_REQUIRE,
     install_requires=REQUIREMENTS,
-    tests_require=TEST_REQUIREMENTS,
+    tests_require=EXTRAS_REQUIRE['test'],
     test_suite='tests',
 )
