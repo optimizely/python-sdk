@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import logging
+import enum
 
 
 class AudienceEvaluationLogs(object):
@@ -145,3 +146,8 @@ class NotificationTypes(object):
     OPTIMIZELY_CONFIG_UPDATE = 'OPTIMIZELY_CONFIG_UPDATE'
     TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'
     LOG_EVENT = 'LOG_EVENT:log_event'
+
+
+class DatafileFetchingStrategy(enum.Enum):
+    MANUAL = 1
+    POLLING = 2

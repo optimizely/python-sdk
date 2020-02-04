@@ -147,7 +147,127 @@ class StaticConfigManager(BaseConfigManager):
         return self._config
 
 
-class PollingConfigManager(StaticConfigManager):
+class FetchConfigManager(StaticConfigManager):
+    """ Config manager that fetches the datafile once and requires `fetch_datafile` calls to update. """
+    def __init__(
+        self,
+        sdk_key=None,
+        datafile=None,
+        url=None,
+        url_template=None,
+        logger=None,
+        error_handler=None,
+        notification_center=None,
+        skip_json_validation=False,
+    ):
+        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
+
+        Args:
+            sdk_key: Optional string uniquely identifying the datafile.
+            datafile: Optional JSON string representing the project.
+            update_interval: Optional floating point number representing time interval in seconds
+                             at which to request datafile and set ProjectConfig.
+            blocking_timeout: Optional Time in seconds to block the get_config call until config object
+                              has been initialized.
+            url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
+            url_template: Optional string template which in conjunction with sdk_key
+                          determines URL from where to fetch the datafile.
+            logger: Provides a logger instance.
+            error_handler: Provides a handle_error method to handle exceptions.
+            notification_center: Notification center to generate config update notification.
+            skip_json_validation: Optional boolean param which allows skipping JSON schema
+                                  validation upon object invocation. By default
+                                  JSON schema validation will be performed.
+
+        """
+        super(FetchConfigManager, self).__init__(
+            datafile=datafile,
+            logger=logger,
+            error_handler=error_handler,
+            notification_center=notification_center,
+            skip_json_validation=skip_json_validation,
+        )
+        self.datafile_url = self.get_datafile_url(
+            sdk_key, url, url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE
+        )
+        self.last_modified = None
+
+    def fetch_datafile(self):
+        """ Fetch datafile and set ProjectConfig. """
+
+        request_headers = {}
+        if self.last_modified:
+            request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
+
+        response = requests.get(
+            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        self._handle_response(response)
+        return response.content
+
+    @staticmethod
+    def get_datafile_url(sdk_key, url, url_template):
+        """ Helper method to determine URL from where to fetch the datafile.
+
+        Args:
+          sdk_key: Key uniquely identifying the datafile.
+          url: String representing URL from which to fetch the datafile.
+          url_template: String representing template which is filled in with
+                        SDK key to determine URL from which to fetch the datafile.
+
+        Returns:
+          String representing URL to fetch datafile from.
+
+        Raises:
+          optimizely.exceptions.InvalidInputException if:
+          - One of sdk_key or url is not provided.
+          - url_template is invalid.
+        """
+        # Ensure that either is provided by the user.
+        if sdk_key is None and url is None:
+            raise optimizely_exceptions.InvalidInputException('Must provide at least one of sdk_key or url.')
+
+        # Return URL if one is provided or use template and SDK key to get it.
+        if url is None:
+            try:
+                return url_template.format(sdk_key=sdk_key)
+            except (AttributeError, KeyError):
+                raise optimizely_exceptions.InvalidInputException(
+                    'Invalid url_template {} provided.'.format(url_template)
+                )
+
+        return url
+
+    def set_last_modified(self, response_headers):
+        """ Looks up and sets last modified time based on Last-Modified header in the response.
+
+         Args:
+             response_headers: requests.Response.headers
+         """
+        self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
+
+    def _handle_response(self, response):
+        """ Helper method to handle response containing datafile.
+
+        Args:
+            response: requests.Response
+        """
+        try:
+            response.raise_for_status()
+        except requests_exceptions.HTTPError as err:
+            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+            return
+
+        # Leave datafile and config unchanged if it has not been modified.
+        if response.status_code == http_status_codes.not_modified:
+            self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
+            return
+
+        self.set_last_modified(response.headers)
+        self._set_config(response.content)
+
+
+class PollingConfigManager(FetchConfigManager):
     """ Config manager that polls for the datafile and updated ProjectConfig based on an update interval. """
 
     def __init__(
@@ -185,54 +305,20 @@ class PollingConfigManager(StaticConfigManager):
         """
         self._config_ready_event = threading.Event()
         super(PollingConfigManager, self).__init__(
+            sdk_key=sdk_key,
+            url=url,
+            url_template=url_template,
             datafile=datafile,
             logger=logger,
             error_handler=error_handler,
             notification_center=notification_center,
             skip_json_validation=skip_json_validation,
         )
-        self.datafile_url = self.get_datafile_url(
-            sdk_key, url, url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE
-        )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
-        self.last_modified = None
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
         self._polling_thread.start()
-
-    @staticmethod
-    def get_datafile_url(sdk_key, url, url_template):
-        """ Helper method to determine URL from where to fetch the datafile.
-
-        Args:
-          sdk_key: Key uniquely identifying the datafile.
-          url: String representing URL from which to fetch the datafile.
-          url_template: String representing template which is filled in with
-                        SDK key to determine URL from which to fetch the datafile.
-
-        Returns:
-          String representing URL to fetch datafile from.
-
-        Raises:
-          optimizely.exceptions.InvalidInputException if:
-          - One of sdk_key or url is not provided.
-          - url_template is invalid.
-        """
-        # Ensure that either is provided by the user.
-        if sdk_key is None and url is None:
-            raise optimizely_exceptions.InvalidInputException('Must provide at least one of sdk_key or url.')
-
-        # Return URL if one is provided or use template and SDK key to get it.
-        if url is None:
-            try:
-                return url_template.format(sdk_key=sdk_key)
-            except (AttributeError, KeyError):
-                raise optimizely_exceptions.InvalidInputException(
-                    'Invalid url_template {} provided.'.format(url_template)
-                )
-
-        return url
 
     def _set_config(self, datafile):
         """ Looks up and sets datafile and config based on response body.
@@ -306,46 +392,6 @@ class PollingConfigManager(StaticConfigManager):
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
 
         self.blocking_timeout = blocking_timeout
-
-    def set_last_modified(self, response_headers):
-        """ Looks up and sets last modified time based on Last-Modified header in the response.
-
-         Args:
-             response_headers: requests.Response.headers
-         """
-        self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
-
-    def _handle_response(self, response):
-        """ Helper method to handle response containing datafile.
-
-        Args:
-            response: requests.Response
-        """
-        try:
-            response.raise_for_status()
-        except requests_exceptions.HTTPError as err:
-            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
-            return
-
-        # Leave datafile and config unchanged if it has not been modified.
-        if response.status_code == http_status_codes.not_modified:
-            self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
-            return
-
-        self.set_last_modified(response.headers)
-        self._set_config(response.content)
-
-    def fetch_datafile(self):
-        """ Fetch datafile and set ProjectConfig. """
-
-        request_headers = {}
-        if self.last_modified:
-            request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
-
-        response = requests.get(
-            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
-        )
-        self._handle_response(response)
 
     @property
     def is_running(self):

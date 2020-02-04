@@ -17,8 +17,7 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
-from .config_manager import PollingConfigManager
-from .config_manager import StaticConfigManager
+from .config_manager import PollingConfigManager, StaticConfigManager, FetchConfigManager
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
 from .event.event_processor import ForwardingEventProcessor
@@ -43,6 +42,7 @@ class Optimizely(object):
         config_manager=None,
         notification_center=None,
         event_processor=None,
+        datafile_fetching_strategy=enums.DatafileFetchingStrategy.POLLING,
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -89,14 +89,24 @@ class Optimizely(object):
 
         if not self.config_manager:
             if sdk_key:
-                self.config_manager = PollingConfigManager(
-                    sdk_key=sdk_key,
-                    datafile=datafile,
-                    logger=self.logger,
-                    error_handler=self.error_handler,
-                    notification_center=self.notification_center,
-                    skip_json_validation=skip_json_validation,
-                )
+                if datafile_fetching_strategy == enums.DatafileFetchingStrategy.MANUAL:
+                    self.config_manager = FetchConfigManager(
+                        sdk_key=sdk_key,
+                        datafile=datafile,
+                        logger=self.logger,
+                        error_handler=self.error_handler,
+                        notification_center=self.notification_center,
+                        skip_json_validation=skip_json_validation,
+                    )
+                else:
+                    self.config_manager = PollingConfigManager(
+                        sdk_key=sdk_key,
+                        datafile=datafile,
+                        logger=self.logger,
+                        error_handler=self.error_handler,
+                        notification_center=self.notification_center,
+                        skip_json_validation=skip_json_validation,
+                    )
             else:
                 self.config_manager = StaticConfigManager(
                     datafile=datafile,
@@ -756,3 +766,11 @@ class Optimizely(object):
             return self.config_manager.optimizely_config
 
         return OptimizelyConfigService(project_config).get_config()
+
+    def refresh(self, datafile=None):
+        fetch_datafile = getattr(self.config_manager, 'fetch_datafile')
+        if datafile:
+            self.config_manager._set_config(datafile)
+            return datafile
+        if callable(fetch_datafile):
+            return fetch_datafile()
