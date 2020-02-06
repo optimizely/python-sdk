@@ -14,7 +14,8 @@ DEFAULTS = {
     'PROJECT_ID': os.environ.get('OPTIMIZELY_PROJECT_ID'),
     'PERSONAL_ACCESS_TOKEN': os.environ.get('OPTIMIZELY_PERSONAL_ACCESS_TOKEN'),
     'FEATURE_FLAG_MODELS': {
-        settings.AUTH_USER_MODEL: {},
+        'ONLY_MODELS': {},
+        'ADDITIONAL_MODELS': {},
     },
     'STORAGE_STRATEGY': 'optimizely.integrations.django.storage.DjangoORMDatafileStorage',
 }
@@ -49,7 +50,14 @@ class OptimizelySettings(object):
             val = import_from_string(val)
 
         if attr == 'FEATURE_FLAG_MODELS':
-            val = {apps.get_model(k): v for k, v in val.items()}
+            model_config = {}
+            if val.get('ONLY_MODELS'):
+                model_config = val['ONLY_MODELS'].copy()
+            else:
+                model_config.update({settings.AUTH_USER_MODEL: {}})
+                model_config.update(val['ADDITIONAL_MODELS'])
+
+            val = {apps.get_model(k): v for k, v in model_config.items()}
 
         setattr(self, attr, val)
         return val
