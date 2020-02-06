@@ -1,4 +1,7 @@
+from importlib import import_module
 import os
+
+from django.apps import apps
 from django.conf import settings
 
 
@@ -8,7 +11,23 @@ REQUIRED_DEVELOPER_CONFIG_KEYS = (
 
 DEFAULTS = {
     'SDK_KEY': os.environ.get('OPTIMIZELY_SDK_KEY'),
+    'PROJECT_ID': os.environ.get('OPTIMIZELY_PROJECT_ID'),
+    'PERSONAL_ACCESS_TOKEN': os.environ.get('OPTIMIZELY_PERSONAL_ACCESS_TOKEN'),
+    'FEATURE_FLAG_MODELS': {
+        settings.AUTH_USER_MODEL: {},
+    },
+    'STORAGE_STRATEGY': 'optimizely.integrations.django.storage.DjangoORMDatafileStorage',
 }
+
+IMPORT_STRINGS = (
+    'STORAGE_STRATEGY',
+)
+
+
+def import_from_string(path):
+    module_path, class_name = path.rsplit('.', 1)
+    module = import_module(module_path)
+    return getattr(module, class_name)
 
 
 class OptimizelySettings(object):
@@ -25,6 +44,12 @@ class OptimizelySettings(object):
             val = self.developer_settings[attr]
         except KeyError:
             val = DEFAULTS[attr]
+
+        if attr in IMPORT_STRINGS:
+            val = import_from_string(val)
+
+        if attr == 'FEATURE_FLAG_MODELS':
+            val = {apps.get_model(k): v for k, v in val.items()}
 
         setattr(self, attr, val)
         return val
