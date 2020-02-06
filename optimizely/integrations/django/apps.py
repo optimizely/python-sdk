@@ -1,6 +1,7 @@
 from django.apps import AppConfig
 
 from ... import integrations
+from ...optimizely import enums
 from . import sdk
 from .settings import optimizely_settings
 
@@ -14,6 +15,11 @@ class OptimizelyAppConfig(AppConfig):
 
     def ready(self):
         optimizely_sdk.refresh()
+        import optimizely
+        optimizely.optimizely_sdk = optimizely_sdk
 
 
-optimizely_sdk = sdk.DjangoOptimizely(sdk_key=optimizely_settings.SDK_KEY)
+optimizely_sdk = sdk.DjangoOptimizely(
+    sdk_key=optimizely_settings.SDK_KEY,
+    datafile_fetching_strategy=enums.DatafileFetchingStrategy.MANUAL,
+)

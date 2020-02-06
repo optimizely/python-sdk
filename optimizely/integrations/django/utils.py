@@ -14,6 +14,18 @@ def fields_for_attributes_for_model(model_class):
     return [model_class._meta.get_field(field) if isinstance(field, six.string_types) else field for field in fields]
 
 
+def attribute_name_for_field(field):
+    model_name = optimizely_settings.FEATURE_FLAG_MODELS[field.model].get('MODEL_NAME',
+                                                                          field.model._meta.verbose_name.title())
+    return '{}: {}'.format(model_name, field.verbose_name.title())
+
+
+def attribute_name_for_additional_attribute(additional_attribute, model_class):
+    model_name = optimizely_settings.FEATURE_FLAG_MODELS[model_class].get('MODEL_NAME',
+                                                                          model_class._meta.verbose_name.title())
+    return '{}: {}'.format(model_name, additional_attribute.get('name', additional_attribute['key'].title()))
+
+
 def attribute_key_for_field(field):
     return attribute_key_for_model(field.name, field.model)
 
@@ -41,11 +53,12 @@ def model_instance_id_and_attributes(model_instance, attribute_overrides=None):
     attributes = {}
     model_class = type(model_instance)
     for field in fields_for_attributes_for_model(model_class):
-        attribute_key = attribute_key_for_field(field)
+        attribute_key = attribute_name_for_field(field) # Note this is a bug IRL
         attributes[attribute_key] = getattr(model_instance, field.attname)
 
     for additional_attribute in optimizely_settings.FEATURE_FLAG_MODELS[model_class].get('ADDITIONAL_ATTRIBUTES', []):
-        attribute_key = attribute_key_for_model(additional_attribute['key'], model_class)
+        attribute_key = attribute_name_for_additional_attribute(additional_attribute,
+                                                                model_class) # Note there is a bug here IRL
         attributes[attribute_key] = additional_attribute['value'](model_instance)
 
     if attribute_overrides:

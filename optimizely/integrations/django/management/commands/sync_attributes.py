@@ -39,15 +39,14 @@ class Command(BaseCommand):
             for field in fields:
                 attribute_key = utils.attribute_key_for_field(field)
                 if attribute_key not in keys:
-                    attribute_name = '{}: {}'.format(model_name, field.verbose_name.title())
+                    attribute_name = utils.attribute_name_for_field(field)
                     names_and_keys.append({'name': attribute_name,
                                            'key': attribute_key})
             for additional_attribute in model_config.get('ADDITIONAL_ATTRIBUTES', []):
                 attribute_key = utils.attribute_key_for_model(additional_attribute['key'], feature_flag_model)
                 if attribute_key not in keys:
-                    attribute_name = '{}: {}'.format(model_name,
-                                                     additional_attribute.get('name',
-                                                                              additional_attribute['key'].title()))
+                    attribute_name = utils.attribute_name_for_additional_attribute(additional_attribute,
+                                                                                   feature_flag_model)
                     names_and_keys.append({'name': attribute_name, 'key': attribute_key})
 
             for name_and_key in names_and_keys:
