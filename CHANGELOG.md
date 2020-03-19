@@ -1,5 +1,12 @@
 # Optimizely Python SDK Changelog
 
+## 3.4.1
+March 19th, 2020
+
+### Bug Fixes:
+* Updated `jsonschema` to address [installation issue](https://github.com/optimizely/python-sdk/issues/232).
+
+
 ## 3.4.0
 January 27th, 2020
 
