@@ -1,14 +1,10 @@
 Optimizely Python SDK
 =====================
 
-[![PyPI
-version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
-[![Build
-Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
-[![Coverage
-Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
-[![Apache
-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![PyPI version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
+[![Build Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
+[![Coverage Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 This repository houses the official Python SDK for use with Optimizely
 Full Stack and Optimizely Rollouts.
@@ -140,7 +136,9 @@ A notification signal will be triggered whenever a *new* datafile is
 fetched and Project Config is updated. To subscribe to these
 notifications, use:
 
-`notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)`
+```
+notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)
+```
 
 For Further details see the Optimizely [Full Stack documentation](https://docs.developers.optimizely.com/full-stack/docs) to learn how to set up your first Python project and use the SDK.
 

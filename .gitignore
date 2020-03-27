@@ -23,3 +23,6 @@ datafile.json
 
 # OSX folder metadata
 *.DS_Store
+
+# Sphinx documentation
+docs/build/
