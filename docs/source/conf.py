@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'Python SDK'
-copyright = '2020, Optimizely, Inc'
+copyright = '2016-2020, Optimizely, Inc'
 author = 'Optimizely, Inc.'
 
 # The full version, including alpha/beta/rc tags
