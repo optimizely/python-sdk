@@ -1,5 +1,5 @@
-Contributing to the Optimizely Python SDK
-=========================================
+Contributing
+============
 
 We welcome contributions and feedback! All contributors must sign our
 [Contributor License Agreement
