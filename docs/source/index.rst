@@ -7,7 +7,11 @@ Python SDK
 .. toctree::
    :caption: API reference
 
+<<<<<<< HEAD
    api_reference
+=======
+   optimizely
+>>>>>>> Added optimizely.py to docs
 
 
 .. toctree::
