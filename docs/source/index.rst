@@ -5,6 +5,12 @@ Python SDK
 
 
 .. toctree::
+   :caption: API reference
+
+   optimizely
+
+
+.. toctree::
    :caption: Bucketing Algorithm
    
    bucketing_algorithm
