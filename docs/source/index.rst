@@ -8,6 +8,8 @@ Python SDK
    :caption: API reference
 
    optimizely
+   event_builder
+   event_dispatcher
 
 
 .. toctree::
