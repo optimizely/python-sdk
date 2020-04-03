@@ -8,7 +8,7 @@ Bucketing Algorithm Methods
 
 Decision Service
 ================
-.. automodule:: optimizely.decision_service
+.. autoclass:: optimizely.decision_service.DecisionService
    :members:
    :special-members:
    :private-members:
