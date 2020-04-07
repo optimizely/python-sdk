@@ -7,9 +7,7 @@ Python SDK
 .. toctree::
    :caption: API reference
 
-   optimizely
-   event_builder
-   event_dispatcher
+   api_reference
 
 
 .. toctree::
