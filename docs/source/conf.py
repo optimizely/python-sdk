@@ -14,11 +14,14 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
+from optimizely.version import __version__
+
 # -- Project information -----------------------------------------------------
 
 project = 'Python SDK'
 copyright = '2016-2020, Optimizely, Inc'
 author = 'Optimizely, Inc.'
+version = __version__
 
 # The full version, including alpha/beta/rc tags
 release = ''
