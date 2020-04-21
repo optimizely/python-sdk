@@ -2569,6 +2569,7 @@ class OptimizelyTest(base.BaseTest):
             'environment': 'staging',
             'is_working': True,
             'object': {'test': 123},
+            'true_object': {'true_test': 1.4},
             'variable_without_usage': 45}
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
@@ -2581,7 +2582,7 @@ class OptimizelyTest(base.BaseTest):
                 opt_obj.get_all_feature_variables('test_feature_in_experiment', 'test_user'),
             )
 
-        self.assertEqual(6, mock_config_logging.info.call_count)
+        self.assertEqual(7, mock_config_logging.info.call_count)
 
         mock_config_logging.info.assert_has_calls(
             [
@@ -2590,6 +2591,7 @@ class OptimizelyTest(base.BaseTest):
                 mock.call('Variable "variable_without_usage" is not used in variation "variation". \
 Assigning default value "45".'),
                 mock.call('Value for variable "object" for variation "variation" is "{"test": 123}".'),
+                mock.call('Value for variable "true_object" for variation "variation" is "{"true_test": 1.4}".'),
                 mock.call('Value for variable "environment" for variation "variation" is "staging".'),
                 mock.call('Value for variable "cost" for variation "variation" is "10.02".')
             ], any_order=True
@@ -2597,13 +2599,16 @@ Assigning default value "45".'),
 
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
-            'feature',
+            'feature-variables',
             'test_user',
             {},
             {
                 'feature_key': 'test_feature_in_experiment',
                 'feature_enabled': True,
                 'source': 'feature-test',
+                'variable_values': {'count': 4243, 'is_working': True, 'true_object': {'true_test': 1.4},
+                                    'variable_without_usage': 45, 'object': {'test': 123}, 'environment': 'staging',
+                                    'cost': 10.02},
                 'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
         )
@@ -3001,12 +3006,14 @@ Assigning default value "45".'),
         )
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
-            'feature',
+            'feature-variables',
             'test_user',
             {'test_attribute': 'test_value'},
             {
                 'feature_key': 'test_feature_in_rollout',
                 'feature_enabled': True,
+                'variable_values': {'count': 399, 'message': 'Hello audience', 'object': {'field': 12},
+                                    'price': 39.99, 'is_running': True},
                 'source': 'rollout',
                 'source_info': {},
             },

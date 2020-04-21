@@ -75,6 +75,7 @@ class DecisionNotificationTypes(object):
     FEATURE = 'feature'
     FEATURE_TEST = 'feature-test'
     FEATURE_VARIABLE = 'feature-variable'
+    FEATURE_VARIABLES = 'feature-variables'
 
 
 class DecisionSources(object):

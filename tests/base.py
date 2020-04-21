@@ -153,6 +153,7 @@ class BaseTest(unittest.TestCase):
                                 {'id': '129', 'value': '10.01'},
                                 {'id': '130', 'value': '4242'},
                                 {'id': '132', 'value': '{"test": 122}'},
+                                {'id': '133', 'value': '{"true_test": 1.3}'},
                             ],
                         },
                         {
@@ -165,6 +166,7 @@ class BaseTest(unittest.TestCase):
                                 {'id': '129', 'value': '10.02'},
                                 {'id': '130', 'value': '4243'},
                                 {'id': '132', 'value': '{"test": 123}'},
+                                {'id': '133', 'value': '{"true_test": 1.4}'},
                             ],
                         },
                     ],
@@ -330,6 +332,7 @@ class BaseTest(unittest.TestCase):
                         {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
                         {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string',
                          'subType': 'json'},
+                        {'id': '133', 'key': 'true_object', 'defaultValue': '{"true_test": 23.54}', 'type': 'json'},
                     ],
                 },
                 {

@@ -344,7 +344,7 @@ class Optimizely(object):
             variable_value = variable.defaultValue
             if feature_enabled:
                 variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
-                self.logger.info(
+                self.logger.debug(
                     'Got variable value "%s" for variable "%s" of feature flag "%s".'
                     % (variable_value, variable_key, feature_key)
                 )
@@ -365,12 +365,13 @@ class Optimizely(object):
 
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
-            enums.DecisionNotificationTypes.FEATURE,
+            enums.DecisionNotificationTypes.FEATURE_VARIABLES,
             user_id,
             attributes or {},
             {
                 'feature_key': feature_key,
                 'feature_enabled': feature_enabled,
+                'variable_values': all_variables,
                 'source': decision.source,
                 'source_info': source_info,
             },

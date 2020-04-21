@@ -106,6 +106,10 @@ class ProjectConfig(object):
                 )
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
+
+        # As we cannot create json variables in datafile directly, here we convert
+        # the variables of string type and json subType to json type
+        # This is needed to fully support json variables
         for feature in self.feature_key_map:
             for variable in self.feature_key_map[feature].variables:
                 sub_type = variable.get('subType', '')
