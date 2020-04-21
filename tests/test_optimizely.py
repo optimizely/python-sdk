@@ -2592,7 +2592,7 @@ Assigning default value "45".'),
                 mock.call('Value for variable "object" for variation "variation" is "{"test": 123}".'),
                 mock.call('Value for variable "environment" for variation "variation" is "staging".'),
                 mock.call('Value for variable "cost" for variation "variation" is "10.02".')
-            ]
+            ], any_order=True
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2997,7 +2997,7 @@ Assigning default value "45".'),
                 mock.call('Value for variable "object" for variation "211129" is "{"field": 12}".'),
                 mock.call('Value for variable "price" for variation "211129" is "39.99".'),
                 mock.call('Value for variable "is_running" for variation "211129" is "true".'),
-            ]
+            ], any_order=True
         )
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
