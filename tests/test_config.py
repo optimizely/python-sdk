@@ -284,6 +284,7 @@ class ConfigTest(base.BaseTest):
                         {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
                         {'id': '129', 'key': 'number_of_days', 'defaultValue': '192', 'type': 'integer'},
                         {'id': '130', 'key': 'significance_value', 'defaultValue': '0.00098', 'type': 'double'},
+                        {'id': '131', 'key': 'object', 'defaultValue': '{"field": 12.4}', 'type': 'string', 'subType': 'json'},
                     ],
                 },
                 {
@@ -489,6 +490,7 @@ class ConfigTest(base.BaseTest):
                     'environment': entities.Variable('128', 'environment', 'string', 'devel'),
                     'number_of_days': entities.Variable('129', 'number_of_days', 'integer', '192'),
                     'significance_value': entities.Variable('130', 'significance_value', 'double', '0.00098'),
+                    'object': entities.Variable('131', 'object', 'json', '{"field": 12.4}'),
                 },
             ),
             'test_feature_in_rollout': entities.FeatureFlag(
@@ -814,6 +816,7 @@ class ConfigTest(base.BaseTest):
                 'message': entities.Variable('133', 'message', 'string', 'Hello'),
                 'price': entities.Variable('134', 'price', 'double', '99.99'),
                 'count': entities.Variable('135', 'count', 'integer', '999'),
+                'object': entities.Variable('136', 'object', 'json', '{"field": 1}'),
             },
         )
 
@@ -856,6 +859,7 @@ class ConfigTest(base.BaseTest):
                                 {'id': '133', 'value': 'Hello audience'},
                                 {'id': '134', 'value': '39.99'},
                                 {'id': '135', 'value': '399'},
+                                {'id': '136', 'value': '{"field": 12}'},
                             ],
                         },
                         {
@@ -867,6 +871,7 @@ class ConfigTest(base.BaseTest):
                                 {'id': '133', 'value': 'environment'},
                                 {'id': '134', 'value': '49.99'},
                                 {'id': '135', 'value': '499'},
+                                {'id': '136', 'value': '{"field": 123}'},
                             ],
                         },
                     ],
@@ -893,6 +898,8 @@ class ConfigTest(base.BaseTest):
                 },
             ],
         )
+        
+        print(json.loads(json.dumps(expected_rollout, default=lambda o: o.__dict__)))
         self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
     def test_get_rollout_from_id__invalid_rollout_id(self):
