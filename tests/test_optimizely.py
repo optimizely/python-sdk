@@ -2532,7 +2532,7 @@ class OptimizelyTest(base.BaseTest):
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
-                {"test":123},
+                {"test": 123},
                 opt_obj.get_feature_variable_json('test_feature_in_experiment', 'object', 'test_user'),
             )
 
@@ -2550,7 +2550,7 @@ class OptimizelyTest(base.BaseTest):
                 'feature_enabled': True,
                 'source': 'feature-test',
                 'variable_key': 'object',
-                'variable_value': {"test":123},
+                'variable_value': {"test": 123},
                 'variable_type': 'json',
                 'source_info': {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
             },
@@ -2587,7 +2587,8 @@ class OptimizelyTest(base.BaseTest):
             [
                 mock.call('Value for variable "count" for variation "variation" is "4243".'),
                 mock.call('Value for variable "is_working" for variation "variation" is "true".'),
-                mock.call('Variable "variable_without_usage" is not used in variation "variation". Assigning default value "45".'),
+                mock.call('Variable "variable_without_usage" is not used in variation "variation". \
+Assigning default value "45".'),
                 mock.call('Value for variable "object" for variation "variation" is "{"test": 123}".'),
                 mock.call('Value for variable "environment" for variation "variation" is "staging".'),
                 mock.call('Value for variable "cost" for variation "variation" is "10.02".')
@@ -2740,7 +2741,7 @@ class OptimizelyTest(base.BaseTest):
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
-                {"test":123}, opt_obj.get_feature_variable('test_feature_in_experiment', 'object', 'test_user'),
+                {"test": 123}, opt_obj.get_feature_variable('test_feature_in_experiment', 'object', 'test_user'),
             )
 
         mock_config_logging.info.assert_called_once_with(
@@ -2990,7 +2991,7 @@ class OptimizelyTest(base.BaseTest):
         self.assertEqual(5, mock_config_logging.info.call_count)
 
         mock_config_logging.info.assert_has_calls(
-            [               
+            [
                 mock.call('Value for variable "count" for variation "211129" is "399".'),
                 mock.call('Value for variable "message" for variation "211129" is "Hello audience".'),
                 mock.call('Value for variable "object" for variation "211129" is "{"field": 12}".'),
@@ -3251,7 +3252,7 @@ class OptimizelyTest(base.BaseTest):
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
         ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
             self.assertEqual(
-                {"test":12}, opt_obj.get_feature_variable_json('test_feature_in_experiment', 'object', 'test_user'),
+                {"test": 12}, opt_obj.get_feature_variable_json('test_feature_in_experiment', 'object', 'test_user'),
             )
 
         mock_config_logger.info.assert_called_once_with(
@@ -4085,7 +4086,7 @@ class OptimizelyTest(base.BaseTest):
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
         ), mock.patch.object(opt_obj, 'logger') as mock_client_logger:
             self.assertEqual(
-               {"field": 1}, opt_obj.get_feature_variable_json('test_feature_in_rollout', 'object', 'test_user'),
+                {"field": 1}, opt_obj.get_feature_variable_json('test_feature_in_rollout', 'object', 'test_user'),
             )
         mock_client_logger.info.assert_called_once_with(
             'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '

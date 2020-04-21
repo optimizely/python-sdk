@@ -284,7 +284,8 @@ class ConfigTest(base.BaseTest):
                         {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
                         {'id': '129', 'key': 'number_of_days', 'defaultValue': '192', 'type': 'integer'},
                         {'id': '130', 'key': 'significance_value', 'defaultValue': '0.00098', 'type': 'double'},
-                        {'id': '131', 'key': 'object', 'defaultValue': '{"field": 12.4}', 'type': 'string', 'subType': 'json'},
+                        {'id': '131', 'key': 'object', 'defaultValue': '{"field": 12.4}', 'type': 'string',
+                         'subType': 'json'},
                     ],
                 },
                 {
@@ -898,8 +899,7 @@ class ConfigTest(base.BaseTest):
                 },
             ],
         )
-        
-        print(json.loads(json.dumps(expected_rollout, default=lambda o: o.__dict__)))
+
         self.assertEqual(expected_rollout, project_config.get_rollout_from_id('211111'))
 
     def test_get_rollout_from_id__invalid_rollout_id(self):

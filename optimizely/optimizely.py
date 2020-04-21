@@ -339,7 +339,7 @@ class Optimizely(object):
             )
 
         all_variables = {}
-        for variable_key in feature_flag.variables: 
+        for variable_key in feature_flag.variables:
             variable = project_config.get_variable_for_feature(feature_key, variable_key)
             variable_value = variable.defaultValue
             if feature_enabled:
@@ -347,7 +347,7 @@ class Optimizely(object):
                 self.logger.info(
                     'Got variable value "%s" for variable "%s" of feature flag "%s".'
                     % (variable_value, variable_key, feature_key)
-                    )
+                )
 
             try:
                 actual_value = project_config.get_typecast_value(variable_value, variable.type)

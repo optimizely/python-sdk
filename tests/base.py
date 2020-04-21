@@ -328,7 +328,8 @@ class BaseTest(unittest.TestCase):
                         {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double'},
                         {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
                         {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
-                        {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string', 'subType': 'json'},
+                        {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string',
+                         'subType': 'json'},
                     ],
                 },
                 {
@@ -341,7 +342,8 @@ class BaseTest(unittest.TestCase):
                         {'id': '133', 'key': 'message', 'defaultValue': 'Hello', 'type': 'string'},
                         {'id': '134', 'key': 'price', 'defaultValue': '99.99', 'type': 'double'},
                         {'id': '135', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
-                        {'id': '136', 'key': 'object', 'defaultValue': '{"field": 1}', 'type': 'string', 'subType': 'json'},
+                        {'id': '136', 'key': 'object', 'defaultValue': '{"field": 1}', 'type': 'string',
+                         'subType': 'json'},
                     ],
                 },
                 {

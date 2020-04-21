@@ -255,11 +255,11 @@ class OptimizelyConfigTest(base.BaseTest):
                                             'id': '129',
                                             'value': '10.99'
                                         },
-                                         'object': {
-                                             'id': '132',
-                                             'key': 'object',
-                                             'type': 'json',
-                                             'value': '{"test": 12}'
+                                        'object': {
+                                            'id': '132',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"test": 12}'
                                         },
                                         'variable_without_usage': {
                                             'key': 'variable_without_usage',
@@ -299,10 +299,10 @@ class OptimizelyConfigTest(base.BaseTest):
                                             'value': '10.02'
                                         },
                                         'object': {
-                                             'id': '132',
-                                             'key': 'object',
-                                             'type': 'json',
-                                             'value': '{"test": 123}'
+                                            'id': '132',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"test": 123}'
                                         },
                                         'variable_without_usage': {
                                             'key': 'variable_without_usage',
