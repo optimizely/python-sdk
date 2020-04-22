@@ -4,22 +4,6 @@ Optimizely's APIs
    :members: 
 
 
-Event Builder
-=============
-
-``Event``
----------
-
-.. autoclass:: optimizely.event_builder.Event
-   :members:
-
-``EventBuilder``
-----------------
-
-.. autoclass:: optimizely.event_builder.EventBuilder
-   :members:
-
-
 Event Dispatcher
 ================
 .. autoclass:: optimizely.event_dispatcher.EventDispatcher
