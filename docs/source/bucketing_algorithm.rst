@@ -1,5 +1,5 @@
-Bucketing Algorithm Methods
-===========================
+Bucketing
+=========
 .. automodule:: optimizely.bucketer
    :members:
 
