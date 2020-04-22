@@ -200,4 +200,4 @@ would be:
 
 ### Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md).
+Please see [CONTRIBUTING](https://github.com/optimizely/python-sdk/blob/master/CONTRIBUTING.md).
