@@ -18,7 +18,7 @@ from optimizely.version import __version__
 
 # -- Project information -----------------------------------------------------
 
-project = 'Python SDK'
+project = 'Optimizely Python SDK'
 copyright = '2016-2020, Optimizely, Inc'
 author = 'Optimizely, Inc.'
 version = __version__
