@@ -2599,7 +2599,7 @@ Assigning default value "45".'),
 
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
-            'feature-variables',
+            'all-feature-variables',
             'test_user',
             {},
             {
@@ -3006,7 +3006,7 @@ Assigning default value "45".'),
         )
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
-            'feature-variables',
+            'all-feature-variables',
             'test_user',
             {'test_attribute': 'test_value'},
             {
@@ -3253,7 +3253,7 @@ Assigning default value "45".'),
         )
         mock_config_logger.info.reset_mock()
 
-        # json
+        # JSON
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
@@ -3460,7 +3460,7 @@ Assigning default value "45".'),
 
         mock_client_logger.info.reset_mock()
 
-        # json
+        # JSON
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
@@ -3961,7 +3961,7 @@ Assigning default value "45".'),
             'Returning the default variable value "devel".'
         )
 
-        # json
+        # JSON
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
@@ -4087,7 +4087,7 @@ Assigning default value "45".'),
             'Returning the default variable value "Hello".'
         )
 
-        # json
+        # JSON
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),

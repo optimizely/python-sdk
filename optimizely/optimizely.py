@@ -365,7 +365,7 @@ class Optimizely(object):
 
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
-            enums.DecisionNotificationTypes.FEATURE_VARIABLES,
+            enums.DecisionNotificationTypes.ALL_FEATURE_VARIABLES,
             user_id,
             attributes or {},
             {
@@ -764,7 +764,7 @@ class Optimizely(object):
         )
 
     def get_feature_variable_json(self, feature_key, variable_key, user_id, attributes=None):
-        """ Returns value for a certain json variable attached to a feature.
+        """ Returns value for a certain JSON variable attached to a feature.
 
     Args:
       feature_key: Key of the feature whose variable's value is being accessed.
@@ -790,7 +790,7 @@ class Optimizely(object):
         )
 
     def get_all_feature_variables(self, feature_key, user_id, attributes=None):
-        """ Returns dictionary of all variables attached to a feature.
+        """ Returns dictionary of all variables and their corresponding values in the context of a feature.
 
     Args:
       feature_key: Key of the feature whose variable's value is being accessed.
@@ -798,7 +798,7 @@ class Optimizely(object):
       attributes: Dict representing user attributes.
 
     Returns:
-      Dictionary object of the variable. None if:
+      Dictionary mapping variable key to variable value. None if:
       - Feature key is invalid.
     """
 
