@@ -101,6 +101,7 @@ class Variable(BaseEntity):
         BOOLEAN = 'boolean'
         DOUBLE = 'double'
         INTEGER = 'integer'
+        JSON = 'json'
         STRING = 'string'
 
     def __init__(self, id, key, type, defaultValue, **kwargs):
