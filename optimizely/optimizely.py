@@ -287,6 +287,97 @@ class Optimizely(object):
         )
         return actual_value
 
+    def _get_all_feature_variables_for_type(
+        self, project_config, feature_key, user_id, attributes,
+    ):
+        """ Helper method to determine value for all variables attached to a feature flag.
+
+    Args:
+      project_config: Instance of ProjectConfig.
+      feature_key: Key of the feature whose variable's value is being accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Dictionary of all variables. None if:
+      - Feature key is invalid.
+    """
+        if not validator.is_non_empty_string(feature_key):
+            self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
+            return None
+
+        if not isinstance(user_id, string_types):
+            self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
+            return None
+
+        if not self._validate_user_inputs(attributes):
+            return None
+
+        feature_flag = project_config.get_feature_from_key(feature_key)
+        if not feature_flag:
+            return None
+
+        feature_enabled = False
+        source_info = {}
+
+        decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id, attributes)
+        if decision.variation:
+
+            feature_enabled = decision.variation.featureEnabled
+            if feature_enabled:
+                self.logger.info(
+                    'Feature "%s" for variation "%s" is enabled.' % (feature_key, decision.variation.key)
+                )
+            else:
+                self.logger.info(
+                    'Feature "%s" for variation "%s" is not enabled.' % (feature_key, decision.variation.key)
+                )
+        else:
+            self.logger.info(
+                'User "%s" is not in any variation or rollout rule. '
+                'Returning default value for all variables of feature flag "%s".' % (user_id, feature_key)
+            )
+
+        all_variables = {}
+        for variable_key in feature_flag.variables:
+            variable = project_config.get_variable_for_feature(feature_key, variable_key)
+            variable_value = variable.defaultValue
+            if feature_enabled:
+                variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
+                self.logger.debug(
+                    'Got variable value "%s" for variable "%s" of feature flag "%s".'
+                    % (variable_value, variable_key, feature_key)
+                )
+
+            try:
+                actual_value = project_config.get_typecast_value(variable_value, variable.type)
+            except:
+                self.logger.error('Unable to cast value. Returning None.')
+                actual_value = None
+
+            all_variables[variable_key] = actual_value
+
+        if decision.source == enums.DecisionSources.FEATURE_TEST:
+            source_info = {
+                'experiment_key': decision.experiment.key,
+                'variation_key': decision.variation.key,
+            }
+
+        self.notification_center.send_notifications(
+            enums.NotificationTypes.DECISION,
+            enums.DecisionNotificationTypes.ALL_FEATURE_VARIABLES,
+            user_id,
+            attributes or {},
+            {
+                'feature_key': feature_key,
+                'feature_enabled': feature_enabled,
+                'variable_values': all_variables,
+                'source': decision.source,
+                'source_info': source_info,
+            },
+        )
+        return all_variables
+
     def activate(self, experiment_key, user_id, attributes=None):
         """ Buckets visitor and sends impression event to Optimizely.
 
@@ -670,6 +761,54 @@ class Optimizely(object):
 
         return self._get_feature_variable_for_type(
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
+        )
+
+    def get_feature_variable_json(self, feature_key, variable_key, user_id, attributes=None):
+        """ Returns value for a certain JSON variable attached to a feature.
+
+    Args:
+      feature_key: Key of the feature whose variable's value is being accessed.
+      variable_key: Key of the variable whose value is to be accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Dictionary object of the variable. None if:
+      - Feature key is invalid.
+      - Variable key is invalid.
+      - Mismatch with type of variable.
+    """
+
+        variable_type = entities.Variable.Type.JSON
+        project_config = self.config_manager.get_config()
+        if not project_config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_json'))
+            return None
+
+        return self._get_feature_variable_for_type(
+            project_config, feature_key, variable_key, variable_type, user_id, attributes,
+        )
+
+    def get_all_feature_variables(self, feature_key, user_id, attributes=None):
+        """ Returns dictionary of all variables and their corresponding values in the context of a feature.
+
+    Args:
+      feature_key: Key of the feature whose variable's value is being accessed.
+      user_id: ID for user.
+      attributes: Dict representing user attributes.
+
+    Returns:
+      Dictionary mapping variable key to variable value. None if:
+      - Feature key is invalid.
+    """
+
+        project_config = self.config_manager.get_config()
+        if not project_config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_all_feature_variables'))
+            return None
+
+        return self._get_all_feature_variables_for_type(
+            project_config, feature_key, user_id, attributes,
         )
 
     def set_forced_variation(self, experiment_key, user_id, variation_key):
