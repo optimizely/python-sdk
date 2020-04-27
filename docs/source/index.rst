@@ -1,7 +1,10 @@
-Python SDK
-==========
+Optimizely Python SDK
+=====================
 
-.. mdinclude:: ../../README.md
+.. toctree::
+   :caption: Introduction
+
+   readme
 
 
 .. toctree::
