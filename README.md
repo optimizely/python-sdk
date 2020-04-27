@@ -122,7 +122,7 @@ notification_center.
 #### Advanced configuration
 
 The following properties can be set to override the default
-configurations for [PollingConfigManager]{.title-ref}.
+configurations for [PollingConfigManager](#pollingconfigmanager).
 
 |   **Property Name**     |**Default Value**|                **Description**                                 |
 |:-----------------------:|:---------------:|:--------------------------------------------------------------:|
