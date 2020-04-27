@@ -124,13 +124,13 @@ notification_center.
 The following properties can be set to override the default
 configurations for [PollingConfigManager]{.title-ref}.
 
-  **PropertyName**   **Default Value**                                           **Description**
-  ------------------ ----------------------------------------------------------- --------------------------------------------------------------------------------------
-  update_interval    5 minutes                                                    Fixed delay between fetches for the datafile
-  sdk_key            None                                                         Optimizely project SDK key
-  url                None                                                         URL override location used to specify custom HTTP source for the Optimizely datafile
-  url_template       https://cdn.optimizely.com/datafiles/{sdk_key}.json          Parameterized datafile URL by SDK key
-  datafile           None                                                         Initial datafile, typically sourced from a local cached source
+|   **Property Name**     |**Default Value**|                **Description**                                 |
+|:-----------------------:|:---------------:|:--------------------------------------------------------------:|
+| update_interval         | 5 minutes       | Fixed delay between fetches for the datafile                   |
+| sdk_key                 | None            | Optimizely project SDK key                                     |
+| url                     | None            | URL override location used to specify custom                   |
+| HTTP source for Optimizely datafile<br>url_template |https://cdn.optimizely.com/datafiles/{sdk_key}.json|Parameterized datafile URL by SDK key|
+| datafile                | None            | Initial datafile, typically sourced from a local cached source |
 
 A notification signal will be triggered whenever a *new* datafile is
 fetched and Project Config is updated. To subscribe to these
