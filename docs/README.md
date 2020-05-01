@@ -1,3 +1,6 @@
+Optimizely Python SDK Sphinx Documentation
+=====================
+
 Getting Started
 ---------------
 
