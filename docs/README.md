@@ -1,10 +1,10 @@
-Optimizely Python SDK Sphinx Documentation
-=====================
+Documentation
+=============
 
 Getting Started
 ---------------
 
-### Installing documentation requirements
+### Installing the requirements
 
 To install dependencies required to generate sphinx documentation locally, execute the following command from the main directory:
 
@@ -12,11 +12,9 @@ To install dependencies required to generate sphinx documentation locally, execu
 
 ### Building documentation locally
 
-To generate python SDK documentation locally, execute the following command:
+To generate Python SDK documentation locally, execute the following commands:
 
     cd docs/
     make html
 
-This will build HTML docs in `docs/build` directory. To open documentation, simply run:
-   
-    open build/html/index.html
+This will build HTML docs in `docs/build/html/index.html`. Open this file in your web browser to see the docs.
