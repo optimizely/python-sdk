@@ -2,6 +2,7 @@ Optimizely's APIs
 =================
 .. automodule:: optimizely.optimizely
    :members: 
+   :special-members: __init__
 
 
 Event Dispatcher
