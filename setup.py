@@ -51,7 +51,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    packages=find_packages(exclude=['tests']),
+    packages=find_packages(exclude=['docs', 'tests']),
     extras_require={'test': TEST_REQUIREMENTS},
     install_requires=REQUIREMENTS,
     tests_require=TEST_REQUIREMENTS,
