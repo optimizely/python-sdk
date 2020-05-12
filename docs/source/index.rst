@@ -14,12 +14,6 @@ Optimizely Python SDK
 
 
 .. toctree::
-   :caption: Bucketing Algorithm
-   
-   bucketing_algorithm
-
-
-.. toctree::
    :caption: Configuration Data
 
    config_manager
