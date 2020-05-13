@@ -77,6 +77,18 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'id': '129',
                                     'value': '10.99'
                                 },
+                                'object': {
+                                    'id': '132',
+                                    'key': 'object',
+                                    'type': 'json',
+                                    'value': '{"test": 12}'
+                                },
+                                'true_object': {
+                                    'id': '133',
+                                    'key': 'true_object',
+                                    'type': 'json',
+                                    'value': '{"true_test": 23.54}'
+                                },
                                 'variable_without_usage': {
                                     'key': 'variable_without_usage',
                                     'type': 'integer',
@@ -113,6 +125,18 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'type': 'double',
                                     'id': '129',
                                     'value': '10.02'
+                                },
+                                'object': {
+                                    'id': '132',
+                                    'key': 'object',
+                                    'type': 'json',
+                                    'value': '{"test": 123}'
+                                },
+                                'true_object': {
+                                    'id': '133',
+                                    'key': 'true_object',
+                                    'type': 'json',
+                                    'value': '{"true_test": 1.4}'
                                 },
                                 'variable_without_usage': {
                                     'key': 'variable_without_usage',
@@ -201,6 +225,18 @@ class OptimizelyConfigTest(base.BaseTest):
                             'id': '129',
                             'value': '10.99'
                         },
+                        'object': {
+                            'id': '132',
+                            'key': 'object',
+                            'type': 'json',
+                            'value': '{"test": 12}'
+                        },
+                        'true_object': {
+                            'id': '133',
+                            'key': 'true_object',
+                            'type': 'json',
+                            'value': '{"true_test": 23.54}'
+                        },
                         'variable_without_usage': {
                             'key': 'variable_without_usage',
                             'type': 'integer',
@@ -236,6 +272,18 @@ class OptimizelyConfigTest(base.BaseTest):
                                             'type': 'double',
                                             'id': '129',
                                             'value': '10.99'
+                                        },
+                                        'object': {
+                                            'id': '132',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"test": 12}'
+                                        },
+                                        'true_object': {
+                                            'id': '133',
+                                            'key': 'true_object',
+                                            'type': 'json',
+                                            'value': '{"true_test": 23.54}'
                                         },
                                         'variable_without_usage': {
                                             'key': 'variable_without_usage',
@@ -273,6 +321,18 @@ class OptimizelyConfigTest(base.BaseTest):
                                             'type': 'double',
                                             'id': '129',
                                             'value': '10.02'
+                                        },
+                                        'object': {
+                                            'id': '132',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"test": 123}'
+                                        },
+                                        'true_object': {
+                                            'id': '133',
+                                            'key': 'true_object',
+                                            'type': 'json',
+                                            'value': '{"true_test": 1.4}'
                                         },
                                         'variable_without_usage': {
                                             'key': 'variable_without_usage',
@@ -318,6 +378,12 @@ class OptimizelyConfigTest(base.BaseTest):
                             'type': 'boolean',
                             'id': '132',
                             'value': 'false'
+                        },
+                        'object': {
+                            'id': '136',
+                            'key': 'object',
+                            'type': 'json',
+                            'value': '{"field": 1}'
                         }
                     },
                     'experiments_map': {
