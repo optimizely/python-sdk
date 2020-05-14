@@ -22,6 +22,7 @@ project = 'Optimizely Python SDK'
 copyright = '2016-2020, Optimizely, Inc'
 author = 'Optimizely, Inc.'
 version = __version__
+master_doc = 'index'
 
 # The full version, including alpha/beta/rc tags
 release = ''
