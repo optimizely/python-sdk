@@ -1,14 +1,10 @@
 Optimizely Python SDK
 =====================
 
-[![PyPI
-version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
-[![Build
-Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
-[![Coverage
-Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
-[![Apache
-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![PyPI version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
+[![Build Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
+[![Coverage Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
+[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 This repository houses the official Python SDK for use with Optimizely
 Full Stack and Optimizely Rollouts.
@@ -126,21 +122,23 @@ notification_center.
 #### Advanced configuration
 
 The following properties can be set to override the default
-configurations for [PollingConfigManager]{.title-ref}.
+configurations for [PollingConfigManager](#pollingconfigmanager).
 
-  **PropertyName**   **Default Value**                                           **Description**
-  ------------------ ----------------------------------------------------------- --------------------------------------------------------------------------------------
-  update_interval    5 minutes                                                    Fixed delay between fetches for the datafile
-  sdk_key            None                                                         Optimizely project SDK key
-  url                None                                                         URL override location used to specify custom HTTP source for the Optimizely datafile
-  url_template       https://cdn.optimizely.com/datafiles/{sdk_key}.json          Parameterized datafile URL by SDK key
-  datafile           None                                                         Initial datafile, typically sourced from a local cached source
+|   **Property Name**     |**Default Value**|                **Description**                                 |
+|:-----------------------:|:---------------:|:--------------------------------------------------------------:|
+| update_interval         | 5 minutes       | Fixed delay between fetches for the datafile                   |
+| sdk_key                 | None            | Optimizely project SDK key                                     |
+| url                     | None            | URL override location used to specify custom                   |
+| HTTP source for Optimizely datafile<br>url_template |https://cdn.optimizely.com/datafiles/{sdk_key}.json|Parameterized datafile URL by SDK key|
+| datafile                | None            | Initial datafile, typically sourced from a local cached source |
 
 A notification signal will be triggered whenever a *new* datafile is
 fetched and Project Config is updated. To subscribe to these
 notifications, use:
 
-`notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)`
+```
+notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)
+```
 
 For Further details see the Optimizely [Full Stack documentation](https://docs.developers.optimizely.com/full-stack/docs) to learn how to set up your first Python project and use the SDK.
 
@@ -202,4 +200,4 @@ would be:
 
 ### Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md).
+Please see [CONTRIBUTING](https://github.com/optimizely/python-sdk/blob/master/CONTRIBUTING.md).
