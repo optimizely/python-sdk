@@ -1,8 +1,7 @@
 *.pyc
 MANIFEST
 .idea/*
-.virtualenv/*
-.py3virtualenv/*
+.*virtualenv/*
 
 # Output of building package
 *.egg-info
