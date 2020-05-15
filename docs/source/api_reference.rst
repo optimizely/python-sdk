@@ -1,7 +1,7 @@
 Optimizely's APIs
 =================
-.. automodule:: optimizely.optimizely
-   :members: 
+.. autoclass:: optimizely.optimizely.Optimizely
+   :members:
    :special-members: __init__
 
 
