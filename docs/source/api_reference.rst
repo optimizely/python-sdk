@@ -1,6 +1,6 @@
 Optimizely's APIs
 =================
-.. autoclass:: optimizely.optimizely.Optimizely
+.. autoclass:: optimizely.Optimizely
    :members:
    :special-members: __init__
 
