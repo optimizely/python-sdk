@@ -1,13 +1,15 @@
 Optimizely Python SDK
 =====================
 
+.. mdinclude:: ../../README.md
+
 .. toctree::
+   :maxdepth: 2
    :caption: Introduction
 
-   readme
-
 
 .. toctree::
+   :maxdepth: 2
    :caption: API reference
 
    api_reference
