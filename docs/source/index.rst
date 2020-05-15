@@ -1,12 +1,4 @@
-Optimizely Python SDK
-=====================
-
 .. mdinclude:: ../../README.md
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Introduction
-
 
 .. toctree::
    :maxdepth: 2
