@@ -1,5 +1,5 @@
 OptimizelyConfig
 ================
 
-.. automodule:: optimizely.optimizely_config
+.. automodule:: optimizely_config
    :members:

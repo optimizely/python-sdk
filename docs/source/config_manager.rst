@@ -4,17 +4,17 @@ Config Manager
 ``Base Config Manager``
 -----------------------
 
-.. autoclass:: config_manager.BaseConfigManager
+.. autoclass:: optimizely.config_manager.BaseConfigManager
    :members:
 
 ``Static Config Manager``
 -------------------------
 
-.. autoclass:: config_manager.StaticConfigManager
+.. autoclass:: optimizely.config_manager.StaticConfigManager
    :members:
 
 ``Polling Config Manager``
 --------------------------
 
-.. autoclass:: config_manager.PollingConfigManager
+.. autoclass:: optimizely.config_manager.PollingConfigManager
    :members:
