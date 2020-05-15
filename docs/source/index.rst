@@ -1,11 +1,4 @@
-Optimizely Python SDK
-=====================
-
-.. toctree::
-   :caption: Introduction
-
-   readme
-
+.. mdinclude:: ../../README.md
 
 .. toctree::
    :caption: API reference
