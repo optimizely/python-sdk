@@ -67,7 +67,7 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
 
-    def getAudienceConditionsOrIds(self):
+    def get_audience_conditions_or_ids(self):
         """ Returns audienceConditions if present, otherwise audienceIds. """
         return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
 

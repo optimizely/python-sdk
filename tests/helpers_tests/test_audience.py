@@ -140,7 +140,7 @@ class AudienceTest(base.BaseTest):
                 )
             )
 
-    def test_is_user_in_experiment__evaluates_audienceIds(self):
+    def test_is_user_in_experiment__evaluates_audience_ids(self):
         """ Test that is_user_in_experiment correctly evaluates audience Ids and
         calls custom attribute evaluator for leaf nodes. """
 
@@ -241,7 +241,7 @@ class AudienceLoggingTest(base.BaseTest):
             ]
         )
 
-    def test_is_user_in_experiment__evaluates_audienceIds(self):
+    def test_is_user_in_experiment__evaluates_audience_ids(self):
         user_attributes = {'test_attribute': 'test_value_1'}
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         experiment.audienceIds = ['11154', '11159']
@@ -256,8 +256,8 @@ class AudienceLoggingTest(base.BaseTest):
                 self.project_config, experiment, user_attributes, self.mock_client_logger,
             )
 
-        self.assertEqual(3, self.mock_client_logger.debug.call_count)
-        self.assertEqual(3, self.mock_client_logger.info.call_count)
+        self.assertEqual(5, self.mock_client_logger.debug.call_count)
+        self.assertEqual(1, self.mock_client_logger.info.call_count)
 
         self.mock_client_logger.assert_has_calls(
             [
@@ -265,11 +265,11 @@ class AudienceLoggingTest(base.BaseTest):
                 mock.call.debug(
                     'Starting to evaluate audience "11154" with conditions: ' + audience_11154.conditions + '.'
                 ),
-                mock.call.info('Audience "11154" evaluated to UNKNOWN.'),
+                mock.call.debug('Audience "11154" evaluated to UNKNOWN.'),
                 mock.call.debug(
                     'Starting to evaluate audience "11159" with conditions: ' + audience_11159.conditions + '.'
                 ),
-                mock.call.info('Audience "11159" evaluated to UNKNOWN.'),
+                mock.call.debug('Audience "11159" evaluated to UNKNOWN.'),
                 mock.call.info('Audiences for experiment "test_experiment" collectively evaluated to FALSE.'),
             ]
         )
@@ -292,8 +292,8 @@ class AudienceLoggingTest(base.BaseTest):
         ):
             audience.is_user_in_experiment(project_config, experiment, {}, self.mock_client_logger)
 
-        self.assertEqual(4, self.mock_client_logger.debug.call_count)
-        self.assertEqual(4, self.mock_client_logger.info.call_count)
+        self.assertEqual(7, self.mock_client_logger.debug.call_count)
+        self.assertEqual(1, self.mock_client_logger.info.call_count)
 
         self.mock_client_logger.assert_has_calls(
             [
@@ -306,17 +306,17 @@ class AudienceLoggingTest(base.BaseTest):
                     'Starting to evaluate audience "3468206642" with '
                     'conditions: ' + audience_3468206642.conditions + '.'
                 ),
-                mock.call.info('Audience "3468206642" evaluated to FALSE.'),
+                mock.call.debug('Audience "3468206642" evaluated to FALSE.'),
                 mock.call.debug(
                     'Starting to evaluate audience "3988293898" with '
                     'conditions: ' + audience_3988293898.conditions + '.'
                 ),
-                mock.call.info('Audience "3988293898" evaluated to UNKNOWN.'),
+                mock.call.debug('Audience "3988293898" evaluated to UNKNOWN.'),
                 mock.call.debug(
                     'Starting to evaluate audience "3988293899" with '
                     'conditions: ' + audience_3988293899.conditions + '.'
                 ),
-                mock.call.info('Audience "3988293899" evaluated to TRUE.'),
+                mock.call.debug('Audience "3988293899" evaluated to TRUE.'),
                 mock.call.info(
                     'Audiences for experiment "audience_combinations_experiment" collectively evaluated to TRUE.'
                 ),

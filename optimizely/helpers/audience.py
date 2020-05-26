@@ -1,4 +1,4 @@
-# Copyright 2016, 2018-2019, Optimizely
+# Copyright 2016, 2018-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -32,8 +32,7 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     Boolean representing if user satisfies audience conditions for any of the audiences or not.
   """
 
-    audience_conditions = experiment.getAudienceConditionsOrIds()
-
+    audience_conditions = experiment.get_audience_conditions_or_ids()
     logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(experiment.key, json.dumps(audience_conditions)))
 
     # Return True in case there are no audiences
@@ -45,35 +44,32 @@ def is_user_in_experiment(config, experiment, attributes, logger):
     if attributes is None:
         attributes = {}
 
-    def evaluate_custom_attr(audienceId, index):
-        audience = config.get_audience(audienceId)
+    def evaluate_custom_attr(audience_id, index):
+        audience = config.get_audience(audience_id)
         custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
             audience.conditionList, attributes, logger
         )
 
         return custom_attr_condition_evaluator.evaluate(index)
 
-    def evaluate_audience(audienceId):
-        audience = config.get_audience(audienceId)
+    def evaluate_audience(audience_id):
+        audience = config.get_audience(audience_id)
 
         if audience is None:
             return None
 
-        logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audienceId, audience.conditions))
+        logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audience_id, audience.conditions))
 
         result = condition_tree_evaluator.evaluate(
-            audience.conditionStructure, lambda index: evaluate_custom_attr(audienceId, index),
+            audience.conditionStructure, lambda index: evaluate_custom_attr(audience_id, index),
         )
 
         result_str = str(result).upper() if result is not None else 'UNKNOWN'
-        logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audienceId, result_str))
+        logger.debug(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audience_id, result_str))
 
         return result
 
     eval_result = condition_tree_evaluator.evaluate(audience_conditions, evaluate_audience)
-
     eval_result = eval_result or False
-
     logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(experiment.key, str(eval_result).upper()))
-
     return eval_result
