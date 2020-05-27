@@ -1,4 +1,4 @@
-# Copyright 2016-2018, Optimizely
+# Copyright 2016-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -67,7 +67,7 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
 
-    def getAudienceConditionsOrIds(self):
+    def get_audience_conditions_or_ids(self):
         """ Returns audienceConditions if present, otherwise audienceIds. """
         return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
 
