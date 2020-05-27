@@ -1,4 +1,4 @@
-# Copyright 2017-2019, Optimizely
+# Copyright 2017-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -250,7 +250,7 @@ class DecisionService(object):
             try:
                 retrieved_profile = self.user_profile_service.lookup(user_id)
             except:
-                self.logger.exception('Unable to retrieve user profile for user "%s" as lookup failed.' % user_id)
+                self.logger.exception('Unable to retrieve user profile for user "{}" as lookup failed.'.format(user_id))
                 retrieved_profile = None
 
             if validator.is_user_profile_valid(retrieved_profile):
@@ -262,8 +262,11 @@ class DecisionService(object):
                 self.logger.warning('User profile has invalid format.')
 
         # Bucket user and store the new decision
-        if not audience_helper.is_user_in_experiment(project_config, experiment, attributes, self.logger):
-            self.logger.info('User "%s" does not meet conditions to be in experiment "%s".' % (user_id, experiment.key))
+        audience_conditions = experiment.getAudienceConditionsOrIds()
+        if not audience_helper.does_user_meet_audience_conditions(
+          project_config, audience_conditions, 'experiment', experiment.key, attributes, self.logger):
+            self.logger.info(
+                'User "{}" does not meet conditions to be in experiment "{}".'.format(user_id, experiment.key))
             return None
 
         # Determine bucketing ID to be used
@@ -277,7 +280,7 @@ class DecisionService(object):
                     user_profile.save_variation_for_experiment(experiment.id, variation.id)
                     self.user_profile_service.save(user_profile.__dict__)
                 except:
-                    self.logger.exception('Unable to save user profile for user "%s".' % user_id)
+                    self.logger.exception('Unable to save user profile for user "{}".'.format(user_id))
             return variation
 
         return None
@@ -299,44 +302,51 @@ class DecisionService(object):
         # Go through each experiment in order and try to get the variation for the user
         if rollout and len(rollout.experiments) > 0:
             for idx in range(len(rollout.experiments) - 1):
-                experiment = project_config.get_experiment_from_key(rollout.experiments[idx].get('key'))
+                logging_key = str(idx + 1)
+                rollout_rule = project_config.get_experiment_from_key(rollout.experiments[idx].get('key'))
 
                 # Check if user meets audience conditions for targeting rule
-                if not audience_helper.is_user_in_experiment(project_config, experiment, attributes, self.logger):
-                    self.logger.debug('User "%s" does not meet conditions for targeting rule %s.' % (user_id, idx + 1))
+                audience_conditions = rollout_rule.getAudienceConditionsOrIds()
+                if not audience_helper.does_user_meet_audience_conditions(
+                  project_config, audience_conditions, 'rollout-rule', logging_key, attributes, self.logger):
+                    self.logger.debug(
+                        'User "{}" does not meet conditions for targeting rule {}.'.format(user_id, logging_key))
                     continue
 
-                self.logger.debug('User "%s" meets conditions for targeting rule %s.' % (user_id, idx + 1))
+                self.logger.debug(
+                    'User "{}" meets audience conditions for targeting rule {}.'.format(user_id, idx + 1))
                 # Determine bucketing ID to be used
                 bucketing_id = self._get_bucketing_id(user_id, attributes)
-                variation = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
+                variation = self.bucketer.bucket(project_config, rollout_rule, user_id, bucketing_id)
                 if variation:
                     self.logger.debug(
-                        'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key)
+                        'User "{}" is in the traffic group of targeting rule {}.'.format(user_id, logging_key)
                     )
-                    return Decision(experiment, variation, enums.DecisionSources.ROLLOUT)
+                    return Decision(rollout_rule, variation, enums.DecisionSources.ROLLOUT)
                 else:
                     # Evaluate no further rules
                     self.logger.debug(
-                        'User "%s" is not in the traffic group for the targeting else. '
-                        'Checking "Everyone Else" rule now.' % user_id
+                        'User "{}" is not in the traffic group for targeting rule {}. '
+                        'Checking "Everyone Else" rule now.'.format(logging_key, user_id)
                     )
                     break
 
             # Evaluate last rule i.e. "Everyone Else" rule
-            everyone_else_experiment = project_config.get_experiment_from_key(rollout.experiments[-1].get('key'))
-            if audience_helper.is_user_in_experiment(
+            everyone_else_rule = project_config.get_experiment_from_key(rollout.experiments[-1].get('key'))
+            audience_conditions = everyone_else_rule.getAudienceConditionsOrIds()
+            if audience_helper.does_user_meet_audience_conditions(
                 project_config,
-                project_config.get_experiment_from_key(rollout.experiments[-1].get('key')),
+                audience_conditions,
+                'rollout-rule',
+                'Everyone Else',
                 attributes,
-                self.logger,
-            ):
+                self.logger):
                 # Determine bucketing ID to be used
                 bucketing_id = self._get_bucketing_id(user_id, attributes)
-                variation = self.bucketer.bucket(project_config, everyone_else_experiment, user_id, bucketing_id)
+                variation = self.bucketer.bucket(project_config, everyone_else_rule, user_id, bucketing_id)
                 if variation:
-                    self.logger.debug('User "%s" meets conditions for targeting rule "Everyone Else".' % user_id)
-                    return Decision(everyone_else_experiment, variation, enums.DecisionSources.ROLLOUT,)
+                    self.logger.debug('User "{}" meets conditions for targeting rule "Everyone Else".'.format(user_id))
+                    return Decision(everyone_else_rule, variation, enums.DecisionSources.ROLLOUT,)
 
         return Decision(None, None, enums.DecisionSources.ROLLOUT)
 
@@ -392,9 +402,6 @@ class DecisionService(object):
                     variation = self.get_variation(project_config, experiment, user_id, attributes)
 
                     if variation:
-                        self.logger.debug(
-                            'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key)
-                        )
                         return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)
             else:
                 self.logger.error(enums.Errors.INVALID_GROUP_ID.format('_get_variation_for_feature'))
@@ -407,9 +414,6 @@ class DecisionService(object):
                 variation = self.get_variation(project_config, experiment, user_id, attributes)
 
                 if variation:
-                    self.logger.debug(
-                        'User "%s" is in variation %s of experiment %s.' % (user_id, variation.key, experiment.key)
-                    )
                     return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)
 
         # Next check if user is part of a rollout

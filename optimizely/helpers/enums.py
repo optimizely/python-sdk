@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,11 +14,9 @@
 import logging
 
 
-class AudienceEvaluationLogs(object):
+class CommonAudienceEvaluationLogs(object):
     AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
-    AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
     EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: {}.'
-    EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for experiment "{}": {}.'
     INFINITE_ATTRIBUTE_VALUE = (
         'Audience condition "{}" evaluated to UNKNOWN because the number value '
         'for user attribute "{}" is not in the range [-2^53, +2^53].'
@@ -46,6 +44,16 @@ class AudienceEvaluationLogs(object):
         'Audience condition "{}" uses an unknown match type. You may need to upgrade to a '
         'newer release of the Optimizely SDK.'
     )
+
+
+class ExperimentAudienceEvaluationLogs(CommonAudienceEvaluationLogs):
+    AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
+    EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for experiment "{}": {}.'
+
+
+class RolloutRuleAudienceEvaluationLogs(CommonAudienceEvaluationLogs):
+    AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for rule {} collectively evaluated to {}.'
+    EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for rule {}: {}.'
 
 
 class ConfigManager(object):

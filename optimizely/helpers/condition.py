@@ -17,7 +17,7 @@ import numbers
 from six import string_types
 
 from . import validator
-from .enums import AudienceEvaluationLogs as audience_logs
+from .enums import CommonAudienceEvaluationLogs as audience_logs
 
 
 class ConditionOperatorTypes(object):

@@ -15,29 +15,35 @@ import json
 
 from . import condition as condition_helper
 from . import condition_tree_evaluator
-from .enums import AudienceEvaluationLogs as audience_logs
+from .enums import ExperimentAudienceEvaluationLogs as experiment_audience_logs
+from .enums import RolloutRuleAudienceEvaluationLogs as rules_audience_logs
 
 
-def is_user_in_experiment(config, experiment, attributes, logger):
+def does_user_meet_audience_conditions(
+    config, audience_conditions, experiment_or_rollout_rule, logging_key, attributes, logger):
     """ Determine for given experiment if user satisfies the audiences for the experiment.
 
-  Args:
-    config: project_config.ProjectConfig object representing the project.
-    experiment: Object representing the experiment.
-    attributes: Dict representing user attributes which will be used in determining
-                if the audience conditions are met. If not provided, default to an empty dict.
-    logger: Provides a logger to send log messages to.
+    Args:
+        config: project_config.ProjectConfig object representing the project.
+        audience_conditions: Audience conditions corresponding to the experiment or rollout rule.
+        experiment_or_rollout_rule: String representing whether entity being evaluated is experiment or rollout rule.
+        logging_key: String representing experiment key or rollout rule's index. To be used in log messages only.
+        attributes: Dict representing user attributes which will be used in determining
+                    if the audience conditions are met. If not provided, default to an empty dict.
+        logger: Provides a logger to send log messages to.
 
-  Returns:
-    Boolean representing if user satisfies audience conditions for any of the audiences or not.
-  """
+    Returns:
+        Boolean representing if user satisfies audience conditions for any of the audiences or not.
+    """
+    audience_logs = experiment_audience_logs
+    if experiment_or_rollout_rule == 'rollout-rule':
+        audience_logs = rules_audience_logs
 
-    audience_conditions = experiment.get_audience_conditions_or_ids()
-    logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(experiment.key, json.dumps(audience_conditions)))
+    logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(logging_key, json.dumps(audience_conditions)))
 
     # Return True in case there are no audiences
     if audience_conditions is None or audience_conditions == []:
-        logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(experiment.key, 'TRUE'))
+        logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(logging_key, 'TRUE'))
 
         return True
 
@@ -71,5 +77,5 @@ def is_user_in_experiment(config, experiment, attributes, logger):
 
     eval_result = condition_tree_evaluator.evaluate(audience_conditions, evaluate_audience)
     eval_result = eval_result or False
-    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(experiment.key, str(eval_result).upper()))
+    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(logging_key, str(eval_result).upper()))
     return eval_result
