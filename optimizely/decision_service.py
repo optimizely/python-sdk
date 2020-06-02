@@ -327,7 +327,7 @@ class DecisionService(object):
                     # Evaluate no further rules
                     self.logger.debug(
                         'User "{}" is not in the traffic group for targeting rule {}. '
-                        'Checking "Everyone Else" rule now.'.format(logging_key, user_id)
+                        'Checking "Everyone Else" rule now.'.format(user_id, logging_key)
                     )
                     break
 
