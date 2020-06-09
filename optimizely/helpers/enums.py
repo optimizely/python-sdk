@@ -49,6 +49,8 @@ class AudienceEvaluationLogs(object):
 
 
 class ConfigManager(object):
+    AUTHENTICATED_DATAFILE_URL_TEMPLATE = 'https://config.optimizely.com/datafiles/auth/{sdk_key}.json'
+    AUTHORIZATION_HEADER_DATA_TEMPLATE = 'Bearer {access_token}'
     DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
     # Default time in seconds to block the 'get_config' method call until 'config' instance has been initialized.
     DEFAULT_BLOCKING_TIMEOUT = 10
@@ -104,6 +106,7 @@ class Errors(object):
 
 
 class HTTPHeaders(object):
+    AUTHORIZATION = 'Authorization'
     IF_MODIFIED_SINCE = 'If-Modified-Since'
     LAST_MODIFIED = 'Last-Modified'
 
