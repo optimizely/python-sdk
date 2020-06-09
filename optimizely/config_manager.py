@@ -420,3 +420,16 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             notification_center=notification_center,
             skip_json_validation=skip_json_validation
         )
+
+    def fetch_datafile(self):
+        request_headers = {}
+        request_headers[enums.HTTPHeaders.AUTHORIZATION] = enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(
+            access_token=self.access_token)
+
+        if self.last_modified:
+            request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
+
+        response = requests.get(
+            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        self._handle_response(response)
