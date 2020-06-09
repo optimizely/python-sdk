@@ -17,6 +17,7 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
+from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
 from .config_manager import StaticConfigManager
 from .error_handler import NoOpErrorHandler as noop_error_handler
@@ -40,6 +41,7 @@ class Optimizely(object):
         skip_json_validation=False,
         user_profile_service=None,
         sdk_key=None,
+        access_token=None,
         config_manager=None,
         notification_center=None,
         event_processor=None,
@@ -57,6 +59,7 @@ class Optimizely(object):
       user_profile_service: Optional component which provides methods to store and manage user profiles.
       sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment combination.
                Must provide at least one of datafile or sdk_key.
+      access_token: Optional string used to fetch authenticated datafile for a secure project environment.
       config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
       notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
                            config_manager.BaseConfigManager implementation which can be using the
@@ -89,14 +92,25 @@ class Optimizely(object):
 
         if not self.config_manager:
             if sdk_key:
-                self.config_manager = PollingConfigManager(
-                    sdk_key=sdk_key,
-                    datafile=datafile,
-                    logger=self.logger,
-                    error_handler=self.error_handler,
-                    notification_center=self.notification_center,
-                    skip_json_validation=skip_json_validation,
-                )
+                if access_token:
+                    self.config_manager = AuthDatafilePollingConfigManager(
+                        access_token=access_token,
+                        sdk_key=sdk_key,
+                        datafile=datafile,
+                        logger=self.logger,
+                        error_handler=self.error_handler,
+                        notification_center=self.notification_center,
+                        skip_json_validation=skip_json_validation,
+                    )
+                else:
+                    self.config_manager = PollingConfigManager(
+                        sdk_key=sdk_key,
+                        datafile=datafile,
+                        logger=self.logger,
+                        error_handler=self.error_handler,
+                        notification_center=self.notification_center,
+                        skip_json_validation=skip_json_validation,
+                    )
             else:
                 self.config_manager = StaticConfigManager(
                     datafile=datafile,
