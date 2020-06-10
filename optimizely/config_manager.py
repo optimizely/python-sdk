@@ -423,9 +423,9 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         )
 
     def _set_access_token(self, access_token):
-        if access_token is None:
+        if not access_token:
             raise optimizely_exceptions.InvalidInputException(
-                'access_token cannot be None.')
+                'access_token cannot be empty or None.')
         self.access_token = access_token
 
     def fetch_datafile(self):

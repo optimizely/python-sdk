@@ -406,7 +406,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         """ Test that initialization fails if access_token is None. """
         self.assertRaisesRegexp(
             optimizely_exceptions.InvalidInputException,
-            'access_token cannot be None.',
+            'access_token cannot be empty or None.',
             config_manager.AuthDatafilePollingConfigManager,
             access_token=None
         )
