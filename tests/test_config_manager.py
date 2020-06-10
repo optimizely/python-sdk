@@ -365,9 +365,10 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_fetch_datafile(self, _):
         """ Test that fetch_datafile sets config and last_modified based on response. """
+        sdk_key = 'some_key'
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
-            project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
-        expected_datafile_url = 'https://cdn.optimizely.com/datafiles/some_key.json'
+            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key)
+        expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
         test_response = requests.Response()
@@ -428,7 +429,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
                 access_token=access_token, sdk_key=sdk_key)
-        expected_datafile_url = 'https://config.optimizely.com/datafiles/auth/some_key.json'
+        expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_datafile = json.dumps(self.config_dict_with_features)
         test_response = requests.Response()
         test_response.status_code = 200
