@@ -388,6 +388,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         skip_json_validation=False
     ):
         """ Initialize config manager. access_token must be set to be able to use. 
+            One of sdk_key or url has to be set to be able to use.
 
         Args:
             access_token: String to be attached to the request header to fetch the authenticated datafile.
@@ -407,7 +408,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
         """
-        self.access_token = access_token
+        self._set_access_token(access_token)
         super(AuthDatafilePollingConfigManager, self).__init__(
             sdk_key=sdk_key,
             datafile=datafile,
@@ -420,6 +421,12 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             notification_center=notification_center,
             skip_json_validation=skip_json_validation
         )
+
+    def _set_access_token(self, access_token):
+        if access_token is None:
+            raise optimizely_exceptions.InvalidInputException(
+                'access_token cannot be None.')
+        self.access_token = access_token
 
     def fetch_datafile(self):
         request_headers = {}
