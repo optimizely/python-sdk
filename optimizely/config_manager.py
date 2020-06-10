@@ -387,7 +387,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         notification_center=None,
         skip_json_validation=False
     ):
-        """ Initialize config manager. access_token must be set to be able to use. 
+        """ Initialize config manager. access_token must be set to be able to use.
             One of sdk_key or url has to be set to be able to use.
 
         Args:
@@ -398,7 +398,8 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
                              at which to request datafile and set ProjectConfig.
             blocking_timeout: Optional Time in seconds to block the get_config call until config object
                               has been initialized.
-            url: Optional string representing URL from where to fetch the authenticated datafile. If set it supersedes the sdk_key.
+            url: Optional string representing URL from where to fetch the authenticated datafile. 
+                 If set it supersedes the sdk_key.
             url_template: Optional string template which in conjunction with sdk_key
                           determines URL from where to fetch the authenticated datafile.
             logger: Provides a logger instance.
@@ -430,8 +431,8 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
     def fetch_datafile(self):
         request_headers = {}
-        request_headers[enums.HTTPHeaders.AUTHORIZATION] = enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(
-            access_token=self.access_token)
+        request_headers[enums.HTTPHeaders.AUTHORIZATION] = \
+            enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(access_token=self.access_token)
 
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified

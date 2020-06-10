@@ -422,7 +422,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         self.assertEqual(access_token, project_config_manager.access_token)
 
     def test_fetch_datafile(self, _):
-        """ Test that fetch_datafile sets authorization header in request header 
+        """ Test that fetch_datafile sets authorization header in request header
             and sets config and last_modified based on response. """
         access_token = 'some_token'
         sdk_key = 'some_key'
