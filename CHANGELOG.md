@@ -1,11 +1,16 @@
 # Optimizely Python SDK Changelog
 
+## 3.4.2
+June 11th, 2020
+
+### Bug Fixes:
+* Adjusted log level for audience evaluation logs. ([#267](https://github.com/optimizely/python-sdk/pull/267))
+
 ## 3.4.1
 March 19th, 2020
 
 ### Bug Fixes:
 * Updated `jsonschema` to address [installation issue](https://github.com/optimizely/python-sdk/issues/232).
-
 
 ## 3.4.0
 January 27th, 2020
