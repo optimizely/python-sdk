@@ -398,7 +398,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
                              at which to request datafile and set ProjectConfig.
             blocking_timeout: Optional Time in seconds to block the get_config call until config object
                               has been initialized.
-            url: Optional string representing URL from where to fetch the authenticated datafile. 
+            url: Optional string representing URL from where to fetch the authenticated datafile.
                  If set it supersedes the sdk_key.
             url_template: Optional string template which in conjunction with sdk_key
                           determines URL from where to fetch the authenticated datafile.
