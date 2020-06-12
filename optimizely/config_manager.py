@@ -376,52 +376,22 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
     def __init__(
         self,
         access_token,
-        sdk_key=None,
-        datafile=None,
-        update_interval=None,
-        blocking_timeout=None,
-        url=None,
-        url_template=None,
-        logger=None,
-        error_handler=None,
-        notification_center=None,
-        skip_json_validation=False
+        **kwargs
     ):
         """ Initialize config manager. access_token must be set to be able to use.
             One of sdk_key or url has to be set to be able to use.
 
         Args:
             access_token: String to be attached to the request header to fetch the authenticated datafile.
-            sdk_key: Optional string uniquely identifying the authenticated datafile.
-            datafile: Optional JSON string representing the project.
-            update_interval: Optional floating point number representing time interval in seconds
-                             at which to request datafile and set ProjectConfig.
-            blocking_timeout: Optional Time in seconds to block the get_config call until config object
-                              has been initialized.
-            url: Optional string representing URL from where to fetch the authenticated datafile.
-                 If set it supersedes the sdk_key.
-            url_template: Optional string template which in conjunction with sdk_key
-                          determines URL from where to fetch the authenticated datafile.
-            logger: Provides a logger instance.
-            error_handler: Provides a handle_error method to handle exceptions.
-            notification_center: Notification center to generate config update notification.
-            skip_json_validation: Optional boolean param which allows skipping JSON schema
-                                  validation upon object invocation. By default
-                                  JSON schema validation will be performed.
+            **kwargs: Refer to keyword arguments descriptions in PollingConfigManager
         """
         self._set_access_token(access_token)
-        super(AuthDatafilePollingConfigManager, self).__init__(
-            sdk_key=sdk_key,
-            datafile=datafile,
-            update_interval=update_interval,
-            blocking_timeout=blocking_timeout,
-            url=url,
-            url_template=url_template or enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE,
-            logger=logger,
-            error_handler=error_handler,
-            notification_center=notification_center,
-            skip_json_validation=skip_json_validation
-        )
+        self._set_url_template(kwargs)
+        super(AuthDatafilePollingConfigManager, self).__init__(**kwargs)
+
+    def _set_url_template(self, kwargs):
+        if 'url_template' not in kwargs or kwargs['url_template'] is None:
+            kwargs['url_template'] = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE
 
     def _set_access_token(self, access_token):
         if not access_token:
