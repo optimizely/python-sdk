@@ -41,10 +41,10 @@ class Optimizely(object):
         skip_json_validation=False,
         user_profile_service=None,
         sdk_key=None,
-        access_token=None,
         config_manager=None,
         notification_center=None,
         event_processor=None,
+        access_token=None,
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -59,7 +59,6 @@ class Optimizely(object):
       user_profile_service: Optional component which provides methods to store and manage user profiles.
       sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment combination.
                Must provide at least one of datafile or sdk_key.
-      access_token: Optional string used to fetch authenticated datafile for a secure project environment.
       config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
       notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
                            config_manager.BaseConfigManager implementation which can be using the
@@ -68,6 +67,7 @@ class Optimizely(object):
                        By default optimizely.event.event_processor.ForwardingEventProcessor is used
                        which simply forwards events to the event dispatcher.
                        To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
+      access_token: Optional string used to fetch authenticated datafile for a secure project environment.
     """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
