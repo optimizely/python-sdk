@@ -371,7 +371,7 @@ class PollingConfigManager(StaticConfigManager):
 
 
 class AuthDatafilePollingConfigManager(PollingConfigManager):
-    """ Config manager that polls for authenticated datafile based on access token. """
+    """ Config manager that polls for authenticated datafile using access token. """
 
     def __init__(
         self,
@@ -390,16 +390,19 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         super(AuthDatafilePollingConfigManager, self).__init__(**kwargs)
 
     def _set_url_template(self, kwargs):
+        """ Helper method to set url template depending on kwargs input. """
         if 'url_template' not in kwargs or kwargs['url_template'] is None:
             kwargs['url_template'] = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE
 
     def _set_access_token(self, access_token):
+        """ Checks for valid access token input and sets it. """
         if not access_token:
             raise optimizely_exceptions.InvalidInputException(
                 'access_token cannot be empty or None.')
         self.access_token = access_token
 
     def fetch_datafile(self):
+        """ Fetch authenticated datafile and set ProjectConfig. """
         request_headers = {}
         request_headers[enums.HTTPHeaders.AUTHORIZATION] = \
             enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(access_token=self.access_token)
