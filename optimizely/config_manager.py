@@ -388,6 +388,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
         Args:
             access_token: String to be attached to the request header to fetch the authenticated datafile.
+            *args: Refer to arguments descriptions in PollingConfigManager
             **kwargs: Refer to keyword arguments descriptions in PollingConfigManager
         """
         self._set_access_token(access_token)
