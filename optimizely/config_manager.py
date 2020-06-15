@@ -150,6 +150,8 @@ class StaticConfigManager(BaseConfigManager):
 class PollingConfigManager(StaticConfigManager):
     """ Config manager that polls for the datafile and updated ProjectConfig based on an update interval. """
 
+    DATAFILE_URL_TEMPLATE = enums.ConfigManager.DATAFILE_URL_TEMPLATE
+
     def __init__(
         self,
         sdk_key=None,
@@ -192,7 +194,7 @@ class PollingConfigManager(StaticConfigManager):
             skip_json_validation=skip_json_validation,
         )
         self.datafile_url = self.get_datafile_url(
-            sdk_key, url, url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE
+            sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
@@ -373,9 +375,12 @@ class PollingConfigManager(StaticConfigManager):
 class AuthDatafilePollingConfigManager(PollingConfigManager):
     """ Config manager that polls for authenticated datafile using access token. """
 
+    DATAFILE_URL_TEMPLATE = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE
+
     def __init__(
         self,
         access_token,
+        *args,
         **kwargs
     ):
         """ Initialize config manager. access_token must be set to be able to use.
@@ -386,13 +391,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             **kwargs: Refer to keyword arguments descriptions in PollingConfigManager
         """
         self._set_access_token(access_token)
-        self._set_url_template(kwargs)
-        super(AuthDatafilePollingConfigManager, self).__init__(**kwargs)
-
-    def _set_url_template(self, kwargs):
-        """ Helper method to set url template depending on kwargs input. """
-        if 'url_template' not in kwargs or kwargs['url_template'] is None:
-            kwargs['url_template'] = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE
+        super(AuthDatafilePollingConfigManager, self).__init__(*args, **kwargs)
 
     def _set_access_token(self, access_token):
         """ Checks for valid access token input and sets it. """
