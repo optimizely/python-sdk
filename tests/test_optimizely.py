@@ -258,7 +258,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager._set_config'), mock.patch(
             'threading.Thread.start'
         ):
-            opt_obj = optimizely.Optimizely(access_token="test_access_token", sdk_key='test_sdk_key')
+            opt_obj = optimizely.Optimizely(access_token='test_access_token', sdk_key='test_sdk_key')
 
         self.assertIs(type(opt_obj.config_manager), config_manager.AuthDatafilePollingConfigManager)
 

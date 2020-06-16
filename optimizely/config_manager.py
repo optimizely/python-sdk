@@ -383,13 +383,12 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         *args,
         **kwargs
     ):
-        """ Initialize config manager. access_token must be set to be able to use.
-            One of sdk_key or url has to be set to be able to use.
+        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
         Args:
             access_token: String to be attached to the request header to fetch the authenticated datafile.
-            *args: Refer to arguments descriptions in PollingConfigManager
-            **kwargs: Refer to keyword arguments descriptions in PollingConfigManager
+            *args: Refer to arguments descriptions in PollingConfigManager.
+            **kwargs: Refer to keyword arguments descriptions in PollingConfigManager.
         """
         self._set_access_token(access_token)
         super(AuthDatafilePollingConfigManager, self).__init__(*args, **kwargs)

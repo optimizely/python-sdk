@@ -90,35 +90,24 @@ class Optimizely(object):
             self.logger.exception(str(error))
             return
 
+        config_manager_options = {
+            'datafile': datafile,
+            'logger': self.logger,
+            'error_handler': self.error_handler,
+            'notification_center': self.notification_center,
+            'skip_json_validation': skip_json_validation,
+        }
+
         if not self.config_manager:
             if sdk_key:
+                config_manager_options['sdk_key'] = sdk_key
                 if access_token:
-                    self.config_manager = AuthDatafilePollingConfigManager(
-                        access_token=access_token,
-                        sdk_key=sdk_key,
-                        datafile=datafile,
-                        logger=self.logger,
-                        error_handler=self.error_handler,
-                        notification_center=self.notification_center,
-                        skip_json_validation=skip_json_validation,
-                    )
+                    config_manager_options['access_token'] = access_token
+                    self.config_manager = AuthDatafilePollingConfigManager(**config_manager_options)
                 else:
-                    self.config_manager = PollingConfigManager(
-                        sdk_key=sdk_key,
-                        datafile=datafile,
-                        logger=self.logger,
-                        error_handler=self.error_handler,
-                        notification_center=self.notification_center,
-                        skip_json_validation=skip_json_validation,
-                    )
+                    self.config_manager = PollingConfigManager(**config_manager_options)
             else:
-                self.config_manager = StaticConfigManager(
-                    datafile=datafile,
-                    logger=self.logger,
-                    error_handler=self.error_handler,
-                    notification_center=self.notification_center,
-                    skip_json_validation=skip_json_validation,
-                )
+                self.config_manager = StaticConfigManager(**config_manager_options)
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
