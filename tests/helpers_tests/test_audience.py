@@ -153,7 +153,8 @@ class AudienceTest(base.BaseTest):
         self.assertEqual({}, custom_attr_eval.call_args[0][1])
 
     def test_does_user_meet_audience_conditions__returns_true__when_condition_tree_evaluator_returns_true(self):
-        """ Test that does_user_meet_audience_conditions returns True when call to condition_tree_evaluator returns True. """
+        """ Test that does_user_meet_audience_conditions returns True
+            when call to condition_tree_evaluator returns True. """
 
         user_attributes = {'test_attribute': 'test_value_1'}
         experiment = self.project_config.get_experiment_from_key('test_experiment')
@@ -170,7 +171,7 @@ class AudienceTest(base.BaseTest):
                 )
             )
 
-    def test_does_user_meet_audience_conditions__returns_false__when_condition_tree_evaluator_returns_none_or_false(self):
+    def test_does_user_meet_audience_conditions_returns_false_when_condition_tree_evaluator_returns_none_or_false(self):
         """ Test that does_user_meet_audience_conditions returns False
         when call to condition_tree_evaluator returns None or False. """
 
@@ -248,7 +249,7 @@ class AudienceTest(base.BaseTest):
 
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
             audience.does_user_meet_audience_conditions(
-                self.project_config,
+                project_config,
                 experiment.get_audience_conditions_or_ids(),
                 'experiment',
                 'audience_combinations_experiment',
@@ -285,7 +286,7 @@ class AudienceTest(base.BaseTest):
 
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
             audience.does_user_meet_audience_conditions(
-                self.project_config,
+                project_config,
                 experiment.get_audience_conditions_or_ids(),
                 'experiment',
                 'audience_combinations_experiment',
@@ -386,7 +387,7 @@ class AudienceLoggingTest(base.BaseTest):
             'optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate', side_effect=[False, None, True],
         ):
             audience.does_user_meet_audience_conditions(
-                self.project_config,
+                project_config,
                 experiment.get_audience_conditions_or_ids(),
                 'experiment',
                 'audience_combinations_experiment',

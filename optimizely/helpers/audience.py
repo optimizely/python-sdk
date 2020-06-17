@@ -19,8 +19,12 @@ from .enums import ExperimentAudienceEvaluationLogs as experiment_audience_logs
 from .enums import RolloutRuleAudienceEvaluationLogs as rules_audience_logs
 
 
-def does_user_meet_audience_conditions(
-    config, audience_conditions, experiment_or_rollout_rule, logging_key, attributes, logger):
+def does_user_meet_audience_conditions(config,
+                                       audience_conditions,
+                                       experiment_or_rollout_rule,
+                                       logging_key,
+                                       attributes,
+                                       logger):
     """ Determine for given experiment if user satisfies the audiences for the experiment.
 
     Args:

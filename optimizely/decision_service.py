@@ -263,8 +263,8 @@ class DecisionService(object):
 
         # Bucket user and store the new decision
         audience_conditions = experiment.get_audience_conditions_or_ids()
-        if not audience_helper.does_user_meet_audience_conditions(
-          project_config, audience_conditions, 'experiment', experiment.key, attributes, self.logger):
+        if not audience_helper.does_user_meet_audience_conditions(project_config, audience_conditions, 'experiment',
+                                                                  experiment.key, attributes, self.logger):
             self.logger.info(
                 'User "{}" does not meet conditions to be in experiment "{}".'.format(user_id, experiment.key))
             return None
@@ -307,8 +307,12 @@ class DecisionService(object):
 
                 # Check if user meets audience conditions for targeting rule
                 audience_conditions = rollout_rule.get_audience_conditions_or_ids()
-                if not audience_helper.does_user_meet_audience_conditions(
-                  project_config, audience_conditions, 'rollout-rule', logging_key, attributes, self.logger):
+                if not audience_helper.does_user_meet_audience_conditions(project_config,
+                                                                          audience_conditions,
+                                                                          'rollout-rule',
+                                                                          logging_key,
+                                                                          attributes,
+                                                                          self.logger):
                     self.logger.debug(
                         'User "{}" does not meet conditions for targeting rule {}.'.format(user_id, logging_key))
                     continue
@@ -340,7 +344,8 @@ class DecisionService(object):
                 'rollout-rule',
                 'Everyone Else',
                 attributes,
-                self.logger):
+                self.logger
+            ):
                 # Determine bucketing ID to be used
                 bucketing_id = self._get_bucketing_id(user_id, attributes)
                 variation = self.bucketer.bucket(project_config, everyone_else_rule, user_id, bucketing_id)
