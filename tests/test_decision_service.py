@@ -839,7 +839,7 @@ class DecisionServiceTest(base.BaseTest):
         self.assertEqual(0, mock_get_stored_variation.call_count)
         mock_audience_check.assert_called_once_with(
             self.project_config,
-            experiment.getAudienceConditionsOrIds(),
+            experiment.get_audience_conditions_or_ids(),
             "experiment",
             "test_experiment",
             None,
@@ -1028,7 +1028,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             [
                 mock.call(
                     self.project_config,
-                    self.project_config.get_experiment_from_key("211127").getAudienceConditionsOrIds(),
+                    self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
                     'rollout-rule',
                     '1',
                     None,
@@ -1036,7 +1036,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 mock.call(
                     self.project_config,
-                    self.project_config.get_experiment_from_key("211147").getAudienceConditionsOrIds(),
+                    self.project_config.get_experiment_from_key("211147").get_audience_conditions_or_ids(),
                     'rollout-rule',
                     'Everyone Else',
                     None,
@@ -1080,7 +1080,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             [
                 mock.call(
                     self.project_config,
-                    self.project_config.get_experiment_from_key("211127").getAudienceConditionsOrIds(),
+                    self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
                     "rollout-rule",
                     "1",
                     None,
@@ -1088,7 +1088,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 mock.call(
                     self.project_config,
-                    self.project_config.get_experiment_from_key("211137").getAudienceConditionsOrIds(),
+                    self.project_config.get_experiment_from_key("211137").get_audience_conditions_or_ids(),
                     "rollout-rule",
                     "2",
                     None,
@@ -1096,7 +1096,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 mock.call(
                     self.project_config,
-                    self.project_config.get_experiment_from_key("211147").getAudienceConditionsOrIds(),
+                    self.project_config.get_experiment_from_key("211147").get_audience_conditions_or_ids(),
                     "rollout-rule",
                     "Everyone Else",
                     None,
@@ -1221,7 +1221,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         self.assertEqual(2, mock_audience_check.call_count)
         mock_audience_check.assert_any_call(
             self.project_config,
-            self.project_config.get_experiment_from_key("group_exp_2").getAudienceConditionsOrIds(),
+            self.project_config.get_experiment_from_key("group_exp_2").get_audience_conditions_or_ids(),
             "experiment",
             "group_exp_2",
             None,
@@ -1229,7 +1229,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         mock_audience_check.assert_any_call(
             self.project_config,
-            self.project_config.get_experiment_from_key("211127").getAudienceConditionsOrIds(),
+            self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
             "rollout-rule",
             "1",
             None,

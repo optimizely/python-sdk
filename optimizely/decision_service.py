@@ -262,7 +262,7 @@ class DecisionService(object):
                 self.logger.warning('User profile has invalid format.')
 
         # Bucket user and store the new decision
-        audience_conditions = experiment.getAudienceConditionsOrIds()
+        audience_conditions = experiment.get_audience_conditions_or_ids()
         if not audience_helper.does_user_meet_audience_conditions(
           project_config, audience_conditions, 'experiment', experiment.key, attributes, self.logger):
             self.logger.info(
@@ -306,7 +306,7 @@ class DecisionService(object):
                 rollout_rule = project_config.get_experiment_from_key(rollout.experiments[idx].get('key'))
 
                 # Check if user meets audience conditions for targeting rule
-                audience_conditions = rollout_rule.getAudienceConditionsOrIds()
+                audience_conditions = rollout_rule.get_audience_conditions_or_ids()
                 if not audience_helper.does_user_meet_audience_conditions(
                   project_config, audience_conditions, 'rollout-rule', logging_key, attributes, self.logger):
                     self.logger.debug(
@@ -333,7 +333,7 @@ class DecisionService(object):
 
             # Evaluate last rule i.e. "Everyone Else" rule
             everyone_else_rule = project_config.get_experiment_from_key(rollout.experiments[-1].get('key'))
-            audience_conditions = everyone_else_rule.getAudienceConditionsOrIds()
+            audience_conditions = everyone_else_rule.get_audience_conditions_or_ids()
             if audience_helper.does_user_meet_audience_conditions(
                 project_config,
                 audience_conditions,
