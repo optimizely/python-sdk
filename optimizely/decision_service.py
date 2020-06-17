@@ -274,6 +274,9 @@ class DecisionService(object):
         variation = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
 
         if variation:
+            self.logger.info(
+                'User "%s" is in variation "%s" of experiment %s.' % (user_id, variation.key, experiment.key)
+            )
             # Store this new decision and return the variation for the user
             if not ignore_user_profile and self.user_profile_service:
                 try:
@@ -283,6 +286,7 @@ class DecisionService(object):
                     self.logger.exception('Unable to save user profile for user "{}".'.format(user_id))
             return variation
 
+        self.logger.info('User "%s" is in no variation.' % user_id)
         return None
 
     def get_variation_for_rollout(self, project_config, rollout, user_id, attributes=None):

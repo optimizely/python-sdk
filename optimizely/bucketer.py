@@ -38,12 +38,12 @@ class Bucketer(object):
     def _generate_unsigned_hash_code_32_bit(self, bucketing_id):
         """ Helper method to retrieve hash code.
 
-    Args:
-      bucketing_id: ID for bucketing.
+        Args:
+            bucketing_id: ID for bucketing.
 
-    Returns:
-      Hash code which is a 32 bit unsigned integer.
-    """
+        Returns:
+            Hash code which is a 32 bit unsigned integer.
+        """
 
         # Adjusting MurmurHash code to be unsigned
         return mmh3.hash(bucketing_id, self.bucket_seed) & UNSIGNED_MAX_32_BIT_VALUE
@@ -51,12 +51,12 @@ class Bucketer(object):
     def _generate_bucket_value(self, bucketing_id):
         """ Helper function to generate bucket value in half-closed interval [0, MAX_TRAFFIC_VALUE).
 
-    Args:
-      bucketing_id: ID for bucketing.
+        Args:
+            bucketing_id: ID for bucketing.
 
-    Returns:
-      Bucket value corresponding to the provided bucketing ID.
-    """
+        Returns:
+            Bucket value corresponding to the provided bucketing ID.
+        """
 
         ratio = float(self._generate_unsigned_hash_code_32_bit(bucketing_id)) / MAX_HASH_VALUE
         return math.floor(ratio * MAX_TRAFFIC_VALUE)
@@ -64,15 +64,15 @@ class Bucketer(object):
     def find_bucket(self, project_config, bucketing_id, parent_id, traffic_allocations):
         """ Determine entity based on bucket value and traffic allocations.
 
-    Args:
-      project_config: Instance of ProjectConfig.
-      bucketing_id: ID to be used for bucketing the user.
-      parent_id: ID representing group or experiment.
-      traffic_allocations: Traffic allocations representing traffic allotted to experiments or variations.
+        Args:
+            project_config: Instance of ProjectConfig.
+            bucketing_id: ID to be used for bucketing the user.
+            parent_id: ID representing group or experiment.
+            traffic_allocations: Traffic allocations representing traffic allotted to experiments or variations.
 
-    Returns:
-      Entity ID which may represent experiment or variation.
-    """
+        Returns:
+            Entity ID which may represent experiment or variation.
+        """
 
         bucketing_key = BUCKETING_ID_TEMPLATE.format(bucketing_id=bucketing_id, parent_id=parent_id)
         bucketing_number = self._generate_bucket_value(bucketing_key)
@@ -90,20 +90,21 @@ class Bucketer(object):
     def bucket(self, project_config, experiment, user_id, bucketing_id):
         """ For a given experiment and bucketing ID determines variation to be shown to user.
 
-    Args:
-      project_config: Instance of ProjectConfig.
-      experiment: Object representing the experiment for which user is to be bucketed.
-      user_id: ID for user.
-      bucketing_id: ID to be used for bucketing the user.
+        Args:
+            project_config: Instance of ProjectConfig.
+            experiment: Object representing the experiment or rollout rule in which user is to be bucketed.
+            user_id: ID for user.
+            bucketing_id: ID to be used for bucketing the user.
 
-    Returns:
-      Variation in which user with ID user_id will be put in. None if no variation.
-    """
+        Returns:
+            Variation in which user with ID user_id will be put in. None if no variation.
+        """
 
         if not experiment:
             return None
 
-        # Determine if experiment is in a mutually exclusive group
+        # Determine if experiment is in a mutually exclusive group.
+        # This will not affect evaluation of rollout rules.
         if experiment.groupPolicy in GROUP_POLICIES:
             group = project_config.get_group(experiment.groupId)
 
@@ -131,10 +132,6 @@ class Bucketer(object):
         variation_id = self.find_bucket(project_config, bucketing_id, experiment.id, experiment.trafficAllocation)
         if variation_id:
             variation = project_config.get_variation_from_id(experiment.key, variation_id)
-            project_config.logger.info(
-                'User "%s" is in variation "%s" of experiment %s.' % (user_id, variation.key, experiment.key)
-            )
             return variation
 
-        project_config.logger.info('User "%s" is in no variation.' % user_id)
         return None
