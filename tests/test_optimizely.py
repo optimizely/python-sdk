@@ -1033,9 +1033,12 @@ class OptimizelyTest(base.BaseTest):
             self.assertIsNone(
                 self.optimizely.activate('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'},)
             )
+        expected_experiment = self.project_config.get_experiment_from_key('test_experiment')
         mock_audience_check.assert_called_once_with(
             self.project_config,
-            self.project_config.get_experiment_from_key('test_experiment'),
+            expected_experiment.get_audience_conditions_or_ids(),
+            'experiment',
+            'test_experiment',
             {'test_attribute': 'test_value'},
             self.optimizely.logger,
         )

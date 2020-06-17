@@ -34,7 +34,14 @@ class AudienceTest(base.BaseTest):
         experiment.audienceIds = []
         experiment.audienceConditions = []
         self.assertStrictTrue(
-            audience.does_user_meet_audience_conditions(self.project_config, experiment, user_attributes, self.mock_client_logger,)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
+            )
         )
 
         # Audience Ids exist but Audience Conditions is Empty
@@ -42,7 +49,15 @@ class AudienceTest(base.BaseTest):
         experiment.audienceIds = ['11154']
         experiment.audienceConditions = []
         self.assertStrictTrue(
-            audience.does_user_meet_audience_conditions(self.project_config, experiment, user_attributes, self.mock_client_logger,)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
+            )
+
         )
 
         # Audience Ids is Empty and  Audience Conditions is None
@@ -50,7 +65,15 @@ class AudienceTest(base.BaseTest):
         experiment.audienceIds = []
         experiment.audienceConditions = None
         self.assertStrictTrue(
-            audience.does_user_meet_audience_conditions(self.project_config, experiment, user_attributes, self.mock_client_logger,)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
+            )
+
         )
 
     def test_does_user_meet_audience_conditions__with_audience(self):
@@ -72,7 +95,12 @@ class AudienceTest(base.BaseTest):
                 ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
             ]
             audience.does_user_meet_audience_conditions(
-                self.project_config, experiment, user_attributes, self.mock_client_logger,
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
             )
 
         self.assertEqual(experiment.audienceConditions, cond_tree_eval.call_args[0][0])
@@ -82,7 +110,12 @@ class AudienceTest(base.BaseTest):
 
             experiment.audienceConditions = None
             audience.does_user_meet_audience_conditions(
-                self.project_config, experiment, user_attributes, self.mock_client_logger,
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
             )
 
         self.assertEqual(experiment.audienceIds, cond_tree_eval.call_args[0][0])
@@ -95,17 +128,31 @@ class AudienceTest(base.BaseTest):
 
         # attributes set to empty dict
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
-            audience.does_user_meet_audience_conditions(self.project_config, experiment, {}, self.mock_client_logger)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                {},
+                self.mock_client_logger
+            )
 
         self.assertEqual({}, custom_attr_eval.call_args[0][1])
 
         # attributes set to None
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
-            audience.does_user_meet_audience_conditions(self.project_config, experiment, None, self.mock_client_logger)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                None,
+                self.mock_client_logger
+            )
 
         self.assertEqual({}, custom_attr_eval.call_args[0][1])
 
-    def test_does_user_meet_audience_conditions__returns_True__when_condition_tree_evaluator_returns_True(self,):
+    def test_does_user_meet_audience_conditions__returns_true__when_condition_tree_evaluator_returns_true(self):
         """ Test that does_user_meet_audience_conditions returns True when call to condition_tree_evaluator returns True. """
 
         user_attributes = {'test_attribute': 'test_value_1'}
@@ -114,11 +161,16 @@ class AudienceTest(base.BaseTest):
 
             self.assertStrictTrue(
                 audience.does_user_meet_audience_conditions(
-                    self.project_config, experiment, user_attributes, self.mock_client_logger,
+                    self.project_config,
+                    experiment.get_audience_conditions_or_ids(),
+                    'experiment',
+                    'test_experiment',
+                    user_attributes,
+                    self.mock_client_logger
                 )
             )
 
-    def test_does_user_meet_audience_conditions__returns_False__when_condition_tree_evaluator_returns_None_or_False(self,):
+    def test_does_user_meet_audience_conditions__returns_false__when_condition_tree_evaluator_returns_none_or_false(self):
         """ Test that does_user_meet_audience_conditions returns False
         when call to condition_tree_evaluator returns None or False. """
 
@@ -128,7 +180,12 @@ class AudienceTest(base.BaseTest):
 
             self.assertStrictFalse(
                 audience.does_user_meet_audience_conditions(
-                    self.project_config, experiment, user_attributes, self.mock_client_logger,
+                    self.project_config,
+                    experiment.get_audience_conditions_or_ids(),
+                    'experiment',
+                    'test_experiment',
+                    user_attributes,
+                    self.mock_client_logger
                 )
             )
 
@@ -136,7 +193,12 @@ class AudienceTest(base.BaseTest):
 
             self.assertStrictFalse(
                 audience.does_user_meet_audience_conditions(
-                    self.project_config, experiment, user_attributes, self.mock_client_logger,
+                    self.project_config,
+                    experiment.get_audience_conditions_or_ids(),
+                    'experiment',
+                    'test_experiment',
+                    user_attributes,
+                    self.mock_client_logger
                 )
             )
 
@@ -149,7 +211,14 @@ class AudienceTest(base.BaseTest):
         experiment.audienceConditions = None
 
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
-            audience.does_user_meet_audience_conditions(self.project_config, experiment, {}, self.mock_client_logger)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                {},
+                self.mock_client_logger
+            )
 
         audience_11154 = self.project_config.get_audience('11154')
         audience_11159 = self.project_config.get_audience('11159')
@@ -178,7 +247,14 @@ class AudienceTest(base.BaseTest):
         ]
 
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
-            audience.does_user_meet_audience_conditions(project_config, experiment, {}, self.mock_client_logger)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'audience_combinations_experiment',
+                {},
+                self.mock_client_logger
+            )
 
         audience_3468206642 = project_config.get_audience('3468206642')
         audience_3988293898 = project_config.get_audience('3988293898')
@@ -208,7 +284,14 @@ class AudienceTest(base.BaseTest):
         experiment.audienceConditions = '3468206645'
 
         with mock.patch('optimizely.helpers.condition.CustomAttributeConditionEvaluator') as custom_attr_eval:
-            audience.does_user_meet_audience_conditions(project_config, experiment, {}, self.mock_client_logger)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'audience_combinations_experiment',
+                {},
+                self.mock_client_logger
+            )
 
         audience_3468206645 = project_config.get_audience('3468206645')
 
@@ -232,7 +315,14 @@ class AudienceLoggingTest(base.BaseTest):
         experiment.audienceIds = []
         experiment.audienceConditions = []
 
-        audience.does_user_meet_audience_conditions(self.project_config, experiment, {}, self.mock_client_logger)
+        audience.does_user_meet_audience_conditions(
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            'experiment',
+            'test_experiment',
+            {},
+            self.mock_client_logger
+        )
 
         self.mock_client_logger.assert_has_calls(
             [
@@ -253,7 +343,12 @@ class AudienceLoggingTest(base.BaseTest):
             'optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate', side_effect=[None, None],
         ):
             audience.does_user_meet_audience_conditions(
-                self.project_config, experiment, user_attributes, self.mock_client_logger,
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
             )
 
         self.assertEqual(5, self.mock_client_logger.debug.call_count)
@@ -290,7 +385,14 @@ class AudienceLoggingTest(base.BaseTest):
         with mock.patch(
             'optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate', side_effect=[False, None, True],
         ):
-            audience.does_user_meet_audience_conditions(project_config, experiment, {}, self.mock_client_logger)
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                'experiment',
+                'audience_combinations_experiment',
+                {},
+                self.mock_client_logger
+            )
 
         self.assertEqual(7, self.mock_client_logger.debug.call_count)
         self.assertEqual(1, self.mock_client_logger.info.call_count)

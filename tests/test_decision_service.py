@@ -596,7 +596,12 @@ class DecisionServiceTest(base.BaseTest):
         mock_lookup.assert_called_once_with("test_user")
         self.assertEqual(1, mock_get_stored_variation.call_count)
         mock_audience_check.assert_called_once_with(
-            self.project_config, experiment, None, mock_decision_service_logging
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            "experiment",
+            "test_experiment",
+            None,
+            mock_decision_service_logging
         )
         mock_bucket.assert_called_once_with(
             self.project_config, experiment, "test_user", "test_user"
@@ -649,7 +654,12 @@ class DecisionServiceTest(base.BaseTest):
         self.assertEqual(0, mock_lookup.call_count)
         self.assertEqual(0, mock_get_stored_variation.call_count)
         mock_audience_check.assert_called_once_with(
-            self.project_config, experiment, None, mock_decision_service_logging
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            "experiment",
+            "test_experiment",
+            None,
+            mock_decision_service_logging
         )
         mock_bucket.assert_called_once_with(
             self.project_config, experiment, "test_user", "test_user"
@@ -693,7 +703,12 @@ class DecisionServiceTest(base.BaseTest):
             self.project_config, experiment, user_profile.UserProfile("test_user")
         )
         mock_audience_check.assert_called_once_with(
-            self.project_config, experiment, None, mock_decision_service_logging
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            "experiment",
+            "test_experiment",
+            None,
+            mock_decision_service_logging
         )
         self.assertEqual(0, mock_bucket.call_count)
         self.assertEqual(0, mock_save.call_count)
@@ -735,7 +750,12 @@ class DecisionServiceTest(base.BaseTest):
         # Stored decision is not consulted as user profile is invalid
         self.assertEqual(0, mock_get_stored_variation.call_count)
         mock_audience_check.assert_called_once_with(
-            self.project_config, experiment, None, mock_decision_service_logging
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            "experiment",
+            "test_experiment",
+            None,
+            mock_decision_service_logging
         )
         mock_decision_service_logging.warning.assert_called_once_with(
             "User profile has invalid format."
@@ -787,7 +807,12 @@ class DecisionServiceTest(base.BaseTest):
         # Stored decision is not consulted as lookup failed
         self.assertEqual(0, mock_get_stored_variation.call_count)
         mock_audience_check.assert_called_once_with(
-            self.project_config, experiment, None, mock_decision_service_logging
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            "experiment",
+            "test_experiment",
+            None,
+            mock_decision_service_logging
         )
         mock_decision_service_logging.exception.assert_called_once_with(
             'Unable to retrieve user profile for user "test_user" as lookup failed.'
@@ -893,7 +918,12 @@ class DecisionServiceTest(base.BaseTest):
             self.project_config, experiment, "test_user"
         )
         mock_audience_check.assert_called_once_with(
-            self.project_config, experiment, None, mock_decision_service_logging
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            "experiment",
+            "test_experiment",
+            None,
+            mock_decision_service_logging
         )
         mock_bucket.assert_called_once_with(
             self.project_config, experiment, "test_user", "test_user"

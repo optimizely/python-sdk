@@ -27,7 +27,7 @@ def does_user_meet_audience_conditions(
         config: project_config.ProjectConfig object representing the project.
         audience_conditions: Audience conditions corresponding to the experiment or rollout rule.
         experiment_or_rollout_rule: String representing whether entity being evaluated is experiment or rollout rule.
-        logging_key: String representing experiment key or rollout rule's index. To be used in log messages only.
+        logging_key: String representing experiment key or rollout rule. To be used in log messages only.
         attributes: Dict representing user attributes which will be used in determining
                     if the audience conditions are met. If not provided, default to an empty dict.
         logger: Provides a logger to send log messages to.
