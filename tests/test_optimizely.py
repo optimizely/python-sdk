@@ -252,6 +252,16 @@ class OptimizelyTest(base.BaseTest):
 
         self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
 
+    def test_init__sdk_key_and_access_token(self):
+        """ Test that if both sdk_key and access_token is provided then AuthDatafilePollingConfigManager is used. """
+
+        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager._set_config'), mock.patch(
+            'threading.Thread.start'
+        ):
+            opt_obj = optimizely.Optimizely(access_token='test_access_token', sdk_key='test_sdk_key')
+
+        self.assertIs(type(opt_obj.config_manager), config_manager.AuthDatafilePollingConfigManager)
+
     def test_invalid_json_raises_schema_validation_off(self):
         """ Test that invalid JSON logs error if schema validation is turned off. """
 
