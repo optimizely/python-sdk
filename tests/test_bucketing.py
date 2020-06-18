@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -234,9 +234,6 @@ class BucketerWithLoggingTest(base.BaseTest):
             )
 
         mock_config_logging.debug.assert_called_once_with('Assigned bucket 42 to user with bucketing ID "test_user".')
-        mock_config_logging.info.assert_called_once_with(
-            'User "test_user" is in variation "control" of experiment test_experiment.'
-        )
 
         # Empty entity ID
         with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4242), mock.patch.object(
@@ -252,7 +249,6 @@ class BucketerWithLoggingTest(base.BaseTest):
             )
 
         mock_config_logging.debug.assert_called_once_with('Assigned bucket 4242 to user with bucketing ID "test_user".')
-        mock_config_logging.info.assert_called_once_with('User "test_user" is in no variation.')
 
         # Variation 2
         with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042), mock.patch.object(
@@ -269,9 +265,6 @@ class BucketerWithLoggingTest(base.BaseTest):
             )
 
         mock_config_logging.debug.assert_called_once_with('Assigned bucket 5042 to user with bucketing ID "test_user".')
-        mock_config_logging.info.assert_called_once_with(
-            'User "test_user" is in variation "variation" of experiment test_experiment.'
-        )
 
         # No matching variation
         with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=424242), mock.patch.object(
@@ -289,7 +282,6 @@ class BucketerWithLoggingTest(base.BaseTest):
         mock_config_logging.debug.assert_called_once_with(
             'Assigned bucket 424242 to user with bucketing ID "test_user".'
         )
-        mock_config_logging.info.assert_called_once_with('User "test_user" is in no variation.')
 
     def test_bucket__experiment_in_group(self):
         """ Test that for provided bucket values correct variation ID is returned. """
@@ -316,7 +308,6 @@ class BucketerWithLoggingTest(base.BaseTest):
         mock_config_logging.info.assert_has_calls(
             [
                 mock.call('User "test_user" is in experiment group_exp_1 of group 19228.'),
-                mock.call('User "test_user" is in variation "group_exp_1_variation" of experiment group_exp_1.'),
             ]
         )
 
@@ -356,7 +347,6 @@ class BucketerWithLoggingTest(base.BaseTest):
         mock_config_logging.info.assert_has_calls(
             [
                 mock.call('User "test_user" is in experiment group_exp_1 of group 19228.'),
-                mock.call('User "test_user" is in no variation.'),
             ]
         )
 
@@ -399,6 +389,5 @@ class BucketerWithLoggingTest(base.BaseTest):
         mock_config_logging.info.assert_has_calls(
             [
                 mock.call('User "test_user" is in experiment group_exp_1 of group 19228.'),
-                mock.call('User "test_user" is in no variation.'),
             ]
         )

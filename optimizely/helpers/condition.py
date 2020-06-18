@@ -1,4 +1,4 @@
-# Copyright 2016, 2018-2019, Optimizely
+# Copyright 2016, 2018-2020, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -17,7 +17,7 @@ import numbers
 from six import string_types
 
 from . import validator
-from .enums import AudienceEvaluationLogs as audience_logs
+from .enums import CommonAudienceEvaluationLogs as audience_logs
 
 
 class ConditionOperatorTypes(object):

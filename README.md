@@ -163,41 +163,41 @@ install command:
 
 You can run all unit tests with:
 
-    nosetests
+    pytest
 
 #### Running all tests in a file
 
 To run all tests under a particular test file you can use the following
 command:
 
-    nosetests tests.<file_name_without_extension>
+    pytest tests.<file_name_without_extension>
 
-For example, to run all tests under `test_event`, the command would be:
+For example, to run all tests under `test_event_builder`, the command would be:
 
-    nosetests tests.test_event
+    pytest tests/test_event_builder.py
 
 #### Running all tests under a class
 
 To run all tests under a particular class of tests you can use the
 following command:
 
-    nosetests tests.<file_name_without_extension>:ClassName
+    pytest tests/<file_name_with_extension>::ClassName
 
-For example, to run all tests under `test_event.EventTest`, the command
+For example, to run all tests under `test_event_builder.EventTest`, the command
 would be:
 
-    nosetests tests.test_event:EventTest
+    pytest tests/test_event_builder.py::EventTest
 
 #### Running a single test
 
 To run a single test you can use the following command:
 
-    nosetests tests.<file_name_without_extension>:ClassName.test_name
+    pytest tests/<file_name_with_extension>::ClassName::test_name
 
-For example, to run `test_event.EventTest.test_dispatch`, the command
+For example, to run `test_event_builder.EventTest.test_init`, the command
 would be:
 
-    nosetests tests.test_event:EventTest.test_dispatch
+    pytest tests/test_event_builder.py::EventTest::test_init
 
 ### Contributing
 

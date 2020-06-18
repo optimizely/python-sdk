@@ -9,7 +9,7 @@ python:
   - "pypy"
   - "pypy3"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
-script: "nosetests --with-coverage --cover-package=optimizely"
+script: "pytest --cov=optimizely"
 after_success:
   - coveralls
 
