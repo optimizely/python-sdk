@@ -15,13 +15,11 @@ import json
 
 from . import condition as condition_helper
 from . import condition_tree_evaluator
-from .enums import ExperimentAudienceEvaluationLogs as experiment_audience_logs
-from .enums import RolloutRuleAudienceEvaluationLogs as rules_audience_logs
 
 
 def does_user_meet_audience_conditions(config,
                                        audience_conditions,
-                                       experiment_or_rollout_rule,
+                                       audience_logs,
                                        logging_key,
                                        attributes,
                                        logger):
@@ -30,7 +28,7 @@ def does_user_meet_audience_conditions(config,
     Args:
         config: project_config.ProjectConfig object representing the project.
         audience_conditions: Audience conditions corresponding to the experiment or rollout rule.
-        experiment_or_rollout_rule: String representing whether entity being evaluated is experiment or rollout rule.
+        audience_logs: Log class capturing the messages to be logged .
         logging_key: String representing experiment key or rollout rule. To be used in log messages only.
         attributes: Dict representing user attributes which will be used in determining
                     if the audience conditions are met. If not provided, default to an empty dict.
@@ -39,10 +37,6 @@ def does_user_meet_audience_conditions(config,
     Returns:
         Boolean representing if user satisfies audience conditions for any of the audiences or not.
     """
-    audience_logs = experiment_audience_logs
-    if experiment_or_rollout_rule == 'rollout-rule':
-        audience_logs = rules_audience_logs
-
     logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(logging_key, json.dumps(audience_conditions)))
 
     # Return True in case there are no audiences

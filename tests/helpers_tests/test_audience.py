@@ -16,6 +16,7 @@ import mock
 
 from optimizely import optimizely
 from optimizely.helpers import audience
+from optimizely.helpers import enums
 from tests import base
 
 
@@ -37,7 +38,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 user_attributes,
                 self.mock_client_logger
@@ -52,7 +53,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 user_attributes,
                 self.mock_client_logger
@@ -68,7 +69,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 user_attributes,
                 self.mock_client_logger
@@ -97,7 +98,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 user_attributes,
                 self.mock_client_logger
@@ -112,7 +113,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 user_attributes,
                 self.mock_client_logger
@@ -131,7 +132,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 {},
                 self.mock_client_logger
@@ -144,7 +145,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 None,
                 self.mock_client_logger
@@ -164,7 +165,7 @@ class AudienceTest(base.BaseTest):
                 audience.does_user_meet_audience_conditions(
                     self.project_config,
                     experiment.get_audience_conditions_or_ids(),
-                    'experiment',
+                    enums.ExperimentAudienceEvaluationLogs,
                     'test_experiment',
                     user_attributes,
                     self.mock_client_logger
@@ -183,7 +184,7 @@ class AudienceTest(base.BaseTest):
                 audience.does_user_meet_audience_conditions(
                     self.project_config,
                     experiment.get_audience_conditions_or_ids(),
-                    'experiment',
+                    enums.ExperimentAudienceEvaluationLogs,
                     'test_experiment',
                     user_attributes,
                     self.mock_client_logger
@@ -196,7 +197,7 @@ class AudienceTest(base.BaseTest):
                 audience.does_user_meet_audience_conditions(
                     self.project_config,
                     experiment.get_audience_conditions_or_ids(),
-                    'experiment',
+                    enums.ExperimentAudienceEvaluationLogs,
                     'test_experiment',
                     user_attributes,
                     self.mock_client_logger
@@ -215,7 +216,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 {},
                 self.mock_client_logger
@@ -251,7 +252,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'audience_combinations_experiment',
                 {},
                 self.mock_client_logger
@@ -288,7 +289,7 @@ class AudienceTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'audience_combinations_experiment',
                 {},
                 self.mock_client_logger
@@ -319,7 +320,7 @@ class AudienceLoggingTest(base.BaseTest):
         audience.does_user_meet_audience_conditions(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            'experiment',
+            enums.ExperimentAudienceEvaluationLogs,
             'test_experiment',
             {},
             self.mock_client_logger
@@ -346,7 +347,7 @@ class AudienceLoggingTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 self.project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'test_experiment',
                 user_attributes,
                 self.mock_client_logger
@@ -389,7 +390,7 @@ class AudienceLoggingTest(base.BaseTest):
             audience.does_user_meet_audience_conditions(
                 project_config,
                 experiment.get_audience_conditions_or_ids(),
-                'experiment',
+                enums.ExperimentAudienceEvaluationLogs,
                 'audience_combinations_experiment',
                 {},
                 self.mock_client_logger

@@ -21,6 +21,7 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .user_profile import UserProfile
 
+
 Decision = namedtuple('Decision', 'experiment variation source')
 
 
@@ -263,8 +264,10 @@ class DecisionService(object):
 
         # Bucket user and store the new decision
         audience_conditions = experiment.get_audience_conditions_or_ids()
-        if not audience_helper.does_user_meet_audience_conditions(project_config, audience_conditions, 'experiment',
-                                                                  experiment.key, attributes, self.logger):
+        if not audience_helper.does_user_meet_audience_conditions(project_config, audience_conditions,
+                                                                  enums.ExperimentAudienceEvaluationLogs,
+                                                                  experiment.key,
+                                                                  attributes, self.logger):
             self.logger.info(
                 'User "{}" does not meet conditions to be in experiment "{}".'.format(user_id, experiment.key))
             return None
@@ -313,7 +316,7 @@ class DecisionService(object):
                 audience_conditions = rollout_rule.get_audience_conditions_or_ids()
                 if not audience_helper.does_user_meet_audience_conditions(project_config,
                                                                           audience_conditions,
-                                                                          'rollout-rule',
+                                                                          enums.RolloutRuleAudienceEvaluationLogs,
                                                                           logging_key,
                                                                           attributes,
                                                                           self.logger):
@@ -345,7 +348,7 @@ class DecisionService(object):
             if audience_helper.does_user_meet_audience_conditions(
                 project_config,
                 audience_conditions,
-                'rollout-rule',
+                enums.RolloutRuleAudienceEvaluationLogs,
                 'Everyone Else',
                 attributes,
                 self.logger

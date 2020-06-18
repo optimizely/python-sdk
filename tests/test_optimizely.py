@@ -1037,7 +1037,7 @@ class OptimizelyTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             expected_experiment.get_audience_conditions_or_ids(),
-            'experiment',
+            enums.ExperimentAudienceEvaluationLogs,
             'test_experiment',
             {'test_attribute': 'test_value'},
             self.optimizely.logger,

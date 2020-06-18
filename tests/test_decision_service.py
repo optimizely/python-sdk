@@ -598,7 +598,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -656,7 +656,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -705,7 +705,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -752,7 +752,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -809,7 +809,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -865,7 +865,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -920,7 +920,7 @@ class DecisionServiceTest(base.BaseTest):
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "test_experiment",
             None,
             mock_decision_service_logging
@@ -1059,7 +1059,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 mock.call(
                     self.project_config,
                     self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
-                    'rollout-rule',
+                    enums.RolloutRuleAudienceEvaluationLogs,
                     '1',
                     None,
                     mock_decision_service_logging,
@@ -1067,7 +1067,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 mock.call(
                     self.project_config,
                     self.project_config.get_experiment_from_key("211147").get_audience_conditions_or_ids(),
-                    'rollout-rule',
+                    enums.RolloutRuleAudienceEvaluationLogs,
                     'Everyone Else',
                     None,
                     mock_decision_service_logging,
@@ -1111,7 +1111,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 mock.call(
                     self.project_config,
                     self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
-                    "rollout-rule",
+                    enums.RolloutRuleAudienceEvaluationLogs,
                     "1",
                     None,
                     mock_decision_service_logging,
@@ -1119,7 +1119,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 mock.call(
                     self.project_config,
                     self.project_config.get_experiment_from_key("211137").get_audience_conditions_or_ids(),
-                    "rollout-rule",
+                    enums.RolloutRuleAudienceEvaluationLogs,
                     "2",
                     None,
                     mock_decision_service_logging,
@@ -1127,7 +1127,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 mock.call(
                     self.project_config,
                     self.project_config.get_experiment_from_key("211147").get_audience_conditions_or_ids(),
-                    "rollout-rule",
+                    enums.RolloutRuleAudienceEvaluationLogs,
                     "Everyone Else",
                     None,
                     mock_decision_service_logging,
@@ -1252,7 +1252,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         mock_audience_check.assert_any_call(
             self.project_config,
             self.project_config.get_experiment_from_key("group_exp_2").get_audience_conditions_or_ids(),
-            "experiment",
+            enums.ExperimentAudienceEvaluationLogs,
             "group_exp_2",
             None,
             mock_decision_service_logging,
@@ -1260,7 +1260,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         mock_audience_check.assert_any_call(
             self.project_config,
             self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
-            "rollout-rule",
+            enums.RolloutRuleAudienceEvaluationLogs,
             "1",
             None,
             mock_decision_service_logging,
