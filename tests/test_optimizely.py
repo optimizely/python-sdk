@@ -1094,10 +1094,13 @@ class OptimizelyTest(base.BaseTest):
     def test_activate__bucketer_returns_none(self):
         """ Test that activate returns None and does not process event when user is in no variation. """
 
-        with mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions',
-                        return_value=True),\
-             mock.patch('optimizely.bucketer.Bucketer.bucket', return_value=None) as mock_bucket, \
-             mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch(
+            'optimizely.helpers.audience.does_user_meet_audience_conditions',
+            return_value=True), mock.patch(
+            'optimizely.bucketer.Bucketer.bucket',
+            return_value=None) as mock_bucket, mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ) as mock_process:
             self.assertIsNone(
                 self.optimizely.activate('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'},)
             )
