@@ -40,6 +40,7 @@ class ProjectConfig(object):
     """
 
         config = json.loads(datafile)
+        self._datafile = datafile
         self.logger = logger
         self.error_handler = error_handler
         self.version = config.get('version')
@@ -528,3 +529,12 @@ class ProjectConfig(object):
     """
 
         return experiment_id in self.experiment_feature_map
+
+    def to_datafile(self):
+        """ Get the datafile.
+
+        Returns:
+            A JSON string representation of the project datafile.
+        """
+
+        return self._datafile
