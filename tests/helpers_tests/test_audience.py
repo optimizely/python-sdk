@@ -204,8 +204,8 @@ class AudienceTest(base.BaseTest):
                 )
             )
 
-    def test_is_user_in_experiment__evaluates_audience_ids(self):
-        """ Test that is_user_in_experiment correctly evaluates audience Ids and
+    def test_does_user_meet_audience_conditions__evaluates_audience_ids(self):
+        """ Test that does_user_meet_audience_conditions correctly evaluates audience Ids and
         calls custom attribute evaluator for leaf nodes. """
 
         experiment = self.project_config.get_experiment_from_key('test_experiment')
@@ -307,7 +307,7 @@ class AudienceTest(base.BaseTest):
         )
 
 
-class AudienceLoggingTest(base.BaseTest):
+class ExperimentAudienceLoggingTest(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self)
         self.mock_client_logger = mock.MagicMock()
@@ -333,7 +333,7 @@ class AudienceLoggingTest(base.BaseTest):
             ]
         )
 
-    def test_is_user_in_experiment__evaluates_audience_ids(self):
+    def test_does_user_meet_audience_conditions__evaluates_audience_ids(self):
         user_attributes = {'test_attribute': 'test_value_1'}
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         experiment.audienceIds = ['11154', '11159']
@@ -426,3 +426,128 @@ class AudienceLoggingTest(base.BaseTest):
                 ),
             ]
         )
+
+
+class RolloutRuleAudienceLoggingTest(base.BaseTest):
+    def setUp(self):
+        base.BaseTest.setUp(self)
+        self.mock_client_logger = mock.MagicMock()
+
+    def test_does_user_meet_audience_conditions__with_no_audience(self):
+        # Using experiment as rule for testing log messages
+        experiment = self.project_config.get_experiment_from_key('test_experiment')
+        experiment.audienceIds = []
+        experiment.audienceConditions = []
+
+        audience.does_user_meet_audience_conditions(
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            enums.RolloutRuleAudienceEvaluationLogs,
+            'test_rule',
+            {},
+            self.mock_client_logger
+        )
+
+        self.mock_client_logger.assert_has_calls(
+            [
+                mock.call.debug('Evaluating audiences for rule test_rule: [].'),
+                mock.call.info('Audiences for rule test_rule collectively evaluated to TRUE.'),
+            ]
+        )
+
+    def test_does_user_meet_audience_conditions__evaluates_audience_ids(self):
+        # Using experiment as rule for testing log messages
+        user_attributes = {'test_attribute': 'test_value_1'}
+        experiment = self.project_config.get_experiment_from_key('test_experiment')
+        experiment.audienceIds = ['11154', '11159']
+        experiment.audienceConditions = None
+        audience_11154 = self.project_config.get_audience('11154')
+        audience_11159 = self.project_config.get_audience('11159')
+
+        with mock.patch(
+            'optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate', side_effect=[None, None],
+        ):
+            audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                enums.RolloutRuleAudienceEvaluationLogs,
+                'test_rule',
+                user_attributes,
+                self.mock_client_logger
+            )
+
+        self.assertEqual(5, self.mock_client_logger.debug.call_count)
+        self.assertEqual(1, self.mock_client_logger.info.call_count)
+
+        self.mock_client_logger.assert_has_calls(
+            [
+                mock.call.debug('Evaluating audiences for rule test_rule: ["11154", "11159"].'),
+                mock.call.debug(
+                    'Starting to evaluate audience "11154" with conditions: ' + audience_11154.conditions + '.'
+                ),
+                mock.call.debug('Audience "11154" evaluated to UNKNOWN.'),
+                mock.call.debug(
+                    'Starting to evaluate audience "11159" with conditions: ' + audience_11159.conditions + '.'
+                ),
+                mock.call.debug('Audience "11159" evaluated to UNKNOWN.'),
+                mock.call.info('Audiences for rule test_rule collectively evaluated to FALSE.'),
+            ]
+        )
+
+    def test_does_user_meet_audience_conditions__evaluates_audience_conditions(self):
+        # Using experiment as rule for testing log messages
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
+        project_config = opt_obj.config_manager.get_config()
+        experiment = project_config.get_experiment_from_key('audience_combinations_experiment')
+        experiment.audienceIds = []
+        experiment.audienceConditions = [
+            'or',
+            ['or', '3468206642', '3988293898', '3988293899'],
+        ]
+        audience_3468206642 = project_config.get_audience('3468206642')
+        audience_3988293898 = project_config.get_audience('3988293898')
+        audience_3988293899 = project_config.get_audience('3988293899')
+
+        with mock.patch(
+            'optimizely.helpers.condition.CustomAttributeConditionEvaluator.evaluate', side_effect=[False, None, True],
+        ):
+            audience.does_user_meet_audience_conditions(
+                project_config,
+                experiment.get_audience_conditions_or_ids(),
+                enums.RolloutRuleAudienceEvaluationLogs,
+                'test_rule',
+                {},
+                self.mock_client_logger
+            )
+
+        self.assertEqual(7, self.mock_client_logger.debug.call_count)
+        self.assertEqual(1, self.mock_client_logger.info.call_count)
+
+        self.mock_client_logger.assert_has_calls(
+            [
+                mock.call.debug(
+                    'Evaluating audiences for rule '
+                    'test_rule: ["or", ["or", "3468206642", '
+                    '"3988293898", "3988293899"]].'
+                ),
+                mock.call.debug(
+                    'Starting to evaluate audience "3468206642" with '
+                    'conditions: ' + audience_3468206642.conditions + '.'
+                ),
+                mock.call.debug('Audience "3468206642" evaluated to FALSE.'),
+                mock.call.debug(
+                    'Starting to evaluate audience "3988293898" with '
+                    'conditions: ' + audience_3988293898.conditions + '.'
+                ),
+                mock.call.debug('Audience "3988293898" evaluated to UNKNOWN.'),
+                mock.call.debug(
+                    'Starting to evaluate audience "3988293899" with '
+                    'conditions: ' + audience_3988293899.conditions + '.'
+                ),
+                mock.call.debug('Audience "3988293899" evaluated to TRUE.'),
+                mock.call.info(
+                    'Audiences for rule test_rule collectively evaluated to TRUE.'
+                ),
+            ]
+        )
+
