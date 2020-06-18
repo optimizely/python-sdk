@@ -1028,13 +1028,17 @@ class OptimizelyTest(base.BaseTest):
     def test_activate__with_attributes__no_audience_match(self):
         """ Test that activate returns None when audience conditions do not match. """
 
-        with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=False) as mock_audience_check:
+        with mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions',
+                        return_value=False) as mock_audience_check:
             self.assertIsNone(
                 self.optimizely.activate('test_experiment', 'test_user', attributes={'test_attribute': 'test_value'},)
             )
+        expected_experiment = self.project_config.get_experiment_from_key('test_experiment')
         mock_audience_check.assert_called_once_with(
             self.project_config,
-            self.project_config.get_experiment_from_key('test_experiment'),
+            expected_experiment.get_audience_conditions_or_ids(),
+            enums.ExperimentAudienceEvaluationLogs,
+            'test_experiment',
             {'test_attribute': 'test_value'},
             self.optimizely.logger,
         )
@@ -1054,7 +1058,7 @@ class OptimizelyTest(base.BaseTest):
         """ Test that activate returns None and does not process event when experiment is not Running. """
 
         with mock.patch(
-            'optimizely.helpers.audience.is_user_in_experiment', return_value=True
+            'optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=True
         ) as mock_audience_check, mock.patch(
             'optimizely.helpers.experiment.is_experiment_running', return_value=False
         ) as mock_is_experiment_running, mock.patch(
@@ -1077,7 +1081,7 @@ class OptimizelyTest(base.BaseTest):
         """ Test that during activate whitelist overrides audience check if user is in the whitelist. """
 
         with mock.patch(
-            'optimizely.helpers.audience.is_user_in_experiment', return_value=False
+            'optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=False
         ) as mock_audience_check, mock.patch(
             'optimizely.helpers.experiment.is_experiment_running', return_value=True
         ) as mock_is_experiment_running:
@@ -1090,9 +1094,11 @@ class OptimizelyTest(base.BaseTest):
     def test_activate__bucketer_returns_none(self):
         """ Test that activate returns None and does not process event when user is in no variation. """
 
-        with mock.patch('optimizely.helpers.audience.is_user_in_experiment', return_value=True), mock.patch(
-            'optimizely.bucketer.Bucketer.bucket', return_value=None
-        ) as mock_bucket, mock.patch(
+        with mock.patch(
+            'optimizely.helpers.audience.does_user_meet_audience_conditions',
+            return_value=True), mock.patch(
+            'optimizely.bucketer.Bucketer.bucket',
+            return_value=None) as mock_bucket, mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process:
             self.assertIsNone(
