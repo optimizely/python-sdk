@@ -550,4 +550,3 @@ class RolloutRuleAudienceLoggingTest(base.BaseTest):
                 ),
             ]
         )
-
