@@ -150,6 +150,8 @@ class StaticConfigManager(BaseConfigManager):
 class PollingConfigManager(StaticConfigManager):
     """ Config manager that polls for the datafile and updated ProjectConfig based on an update interval. """
 
+    DATAFILE_URL_TEMPLATE = enums.ConfigManager.DATAFILE_URL_TEMPLATE
+
     def __init__(
         self,
         sdk_key=None,
@@ -192,7 +194,7 @@ class PollingConfigManager(StaticConfigManager):
             skip_json_validation=skip_json_validation,
         )
         self.datafile_url = self.get_datafile_url(
-            sdk_key, url, url_template or enums.ConfigManager.DATAFILE_URL_TEMPLATE
+            sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
@@ -368,3 +370,46 @@ class PollingConfigManager(StaticConfigManager):
         """ Start the config manager and the thread to periodically fetch datafile. """
         if not self.is_running:
             self._polling_thread.start()
+
+
+class AuthDatafilePollingConfigManager(PollingConfigManager):
+    """ Config manager that polls for authenticated datafile using access token. """
+
+    DATAFILE_URL_TEMPLATE = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE
+
+    def __init__(
+        self,
+        access_token,
+        *args,
+        **kwargs
+    ):
+        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
+
+        Args:
+            access_token: String to be attached to the request header to fetch the authenticated datafile.
+            *args: Refer to arguments descriptions in PollingConfigManager.
+            **kwargs: Refer to keyword arguments descriptions in PollingConfigManager.
+        """
+        self._set_access_token(access_token)
+        super(AuthDatafilePollingConfigManager, self).__init__(*args, **kwargs)
+
+    def _set_access_token(self, access_token):
+        """ Checks for valid access token input and sets it. """
+        if not access_token:
+            raise optimizely_exceptions.InvalidInputException(
+                'access_token cannot be empty or None.')
+        self.access_token = access_token
+
+    def fetch_datafile(self):
+        """ Fetch authenticated datafile and set ProjectConfig. """
+        request_headers = {}
+        request_headers[enums.HTTPHeaders.AUTHORIZATION] = \
+            enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(access_token=self.access_token)
+
+        if self.last_modified:
+            request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
+
+        response = requests.get(
+            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        self._handle_response(response)

@@ -17,6 +17,7 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
+from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
 from .config_manager import StaticConfigManager
 from .error_handler import NoOpErrorHandler as noop_error_handler
@@ -43,6 +44,7 @@ class Optimizely(object):
         config_manager=None,
         notification_center=None,
         event_processor=None,
+        access_token=None,
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -65,6 +67,7 @@ class Optimizely(object):
                        By default optimizely.event.event_processor.ForwardingEventProcessor is used
                        which simply forwards events to the event dispatcher.
                        To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
+      access_token: Optional string used to fetch authenticated datafile for a secure project environment.
     """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -87,24 +90,24 @@ class Optimizely(object):
             self.logger.exception(str(error))
             return
 
+        config_manager_options = {
+            'datafile': datafile,
+            'logger': self.logger,
+            'error_handler': self.error_handler,
+            'notification_center': self.notification_center,
+            'skip_json_validation': skip_json_validation,
+        }
+
         if not self.config_manager:
             if sdk_key:
-                self.config_manager = PollingConfigManager(
-                    sdk_key=sdk_key,
-                    datafile=datafile,
-                    logger=self.logger,
-                    error_handler=self.error_handler,
-                    notification_center=self.notification_center,
-                    skip_json_validation=skip_json_validation,
-                )
+                config_manager_options['sdk_key'] = sdk_key
+                if access_token:
+                    config_manager_options['access_token'] = access_token
+                    self.config_manager = AuthDatafilePollingConfigManager(**config_manager_options)
+                else:
+                    self.config_manager = PollingConfigManager(**config_manager_options)
             else:
-                self.config_manager = StaticConfigManager(
-                    datafile=datafile,
-                    logger=self.logger,
-                    error_handler=self.error_handler,
-                    notification_center=self.notification_center,
-                    skip_json_validation=skip_json_validation,
-                )
+                self.config_manager = StaticConfigManager(**config_manager_options)
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
