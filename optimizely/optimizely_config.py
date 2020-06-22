@@ -21,7 +21,7 @@ class OptimizelyConfig(object):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
-        self._datafile = datafile
+        self.datafile = datafile
 
     def get_datafile(self):
         """ Get the datafile associated with project_config.
@@ -29,7 +29,7 @@ class OptimizelyConfig(object):
         Returns:
             A JSON string representation of the project datafile.
         """
-        return self._datafile
+        return self.datafile
 
 
 class OptimizelyExperiment(object):
