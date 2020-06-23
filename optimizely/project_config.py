@@ -192,6 +192,15 @@ class ProjectConfig(object):
         else:
             return value
 
+    def to_datafile(self):
+        """ Get the datafile.
+
+        Returns:
+            A JSON string representation of the project datafile.
+        """
+
+        return self._datafile
+
     def get_version(self):
         """ Get version of the datafile.
 
@@ -532,12 +541,3 @@ class ProjectConfig(object):
         """
 
         return experiment_id in self.experiment_feature_map
-
-    def to_datafile(self):
-        """ Get the datafile.
-
-        Returns:
-            A JSON string representation of the project datafile.
-        """
-
-        return self._datafile
