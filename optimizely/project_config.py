@@ -33,11 +33,11 @@ class ProjectConfig(object):
     def __init__(self, datafile, logger, error_handler):
         """ ProjectConfig init method to load and set project config data.
 
-    Args:
-      datafile: JSON string representing the project.
-      logger: Provides a logger instance.
-      error_handler: Provides a handle_error method to handle exceptions.
-    """
+        Args:
+            datafile: JSON string representing the project.
+            logger: Provides a logger instance.
+            error_handler: Provides a handle_error method to handle exceptions.
+        """
 
         config = json.loads(datafile)
         self._datafile = datafile
@@ -138,14 +138,14 @@ class ProjectConfig(object):
     def _generate_key_map(entity_list, key, entity_class):
         """ Helper method to generate map from key to entity object for given list of dicts.
 
-    Args:
-      entity_list: List consisting of dict.
-      key: Key in each dict which will be key in the map.
-      entity_class: Class representing the entity.
+        Args:
+            entity_list: List consisting of dict.
+            key: Key in each dict which will be key in the map.
+            entity_class: Class representing the entity.
 
-    Returns:
-      Map mapping key to entity object.
-    """
+        Returns:
+            Map mapping key to entity object.
+        """
 
         key_map = {}
         for obj in entity_list:
@@ -157,12 +157,12 @@ class ProjectConfig(object):
     def _deserialize_audience(audience_map):
         """ Helper method to de-serialize and populate audience map with the condition list and structure.
 
-    Args:
-      audience_map: Dict mapping audience ID to audience object.
+        Args:
+            audience_map: Dict mapping audience ID to audience object.
 
-    Returns:
-      Dict additionally consisting of condition list and structure on every audience object.
-    """
+        Returns:
+            Dict additionally consisting of condition list and structure on every audience object.
+        """
 
         for audience in audience_map.values():
             condition_structure, condition_list = condition_helper.loads(audience.conditions)
@@ -173,13 +173,13 @@ class ProjectConfig(object):
     def get_typecast_value(self, value, type):
         """ Helper method to determine actual value based on type of feature variable.
 
-    Args:
-      value: Value in string form as it was parsed from datafile.
-      type: Type denoting the feature flag type.
+        Args:
+            value: Value in string form as it was parsed from datafile.
+            type: Type denoting the feature flag type.
 
-    Return:
-      Value type-casted based on type of feature variable.
-    """
+        Returns:
+            Value type-casted based on type of feature variable.
+        """
 
         if type == entities.Variable.Type.BOOLEAN:
             return value == 'true'
@@ -195,48 +195,48 @@ class ProjectConfig(object):
     def get_version(self):
         """ Get version of the datafile.
 
-    Returns:
-      Version of the datafile.
-    """
+        Returns:
+            Version of the datafile.
+        """
 
         return self.version
 
     def get_revision(self):
         """ Get revision of the datafile.
 
-    Returns:
-      Revision of the datafile.
-    """
+        Returns:
+            Revision of the datafile.
+        """
 
         return self.revision
 
     def get_account_id(self):
         """ Get account ID from the config.
 
-    Returns:
-      Account ID information from the config.
-    """
+        Returns:
+            Account ID information from the config.
+        """
 
         return self.account_id
 
     def get_project_id(self):
         """ Get project ID from the config.
 
-    Returns:
-      Project ID information from the config.
-    """
+        Returns:
+            Project ID information from the config.
+        """
 
         return self.project_id
 
     def get_experiment_from_key(self, experiment_key):
         """ Get experiment for the provided experiment key.
 
-    Args:
-      experiment_key: Experiment key for which experiment is to be determined.
+        Args:
+            experiment_key: Experiment key for which experiment is to be determined.
 
-    Returns:
-      Experiment corresponding to the provided experiment key.
-    """
+        Returns:
+            Experiment corresponding to the provided experiment key.
+        """
 
         experiment = self.experiment_key_map.get(experiment_key)
 
@@ -250,12 +250,12 @@ class ProjectConfig(object):
     def get_experiment_from_id(self, experiment_id):
         """ Get experiment for the provided experiment ID.
 
-    Args:
-      experiment_id: Experiment ID for which experiment is to be determined.
+        Args:
+            experiment_id: Experiment ID for which experiment is to be determined.
 
-    Returns:
-      Experiment corresponding to the provided experiment ID.
-    """
+        Returns:
+            Experiment corresponding to the provided experiment ID.
+        """
 
         experiment = self.experiment_id_map.get(experiment_id)
 
@@ -269,12 +269,12 @@ class ProjectConfig(object):
     def get_group(self, group_id):
         """ Get group for the provided group ID.
 
-    Args:
-      group_id: Group ID for which group is to be determined.
+        Args:
+            group_id: Group ID for which group is to be determined.
 
-    Returns:
-      Group corresponding to the provided group ID.
-    """
+        Returns:
+            Group corresponding to the provided group ID.
+        """
 
         group = self.group_id_map.get(group_id)
 
@@ -288,12 +288,12 @@ class ProjectConfig(object):
     def get_audience(self, audience_id):
         """ Get audience object for the provided audience ID.
 
-    Args:
-      audience_id: ID of the audience.
+        Args:
+            audience_id: ID of the audience.
 
-    Returns:
-      Dict representing the audience.
-    """
+        Returns:
+            Dict representing the audience.
+        """
 
         audience = self.audience_id_map.get(audience_id)
         if audience:
@@ -305,13 +305,13 @@ class ProjectConfig(object):
     def get_variation_from_key(self, experiment_key, variation_key):
         """ Get variation given experiment and variation key.
 
-    Args:
-      experiment: Key representing parent experiment of variation.
-      variation_key: Key representing the variation.
+        Args:
+            experiment: Key representing parent experiment of variation.
+            variation_key: Key representing the variation.
 
-    Returns
-      Object representing the variation.
-    """
+        Returns
+            Object representing the variation.
+        """
 
         variation_map = self.variation_key_map.get(experiment_key)
 
@@ -331,13 +331,13 @@ class ProjectConfig(object):
     def get_variation_from_id(self, experiment_key, variation_id):
         """ Get variation given experiment and variation ID.
 
-    Args:
-      experiment: Key representing parent experiment of variation.
-      variation_id: ID representing the variation.
+        Args:
+            experiment: Key representing parent experiment of variation.
+            variation_id: ID representing the variation.
 
-    Returns
-      Object representing the variation.
-    """
+        Returns
+            Object representing the variation.
+        """
 
         variation_map = self.variation_id_map.get(experiment_key)
 
@@ -357,12 +357,12 @@ class ProjectConfig(object):
     def get_event(self, event_key):
         """ Get event for the provided event key.
 
-    Args:
-      event_key: Event key for which event is to be determined.
+        Args:
+            event_key: Event key for which event is to be determined.
 
-    Returns:
-      Event corresponding to the provided event key.
-    """
+        Returns:
+            Event corresponding to the provided event key.
+        """
 
         event = self.event_key_map.get(event_key)
 
@@ -376,12 +376,12 @@ class ProjectConfig(object):
     def get_attribute_id(self, attribute_key):
         """ Get attribute ID for the provided attribute key.
 
-    Args:
-      attribute_key: Attribute key for which attribute is to be fetched.
+        Args:
+            attribute_key: Attribute key for which attribute is to be fetched.
 
-    Returns:
-      Attribute ID corresponding to the provided attribute key.
-    """
+        Returns:
+            Attribute ID corresponding to the provided attribute key.
+        """
 
         attribute = self.attribute_key_map.get(attribute_key)
         has_reserved_prefix = attribute_key.startswith(RESERVED_ATTRIBUTE_PREFIX)
@@ -407,12 +407,13 @@ class ProjectConfig(object):
     def get_feature_from_key(self, feature_key):
         """ Get feature for the provided feature key.
 
-    Args:
-      feature_key: Feature key for which feature is to be fetched.
+        Args:
+            feature_key: Feature key for which feature is to be fetched.
 
-    Returns:
-      Feature corresponding to the provided feature key.
-    """
+        Returns:
+            Feature corresponding to the provided feature key.
+        """
+
         feature = self.feature_key_map.get(feature_key)
 
         if feature:
@@ -424,12 +425,13 @@ class ProjectConfig(object):
     def get_rollout_from_id(self, rollout_id):
         """ Get rollout for the provided ID.
 
-    Args:
-      rollout_id: ID of the rollout to be fetched.
+        Args:
+            rollout_id: ID of the rollout to be fetched.
 
-    Returns:
-      Rollout corresponding to the provided ID.
-    """
+        Returns:
+            Rollout corresponding to the provided ID.
+        """
+
         layer = self.rollout_id_map.get(rollout_id)
 
         if layer:
@@ -441,13 +443,13 @@ class ProjectConfig(object):
     def get_variable_value_for_variation(self, variable, variation):
         """ Get the variable value for the given variation.
 
-    Args:
-      variable: The Variable for which we are getting the value.
-      variation: The Variation for which we are getting the variable value.
+        Args:
+            variable: The Variable for which we are getting the value.
+            variation: The Variation for which we are getting the variable value.
 
-    Returns:
-      The variable value or None if any of the inputs are invalid.
-    """
+        Returns:
+            The variable value or None if any of the inputs are invalid.
+        """
 
         if not variable or not variation:
             return None
@@ -482,13 +484,14 @@ class ProjectConfig(object):
     def get_variable_for_feature(self, feature_key, variable_key):
         """ Get the variable with the given variable key for the given feature.
 
-    Args:
-      feature_key: The key of the feature for which we are getting the variable.
-      variable_key: The key of the variable we are getting.
+        Args:
+            feature_key: The key of the feature for which we are getting the variable.
+            variable_key: The key of the variable we are getting.
 
-    Returns:
-      Variable with the given key in the given variation.
-    """
+        Returns:
+            Variable with the given key in the given variation.
+        """
+
         feature = self.feature_key_map.get(feature_key)
         if not feature:
             self.logger.error('Feature with key "%s" not found in the datafile.' % feature_key)
@@ -503,30 +506,30 @@ class ProjectConfig(object):
     def get_anonymize_ip_value(self):
         """ Gets the anonymize IP value.
 
-      Returns:
-        A boolean value that indicates if the IP should be anonymized.
-    """
+        Returns:
+            A boolean value that indicates if the IP should be anonymized.
+        """
 
         return self.anonymize_ip
 
     def get_bot_filtering_value(self):
         """ Gets the bot filtering value.
 
-      Returns:
-        A boolean value that indicates if bot filtering should be enabled.
-    """
+        Returns:
+            A boolean value that indicates if bot filtering should be enabled.
+        """
 
         return self.bot_filtering
 
     def is_feature_experiment(self, experiment_id):
         """ Determines if given experiment is a feature test.
 
-      Args:
-        experiment_id: Experiment ID for which feature test is to be determined.
+        Args:
+            experiment_id: Experiment ID for which feature test is to be determined.
 
-      Returns:
-        A boolean value that indicates if given experiment is a feature test.
-    """
+        Returns:
+            A boolean value that indicates if given experiment is a feature test.
+        """
 
         return experiment_id in self.experiment_feature_map
 
