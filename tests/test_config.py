@@ -1103,7 +1103,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_experiment_from_key__invalid_key(self):
         """ Test that exception is raised when provided experiment key is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidExperimentException,
             enums.Errors.INVALID_EXPERIMENT_KEY,
             self.project_config.get_experiment_from_key,
@@ -1113,14 +1113,14 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_audience__invalid_id(self):
         """ Test that message is logged when provided audience ID is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidAudienceException, enums.Errors.INVALID_AUDIENCE, self.project_config.get_audience, '42',
         )
 
     def test_get_variation_from_key__invalid_experiment_key(self):
         """ Test that exception is raised when provided experiment key is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidExperimentException,
             enums.Errors.INVALID_EXPERIMENT_KEY,
             self.project_config.get_variation_from_key,
@@ -1131,7 +1131,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_variation_from_key__invalid_variation_key(self):
         """ Test that exception is raised when provided variation key is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidVariationException,
             enums.Errors.INVALID_VARIATION,
             self.project_config.get_variation_from_key,
@@ -1142,7 +1142,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_variation_from_id__invalid_experiment_key(self):
         """ Test that exception is raised when provided experiment key is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidExperimentException,
             enums.Errors.INVALID_EXPERIMENT_KEY,
             self.project_config.get_variation_from_id,
@@ -1153,7 +1153,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_variation_from_id__invalid_variation_id(self):
         """ Test that exception is raised when provided variation ID is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidVariationException,
             enums.Errors.INVALID_VARIATION,
             self.project_config.get_variation_from_key,
@@ -1164,7 +1164,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_event__invalid_key(self):
         """ Test that exception is raised when provided event key is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidEventException,
             enums.Errors.INVALID_EVENT_KEY,
             self.project_config.get_event,
@@ -1174,7 +1174,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_attribute_id__invalid_key(self):
         """ Test that exception is raised when provided attribute key is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE,
             self.project_config.get_attribute_id,
@@ -1184,7 +1184,7 @@ class ConfigExceptionTest(base.BaseTest):
     def test_get_group__invalid_id(self):
         """ Test that exception is raised when provided group ID is invalid. """
 
-        self.assertRaisesRegex(
+        self.assertRaisesRegexp(
             exceptions.InvalidGroupException, enums.Errors.INVALID_GROUP_ID, self.project_config.get_group, '42',
         )
 
