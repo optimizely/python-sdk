@@ -24,10 +24,10 @@ class OptimizelyConfig(object):
         self.datafile = datafile
 
     def get_datafile(self):
-        """ Get the datafile associated with project_config.
+        """ Get the datafile associated with OptimizelyConfig.
 
         Returns:
-            A JSON string representation of the project datafile.
+            A JSON string representation of the environment's datafile.
         """
         return self.datafile
 
