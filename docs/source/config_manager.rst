@@ -20,7 +20,7 @@ Config Manager
    :members:
 
 ``Authenticated Datafile Polling Config Manager``
---------------------------
+-------------------------------------------------
 
 .. autoclass:: optimizely.config_manager.AuthDatafilePollingConfigManager
    :members:
