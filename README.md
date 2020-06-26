@@ -135,8 +135,7 @@ by making HTTP requests.
 **Note**: To use [AuthDatafilePollingConfigManager](#authdatafilepollingconfigmanager), you must create a secure environment for
 your project and generate an access token for your datafile.
 
-**access_token**: The access_token is attached to the outbound HTTP request header to authorize the request and fetch the
-authenticated datafile.
+**access_token**: The access_token is attached to the outbound HTTP request header to authorize the request and fetch the datafile.
 
 #### Advanced configuration
 
