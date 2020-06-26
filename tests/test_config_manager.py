@@ -211,11 +211,11 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_get_config_blocks(self):
         """ Test that get_config blocks until blocking timeout is hit. """
         start_time = time.time()
-        project_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key', blocking_timeout=5)
+        project_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key', blocking_timeout=1)
         # Assert get_config should block until blocking timeout.
         project_config_manager.get_config()
         end_time = time.time()
-        self.assertEqual(5, round(end_time - start_time))
+        self.assertEqual(1, round(end_time - start_time))
 
 
 @mock.patch('requests.get')
