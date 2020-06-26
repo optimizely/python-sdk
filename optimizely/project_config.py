@@ -193,7 +193,7 @@ class ProjectConfig(object):
             return value
 
     def to_datafile(self):
-        """ Get the datafile.
+        """ Get the datafile corresponding to ProjectConfig.
 
         Returns:
             A JSON string representation of the project datafile.
