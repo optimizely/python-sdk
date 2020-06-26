@@ -211,11 +211,11 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_get_config_blocks(self):
         """ Test that get_config blocks until blocking timeout is hit. """
         start_time = time.time()
-        project_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key', blocking_timeout=5)
+        project_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key', blocking_timeout=1)
         # Assert get_config should block until blocking timeout.
         project_config_manager.get_config()
         end_time = time.time()
-        self.assertEqual(5, round(end_time - start_time))
+        self.assertEqual(1, round(end_time - start_time))
 
 
 @mock.patch('requests.get')
@@ -425,17 +425,22 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         """ Test that fetch_datafile sets authorization header in request header and sets config based on response. """
         access_token = 'some_token'
         sdk_key = 'some_key'
-        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
+        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'), mock.patch(
+            'optimizely.config_manager.AuthDatafilePollingConfigManager._run'
+        ):
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
                 access_token=access_token, sdk_key=sdk_key)
         expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
         test_response = requests.Response()
         test_response.status_code = 200
+        test_response.headers = test_headers
         test_response._content = test_datafile
 
         # Call fetch_datafile and assert that request was sent with correct authorization header
-        with mock.patch('requests.get', return_value=test_response) as mock_request:
+        with mock.patch('requests.get',
+                        return_value=test_response) as mock_request:
             project_config_manager.fetch_datafile()
 
         mock_request.assert_called_once_with(
