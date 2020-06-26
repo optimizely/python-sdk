@@ -425,7 +425,9 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         """ Test that fetch_datafile sets authorization header in request header and sets config based on response. """
         access_token = 'some_token'
         sdk_key = 'some_key'
-        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
+        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'), mock.patch(
+            'optimizely.config_manager.AuthDatafilePollingConfigManager._run'
+        ):
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
                 access_token=access_token, sdk_key=sdk_key)
         expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
@@ -438,9 +440,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
 
         # Call fetch_datafile and assert that request was sent with correct authorization header
         with mock.patch('requests.get',
-                        return_value=test_response) as mock_request, mock.patch(
-            'optimizely.config_manager.AuthDatafilePollingConfigManager._run'
-        ):
+                        return_value=test_response) as mock_request:
             project_config_manager.fetch_datafile()
 
         mock_request.assert_called_once_with(
