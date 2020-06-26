@@ -449,5 +449,4 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
 
-        self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
