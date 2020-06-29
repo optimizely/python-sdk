@@ -26,7 +26,7 @@ from optimizely.event.log_event import LogEvent
 from optimizely.event.user_event_factory import UserEventFactory
 from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
 from optimizely.helpers import enums
-from optimizely.logger import SimpleLogger
+from optimizely.logger import NoOpLogger
 from . import base
 
 
@@ -114,15 +114,16 @@ class BatchEventProcessorTest(base.BaseTest):
 
     DEFAULT_QUEUE_CAPACITY = 1000
     MAX_BATCH_SIZE = 10
-    MAX_DURATION_SEC = 1
-    MAX_TIMEOUT_INTERVAL_SEC = 5
+    MAX_DURATION_SEC = 0.2
+    MAX_TIMEOUT_INTERVAL_SEC = 0.1
+    TEST_TIMEOUT = 0.3
 
     def setUp(self, *args, **kwargs):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
         self.test_user_id = 'test_user'
         self.event_name = 'test_event'
         self.event_queue = queue.Queue(maxsize=self.DEFAULT_QUEUE_CAPACITY)
-        self.optimizely.logger = SimpleLogger()
+        self.optimizely.logger = NoOpLogger()
         self.notification_center = self.optimizely.notification_center
 
     def tearDown(self):
@@ -154,7 +155,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(5)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -169,7 +170,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(3)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -177,7 +178,7 @@ class BatchEventProcessorTest(base.BaseTest):
     def test_flush_once_max_timeout(self):
         event_dispatcher = TestEventDispatcher()
 
-        self.optimizely.logger = SimpleLogger(enums.LogLevels.DEBUG)
+        self.optimizely.logger = NoOpLogger()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -186,7 +187,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(1.75)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -195,7 +196,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.debug.assert_any_call('Flushing batch size 1')
         mock_config_logging.debug.assert_any_call('Flush interval deadline. Flushed batch.')
         self.assertTrue(mock_config_logging.debug.call_count == 3)
-        self.optimizely.logger = SimpleLogger()
+        self.optimizely.logger = NoOpLogger()
 
     def test_flush_max_batch_size(self):
         event_dispatcher = TestEventDispatcher()
@@ -208,7 +209,7 @@ class BatchEventProcessorTest(base.BaseTest):
             self.event_processor.process(user_event)
             event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(1)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -228,7 +229,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.flush()
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(3)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -253,7 +254,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event_2)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(3)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -278,7 +279,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event_2)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(3)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -293,7 +294,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(3)
+        time.sleep(self.TEST_TIMEOUT)
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.event_processor.stop()
@@ -509,7 +510,7 @@ class ForwardingEventProcessorTest(base.BaseTest):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
         self.test_user_id = 'test_user'
         self.event_name = 'test_event'
-        self.optimizely.logger = SimpleLogger()
+        self.optimizely.logger = NoOpLogger()
         self.notification_center = self.optimizely.notification_center
         self.event_dispatcher = TestForwardingEventDispatcher(is_updated=False)
 

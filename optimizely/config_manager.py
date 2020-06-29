@@ -402,9 +402,11 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
     def fetch_datafile(self):
         """ Fetch authenticated datafile and set ProjectConfig. """
-        request_headers = {}
-        request_headers[enums.HTTPHeaders.AUTHORIZATION] = \
-            enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(access_token=self.access_token)
+        request_headers = {
+            enums.HTTPHeaders.AUTHORIZATION: enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(
+                access_token=self.access_token
+            )
+        }
 
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
