@@ -135,7 +135,7 @@ by making HTTP requests.
 **Note**: To use [AuthDatafilePollingConfigManager](#authdatafilepollingconfigmanager), you must create a secure environment for
 your project and generate an access token for your datafile.
 
-**access_token**: The access_token is attached to the outbound HTTP request header to authorize the request and fetch the datafile.
+**access_token** The access_token is attached to the outbound HTTP request header to authorize the request and fetch the datafile.
 
 #### Advanced configuration
 
@@ -148,7 +148,7 @@ configurations for [PollingConfigManager](#pollingconfigmanager) and [AuthDatafi
 |     datafile      |                                                                                          None                                                                                           | Initial datafile, typically sourced from a local cached source |
 |  update_interval  |                                                                                        5 minutes                                                                                        |          Fixed delay between fetches for the datafile          |
 |        url        |                                                                                          None                                                                                           |      Custom URL location from which to fetch the datafile      |
-|   url_template    | `PollingConfigManager`:<br/>https://cdn.optimizely.com/datafiles/{sdk_key}.json<br/>`AuthDatafilePollingConfigManager`:<br/>https://config.optimizely.com/datafiles/auth/{sdk_key}.json |             Parameterized datafile URL by SDK key              |
+|   url_template    | `PollingConfigManager:`<br/>https://cdn.optimizely.com/datafiles/{sdk_key}.json<br/>`AuthDatafilePollingConfigManager:`<br/>https://config.optimizely.com/datafiles/auth/{sdk_key}.json |             Parameterized datafile URL by SDK key              |
 
 A notification signal will be triggered whenever a _new_ datafile is
 fetched and Project Config is updated. To subscribe to these
