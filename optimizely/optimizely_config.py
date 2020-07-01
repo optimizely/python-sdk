@@ -17,10 +17,19 @@ from .project_config import ProjectConfig
 
 
 class OptimizelyConfig(object):
-    def __init__(self, revision, experiments_map, features_map):
+    def __init__(self, revision, experiments_map, features_map, datafile=None):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
+        self.datafile = datafile
+
+    def get_datafile(self):
+        """ Get the datafile associated with OptimizelyConfig.
+
+        Returns:
+            A JSON string representation of the environment's datafile.
+        """
+        return self.datafile
 
 
 class OptimizelyExperiment(object):
@@ -68,6 +77,7 @@ class OptimizelyConfigService(object):
             self.is_valid = False
             return
 
+        self._datafile = project_config.to_datafile()
         self.experiments = project_config.experiments
         self.feature_flags = project_config.feature_flags
         self.groups = project_config.groups
@@ -88,7 +98,7 @@ class OptimizelyConfigService(object):
         experiments_key_map, experiments_id_map = self._get_experiments_maps()
         features_map = self._get_features_map(experiments_id_map)
 
-        return OptimizelyConfig(self.revision, experiments_key_map, features_map)
+        return OptimizelyConfig(self.revision, experiments_key_map, features_map, self._datafile)
 
     def _create_lookup_maps(self):
         """ Creates lookup maps to avoid redundant iteration of config objects.  """

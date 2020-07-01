@@ -985,6 +985,18 @@ class ConfigTest(base.BaseTest):
 
         self.assertIsNone(project_config.get_variable_for_feature('test_feature_in_experiment', 'invalid_variable_key'))
 
+    def test_to_datafile(self):
+        """ Test that to_datafile returns the expected datafile. """
+
+        expected_datafile = json.dumps(self.config_dict_with_features)
+
+        opt_obj = optimizely.Optimizely(expected_datafile)
+        project_config = opt_obj.config_manager.get_config()
+
+        actual_datafile = project_config.to_datafile()
+
+        self.assertEqual(expected_datafile, actual_datafile)
+
 
 class ConfigLoggingTest(base.BaseTest):
     def setUp(self):
