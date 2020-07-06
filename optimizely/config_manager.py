@@ -97,9 +97,9 @@ class StaticConfigManager(BaseConfigManager):
     def _set_config(self, datafile):
         """ Looks up and sets datafile and config based on response body.
 
-         Args:
-           datafile: JSON string representing the Optimizely project.
-         """
+        Args:
+            datafile: JSON string representing the Optimizely project.
+        """
 
         if self.validate_schema:
             if not validator.is_datafile_valid(datafile):
@@ -239,9 +239,9 @@ class PollingConfigManager(StaticConfigManager):
     def _set_config(self, datafile):
         """ Looks up and sets datafile and config based on response body.
 
-         Args:
-           datafile: JSON string representing the Optimizely project.
-         """
+        Args:
+            datafile: JSON string representing the Optimizely project.
+        """
         if datafile or self._config_ready_event.is_set():
             super(PollingConfigManager, self)._set_config(datafile=datafile)
             self._config_ready_event.set()
@@ -261,7 +261,7 @@ class PollingConfigManager(StaticConfigManager):
         """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
 
         Args:
-          update_interval: Time in seconds after which to update datafile.
+            update_interval: Time in seconds after which to update datafile.
         """
         if update_interval is None:
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
@@ -287,7 +287,7 @@ class PollingConfigManager(StaticConfigManager):
         """ Helper method to set time in seconds to block the config call until config has been initialized.
 
         Args:
-          blocking_timeout: Time in seconds to block the config call.
+            blocking_timeout: Time in seconds to block the config call.
         """
         if blocking_timeout is None:
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
@@ -312,9 +312,9 @@ class PollingConfigManager(StaticConfigManager):
     def set_last_modified(self, response_headers):
         """ Looks up and sets last modified time based on Last-Modified header in the response.
 
-         Args:
-             response_headers: requests.Response.headers
-         """
+        Args:
+            response_headers: requests.Response.headers
+        """
         self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
 
     def _handle_response(self, response):

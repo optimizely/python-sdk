@@ -253,7 +253,10 @@ class OptimizelyTest(base.BaseTest):
         self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
 
     def test_init__sdk_key_and_datafile_access_token(self):
-        """ Test that if both sdk_key and datafile_access_token is provided then AuthDatafilePollingConfigManager is used. """
+        """ 
+            Test that if both sdk_key and datafile_access_token is provided then AuthDatafilePollingConfigManager 
+            is used. 
+        """
 
         with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager._set_config'), mock.patch(
             'threading.Thread.start'
