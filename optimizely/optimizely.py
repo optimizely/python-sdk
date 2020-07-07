@@ -252,8 +252,8 @@ class Optimizely(object):
                 )
             else:
                 self.logger.info(
-                    'Feature "%s" for variation "%s" is not enabled. '
-                    'Returning the default variable value "%s".' % (feature_key, decision.variation.key, variable_value)
+                    'Feature "%s" is not enabled for user "%s". '
+                    'Returning the default variable value "%s".' % (feature_key, user_id, variable_value)
                 )
         else:
             self.logger.info(
@@ -329,11 +329,11 @@ class Optimizely(object):
             feature_enabled = decision.variation.featureEnabled
             if feature_enabled:
                 self.logger.info(
-                    'Feature "%s" for variation "%s" is enabled.' % (feature_key, decision.variation.key)
+                    'Feature "%s" is enabled for user "%s".' % (feature_key, user_id)
                 )
             else:
                 self.logger.info(
-                    'Feature "%s" for variation "%s" is not enabled.' % (feature_key, decision.variation.key)
+                    'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id)
                 )
         else:
             self.logger.info(
