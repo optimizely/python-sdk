@@ -127,7 +127,7 @@ implements `PollingConfigManager` and asynchronously polls for authenticated dat
 by making HTTP requests.
 
     auth_datafile_polling_config_manager = AuthDatafilePollingConfigManager(
-        access_token,
+        datafile_access_token,
         *args,
         **kwargs
     )
@@ -135,7 +135,7 @@ by making HTTP requests.
 **Note**: To use [AuthDatafilePollingConfigManager](#authdatafilepollingconfigmanager), you must create a secure environment for
 your project and generate an access token for your datafile.
 
-**access_token** The access_token is attached to the outbound HTTP request header to authorize the request and fetch the datafile.
+**datafile_access_token** The datafile_access_token is attached to the outbound HTTP request header to authorize the request and fetch the datafile.
 
 #### Advanced configuration
 

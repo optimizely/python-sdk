@@ -402,34 +402,34 @@ class PollingConfigManagerTest(base.BaseTest):
 
 @mock.patch('requests.get')
 class AuthDatafilePollingConfigManagerTest(base.BaseTest):
-    def test_init__access_token_none__fails(self, _):
-        """ Test that initialization fails if access_token is None. """
+    def test_init__datafile_access_token_none__fails(self, _):
+        """ Test that initialization fails if datafile_access_token is None. """
         self.assertRaisesRegexp(
             optimizely_exceptions.InvalidInputException,
-            'access_token cannot be empty or None.',
+            'datafile_access_token cannot be empty or None.',
             config_manager.AuthDatafilePollingConfigManager,
-            access_token=None
+            datafile_access_token=None
         )
 
-    def test_set_access_token(self, _):
-        """ Test that access_token is properly set as instance variable. """
-        access_token = 'some_token'
+    def test_set_datafile_access_token(self, _):
+        """ Test that datafile_access_token is properly set as instance variable. """
+        datafile_access_token = 'some_token'
         sdk_key = 'some_key'
         with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
-                access_token=access_token, sdk_key=sdk_key)
+                datafile_access_token=datafile_access_token, sdk_key=sdk_key)
 
-        self.assertEqual(access_token, project_config_manager.access_token)
+        self.assertEqual(datafile_access_token, project_config_manager.datafile_access_token)
 
     def test_fetch_datafile(self, _):
         """ Test that fetch_datafile sets authorization header in request header and sets config based on response. """
-        access_token = 'some_token'
+        datafile_access_token = 'some_token'
         sdk_key = 'some_key'
         with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'), mock.patch(
             'optimizely.config_manager.AuthDatafilePollingConfigManager._run'
         ):
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
-                access_token=access_token, sdk_key=sdk_key)
+                datafile_access_token=datafile_access_token, sdk_key=sdk_key)
         expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
@@ -445,7 +445,8 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
 
         mock_request.assert_called_once_with(
             expected_datafile_url,
-            headers={'Authorization': 'Bearer {access_token}'.format(access_token=access_token)},
+            headers={'Authorization': 'Bearer {datafile_access_token}'.format(
+                datafile_access_token=datafile_access_token)},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
 
