@@ -97,9 +97,9 @@ class StaticConfigManager(BaseConfigManager):
     def _set_config(self, datafile):
         """ Looks up and sets datafile and config based on response body.
 
-         Args:
-           datafile: JSON string representing the Optimizely project.
-         """
+        Args:
+            datafile: JSON string representing the Optimizely project.
+        """
 
         if self.validate_schema:
             if not validator.is_datafile_valid(datafile):
@@ -239,9 +239,9 @@ class PollingConfigManager(StaticConfigManager):
     def _set_config(self, datafile):
         """ Looks up and sets datafile and config based on response body.
 
-         Args:
-           datafile: JSON string representing the Optimizely project.
-         """
+        Args:
+            datafile: JSON string representing the Optimizely project.
+        """
         if datafile or self._config_ready_event.is_set():
             super(PollingConfigManager, self)._set_config(datafile=datafile)
             self._config_ready_event.set()
@@ -261,7 +261,7 @@ class PollingConfigManager(StaticConfigManager):
         """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
 
         Args:
-          update_interval: Time in seconds after which to update datafile.
+            update_interval: Time in seconds after which to update datafile.
         """
         if update_interval is None:
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
@@ -287,7 +287,7 @@ class PollingConfigManager(StaticConfigManager):
         """ Helper method to set time in seconds to block the config call until config has been initialized.
 
         Args:
-          blocking_timeout: Time in seconds to block the config call.
+            blocking_timeout: Time in seconds to block the config call.
         """
         if blocking_timeout is None:
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
@@ -312,9 +312,9 @@ class PollingConfigManager(StaticConfigManager):
     def set_last_modified(self, response_headers):
         """ Looks up and sets last modified time based on Last-Modified header in the response.
 
-         Args:
-             response_headers: requests.Response.headers
-         """
+        Args:
+            response_headers: requests.Response.headers
+        """
         self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
 
     def _handle_response(self, response):
@@ -379,32 +379,32 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
     def __init__(
         self,
-        access_token,
+        datafile_access_token,
         *args,
         **kwargs
     ):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
         Args:
-            access_token: String to be attached to the request header to fetch the authenticated datafile.
+            datafile_access_token: String to be attached to the request header to fetch the authenticated datafile.
             *args: Refer to arguments descriptions in PollingConfigManager.
             **kwargs: Refer to keyword arguments descriptions in PollingConfigManager.
         """
-        self._set_access_token(access_token)
+        self._set_datafile_access_token(datafile_access_token)
         super(AuthDatafilePollingConfigManager, self).__init__(*args, **kwargs)
 
-    def _set_access_token(self, access_token):
+    def _set_datafile_access_token(self, datafile_access_token):
         """ Checks for valid access token input and sets it. """
-        if not access_token:
+        if not datafile_access_token:
             raise optimizely_exceptions.InvalidInputException(
-                'access_token cannot be empty or None.')
-        self.access_token = access_token
+                'datafile_access_token cannot be empty or None.')
+        self.datafile_access_token = datafile_access_token
 
     def fetch_datafile(self):
         """ Fetch authenticated datafile and set ProjectConfig. """
         request_headers = {
             enums.HTTPHeaders.AUTHORIZATION: enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(
-                access_token=self.access_token
+                datafile_access_token=self.datafile_access_token
             )
         }
 
