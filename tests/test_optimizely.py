@@ -2617,7 +2617,8 @@ class OptimizelyTest(base.BaseTest):
                           'feature flag "test_feature_in_experiment".'),
                 mock.call('Got variable value "staging" for variable "environment" of '
                           'feature flag "test_feature_in_experiment".'),
-                mock.call('Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".')
+                mock.call('Got variable value "10.02" for variable "cost" of '
+                          'feature flag "test_feature_in_experiment".')
             ], any_order=True
         )
 
@@ -2776,7 +2777,6 @@ class OptimizelyTest(base.BaseTest):
         mock_logger.info.assert_called_once_with(
             'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
-
 
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
