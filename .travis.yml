@@ -19,6 +19,7 @@ stages:
   - 'Linting'
   - 'Integration tests'
   - 'Test'
+  - 'Production tests'
 
 jobs:
   include:
@@ -51,7 +52,9 @@ jobs:
       install: "pip install flake8==3.6.0" 
       script: "flake8"
       after_success: travis_terminate 0
-    - stage: 'Integration tests'
+    
+    - &integrationtest
+      stage: 'Integration tests'
       merge_mode: replace
       env: SDK=python SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
       cache: false
@@ -62,6 +65,14 @@ jobs:
       script:
         - $HOME/travisci-tools/trigger-script-with-status-update.sh
       after_success: travis_terminate 0
+
+    - <<: *integrationtest
+      stage: 'Production tests'
+      env:
+        SDK=python
+        SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
+        FULLSTACK_TEST_REPO=ProdTesting
+
     - stage: 'Test'
       addons:
         srcclr: true
