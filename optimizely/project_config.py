@@ -465,16 +465,9 @@ class ProjectConfig(object):
 
         if variable_usage:
             variable_value = variable_usage.value
-            self.logger.info(
-                'Value for variable "%s" for variation "%s" is "%s".' % (variable.key, variation.key, variable_value)
-            )
 
         else:
             variable_value = variable.defaultValue
-            self.logger.info(
-                'Variable "%s" is not used in variation "%s". Assigning default value "%s".'
-                % (variable.key, variation.key, variable_value)
-            )
 
         return variable_value
 
