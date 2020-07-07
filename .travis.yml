@@ -18,8 +18,8 @@ stages:
   - 'Lint markdown files'
   - 'Linting'
   - 'Integration tests'
-  - 'Test'
   - 'Production tests'
+  - 'Test'
 
 jobs:
   include:
