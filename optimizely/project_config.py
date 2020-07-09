@@ -40,7 +40,7 @@ class ProjectConfig(object):
         """
 
         config = json.loads(datafile)
-        self._datafile = config
+        self._datafile = str(datafile)
         self.logger = logger
         self.error_handler = error_handler
         self.version = config.get('version')
@@ -196,7 +196,7 @@ class ProjectConfig(object):
         """ Get the datafile corresponding to ProjectConfig.
 
         Returns:
-            A JSON representation of the project datafile.
+            A JSON string representation of the project datafile.
         """
 
         return self._datafile

@@ -27,7 +27,7 @@ class OptimizelyConfig(object):
         """ Get the datafile associated with OptimizelyConfig.
 
         Returns:
-            A JSON representation of the environment's datafile.
+            A JSON string representation of the environment's datafile.
         """
         return self._datafile
 
