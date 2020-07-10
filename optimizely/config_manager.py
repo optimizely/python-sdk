@@ -325,7 +325,7 @@ class PollingConfigManager(StaticConfigManager):
         """
         try:
             response.raise_for_status()
-        except requests_exceptions.HTTPError as err:
+        except requests_exceptions.RequestException as err:
             self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
             return
 
