@@ -4,7 +4,7 @@
 July 10th, 2020
 
 ### Bug Fixes:
-* Fixed HTTP request exception handling in PollingConfigManager. ([#285](https://github.com/optimizely/python-sdk/pull/285))
+* Fixed HTTP request exception handling in `PollingConfigManager`. ([#285](https://github.com/optimizely/python-sdk/pull/285))
 
 ## 3.5.0
 July 9th, 2020
