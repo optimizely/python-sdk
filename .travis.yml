@@ -19,6 +19,7 @@ stages:
   - 'Linting'
   - 'Integration tests'
   - 'Test'
+  - 'Source Clear'
 
 jobs:
   include:
@@ -63,12 +64,18 @@ jobs:
         - $HOME/travisci-tools/trigger-script-with-status-update.sh
       after_success: travis_terminate 0
     - stage: 'Test'
-      addons:
-        srcclr: true
       dist: xenial
       python: "3.7"
     - stage: 'Test'
-      addons:
-        srcclr: true
       dist: xenial
       python: "3.8"
+
+    - stage: 'Source Clear'
+      if: type = cron
+      addons:
+        srcclr: true
+      before_install: skip
+      install: skip
+      before_script: skip
+      script: skip
+      after_success: skip
