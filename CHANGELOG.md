@@ -1,5 +1,23 @@
 # Optimizely Python SDK Changelog
 
+## 3.5.1
+July 10th, 2020
+
+### Bug Fixes:
+* Fixed HTTP request exception handling in `PollingConfigManager`. ([#285](https://github.com/optimizely/python-sdk/pull/285))
+
+## 3.5.0
+July 9th, 2020
+
+### New Features:
+* Introduced 2 APIs to interact with feature variables:
+  * `get_feature_variable_json` allows you to get value for JSON variables related to a feature.
+  * `get_all_feature_variables` gets values for all variables under a feature.
+* Added support for fetching authenticated datafiles. `AuthDatafilePollingConfigManager` is a new config manager that allows you to poll for a datafile belonging to a secure environment. You can create a client by setting the `datafile_access_token`.
+
+### Bug Fixes:
+* Fixed log messages for targeted rollouts evaluation. ([#268](https://github.com/optimizely/python-sdk/pull/268))
+
 ## 3.4.2
 June 11th, 2020
 

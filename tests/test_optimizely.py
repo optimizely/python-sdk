@@ -252,13 +252,16 @@ class OptimizelyTest(base.BaseTest):
 
         self.assertIs(type(opt_obj.config_manager), config_manager.PollingConfigManager)
 
-    def test_init__sdk_key_and_access_token(self):
-        """ Test that if both sdk_key and access_token is provided then AuthDatafilePollingConfigManager is used. """
+    def test_init__sdk_key_and_datafile_access_token(self):
+        """
+            Test that if both sdk_key and datafile_access_token is provided then AuthDatafilePollingConfigManager
+            is used.
+        """
 
         with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager._set_config'), mock.patch(
             'threading.Thread.start'
         ):
-            opt_obj = optimizely.Optimizely(access_token='test_access_token', sdk_key='test_sdk_key')
+            opt_obj = optimizely.Optimizely(datafile_access_token='test_datafile_access_token', sdk_key='test_sdk_key')
 
         self.assertIs(type(opt_obj.config_manager), config_manager.AuthDatafilePollingConfigManager)
 
@@ -2395,15 +2398,15 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
                 opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user')
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "is_working" for variation "variation" is "true".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "true" for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2432,15 +2435,15 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
                 10.02, opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "cost" for variation "variation" is "10.02".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2469,15 +2472,15 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
                 4243, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "count" for variation "variation" is "4243".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "4243" for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2497,8 +2500,8 @@ class OptimizelyTest(base.BaseTest):
         )
 
     def test_get_feature_variable_string(self):
-        """ Test that get_feature_variable_string returns String value as expected \
-    and broadcasts decision with proper parameters. """
+        """ Test that get_feature_variable_string returns String value as expected and
+        broadcasts decision with proper parameters. """
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('test_experiment')
@@ -2506,7 +2509,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
@@ -2514,8 +2517,8 @@ class OptimizelyTest(base.BaseTest):
                 opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "environment" for variation "variation" is "staging".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "staging" for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2544,7 +2547,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
@@ -2552,8 +2555,8 @@ class OptimizelyTest(base.BaseTest):
                 opt_obj.get_feature_variable_json('test_feature_in_experiment', 'object', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "object" for variation "variation" is "{"test": 123}".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2590,7 +2593,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
@@ -2598,18 +2601,24 @@ class OptimizelyTest(base.BaseTest):
                 opt_obj.get_all_feature_variables('test_feature_in_experiment', 'test_user'),
             )
 
-        self.assertEqual(7, mock_config_logging.info.call_count)
+        self.assertEqual(7, mock_logger.debug.call_count)
 
-        mock_config_logging.info.assert_has_calls(
+        mock_logger.debug.assert_has_calls(
             [
-                mock.call('Value for variable "count" for variation "variation" is "4243".'),
-                mock.call('Value for variable "is_working" for variation "variation" is "true".'),
-                mock.call('Variable "variable_without_usage" is not used in variation "variation". \
-Assigning default value "45".'),
-                mock.call('Value for variable "object" for variation "variation" is "{"test": 123}".'),
-                mock.call('Value for variable "true_object" for variation "variation" is "{"true_test": 1.4}".'),
-                mock.call('Value for variable "environment" for variation "variation" is "staging".'),
-                mock.call('Value for variable "cost" for variation "variation" is "10.02".')
+                mock.call('Got variable value "4243" for variable "count" of '
+                          'feature flag "test_feature_in_experiment".'),
+                mock.call('Got variable value "true" for variable "is_working" of '
+                          'feature flag "test_feature_in_experiment".'),
+                mock.call('Got variable value "45" for variable "variable_without_usage" of '
+                          'feature flag "test_feature_in_experiment".'),
+                mock.call('Got variable value "{"test": 123}" for variable "object" of '
+                          'feature flag "test_feature_in_experiment".'),
+                mock.call('Got variable value "{"true_test": 1.4}" for variable "true_object" of '
+                          'feature flag "test_feature_in_experiment".'),
+                mock.call('Got variable value "staging" for variable "environment" of '
+                          'feature flag "test_feature_in_experiment".'),
+                mock.call('Got variable value "10.02" for variable "cost" of '
+                          'feature flag "test_feature_in_experiment".')
             ], any_order=True
         )
 
@@ -2640,13 +2649,13 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(opt_obj.get_feature_variable('test_feature_in_experiment', 'is_working', 'test_user'))
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "is_working" for variation "variation" is "true".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "true" for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2668,15 +2677,15 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
                 10.02, opt_obj.get_feature_variable('test_feature_in_experiment', 'cost', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "cost" for variation "variation" is "10.02".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2698,15 +2707,15 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
                 4243, opt_obj.get_feature_variable('test_feature_in_experiment', 'count', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "count" for variation "variation" is "4243".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "4243" for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2728,15 +2737,15 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
                 'staging', opt_obj.get_feature_variable('test_feature_in_experiment', 'environment', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "environment" for variation "variation" is "staging".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "staging" for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2758,15 +2767,15 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertEqual(
                 {"test": 123}, opt_obj.get_feature_variable('test_feature_in_experiment', 'object', 'test_user'),
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "object" for variation "variation" is "{"test": 123}".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2797,7 +2806,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -2806,8 +2815,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "is_running" for variation "211129" is "true".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "true" for variable "is_running" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2838,7 +2847,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -2847,8 +2856,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "price" for variation "211129" is "39.99".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "39.99" for variable "price" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2879,7 +2888,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -2888,7 +2897,9 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with('Value for variable "count" for variation "211129" is "399".')
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "399" for variable "count" of feature flag "test_feature_in_rollout".'
+        )
 
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
@@ -2918,7 +2929,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -2927,8 +2938,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "message" for variation "211129" is "Hello audience".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "Hello audience" for variable "message" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -2959,7 +2970,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -2968,8 +2979,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "object" for variation "211129" is "{"field": 12}".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "{"field": 12}" for variable "object" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -3000,7 +3011,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -3009,17 +3020,23 @@ Assigning default value "45".'),
                 )
             )
 
-        self.assertEqual(5, mock_config_logging.info.call_count)
+        self.assertEqual(5, mock_logger.debug.call_count)
 
-        mock_config_logging.info.assert_has_calls(
+        mock_logger.debug.assert_has_calls(
             [
-                mock.call('Value for variable "count" for variation "211129" is "399".'),
-                mock.call('Value for variable "message" for variation "211129" is "Hello audience".'),
-                mock.call('Value for variable "object" for variation "211129" is "{"field": 12}".'),
-                mock.call('Value for variable "price" for variation "211129" is "39.99".'),
-                mock.call('Value for variable "is_running" for variation "211129" is "true".'),
+                mock.call('Got variable value "399" for variable "count" of '
+                          'feature flag "test_feature_in_rollout".'),
+                mock.call('Got variable value "Hello audience" for variable "message" of '
+                          'feature flag "test_feature_in_rollout".'),
+                mock.call('Got variable value "{"field": 12}" for variable "object" of '
+                          'feature flag "test_feature_in_rollout".'),
+                mock.call('Got variable value "39.99" for variable "price" of '
+                          'feature flag "test_feature_in_rollout".'),
+                mock.call('Got variable value "true" for variable "is_running" of '
+                          'feature flag "test_feature_in_rollout".'),
             ], any_order=True
         )
+
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
             'all-feature-variables',
@@ -3047,7 +3064,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -3056,8 +3073,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "is_running" for variation "211129" is "true".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "true" for variable "is_running" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -3079,7 +3096,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -3088,8 +3105,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "price" for variation "211129" is "39.99".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "39.99" for variable "price" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -3111,7 +3128,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -3120,7 +3137,9 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with('Value for variable "count" for variation "211129" is "399".')
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "399" for variable "count" of feature flag "test_feature_in_rollout".'
+        )
 
         mock_broadcast_decision.assert_called_once_with(
             enums.NotificationTypes.DECISION,
@@ -3141,7 +3160,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -3150,8 +3169,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "message" for variation "211129" is "Hello audience".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "Hello audience" for variable "message" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -3174,7 +3193,7 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logging, mock.patch(
+        ), mock.patch.object(opt_obj, 'logger') as mock_logger, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision:
             self.assertTrue(
@@ -3183,8 +3202,8 @@ Assigning default value "45".'),
                 )
             )
 
-        mock_config_logging.info.assert_called_once_with(
-            'Value for variable "object" for variation "211129" is "{"field": 12}".'
+        mock_logger.info.assert_called_once_with(
+            'Got variable value "{"field": 12}" for variable "object" of feature flag "test_feature_in_rollout".'
         )
 
         mock_broadcast_decision.assert_called_once_with(
@@ -3217,122 +3236,77 @@ Assigning default value "45".'),
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertTrue(
                 opt_obj.get_feature_variable_boolean('test_feature_in_experiment', 'is_working', 'test_user')
             )
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "is_working" is not used in variation "variation". Assigning default value "true".'
-        )
-        mock_config_logger.info.reset_mock()
 
         # Double
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 10.99, opt_obj.get_feature_variable_double('test_feature_in_experiment', 'cost', 'test_user'),
             )
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "cost" is not used in variation "variation". Assigning default value "10.99".'
-        )
-        mock_config_logger.info.reset_mock()
 
         # Integer
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 999, opt_obj.get_feature_variable_integer('test_feature_in_experiment', 'count', 'test_user'),
             )
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "count" is not used in variation "variation". Assigning default value "999".'
-        )
-        mock_config_logger.info.reset_mock()
 
         # String
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 'devel', opt_obj.get_feature_variable_string('test_feature_in_experiment', 'environment', 'test_user'),
             )
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "environment" is not used in variation "variation". Assigning default value "devel".'
-        )
-        mock_config_logger.info.reset_mock()
 
         # JSON
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 {"test": 12}, opt_obj.get_feature_variable_json('test_feature_in_experiment', 'object', 'test_user'),
             )
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "object" is not used in variation "variation". Assigning default value "{"test": 12}".'
-        )
-        mock_config_logger.info.reset_mock()
 
         # Non-typed
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertTrue(opt_obj.get_feature_variable('test_feature_in_experiment', 'is_working', 'test_user'))
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "is_working" is not used in variation "variation". Assigning default value "true".'
-        )
-        mock_config_logger.info.reset_mock()
 
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 10.99, opt_obj.get_feature_variable('test_feature_in_experiment', 'cost', 'test_user'),
             )
 
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "cost" is not used in variation "variation". Assigning default value "10.99".'
-        )
-        mock_config_logger.info.reset_mock()
-
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 999, opt_obj.get_feature_variable('test_feature_in_experiment', 'count', 'test_user'),
             )
 
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "count" is not used in variation "variation". Assigning default value "999".'
-        )
-        mock_config_logger.info.reset_mock()
-
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ), mock.patch.object(opt_obj.config_manager.get_config(), 'logger') as mock_config_logger:
+        ):
             self.assertEqual(
                 'devel', opt_obj.get_feature_variable('test_feature_in_experiment', 'environment', 'test_user'),
             )
-
-        mock_config_logger.info.assert_called_once_with(
-            'Variable "environment" is not used in variation "variation". Assigning default value "devel".'
-        )
-        mock_config_logger.info.reset_mock()
 
     def test_get_feature_variable__returns_default_value_if_no_variation(self):
         """ Test that get_feature_variable_* returns default value if no variation \
@@ -3931,7 +3905,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "true".'
         )
 
@@ -3945,7 +3919,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "10.99".'
         )
 
@@ -3959,7 +3933,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "999".'
         )
 
@@ -3973,7 +3947,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "devel".'
         )
 
@@ -3987,7 +3961,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "{"test": 12}".'
         )
 
@@ -4000,7 +3974,7 @@ Assigning default value "45".'),
             self.assertTrue(opt_obj.get_feature_variable('test_feature_in_experiment', 'is_working', 'test_user'))
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "true".'
         )
 
@@ -4013,7 +3987,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "10.99".'
         )
 
@@ -4026,7 +4000,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "999".'
         )
 
@@ -4039,7 +4013,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_experiment" for variation "control" is not enabled. '
+            'Feature "test_feature_in_experiment" is not enabled for user "test_user". '
             'Returning the default variable value "devel".'
         )
 
@@ -4058,7 +4032,7 @@ Assigning default value "45".'),
             self.assertFalse(opt_obj.get_feature_variable_boolean('test_feature_in_rollout', 'is_running', 'test_user'))
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "false".'
         )
 
@@ -4072,7 +4046,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "99.99".'
         )
 
@@ -4086,7 +4060,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "999".'
         )
 
@@ -4099,7 +4073,7 @@ Assigning default value "45".'),
                 'Hello', opt_obj.get_feature_variable_string('test_feature_in_rollout', 'message', 'test_user'),
             )
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "Hello".'
         )
 
@@ -4112,7 +4086,7 @@ Assigning default value "45".'),
                 {"field": 1}, opt_obj.get_feature_variable_json('test_feature_in_rollout', 'object', 'test_user'),
             )
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "{"field": 1}".'
         )
 
@@ -4124,7 +4098,7 @@ Assigning default value "45".'),
             self.assertFalse(opt_obj.get_feature_variable('test_feature_in_rollout', 'is_running', 'test_user'))
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "false".'
         )
 
@@ -4137,7 +4111,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "99.99".'
         )
 
@@ -4150,7 +4124,7 @@ Assigning default value "45".'),
             )
 
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "999".'
         )
 
@@ -4162,7 +4136,7 @@ Assigning default value "45".'),
                 'Hello', opt_obj.get_feature_variable('test_feature_in_rollout', 'message', 'test_user'),
             )
         mock_client_logger.info.assert_called_once_with(
-            'Feature "test_feature_in_rollout" for variation "211229" is not enabled. '
+            'Feature "test_feature_in_rollout" is not enabled for user "test_user". '
             'Returning the default variable value "Hello".'
         )
 
@@ -4477,10 +4451,10 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         """ Test that expected log messages are logged during track when attributes are in invalid format. """
 
         mock_logger = mock.patch.object(self.optimizely, 'logger')
-        with mock_logger as mock_logging:
+        with mock_logger as mock_logger:
             self.optimizely.track('test_event', 'test_user', attributes='invalid')
 
-        mock_logging.error.assert_called_once_with('Provided attributes are in an invalid format.')
+        mock_logger.error.assert_called_once_with('Provided attributes are in an invalid format.')
 
     def test_track__invalid_event_tag(self):
         """ Test that expected log messages are logged during track when event_tag is in invalid format. """

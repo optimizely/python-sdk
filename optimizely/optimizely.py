@@ -44,7 +44,7 @@ class Optimizely(object):
         config_manager=None,
         notification_center=None,
         event_processor=None,
-        access_token=None,
+        datafile_access_token=None,
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -67,7 +67,7 @@ class Optimizely(object):
                        By default optimizely.event.event_processor.ForwardingEventProcessor is used
                        which simply forwards events to the event dispatcher.
                        To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
-      access_token: Optional string used to fetch authenticated datafile for a secure project environment.
+      datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
     """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -101,8 +101,8 @@ class Optimizely(object):
         if not self.config_manager:
             if sdk_key:
                 config_manager_options['sdk_key'] = sdk_key
-                if access_token:
-                    config_manager_options['access_token'] = access_token
+                if datafile_access_token:
+                    config_manager_options['datafile_access_token'] = datafile_access_token
                     self.config_manager = AuthDatafilePollingConfigManager(**config_manager_options)
                 else:
                     self.config_manager = PollingConfigManager(**config_manager_options)
@@ -252,8 +252,8 @@ class Optimizely(object):
                 )
             else:
                 self.logger.info(
-                    'Feature "%s" for variation "%s" is not enabled. '
-                    'Returning the default variable value "%s".' % (feature_key, decision.variation.key, variable_value)
+                    'Feature "%s" is not enabled for user "%s". '
+                    'Returning the default variable value "%s".' % (feature_key, user_id, variable_value)
                 )
         else:
             self.logger.info(
@@ -329,11 +329,11 @@ class Optimizely(object):
             feature_enabled = decision.variation.featureEnabled
             if feature_enabled:
                 self.logger.info(
-                    'Feature "%s" for variation "%s" is enabled.' % (feature_key, decision.variation.key)
+                    'Feature "%s" is enabled for user "%s".' % (feature_key, user_id)
                 )
             else:
                 self.logger.info(
-                    'Feature "%s" for variation "%s" is not enabled.' % (feature_key, decision.variation.key)
+                    'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id)
                 )
         else:
             self.logger.info(
