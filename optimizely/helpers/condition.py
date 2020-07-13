@@ -32,6 +32,11 @@ class ConditionMatchTypes(object):
     GREATER_THAN = 'gt'
     LESS_THAN = 'lt'
     SUBSTRING = 'substring'
+    SEMVER_EQ = 'semver_eq'
+    SEMVER_GT = 'semver_gt'
+    SEMVER_LT = 'semver_lt'
+    SEMVER_GE = 'semver_ge'
+    SEMVER_LE = 'semver_le'
 
 
 class CustomAttributeConditionEvaluator(object):
@@ -233,12 +238,98 @@ class CustomAttributeConditionEvaluator(object):
 
         return condition_value in user_value
 
+    def semver_equal_evaluator(self, index):
+
+        condition_name = self.condition_data[index][0]
+        condition_value = self.condition_data[index][1]
+        user_value = self.attributes.get(condition_name)
+
+        if not self.is_value_type_valid_for_exact_conditions(condition_value):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index)))
+            return None
+
+        if not self.is_value_type_valid_for_exact_conditions(user_value) or not validator.are_values_same_type(
+            condition_value, user_value
+        ):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
+            )
+            return None
+
+        return condition_value == user_value
+
+    def semver_greater_than_evaluator(self, index):
+
+        condition_name = self.condition_data[index][0]
+        condition_value = self.condition_data[index][1]
+        user_value = self.attributes.get(condition_name)
+
+        condition_version_parts = condition_value.split(".")
+        user_version_parts = user_value.split(".")
+
+        condition_version_parts_len = len(condition_version_parts)
+        user_version_parts_len = len(user_version_parts)
+
+        # fill smaller version with 0s
+        if condition_version_parts_len > user_version_parts_len:
+            for i in range(user_version_parts_len, condition_version_parts_len):
+                user_version_parts.append("0")
+        elif user_version_parts_len > condition_version_parts_len:
+            for i in range(condition_version_parts_len, user_version_parts_len):
+                condition_version_parts.append("0")
+
+        for (idx, _) in enumerate(condition_version_parts):
+            if int(user_version_parts[idx]) > int(condition_version_parts[idx]):
+                return True
+            else:
+                return False
+
+    def semver_less_than_evaluator(self, index):
+
+        condition_name = self.condition_data[index][0]
+        condition_value = self.condition_data[index][1]
+        user_value = self.attributes.get(condition_name)
+
+        condition_version_parts = condition_value.split(".")
+        user_version_parts = user_value.split(".")
+
+        condition_version_parts_len = len(condition_version_parts)
+        user_version_parts_len = len(user_version_parts)
+
+        # fill smaller version with 0s
+        if condition_version_parts_len > user_version_parts_len:
+            for i in range(user_version_parts_len, condition_version_parts_len):
+                user_version_parts.append("0")
+        elif user_version_parts_len > condition_version_parts_len:
+            for i in range(condition_version_parts_len, user_version_parts_len):
+                condition_version_parts.append("0")
+
+        for (idx, _) in enumerate(condition_version_parts):
+            if int(user_version_parts[idx]) < int(condition_version_parts[idx]):
+                return True
+            else:
+                return False
+
+    def semver_less_than_and_equal_evaluator(self, index):
+        if self.semver_less_than_evaluator(self, index) or self.semver_equal_evaluator(self, index):
+            return True
+
+    def semver_greater_than_and_equal_evaluator(self, index):
+        if self.semver_greater_than_evaluator(self, index) or self.semver_equal_evaluator(self, index):
+            return True
+
+
     EVALUATORS_BY_MATCH_TYPE = {
         ConditionMatchTypes.EXACT: exact_evaluator,
         ConditionMatchTypes.EXISTS: exists_evaluator,
         ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
         ConditionMatchTypes.LESS_THAN: less_than_evaluator,
         ConditionMatchTypes.SUBSTRING: substring_evaluator,
+        ConditionMatchTypes.SEMVER_EQ: exact_evaluator,
+        ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
+        ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
+        ConditionMatchTypes.SEMVER_LE: semver_less_than_and_equal_evaluator,
+        ConditionMatchTypes.SEMVER_GE: semver_greater_than_and_equal_evaluator
     }
 
     def evaluate(self, index):
