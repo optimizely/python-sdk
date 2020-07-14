@@ -244,19 +244,10 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if not self.is_value_type_valid_for_exact_conditions(condition_value):
-            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index)))
-            return None
-
-        if not self.is_value_type_valid_for_exact_conditions(user_value) or not validator.are_values_same_type(
-            condition_value, user_value
-        ):
-            self.logger.warning(
-                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
-            )
-            return None
-
-        return condition_value == user_value
+        if self.compare_versions(condition_value, user_value) is None:
+            return True
+        else:
+            return False
 
     def semver_greater_than_evaluator(self, index):
 
@@ -264,25 +255,10 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        condition_version_parts = condition_value.split(".")
-        user_version_parts = user_value.split(".")
-
-        condition_version_parts_len = len(condition_version_parts)
-        user_version_parts_len = len(user_version_parts)
-
-        # fill smaller version with 0s
-        if condition_version_parts_len > user_version_parts_len:
-            for i in range(user_version_parts_len, condition_version_parts_len):
-                user_version_parts.append("0")
-        elif user_version_parts_len > condition_version_parts_len:
-            for i in range(condition_version_parts_len, user_version_parts_len):
-                condition_version_parts.append("0")
-
-        for (idx, _) in enumerate(condition_version_parts):
-            if int(user_version_parts[idx]) > int(condition_version_parts[idx]):
-                return True
-            else:
-                return False
+        if self.compare_versions(condition_value, user_value) is True:
+            return True
+        else:
+            return False
 
     def semver_less_than_evaluator(self, index):
 
@@ -290,8 +266,23 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        condition_version_parts = condition_value.split(".")
-        user_version_parts = user_value.split(".")
+        if self.compare_versions(condition_value, user_value) is False:
+            return True
+        else:
+            return False
+
+    def semver_less_than_and_equal_evaluator(self, index):
+        if self.semver_less_than_evaluator(self, index) is True or self.semver_equal_evaluator(self, index) is True:
+            return True
+
+    def semver_greater_than_and_equal_evaluator(self, index):
+        if self.semver_greater_than_evaluator(self, index) is True or self.semver_equal_evaluator(self, index) is True:
+            return True
+
+    def compare_versions(self, target_version, user_version):
+
+        condition_version_parts = target_version.split(".")
+        user_version_parts = user_version.split(".")
 
         condition_version_parts_len = len(condition_version_parts)
         user_version_parts_len = len(user_version_parts)
@@ -304,19 +295,14 @@ class CustomAttributeConditionEvaluator(object):
             for i in range(condition_version_parts_len, user_version_parts_len):
                 condition_version_parts.append("0")
 
+        # returns True if Greater, False if smaller and None if equal
         for (idx, _) in enumerate(condition_version_parts):
-            if int(user_version_parts[idx]) < int(condition_version_parts[idx]):
+            if int(user_version_parts[idx]) > int(condition_version_parts[idx]):
                 return True
-            else:
+            elif int(user_version_parts[idx]) < int(condition_version_parts[idx]):
                 return False
+        return None
 
-    def semver_less_than_and_equal_evaluator(self, index):
-        if self.semver_less_than_evaluator(self, index) or self.semver_equal_evaluator(self, index):
-            return True
-
-    def semver_greater_than_and_equal_evaluator(self, index):
-        if self.semver_greater_than_evaluator(self, index) or self.semver_equal_evaluator(self, index):
-            return True
 
 
     EVALUATORS_BY_MATCH_TYPE = {
