@@ -1,5 +1,11 @@
 # Optimizely Python SDK Changelog
 
+## 3.5.2
+July 14th, 2020
+
+### Bug Fixes:
+* Fixed handling of network and no status code errors when polling for datafile in `PollingConfigManager` and `AuthDatafilePollingConfigManager`. ([#287](https://github.com/optimizely/python-sdk/pull/287))
+
 ## 3.5.1
 July 10th, 2020
 
