@@ -24,6 +24,12 @@ booleanCondition = ['is_firefox', True, 'custom_attribute', 'exact']
 integerCondition = ['num_users', 10, 'custom_attribute', 'exact']
 doubleCondition = ['pi_value', 3.14, 'custom_attribute', 'exact']
 
+eq_semver_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_eq']]
+lt_semver_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_lt']]
+gt_semver_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_gt']]
+le_semver_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_le']]
+ge_semver_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_ge']]
+
 exists_condition_list = [['input_value', None, 'custom_attribute', 'exists']]
 exact_string_condition_list = [['favorite_constellation', 'Lacerta', 'custom_attribute', 'exact']]
 exact_int_condition_list = [['lasers_count', 9000, 'custom_attribute', 'exact']]
@@ -34,6 +40,8 @@ gt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
 gt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'gt']]
 lt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
 lt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
+
+
 
 
 class CustomAttributeConditionEvaluator(base.BaseTest):
@@ -108,6 +116,98 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
+    def test_evaluate__returns_true__when_audience_version_matches_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            eq_semver_condition_list, {'Android': '2.0.0'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_doesn_not_match_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            eq_semver_condition_list, {'Android': '2.1.1'}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_gt_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            gt_semver_condition_list, {'Android': '2.1.1'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_not_gt_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            gt_semver_condition_list, {'Android': '1.1.1'}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_lt_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            lt_semver_condition_list, {'Android': '1.9.1'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_not_lt_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            lt_semver_condition_list, {'Android': '2.9.1'}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_ge_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_semver_condition_list, {'Android': '2.0.0'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_semver_condition_list, {'Android': '2.0.7'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_not_ge_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_semver_condition_list, {'Android': '1.0.0'}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_le_condition_version(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_semver_condition_list, {'Android': '2.0'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_semver_condition_list, {'Android': '1.9.9'}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_evaluate__returns_true__when_audience_version_is_not_le_condition_version(self):
+        
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_semver_condition_list, {'Android': '3.0.1'}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
     def test_exists__returns_false__when_no_user_provided_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -154,8 +254,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_string__returns_true__when_user_provided_value_is_equal_to_condition_value(self,):
-
+    def test_exact_string__returns_true__when_user_provided_version_is_equal_to_condition_value(self, ):
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_string_condition_list, {'favorite_constellation': 'Lacerta'}, self.mock_client_logger,
         )

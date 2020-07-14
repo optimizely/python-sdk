@@ -244,7 +244,7 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if self.compare_versions(condition_value, user_value) is None:
+        if self.compare_user_version_with_target_version(user_value, condition_value) is None:
             return True
         else:
             return False
@@ -255,7 +255,7 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if self.compare_versions(condition_value, user_value) is True:
+        if self.compare_user_version_with_target_version(user_value, condition_value) is True:
             return True
         else:
             return False
@@ -266,26 +266,31 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if self.compare_versions(condition_value, user_value) is False:
+        if self.compare_user_version_with_target_version(user_value, condition_value) is False:
             return True
         else:
             return False
 
     def semver_less_than_and_equal_evaluator(self, index):
-        if self.semver_less_than_evaluator(self, index) is True or self.semver_equal_evaluator(self, index) is True:
+        if self.semver_less_than_evaluator(index) is True or self.semver_equal_evaluator(index) is True:
             return True
+        else:
+            return False
 
     def semver_greater_than_and_equal_evaluator(self, index):
-        if self.semver_greater_than_evaluator(self, index) is True or self.semver_equal_evaluator(self, index) is True:
+        if self.semver_greater_than_evaluator(index) is True or self.semver_equal_evaluator(index) is True:
             return True
+        else:
+            return False
 
-    def compare_versions(self, target_version, user_version):
+    def compare_user_version_with_target_version(self, user_version, target_version):
 
         condition_version_parts = target_version.split(".")
         user_version_parts = user_version.split(".")
 
         condition_version_parts_len = len(condition_version_parts)
         user_version_parts_len = len(user_version_parts)
+
 
         # fill smaller version with 0s
         if condition_version_parts_len > user_version_parts_len:
@@ -311,7 +316,7 @@ class CustomAttributeConditionEvaluator(object):
         ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
         ConditionMatchTypes.LESS_THAN: less_than_evaluator,
         ConditionMatchTypes.SUBSTRING: substring_evaluator,
-        ConditionMatchTypes.SEMVER_EQ: exact_evaluator,
+        ConditionMatchTypes.SEMVER_EQ: semver_equal_evaluator,
         ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
         ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
         ConditionMatchTypes.SEMVER_LE: semver_less_than_and_equal_evaluator,
