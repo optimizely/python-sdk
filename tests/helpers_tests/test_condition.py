@@ -199,7 +199,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
         self.assertStrictTrue(evaluator.evaluate(0))
 
     def test_evaluate__returns_true__when_audience_version_is_not_le_condition_version(self):
-        
+
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_semver_condition_list, {'Android': '3.0.1'}, self.mock_client_logger
         )

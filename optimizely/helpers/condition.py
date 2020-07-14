@@ -291,7 +291,6 @@ class CustomAttributeConditionEvaluator(object):
         condition_version_parts_len = len(condition_version_parts)
         user_version_parts_len = len(user_version_parts)
 
-
         # fill smaller version with 0s
         if condition_version_parts_len > user_version_parts_len:
             for i in range(user_version_parts_len, condition_version_parts_len):
@@ -307,8 +306,6 @@ class CustomAttributeConditionEvaluator(object):
             elif int(user_version_parts[idx]) < int(condition_version_parts[idx]):
                 return False
         return None
-
-
 
     EVALUATORS_BY_MATCH_TYPE = {
         ConditionMatchTypes.EXACT: exact_evaluator,
