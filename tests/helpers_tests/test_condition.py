@@ -42,8 +42,6 @@ lt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
 lt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
 
 
-
-
 class CustomAttributeConditionEvaluator(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self)
@@ -254,7 +252,8 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_string__returns_true__when_user_provided_version_is_equal_to_condition_value(self, ):
+    def test_exact_string__returns_true__when_user_provided_version_is_equal_to_condition_value(self,):
+
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_string_condition_list, {'favorite_constellation': 'Lacerta'}, self.mock_client_logger,
         )
