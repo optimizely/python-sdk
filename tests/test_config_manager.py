@@ -394,8 +394,8 @@ class PollingConfigManagerTest(base.BaseTest):
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         self.assertTrue(project_config_manager.is_running)
 
-    def test_fetch_datafile__exception_raised(self, _):
-        """ Test that config_manager keeps running if exception is raised when fetching datafile. """
+    def test_fetch_datafile__status_exception_raised(self, _):
+        """ Test that config_manager keeps running if status code exception is raised when fetching datafile. """
         class MockExceptionResponse(object):
             def raise_for_status(self):
                 raise requests.exceptions.RequestException('Error Error !!')
@@ -419,6 +419,45 @@ class PollingConfigManagerTest(base.BaseTest):
 
         # Call fetch_datafile again, but raise exception this time
         with mock.patch('requests.get', return_value=MockExceptionResponse()) as mock_requests:
+            project_config_manager.fetch_datafile()
+
+        mock_requests.assert_called_once_with(
+            expected_datafile_url,
+            headers={'If-Modified-Since': test_headers['Last-Modified']},
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
+            expected_datafile_url
+        ))
+        self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+        # Confirm that config manager keeps running
+        self.assertTrue(project_config_manager.is_running)
+
+    def test_fetch_datafile__request_exception_raised(self, _):
+        """ Test that config_manager keeps running if a request exception is raised when fetching datafile. """
+        sdk_key = 'some_key'
+        mock_logger = mock.Mock()
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
+        expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+        with mock.patch('requests.get', return_value=test_response):
+            project_config_manager.fetch_datafile()
+
+        self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+        # Call fetch_datafile again, but raise exception this time
+        with mock.patch(
+            'requests.get',
+            side_effect=requests.exceptions.RequestException('Error Error !!'),
+        ) as mock_requests:
             project_config_manager.fetch_datafile()
 
         mock_requests.assert_called_once_with(
@@ -492,3 +531,58 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         )
 
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+    def test_fetch_datafile__request_exception_raised(self, _):
+        """ Test that config_manager keeps running if a request exception is raised when fetching datafile. """
+        datafile_access_token = 'some_token'
+        sdk_key = 'some_key'
+        mock_logger = mock.Mock()
+
+        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
+            project_config_manager = config_manager.AuthDatafilePollingConfigManager(
+                datafile_access_token=datafile_access_token, sdk_key=sdk_key, logger=mock_logger)
+        expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        # Call fetch_datafile and assert that request was sent with correct authorization header
+        with mock.patch('requests.get',
+                        return_value=test_response) as mock_request:
+            project_config_manager.fetch_datafile()
+
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers={'Authorization': 'Bearer {datafile_access_token}'.format(
+                datafile_access_token=datafile_access_token)},
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+        # Call fetch_datafile again, but raise exception this time
+        with mock.patch(
+            'requests.get',
+            side_effect=requests.exceptions.RequestException('Error Error !!'),
+        ) as mock_requests:
+            project_config_manager.fetch_datafile()
+
+        mock_requests.assert_called_once_with(
+            expected_datafile_url,
+            headers={
+                'If-Modified-Since': test_headers['Last-Modified'],
+                'Authorization': 'Bearer {datafile_access_token}'.format(
+                    datafile_access_token=datafile_access_token),
+            },
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
+            expected_datafile_url
+        ))
+        self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+        # Confirm that config manager keeps running
+        self.assertTrue(project_config_manager.is_running)

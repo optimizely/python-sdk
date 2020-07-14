@@ -176,7 +176,7 @@ Build and install the SDK with pip, using the following command:
 To get test dependencies installed, use a modified version of the
 install command:
 
-    pip install -e .[test]
+    pip install -e '.[test]'
 
 You can run all unit tests with:
 
