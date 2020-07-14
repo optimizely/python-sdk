@@ -252,7 +252,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_string__returns_true__when_user_provided_version_is_equal_to_condition_value(self,):
+    def test_exact_string__returns_true__when_user_provided_value_is_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_string_condition_list, {'favorite_constellation': 'Lacerta'}, self.mock_client_logger,
