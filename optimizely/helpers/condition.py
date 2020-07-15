@@ -244,10 +244,7 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if self.compare_user_version_with_target_version(user_value, condition_value) is None:
-            return True
-        else:
-            return False
+        return self.compare_user_version_with_target_version(user_value, condition_value) is 0
 
     def semver_greater_than_evaluator(self, index):
 
@@ -255,10 +252,7 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if self.compare_user_version_with_target_version(user_value, condition_value) is True:
-            return True
-        else:
-            return False
+        return self.compare_user_version_with_target_version(user_value, condition_value) is 1
 
     def semver_less_than_evaluator(self, index):
 
@@ -266,22 +260,13 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if self.compare_user_version_with_target_version(user_value, condition_value) is False:
-            return True
-        else:
-            return False
+        return self.compare_user_version_with_target_version(user_value, condition_value) is -1
 
     def semver_less_than_and_equal_evaluator(self, index):
-        if self.semver_less_than_evaluator(index) is True or self.semver_equal_evaluator(index) is True:
-            return True
-        else:
-            return False
+        return self.semver_less_than_evaluator(index) is True or self.semver_equal_evaluator(index) is True
 
     def semver_greater_than_and_equal_evaluator(self, index):
-        if self.semver_greater_than_evaluator(index) is True or self.semver_equal_evaluator(index) is True:
-            return True
-        else:
-            return False
+        return self.semver_greater_than_evaluator(index) is True or self.semver_equal_evaluator(index) is True
 
     def compare_user_version_with_target_version(self, user_version, target_version):
 
@@ -299,13 +284,17 @@ class CustomAttributeConditionEvaluator(object):
             for i in range(condition_version_parts_len, user_version_parts_len):
                 condition_version_parts.append("0")
 
-        # returns True if Greater, False if smaller and None if equal
         for (idx, _) in enumerate(condition_version_parts):
-            if int(user_version_parts[idx]) > int(condition_version_parts[idx]):
-                return True
+            # compare strings e.g: n1.n2.n3-alpha/beta
+            if not user_version_parts[idx].isnumeric():
+                if user_version_parts[idx] != condition_version_parts[idx]:
+                    return -1
+            # compare numbers e.g: n1.n2.n3
+            elif int(user_version_parts[idx]) > int(condition_version_parts[idx]):
+                return 1
             elif int(user_version_parts[idx]) < int(condition_version_parts[idx]):
-                return False
-        return None
+                return -1
+        return 0
 
     EVALUATORS_BY_MATCH_TYPE = {
         ConditionMatchTypes.EXACT: exact_evaluator,
