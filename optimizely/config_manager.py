@@ -344,9 +344,14 @@ class PollingConfigManager(StaticConfigManager):
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
-        response = requests.get(
-            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
-        )
+        try:
+            response = requests.get(
+                self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            )
+        except requests_exceptions.RequestException as err:
+            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+            return
+
         self._handle_response(response)
 
     @property
@@ -411,7 +416,12 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
-        response = requests.get(
-            self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
-        )
+        try:
+            response = requests.get(
+                self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            )
+        except requests_exceptions.RequestException as err:
+            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+            return
+
         self._handle_response(response)
