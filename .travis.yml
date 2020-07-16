@@ -18,7 +18,7 @@ stages:
   - 'Lint markdown files'
   - 'Linting'
   - 'Integration tests'
-  - 'Production tests'
+  - 'Full stack production tests'
   - 'Test'
 
 jobs:
@@ -67,7 +67,7 @@ jobs:
       after_success: travis_terminate 0
 
     - <<: *integrationtest
-      stage: 'Production tests'
+      stage: 'Full stack production tests'
       env:
         SDK=python
         SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
