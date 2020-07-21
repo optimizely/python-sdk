@@ -40,7 +40,7 @@ class ProjectConfig(object):
         """
 
         config = json.loads(datafile)
-        self._datafile = datafile.encode('utf-8')
+        self._datafile = u'{}'.format(datafile)
         self.logger = logger
         self.error_handler = error_handler
         self.version = config.get('version')
