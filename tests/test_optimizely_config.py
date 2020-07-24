@@ -456,7 +456,7 @@ class OptimizelyConfigTest(base.BaseTest):
                 }
             },
             'revision': '1',
-            'datafile': json.dumps(self.config_dict_with_features)
+            '_datafile': json.dumps(self.config_dict_with_features)
         }
 
         self.actual_config = self.opt_config_service.get_config()
