@@ -15,9 +15,9 @@ after_success:
 
 # Linting and Integration tests need to run first to reset the PR build status to pending.
 stages:
+  - 'Source Clear'
   - 'Lint markdown files'
   - 'Linting'
-  - 'Source Clear'
   - 'Integration tests'
   - 'Test'
 
