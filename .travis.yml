@@ -17,9 +17,9 @@ after_success:
 stages:
   - 'Lint markdown files'
   - 'Linting'
+  - 'Source Clear'
   - 'Integration tests'
   - 'Test'
-  - 'Source Clear'
 
 jobs:
   include:
