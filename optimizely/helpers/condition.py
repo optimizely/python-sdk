@@ -240,7 +240,7 @@ class CustomAttributeConditionEvaluator(object):
         return condition_value in user_value
 
     def semver_equal_evaluator(self, index):
-        """ Evaluate the given semver equal match target version for the user version.
+        """ Evaluate the given semantic version equal match target version for the user version.
 
     Args:
       index: Index of the condition to be evaluated.
@@ -255,7 +255,7 @@ class CustomAttributeConditionEvaluator(object):
         return self.compare_user_version_with_target_version(index) == 0
 
     def semver_greater_than_evaluator(self, index):
-        """ Evaluate the given semver greater than match target version for the user version.
+        """ Evaluate the given semantic version greater than match target version for the user version.
 
       Args:
         index: Index of the condition to be evaluated.
@@ -267,10 +267,10 @@ class CustomAttributeConditionEvaluator(object):
         None:
           - if the user version value is not string type or is null.
     """
-        return self.compare_user_version_with_target_version(index) == 1
+        return self.compare_user_version_with_target_version(index) > 0
 
     def semver_less_than_evaluator(self, index):
-        """ Evaluate the given semver less than match target version for the user version.
+        """ Evaluate the given semantic version less than match target version for the user version.
 
       Args:
         index: Index of the condition to be evaluated.
@@ -282,10 +282,10 @@ class CustomAttributeConditionEvaluator(object):
         None:
           - if the user version value is not string type or is null.
     """
-        return self.compare_user_version_with_target_version(index) == -1
+        return self.compare_user_version_with_target_version(index) < 0
 
     def semver_less_than_or_equal_evaluator(self, index):
-        """ Evaluate the given semver less than or equal to match target version for the user version.
+        """ Evaluate the given semantic version less than or equal to match target version for the user version.
 
       Args:
         index: Index of the condition to be evaluated.
@@ -300,7 +300,7 @@ class CustomAttributeConditionEvaluator(object):
         return self.compare_user_version_with_target_version(index) <= 0
 
     def semver_greater_than_or_equal_evaluator(self, index):
-        """ Evaluate the given semver greater than or equal to match target version for the user version.
+        """ Evaluate the given semantic version greater than or equal to match target version for the user version.
 
       Args:
         index: Index of the condition to be evaluated.
@@ -328,9 +328,14 @@ class CustomAttributeConditionEvaluator(object):
     """
         target_prefix = target
         target_suffix = ""
+        target_parts = []
 
-        if self.is_pre_release(target) or self.is_build(target):
-            target_parts = target.split(SemverType.IS_PRE_RELEASE if self.is_pre_release(target) else SemverType.IS_BUILD)
+        if self.is_pre_release(target):
+            target_parts = target.split(SemverType.IS_PRE_RELEASE)
+        elif self.is_build(target):
+            target_parts = target.split(SemverType.IS_BUILD)
+
+        if target_parts:
             if len(target_parts) < 1:
                 raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
 
@@ -362,7 +367,6 @@ class CustomAttributeConditionEvaluator(object):
     def is_patch_pre_release(self, idx, idx_value):
         return idx == SemverType.PATCH_INDEX and idx_value in SemverType.IS_PATCH_PRE_RELEASE
 
-
     def is_build(self, target):
         """ Method to check if the given version contains "+"
 
@@ -386,7 +390,8 @@ class CustomAttributeConditionEvaluator(object):
       Int:
         -  0 if user version is equal to target version.
         -  1 if user version is greater than target version.
-        - -1 if user version is less than target version or, in case of exact string match, doesn't match the target version.
+        - -1 if user version is less than target version or, in case of exact string match, doesn't match the target
+        version.
       None:
         - if the user version value is not string type or is null.
     """
@@ -396,7 +401,8 @@ class CustomAttributeConditionEvaluator(object):
 
         if not isinstance(user_version, string_types):
             self.logger.warning(
-                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_version), condition_name)
+                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_version),
+                                                     condition_name)
             )
             return None
 
@@ -408,13 +414,13 @@ class CustomAttributeConditionEvaluator(object):
         for (idx, _) in enumerate(target_version_parts):
             if user_version_parts_len <= idx:
                 return -1
-            # compare strings e.g: alpha/beta/release
+            # compare strings
             elif not user_version_parts[idx].isdigit():
                 if user_version_parts[idx] < target_version_parts[idx]:
                     return -1
                 elif user_version_parts[idx] > target_version_parts[idx]:
                     return 1
-            # compare numbers e.g: n1.n2.n3
+            # compare numbers
             else:
                 user_version_part = int(user_version_parts[idx])
                 target_version_part = int(target_version_parts[idx])
@@ -423,7 +429,7 @@ class CustomAttributeConditionEvaluator(object):
                 elif user_version_part < target_version_part:
                     return -1
         if user_version_parts_len > target_version_parts_len:
-            if self.is_patch_pre_release(user_version_parts_len-1, user_version_parts[user_version_parts_len-1]):
+            if self.is_patch_pre_release(user_version_parts_len - 1, user_version_parts[user_version_parts_len - 1]):
                 return -1
         return 0
 

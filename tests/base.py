@@ -557,7 +557,8 @@ class BaseTest(unittest.TestCase):
                             'audienceConditions': [
                                 'and',
                                 ['or', '3468206642', '3988293898'],
-                                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643', '18278344267'],
+                                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643',
+                                 '18278344267'],
                             ],
                             'variations': [
                                 {'variables': [], 'id': '11557362670', 'key': '11557362670', 'featureEnabled': True}
@@ -879,7 +880,6 @@ class BaseTest(unittest.TestCase):
                 {'key': 'should_do_it', 'id': '594017'},
                 {'key': 'favorite_ice_cream', 'id': '594018'},
                 {'key': 'android-release', 'id': '594019'},
-
             ],
             'botFiltering': False,
             'accountId': '4879520872',
