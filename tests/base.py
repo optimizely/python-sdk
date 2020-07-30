@@ -518,6 +518,7 @@ class BaseTest(unittest.TestCase):
                                 '3468206647',
                                 '3468206644',
                                 '3468206643',
+                                '18278344267'
                             ],
                             'variations': [
                                 {'variables': [], 'id': '11557362669', 'key': '11557362669', 'featureEnabled': True}
@@ -556,7 +557,7 @@ class BaseTest(unittest.TestCase):
                             'audienceConditions': [
                                 'and',
                                 ['or', '3468206642', '3988293898'],
-                                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
+                                ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643', '18278344267'],
                             ],
                             'variations': [
                                 {'variables': [], 'id': '11557362670', 'key': '11557362670', 'featureEnabled': True}
@@ -626,6 +627,7 @@ class BaseTest(unittest.TestCase):
                         '3468206647',
                         '3468206644',
                         '3468206643',
+                        '18278344267'
                     ],
                     'variations': [
                         {
@@ -653,6 +655,7 @@ class BaseTest(unittest.TestCase):
                         '3468206647',
                         '3468206644',
                         '3468206643',
+                        '18278344267'
                     ],
                     'forcedVariations': {},
                 },
@@ -667,7 +670,7 @@ class BaseTest(unittest.TestCase):
                     'audienceConditions': [
                         'and',
                         ['or', '3468206642', '3988293898'],
-                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
+                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643', '18278344267'],
                     ],
                     'forcedVariations': {},
                 },
@@ -689,7 +692,7 @@ class BaseTest(unittest.TestCase):
                     'audienceConditions': [
                         'and',
                         ['or', '3468206642', '3988293898'],
-                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643'],
+                        ['or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643', '18278344267'],
                     ],
                     'forcedVariations': {},
                 },
@@ -837,6 +840,37 @@ class BaseTest(unittest.TestCase):
                         ],
                     ],
                 },
+                {
+                    "id": "18278344267",
+                    "name": "semverReleaseLt1.2.3Gt1.0.0",
+                    "conditions": [
+                        "and",
+                        [
+                            "or",
+                            [
+                                "or",
+                                {
+                                    "value": "1.2.3",
+                                    "type": "custom_attribute",
+                                    "name": "android-release",
+                                    "match": "semver_lt"
+                                }
+                            ]
+                        ],
+                        [
+                            "or",
+                            [
+                                "or",
+                                {
+                                    "value": "1.0.0",
+                                    "type": "custom_attribute",
+                                    "name": "android-release",
+                                    "match": "semver_gt"
+                                }
+                            ]
+                        ]
+                    ]
+                }
             ],
             'groups': [],
             'attributes': [
@@ -844,6 +878,8 @@ class BaseTest(unittest.TestCase):
                 {'key': 'lasers', 'id': '594016'},
                 {'key': 'should_do_it', 'id': '594017'},
                 {'key': 'favorite_ice_cream', 'id': '594018'},
+                {'key': 'android-release', 'id': '594019'},
+
             ],
             'botFiltering': False,
             'accountId': '4879520872',

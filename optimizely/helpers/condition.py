@@ -18,6 +18,7 @@ from six import string_types
 
 from . import validator
 from .enums import CommonAudienceEvaluationLogs as audience_logs
+from .enums import Errors, SemverType
 
 
 class ConditionOperatorTypes(object):
@@ -31,6 +32,11 @@ class ConditionMatchTypes(object):
     EXISTS = 'exists'
     GREATER_THAN = 'gt'
     LESS_THAN = 'lt'
+    SEMVER_EQ = 'semver_eq'
+    SEMVER_GE = 'semver_ge'
+    SEMVER_GT = 'semver_gt'
+    SEMVER_LE = 'semver_le'
+    SEMVER_LT = 'semver_lt'
     SUBSTRING = 'substring'
 
 
@@ -233,12 +239,205 @@ class CustomAttributeConditionEvaluator(object):
 
         return condition_value in user_value
 
+    def semver_equal_evaluator(self, index):
+        """ Evaluate the given semver equal match target version for the user version.
+
+    Args:
+      index: Index of the condition to be evaluated.
+
+    Returns:
+      Boolean:
+        - True if the user version is equal (==) to the target version.
+        - False if the user version is not equal (!=) to the target version.
+      None:
+        - if the user version value is not string type or is null.
+    """
+        return self.compare_user_version_with_target_version(index) == 0
+
+    def semver_greater_than_evaluator(self, index):
+        """ Evaluate the given semver greater than match target version for the user version.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean:
+          - True if the user version is greater than the target version.
+          - False if the user version is less than or equal to the target version.
+        None:
+          - if the user version value is not string type or is null.
+    """
+        return self.compare_user_version_with_target_version(index) == 1
+
+    def semver_less_than_evaluator(self, index):
+        """ Evaluate the given semver less than match target version for the user version.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean:
+          - True if the user version is less than the target version.
+          - False if the user version is greater than or equal to the target version.
+        None:
+          - if the user version value is not string type or is null.
+    """
+        return self.compare_user_version_with_target_version(index) == -1
+
+    def semver_less_than_or_equal_evaluator(self, index):
+        """ Evaluate the given semver less than or equal to match target version for the user version.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean:
+          - True if the user version is less than or equal to the target version.
+          - False if the user version is greater than the target version.
+        None:
+          - if the user version value is not string type or is null.
+    """
+        return self.compare_user_version_with_target_version(index) <= 0
+
+    def semver_greater_than_or_equal_evaluator(self, index):
+        """ Evaluate the given semver greater than or equal to match target version for the user version.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean:
+          - True if the user version is greater than or equal to the target version.
+          - False if the user version is less than the target version.
+        None:
+          - if the user version value is not string type or is null.
+    """
+        return self.compare_user_version_with_target_version(index) >= 0
+
+    def split_semantic_version(self, target):
+        """ Method to split the given version.
+
+      Args:
+        target: Given version.
+
+      Returns:
+        List:
+          - The array of version split into smaller parts i.e major, minor, patch etc
+        Exception:
+          - if the given version is invalid in format
+    """
+        target_prefix = target
+        target_suffix = ""
+
+        if self.is_pre_release(target) or self.is_build(target):
+            target_parts = target.split(SemverType.IS_PRE_RELEASE if self.is_pre_release(target) else SemverType.IS_BUILD)
+            if len(target_parts) < 1:
+                raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+
+            target_prefix = str(target_parts[0])
+            target_suffix = target_parts[1:]
+
+        target_version_parts = target_prefix.split(".")
+        for part in target_version_parts:
+            if not part.isdigit():
+                raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+
+        if target_suffix:
+            target_version_parts.extend(target_suffix)
+        return target_version_parts
+
+    def is_pre_release(self, target):
+        """ Method to check if the given version contains "-"
+
+      Args:
+        target: Given version in string.
+
+      Returns:
+        Boolean:
+            - True if the given version does contain "-"
+            - False if it doesn't
+    """
+        return SemverType.IS_PRE_RELEASE in target
+
+    def is_patch_pre_release(self, idx, idx_value):
+        return idx == SemverType.PATCH_INDEX and idx_value in SemverType.IS_PATCH_PRE_RELEASE
+
+
+    def is_build(self, target):
+        """ Method to check if the given version contains "+"
+
+      Args:
+        target: Given version in string.
+
+      Returns:
+        Boolean:
+            - True if the given version does contain "+"
+            - False if it doesn't
+    """
+        return SemverType.IS_BUILD in target
+
+    def compare_user_version_with_target_version(self, index):
+        """ Method to compare user version with target version.
+
+    Args:
+      index: Index of the condition to be evaluated.
+
+    Returns:
+      Int:
+        -  0 if user version is equal to target version.
+        -  1 if user version is greater than target version.
+        - -1 if user version is less than target version or, in case of exact string match, doesn't match the target version.
+      None:
+        - if the user version value is not string type or is null.
+    """
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_version), condition_name)
+            )
+            return None
+
+        target_version_parts = self.split_semantic_version(target_version)
+        user_version_parts = self.split_semantic_version(user_version)
+        user_version_parts_len = len(user_version_parts)
+        target_version_parts_len = len(target_version_parts)
+
+        for (idx, _) in enumerate(target_version_parts):
+            if user_version_parts_len <= idx:
+                return -1
+            # compare strings e.g: alpha/beta/release
+            elif not user_version_parts[idx].isdigit():
+                if user_version_parts[idx] < target_version_parts[idx]:
+                    return -1
+                elif user_version_parts[idx] > target_version_parts[idx]:
+                    return 1
+            # compare numbers e.g: n1.n2.n3
+            else:
+                user_version_part = int(user_version_parts[idx])
+                target_version_part = int(target_version_parts[idx])
+                if user_version_part > target_version_part:
+                    return 1
+                elif user_version_part < target_version_part:
+                    return -1
+        if user_version_parts_len > target_version_parts_len:
+            if self.is_patch_pre_release(user_version_parts_len-1, user_version_parts[user_version_parts_len-1]):
+                return -1
+        return 0
+
     EVALUATORS_BY_MATCH_TYPE = {
         ConditionMatchTypes.EXACT: exact_evaluator,
         ConditionMatchTypes.EXISTS: exists_evaluator,
         ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
         ConditionMatchTypes.LESS_THAN: less_than_evaluator,
-        ConditionMatchTypes.SUBSTRING: substring_evaluator,
+        ConditionMatchTypes.SEMVER_EQ: semver_equal_evaluator,
+        ConditionMatchTypes.SEMVER_GE: semver_greater_than_or_equal_evaluator,
+        ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
+        ConditionMatchTypes.SEMVER_LE: semver_less_than_or_equal_evaluator,
+        ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
+        ConditionMatchTypes.SUBSTRING: substring_evaluator
     }
 
     def evaluate(self, index):
