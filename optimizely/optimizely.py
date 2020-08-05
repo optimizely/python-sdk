@@ -876,6 +876,7 @@ class Optimizely(object):
 
         forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
+
     def get_optimizely_config(self):
         """ Gets OptimizelyConfig instance for the current project config.
 
