@@ -411,7 +411,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
             return None
 
-        variation_key = self.get_variation(experiment_key, user_id, attributes)
+        variation_key = self.get_variation(experiment_key=experiment_key, user_id=user_id, attributes=attributes)
 
         if not variation_key:
             self.logger.info('Not activating user "%s".' % user_id)
@@ -636,7 +636,7 @@ class Optimizely(object):
             return enabled_features
 
         for feature in project_config.feature_key_map.values():
-            if self.is_feature_enabled(feature.key, user_id, attributes):
+            if self.is_feature_enabled(feature_key=feature.key, user_id=user_id, attributes=attributes):
                 enabled_features.append(feature.key)
 
         return enabled_features
@@ -876,7 +876,6 @@ class Optimizely(object):
 
         forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
-
     def get_optimizely_config(self):
         """ Gets OptimizelyConfig instance for the current project config.
 
