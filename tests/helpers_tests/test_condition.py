@@ -333,6 +333,62 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid5(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': "3.6"}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid6(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': "2"}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid7(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': "3.90"}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid8(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': "3.90.2.8"}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid9(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': "-2.4"}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid10(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': True}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
+    def test_evalduate__returns_exception__when_user_provided_version_is_invalid11(self):
+
+        condition_helper.CustomAttributeConditionEvaluator(
+            semver_equal_2_0_condition_list, {'Android': False}, self.mock_client_logger
+        )
+
+        self.assertRaises(Exception)
+
     def test_exists__returns_false__when_no_user_provided_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(

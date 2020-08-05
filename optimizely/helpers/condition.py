@@ -330,6 +330,9 @@ class CustomAttributeConditionEvaluator(object):
         target_suffix = ""
         target_parts = []
 
+        if self.has_white_space(target):
+            raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+
         if self.is_pre_release(target):
             target_parts = target.split(SemverType.IS_PRE_RELEASE)
         elif self.is_build(target):
@@ -338,11 +341,16 @@ class CustomAttributeConditionEvaluator(object):
         if target_parts:
             if len(target_parts) < 1:
                 raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
-
             target_prefix = str(target_parts[0])
             target_suffix = target_parts[1:]
 
+        dot_count = target_prefix.count(".")
+        if dot_count > 2:
+            raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+
         target_version_parts = target_prefix.split(".")
+        if len(target_version_parts) != dot_count + 1:
+            raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
         for part in target_version_parts:
             if not part.isdigit():
                 raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
@@ -380,6 +388,19 @@ class CustomAttributeConditionEvaluator(object):
     """
         return SemverType.IS_BUILD in target
 
+    def has_white_space(self, target):
+        """ Method to check if the given version contains " " (white space)
+
+      Args:
+        target: Given version in string.
+
+      Returns:
+        Boolean:
+            - True if the given version does contain " "
+            - False if it doesn't
+    """
+        return SemverType.HAS_WHITE_SPACE in target
+
     def compare_user_version_with_target_version(self, index):
         """ Method to compare user version with target version.
 
@@ -399,28 +420,18 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
-        if not isinstance(user_version, string_types):
-            self.logger.warning(
-                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_version),
-                                                     condition_name)
-            )
-            return None
-
         target_version_parts = self.split_semantic_version(target_version)
         user_version_parts = self.split_semantic_version(user_version)
         user_version_parts_len = len(user_version_parts)
-        target_version_parts_len = len(target_version_parts)
 
         for (idx, _) in enumerate(target_version_parts):
             if user_version_parts_len <= idx:
-                return -1
-            # compare strings
+                return 1 if self.is_pre_release(target_version) else -1
             elif not user_version_parts[idx].isdigit():
                 if user_version_parts[idx] < target_version_parts[idx]:
                     return -1
                 elif user_version_parts[idx] > target_version_parts[idx]:
                     return 1
-            # compare numbers
             else:
                 user_version_part = int(user_version_parts[idx])
                 target_version_part = int(target_version_parts[idx])
@@ -428,9 +439,8 @@ class CustomAttributeConditionEvaluator(object):
                     return 1
                 elif user_version_part < target_version_part:
                     return -1
-        if user_version_parts_len > target_version_parts_len:
-            if self.is_patch_pre_release(user_version_parts_len - 1, user_version_parts[user_version_parts_len - 1]):
-                return -1
+        if self.is_pre_release(user_version) and not self.is_pre_release(target_version):
+            return -1
         return 0
 
     EVALUATORS_BY_MATCH_TYPE = {
