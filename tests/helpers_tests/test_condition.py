@@ -46,8 +46,12 @@ exact_bool_condition_list = [['did_register_user', False, 'custom_attribute', 'e
 substring_condition_list = [['headline_text', 'buy now', 'custom_attribute', 'substring']]
 gt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'gt']]
 gt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'gt']]
+ge_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'ge']]
+ge_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'ge']]
 lt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
 lt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
+le_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'le']]
+le_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'le']]
 
 
 class CustomAttributeConditionEvaluator(base.BaseTest):
@@ -788,6 +792,153 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
+    def test_greater_than_or_equal_int__returns_true__when_user_value_greater_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 48}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                gt_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
+            )
+
+            self.assertStrictTrue(evaluator.evaluate(0))
+
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                gt_int_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
+            )
+
+            self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_float__returns_true__when_user_value_greater_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': 48.2}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                ge_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
+            )
+
+            self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_int__returns_false__when_user_value_not_greater_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                ge_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger,
+            )
+
+            self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_float__returns_false__when_user_value_not_greater_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': 48}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                ge_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
+            )
+
+            self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_int__returns_null__when_user_value_is_not_a_number(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 'a long way'}, self.mock_client_logger,
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': False}, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_float__returns_null__when_user_value_is_not_a_number(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': 'a long way'}, self.mock_client_logger,
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {'meters_travelled': False}, self.mock_client_logger,
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_int__returns_null__when_no_user_provided_value(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {}, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal_float__returns_null__when_no_user_provided_value(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_float_condition_list, {}, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
     def test_less_than_int__returns_true__when_user_value_less_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -904,6 +1055,140 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
+    def test_less_than_or_equal_int__returns_true__when_user_value_less_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': 48}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                le_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger,
+            )
+
+            self.assertStrictTrue(evaluator.evaluate(0))
+
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                le_int_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
+            )
+
+            self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_float__returns_true__when_user_value_less_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {'meters_travelled': 48.2}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {'meters_travelled': 48}, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                le_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
+            )
+
+            self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_int__returns_false__when_user_value_not_less_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                le_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
+            )
+
+            self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_float__returns_false__when_user_value_not_less_than_or_equal_condition_value(self,):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {'meters_travelled': 49}, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+        if PY2:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                le_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
+            )
+
+            self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_int__returns_null__when_user_value_is_not_a_number(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': False}, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_float__returns_null__when_user_value_is_not_a_number(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {'meters_travelled': False}, self.mock_client_logger,
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_int__returns_null__when_no_user_provided_value(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {}, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_less_than_or_equal_float__returns_null__when_no_user_provided_value(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_float_condition_list, {}, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
     def test_greater_than__calls_is_finite_number(self):
         """ Test that CustomAttributeConditionEvaluator.evaluate returns True
         if is_finite_number returns True. Returns None if is_finite_number returns False. """
@@ -953,6 +1238,92 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             lt_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
+        )
+
+        def is_finite_number__rejecting_condition_value(value):
+            if value == 48:
+                return False
+            return True
+
+        with mock.patch(
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__rejecting_condition_value,
+        ) as mock_is_finite:
+            self.assertIsNone(evaluator.evaluate(0))
+
+        # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+        mock_is_finite.assert_called_once_with(48)
+
+        def is_finite_number__rejecting_user_attribute_value(value):
+            if value == 47:
+                return False
+            return True
+
+        with mock.patch(
+            'optimizely.helpers.validator.is_finite_number',
+            side_effect=is_finite_number__rejecting_user_attribute_value,
+        ) as mock_is_finite:
+            self.assertIsNone(evaluator.evaluate(0))
+
+        # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+        mock_is_finite.assert_has_calls([mock.call(48), mock.call(47)])
+
+        def is_finite_number__accepting_both_values(value):
+            return True
+
+        with mock.patch(
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__accepting_both_values,
+        ):
+            self.assertTrue(evaluator.evaluate(0))
+
+    def test_greater_than_or_equal__calls_is_finite_number(self):
+        """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            ge_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
+        )
+
+        def is_finite_number__rejecting_condition_value(value):
+            if value == 48:
+                return False
+            return True
+
+        with mock.patch(
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__rejecting_condition_value,
+        ) as mock_is_finite:
+            self.assertIsNone(evaluator.evaluate(0))
+
+        # assert that isFiniteNumber only needs to reject condition value to stop evaluation.
+        mock_is_finite.assert_called_once_with(48)
+
+        def is_finite_number__rejecting_user_attribute_value(value):
+            if value == 48.1:
+                return False
+            return True
+
+        with mock.patch(
+            'optimizely.helpers.validator.is_finite_number',
+            side_effect=is_finite_number__rejecting_user_attribute_value,
+        ) as mock_is_finite:
+            self.assertIsNone(evaluator.evaluate(0))
+
+        # assert that isFiniteNumber evaluates user value only if it has accepted condition value.
+        mock_is_finite.assert_has_calls([mock.call(48), mock.call(48.1)])
+
+        def is_finite_number__accepting_both_values(value):
+            return True
+
+        with mock.patch(
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__accepting_both_values,
+        ):
+            self.assertTrue(evaluator.evaluate(0))
+
+    def test_less_than_or_equal__calls_is_finite_number(self):
+        """ Test that CustomAttributeConditionEvaluator.evaluate returns True
+        if is_finite_number returns True. Returns None if is_finite_number returns False. """
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            le_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
         )
 
         def is_finite_number__rejecting_condition_value(value):

@@ -31,7 +31,9 @@ class ConditionMatchTypes(object):
     EXACT = 'exact'
     EXISTS = 'exists'
     GREATER_THAN = 'gt'
+    GREATER_THAN_OR_EQUAL = 'ge'
     LESS_THAN = 'lt'
+    LESS_THAN_OR_EQUAL = 'le'
     SEMVER_EQ = 'semver_eq'
     SEMVER_GE = 'semver_ge'
     SEMVER_GT = 'semver_gt'
@@ -177,6 +179,40 @@ class CustomAttributeConditionEvaluator(object):
 
         return user_value > condition_value
 
+    def greater_than_or_equal_evaluator(self, index):
+        """ Evaluate the given greater than or equal to match condition for the user attributes.
+
+      Args:
+        index: Index of the condition to be evaluated.
+
+      Returns:
+        Boolean:
+          - True if the user attribute value is greater than or equal to the condition value.
+          - False if the user attribute value is less than the condition value.
+        None: if the condition value isn't finite or the user attribute value isn't finite.
+    """
+        condition_name = self.condition_data[index][0]
+        condition_value = self.condition_data[index][1]
+        user_value = self.attributes.get(condition_name)
+
+        if not validator.is_finite_number(condition_value):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index)))
+            return None
+
+        if not self.is_value_a_number(user_value):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
+            )
+            return None
+
+        if not validator.is_finite_number(user_value):
+            self.logger.warning(
+                audience_logs.INFINITE_ATTRIBUTE_VALUE.format(self._get_condition_json(index), condition_name)
+            )
+            return None
+
+        return user_value >= condition_value
+
     def less_than_evaluator(self, index):
         """ Evaluate the given less than match condition for the user attributes.
 
@@ -210,6 +246,40 @@ class CustomAttributeConditionEvaluator(object):
             return None
 
         return user_value < condition_value
+
+    def less_than_or_equal_evaluator(self, index):
+        """ Evaluate the given less than or equal to match condition for the user attributes.
+
+    Args:
+      index: Index of the condition to be evaluated.
+
+    Returns:
+      Boolean:
+        - True if the user attribute value is less than or equal to the condition value.
+        - False if the user attribute value is greater than the condition value.
+      None: if the condition value isn't finite or the user attribute value isn't finite.
+    """
+        condition_name = self.condition_data[index][0]
+        condition_value = self.condition_data[index][1]
+        user_value = self.attributes.get(condition_name)
+
+        if not validator.is_finite_number(condition_value):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index)))
+            return None
+
+        if not self.is_value_a_number(user_value):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
+            )
+            return None
+
+        if not validator.is_finite_number(user_value):
+            self.logger.warning(
+                audience_logs.INFINITE_ATTRIBUTE_VALUE.format(self._get_condition_json(index), condition_name)
+            )
+            return None
+
+        return user_value <= condition_value
 
     def substring_evaluator(self, index):
         """ Evaluate the given substring match condition for the given user attributes.
@@ -331,7 +401,8 @@ class CustomAttributeConditionEvaluator(object):
         target_parts = []
 
         if self.has_white_space(target):
-            raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+            self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
+            return None
 
         if self.is_pre_release(target):
             target_parts = target.split(SemverType.IS_PRE_RELEASE)
@@ -340,20 +411,24 @@ class CustomAttributeConditionEvaluator(object):
 
         if target_parts:
             if len(target_parts) < 1:
-                raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+                self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
+                return None
             target_prefix = str(target_parts[0])
             target_suffix = target_parts[1:]
 
         dot_count = target_prefix.count(".")
         if dot_count > 2:
-            raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+            self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
+            return None
 
         target_version_parts = target_prefix.split(".")
         if len(target_version_parts) != dot_count + 1:
-            raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+            self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
+            return None
         for part in target_version_parts:
             if not part.isdigit():
-                raise Exception(Errors.INVALID_ATTRIBUTE_FORMAT)
+                self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
+                return None
 
         if target_suffix:
             target_version_parts.extend(target_suffix)
@@ -453,7 +528,9 @@ class CustomAttributeConditionEvaluator(object):
         ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
         ConditionMatchTypes.SEMVER_LE: semver_less_than_or_equal_evaluator,
         ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
-        ConditionMatchTypes.SUBSTRING: substring_evaluator
+        ConditionMatchTypes.SUBSTRING: substring_evaluator,
+        ConditionMatchTypes.LESS_THAN_OR_EQUAL: less_than_or_equal_evaluator,
+        ConditionMatchTypes.GREATER_THAN_OR_EQUAL: greater_than_or_equal_evaluator,
     }
 
     def evaluate(self, index):
