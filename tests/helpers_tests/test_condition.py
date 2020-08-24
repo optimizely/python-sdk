@@ -819,12 +819,6 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                gt_int_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_greater_than_or_equal_float__returns_true__when_user_value_greater_than_or_equal_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
