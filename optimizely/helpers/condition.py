@@ -92,6 +92,90 @@ class CustomAttributeConditionEvaluator(object):
 
         return False
 
+    def is_pre_release(self, target):
+        """ Method to check if the given version contains "-"
+
+        Args:
+          target: Given version in string.
+
+        Returns:
+          Boolean:
+            - True if the given version does contain "-"
+            - False if it doesn't
+        """
+        return SemverType.IS_PRE_RELEASE in target
+
+    def is_patch_pre_release(self, idx, idx_value):
+        return idx == SemverType.PATCH_INDEX and idx_value in SemverType.IS_PATCH_PRE_RELEASE
+
+    def is_build(self, target):
+        """ Method to check if the given version contains "+"
+
+        Args:
+          target: Given version in string.
+
+        Returns:
+          Boolean:
+            - True if the given version does contain "+"
+            - False if it doesn't
+        """
+        return SemverType.IS_BUILD in target
+
+    def has_white_space(self, target):
+        """ Method to check if the given version contains " " (white space)
+
+        Args:
+          target: Given version in string.
+
+        Returns:
+          Boolean:
+            - True if the given version does contain " "
+            - False if it doesn't
+        """
+        return SemverType.HAS_WHITE_SPACE in target
+
+    def compare_user_version_with_target_version(self, index):
+        """ Method to compare user version with target version.
+
+        Args:
+          index: Index of the condition to be evaluated.
+
+        Returns:
+          Int:
+            -  0 if user version is equal to target version.
+            -  1 if user version is greater than target version.
+            - -1 if user version is less than target version or, in case of exact string match, doesn't match the target
+            version.
+          None:
+            - if the user version value is not string type or is null.
+        """
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        target_version_parts = self.split_semantic_version(target_version)
+        user_version_parts = self.split_semantic_version(user_version)
+        user_version_parts_len = len(user_version_parts)
+
+        for (idx, _) in enumerate(target_version_parts):
+            if user_version_parts_len <= idx:
+                return 1 if self.is_pre_release(target_version) else -1
+            elif not user_version_parts[idx].isdigit():
+                if user_version_parts[idx] < target_version_parts[idx]:
+                    return -1
+                elif user_version_parts[idx] > target_version_parts[idx]:
+                    return 1
+            else:
+                user_version_part = int(user_version_parts[idx])
+                target_version_part = int(target_version_parts[idx])
+                if user_version_part > target_version_part:
+                    return 1
+                elif user_version_part < target_version_part:
+                    return -1
+        if self.is_pre_release(user_version) and not self.is_pre_release(target_version):
+            return -1
+        return 0
+
     def exact_evaluator(self, index):
         """ Evaluate the given exact match condition for the user attributes.
 
@@ -384,6 +468,21 @@ class CustomAttributeConditionEvaluator(object):
         """
         return self.compare_user_version_with_target_version(index) >= 0
 
+    EVALUATORS_BY_MATCH_TYPE = {
+        ConditionMatchTypes.EXACT: exact_evaluator,
+        ConditionMatchTypes.EXISTS: exists_evaluator,
+        ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
+        ConditionMatchTypes.LESS_THAN: less_than_evaluator,
+        ConditionMatchTypes.SEMVER_EQ: semver_equal_evaluator,
+        ConditionMatchTypes.SEMVER_GE: semver_greater_than_or_equal_evaluator,
+        ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
+        ConditionMatchTypes.SEMVER_LE: semver_less_than_or_equal_evaluator,
+        ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
+        ConditionMatchTypes.SUBSTRING: substring_evaluator,
+        ConditionMatchTypes.LESS_THAN_OR_EQUAL: less_than_or_equal_evaluator,
+        ConditionMatchTypes.GREATER_THAN_OR_EQUAL: greater_than_or_equal_evaluator,
+    }
+
     def split_semantic_version(self, target):
         """ Method to split the given version.
 
@@ -400,15 +499,21 @@ class CustomAttributeConditionEvaluator(object):
         target_suffix = ""
         target_parts = []
 
+        """ remove spaces from target version string """
+
         if self.has_white_space(target):
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
             return None
+
+        """ check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release otherwise
+            check for build e.g. 1.0.0+001 where 001 is a build metadata"""
 
         if self.is_pre_release(target):
             target_parts = target.split(SemverType.IS_PRE_RELEASE)
         elif self.is_build(target):
             target_parts = target.split(SemverType.IS_BUILD)
 
+        """ validate target version into prefix and suffix """
         if target_parts:
             if len(target_parts) < 1:
                 self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
@@ -416,6 +521,7 @@ class CustomAttributeConditionEvaluator(object):
             target_prefix = str(target_parts[0])
             target_suffix = target_parts[1:]
 
+        """ validate dot counts in a target version """
         dot_count = target_prefix.count(".")
         if dot_count > 2:
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
@@ -433,105 +539,6 @@ class CustomAttributeConditionEvaluator(object):
         if target_suffix:
             target_version_parts.extend(target_suffix)
         return target_version_parts
-
-    def is_pre_release(self, target):
-        """ Method to check if the given version contains "-"
-
-        Args:
-          target: Given version in string.
-
-        Returns:
-          Boolean:
-            - True if the given version does contain "-"
-            - False if it doesn't
-        """
-        return SemverType.IS_PRE_RELEASE in target
-
-    def is_patch_pre_release(self, idx, idx_value):
-        return idx == SemverType.PATCH_INDEX and idx_value in SemverType.IS_PATCH_PRE_RELEASE
-
-    def is_build(self, target):
-        """ Method to check if the given version contains "+"
-
-        Args:
-          target: Given version in string.
-
-        Returns:
-          Boolean:
-            - True if the given version does contain "+"
-            - False if it doesn't
-        """
-        return SemverType.IS_BUILD in target
-
-    def has_white_space(self, target):
-        """ Method to check if the given version contains " " (white space)
-
-        Args:
-          target: Given version in string.
-
-        Returns:
-          Boolean:
-            - True if the given version does contain " "
-            - False if it doesn't
-        """
-        return SemverType.HAS_WHITE_SPACE in target
-
-    def compare_user_version_with_target_version(self, index):
-        """ Method to compare user version with target version.
-
-        Args:
-          index: Index of the condition to be evaluated.
-
-        Returns:
-          Int:
-            -  0 if user version is equal to target version.
-            -  1 if user version is greater than target version.
-            - -1 if user version is less than target version or, in case of exact string match, doesn't match the target
-            version.
-          None:
-            - if the user version value is not string type or is null.
-        """
-        condition_name = self.condition_data[index][0]
-        target_version = self.condition_data[index][1]
-        user_version = self.attributes.get(condition_name)
-
-        target_version_parts = self.split_semantic_version(target_version)
-        user_version_parts = self.split_semantic_version(user_version)
-        user_version_parts_len = len(user_version_parts)
-
-        for (idx, _) in enumerate(target_version_parts):
-            if user_version_parts_len <= idx:
-                return 1 if self.is_pre_release(target_version) else -1
-            elif not user_version_parts[idx].isdigit():
-                if user_version_parts[idx] < target_version_parts[idx]:
-                    return -1
-                elif user_version_parts[idx] > target_version_parts[idx]:
-                    return 1
-            else:
-                user_version_part = int(user_version_parts[idx])
-                target_version_part = int(target_version_parts[idx])
-                if user_version_part > target_version_part:
-                    return 1
-                elif user_version_part < target_version_part:
-                    return -1
-        if self.is_pre_release(user_version) and not self.is_pre_release(target_version):
-            return -1
-        return 0
-
-    EVALUATORS_BY_MATCH_TYPE = {
-        ConditionMatchTypes.EXACT: exact_evaluator,
-        ConditionMatchTypes.EXISTS: exists_evaluator,
-        ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
-        ConditionMatchTypes.LESS_THAN: less_than_evaluator,
-        ConditionMatchTypes.SEMVER_EQ: semver_equal_evaluator,
-        ConditionMatchTypes.SEMVER_GE: semver_greater_than_or_equal_evaluator,
-        ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
-        ConditionMatchTypes.SEMVER_LE: semver_less_than_or_equal_evaluator,
-        ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
-        ConditionMatchTypes.SUBSTRING: substring_evaluator,
-        ConditionMatchTypes.LESS_THAN_OR_EQUAL: less_than_or_equal_evaluator,
-        ConditionMatchTypes.GREATER_THAN_OR_EQUAL: greater_than_or_equal_evaluator,
-    }
 
     def evaluate(self, index):
         """ Given a custom attribute audience condition and user attributes, evaluate the

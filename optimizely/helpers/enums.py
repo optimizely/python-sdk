@@ -161,5 +161,5 @@ class NotificationTypes(object):
 
 class SemverType(object):
     IS_PRE_RELEASE = '-'
-    HAS_WHITE_SPACE = " "
+    HAS_WHITE_SPACE = ' '
     IS_BUILD = '+'
