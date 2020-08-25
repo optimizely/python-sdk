@@ -55,12 +55,12 @@ class CustomAttributeConditionEvaluator(object):
     def _get_condition_json(self, index):
         """ Method to generate json for logging audience condition.
 
-    Args:
-      index: Index of the condition.
+        Args:
+          index: Index of the condition.
 
-    Returns:
-      String: Audience condition JSON.
-    """
+        Returns:
+          String: Audience condition JSON.
+        """
         condition = self.condition_data[index]
         condition_log = {
             'name': condition[0],
@@ -74,12 +74,12 @@ class CustomAttributeConditionEvaluator(object):
     def is_value_type_valid_for_exact_conditions(self, value):
         """ Method to validate if the value is valid for exact match type evaluation.
 
-    Args:
-      value: Value to validate.
+        Args:
+          value: Value to validate.
 
-    Returns:
-      Boolean: True if value is a string, boolean, or number. Otherwise False.
-    """
+        Returns:
+          Boolean: True if value is a string, boolean, or number. Otherwise False.
+        """
         # No need to check for bool since bool is a subclass of int
         if isinstance(value, string_types) or isinstance(value, (numbers.Integral, float)):
             return True
@@ -95,29 +95,29 @@ class CustomAttributeConditionEvaluator(object):
     def exact_evaluator(self, index):
         """ Evaluate the given exact match condition for the user attributes.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the user attribute value is equal (===) to the condition value.
-        - False if the user attribute value is not equal (!==) to the condition value.
-      None:
-        - if the condition value or user attribute value has an invalid type.
-        - if there is a mismatch between the user attribute type and the condition value type.
-    """
+        Returns:
+          Boolean:
+            - True if the user attribute value is equal (===) to the condition value.
+            - False if the user attribute value is not equal (!==) to the condition value.
+          None:
+            - if the condition value or user attribute value has an invalid type.
+            - if there is a mismatch between the user attribute type and the condition value type.
+        """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
         if not self.is_value_type_valid_for_exact_conditions(condition_value) or (
-            self.is_value_a_number(condition_value) and not validator.is_finite_number(condition_value)
+                self.is_value_a_number(condition_value) and not validator.is_finite_number(condition_value)
         ):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index)))
             return None
 
         if not self.is_value_type_valid_for_exact_conditions(user_value) or not validator.are_values_same_type(
-            condition_value, user_value
+                condition_value, user_value
         ):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
@@ -135,28 +135,28 @@ class CustomAttributeConditionEvaluator(object):
     def exists_evaluator(self, index):
         """ Evaluate the given exists match condition for the user attributes.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean: True if the user attributes have a non-null value for the given condition,
-                 otherwise False.
-    """
+        Returns:
+          Boolean: True if the user attributes have a non-null value for the given condition,
+                   otherwise False.
+        """
         attr_name = self.condition_data[index][0]
         return self.attributes.get(attr_name) is not None
 
     def greater_than_evaluator(self, index):
         """ Evaluate the given greater than match condition for the user attributes.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean:
-          - True if the user attribute value is greater than the condition value.
-          - False if the user attribute value is less than or equal to the condition value.
-        None: if the condition value isn't finite or the user attribute value isn't finite.
-    """
+        Returns:
+          Boolean:
+            - True if the user attribute value is greater than the condition value.
+            - False if the user attribute value is less than or equal to the condition value.
+          None: if the condition value isn't finite or the user attribute value isn't finite.
+        """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
@@ -182,15 +182,15 @@ class CustomAttributeConditionEvaluator(object):
     def greater_than_or_equal_evaluator(self, index):
         """ Evaluate the given greater than or equal to match condition for the user attributes.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean:
-          - True if the user attribute value is greater than or equal to the condition value.
-          - False if the user attribute value is less than the condition value.
-        None: if the condition value isn't finite or the user attribute value isn't finite.
-    """
+        Returns:
+          Boolean:
+            - True if the user attribute value is greater than or equal to the condition value.
+            - False if the user attribute value is less than the condition value.
+            None: if the condition value isn't finite or the user attribute value isn't finite.
+        """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
@@ -216,15 +216,15 @@ class CustomAttributeConditionEvaluator(object):
     def less_than_evaluator(self, index):
         """ Evaluate the given less than match condition for the user attributes.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the user attribute value is less than the condition value.
-        - False if the user attribute value is greater than or equal to the condition value.
-      None: if the condition value isn't finite or the user attribute value isn't finite.
-    """
+        Returns:
+          Boolean:
+            - True if the user attribute value is less than the condition value.
+            - False if the user attribute value is greater than or equal to the condition value.
+          None: if the condition value isn't finite or the user attribute value isn't finite.
+        """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
@@ -250,15 +250,15 @@ class CustomAttributeConditionEvaluator(object):
     def less_than_or_equal_evaluator(self, index):
         """ Evaluate the given less than or equal to match condition for the user attributes.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the user attribute value is less than or equal to the condition value.
-        - False if the user attribute value is greater than the condition value.
-      None: if the condition value isn't finite or the user attribute value isn't finite.
-    """
+        Returns:
+          Boolean:
+            - True if the user attribute value is less than or equal to the condition value.
+            - False if the user attribute value is greater than the condition value.
+          None: if the condition value isn't finite or the user attribute value isn't finite.
+        """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
@@ -284,21 +284,21 @@ class CustomAttributeConditionEvaluator(object):
     def substring_evaluator(self, index):
         """ Evaluate the given substring match condition for the given user attributes.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the condition value is a substring of the user attribute value.
-        - False if the condition value is not a substring of the user attribute value.
-      None: if the condition value isn't a string or the user attribute value isn't a string.
-    """
+        Returns:
+          Boolean:
+            - True if the condition value is a substring of the user attribute value.
+            - False if the condition value is not a substring of the user attribute value.
+          None: if the condition value isn't a string or the user attribute value isn't a string.
+        """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
         if not isinstance(condition_value, string_types):
-            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index),))
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
             return None
 
         if not isinstance(user_value, string_types):
@@ -312,90 +312,90 @@ class CustomAttributeConditionEvaluator(object):
     def semver_equal_evaluator(self, index):
         """ Evaluate the given semantic version equal match target version for the user version.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the user version is equal (==) to the target version.
-        - False if the user version is not equal (!=) to the target version.
-      None:
-        - if the user version value is not string type or is null.
-    """
+        Returns:
+          Boolean:
+            - True if the user version is equal (==) to the target version.
+            - False if the user version is not equal (!=) to the target version.
+          None:
+            - if the user version value is not string type or is null.
+        """
         return self.compare_user_version_with_target_version(index) == 0
 
     def semver_greater_than_evaluator(self, index):
         """ Evaluate the given semantic version greater than match target version for the user version.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean:
-          - True if the user version is greater than the target version.
-          - False if the user version is less than or equal to the target version.
-        None:
-          - if the user version value is not string type or is null.
-    """
+        Returns:
+          Boolean:
+            - True if the user version is greater than the target version.
+            - False if the user version is less than or equal to the target version.
+          None:
+            - if the user version value is not string type or is null.
+        """
         return self.compare_user_version_with_target_version(index) > 0
 
     def semver_less_than_evaluator(self, index):
         """ Evaluate the given semantic version less than match target version for the user version.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean:
-          - True if the user version is less than the target version.
-          - False if the user version is greater than or equal to the target version.
-        None:
-          - if the user version value is not string type or is null.
-    """
+        Returns:
+          Boolean:
+            - True if the user version is less than the target version.
+            - False if the user version is greater than or equal to the target version.
+          None:
+            - if the user version value is not string type or is null.
+        """
         return self.compare_user_version_with_target_version(index) < 0
 
     def semver_less_than_or_equal_evaluator(self, index):
         """ Evaluate the given semantic version less than or equal to match target version for the user version.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean:
-          - True if the user version is less than or equal to the target version.
-          - False if the user version is greater than the target version.
-        None:
-          - if the user version value is not string type or is null.
-    """
+        Returns:
+          Boolean:
+            - True if the user version is less than or equal to the target version.
+            - False if the user version is greater than the target version.
+          None:
+            - if the user version value is not string type or is null.
+        """
         return self.compare_user_version_with_target_version(index) <= 0
 
     def semver_greater_than_or_equal_evaluator(self, index):
         """ Evaluate the given semantic version greater than or equal to match target version for the user version.
 
-      Args:
-        index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-      Returns:
-        Boolean:
-          - True if the user version is greater than or equal to the target version.
-          - False if the user version is less than the target version.
-        None:
-          - if the user version value is not string type or is null.
-    """
+        Returns:
+          Boolean:
+            - True if the user version is greater than or equal to the target version.
+            - False if the user version is less than the target version.
+          None:
+            - if the user version value is not string type or is null.
+        """
         return self.compare_user_version_with_target_version(index) >= 0
 
     def split_semantic_version(self, target):
         """ Method to split the given version.
 
-      Args:
-        target: Given version.
+        Args:
+          target: Given version.
 
-      Returns:
-        List:
-          - The array of version split into smaller parts i.e major, minor, patch etc
-        Exception:
-          - if the given version is invalid in format
-    """
+        Returns:
+          List:
+            - The array of version split into smaller parts i.e major, minor, patch etc
+          Exception:
+            - if the given version is invalid in format
+        """
         target_prefix = target
         target_suffix = ""
         target_parts = []
@@ -437,14 +437,14 @@ class CustomAttributeConditionEvaluator(object):
     def is_pre_release(self, target):
         """ Method to check if the given version contains "-"
 
-      Args:
-        target: Given version in string.
+        Args:
+          target: Given version in string.
 
-      Returns:
-        Boolean:
+        Returns:
+          Boolean:
             - True if the given version does contain "-"
             - False if it doesn't
-    """
+        """
         return SemverType.IS_PRE_RELEASE in target
 
     def is_patch_pre_release(self, idx, idx_value):
@@ -453,44 +453,44 @@ class CustomAttributeConditionEvaluator(object):
     def is_build(self, target):
         """ Method to check if the given version contains "+"
 
-      Args:
-        target: Given version in string.
+        Args:
+          target: Given version in string.
 
-      Returns:
-        Boolean:
+        Returns:
+          Boolean:
             - True if the given version does contain "+"
             - False if it doesn't
-    """
+        """
         return SemverType.IS_BUILD in target
 
     def has_white_space(self, target):
         """ Method to check if the given version contains " " (white space)
 
-      Args:
-        target: Given version in string.
+        Args:
+          target: Given version in string.
 
-      Returns:
-        Boolean:
+        Returns:
+          Boolean:
             - True if the given version does contain " "
             - False if it doesn't
-    """
+        """
         return SemverType.HAS_WHITE_SPACE in target
 
     def compare_user_version_with_target_version(self, index):
         """ Method to compare user version with target version.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Int:
-        -  0 if user version is equal to target version.
-        -  1 if user version is greater than target version.
-        - -1 if user version is less than target version or, in case of exact string match, doesn't match the target
-        version.
-      None:
-        - if the user version value is not string type or is null.
-    """
+        Returns:
+          Int:
+            -  0 if user version is equal to target version.
+            -  1 if user version is greater than target version.
+            - -1 if user version is less than target version or, in case of exact string match, doesn't match the target
+            version.
+          None:
+            - if the user version value is not string type or is null.
+        """
         condition_name = self.condition_data[index][0]
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
@@ -537,15 +537,15 @@ class CustomAttributeConditionEvaluator(object):
         """ Given a custom attribute audience condition and user attributes, evaluate the
         condition against the attributes.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+          index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the user attributes match the given condition.
-        - False if the user attributes don't match the given condition.
-      None: if the user attributes and condition can't be evaluated.
-    """
+        Returns:
+          Boolean:
+            - True if the user attributes match the given condition.
+            - False if the user attributes don't match the given condition.
+          None: if the user attributes and condition can't be evaluated.
+        """
 
         if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_json(index)))
@@ -578,7 +578,7 @@ class CustomAttributeConditionEvaluator(object):
 
 class ConditionDecoder(object):
     """ Class which provides an object_hook method for decoding dict
-  objects into a list when given a condition_decoder. """
+    objects into a list when given a condition_decoder. """
 
     def __init__(self, condition_decoder):
         self.condition_list = []
@@ -587,16 +587,16 @@ class ConditionDecoder(object):
 
     def object_hook(self, object_dict):
         """ Hook which when passed into a json.JSONDecoder will replace each dict
-    in a json string with its index and convert the dict to an object as defined
-    by the passed in condition_decoder. The newly created condition object is
-    appended to the conditions_list.
+        in a json string with its index and convert the dict to an object as defined
+        by the passed in condition_decoder. The newly created condition object is
+        appended to the conditions_list.
 
-    Args:
-      object_dict: Dict representing an object.
+        Args:
+          object_dict: Dict representing an object.
 
-    Returns:
-      An index which will be used as the placeholder in the condition_structure
-    """
+        Returns:
+          An index which will be used as the placeholder in the condition_structure
+        """
         instance = self.decoder(object_dict)
         self.condition_list.append(instance)
         self.index += 1
@@ -606,12 +606,12 @@ class ConditionDecoder(object):
 def _audience_condition_deserializer(obj_dict):
     """ Deserializer defining how dict objects need to be decoded for audience conditions.
 
-  Args:
-    obj_dict: Dict representing one audience condition.
+    Args:
+      obj_dict: Dict representing one audience condition.
 
-  Returns:
-    List consisting of condition key with corresponding value, type and match.
-  """
+    Returns:
+      List consisting of condition key with corresponding value, type and match.
+    """
     return [
         obj_dict.get('name'),
         obj_dict.get('value'),
@@ -622,16 +622,16 @@ def _audience_condition_deserializer(obj_dict):
 
 def loads(conditions_string):
     """ Deserializes the conditions property into its corresponding
-  components: the condition_structure and the condition_list.
+    components: the condition_structure and the condition_list.
 
-  Args:
-    conditions_string: String defining valid and/or conditions.
+    Args:
+      conditions_string: String defining valid and/or conditions.
 
-  Returns:
-    A tuple of (condition_structure, condition_list).
-    condition_structure: nested list of operators and placeholders for operands.
-    condition_list: list of conditions whose index correspond to the values of the placeholders.
-  """
+    Returns:
+      A tuple of (condition_structure, condition_list).
+      condition_structure: nested list of operators and placeholders for operands.
+      condition_list: list of conditions whose index correspond to the values of the placeholders.
+    """
     decoder = ConditionDecoder(_audience_condition_deserializer)
 
     # Create a custom JSONDecoder using the ConditionDecoder's object_hook method
