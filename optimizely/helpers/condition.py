@@ -505,15 +505,15 @@ class CustomAttributeConditionEvaluator(object):
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
             return None
 
-        """ check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release otherwise
-            check for build e.g. 1.0.0+001 where 001 is a build metadata"""
+        # check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release
+        # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata"""
 
         if self.is_pre_release(target):
             target_parts = target.split(SemverType.IS_PRE_RELEASE)
         elif self.is_build(target):
             target_parts = target.split(SemverType.IS_BUILD)
 
-        """ validate target version into prefix and suffix """
+        # validate target version into prefix and suffix
         if target_parts:
             if len(target_parts) < 1:
                 self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
@@ -521,7 +521,7 @@ class CustomAttributeConditionEvaluator(object):
             target_prefix = str(target_parts[0])
             target_suffix = target_parts[1:]
 
-        """ validate dot counts in a target version """
+        # validate dot counts in a target version
         dot_count = target_prefix.count(".")
         if dot_count > 2:
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
