@@ -105,9 +105,6 @@ class CustomAttributeConditionEvaluator(object):
         """
         return SemverType.IS_PRE_RELEASE in target
 
-    def is_patch_pre_release(self, idx, idx_value):
-        return idx == SemverType.PATCH_INDEX and idx_value in SemverType.IS_PATCH_PRE_RELEASE
-
     def is_build(self, target):
         """ Method to check if the given version contains "+"
 
@@ -499,14 +496,14 @@ class CustomAttributeConditionEvaluator(object):
         target_suffix = ""
         target_parts = []
 
-        """ remove spaces from target version string """
+        # remove spaces from target version string
 
         if self.has_white_space(target):
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
             return None
 
         # check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release
-        # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata"""
+        # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata
 
         if self.is_pre_release(target):
             target_parts = target.split(SemverType.IS_PRE_RELEASE)
