@@ -313,7 +313,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid2(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid2(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "+--"}, self.mock_client_logger
@@ -321,7 +321,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid3(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid3(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "...+"}, self.mock_client_logger
@@ -329,7 +329,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid4(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid4(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "+test"}, self.mock_client_logger
@@ -337,7 +337,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid5(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid5(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "3.6"}, self.mock_client_logger
@@ -345,7 +345,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid6(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid6(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "2"}, self.mock_client_logger
@@ -353,7 +353,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid7(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid7(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "3.90"}, self.mock_client_logger
@@ -361,7 +361,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid8(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid8(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "3.90.2.8"}, self.mock_client_logger
@@ -369,7 +369,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid9(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid9(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': "-2.4"}, self.mock_client_logger
@@ -377,7 +377,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid10(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid10(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': True}, self.mock_client_logger
@@ -385,7 +385,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertRaises(Exception)
 
-    def test_evalduate__returns_exception__when_user_provided_version_is_invalid11(self):
+    def test_evaluate__returns_exception__when_user_provided_version_is_invalid11(self):
 
         condition_helper.CustomAttributeConditionEvaluator(
             semver_equal_2_0_condition_list, {'Android': False}, self.mock_client_logger
@@ -854,6 +854,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
+
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             ge_int_condition_list, {'meters_travelled': 47}, self.mock_client_logger
         )
@@ -867,7 +868,8 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_greater_than_or_equal_float__returns_false__when_user_value_not_greater_than_or_equal_condition(self,):
+    def test_greater_than_or_equal_float__returns_false__when_user_value_not_greater_than_or_equal_condition_value(self,):
+
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             ge_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
         )
