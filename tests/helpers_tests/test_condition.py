@@ -13,7 +13,6 @@
 
 import json
 import mock
-import pytest
 from six import PY2
 
 from optimizely.helpers import condition as condition_helper
