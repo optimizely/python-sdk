@@ -315,15 +315,15 @@ class CustomAttributeConditionEvaluator(object):
     def less_than_evaluator(self, index):
         """ Evaluate the given less than match condition for the user attributes.
 
-        Args:
-          index: Index of the condition to be evaluated.
+    Args:
+      index: Index of the condition to be evaluated.
 
-        Returns:
-          Boolean:
-            - True if the user attribute value is less than the condition value.
-            - False if the user attribute value is greater than or equal to the condition value.
-          None: if the condition value isn't finite or the user attribute value isn't finite.
-        """
+    Returns:
+      Boolean:
+        - True if the user attribute value is less than the condition value.
+        - False if the user attribute value is greater than or equal to the condition value.
+      None: if the condition value isn't finite or the user attribute value isn't finite.
+    """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
@@ -383,21 +383,21 @@ class CustomAttributeConditionEvaluator(object):
     def substring_evaluator(self, index):
         """ Evaluate the given substring match condition for the given user attributes.
 
-        Args:
-          index: Index of the condition to be evaluated.
+    Args:
+      index: Index of the condition to be evaluated.
 
-        Returns:
-          Boolean:
-            - True if the condition value is a substring of the user attribute value.
-            - False if the condition value is not a substring of the user attribute value.
-          None: if the condition value isn't a string or the user attribute value isn't a string.
-        """
+    Returns:
+      Boolean:
+        - True if the condition value is a substring of the user attribute value.
+        - False if the condition value is not a substring of the user attribute value.
+      None: if the condition value isn't a string or the user attribute value isn't a string.
+    """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
         if not isinstance(condition_value, string_types):
-            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index),))
             return None
 
         if not isinstance(user_value, string_types):
