@@ -152,9 +152,6 @@ class CustomAttributeConditionEvaluator(object):
 
         target_version_parts = self.split_semantic_version(target_version)
         user_version_parts = self.split_semantic_version(user_version)
-        if not user_version_parts:
-            return None
-
         user_version_parts_len = len(user_version_parts)
 
         for (idx, _) in enumerate(target_version_parts):
@@ -406,8 +403,7 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        return self.compare_user_version_with_target_version(
-            index) == 0 if self.compare_user_version_with_target_version(index) else None
+        return self.compare_user_version_with_target_version(index) == 0
 
     def semver_greater_than_evaluator(self, index):
         """ Evaluate the given semantic version greater than match target version for the user version.
@@ -422,8 +418,7 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        return self.compare_user_version_with_target_version(
-            index) > 0 if self.compare_user_version_with_target_version(index) else None
+        return self.compare_user_version_with_target_version(index) > 0
 
     def semver_less_than_evaluator(self, index):
         """ Evaluate the given semantic version less than match target version for the user version.
@@ -438,8 +433,7 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        return self.compare_user_version_with_target_version(
-            index) < 0 if self.compare_user_version_with_target_version(index) else None
+        return self.compare_user_version_with_target_version(index) < 0
 
     def semver_less_than_or_equal_evaluator(self, index):
         """ Evaluate the given semantic version less than or equal to match target version for the user version.
@@ -454,8 +448,7 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        return self.compare_user_version_with_target_version(
-            index) <= 0 if self.compare_user_version_with_target_version(index) else None
+        return self.compare_user_version_with_target_version(index) <= 0
 
     def semver_greater_than_or_equal_evaluator(self, index):
         """ Evaluate the given semantic version greater than or equal to match target version for the user version.
@@ -470,8 +463,7 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        return self.compare_user_version_with_target_version(
-            index) >= 0 if self.compare_user_version_with_target_version(index) else None
+        return self.compare_user_version_with_target_version(index) >= 0
 
     EVALUATORS_BY_MATCH_TYPE = {
         ConditionMatchTypes.EXACT: exact_evaluator,

@@ -2019,13 +2019,11 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
             ).format(json.dumps(expected_condition_log))
         )
 
-    def test_invalid_semver__returns_None__when_semver_is_invalid(self):
-        invalid_test_cases = ["-", ".", "..", "+", "+test", " ", "2 .0. 0",
-                              "2.", ".0.0", "1.2.2.2", "2.x", ",",
-                              "+build-prerelese"]
+    @pytest.mark.parametrize("test_input,expected", [(i, None) for i in ["-", ".", "..", "+", "+test", " ", "2 .0. 0",
+                                                                         "2.", ".0.0", "1.2.2.2", "2.x", ",",
+                                                                         "+build-prerelese"]])
+    def test_invalid_semver__returns_null__when_semver_is_invalid(self, test_input, expected):
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            semver_less_than_or_equal_2_0_1_condition_list, {'Android': test_input}, self.mock_client_logger)
 
-        for invalid_test_case in invalid_test_cases:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                semver_less_than_or_equal_2_0_1_condition_list, {'Android': invalid_test_case}, self.mock_client_logger)
-
-            self.assertIsNone(evaluator.evaluate(0))
+        assert eval(evaluator.evaluate(0)) == expected
