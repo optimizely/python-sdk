@@ -439,7 +439,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_string__returns_true__when_user_provided_value_is_equal_to_condition_value(self, ):
+    def test_exact_string__returns_true__when_user_provided_value_is_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_string_condition_list, {'favorite_constellation': 'Lacerta'}, self.mock_client_logger,
@@ -447,7 +447,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_string__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self, ):
+    def test_exact_string__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_string_condition_list, {'favorite_constellation': 'The Big Dipper'}, self.mock_client_logger,
@@ -455,7 +455,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_exact_string__returns_null__when_user_provided_value_is_different_type_from_condition_value(self, ):
+    def test_exact_string__returns_null__when_user_provided_value_is_different_type_from_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_string_condition_list, {'favorite_constellation': False}, self.mock_client_logger,
@@ -471,7 +471,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_exact_int__returns_true__when_user_provided_value_is_equal_to_condition_value(self, ):
+    def test_exact_int__returns_true__when_user_provided_value_is_equal_to_condition_value(self,):
 
         if PY2:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -513,7 +513,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_int__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self, ):
+    def test_exact_int__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_int_condition_list, {'lasers_count': 8000}, self.mock_client_logger
@@ -521,7 +521,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_exact_float__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self, ):
+    def test_exact_float__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_float_condition_list, {'lasers_count': 8000.0}, self.mock_client_logger,
@@ -529,7 +529,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_exact_int__returns_null__when_user_provided_value_is_different_type_from_condition_value(self, ):
+    def test_exact_int__returns_null__when_user_provided_value_is_different_type_from_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_int_condition_list, {'lasers_count': 'hi'}, self.mock_client_logger
@@ -543,7 +543,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_exact_float__returns_null__when_user_provided_value_is_different_type_from_condition_value(self, ):
+    def test_exact_float__returns_null__when_user_provided_value_is_different_type_from_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_float_condition_list, {'lasers_count': 'hi'}, self.mock_client_logger
@@ -600,7 +600,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         mock_is_finite.assert_has_calls([mock.call(9000), mock.call(9000)])
 
-    def test_exact_bool__returns_true__when_user_provided_value_is_equal_to_condition_value(self, ):
+    def test_exact_bool__returns_true__when_user_provided_value_is_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_bool_condition_list, {'did_register_user': False}, self.mock_client_logger,
@@ -608,7 +608,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_bool__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self, ):
+    def test_exact_bool__returns_false__when_user_provided_value_is_not_equal_to_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_bool_condition_list, {'did_register_user': True}, self.mock_client_logger,
@@ -616,7 +616,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_exact_bool__returns_null__when_user_provided_value_is_different_type_from_condition_value(self, ):
+    def test_exact_bool__returns_null__when_user_provided_value_is_different_type_from_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_bool_condition_list, {'did_register_user': 0}, self.mock_client_logger
@@ -632,7 +632,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_substring__returns_true__when_condition_value_is_substring_of_user_value(self, ):
+    def test_substring__returns_true__when_condition_value_is_substring_of_user_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             substring_condition_list, {'headline_text': 'Limited time, buy now!'}, self.mock_client_logger,
@@ -640,7 +640,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_substring__returns_false__when_condition_value_is_not_a_substring_of_user_value(self, ):
+    def test_substring__returns_false__when_condition_value_is_not_a_substring_of_user_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             substring_condition_list, {'headline_text': 'Breaking news!'}, self.mock_client_logger,
@@ -664,7 +664,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_greater_than_int__returns_true__when_user_value_greater_than_condition_value(self, ):
+    def test_greater_than_int__returns_true__when_user_value_greater_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             gt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -685,7 +685,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_greater_than_float__returns_true__when_user_value_greater_than_condition_value(self, ):
+    def test_greater_than_float__returns_true__when_user_value_greater_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             gt_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
@@ -706,7 +706,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_greater_than_int__returns_false__when_user_value_not_greater_than_condition_value(self, ):
+    def test_greater_than_int__returns_false__when_user_value_not_greater_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             gt_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
@@ -727,7 +727,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_greater_than_float__returns_false__when_user_value_not_greater_than_condition_value(self, ):
+    def test_greater_than_float__returns_false__when_user_value_not_greater_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             gt_float_condition_list, {'meters_travelled': 48.2}, self.mock_client_logger
@@ -792,7 +792,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_greater_than_or_equal_int__returns_true__when_user_value_greater_than_or_equal_condition_value(self, ):
+    def test_greater_than_or_equal_int__returns_true__when_user_value_greater_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             ge_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -819,7 +819,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_greater_than_or_equal_float__returns_true__when_user_value_greater_than_or_equal_condition_value(self, ):
+    def test_greater_than_or_equal_float__returns_true__when_user_value_greater_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             ge_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
@@ -847,7 +847,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             self.assertStrictTrue(evaluator.evaluate(0))
 
     def test_greater_than_or_equal_int__returns_false__when_user_value_not_greater_than_or_equal_condition_value(
-            self, ):
+            self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             ge_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
@@ -869,7 +869,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             self.assertStrictFalse(evaluator.evaluate(0))
 
     def test_greater_than_or_equal_float__returns_false__when_user_value_not_greater_than_or_equal_condition_value(
-            self, ):
+            self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             ge_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -934,7 +934,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_less_than_int__returns_true__when_user_value_less_than_condition_value(self, ):
+    def test_less_than_int__returns_true__when_user_value_less_than_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             lt_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
@@ -955,7 +955,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self, ):
+    def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             lt_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -976,7 +976,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_int__returns_false__when_user_value_not_less_than_condition_value(self, ):
+    def test_less_than_int__returns_false__when_user_value_not_less_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             lt_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -997,7 +997,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_less_than_float__returns_false__when_user_value_not_less_than_condition_value(self, ):
+    def test_less_than_float__returns_false__when_user_value_not_less_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             lt_float_condition_list, {'meters_travelled': 48.2}, self.mock_client_logger
@@ -1050,7 +1050,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_int__returns_true__when_user_value_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_int__returns_true__when_user_value_less_than_or_equal_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
@@ -1083,7 +1083,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_float__returns_true__when_user_value_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_float__returns_true__when_user_value_less_than_or_equal_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -1110,7 +1110,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_int__returns_false__when_user_value_not_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_int__returns_false__when_user_value_not_less_than_or_equal_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -1131,7 +1131,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_float__returns_false__when_user_value_not_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_float__returns_false__when_user_value_not_less_than_or_equal_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
@@ -1198,8 +1198,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             return True
 
         with mock.patch(
-                'optimizely.helpers.validator.is_finite_number',
-                side_effect=is_finite_number__rejecting_condition_value,
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__rejecting_condition_value,
         ) as mock_is_finite:
             self.assertIsNone(evaluator.evaluate(0))
 
@@ -1212,8 +1211,8 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             return True
 
         with mock.patch(
-                'optimizely.helpers.validator.is_finite_number',
-                side_effect=is_finite_number__rejecting_user_attribute_value,
+            'optimizely.helpers.validator.is_finite_number',
+            side_effect=is_finite_number__rejecting_user_attribute_value,
         ) as mock_is_finite:
             self.assertIsNone(evaluator.evaluate(0))
 
@@ -1224,7 +1223,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             return True
 
         with mock.patch(
-                'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__accepting_both_values,
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__accepting_both_values,
         ):
             self.assertTrue(evaluator.evaluate(0))
 
@@ -1242,8 +1241,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             return True
 
         with mock.patch(
-                'optimizely.helpers.validator.is_finite_number',
-                side_effect=is_finite_number__rejecting_condition_value,
+            'optimizely.helpers.validator.is_finite_number', side_effect=is_finite_number__rejecting_condition_value,
         ) as mock_is_finite:
             self.assertIsNone(evaluator.evaluate(0))
 
@@ -1256,8 +1254,8 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
             return True
 
         with mock.patch(
-                'optimizely.helpers.validator.is_finite_number',
-                side_effect=is_finite_number__rejecting_user_attribute_value,
+            'optimizely.helpers.validator.is_finite_number',
+            side_effect=is_finite_number__rejecting_user_attribute_value,
         ) as mock_is_finite:
             self.assertIsNone(evaluator.evaluate(0))
 

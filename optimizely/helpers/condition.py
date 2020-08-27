@@ -423,9 +423,9 @@ class CustomAttributeConditionEvaluator(object):
         """
         result = self.compare_user_version_with_target_version(index)
         if result is None:
-            return result
+            return None
 
-        return self.compare_user_version_with_target_version(index) == 0
+        return result == 0
 
     def semver_greater_than_evaluator(self, index):
         """ Evaluate the given semantic version greater than match target version for the user version.
@@ -442,8 +442,9 @@ class CustomAttributeConditionEvaluator(object):
         """
         result = self.compare_user_version_with_target_version(index)
         if result is None:
-            return result
-        return self.compare_user_version_with_target_version(index) > 0
+            return None
+
+        return result > 0
 
     def semver_less_than_evaluator(self, index):
         """ Evaluate the given semantic version less than match target version for the user version.
@@ -460,8 +461,9 @@ class CustomAttributeConditionEvaluator(object):
         """
         result = self.compare_user_version_with_target_version(index)
         if result is None:
-            return result
-        return self.compare_user_version_with_target_version(index) < 0
+            return None
+
+        return result < 0
 
     def semver_less_than_or_equal_evaluator(self, index):
         """ Evaluate the given semantic version less than or equal to match target version for the user version.
@@ -478,8 +480,9 @@ class CustomAttributeConditionEvaluator(object):
         """
         result = self.compare_user_version_with_target_version(index)
         if result is None:
-            return result
-        return self.compare_user_version_with_target_version(index) <= 0
+            return None
+
+        return result <= 0
 
     def semver_greater_than_or_equal_evaluator(self, index):
         """ Evaluate the given semantic version greater than or equal to match target version for the user version.
@@ -496,22 +499,23 @@ class CustomAttributeConditionEvaluator(object):
         """
         result = self.compare_user_version_with_target_version(index)
         if result is None:
-            return result
-        return self.compare_user_version_with_target_version(index) >= 0
+            return None
+
+        return result >= 0
 
     EVALUATORS_BY_MATCH_TYPE = {
         ConditionMatchTypes.EXACT: exact_evaluator,
         ConditionMatchTypes.EXISTS: exists_evaluator,
         ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
+        ConditionMatchTypes.GREATER_THAN_OR_EQUAL: greater_than_or_equal_evaluator,
         ConditionMatchTypes.LESS_THAN: less_than_evaluator,
+        ConditionMatchTypes.LESS_THAN_OR_EQUAL: less_than_or_equal_evaluator,
         ConditionMatchTypes.SEMVER_EQ: semver_equal_evaluator,
         ConditionMatchTypes.SEMVER_GE: semver_greater_than_or_equal_evaluator,
         ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
         ConditionMatchTypes.SEMVER_LE: semver_less_than_or_equal_evaluator,
         ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
-        ConditionMatchTypes.SUBSTRING: substring_evaluator,
-        ConditionMatchTypes.LESS_THAN_OR_EQUAL: less_than_or_equal_evaluator,
-        ConditionMatchTypes.GREATER_THAN_OR_EQUAL: greater_than_or_equal_evaluator,
+        ConditionMatchTypes.SUBSTRING: substring_evaluator
     }
 
     def split_semantic_version(self, target):
@@ -523,28 +527,26 @@ class CustomAttributeConditionEvaluator(object):
         Returns:
           List:
             - The array of version split into smaller parts i.e major, minor, patch etc
-          Exception:
+          None:
             - if the given version is invalid in format
         """
         target_prefix = target
         target_suffix = ""
         target_parts = []
 
-        # remove spaces from target version string
-
+        # check that target shouldn't have white space
         if self.has_white_space(target):
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
             return None
 
         # check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release
         # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata
-
         if self.is_pre_release(target):
             target_parts = target.split(SemverType.IS_PRE_RELEASE)
         elif self.is_build(target):
             target_parts = target.split(SemverType.IS_BUILD)
 
-        # validate target version into prefix and suffix
+        # split target version into prefix and suffix
         if target_parts:
             if len(target_parts) < 1:
                 self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
@@ -552,7 +554,7 @@ class CustomAttributeConditionEvaluator(object):
             target_prefix = str(target_parts[0])
             target_suffix = target_parts[1:]
 
-        # validate dot counts in a target version
+        # check dot counts in target_prefix
         dot_count = target_prefix.count(".")
         if dot_count > 2:
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
@@ -575,15 +577,15 @@ class CustomAttributeConditionEvaluator(object):
         """ Given a custom attribute audience condition and user attributes, evaluate the
         condition against the attributes.
 
-        Args:
-          index: Index of the condition to be evaluated.
+    Args:
+      index: Index of the condition to be evaluated.
 
-        Returns:
-          Boolean:
-            - True if the user attributes match the given condition.
-            - False if the user attributes don't match the given condition.
-          None: if the user attributes and condition can't be evaluated.
-        """
+    Returns:
+      Boolean:
+        - True if the user attributes match the given condition.
+        - False if the user attributes don't match the given condition.
+      None: if the user attributes and condition can't be evaluated.
+    """
 
         if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_json(index)))
@@ -616,7 +618,7 @@ class CustomAttributeConditionEvaluator(object):
 
 class ConditionDecoder(object):
     """ Class which provides an object_hook method for decoding dict
-    objects into a list when given a condition_decoder. """
+  objects into a list when given a condition_decoder. """
 
     def __init__(self, condition_decoder):
         self.condition_list = []
@@ -625,16 +627,16 @@ class ConditionDecoder(object):
 
     def object_hook(self, object_dict):
         """ Hook which when passed into a json.JSONDecoder will replace each dict
-        in a json string with its index and convert the dict to an object as defined
-        by the passed in condition_decoder. The newly created condition object is
-        appended to the conditions_list.
+    in a json string with its index and convert the dict to an object as defined
+    by the passed in condition_decoder. The newly created condition object is
+    appended to the conditions_list.
 
-        Args:
-          object_dict: Dict representing an object.
+    Args:
+      object_dict: Dict representing an object.
 
-        Returns:
-          An index which will be used as the placeholder in the condition_structure
-        """
+    Returns:
+      An index which will be used as the placeholder in the condition_structure
+    """
         instance = self.decoder(object_dict)
         self.condition_list.append(instance)
         self.index += 1
@@ -644,12 +646,12 @@ class ConditionDecoder(object):
 def _audience_condition_deserializer(obj_dict):
     """ Deserializer defining how dict objects need to be decoded for audience conditions.
 
-    Args:
-      obj_dict: Dict representing one audience condition.
+  Args:
+    obj_dict: Dict representing one audience condition.
 
-    Returns:
-      List consisting of condition key with corresponding value, type and match.
-    """
+  Returns:
+    List consisting of condition key with corresponding value, type and match.
+  """
     return [
         obj_dict.get('name'),
         obj_dict.get('value'),
@@ -660,16 +662,16 @@ def _audience_condition_deserializer(obj_dict):
 
 def loads(conditions_string):
     """ Deserializes the conditions property into its corresponding
-    components: the condition_structure and the condition_list.
+  components: the condition_structure and the condition_list.
 
-    Args:
-      conditions_string: String defining valid and/or conditions.
+  Args:
+    conditions_string: String defining valid and/or conditions.
 
-    Returns:
-      A tuple of (condition_structure, condition_list).
-      condition_structure: nested list of operators and placeholders for operands.
-      condition_list: list of conditions whose index correspond to the values of the placeholders.
-    """
+  Returns:
+    A tuple of (condition_structure, condition_list).
+    condition_structure: nested list of operators and placeholders for operands.
+    condition_list: list of conditions whose index correspond to the values of the placeholders.
+  """
     decoder = ConditionDecoder(_audience_condition_deserializer)
 
     # Create a custom JSONDecoder using the ConditionDecoder's object_hook method
