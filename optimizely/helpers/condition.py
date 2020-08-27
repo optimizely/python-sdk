@@ -55,12 +55,12 @@ class CustomAttributeConditionEvaluator(object):
     def _get_condition_json(self, index):
         """ Method to generate json for logging audience condition.
 
-        Args:
-          index: Index of the condition.
+    Args:
+      index: Index of the condition.
 
-        Returns:
-          String: Audience condition JSON.
-        """
+    Returns:
+      String: Audience condition JSON.
+    """
         condition = self.condition_data[index]
         condition_log = {
             'name': condition[0],
@@ -74,12 +74,12 @@ class CustomAttributeConditionEvaluator(object):
     def is_value_type_valid_for_exact_conditions(self, value):
         """ Method to validate if the value is valid for exact match type evaluation.
 
-        Args:
-          value: Value to validate.
+    Args:
+      value: Value to validate.
 
-        Returns:
-          Boolean: True if value is a string, boolean, or number. Otherwise False.
-        """
+    Returns:
+      Boolean: True if value is a string, boolean, or number. Otherwise False.
+    """
         # No need to check for bool since bool is a subclass of int
         if isinstance(value, string_types) or isinstance(value, (numbers.Integral, float)):
             return True
@@ -194,29 +194,29 @@ class CustomAttributeConditionEvaluator(object):
     def exact_evaluator(self, index):
         """ Evaluate the given exact match condition for the user attributes.
 
-        Args:
-          index: Index of the condition to be evaluated.
+    Args:
+      index: Index of the condition to be evaluated.
 
-        Returns:
-          Boolean:
-            - True if the user attribute value is equal (===) to the condition value.
-            - False if the user attribute value is not equal (!==) to the condition value.
-          None:
-            - if the condition value or user attribute value has an invalid type.
-            - if there is a mismatch between the user attribute type and the condition value type.
-        """
+    Returns:
+      Boolean:
+        - True if the user attribute value is equal (===) to the condition value.
+        - False if the user attribute value is not equal (!==) to the condition value.
+      None:
+        - if the condition value or user attribute value has an invalid type.
+        - if there is a mismatch between the user attribute type and the condition value type.
+    """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
         if not self.is_value_type_valid_for_exact_conditions(condition_value) or (
-                self.is_value_a_number(condition_value) and not validator.is_finite_number(condition_value)
+            self.is_value_a_number(condition_value) and not validator.is_finite_number(condition_value)
         ):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index)))
             return None
 
         if not self.is_value_type_valid_for_exact_conditions(user_value) or not validator.are_values_same_type(
-                condition_value, user_value
+            condition_value, user_value
         ):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
@@ -234,28 +234,28 @@ class CustomAttributeConditionEvaluator(object):
     def exists_evaluator(self, index):
         """ Evaluate the given exists match condition for the user attributes.
 
-        Args:
-          index: Index of the condition to be evaluated.
+      Args:
+        index: Index of the condition to be evaluated.
 
-        Returns:
-          Boolean: True if the user attributes have a non-null value for the given condition,
-                   otherwise False.
-        """
+      Returns:
+        Boolean: True if the user attributes have a non-null value for the given condition,
+                 otherwise False.
+    """
         attr_name = self.condition_data[index][0]
         return self.attributes.get(attr_name) is not None
 
     def greater_than_evaluator(self, index):
         """ Evaluate the given greater than match condition for the user attributes.
 
-        Args:
-          index: Index of the condition to be evaluated.
+      Args:
+        index: Index of the condition to be evaluated.
 
-        Returns:
-          Boolean:
-            - True if the user attribute value is greater than the condition value.
-            - False if the user attribute value is less than or equal to the condition value.
-          None: if the condition value isn't finite or the user attribute value isn't finite.
-        """
+      Returns:
+        Boolean:
+          - True if the user attribute value is greater than the condition value.
+          - False if the user attribute value is less than or equal to the condition value.
+        None: if the condition value isn't finite or the user attribute value isn't finite.
+    """
         condition_name = self.condition_data[index][0]
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)

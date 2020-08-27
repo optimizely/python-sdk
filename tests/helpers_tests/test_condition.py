@@ -492,7 +492,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_exact_float__returns_true__when_user_provided_value_is_equal_to_condition_value(self, ):
+    def test_exact_float__returns_true__when_user_provided_value_is_equal_to_condition_value(self,):
 
         if PY2:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -955,7 +955,7 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self):
+    def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self,):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             lt_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
