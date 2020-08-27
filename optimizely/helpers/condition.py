@@ -150,8 +150,24 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
+        if not isinstance(target_version, string_types):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            return None
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_version), condition_name)
+            )
+            return None
+
         target_version_parts = self.split_semantic_version(target_version)
+        if target_version_parts is None:
+            return None
+
         user_version_parts = self.split_semantic_version(user_version)
+        if user_version_parts is None:
+            return None
+
         user_version_parts_len = len(user_version_parts)
 
         for (idx, _) in enumerate(target_version_parts):
@@ -403,6 +419,10 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
+        result = self.compare_user_version_with_target_version(index)
+        if result is None:
+            return result
+
         return self.compare_user_version_with_target_version(index) == 0
 
     def semver_greater_than_evaluator(self, index):
@@ -418,6 +438,9 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
+        result = self.compare_user_version_with_target_version(index)
+        if result is None:
+            return result
         return self.compare_user_version_with_target_version(index) > 0
 
     def semver_less_than_evaluator(self, index):
@@ -433,6 +456,9 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
+        result = self.compare_user_version_with_target_version(index)
+        if result is None:
+            return result
         return self.compare_user_version_with_target_version(index) < 0
 
     def semver_less_than_or_equal_evaluator(self, index):
@@ -448,6 +474,9 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
+        result = self.compare_user_version_with_target_version(index)
+        if result is None:
+            return result
         return self.compare_user_version_with_target_version(index) <= 0
 
     def semver_greater_than_or_equal_evaluator(self, index):
@@ -463,6 +492,9 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
+        result = self.compare_user_version_with_target_version(index)
+        if result is None:
+            return result
         return self.compare_user_version_with_target_version(index) >= 0
 
     EVALUATORS_BY_MATCH_TYPE = {
