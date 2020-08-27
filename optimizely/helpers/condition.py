@@ -156,7 +156,9 @@ class CustomAttributeConditionEvaluator(object):
 
         if not isinstance(user_version, string_types):
             self.logger.warning(
-                audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_version), condition_name)
+                audience_logs.UNEXPECTED_TYPE.format(
+                    self._get_condition_json(index), type(user_version), condition_name
+                )
             )
             return None
 
