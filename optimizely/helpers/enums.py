@@ -159,7 +159,7 @@ class NotificationTypes(object):
     LOG_EVENT = 'LOG_EVENT:log_event'
 
 
-class SemverType(object):
+class VersionType(object):
     IS_PRE_RELEASE = '-'
     HAS_WHITE_SPACE = ' '
     IS_BUILD = '+'

@@ -54,7 +54,7 @@ le_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'le']]
 le_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'le']]
 
 
-class CustomAttributeConditionEvaluator(base.BaseTest):
+class CustomAttributeConditionEvaluatorTest(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self)
         self.condition_list = [
@@ -187,14 +187,6 @@ class CustomAttributeConditionEvaluator(base.BaseTest):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             semver_less_than_2_0_0_condition_list, {'Android': '1.9.9'}, self.mock_client_logger
-        )
-
-        self.assertStrictTrue(evaluator.evaluate(0))
-
-    def test_evaluate__returns_true__when_user_version_1_9_0_beta_is_less_than_target_version_2_0_0(self):
-
-        evaluator = condition_helper.CustomAttributeConditionEvaluator(
-            semver_less_than_2_0_0_condition_list, {'Android': '1.9.0-beta'}, self.mock_client_logger
         )
 
         self.assertStrictTrue(evaluator.evaluate(0))
@@ -2020,10 +2012,12 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
     def test_invalid_semver__returns_None__when_semver_is_invalid(self):
         invalid_test_cases = ["-", ".", "..", "+", "+test", " ", "2 .0. 0",
                               "2.", ".0.0", "1.2.2.2", "2.x", ",",
-                              "+build-prerelese"]
+                              "+build-prerelease", "2..0", "2.2.0+build-prerelease"]
 
-        for invalid_test_case in invalid_test_cases:
+        for user_version in invalid_test_cases:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                semver_less_than_or_equal_2_0_1_condition_list, {'Android': invalid_test_case}, self.mock_client_logger)
+                semver_less_than_or_equal_2_0_1_condition_list, {'Android': user_version}, self.mock_client_logger)
 
-            self.assertIsNone(evaluator.evaluate(0))
+            result = evaluator.evaluate(0)
+            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            self.assertIsNone(result, custom_err_msg)

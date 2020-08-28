@@ -18,7 +18,8 @@ from six import string_types
 
 from . import validator
 from .enums import CommonAudienceEvaluationLogs as audience_logs
-from .enums import Errors, SemverType
+from .enums import Errors
+from .enums import VersionType
 
 
 class ConditionOperatorTypes(object):
@@ -92,44 +93,48 @@ class CustomAttributeConditionEvaluator(object):
 
         return False
 
-    def is_pre_release(self, target):
-        """ Method to check if the given version contains "-"
+    def is_pre_release(self, version):
+        """ Method to check if given version is pre-release.
+            Criteria for pre-release includes:
+                - Version includes "-"
 
         Args:
-          target: Given version in string.
+          version: Given version in string.
 
         Returns:
           Boolean:
-            - True if the given version does contain "-"
+            - True if the given version is pre-release
             - False if it doesn't
         """
-        return SemverType.IS_PRE_RELEASE in target
+        return VersionType.IS_PRE_RELEASE in version
 
-    def is_build(self, target):
-        """ Method to check if the given version contains "+"
+    def is_build(self, version):
+        """ Method to check given version is a build version.
+            Criteria for build version includes:
+                - Version includes "+"
 
         Args:
-          target: Given version in string.
+          version: Given version in string.
 
         Returns:
           Boolean:
-            - True if the given version does contain "+"
+            - True if the given version is a build version
             - False if it doesn't
         """
-        return SemverType.IS_BUILD in target
+        return VersionType.IS_BUILD in version
 
-    def has_white_space(self, target):
+    def has_white_space(self, version):
         """ Method to check if the given version contains " " (white space)
 
         Args:
-          target: Given version in string.
+          version: Given version in string.
 
         Returns:
           Boolean:
-            - True if the given version does contain " "
+            - True if the given version does contain whitespace
             - False if it doesn't
         """
-        return SemverType.HAS_WHITE_SPACE in target
+        return VersionType.HAS_WHITE_SPACE in version
 
     def compare_user_version_with_target_version(self, index):
         """ Method to compare user version with target version.
@@ -162,11 +167,11 @@ class CustomAttributeConditionEvaluator(object):
             )
             return None
 
-        target_version_parts = self.split_semantic_version(target_version)
+        target_version_parts = self.split_version(target_version)
         if target_version_parts is None:
             return None
 
-        user_version_parts = self.split_semantic_version(user_version)
+        user_version_parts = self.split_version(user_version)
         if user_version_parts is None:
             return None
 
@@ -518,7 +523,7 @@ class CustomAttributeConditionEvaluator(object):
         ConditionMatchTypes.SUBSTRING: substring_evaluator
     }
 
-    def split_semantic_version(self, target):
+    def split_version(self, target):
         """ Method to split the given version.
 
         Args:
@@ -542,9 +547,9 @@ class CustomAttributeConditionEvaluator(object):
         # check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release
         # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata
         if self.is_pre_release(target):
-            target_parts = target.split(SemverType.IS_PRE_RELEASE)
+            target_parts = target.split(VersionType.IS_PRE_RELEASE)
         elif self.is_build(target):
-            target_parts = target.split(SemverType.IS_BUILD)
+            target_parts = target.split(VersionType.IS_BUILD)
 
         # split target version into prefix and suffix
         if target_parts:
