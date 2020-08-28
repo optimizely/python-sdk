@@ -1350,6 +1350,19 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         ):
             self.assertTrue(evaluator.evaluate(0))
 
+    def test_invalid_semver__returns_None__when_semver_is_invalid(self):
+        invalid_test_cases = ["-", ".", "..", "+", "+test", " ", "2 .0. 0",
+                              "2.", ".0.0", "1.2.2.2", "2.x", ",",
+                              "+build-prerelease", "2..0", "2.2.0+build-prerelease"]
+
+        for user_version in invalid_test_cases:
+            evaluator = condition_helper.CustomAttributeConditionEvaluator(
+                semver_less_than_or_equal_2_0_1_condition_list, {'Android': user_version}, self.mock_client_logger)
+
+            result = evaluator.evaluate(0)
+            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            self.assertIsNone(result, custom_err_msg)
+
 
 class ConditionDecoderTests(base.BaseTest):
     def test_loads(self):
@@ -2008,16 +2021,3 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
                 'newer release of the Optimizely SDK.'
             ).format(json.dumps(expected_condition_log))
         )
-
-    def test_invalid_semver__returns_None__when_semver_is_invalid(self):
-        invalid_test_cases = ["-", ".", "..", "+", "+test", " ", "2 .0. 0",
-                              "2.", ".0.0", "1.2.2.2", "2.x", ",",
-                              "+build-prerelease", "2..0", "2.2.0+build-prerelease"]
-
-        for user_version in invalid_test_cases:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                semver_less_than_or_equal_2_0_1_condition_list, {'Android': user_version}, self.mock_client_logger)
-
-            result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
-            self.assertIsNone(result, custom_err_msg)

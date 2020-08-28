@@ -136,11 +136,12 @@ class CustomAttributeConditionEvaluator(object):
         """
         return VersionType.HAS_WHITE_SPACE in version
 
-    def compare_user_version_with_target_version(self, index):
+    def compare_user_version_with_target_version(self, target_version, user_version):
         """ Method to compare user version with target version.
 
         Args:
-          index: Index of the condition to be evaluated.
+          target_version: String representing condition value
+          user_version: String representing user value
 
         Returns:
           Int:
@@ -149,23 +150,8 @@ class CustomAttributeConditionEvaluator(object):
             - -1 if user version is less than target version or, in case of exact string match, doesn't match the target
             version.
           None:
-            - if the user version value is not string type or is null.
+            - if the user version value format is not a valid semantic version.
         """
-        condition_name = self.condition_data[index][0]
-        target_version = self.condition_data[index][1]
-        user_version = self.attributes.get(condition_name)
-
-        if not isinstance(target_version, string_types):
-            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
-            return None
-
-        if not isinstance(user_version, string_types):
-            self.logger.warning(
-                audience_logs.UNEXPECTED_TYPE.format(
-                    self._get_condition_json(index), type(user_version), condition_name
-                )
-            )
-            return None
 
         target_version_parts = self.split_version(target_version)
         if target_version_parts is None:
@@ -426,7 +412,24 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        result = self.compare_user_version_with_target_version(index)
+
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        if not isinstance(target_version, string_types):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            return None
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(
+                    self._get_condition_json(index), type(user_version), condition_name
+                )
+            )
+            return None
+
+        result = self.compare_user_version_with_target_version(target_version, user_version)
         if result is None:
             return None
 
@@ -445,7 +448,23 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        result = self.compare_user_version_with_target_version(index)
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        if not isinstance(target_version, string_types):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            return None
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(
+                    self._get_condition_json(index), type(user_version), condition_name
+                )
+            )
+            return None
+
+        result = self.compare_user_version_with_target_version(target_version, user_version)
         if result is None:
             return None
 
@@ -464,7 +483,23 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        result = self.compare_user_version_with_target_version(index)
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        if not isinstance(target_version, string_types):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            return None
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(
+                    self._get_condition_json(index), type(user_version), condition_name
+                )
+            )
+            return None
+
+        result = self.compare_user_version_with_target_version(target_version, user_version)
         if result is None:
             return None
 
@@ -483,7 +518,23 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        result = self.compare_user_version_with_target_version(index)
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        if not isinstance(target_version, string_types):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            return None
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(
+                    self._get_condition_json(index), type(user_version), condition_name
+                )
+            )
+            return None
+
+        result = self.compare_user_version_with_target_version(target_version, user_version)
         if result is None:
             return None
 
@@ -502,7 +553,23 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the user version value is not string type or is null.
         """
-        result = self.compare_user_version_with_target_version(index)
+        condition_name = self.condition_data[index][0]
+        target_version = self.condition_data[index][1]
+        user_version = self.attributes.get(condition_name)
+
+        if not isinstance(target_version, string_types):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
+            return None
+
+        if not isinstance(user_version, string_types):
+            self.logger.warning(
+                audience_logs.UNEXPECTED_TYPE.format(
+                    self._get_condition_json(index), type(user_version), condition_name
+                )
+            )
+            return None
+
+        result = self.compare_user_version_with_target_version(target_version, user_version)
         if result is None:
             return None
 
@@ -523,11 +590,11 @@ class CustomAttributeConditionEvaluator(object):
         ConditionMatchTypes.SUBSTRING: substring_evaluator
     }
 
-    def split_version(self, target):
+    def split_version(self, version):
         """ Method to split the given version.
 
         Args:
-          target: Given version.
+          version: Given version.
 
         Returns:
           List:
@@ -535,23 +602,23 @@ class CustomAttributeConditionEvaluator(object):
           None:
             - if the given version is invalid in format
         """
-        target_prefix = target
+        target_prefix = version
         target_suffix = ""
         target_parts = []
 
-        # check that target shouldn't have white space
-        if self.has_white_space(target):
+        # check that version shouldn't have white space
+        if self.has_white_space(version):
             self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
             return None
 
         # check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release
         # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata
-        if self.is_pre_release(target):
-            target_parts = target.split(VersionType.IS_PRE_RELEASE)
-        elif self.is_build(target):
-            target_parts = target.split(VersionType.IS_BUILD)
+        if self.is_pre_release(version):
+            target_parts = version.split(VersionType.IS_PRE_RELEASE)
+        elif self.is_build(version):
+            target_parts = version.split(VersionType.IS_BUILD)
 
-        # split target version into prefix and suffix
+        # split version into prefix and suffix
         if target_parts:
             if len(target_parts) < 1:
                 self.logger.warning(Errors.INVALID_ATTRIBUTE_FORMAT)
