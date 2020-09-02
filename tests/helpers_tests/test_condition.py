@@ -236,14 +236,14 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         semver_greater_than_2_0_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_gt']]
         versions = [
             ('2.0.1', '2.0.1'),
-            ('2.0.0', '2.0.0'),
             ('2.9', '2.9.1'),
             ('2.9.9', '2.9.9'),
             ('2.9.9-beta', '2.9.9-beta'),
             ('2.1', '2.1.0'),
             ('2.1', '2.1.215'),
             ('2', '2.12'),
-            ('2', '2.785.13')
+            ('2', '2.785.13'),
+            ('2', '2.785.13'),
         ]
         for target_version, user_version in versions:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -263,9 +263,14 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             ('2.0', '3.0.1'),
             ('2.0', '2.9.1'),
             ('2.9.0', '2.9.1'),
-            ('2.1.2', '2.1.3-beta'),
             ('2.1.2-beta', '2.1.2-release'),
-            ('2.1.3-beta', '2.1.3')
+            ('2.1.3-beta1', '2.1.3-beta2'),
+            ('2.9.9-beta', '2.9.9'),
+            ('2.9.9+beta', '2.9.9'),
+            ('3.7.0-prerelease+build', '3.7.0-prerelease+rc'),
+            ('2.2.3-beta-beta1', '2.2.3-beta-beta2'),
+            ('2.2.3-beta+beta1', '2.2.3-beta+beta2'),
+            ('2.2.3+beta2-beta1', '2.2.3+beta3-beta2')
         ]
         for target_version, user_version in versions:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -286,7 +291,12 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             ('2.3.5', '2.3.1'),
             ('2.9.8', '2.9'),
             ('2.1.2-release', '2.1.2-beta'),
-            ('2.1.3', '2.1.3-beta')
+            ('2.1.3', '2.1.3-beta'),
+            ('2.1.3', '2.1.3+beta'),
+            ('2.9.9+beta', '2.9.9-beta'),
+            ('3.7.0+build3.7.0-prerelease+build', '3.7.0-prerelease'),
+            ('2.1.3-beta-beta2', '2.1.3-beta'),
+            ('2.1.3-beta1+beta3', '2.1.3-beta1+beta2')
         ]
         for target_version, user_version in versions:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -300,9 +310,8 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
     def test_compare_invalid_user_version_with(self):
         semver_greater_than_2_0_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_gt']]
-        versions = [
-            '-', '.', '..', '+', '+test', ' ', '2 .3. 0', '2.', '.2.2', '3.7.2.2', '3.x', ',', '+build-prerelease'
-        ]
+        versions = ['-', '.', '..', '+', '+test', ' ', '2 .3. 0', '2.', '.2.2', '3.7.2.2', '3.x', ',',
+                    '+build-prerelease', '2..2']
         target_version = '2.1.0'
 
         for user_version in versions:
@@ -1283,7 +1292,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         semver_less_than_or_equal_2_0_1_condition_list = [['Android', "2.0.1", 'custom_attribute', 'semver_le']]
         invalid_test_cases = ["-", ".", "..", "+", "+test", " ", "2 .0. 0",
                               "2.", ".0.0", "1.2.2.2", "2.x", ",",
-                              "+build-prerelease", "2..0", "2.2.0+build-prerelease"]
+                              "+build-prerelease", "2..0"]
 
         for user_version in invalid_test_cases:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
