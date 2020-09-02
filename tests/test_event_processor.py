@@ -46,7 +46,7 @@ class CanonicalEvent(object):
         return self.__dict__ == other.__dict__
 
 
-class TestEventDispatcher(object):
+class CustomEventDispatcher(object):
 
     IMPRESSION_EVENT_NAME = 'campaign_activated'
 
@@ -146,7 +146,7 @@ class BatchEventProcessorTest(base.BaseTest):
         )
 
     def test_drain_on_stop(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -161,7 +161,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_flush_on_max_timeout(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -176,7 +176,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_flush_once_max_timeout(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         self.optimizely.logger = NoOpLogger()
 
@@ -199,7 +199,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.optimizely.logger = NoOpLogger()
 
     def test_flush_max_batch_size(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -215,7 +215,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_flush(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -235,7 +235,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_flush_on_mismatch_revision(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -260,7 +260,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_flush_on_mismatch_project_id(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -285,7 +285,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_stop_and_start(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self._set_event_processor(event_dispatcher, mock_config_logging)
@@ -311,7 +311,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(0, self.event_processor.event_queue.qsize())
 
     def test_init__invalid_batch_size(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -329,7 +329,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.info.assert_called_with('Using default value 10 for batch_size.')
 
     def test_init__NaN_batch_size(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -347,7 +347,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.info.assert_called_with('Using default value 10 for batch_size.')
 
     def test_init__invalid_flush_interval(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -365,7 +365,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
     def test_init__float_flush_interval(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -382,7 +382,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(datetime.timedelta(seconds=0.5), self.event_processor.flush_interval)
 
     def test_init__float_flush_deadline(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -399,7 +399,7 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertTrue(isinstance(self.event_processor.flushing_interval_deadline, float))
 
     def test_init__bool_flush_interval(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -417,7 +417,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
     def test_init__string_flush_interval(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -435,7 +435,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.info.assert_called_with('Using default value 30 for flush_interval.')
 
     def test_init__invalid_timeout_interval(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -453,7 +453,7 @@ class BatchEventProcessorTest(base.BaseTest):
         mock_config_logging.info.assert_called_with('Using default value 5 for timeout_interval.')
 
     def test_init__NaN_timeout_interval(self):
-        event_dispatcher = TestEventDispatcher()
+        event_dispatcher = CustomEventDispatcher()
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
@@ -495,7 +495,7 @@ class BatchEventProcessorTest(base.BaseTest):
         )
 
 
-class TestForwardingEventDispatcher(object):
+class CustomForwardingEventDispatcher(object):
     def __init__(self, is_updated=False):
         self.is_updated = is_updated
 
@@ -512,7 +512,7 @@ class ForwardingEventProcessorTest(base.BaseTest):
         self.event_name = 'test_event'
         self.optimizely.logger = NoOpLogger()
         self.notification_center = self.optimizely.notification_center
-        self.event_dispatcher = TestForwardingEventDispatcher(is_updated=False)
+        self.event_dispatcher = CustomForwardingEventDispatcher(is_updated=False)
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = ForwardingEventProcessor(
