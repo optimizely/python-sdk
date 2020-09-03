@@ -13,7 +13,6 @@
 
 import json
 import numbers
-import sys
 
 from six import string_types
 
@@ -107,9 +106,12 @@ class CustomAttributeConditionEvaluator(object):
             - True if the given version is pre-release
             - False if it doesn't
         """
-        return VersionType.IS_PRE_RELEASE in version and \
-               (version.find("-") if version.find("-") >= 0 else sys.maxsize) < \
-               (version.find("+") if version.find("+") >= 0 else sys.maxsize)
+        if VersionType.IS_PRE_RELEASE in version:
+            user_version_release_index = version.find(VersionType.IS_PRE_RELEASE)
+            user_version_build_index = version.find(VersionType.IS_BUILD)
+            if (user_version_release_index < user_version_build_index) or (user_version_build_index < 0):
+                return True
+        return False
 
     def is_build(self, version):
         """ Method to check given version is a build version.
@@ -124,9 +126,12 @@ class CustomAttributeConditionEvaluator(object):
             - True if the given version is a build version
             - False if it doesn't
         """
-        return VersionType.IS_BUILD in version and \
-               (version.find("+") if version.find("+") >= 0 else sys.maxsize) < \
-               (version.find("-") if version.find("-") >= 0 else sys.maxsize)
+        if VersionType.IS_BUILD in version:
+            user_version_release_index = version.find(VersionType.IS_PRE_RELEASE)
+            user_version_build_index = version.find(VersionType.IS_BUILD)
+            if (user_version_build_index < user_version_release_index) or (user_version_release_index < 0):
+                return True
+        return False
 
     def has_white_space(self, version):
         """ Method to check if the given version contains " " (white space)
@@ -172,16 +177,12 @@ class CustomAttributeConditionEvaluator(object):
             if user_version_parts_len <= idx:
                 return 1 if self.is_pre_release(target_version) or self.is_build(target_version) else -1
             elif not user_version_parts[idx].isdigit():
-                if (self.is_pre_release(user_version) and self.is_pre_release(target_version)) or \
-                        (self.is_build(user_version) and self.is_build(target_version)):
-                    if user_version_parts[idx] < target_version_parts[idx]:
-                        return -1
-                    elif user_version_parts[idx] > target_version_parts[idx]:
-                        return 1
-                elif self.is_build(user_version):
-                    return 1
-                elif self.is_build(target_version):
-                    return -1
+                if user_version_parts[idx] < target_version_parts[idx]:
+                    return 1 if self.is_pre_release(target_version) and not \
+                        self.is_pre_release(user_version) else -1
+                elif user_version_parts[idx] > target_version_parts[idx]:
+                    return -1 if not self.is_pre_release(target_version) and \
+                        self.is_pre_release(user_version) else 1
             else:
                 user_version_part = int(user_version_parts[idx])
                 target_version_part = int(target_version_parts[idx])
@@ -190,12 +191,9 @@ class CustomAttributeConditionEvaluator(object):
                 elif user_version_part < target_version_part:
                     return -1
 
-        if (self.is_pre_release(user_version) or self.is_build(user_version)) and (
-                not self.is_pre_release(target_version) and not self.is_build(target_version)):
+        if (self.is_pre_release(user_version) and not self.is_pre_release(target_version)) or \
+           (self.is_build(user_version) and not self.is_build(target_version)):
             return -1
-        elif (not self.is_pre_release(user_version) and not self.is_build(user_version)) and (
-                self.is_pre_release(target_version) or self.is_build(target_version)):
-            return 1
         return 0
 
     def exact_evaluator(self, index):
