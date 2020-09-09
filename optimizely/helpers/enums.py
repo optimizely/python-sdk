@@ -161,5 +161,4 @@ class NotificationTypes(object):
 
 class VersionType(object):
     IS_PRE_RELEASE = '-'
-    HAS_WHITE_SPACE = ' '
     IS_BUILD = '+'

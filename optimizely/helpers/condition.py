@@ -93,7 +93,7 @@ class CustomAttributeConditionEvaluator(object):
 
         return False
 
-    def is_pre_release(self, version):
+    def is_pre_release_version(self, version):
         """ Method to check if given version is pre-release.
             Criteria for pre-release includes:
                 - Version includes "-"
@@ -113,7 +113,7 @@ class CustomAttributeConditionEvaluator(object):
                 return True
         return False
 
-    def is_build(self, version):
+    def is_build_version(self, version):
         """ Method to check given version is a build version.
             Criteria for build version includes:
                 - Version includes "+"
@@ -144,7 +144,7 @@ class CustomAttributeConditionEvaluator(object):
             - True if the given version does contain whitespace
             - False if it doesn't
         """
-        return VersionType.HAS_WHITE_SPACE in version
+        return ' ' in version
 
     def compare_user_version_with_target_version(self, target_version, user_version):
         """ Method to compare user version with target version.
@@ -175,14 +175,14 @@ class CustomAttributeConditionEvaluator(object):
 
         for (idx, _) in enumerate(target_version_parts):
             if user_version_parts_len <= idx:
-                return 1 if self.is_pre_release(target_version) or self.is_build(target_version) else -1
+                return 1 if self.is_pre_release_version(target_version) or self.is_build_version(target_version) else -1
             elif not user_version_parts[idx].isdigit():
                 if user_version_parts[idx] < target_version_parts[idx]:
-                    return 1 if self.is_pre_release(target_version) and not \
-                        self.is_pre_release(user_version) else -1
+                    return 1 if self.is_pre_release_version(target_version) and not \
+                        self.is_pre_release_version(user_version) else -1
                 elif user_version_parts[idx] > target_version_parts[idx]:
-                    return -1 if not self.is_pre_release(target_version) and \
-                        self.is_pre_release(user_version) else 1
+                    return -1 if not self.is_pre_release_version(target_version) and \
+                        self.is_pre_release_version(user_version) else 1
             else:
                 user_version_part = int(user_version_parts[idx])
                 target_version_part = int(target_version_parts[idx])
@@ -191,8 +191,9 @@ class CustomAttributeConditionEvaluator(object):
                 elif user_version_part < target_version_part:
                     return -1
 
-        if (self.is_pre_release(user_version) and not self.is_pre_release(target_version)) or \
-           (self.is_build(user_version) and not self.is_build(target_version)):
+        # check if user version contains build or pre-release and target version doesn't
+        if (self.is_pre_release_version(user_version) and not self.is_pre_release_version(target_version)) or \
+           (self.is_build_version(user_version) and not self.is_build_version(target_version)):
             return -1
         return 0
 
@@ -627,8 +628,8 @@ class CustomAttributeConditionEvaluator(object):
 
         # check for pre release e.g. 1.0.0-alpha where 'alpha' is a pre release
         # otherwise check for build e.g. 1.0.0+001 where 001 is a build metadata
-        if self.is_pre_release(version) or self.is_build(version):
-            target_parts = version.split(VersionType.IS_PRE_RELEASE, 1) if self.is_pre_release(version) else \
+        if self.is_pre_release_version(version) or self.is_build_version(version):
+            target_parts = version.split(VersionType.IS_PRE_RELEASE, 1) if self.is_pre_release_version(version) else \
                 version.split(VersionType.IS_BUILD, 1)
 
         # split version into prefix and suffix
