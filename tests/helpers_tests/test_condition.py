@@ -238,7 +238,8 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             ('2.0.1', '2.0.1'),
             ('2.9.9-beta', '2.9.9-beta'),
             ('2.1', '2.1.0'),
-            ('2', '2.12')
+            ('2', '2.12'),
+            ('2.9', '2.9.1')
         ]
         for target_version, user_version in versions:
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
