@@ -972,7 +972,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertIsNone(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_int__returns_true__when_user_value_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_int__returns_true__when_user_value_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_int_condition_list, {'meters_travelled': 47.9}, self.mock_client_logger
@@ -1005,7 +1005,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_float__returns_true__when_user_value_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_float__returns_true__when_user_value_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_float_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -1032,7 +1032,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
             self.assertStrictTrue(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_int__returns_false__when_user_value_not_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_int__returns_false__when_user_value_not_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_int_condition_list, {'meters_travelled': 48.1}, self.mock_client_logger
@@ -1053,7 +1053,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
             self.assertStrictFalse(evaluator.evaluate(0))
 
-    def test_less_than_or_equal_float__returns_false__when_user_value_not_less_than_or_equal_condition_value(self, ):
+    def test_less_than_or_equal_float__returns_false__when_user_value_not_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             le_float_condition_list, {'meters_travelled': 48.3}, self.mock_client_logger
