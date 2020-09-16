@@ -300,7 +300,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
                              "and target version: {}".format(result,
                                                              user_version,
                                                              target_version)
-            self.assertEquals(result, -1, custom_err_msg)
+            self.assertEqual(result, -1, custom_err_msg)
 
     def test_compare_invalid_user_version_with(self):
         semver_greater_than_2_0_condition_list = [['Android', "2.0", 'custom_attribute', 'semver_gt']]
