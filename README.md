@@ -1,4 +1,4 @@
-# Optimizely Python SDK
+# Optimizely Python SDK 
 
 [![PyPI version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
 [![Build Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
