@@ -194,8 +194,8 @@ class CustomAttributeConditionEvaluator(object):
                 elif user_version_part < target_version_part:
                     return -1
 
-        # check if user version contains build or pre-release and target version doesn't
-        if is_pre_release_in_user_version and is_build_in_target_version:
+        # check if user version contains pre-release and target version doesn't
+        if is_pre_release_in_user_version and not is_pre_release_in_target_version:
             return -1
         return 0
 
