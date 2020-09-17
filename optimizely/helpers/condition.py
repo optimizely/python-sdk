@@ -165,7 +165,6 @@ class CustomAttributeConditionEvaluator(object):
         is_pre_release_in_target_version = self.is_pre_release_version(target_version)
         is_pre_release_in_user_version = self.is_pre_release_version(user_version)
         is_build_in_target_version = self.is_build_version(target_version)
-        is_build_in_user_version = self.is_build_version(user_version)
 
         target_version_parts = self.split_version(target_version)
         if target_version_parts is None:
