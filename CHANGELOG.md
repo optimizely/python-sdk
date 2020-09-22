@@ -1,14 +1,14 @@
 # Optimizely Python SDK Changelog
 
 ## 3.6.0-beta
-September 21st, 2020
+September 22st, 2020
 
 ### New Features:
-* Version targeting using semantic version syntax [#293](https://github.com/optimizely/python-sdk/pull/293)
-* Datafile accessor [#283](https://github.com/optimizely/python-sdk/pull/283)
+* Version targeting using semantic version syntax [#293](https://github.com/optimizely/python-sdk/pull/293).
+* Datafile accessor API added to access current config as a json string [#283](https://github.com/optimizely/python-sdk/pull/283).
 
 ### Bug Fixes:
-* Fixed package installation for Python 3.4 and pypy [#298](https://github.com/optimizely/python-sdk/pull/298)
+* Fixed package installation for Python 3.4 and pypy [#298](https://github.com/optimizely/python-sdk/pull/298).
 
 ## 3.5.2
 July 14th, 2020
