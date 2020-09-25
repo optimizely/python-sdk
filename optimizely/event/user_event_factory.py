@@ -20,7 +20,7 @@ class UserEventFactory(object):
 
     @classmethod
     def create_impression_event(
-        cls, project_config, activated_experiment, variation_id, user_id, user_attributes,
+        cls, project_config, activated_experiment, variation_id, user_id, user_attributes, flag_key, flag_type
     ):
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -52,6 +52,8 @@ class UserEventFactory(object):
             activated_experiment,
             event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
             variation,
+            flag_key,
+            flag_type,
             project_config.get_bot_filtering_value(),
         )
 

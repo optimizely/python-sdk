@@ -160,7 +160,7 @@ class Optimizely(object):
 
         return True
 
-    def _send_impression_event(self, project_config, experiment, variation, user_id, attributes):
+    def _send_impression_event(self, project_config, experiment, variation, user_id, attributes, flag_key, flag_type):
         """ Helper method to send impression event.
 
     Args:
@@ -172,7 +172,7 @@ class Optimizely(object):
     """
 
         user_event = user_event_factory.UserEventFactory.create_impression_event(
-            project_config, experiment, variation.id, user_id, attributes
+            project_config, experiment, variation.id, user_id, attributes, flag_key, flag_type
         )
 
         self.event_processor.process(user_event)
@@ -422,7 +422,7 @@ class Optimizely(object):
 
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
-        self._send_impression_event(project_config, experiment, variation, user_id, attributes)
+        self._send_impression_event(project_config, experiment, variation, user_id, attributes, experiment.key, "experiment")
 
         return variation.key
 
@@ -573,6 +573,12 @@ class Optimizely(object):
         source_info = {}
         decision = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
+        is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
+
+        if is_source_rollout and project_config.get_send_flag_decisions_value():
+            self._send_impression_event(
+                project_config, decision.experiment, decision.variation, user_id, attributes, feature.key, decision.source
+            )
 
         if decision.variation:
             if decision.variation.featureEnabled is True:
@@ -584,7 +590,7 @@ class Optimizely(object):
                     'variation_key': decision.variation.key,
                 }
                 self._send_impression_event(
-                    project_config, decision.experiment, decision.variation, user_id, attributes,
+                    project_config, decision.experiment, decision.variation, user_id, attributes, feature.key, decision.source
                 )
 
         if feature_enabled:

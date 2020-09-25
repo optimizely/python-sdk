@@ -74,7 +74,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'}
+                                }
                             ],
                             'events': [
                                 {
@@ -104,6 +108,8 @@ class EventFactoryTest(base.BaseTest):
                 '111129',
                 'test_user',
                 None,
+                'flag_key',
+                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -128,7 +134,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -158,6 +168,8 @@ class EventFactoryTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'test_attribute': 'test_value'},
+                'flag_key',
+                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -180,7 +192,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'}
+                                 }
                             ],
                             'events': [
                                 {
@@ -210,6 +226,9 @@ class EventFactoryTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'do_you_know_me': 'test_value'},
+                'flag_key',
+                'experiment'
+
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -235,7 +254,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -282,6 +305,8 @@ class EventFactoryTest(base.BaseTest):
                     '111129',
                     'test_user',
                     attributes,
+                    'flag_key',
+                    'experiment'
                 )
 
             log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -317,7 +342,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -349,6 +378,8 @@ class EventFactoryTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'$opt_user_agent': 'Edge'},
+                'flag_key',
+                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -379,7 +410,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -411,6 +446,8 @@ class EventFactoryTest(base.BaseTest):
                 '111129',
                 'test_user',
                 None,
+                'flag_key',
+                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -447,7 +484,11 @@ class EventFactoryTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'flag_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -479,6 +520,8 @@ class EventFactoryTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'$opt_user_agent': 'Chrome'},
+                'flag_key',
+                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)

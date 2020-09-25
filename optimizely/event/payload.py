@@ -61,10 +61,19 @@ class EventBatch(object):
 class Decision(object):
     """ Class respresenting Decision. """
 
-    def __init__(self, campaign_id, experiment_id, variation_id):
+    def __init__(self, campaign_id, experiment_id, variation_id, metadata):
         self.campaign_id = campaign_id
         self.experiment_id = experiment_id
         self.variation_id = variation_id
+        self.metadata = metadata
+
+class Metadata(object):
+    """ Class respresenting Metadata. """
+
+    def __init__(self, variation_key, flag_key, flag_type):
+        self.variation_key = variation_key
+        self.flag_key = flag_key
+        self.flag_type = flag_type
 
 
 class Snapshot(object):

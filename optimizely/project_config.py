@@ -61,6 +61,7 @@ class ProjectConfig(object):
         self.feature_flags = config.get('featureFlags', [])
         self.rollouts = config.get('rollouts', [])
         self.anonymize_ip = config.get('anonymizeIP', False)
+        self.send_flag_decisions = config.get('sendFlagDecisions', False)
         self.bot_filtering = config.get('botFiltering', None)
 
         # Utility maps for quick lookup
@@ -513,6 +514,15 @@ class ProjectConfig(object):
         """
 
         return self.anonymize_ip
+
+    def get_send_flag_decisions_value(self):
+        """ Gets the Send Flag Decisions value.
+
+        Returns:
+            A boolean value that indicates if we should send flag decisions.
+        """
+
+        return self.send_flag_decisions
 
     def get_bot_filtering_value(self):
         """ Gets the bot filtering value.
