@@ -41,7 +41,8 @@ class ImpressionEvent(UserEvent):
     """ Class representing Impression Event. """
 
     def __init__(
-        self, event_context, user_id, experiment, visitor_attributes, variation, flag_key, flag_type, bot_filtering=None,
+        self, event_context, user_id, experiment, visitor_attributes, variation, flag_key, flag_type,
+        bot_filtering=None,
     ):
         super(ImpressionEvent, self).__init__(event_context, user_id, visitor_attributes, bot_filtering)
         self.experiment = experiment

@@ -1998,8 +1998,7 @@ class OptimizelyTest(base.BaseTest):
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
                                               'flag_type': 'feature-test',
-                                              'variation_key': 'variation'},
-                                }
+                                              'variation_key': 'variation'}}
                             ],
                             'events': [
                                 {
@@ -2096,8 +2095,7 @@ class OptimizelyTest(base.BaseTest):
                                 {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
                                               'flag_type': 'feature-test',
-                                              'variation_key': 'control'},
-                                }
+                                              'variation_key': 'control'}}
                             ],
                             'events': [
                                 {

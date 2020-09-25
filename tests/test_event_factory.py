@@ -77,8 +77,7 @@ class EventFactoryTest(base.BaseTest):
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
                                               'flag_type': 'experiment',
-                                              'variation_key': 'variation'}
-                                }
+                                              'variation_key': 'variation'}}
                             ],
                             'events': [
                                 {

@@ -422,7 +422,8 @@ class Optimizely(object):
 
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
-        self._send_impression_event(project_config, experiment, variation, user_id, attributes, experiment.key, "experiment")
+        self._send_impression_event(project_config, experiment, variation, user_id, attributes, experiment.key,
+                                    "experiment")
 
         return variation.key
 
@@ -577,7 +578,8 @@ class Optimizely(object):
 
         if is_source_rollout and project_config.get_send_flag_decisions_value():
             self._send_impression_event(
-                project_config, decision.experiment, decision.variation, user_id, attributes, feature.key, decision.source
+                project_config, decision.experiment, decision.variation, user_id, attributes, feature.key,
+                decision.source
             )
 
         if decision.variation:
@@ -590,7 +592,8 @@ class Optimizely(object):
                     'variation_key': decision.variation.key,
                 }
                 self._send_impression_event(
-                    project_config, decision.experiment, decision.variation, user_id, attributes, feature.key, decision.source
+                    project_config, decision.experiment, decision.variation, user_id, attributes, feature.key,
+                    decision.source
                 )
 
         if feature_enabled:
