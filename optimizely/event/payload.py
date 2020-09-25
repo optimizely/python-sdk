@@ -67,6 +67,7 @@ class Decision(object):
         self.variation_id = variation_id
         self.metadata = metadata
 
+
 class Metadata(object):
     """ Class respresenting Metadata. """
 
