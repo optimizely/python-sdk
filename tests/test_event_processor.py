@@ -83,7 +83,7 @@ class CustomEventDispatcher(object):
 
         for visitor in visitors:
             for snapshot in visitor.snapshots:
-                decisions = snapshot.get('decisions') or [Decision(None, None, None)]
+                decisions = snapshot.get('decisions') or [Decision(None, None, None, None)]
                 for decision in decisions:
                     for event in snapshot.get('events'):
                         attributes = visitor.attributes
