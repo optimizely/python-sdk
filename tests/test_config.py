@@ -613,6 +613,20 @@ class ConfigTest(base.BaseTest):
             self.config_dict_with_features['botFiltering'], project_config.get_bot_filtering_value(),
         )
 
+    def test_get_send_flag_decisions(self):
+        """ Test that send_flag_decisions is retrieved correctly when using get_send_flag_decisions_value. """
+
+        # Assert send_flag_decisions is None when not provided in data file
+        self.assertTrue('sendFlagDecisions' not in self.config_dict)
+        self.assertFalse(self.project_config.get_send_flag_decisions_value())
+
+        # Assert send_flag_decisions is retrieved as provided in the data file
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+        self.assertEqual(
+            self.config_dict_with_features['sendFlagDecisions'], project_config.get_send_flag_decisions_value(),
+        )
+
     def test_get_experiment_from_key__valid_key(self):
         """ Test that experiment is retrieved correctly for valid experiment key. """
 

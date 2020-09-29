@@ -105,10 +105,10 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config,
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
+                'flag_key',
+                'experiment',
                 'test_user',
                 None,
-                'flag_key',
-                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -165,10 +165,10 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config,
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
+                'flag_key',
+                'experiment',
                 'test_user',
                 {'test_attribute': 'test_value'},
-                'flag_key',
-                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -223,11 +223,10 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config,
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
+                'flag_key',
+                'experiment',
                 'test_user',
                 {'do_you_know_me': 'test_value'},
-                'flag_key',
-                'experiment'
-
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -302,10 +301,10 @@ class EventFactoryTest(base.BaseTest):
                     self.project_config,
                     self.project_config.get_experiment_from_key('test_experiment'),
                     '111129',
+                    'flag_key',
+                    'experiment',
                     'test_user',
                     attributes,
-                    'flag_key',
-                    'experiment'
                 )
 
             log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -375,10 +374,10 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config,
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
+                'flag_key',
+                'experiment',
                 'test_user',
                 {'$opt_user_agent': 'Edge'},
-                'flag_key',
-                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -443,10 +442,10 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config,
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
+                'flag_key',
+                'experiment',
                 'test_user',
                 None,
-                'flag_key',
-                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -517,10 +516,10 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config,
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
+                'flag_key',
+                'experiment',
                 'test_user',
                 {'$opt_user_agent': 'Chrome'},
-                'flag_key',
-                'experiment'
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)

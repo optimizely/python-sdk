@@ -667,9 +667,9 @@ class OptimizelyTest(base.BaseTest):
 
         mock_decision.assert_called_once_with(project_config, feature, 'test_user', None)
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
-        self.assertEqual(False, access_callback[0])
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
+        self.assertEqual(True, access_callback[0])
 
     def test_activate__with_attributes__audience_match(self):
         """ Test that activate calls process with right params and returns expected
@@ -2171,8 +2171,8 @@ class OptimizelyTest(base.BaseTest):
             },
         )
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
     def test_is_feature_enabled__returns_true_for_feature_rollout_if_feature_enabled_with_sending_decisions(self,):
         """ Test that the feature is enabled for the user if bucketed into variation of a rollout and
@@ -2317,8 +2317,8 @@ class OptimizelyTest(base.BaseTest):
             },
         )
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
     def test_is_feature_enabled__returns_false_when_user_is_not_bucketed_into_any_variation(self,):
         """ Test that the feature is not enabled for the user if user is neither bucketed for
@@ -2342,8 +2342,8 @@ class OptimizelyTest(base.BaseTest):
         ):
             self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
         mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
@@ -2360,8 +2360,8 @@ class OptimizelyTest(base.BaseTest):
             },
         )
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
     def test_is_feature_enabled__invalid_object(self):
         """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
