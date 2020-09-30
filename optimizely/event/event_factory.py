@@ -90,7 +90,7 @@ class EventFactory(object):
 
         if isinstance(event, user_event.ImpressionEvent):
 
-            metadata = payload.Metadata(event.variation.key, event.flag_key, event.flag_type)
+            metadata = payload.Metadata(event.flag_key, event.flag_type, event.variation.key)
 
             decision = payload.Decision(event.experiment.layerId, event.experiment.id, event.variation.id, metadata)
 

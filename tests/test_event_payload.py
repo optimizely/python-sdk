@@ -58,7 +58,7 @@ class EventPayloadTest(base.BaseTest):
         batch = payload.EventBatch('12001', '111001', '42', 'python-sdk', version.__version__, False, True)
         visitor_attr = payload.VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
         event = payload.SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated', 42123,)
-        metadata = payload.Metadata('variation', 'flag_key', 'experiment')
+        metadata = payload.Metadata('flag_key', 'experiment', 'variation')
         event_decision = payload.Decision('111182', '111127', '111129', metadata)
 
         snapshots = payload.Snapshot([event], [event_decision])

@@ -46,8 +46,11 @@ class UserEventFactory(object):
             experiment_key = activated_experiment.key
         else:
             experiment_key = None
-        variation = project_config.get_variation_from_id(experiment_key, variation_id)
 
+        if variation_id:
+            variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        else:
+            variation = None
         event_context = user_event.EventContext(
             project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
         )
