@@ -425,7 +425,7 @@ class Optimizely(object):
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
         self._send_impression_event(project_config, experiment, variation, experiment.key,
-                                    "experiment", user_id, attributes)
+                                    enums.DecisionSources.EXPERIMENT, user_id, attributes)
 
         return variation.key
 
