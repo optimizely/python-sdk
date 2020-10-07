@@ -160,21 +160,22 @@ class Optimizely(object):
 
         return True
 
-    def _send_impression_event(self, project_config, experiment, variation, flag_key, flag_type, user_id, attributes):
+    def _send_impression_event(self, project_config, experiment, variation, flag_key, rule_key, rule_type, user_id, attributes):
         """ Helper method to send impression event.
 
     Args:
       project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression event is being sent.
       variation: Variation picked for user for the given experiment.
-      flag_key: key for a feature flag or experiment
-      flag_type: type for the source
+      flag_key: key for a feature flag
+      rule_key: key for an experiment
+      rule_type: type for the source
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
     """
         variation_id = variation.id if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(
-            project_config, experiment, variation_id, flag_key, flag_type, user_id, attributes
+            project_config, experiment, variation_id, flag_key, rule_key, rule_type, user_id, attributes
         )
 
         self.event_processor.process(user_event)
@@ -424,7 +425,7 @@ class Optimizely(object):
 
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
-        self._send_impression_event(project_config, experiment, variation, experiment.key,
+        self._send_impression_event(project_config, experiment, variation, "", experiment.key,
                                     enums.DecisionSources.EXPERIMENT, user_id, attributes)
 
         return variation.key
@@ -580,8 +581,8 @@ class Optimizely(object):
 
         if is_source_rollout and project_config.get_send_flag_decisions_value():
             self._send_impression_event(
-                project_config, decision.experiment, decision.variation, feature.key,
-                decision.source, user_id, attributes
+                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
+                decision.experiment else '', decision.source, user_id, attributes
             )
 
         if decision.variation:
@@ -594,7 +595,7 @@ class Optimizely(object):
                     'variation_key': decision.variation.key,
                 }
                 self._send_impression_event(
-                    project_config, decision.experiment, decision.variation, feature.key,
+                    project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
                     decision.source, user_id, attributes
                 )
 

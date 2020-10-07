@@ -322,8 +322,9 @@ class OptimizelyTest(base.BaseTest):
                         {
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
-                                 'metadata': {'flag_key': 'test_experiment',
-                                              'flag_type': 'experiment',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -699,8 +700,9 @@ class OptimizelyTest(base.BaseTest):
                         {
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
-                                 'metadata': {'flag_key': 'test_experiment',
-                                              'flag_type': 'experiment',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -780,8 +782,9 @@ class OptimizelyTest(base.BaseTest):
                         {
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
-                                 'metadata': {'flag_key': 'test_experiment',
-                                              'flag_type': 'experiment',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -975,8 +978,9 @@ class OptimizelyTest(base.BaseTest):
                         {
                             'decisions': [
                                 {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',
-                                 'metadata': {'flag_key': 'test_experiment',
-                                              'flag_type': 'experiment',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'control'},
                                  }
                             ],
@@ -1049,8 +1053,9 @@ class OptimizelyTest(base.BaseTest):
                         {
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
-                                 'metadata': {'flag_key': 'test_experiment',
-                                              'flag_type': 'experiment',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -1997,7 +2002,8 @@ class OptimizelyTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
-                                              'flag_type': 'feature-test',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'feature-test',
                                               'variation_key': 'variation'}}
                             ],
                             'events': [
@@ -2094,7 +2100,8 @@ class OptimizelyTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
-                                              'flag_type': 'feature-test',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'feature-test',
                                               'variation_key': 'control'}}
                             ],
                             'events': [
@@ -2239,7 +2246,8 @@ class OptimizelyTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
-                                              'flag_type': 'rollout',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'rollout',
                                               'variation_key': 'variation'},
                                  }
                             ],

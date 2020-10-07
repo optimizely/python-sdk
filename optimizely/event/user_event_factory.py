@@ -21,7 +21,7 @@ class UserEventFactory(object):
 
     @classmethod
     def create_impression_event(
-        cls, project_config, activated_experiment, variation_id, flag_key, flag_type, user_id, user_attributes
+        cls, project_config, activated_experiment, variation_id, flag_key, rule_key, rule_type, user_id, user_attributes
     ):
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -29,8 +29,9 @@ class UserEventFactory(object):
       project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
-      flag_key: key for a feature flag or experiment
-      flag_type: type for the source
+      flag_key: key for a feature flag
+      rule_key: key for an experiment
+      rule_type: type for the source
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
 
@@ -39,7 +40,7 @@ class UserEventFactory(object):
       - activated_experiment is None.
     """
 
-        if not activated_experiment and flag_type is not enums.DecisionSources.ROLLOUT:
+        if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
             return None
 
         variation, experiment_key = None, None
@@ -59,7 +60,8 @@ class UserEventFactory(object):
             event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
             variation,
             flag_key,
-            flag_type,
+            rule_key,
+            rule_type,
             project_config.get_bot_filtering_value(),
         )
 

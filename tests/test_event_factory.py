@@ -76,7 +76,8 @@ class EventFactoryTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
-                                              'flag_type': 'experiment',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'}}
                             ],
                             'events': [
@@ -106,6 +107,7 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'flag_key',
+                'rule_key',
                 'experiment',
                 'test_user',
                 None,
@@ -135,7 +137,8 @@ class EventFactoryTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
-                                              'flag_type': 'experiment',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -166,6 +169,7 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'flag_key',
+                'rule_key',
                 'experiment',
                 'test_user',
                 {'test_attribute': 'test_value'},
@@ -193,7 +197,8 @@ class EventFactoryTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
-                                              'flag_type': 'experiment',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'}
                                  }
                             ],
@@ -224,6 +229,7 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'flag_key',
+                'rule_key',
                 'experiment',
                 'test_user',
                 {'do_you_know_me': 'test_value'},
@@ -342,7 +348,8 @@ class EventFactoryTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
-                                              'flag_type': 'experiment',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -375,6 +382,7 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'flag_key',
+                'rule_key',
                 'experiment',
                 'test_user',
                 {'$opt_user_agent': 'Edge'},
@@ -410,7 +418,8 @@ class EventFactoryTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
-                                              'flag_type': 'experiment',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -443,6 +452,7 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'flag_key',
+                'rule_key',
                 'experiment',
                 'test_user',
                 None,
@@ -484,7 +494,8 @@ class EventFactoryTest(base.BaseTest):
                             'decisions': [
                                 {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
                                  'metadata': {'flag_key': 'flag_key',
-                                              'flag_type': 'experiment',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
                                               'variation_key': 'variation'},
                                  }
                             ],
@@ -517,6 +528,7 @@ class EventFactoryTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'flag_key',
+                'rule_key',
                 'experiment',
                 'test_user',
                 {'$opt_user_agent': 'Chrome'},
