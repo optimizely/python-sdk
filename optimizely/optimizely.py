@@ -160,7 +160,8 @@ class Optimizely(object):
 
         return True
 
-    def _send_impression_event(self, project_config, experiment, variation, flag_key, rule_key, rule_type, user_id, attributes):
+    def _send_impression_event(self, project_config, experiment, variation, flag_key, rule_key, rule_type, user_id,
+                               attributes):
         """ Helper method to send impression event.
 
     Args:
