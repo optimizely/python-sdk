@@ -29,9 +29,9 @@ class UserEventFactory(object):
       project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
-      flag_key: key for a feature flag
-      rule_key: key for an experiment
-      rule_type: type for the source
+      flag_key: key for a feature flag.
+      rule_key: key for an experiment.
+      rule_type: type for the source.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
 

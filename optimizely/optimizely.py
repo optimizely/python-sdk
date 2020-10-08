@@ -168,9 +168,9 @@ class Optimizely(object):
       project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression event is being sent.
       variation: Variation picked for user for the given experiment.
-      flag_key: key for a feature flag
-      rule_key: key for an experiment
-      rule_type: type for the source
+      flag_key: key for a feature flag.
+      rule_key: key for an experiment.
+      rule_type: type for the source.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
     """
@@ -426,7 +426,7 @@ class Optimizely(object):
 
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
-        self._send_impression_event(project_config, experiment, variation, "", experiment.key,
+        self._send_impression_event(project_config, experiment, variation, '', experiment.key,
                                     enums.DecisionSources.EXPERIMENT, user_id, attributes)
 
         return variation.key
