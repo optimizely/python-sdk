@@ -89,6 +89,7 @@ class DecisionNotificationTypes(object):
 
 
 class DecisionSources(object):
+    EXPERIMENT = 'experiment'
     FEATURE_TEST = 'feature-test'
     ROLLOUT = 'rollout'
 

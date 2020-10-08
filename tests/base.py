@@ -129,6 +129,7 @@ class BaseTest(unittest.TestCase):
             'projectId': '111111',
             'version': '4',
             'botFiltering': True,
+            'sendFlagDecisions': True,
             'events': [{'key': 'test_event', 'experimentIds': ['111127'], 'id': '111095'}],
             'experiments': [
                 {

@@ -13,6 +13,7 @@
 
 from . import event_factory
 from . import user_event
+from optimizely.helpers import enums
 
 
 class UserEventFactory(object):
@@ -20,7 +21,7 @@ class UserEventFactory(object):
 
     @classmethod
     def create_impression_event(
-        cls, project_config, activated_experiment, variation_id, user_id, user_attributes,
+        cls, project_config, activated_experiment, variation_id, flag_key, rule_key, rule_type, user_id, user_attributes
     ):
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -28,6 +29,9 @@ class UserEventFactory(object):
       project_config: Instance of ProjectConfig.
       experiment: Experiment for which impression needs to be recorded.
       variation_id: ID for variation which would be presented to user.
+      flag_key: key for a feature flag.
+      rule_key: key for an experiment.
+      rule_type: type for the source.
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
 
@@ -36,12 +40,15 @@ class UserEventFactory(object):
       - activated_experiment is None.
     """
 
-        if not activated_experiment:
+        if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
             return None
 
-        experiment_key = activated_experiment.key
-        variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        variation, experiment_key = None, None
+        if activated_experiment:
+            experiment_key = activated_experiment.key
 
+        if variation_id and experiment_key:
+            variation = project_config.get_variation_from_id(experiment_key, variation_id)
         event_context = user_event.EventContext(
             project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
         )
@@ -52,6 +59,9 @@ class UserEventFactory(object):
             activated_experiment,
             event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
             variation,
+            flag_key,
+            rule_key,
+            rule_type,
             project_config.get_bot_filtering_value(),
         )
 

@@ -30,7 +30,12 @@ class EventPayloadTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'flag_key',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -54,7 +59,8 @@ class EventPayloadTest(base.BaseTest):
         batch = payload.EventBatch('12001', '111001', '42', 'python-sdk', version.__version__, False, True)
         visitor_attr = payload.VisitorAttribute('111094', 'test_attribute', 'custom', 'test_value')
         event = payload.SnapshotEvent('111182', 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c', 'campaign_activated', 42123,)
-        event_decision = payload.Decision('111182', '111127', '111129')
+        metadata = payload.Metadata('flag_key', 'rule_key', 'experiment', 'variation')
+        event_decision = payload.Decision('111182', '111127', '111129', metadata)
 
         snapshots = payload.Snapshot([event], [event_decision])
         user = payload.Visitor([snapshots], [visitor_attr], 'test_user')

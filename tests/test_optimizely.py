@@ -321,7 +321,12 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -663,9 +668,9 @@ class OptimizelyTest(base.BaseTest):
 
         mock_decision.assert_called_once_with(project_config, feature, 'test_user', None)
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
-        self.assertEqual(False, access_callback[0])
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
+        self.assertEqual(True, access_callback[0])
 
     def test_activate__with_attributes__audience_match(self):
         """ Test that activate calls process with right params and returns expected
@@ -694,7 +699,12 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -771,7 +781,12 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -962,7 +977,12 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'control'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -1032,7 +1052,12 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation'},
+                                 }
                             ],
                             'events': [
                                 {
@@ -1975,7 +2000,11 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'test_feature_in_experiment',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'feature-test',
+                                              'variation_key': 'variation'}}
                             ],
                             'events': [
                                 {
@@ -2069,7 +2098,11 @@ class OptimizelyTest(base.BaseTest):
                     'snapshots': [
                         {
                             'decisions': [
-                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182'}
+                                {'variation_id': '111128', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'test_feature_in_experiment',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'feature-test',
+                                              'variation_key': 'control'}}
                             ],
                             'events': [
                                 {
@@ -2145,8 +2178,108 @@ class OptimizelyTest(base.BaseTest):
             },
         )
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
+
+    def test_is_feature_enabled__returns_true_for_feature_rollout_if_feature_enabled_with_sending_decisions(self,):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout and
+    the variation's featureEnabled property is True. Also confirm that an impression event is processed and
+    decision is broadcasted with proper parameters, as send_flag_decisions is set to true """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+        project_config.send_flag_decisions = True
+        feature = project_config.get_feature_from_key('test_feature_in_experiment')
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        # Assert that featureEnabled property is True
+        self.assertTrue(mock_variation.featureEnabled)
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+        ) as mock_decision, mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ) as mock_process, mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'time.time', return_value=42
+        ):
+            self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
+
+        mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
+
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'feature',
+            'test_user',
+            {},
+            {
+                'feature_key': 'test_feature_in_experiment',
+                'feature_enabled': True,
+                'source': 'rollout',
+                'source_info': {},
+            },
+        )
+
+        # Check that impression event is sent
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111111',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [
+                        {
+                            'type': 'custom',
+                            'value': True,
+                            'entity_id': '$opt_bot_filtering',
+                            'key': '$opt_bot_filtering',
+                        }
+                    ],
+                    'snapshots': [
+                        {
+                            'decisions': [
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': 'test_feature_in_experiment',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'rollout',
+                                              'variation_key': 'variation'},
+                                 }
+                            ],
+                            'events': [
+                                {
+                                    'timestamp': 42000,
+                                    'entity_id': '111182',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'campaign_activated',
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            'client_version': version.__version__,
+            'client_name': 'python-sdk',
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '1',
+        }
+        log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+
+        # Check that impression event is sent
+        self.assertEqual(1, mock_process.call_count)
+        self._validate_event_object(
+            log_event.__dict__,
+            'https://logx.optimizely.com/v1/events',
+            expected_params,
+            'POST',
+            {'Content-Type': 'application/json'},
+        )
 
     def test_is_feature_enabled__returns_false_for_feature_rollout_if_feature_disabled(self,):
         """ Test that the feature is disabled for the user if bucketed into variation of a rollout and
@@ -2192,8 +2325,8 @@ class OptimizelyTest(base.BaseTest):
             },
         )
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
     def test_is_feature_enabled__returns_false_when_user_is_not_bucketed_into_any_variation(self,):
         """ Test that the feature is not enabled for the user if user is neither bucketed for
@@ -2217,8 +2350,8 @@ class OptimizelyTest(base.BaseTest):
         ):
             self.assertFalse(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
         mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
 
@@ -2235,8 +2368,8 @@ class OptimizelyTest(base.BaseTest):
             },
         )
 
-        # Check that impression event is not sent
-        self.assertEqual(0, mock_process.call_count)
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
 
     def test_is_feature_enabled__invalid_object(self):
         """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
