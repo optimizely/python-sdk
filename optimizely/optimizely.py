@@ -580,7 +580,7 @@ class Optimizely(object):
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
-        if is_source_rollout and project_config.get_send_flag_decisions_value():
+        if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
                 decision.experiment else '', decision.source, user_id, attributes
