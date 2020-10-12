@@ -2371,6 +2371,48 @@ class OptimizelyTest(base.BaseTest):
         # Check that impression event is sent for rollout and send_flag_decisions = True
         self.assertEqual(1, mock_process.call_count)
 
+    def test_is_feature_enabled__returns_false_when_variation_is_nil(self,):
+        """ Test that the feature is not enabled with nil variation
+    Also confirm that impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+        feature = project_config.get_feature_from_key('test_feature_in_experiment_and_rollout')
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+        ) as mock_decision, mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ) as mock_process, mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'time.time', return_value=42
+        ):
+            self.assertFalse(opt_obj.is_feature_enabled("test_feature_in_experiment_and_rollout", 'test_user'))
+
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
+
+        mock_decision.assert_called_once_with(opt_obj.config_manager.get_config(), feature, 'test_user', None)
+
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'feature',
+            'test_user',
+            {},
+            {
+                'feature_key': 'test_feature_in_experiment_and_rollout',
+                'feature_enabled': False,
+                'source': 'rollout',
+                'source_info': {},
+            },
+        )
+
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
+
     def test_is_feature_enabled__invalid_object(self):
         """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
 
