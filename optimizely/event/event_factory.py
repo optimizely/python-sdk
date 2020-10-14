@@ -89,10 +89,20 @@ class EventFactory(object):
     """
 
         if isinstance(event, user_event.ImpressionEvent):
-            metadata = payload.Metadata(event.flag_key, event.rule_key, event.rule_type, event.variation.key)
-            decision = payload.Decision(event.experiment.layerId, event.experiment.id, event.variation.id, metadata)
+            experiment_layerId, experiment_id, variation_id, variation_key = '', '', '', ''
+
+            if event.variation:
+                variation_id = event.variation.id
+                variation_key = event.variation.key
+
+            if event.experiment:
+                experiment_layerId = event.experiment.layerId
+                experiment_id = event.experiment.id
+
+            metadata = payload.Metadata(event.flag_key, event.rule_key, event.rule_type, variation_key)
+            decision = payload.Decision(experiment_layerId, experiment_id, variation_id, metadata)
             snapshot_event = payload.SnapshotEvent(
-                event.experiment.layerId, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,
+                experiment_layerId, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,
             )
 
             snapshot = payload.Snapshot([snapshot_event], [decision])
