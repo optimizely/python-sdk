@@ -919,11 +919,11 @@ class Optimizely(object):
         even when the SDK is not fully configured.
 
         Args:
-            user_id:
-            attributes:
+            user_id: string to use as user id for user context
+            attributes: dictionary of attributes or None
 
         Returns:
-
+            UserContext instance or None if the user id or attributes are invalid.
         """
         if not isinstance(user_id, string_types):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
