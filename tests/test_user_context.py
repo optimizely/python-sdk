@@ -14,7 +14,6 @@
 from . import base
 from optimizely import logger
 from optimizely.user_context import UserContext
-from optimizely.optimizely import Optimizely
 
 
 class UserContextTests(base.BaseTest):

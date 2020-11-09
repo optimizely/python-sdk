@@ -28,7 +28,6 @@ from optimizely import project_config
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
-from optimizely.user_context import UserContext
 from . import base
 
 
