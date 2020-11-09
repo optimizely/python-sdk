@@ -28,6 +28,7 @@ from optimizely import project_config
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
+from optimizely.user_context import UserContext
 from . import base
 
 
@@ -4957,3 +4958,13 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.assertIsNone(self.optimizely.get_forced_variation('test_experiment', 99))
 
         mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
+
+    def test_user_context_invalid_user_id(self):
+        """
+        Tests user context.
+        """
+        user_ids = [5, 5.5, None, True, [], {}]
+
+        for u in user_ids:
+            uc = self.optimizely.create_user_context(u)
+            self.assertIsNone(uc, "invalid user id should return none")

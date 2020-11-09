@@ -27,6 +27,7 @@ from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums, validator
 from .notification_center import NotificationCenter
 from .optimizely_config import OptimizelyConfigService
+from .user_context import UserContext
 
 
 class Optimizely(object):
@@ -911,3 +912,26 @@ class Optimizely(object):
             return self.config_manager.optimizely_config
 
         return OptimizelyConfigService(project_config).get_config()
+
+    def create_user_context(self, user_id, attributes=None):
+        """
+        We do not check for is_valid here as a user context can be created successfully
+        even when the SDK is not fully configured.
+
+        Args:
+            user_id:
+            attributes:
+
+        Returns:
+
+        """
+        if not isinstance(user_id, string_types):
+            self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
+            return None
+
+        if attributes is not None and type(attributes) is not dict:
+            self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
+            return None
+
+        user_context = UserContext(self, user_id, attributes)
+        return user_context
