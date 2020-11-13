@@ -325,7 +325,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': '',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -703,7 +704,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': '',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -785,7 +787,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': '',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -981,7 +984,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': '',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'control'},
+                                              'variation_key': 'control',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -1056,7 +1060,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': '',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -2004,7 +2009,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'feature-test',
-                                              'variation_key': 'variation'}}
+                                              'variation_key': 'variation',
+                                              'enabled': True}}
                             ],
                             'events': [
                                 {
@@ -2102,7 +2108,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'feature-test',
-                                              'variation_key': 'control'}}
+                                              'variation_key': 'control',
+                                              'enabled': False}}
                             ],
                             'events': [
                                 {
@@ -2248,7 +2255,8 @@ class OptimizelyTest(base.BaseTest):
                                  'metadata': {'flag_key': 'test_feature_in_experiment',
                                               'rule_key': 'test_experiment',
                                               'rule_type': 'rollout',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
