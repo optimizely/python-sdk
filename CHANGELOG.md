@@ -1,5 +1,11 @@
 # Optimizely Python SDK Changelog
 
+## 3.7.1
+November 19th, 2020
+
+### Bug Fixes:
+* Added "enabled" field to decision metadata structure. [#306](https://github.com/optimizely/python-sdk/pull/306)
+
 ## 3.7.0
 November 2nd, 2020
 
