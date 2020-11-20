@@ -78,7 +78,8 @@ class EventFactoryTest(base.BaseTest):
                                  'metadata': {'flag_key': 'flag_key',
                                               'rule_key': 'rule_key',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'}}
+                                              'variation_key': 'variation',
+                                              'enabled': False}}
                             ],
                             'events': [
                                 {
@@ -109,6 +110,7 @@ class EventFactoryTest(base.BaseTest):
                 'flag_key',
                 'rule_key',
                 'experiment',
+                False,
                 'test_user',
                 None,
             )
@@ -139,7 +141,8 @@ class EventFactoryTest(base.BaseTest):
                                  'metadata': {'flag_key': 'flag_key',
                                               'rule_key': 'rule_key',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -171,6 +174,7 @@ class EventFactoryTest(base.BaseTest):
                 'flag_key',
                 'rule_key',
                 'experiment',
+                True,
                 'test_user',
                 {'test_attribute': 'test_value'},
             )
@@ -199,7 +203,8 @@ class EventFactoryTest(base.BaseTest):
                                  'metadata': {'flag_key': 'flag_key',
                                               'rule_key': 'rule_key',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'}
+                                              'variation_key': 'variation',
+                                              'enabled': True}
                                  }
                             ],
                             'events': [
@@ -231,6 +236,7 @@ class EventFactoryTest(base.BaseTest):
                 'flag_key',
                 'rule_key',
                 'experiment',
+                True,
                 'test_user',
                 {'do_you_know_me': 'test_value'},
             )
@@ -350,7 +356,8 @@ class EventFactoryTest(base.BaseTest):
                                  'metadata': {'flag_key': 'flag_key',
                                               'rule_key': 'rule_key',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': False},
                                  }
                             ],
                             'events': [
@@ -384,6 +391,7 @@ class EventFactoryTest(base.BaseTest):
                 'flag_key',
                 'rule_key',
                 'experiment',
+                False,
                 'test_user',
                 {'$opt_user_agent': 'Edge'},
             )
@@ -420,7 +428,8 @@ class EventFactoryTest(base.BaseTest):
                                  'metadata': {'flag_key': 'flag_key',
                                               'rule_key': 'rule_key',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': False},
                                  }
                             ],
                             'events': [
@@ -454,6 +463,7 @@ class EventFactoryTest(base.BaseTest):
                 'flag_key',
                 'rule_key',
                 'experiment',
+                False,
                 'test_user',
                 None,
             )
@@ -496,7 +506,8 @@ class EventFactoryTest(base.BaseTest):
                                  'metadata': {'flag_key': 'flag_key',
                                               'rule_key': 'rule_key',
                                               'rule_type': 'experiment',
-                                              'variation_key': 'variation'},
+                                              'variation_key': 'variation',
+                                              'enabled': True},
                                  }
                             ],
                             'events': [
@@ -530,6 +541,7 @@ class EventFactoryTest(base.BaseTest):
                 'flag_key',
                 'rule_key',
                 'experiment',
+                True,
                 'test_user',
                 {'$opt_user_agent': 'Chrome'},
             )
