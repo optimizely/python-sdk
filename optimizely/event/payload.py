@@ -71,11 +71,12 @@ class Decision(object):
 class Metadata(object):
     """ Class respresenting Metadata. """
 
-    def __init__(self, flag_key, rule_key, rule_type, variation_key):
+    def __init__(self, flag_key, rule_key, rule_type, variation_key, enabled):
         self.flag_key = flag_key
         self.rule_key = rule_key
         self.rule_type = rule_type
         self.variation_key = variation_key
+        self.enabled = enabled
 
 
 class Snapshot(object):

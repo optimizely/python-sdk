@@ -99,7 +99,7 @@ class EventFactory(object):
                 experiment_layerId = event.experiment.layerId
                 experiment_id = event.experiment.id
 
-            metadata = payload.Metadata(event.flag_key, event.rule_key, event.rule_type, variation_key)
+            metadata = payload.Metadata(event.flag_key, event.rule_key, event.rule_type, variation_key, event.enabled)
             decision = payload.Decision(experiment_layerId, experiment_id, variation_id, metadata)
             snapshot_event = payload.SnapshotEvent(
                 experiment_layerId, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,

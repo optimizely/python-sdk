@@ -168,8 +168,8 @@ class Optimizely(object):
 
         return True
 
-    def _send_impression_event(self, project_config, experiment, variation, flag_key, rule_key, rule_type, user_id,
-                               attributes):
+    def _send_impression_event(self, project_config, experiment, variation, flag_key, rule_key, rule_type, enabled,
+                               user_id, attributes):
         """ Helper method to send impression event.
 
     Args:
@@ -179,12 +179,13 @@ class Optimizely(object):
       flag_key: key for a feature flag.
       rule_key: key for an experiment.
       rule_type: type for the source.
+      enabled: boolean representing if feature is enabled
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
     """
         variation_id = variation.id if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(
-            project_config, experiment, variation_id, flag_key, rule_key, rule_type, user_id, attributes
+            project_config, experiment, variation_id, flag_key, rule_key, rule_type, enabled, user_id, attributes
         )
 
         self.event_processor.process(user_event)
@@ -435,7 +436,7 @@ class Optimizely(object):
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
         self._send_impression_event(project_config, experiment, variation, '', experiment.key,
-                                    enums.DecisionSources.EXPERIMENT, user_id, attributes)
+                                    enums.DecisionSources.EXPERIMENT, True, user_id, attributes)
 
         return variation.key
 
@@ -588,25 +589,26 @@ class Optimizely(object):
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
-        if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
-            self._send_impression_event(
-                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
-                decision.experiment else '', decision.source, user_id, attributes
-            )
-
         if decision.variation:
             if decision.variation.featureEnabled is True:
                 feature_enabled = True
-            # Send event if Decision came from an experiment.
-            if is_source_experiment:
-                source_info = {
-                    'experiment_key': decision.experiment.key,
-                    'variation_key': decision.variation.key,
-                }
-                self._send_impression_event(
-                    project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
-                    decision.source, user_id, attributes
-                )
+
+        if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
+            self._send_impression_event(
+                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
+                decision.experiment else '', decision.source, feature_enabled, user_id, attributes
+            )
+
+        # Send event if Decision came from an experiment.
+        if is_source_experiment and decision.variation:
+            source_info = {
+                'experiment_key': decision.experiment.key,
+                'variation_key': decision.variation.key,
+            }
+            self._send_impression_event(
+                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
+                decision.source, feature_enabled, user_id, attributes
+            )
 
         if feature_enabled:
             self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))

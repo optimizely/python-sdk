@@ -21,7 +21,8 @@ class UserEventFactory(object):
 
     @classmethod
     def create_impression_event(
-        cls, project_config, activated_experiment, variation_id, flag_key, rule_key, rule_type, user_id, user_attributes
+        cls, project_config, activated_experiment, variation_id, flag_key, rule_key, rule_type,
+        enabled, user_id, user_attributes
     ):
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -32,6 +33,7 @@ class UserEventFactory(object):
       flag_key: key for a feature flag.
       rule_key: key for an experiment.
       rule_type: type for the source.
+      enabled: boolean representing if feature is enabled
       user_id: ID for user.
       attributes: Dict representing user attributes and values which need to be recorded.
 
@@ -62,6 +64,7 @@ class UserEventFactory(object):
             flag_key,
             rule_key,
             rule_type,
+            enabled,
             project_config.get_bot_filtering_value(),
         )
 
