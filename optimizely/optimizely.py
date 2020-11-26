@@ -20,11 +20,15 @@ from . import logger as _logging
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
 from .config_manager import StaticConfigManager
+from .decision.decide_option import DecideOption
+from .decision.decision import Decision
+from .decision.decision_message import DecisionMessage
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
 from .event.event_processor import ForwardingEventProcessor
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums, validator
+from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
 from .optimizely_config import OptimizelyConfigService
 from .user_context import UserContext
@@ -34,18 +38,19 @@ class Optimizely(object):
     """ Class encapsulating all SDK functionality. """
 
     def __init__(
-        self,
-        datafile=None,
-        event_dispatcher=None,
-        logger=None,
-        error_handler=None,
-        skip_json_validation=False,
-        user_profile_service=None,
-        sdk_key=None,
-        config_manager=None,
-        notification_center=None,
-        event_processor=None,
-        datafile_access_token=None,
+            self,
+            datafile=None,
+            event_dispatcher=None,
+            logger=None,
+            error_handler=None,
+            skip_json_validation=False,
+            user_profile_service=None,
+            sdk_key=None,
+            config_manager=None,
+            notification_center=None,
+            event_processor=None,
+            datafile_access_token=None,
+            default_decisions=None
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -69,6 +74,7 @@ class Optimizely(object):
                        which simply forwards events to the event dispatcher.
                        To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
       datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
+      default_decisions: Optional list of decide options used with the decide APIs.
     """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -80,6 +86,7 @@ class Optimizely(object):
         self.event_processor = event_processor or ForwardingEventProcessor(
             self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
         )
+        self.default_decisions = default_decisions or []
 
         try:
             self._validate_instantiation_options()
@@ -192,7 +199,7 @@ class Optimizely(object):
             )
 
     def _get_feature_variable_for_type(
-        self, project_config, feature_key, variable_key, variable_type, user_id, attributes,
+            self, project_config, feature_key, variable_key, variable_type, user_id, attributes,
     ):
         """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
@@ -296,7 +303,7 @@ class Optimizely(object):
         return actual_value
 
     def _get_all_feature_variables_for_type(
-        self, project_config, feature_key, user_id, attributes,
+            self, project_config, feature_key, user_id, attributes,
     ):
         """ Helper method to determine value for all variables attached to a feature flag.
 
@@ -935,3 +942,136 @@ class Optimizely(object):
 
         user_context = UserContext(self, user_id, attributes)
         return user_context
+
+    def decide(self, user_context, key, decide_options=None):
+        # raising on user context as it is internal and not provided directly by the user.
+        if not isinstance(user_context, UserContext):
+            raise
+
+        reasons = []
+
+        # check if SDK is ready
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide'))
+            reasons.append(DecisionMessage.SDK_NOT_READY)
+            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
+
+        # validate that key is a string
+        if not isinstance(key, string_types):
+            self.logger.error('Key parameter is invalid')
+            reasons.append(DecisionMessage.FLAG_KEY_INVALID.format(key))
+            return Decision.new(flag_key=key, user_context=user_context, reasons=reasons)
+
+        # validate that key maps to a feature flag
+        config = self.project_config
+        feature_flag = config.get_feature_flag_from_key(key)
+        if feature_flag is None:
+            self.logger.error("No feature flag was found for key '#{key}'.")
+            reasons.push(DecisionMessage.FLAG_KEY_INVALID.format(key))
+            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
+
+        # merge decide_options and default_decide_options
+        if isinstance(decide_options, list):
+            decide_options += self.default_decisions
+        else:
+            self.logger.debug('Provided decide options is not an array. Using default decide options.')
+            decide_options = self.default_decisions
+
+        # Create Optimizely Decision Result.
+        user_id = user_context.user_id
+        attributes = user_context.user_attributes
+        variation_key = None
+        feature_enabled = False
+        rule_key = None
+        flag_key = key
+        all_variables = {}
+        decision_event_dispatched = False
+        experiment = None
+        decision_source = DecisionSources.ROLLOUT
+        source_info = {}
+
+        decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes,
+                                                                   decide_options, reasons)
+
+        # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
+        if decision.source == enums.DecisionSources.FEATURE_TEST:
+            experiment = decision.experiment
+            rule_key = experiment['key']
+            variation = decision['variation']
+            variation_key = variation['key']
+            feature_enabled = variation['featureEnabled']
+            decision_source = decision.source
+            source_info["variation"] = variation
+            source_info["experiment"] = experiment
+
+        if DecideOption.DISABLE_DECISION_EVENT not in decide_options:
+            if decision_source == DecisionSources.FEATURE_TEST or config.send_flag_decisions:
+                self._send_impression_event(config, experiment, variation_key or '', flag_key, rule_key or '',
+                                            feature_enabled, decision_source,
+                                            user_id, attributes)
+                decision_event_dispatched = True
+
+        # Generate all variables map if decide options doesn't include excludeVariables
+        if DecideOption.EXCLUDE_VARIABLES not in decide_options:
+            for v in feature_flag['variables']:
+                project_config = self.config_manager.get_config()
+                all_variables[v['key']] = self._get_feature_variable_for_type(project_config, feature_flag['key'],
+                                                                              v['key'], v['type'], user_id, attributes)
+
+        # Send notification
+        self.notification_center.send_notifications(
+            enums.NotificationTypes.DECISION,
+            enums.DecisionNotificationTypes.FEATURE,
+            user_id,
+            attributes or {},
+            {
+                'feature_key': key,
+                'feature_enabled': feature_enabled,
+                'source': decision.source,
+                'source_info': source_info,
+            },
+        )
+
+        include_reasons = []
+        if DecideOption.INCLUDE_REASONS in decide_options:
+            include_reasons = reasons
+
+        return Decision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
+                        rule_key=rule_key,
+                        flag_key=flag_key, user_context=user_context, reasons=include_reasons)
+
+    def decide_all(self, user_context, decide_options=None):
+        # raising on user context as it is internal and not provided directly by the user.
+        if not isinstance(user_context, UserContext):
+            raise
+
+        # check if SDK is ready
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide_all'))
+            return {}
+
+        keys = []
+        for f in self.project_config:
+            keys.append(f['key'])
+
+        return self.decide_for_keys(user_context, keys, decide_options)
+
+    def decide_for_keys(self, user_context, keys, decide_options=[]):
+        # raising on user context as it is internal and not provided directly by the user.
+        if not isinstance(user_context, UserContext):
+            raise
+
+        # check if SDK is ready
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide_for_keys'))
+            return {}
+
+        enabled_flags_only = DecideOption.ENABLED_FLAGS_ONLY in decide_options
+        decisions = {}
+        for key in keys:
+            decision = self.decide(user_context, key, decide_options)
+            if enabled_flags_only and not decision.enabled:
+                continue
+            decisions[key] = decision
+
+        return decisions
