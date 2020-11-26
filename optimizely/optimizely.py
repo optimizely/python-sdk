@@ -985,7 +985,6 @@ class Optimizely(object):
         rule_key = None
         flag_key = key
         all_variables = {}
-        decision_event_dispatched = False
         experiment = None
         decision_source = DecisionSources.ROLLOUT
         source_info = {}
@@ -993,7 +992,8 @@ class Optimizely(object):
         decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_id, attributes,
                                                                    decide_options, reasons)
 
-        # Send impression event if Decision came from a feature test and decide options doesn't include disableDecisionEvent
+        # Send impression event if Decision came from a feature
+        # test and decide options doesn't include disableDecisionEvent
         if decision.source == enums.DecisionSources.FEATURE_TEST:
             experiment = decision.experiment
             rule_key = experiment['key']
@@ -1009,7 +1009,6 @@ class Optimizely(object):
                 self._send_impression_event(config, experiment, variation_key or '', flag_key, rule_key or '',
                                             feature_enabled, decision_source,
                                             user_id, attributes)
-                decision_event_dispatched = True
 
         # Generate all variables map if decide options doesn't include excludeVariables
         if DecideOption.EXCLUDE_VARIABLES not in decide_options:
