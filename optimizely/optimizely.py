@@ -982,14 +982,10 @@ class Optimizely(object):
             reasons.append(DecisionMessage.SDK_NOT_READY)
             return Decision(flag_key=key, user_context=user_context, reasons=reasons)
 
-        feature_flag = None
-        for flag in config.feature_flags:
-            if flag['key'] == key:
-                feature_flag = flag
-                break
+        feature_flag = config.get_feature_from_key(key)
         if feature_flag is None:
             self.logger.error("No feature flag was found for key '#{key}'.")
-            reasons.push(DecisionMessage.FLAG_KEY_INVALID.format(key))
+            reasons.append(DecisionMessage.FLAG_KEY_INVALID.format(key))
             return Decision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # merge decide_options and default_decide_options
@@ -1003,6 +999,7 @@ class Optimizely(object):
         user_id = user_context.user_id
         attributes = user_context.user_attributes
         variation_key = None
+        variation = None
         feature_enabled = False
         rule_key = None
         flag_key = key
@@ -1035,10 +1032,11 @@ class Optimizely(object):
 
         # Generate all variables map if decide options doesn't include excludeVariables
         if DecideOption.EXCLUDE_VARIABLES not in decide_options:
-            for v in feature_flag['variables']:
-                project_config = self.config_manager.get_config()
-                all_variables[v['key']] = self._get_feature_variable_for_type(project_config, feature_flag['key'],
-                                                                              v['key'], v['type'], user_id, attributes)
+            project_config = self.config_manager.get_config()
+            for key in feature_flag.variables:
+                v = feature_flag.variables[key]
+                all_variables[v.key] = self._get_feature_variable_for_type(project_config, feature_flag.key,
+                                                                           v.key, v.type, user_id, attributes)
 
         # Send notification
         self.notification_center.send_notifications(
@@ -1094,7 +1092,7 @@ class Optimizely(object):
 
         return self.decide_for_keys(user_context, keys, decide_options)
 
-    def decide_for_keys(self, user_context, keys, decide_options=[]):
+    def decide_for_keys(self, user_context, keys, decide_options=None):
         """
 
         Args:
@@ -1114,7 +1112,10 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide_for_keys'))
             return {}
 
-        enabled_flags_only = DecideOption.ENABLED_FLAGS_ONLY in decide_options
+        enabled_flags_only = False
+        if decide_options is not None:
+            enabled_flags_only = DecideOption.ENABLED_FLAGS_ONLY in decide_options
+
         decisions = {}
         for key in keys:
             decision = self.decide(user_context, key, decide_options)

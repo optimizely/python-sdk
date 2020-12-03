@@ -57,15 +57,48 @@ class UserContextTests(base.BaseTest):
     Also confirm that no impression event is processed. """
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        project_config = opt_obj.config_manager.get_config()
 
-        mock_rollout = project_config.get_experiment_from_key('test_experiment')
-        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-        with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=decision_service.Decision(mock_rollout, mock_variation, enums.DecisionSources.ROLLOUT),
-        ):
-            user_context = opt_obj.create_user_context('test_user')
-            decision = opt_obj.decide(user_context, 'test_feature_in_experiment')
-            self.assertTrue(decision.enabled)
-            self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
+        user_context = opt_obj.create_user_context('test_user')
+        decision = opt_obj.decide(user_context, 'test_feature_in_rollout')
+        self.assertFalse(decision.enabled)
+        self.assertEqual(decision.flag_key, 'test_feature_in_rollout')
+
+    def test_decide_for_keys(self):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+        decisions = opt_obj.decide_for_keys(user_context, ['test_feature_in_rollout', 'test_feature_in_experiment'])
+        self.assertTrue(len(decisions) == 2)
+
+        self.assertFalse(decisions['test_feature_in_rollout'].enabled)
+        self.assertEqual(decisions['test_feature_in_rollout'].flag_key, 'test_feature_in_rollout')
+
+        self.assertFalse(decisions['test_feature_in_experiment'].enabled)
+        self.assertEqual(decisions['test_feature_in_experiment'].flag_key, 'test_feature_in_experiment')
+
+    def test_decide_all(self):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+        decisions = opt_obj.decide_all(user_context)
+        self.assertTrue(len(decisions) == 4)
+
+        self.assertFalse(decisions['test_feature_in_rollout'].enabled)
+        self.assertEqual(decisions['test_feature_in_rollout'].flag_key, 'test_feature_in_rollout')
+
+        self.assertFalse(decisions['test_feature_in_experiment'].enabled)
+        self.assertEqual(decisions['test_feature_in_experiment'].flag_key, 'test_feature_in_experiment')
+
+        self.assertFalse(decisions['test_feature_in_group'].enabled)
+        self.assertEqual(decisions['test_feature_in_group'].flag_key, 'test_feature_in_group')
+
+        self.assertFalse(decisions['test_feature_in_experiment_and_rollout'].enabled)
+        self.assertEqual(decisions['test_feature_in_experiment_and_rollout'].flag_key,
+                         'test_feature_in_experiment_and_rollout')
+
