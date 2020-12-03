@@ -10,9 +10,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 
+import mock
+
+from optimizely.decision.decide_option import DecideOption
+from optimizely.helpers import enums
 from . import base
-from optimizely import logger
+from optimizely import logger, optimizely, decision_service
 from optimizely.user_context import UserContext
 
 
@@ -32,3 +37,37 @@ class UserContextTests(base.BaseTest):
         self.assertEqual(uc.user_attributes["key"], "value", "should have added attribute")
         uc.set_attribute("key", "value2")
         self.assertEqual(uc.user_attributes["key"], "value2", "should have new attribute")
+
+    def test_decide_feature_test(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+        feature = project_config.get_feature_from_key('test_feature_in_experiment')
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
+        ):
+            user_context = opt_obj.create_user_context('test_user')
+            decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
+            self.assertTrue(decision.enabled, "decision should be enabled")
+
+    def test_decide_rollout(self):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_rollout = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=decision_service.Decision(mock_rollout, mock_variation, enums.DecisionSources.ROLLOUT),
+        ):
+            user_context = opt_obj.create_user_context('test_user')
+            decision = opt_obj.decide(user_context, 'test_feature_in_experiment')
+            self.assertTrue(decision.enabled)
+            self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
+

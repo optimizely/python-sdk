@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
+from . import logger as _logging
 
 class UserContext(object):
     """
@@ -35,6 +35,10 @@ class UserContext(object):
         self.user_id = user_id
         self.user_attributes = user_attributes.copy() if user_attributes else {}
 
+        self.logger_name = '.'.join([__name__, self.__class__.__name__])
+
+        self.logger = _logging.reset_logger(self.logger_name)
+
     def set_attribute(self, attribute_key, attribute_value):
         """
         sets a attribute by key for this user context.
@@ -49,35 +53,50 @@ class UserContext(object):
 
     def decide(self, key, options=None):
         """
-        TODO: call optimizely_clieint.decide
+        Call decide on contained Optimizely object
         Args:
-          key:
-          options:
+          key: feature key
+          options: array of DecisionOption
 
         Returns:
-
+            Decision object
         """
+        if not self.client:
+            self.logger.error("Optimizely Client invalid")
+            return None
+
+        return self.client.decide(self, key, options)
 
     def decide_for_keys(self, keys, options=None):
         """
-        TODO: call optimizely_client.decide_for_keys
+        Call decide_for_keys on contained optimizely object
         Args:
-          keys:
-          options:
+          keys: array of feature keys
+          options: array of DecisionOption
 
         Returns:
+          Dictionary with feature_key keys and Decision object values
+        """
+        if not self.client:
+            self.logger.error("Optimizely Client invalid")
+            return None
 
-      """
+        self.client.decide_for_keys(self, keys, options)
 
     def decide_all(self, options=None):
         """
-        TODO: call optimize_client.decide_all
+        Call decide_all on contained optimizely instance
         Args:
-          options:
+          options: Array of DecisionOption objects
 
         Returns:
-
+          Dictionary with feature_key keys and Decision object values
         """
+        if not self.client:
+            self.logger.error("Optimizely Client invalid")
+            return None
+
+        self.client.decide_all(self, options)
 
     def track_event(self, event_key, event_tags=None):
-        self.optimizely_client.track(event_key, self.user_id, self.user_attributes, event_tags)
+        self.client.track(event_key, self.user_id, self.user_attributes, event_tags)
