@@ -15,6 +15,7 @@ import json
 import mock
 
 from optimizely.decision.decide_option import DecideOption
+from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
 from . import base
 from optimizely import logger, optimizely, decision_service
@@ -102,3 +103,31 @@ class UserContextTests(base.BaseTest):
         self.assertEqual(decisions['test_feature_in_experiment_and_rollout'].flag_key,
                          'test_feature_in_experiment_and_rollout')
 
+    def test_decide_all_enabled_only(self):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+        decisions = opt_obj.decide_all(user_context, [DecideOption.ENABLED_FLAGS_ONLY])
+        self.assertTrue(len(decisions) == 0)
+
+    def test_track(self):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        with mock.patch('time.time', return_value=42), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+            user_context = opt_obj.create_user_context('test_user')
+            user_context.track_event('test_event')
+
+        log_event = EventFactory.create_log_event(mock_process.call_args[0][0], opt_obj.logger)
+        self.assertEqual(log_event.params['visitors'][0]['visitor_id'], 'test_user')
+        self.assertEqual(log_event.params['visitors'][0]['snapshots'][0]['events'][0]['timestamp'], 42000)
+        self.assertEqual(log_event.params['visitors'][0]['snapshots'][0]['events'][0]['uuid'],
+                         'a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
+        self.assertEqual(log_event.params['visitors'][0]['snapshots'][0]['events'][0]['key'], 'test_event')
