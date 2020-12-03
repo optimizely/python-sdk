@@ -41,7 +41,6 @@ class UserContextTests(base.BaseTest):
     def test_decide_feature_test(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         project_config = opt_obj.config_manager.get_config()
-        feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
@@ -70,4 +69,3 @@ class UserContextTests(base.BaseTest):
             decision = opt_obj.decide(user_context, 'test_feature_in_experiment')
             self.assertTrue(decision.enabled)
             self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
-

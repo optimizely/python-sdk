@@ -680,16 +680,13 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         project_config = opt_obj.config_manager.get_config()
-        feature = project_config.get_feature_from_key('test_feature_in_experiment')
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-        ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
-        ) as mock_process:
+        ):
             user_context = opt_obj.create_user_context('test_user')
             decision = opt_obj.decide(user_context, 'test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
             self.assertTrue(decision.enabled, "decision should be enabled")
