@@ -10,7 +10,7 @@ python:
   - "pypy3"
 before_install:
   - sudo apt-get --auto-remove --yes remove python-openssl
-  - pip install pyOpenSSL
+  - sudo pip install pyOpenSSL
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
 script: "pytest --cov=optimizely"
 after_success:
