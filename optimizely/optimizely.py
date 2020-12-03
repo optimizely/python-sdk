@@ -982,10 +982,12 @@ class Optimizely(object):
             reasons.append(DecisionMessage.SDK_NOT_READY)
             return Decision(flag_key=key, user_context=user_context, reasons=reasons)
 
-        result = filter(lambda x: x['key'] == key, config.feature_flags)
-        if len(result) > 0:
-            feature_flag = result[0]
-        else:
+        feature_flag = None
+        for flag in config.feature_flags:
+            if flag['key'] == key:
+                feature_flag = flag
+                break
+        if feature_flag is None:
             self.logger.error("No feature flag was found for key '#{key}'.")
             reasons.push(DecisionMessage.FLAG_KEY_INVALID.format(key))
             return Decision(flag_key=key, user_context=user_context, reasons=reasons)
