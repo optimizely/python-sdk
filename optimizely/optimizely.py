@@ -201,6 +201,7 @@ class Optimizely(object):
 
     def _get_feature_variable_for_type(
             self, project_config, feature_key, variable_key, variable_type, user_id, attributes,
+            ignore_user_profile=False
     ):
         """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
@@ -211,6 +212,7 @@ class Optimizely(object):
       variable_type: Type of variable which could be one of boolean/double/integer/string.
       user_id: ID for user.
       attributes: Dict representing user attributes.
+      ignore_user_profile: if true don't use the user profile service
 
     Returns:
       Value of the variable. None if:
@@ -253,7 +255,8 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
         variable_value = variable.defaultValue
-        decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id, attributes)
+        decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id,
+                                                                   attributes, ignore_user_profile)
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -1009,7 +1012,10 @@ class Optimizely(object):
         source_info = {}
 
         decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_context.user_id,
-                                                                   user_context.user_attributes)
+                                                                   user_context.user_attributes,
+                                                                   DecideOption.IGNORE_USER_PROFILE_SERVICE in
+                                                                   decide_options)
+
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
         if decision.experiment is not None:
             experiment = decision.experiment
@@ -1033,10 +1039,13 @@ class Optimizely(object):
         # Generate all variables map if decide options doesn't include excludeVariables
         if DecideOption.EXCLUDE_VARIABLES not in decide_options:
             project_config = self.config_manager.get_config()
-            for key in feature_flag.variables:
-                v = feature_flag.variables[key]
+            for v_key in feature_flag.variables:
+                v = feature_flag.variables[v_key]
                 all_variables[v.key] = self._get_feature_variable_for_type(project_config, feature_flag.key,
-                                                                           v.key, v.type, user_id, attributes)
+                                                                           v.key, v.type, user_id, attributes,
+                                                                           DecideOption.IGNORE_USER_PROFILE_SERVICE in
+                                                                           decide_options
+                                                                           )
 
         # Send notification
         self.notification_center.send_notifications(

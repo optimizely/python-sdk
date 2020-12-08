@@ -301,6 +301,7 @@ class DecisionService(object):
       rollout: Rollout for which we are getting the variation.
       user_id: ID for user.
       attributes: Dict representing user attributes.
+      ignore_user_profile: True if we should bypass the user profile service
 
     Returns:
       Decision namedtuple consisting of experiment and variation for the user.
@@ -390,7 +391,7 @@ class DecisionService(object):
 
         return None
 
-    def get_variation_for_feature(self, project_config, feature, user_id, attributes=None):
+    def get_variation_for_feature(self, project_config, feature, user_id, attributes=None, ignore_user_profile=False):
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
     Args:
@@ -398,6 +399,7 @@ class DecisionService(object):
       feature: Feature for which we are determining if it is enabled or not for the given user.
       user_id: ID for user.
       attributes: Dict representing user attributes.
+      ignore_user_profile: True if you want to bypass the user profile service
 
     Returns:
       Decision namedtuple consisting of experiment and variation for the user.
@@ -411,7 +413,7 @@ class DecisionService(object):
             if group:
                 experiment = self.get_experiment_in_group(project_config, group, bucketing_id)
                 if experiment and experiment.id in feature.experimentIds:
-                    variation = self.get_variation(project_config, experiment, user_id, attributes)
+                    variation = self.get_variation(project_config, experiment, user_id, attributes, ignore_user_profile)
 
                     if variation:
                         return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)
@@ -423,7 +425,7 @@ class DecisionService(object):
             # If an experiment is not in a group, then the feature can only be associated with one experiment
             experiment = project_config.get_experiment_from_id(feature.experimentIds[0])
             if experiment:
-                variation = self.get_variation(project_config, experiment, user_id, attributes)
+                variation = self.get_variation(project_config, experiment, user_id, attributes, ignore_user_profile)
 
                 if variation:
                     return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST)

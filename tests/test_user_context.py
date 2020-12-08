@@ -17,6 +17,7 @@ import mock
 from optimizely.decision.decide_option import DecideOption
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
+from optimizely.user_profile import UserProfileService, UserProfile
 from . import base
 from optimizely import logger, optimizely, decision_service
 from optimizely.user_context import UserContext
@@ -131,3 +132,156 @@ class UserContextTests(base.BaseTest):
         self.assertEqual(log_event.params['visitors'][0]['snapshots'][0]['events'][0]['uuid'],
                          'a68cf1ad-0393-4e18-af87-efe8f01a7c9c')
         self.assertEqual(log_event.params['visitors'][0]['snapshots'][0]['events'][0]['key'], 'test_event')
+
+    def test_decide_sendEvent(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        # Assert that featureEnabled property is True
+        self.assertTrue(mock_variation.featureEnabled)
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+        ), mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ) as mock_process, mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'time.time', return_value=42
+        ):
+            context = opt_obj.create_user_context('test_user')
+            decision = context.decide('test_feature_in_experiment')
+            self.assertTrue(decision.enabled)
+
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'feature',
+            'test_user',
+            {},
+            {
+                'feature_key': 'test_feature_in_experiment',
+                'feature_enabled': True,
+                'source': 'rollout',
+                'source_info': {
+                    'experiment': mock_experiment,
+                    'variation': mock_variation,
+                },
+            },
+        )
+
+        # Check that impression event is sent for rollout and send_flag_decisions = True
+        self.assertEqual(1, mock_process.call_count)
+
+    def test_decide_doNotSendEvent_withOption(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        # Assert that featureEnabled property is True
+        self.assertTrue(mock_variation.featureEnabled)
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+        ), mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ) as mock_process, mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'time.time', return_value=42
+        ):
+            context = opt_obj.create_user_context('test_user')
+            decision = context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
+            self.assertTrue(decision.enabled)
+
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'feature',
+            'test_user',
+            {},
+            {
+                'feature_key': 'test_feature_in_experiment',
+                'feature_enabled': True,
+                'source': 'rollout',
+                'source_info': {
+                    'experiment': mock_experiment,
+                    'variation': mock_variation,
+                },
+            },
+        )
+
+        # Check that impression event is NOT sent for rollout and send_flag_decisions = True
+        # with disable decision event decision option
+        self.assertEqual(0, mock_process.call_count)
+
+    def test_decide_options_bypass_UPS(self):
+        user_id = 'test_user'
+        experiment_bucket_map = {'111127': {'variation_id': '111128'}}
+
+        profile = UserProfile(user_id, experiment_bucket_map=experiment_bucket_map)
+
+        class Ups(UserProfileService):
+
+            def lookup(self, user_id):
+                return profile
+
+            def save(self, user_profile):
+                super(Ups, self).save(user_profile)
+
+        ups = Ups()
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features), user_profile_service=ups)
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        # Assert that featureEnabled property is True
+        self.assertTrue(mock_variation.featureEnabled)
+
+        with mock.patch(
+            'optimizely.bucketer.Bucketer.bucket',
+                return_value=mock_variation,
+        ), mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ) as mock_process, mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'time.time', return_value=42
+        ):
+            context = opt_obj.create_user_context(user_id)
+            decision = context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT,
+                                                                     DecideOption.IGNORE_USER_PROFILE_SERVICE,
+                                                                     DecideOption.EXCLUDE_VARIABLES])
+            self.assertTrue(decision.enabled)
+
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'feature',
+            'test_user',
+            {},
+            {
+                'feature_key': 'test_feature_in_experiment',
+                'feature_enabled': True,
+                'source': 'feature-test',
+                'source_info': {
+                    'experiment': mock_experiment,
+                    'variation': mock_variation,
+                },
+            },
+        )
+
+        # Check that impression event is NOT sent for rollout and send_flag_decisions = True
+        # with disable decision event decision option
+        self.assertEqual(0, mock_process.call_count)
