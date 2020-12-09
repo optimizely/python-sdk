@@ -10,6 +10,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+import threading
+
 from six import string_types
 
 from . import decision_service
@@ -998,6 +1001,33 @@ class Optimizely(object):
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
             decide_options = self.default_decisions
 
+        class ReasonLogHandler(logging.StreamHandler):
+            def __init__(self):
+                super(ReasonLogHandler, self).__init__()
+                self._name = "ReasonLogHandler"
+                self.reasons = {threading.current_thread().ident: []}
+                self.level = logging.INFO
+                formatter = logging.Formatter('%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s')
+                self.setFormatter(formatter)
+                self.createLock()
+
+            def handle(self, record):
+                msg = self.format(record)
+                self.reasons[threading.current_thread().ident].append(msg)
+
+            def emit(self, record):
+                pass
+
+            def get_reasons(self):
+                return self.reasons[threading.current_thread().ident]
+
+        handler = None
+
+        if DecideOption.INCLUDE_REASONS in decide_options:
+            handler = ReasonLogHandler()
+            self.decision_service.logger.addHandler(handler)
+            config.logger.addHandler(handler)
+
         # Create Optimizely Decision Result.
         user_id = user_context.user_id
         attributes = user_context.user_attributes
@@ -1063,7 +1093,11 @@ class Optimizely(object):
 
         include_reasons = []
         if DecideOption.INCLUDE_REASONS in decide_options:
+            handler.flush()
             include_reasons = reasons
+            include_reasons += handler.get_reasons()
+            self.decision_service.logger.removeHandler(handler)
+            config.logger.removeHandler(handler)
 
         return Decision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                         rule_key=rule_key,
