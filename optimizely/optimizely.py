@@ -1006,7 +1006,7 @@ class Optimizely(object):
                 super(ReasonLogHandler, self).__init__()
                 self._name = "ReasonLogHandler"
                 self.reasons = {threading.current_thread().ident: []}
-                self.level = logging.INFO
+                self.level = logging.DEBUG
                 formatter = logging.Formatter('%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s')
                 self.setFormatter(formatter)
                 self.createLock()

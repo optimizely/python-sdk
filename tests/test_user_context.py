@@ -303,7 +303,7 @@ class UserContextTests(base.BaseTest):
 
         ups = Ups()
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features),
-                                        logger=logger.SimpleLogger(min_level=logging.INFO),
+                                        logger=logger.SimpleLogger(min_level=logging.DEBUG),
                                         user_profile_service=ups)
         project_config = opt_obj.config_manager.get_config()
 
@@ -349,9 +349,9 @@ class UserContextTests(base.BaseTest):
         )
 
         self.assertIsNotNone(decision.reasons)
-        self.assertTrue(decision.reasons[0].find(
+        self.assertTrue(decision.reasons[2].find(
             'Audiences for experiment "test_experiment" collectively evaluated to TRUE.') is not -1)
-        self.assertTrue(decision.reasons[1].find(
+        self.assertTrue(decision.reasons[3].find(
             'User "test_user" is in variation "variation" of experiment test_experiment.') is not -1)
         # Check that impression event is NOT sent for rollout and send_flag_decisions = True
         # with disable decision event decision option
