@@ -42,7 +42,7 @@ class UserContext(object):
 
     def clone(self):
         return UserContext(self.client, self.user_id, self.user_attributes)
-        
+
     def set_attribute(self, attribute_key, attribute_value):
         """
         sets a attribute by key for this user context.
