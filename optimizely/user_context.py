@@ -41,7 +41,7 @@ class UserContext(object):
         self.logger = _logging.reset_logger(self.logger_name)
 
     def clone(self):
-      return UserContext(self.client, self.user_id, self.user_attributes)
+        return UserContext(self.client, self.user_id, self.user_attributes)
         
     def set_attribute(self, attribute_key, attribute_value):
         """
