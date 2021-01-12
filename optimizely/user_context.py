@@ -40,6 +40,9 @@ class UserContext(object):
 
         self.logger = _logging.reset_logger(self.logger_name)
 
+    def clone(self):
+      return UserContext(self.client, self.user_id, self.user_attributes)
+        
     def set_attribute(self, attribute_key, attribute_value):
         """
         sets a attribute by key for this user context.
@@ -66,7 +69,7 @@ class UserContext(object):
             self.logger.error("Optimizely Client invalid")
             return None
 
-        return self.client.decide(self, key, options)
+        return self.client.decide(self.clone(), key, options)
 
     def decide_for_keys(self, keys, options=None):
         """
@@ -82,7 +85,7 @@ class UserContext(object):
             self.logger.error("Optimizely Client invalid")
             return None
 
-        self.client.decide_for_keys(self, keys, options)
+        self.client.decide_for_keys(self.clone(), keys, options)
 
     def decide_all(self, options=None):
         """
@@ -97,7 +100,7 @@ class UserContext(object):
             self.logger.error("Optimizely Client invalid")
             return None
 
-        self.client.decide_all(self, options)
+        self.client.decide_all(self.clone(), options)
 
     def track_event(self, event_key, event_tags=None):
         self.client.track(event_key, self.user_id, self.user_attributes, event_tags)
