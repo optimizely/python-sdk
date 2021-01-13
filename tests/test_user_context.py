@@ -66,6 +66,17 @@ class UserContextTests(base.BaseTest):
         self.assertFalse(decision.enabled)
         self.assertEqual(decision.flag_key, 'test_feature_in_rollout')
 
+    def test_decide_user_context(self):
+        """ Test that the user context in decide response is not the same object on which
+    the decide was called """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+        decision = user_context.decide('test_feature_in_rollout')
+        user_context.set_attribute("test_key", "test_value")
+        self.assertNotEqual(user_context.user_attributes, decision.user_context.user_attributes)
+
     def test_decide_for_keys(self):
         """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
     Also confirm that no impression event is processed. """
