@@ -82,7 +82,7 @@ class UserContext(object):
             self.logger.error("Optimizely Client invalid")
             return None
 
-        self.client.decide_for_keys(self, keys, options)
+        return self.client.decide_for_keys(self, keys, options)
 
     def decide_all(self, options=None):
         """
@@ -97,7 +97,13 @@ class UserContext(object):
             self.logger.error("Optimizely Client invalid")
             return None
 
-        self.client.decide_all(self, options)
+        return self.client.decide_all(self, options)
 
     def track_event(self, event_key, event_tags=None):
-        self.client.track(event_key, self.user_id, self.user_attributes, event_tags)
+        return self.client.track(event_key, self.user_id, self.user_attributes, event_tags)
+
+    def as_json(self):
+        return {
+            'user_id': self.user_id,
+            'attributes': self.user_attributes,
+        }

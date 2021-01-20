@@ -979,7 +979,7 @@ class Optimizely(object):
         if not isinstance(key, string_types):
             self.logger.error('Key parameter is invalid')
             reasons.append(DecisionMessage.FLAG_KEY_INVALID.format(key))
-            return Decision.new(flag_key=key, user_context=user_context, reasons=reasons)
+            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # validate that key maps to a feature flag
         config = self.config_manager.get_config()
@@ -1041,11 +1041,13 @@ class Optimizely(object):
         experiment = None
         decision_source = DecisionSources.ROLLOUT
         source_info = {}
+        decision_event_dispatched = False
 
         decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_context.user_id,
                                                                    user_context.user_attributes,
                                                                    DecideOption.IGNORE_USER_PROFILE_SERVICE in
                                                                    decide_options)
+
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
         if decision.experiment is not None:
@@ -1058,14 +1060,16 @@ class Optimizely(object):
             feature_enabled = variation.featureEnabled
             decision_source = decision.source
             source_info["variation"] = variation
-
+        #
         # Send impression event if Decision came from a feature
         # test and decide options doesn't include disableDecisionEvent
         if DecideOption.DISABLE_DECISION_EVENT not in decide_options:
             if decision_source == DecisionSources.FEATURE_TEST or config.send_flag_decisions:
                 self._send_impression_event(config, experiment, variation, flag_key, rule_key or '',
-                                            feature_enabled, decision_source,
+                                            decision_source, feature_enabled,
                                             user_id, attributes)
+                decision_event_dispatched = True
+
 
         # Generate all variables map if decide options doesn't include excludeVariables
         if DecideOption.EXCLUDE_VARIABLES not in decide_options:
@@ -1078,19 +1082,27 @@ class Optimizely(object):
                                                                            decide_options
                                                                            )
 
-        # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
-            enums.DecisionNotificationTypes.FEATURE,
+            enums.DecisionNotificationTypes.FLAG,
             user_id,
             attributes or {},
             {
-                'feature_key': key,
-                'feature_enabled': feature_enabled,
-                'source': decision.source,
-                'source_info': source_info,
+                # 'feature_key': key,
+                # 'feature_enabled': feature_enabled,
+                # 'source': decision.source,
+                # 'source_info': source_info,
+                'flag_key' : flag_key,
+                'enabled' : feature_enabled,
+                'variables': all_variables ,
+                'variation_key' : variation_key,
+                'rule_key' : rule_key,
+                'reasons' : reasons,
+                'decision_event_dispatched': decision_event_dispatched
+
             },
         )
+        # Send notification
 
         include_reasons = []
         if DecideOption.INCLUDE_REASONS in decide_options:
@@ -1133,7 +1145,6 @@ class Optimizely(object):
         keys = []
         for f in config.feature_flags:
             keys.append(f['key'])
-
         return self.decide_for_keys(user_context, keys, decide_options)
 
     def decide_for_keys(self, user_context, keys, decide_options=None):
@@ -1166,5 +1177,4 @@ class Optimizely(object):
             if enabled_flags_only and not decision.enabled:
                 continue
             decisions[key] = decision
-
         return decisions

@@ -15,13 +15,13 @@ import logging
 
 import mock
 
+from optimizely import logger, optimizely, decision_service
 from optimizely.decision.decide_option import DecideOption
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
+from optimizely.user_context import UserContext
 from optimizely.user_profile import UserProfileService, UserProfile
 from . import base
-from optimizely import logger, optimizely, decision_service
-from optimizely.user_context import UserContext
 
 
 class UserContextTests(base.BaseTest):
@@ -47,9 +47,11 @@ class UserContextTests(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
         with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=decision_service.Decision(mock_experiment, mock_variation,
+                                                       enums.DecisionSources.FEATURE_TEST),
         ):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
@@ -122,7 +124,7 @@ class UserContextTests(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
         with mock.patch('time.time', return_value=42), mock.patch(
-            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+                'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
             user_context = opt_obj.create_user_context('test_user')
             user_context.track_event('test_event')
@@ -145,8 +147,8 @@ class UserContextTests(base.BaseTest):
         self.assertTrue(mock_variation.featureEnabled)
 
         with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process, mock.patch(
@@ -190,8 +192,8 @@ class UserContextTests(base.BaseTest):
         self.assertTrue(mock_variation.featureEnabled)
 
         with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process, mock.patch(
@@ -250,7 +252,7 @@ class UserContextTests(base.BaseTest):
         self.assertTrue(mock_variation.featureEnabled)
 
         with mock.patch(
-            'optimizely.bucketer.Bucketer.bucket',
+                'optimizely.bucketer.Bucketer.bucket',
                 return_value=mock_variation,
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
@@ -314,7 +316,7 @@ class UserContextTests(base.BaseTest):
         self.assertTrue(mock_variation.featureEnabled)
 
         with mock.patch(
-            'optimizely.bucketer.Bucketer.bucket',
+                'optimizely.bucketer.Bucketer.bucket',
                 return_value=mock_variation,
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
@@ -356,3 +358,46 @@ class UserContextTests(base.BaseTest):
         # Check that impression event is NOT sent for rollout and send_flag_decisions = True
         # with disable decision event decision option
         self.assertEqual(0, mock_process.call_count)
+
+    "Add more test cases for user_context scenario"
+
+    def test_optimizely_user_context_created_with_expected_values(self):
+        user_id = 'test_user'
+        attributes = {"browser": "chrome"}
+        uc = UserContext(self.optimizely, user_id, attributes)
+        self.assertEquals("test_user", uc.user_id)
+        self.assertEqual(attributes, uc.user_attributes)
+        self.assertIs(self.optimizely, uc.client)
+
+    def test_set_attributes(self):
+        user_id = 'test_user'
+        attributes = {"browser": "chrome"}
+        uc = UserContext(self.optimizely, user_id, attributes)
+        self.assertEqual(attributes, uc.user_attributes)
+        uc.set_attribute('color', 'red')
+        self.assertEquals({
+            "browser": "chrome",
+            "color": "red"}, uc.user_attributes)
+
+    def test_set_attributes_overrides_value_of_existing_key(self):
+        user_id = 'test_user'
+        attributes = {"browser": "chrome"}
+        uc = UserContext(self.optimizely, user_id, attributes)
+        self.assertEquals(attributes, uc.user_attributes)
+        uc.set_attribute('browser', 'firefox')
+        self.assertEquals({"browser": "firefox"}, uc.user_attributes)
+
+    def test_set_attribute_when_no_attributes_provided_in_constructor(self):
+        user_id = 'test_user'
+        uc = UserContext(self.optimizely, user_id)
+        self.assertEqual({}, uc.user_attributes)
+        uc.set_attribute('browser', 'firefox')
+        self.assertEqual({'browser': 'firefox'}, uc.user_attributes)
+
+    def test_attribute_when_no_update_on_caller_copy_update(self):
+        user_id = 'test_user'
+        attributes = {"browser": "chrome"}
+        uc = UserContext(self.optimizely, user_id, attributes)
+        self.assertEqual(attributes, uc.user_attributes)
+        attributes['new_key'] = 'test_value'
+        self.assertNotEqual(attributes, uc.user_attributes)
