@@ -1060,7 +1060,7 @@ class Optimizely(object):
             feature_enabled = variation.featureEnabled
             decision_source = decision.source
             source_info["variation"] = variation
-        #
+
         # Send impression event if Decision came from a feature
         # test and decide options doesn't include disableDecisionEvent
         if DecideOption.DISABLE_DECISION_EVENT not in decide_options:
@@ -1073,14 +1073,23 @@ class Optimizely(object):
 
         # Generate all variables map if decide options doesn't include excludeVariables
         if DecideOption.EXCLUDE_VARIABLES not in decide_options:
-            project_config = self.config_manager.get_config()
-            for v_key in feature_flag.variables:
-                v = feature_flag.variables[v_key]
-                all_variables[v.key] = self._get_feature_variable_for_type(project_config, feature_flag.key,
-                                                                           v.key, v.type, user_id, attributes,
-                                                                           DecideOption.IGNORE_USER_PROFILE_SERVICE in
-                                                                           decide_options
-                                                                           )
+            for variable_key in feature_flag.variables:
+                variable = config.get_variable_for_feature(flag_key, variable_key)
+                variable_value = variable.defaultValue
+                if feature_enabled:
+                    variable_value = config.get_variable_value_for_variation(variable, decision.variation)
+                    self.logger.debug(
+                        'Got variable value "%s" for variable "%s" of feature flag "%s".'
+                        % (variable_value, variable_key, flag_key)
+                    )
+
+                try:
+                    actual_value = config.get_typecast_value(variable_value, variable.type)
+                except:
+                    self.logger.error('Unable to cast value. Returning None.')
+                    actual_value = None
+
+                all_variables[variable_key] = actual_value
 
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
@@ -1088,10 +1097,6 @@ class Optimizely(object):
             user_id,
             attributes or {},
             {
-                # 'feature_key': key,
-                # 'feature_enabled': feature_enabled,
-                # 'source': decision.source,
-                # 'source_info': source_info,
                 'flag_key' : flag_key,
                 'enabled' : feature_enabled,
                 'variables': all_variables ,
@@ -1102,8 +1107,8 @@ class Optimizely(object):
 
             },
         )
-        # Send notification
 
+        # Send notification
         include_reasons = []
         if DecideOption.INCLUDE_REASONS in decide_options:
             handler.flush()
@@ -1115,6 +1120,7 @@ class Optimizely(object):
         return Decision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                         rule_key=rule_key,
                         flag_key=flag_key, user_context=user_context, reasons=include_reasons)
+
 
     def decide_all(self, user_context, decide_options=None):
         """
