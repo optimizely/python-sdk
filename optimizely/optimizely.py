@@ -952,7 +952,6 @@ class Optimizely(object):
 
         return UserContext(self, user_id, attributes)
 
-
     def decide(self, user_context, key, decide_options=None):
         """
         decide calls optimizely decide with feature key provided
@@ -1003,7 +1002,6 @@ class Optimizely(object):
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
             decide_options = self.default_decide_options
 
-
         # Create Optimizely Decision Result.
         user_id = user_context.user_id
         attributes = user_context.user_attributes
@@ -1022,7 +1020,6 @@ class Optimizely(object):
                                                                    user_context.user_attributes,
                                                                    DecideOption.IGNORE_USER_PROFILE_SERVICE in
                                                                    decide_options)
-
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
         if decision.experiment is not None:
@@ -1044,7 +1041,6 @@ class Optimizely(object):
                                             decision_source, feature_enabled,
                                             user_id, attributes)
                 decision_event_dispatched = True
-
 
         # Generate all variables map if decide options doesn't include excludeVariables
         if DecideOption.EXCLUDE_VARIABLES not in decide_options:
@@ -1073,12 +1069,12 @@ class Optimizely(object):
             user_id,
             attributes or {},
             {
-                'flag_key' : flag_key,
-                'enabled' : feature_enabled,
-                'variables': all_variables ,
-                'variation_key' : variation_key,
-                'rule_key' : rule_key,
-                'reasons' : reasons,
+                'flag_key': flag_key,
+                'enabled': feature_enabled,
+                'variables': all_variables,
+                'variation_key': variation_key,
+                'rule_key': rule_key,
+                'reasons': reasons,
                 'decision_event_dispatched': decision_event_dispatched
 
             },
@@ -1087,7 +1083,6 @@ class Optimizely(object):
         return Decision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                         rule_key=rule_key,
                         flag_key=flag_key, user_context=user_context, reasons=reasons)
-
 
     def decide_all(self, user_context, decide_options=None):
         """

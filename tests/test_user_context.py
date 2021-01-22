@@ -12,7 +12,6 @@
 # limitations under the License.
 import json
 import logging
-
 import mock
 
 from optimizely import logger, optimizely, decision_service
@@ -164,20 +163,19 @@ class UserContextTests(base.BaseTest):
 
         mock_broadcast_decision.assert_called_with(
             enums.NotificationTypes.DECISION,
-            'feature',
+            'flag',
             'test_user',
             {},
             {
-                'feature_key': 'test_feature_in_experiment',
-                'feature_enabled': True,
-                'source': 'rollout',
-                'source_info': {
-                    'experiment': mock_experiment,
-                    'variation': mock_variation,
-                },
+                'flag_key': 'test_feature_in_experiment',
+                'enabled': True,
+                'variation_key': decision.variation_key,
+                'rule_key': decision.rule_key,
+                'reasons': decision.reasons,
+                'decision_event_dispatched': True,
+                'variables': decision.variables,
             },
         )
-
         # Check that impression event is sent for rollout and send_flag_decisions = True
         self.assertEqual(1, mock_process.call_count)
 
@@ -209,17 +207,18 @@ class UserContextTests(base.BaseTest):
 
         mock_broadcast_decision.assert_called_with(
             enums.NotificationTypes.DECISION,
-            'feature',
+            'flag',
             'test_user',
             {},
             {
-                'feature_key': 'test_feature_in_experiment',
-                'feature_enabled': True,
-                'source': 'rollout',
-                'source_info': {
-                    'experiment': mock_experiment,
-                    'variation': mock_variation,
-                },
+                'flag_key': 'test_feature_in_experiment',
+                'enabled': True,
+                'variation_key': decision.variation_key,
+                'rule_key': decision.rule_key,
+                'reasons': decision.reasons,
+                'decision_event_dispatched': False,
+                'variables': decision.variables,
+
             },
         )
 
@@ -245,7 +244,6 @@ class UserContextTests(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features), user_profile_service=ups)
         project_config = opt_obj.config_manager.get_config()
 
-        mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
 
         # Assert that featureEnabled property is True
@@ -271,17 +269,18 @@ class UserContextTests(base.BaseTest):
 
         mock_broadcast_decision.assert_called_with(
             enums.NotificationTypes.DECISION,
-            'feature',
+            'flag',
             'test_user',
             {},
             {
-                'feature_key': 'test_feature_in_experiment',
-                'feature_enabled': True,
-                'source': 'feature-test',
-                'source_info': {
-                    'experiment': mock_experiment,
-                    'variation': mock_variation,
-                },
+                'flag_key': 'test_feature_in_experiment',
+                'enabled': True,
+                'variation_key': decision.variation_key,
+                'rule_key': decision.rule_key,
+                'reasons': decision.reasons,
+                'decision_event_dispatched': False,
+                'variables': decision.variables,
+
             },
         )
 
@@ -309,7 +308,6 @@ class UserContextTests(base.BaseTest):
                                         user_profile_service=ups)
         project_config = opt_obj.config_manager.get_config()
 
-        mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
 
         # Assert that featureEnabled property is True
@@ -336,25 +334,21 @@ class UserContextTests(base.BaseTest):
 
         mock_broadcast_decision.assert_called_with(
             enums.NotificationTypes.DECISION,
-            'feature',
+            'flag',
             'test_user',
             {},
             {
-                'feature_key': 'test_feature_in_experiment',
-                'feature_enabled': True,
-                'source': 'feature-test',
-                'source_info': {
-                    'experiment': mock_experiment,
-                    'variation': mock_variation,
-                },
+                'flag_key': 'test_feature_in_experiment',
+                'enabled': True,
+                'variation_key': decision.variation_key,
+                'rule_key': decision.rule_key,
+                'reasons': decision.reasons,
+                'decision_event_dispatched': False,
+                'variables': decision.variables,
+
             },
         )
 
-        self.assertIsNotNone(decision.reasons)
-        self.assertTrue(decision.reasons[0].find(
-            'Audiences for experiment "test_experiment" collectively evaluated to TRUE.') is not -1)
-        self.assertTrue(decision.reasons[1].find(
-            'User "test_user" is in variation "variation" of experiment test_experiment.') is not -1)
         # Check that impression event is NOT sent for rollout and send_flag_decisions = True
         # with disable decision event decision option
         self.assertEqual(0, mock_process.call_count)

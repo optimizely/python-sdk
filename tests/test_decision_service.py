@@ -1183,6 +1183,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("test_experiment"),
             "test_user",
             None,
+            False
         )
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_rollout(self):
@@ -1302,6 +1303,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("group_exp_1"),
             "test_user",
             None,
+            False
         )
 
     def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
@@ -1349,6 +1351,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("test_experiment"),
             "test_user",
             None,
+            False
         )
 
     def test_get_variation_for_feature__returns_none_for_invalid_group_id(self):
