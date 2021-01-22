@@ -1,4 +1,4 @@
-#    Copyright 2020, Optimizely and contributors
+#    Copyright 2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-from . import logger as _logging
-
 
 class UserContext(object):
     """
@@ -35,10 +33,6 @@ class UserContext(object):
         self.client = optimizely_client
         self.user_id = user_id
         self.user_attributes = user_attributes.copy() if user_attributes else {}
-
-        self.logger_name = '.'.join([__name__, self.__class__.__name__])
-
-        self.logger = _logging.reset_logger(self.logger_name)
 
     def set_attribute(self, attribute_key, attribute_value):
         """
@@ -62,10 +56,6 @@ class UserContext(object):
         Returns:
             Decision object
         """
-        if not self.client:
-            self.logger.error("Optimizely Client invalid")
-            return None
-
         return self.client.decide(self, key, options)
 
     def decide_for_keys(self, keys, options=None):
@@ -78,10 +68,6 @@ class UserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        if not self.client:
-            self.logger.error("Optimizely Client invalid")
-            return None
-
         return self.client.decide_for_keys(self, keys, options)
 
     def decide_all(self, options=None):
@@ -93,10 +79,6 @@ class UserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        if not self.client:
-            self.logger.error("Optimizely Client invalid")
-            return None
-
         return self.client.decide_all(self, options)
 
     def track_event(self, event_key, event_tags=None):

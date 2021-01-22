@@ -10,8 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
-import threading
 
 from six import string_types
 
@@ -53,7 +51,7 @@ class Optimizely(object):
             notification_center=None,
             event_processor=None,
             datafile_access_token=None,
-            default_decisions=None
+            default_decide_options=None
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -77,7 +75,7 @@ class Optimizely(object):
                        which simply forwards events to the event dispatcher.
                        To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
       datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
-      default_decisions: Optional list of decide options used with the decide APIs.
+      default_decide_options: Optional list of decide options used with the decide APIs.
     """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -89,7 +87,13 @@ class Optimizely(object):
         self.event_processor = event_processor or ForwardingEventProcessor(
             self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
         )
-        self.default_decisions = default_decisions or []
+
+        if default_decide_options is None:
+            self.default_decide_options = []
+
+        if not isinstance(self.default_decide_options, list):
+            self.logger.debug('Provided default decide options is not a list.')
+            self.default_decide_options = []
 
         try:
             self._validate_instantiation_options()
@@ -203,8 +207,7 @@ class Optimizely(object):
             )
 
     def _get_feature_variable_for_type(
-            self, project_config, feature_key, variable_key, variable_type, user_id, attributes,
-            ignore_user_profile=False
+            self, project_config, feature_key, variable_key, variable_type, user_id, attributes
     ):
         """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
@@ -215,7 +218,6 @@ class Optimizely(object):
       variable_type: Type of variable which could be one of boolean/double/integer/string.
       user_id: ID for user.
       attributes: Dict representing user attributes.
-      ignore_user_profile: if true don't use the user profile service
 
     Returns:
       Value of the variable. None if:
@@ -259,7 +261,7 @@ class Optimizely(object):
         source_info = {}
         variable_value = variable.defaultValue
         decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id,
-                                                                   attributes, ignore_user_profile)
+                                                                   attributes)
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -310,7 +312,7 @@ class Optimizely(object):
         return actual_value
 
     def _get_all_feature_variables_for_type(
-            self, project_config, feature_key, user_id, attributes,
+        self, project_config, feature_key, user_id, attributes,
     ):
         """ Helper method to determine value for all variables attached to a feature flag.
 
@@ -948,8 +950,8 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
             return None
 
-        user_context = UserContext(self, user_id, attributes)
-        return user_context
+        return UserContext(self, user_id, attributes)
+
 
     def decide(self, user_context, key, decide_options=None):
         """
@@ -971,7 +973,7 @@ class Optimizely(object):
 
         # check if SDK is ready
         if not self.is_valid:
-            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide'))
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('decide'))
             reasons.append(DecisionMessage.SDK_NOT_READY)
             return Decision(flag_key=key, user_context=user_context, reasons=reasons)
 
@@ -996,38 +998,11 @@ class Optimizely(object):
 
         # merge decide_options and default_decide_options
         if isinstance(decide_options, list):
-            decide_options += self.default_decisions
+            decide_options += self.default_decide_options
         else:
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
-            decide_options = self.default_decisions
+            decide_options = self.default_decide_options
 
-        class ReasonLogHandler(logging.StreamHandler):
-            def __init__(self):
-                super(ReasonLogHandler, self).__init__()
-                self._name = "ReasonLogHandler"
-                self.reasons = {threading.current_thread().ident: []}
-                # setting to info level since we don't put debug in reasons.
-                self.level = logging.INFO
-                formatter = logging.Formatter('%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s')
-                self.setFormatter(formatter)
-                self.createLock()
-
-            def handle(self, record):
-                msg = self.format(record)
-                self.reasons[threading.current_thread().ident].append(msg)
-
-            def emit(self, record):
-                pass
-
-            def get_reasons(self):
-                return self.reasons[threading.current_thread().ident]
-
-        handler = None
-
-        if DecideOption.INCLUDE_REASONS in decide_options:
-            handler = ReasonLogHandler()
-            self.decision_service.logger.addHandler(handler)
-            config.logger.addHandler(handler)
 
         # Create Optimizely Decision Result.
         user_id = user_context.user_id
@@ -1091,6 +1066,7 @@ class Optimizely(object):
 
                 all_variables[variable_key] = actual_value
 
+        # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
             enums.DecisionNotificationTypes.FLAG,
@@ -1108,18 +1084,9 @@ class Optimizely(object):
             },
         )
 
-        # Send notification
-        include_reasons = []
-        if DecideOption.INCLUDE_REASONS in decide_options:
-            handler.flush()
-            include_reasons = reasons
-            include_reasons += handler.get_reasons()
-            self.decision_service.logger.removeHandler(handler)
-            config.logger.removeHandler(handler)
-
         return Decision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                         rule_key=rule_key,
-                        flag_key=flag_key, user_context=user_context, reasons=include_reasons)
+                        flag_key=flag_key, user_context=user_context, reasons=reasons)
 
 
     def decide_all(self, user_context, decide_options=None):
@@ -1138,7 +1105,7 @@ class Optimizely(object):
 
         # check if SDK is ready
         if not self.is_valid:
-            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide_all'))
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('decide_all'))
             return {}
 
         config = self.config_manager.get_config()
@@ -1170,7 +1137,7 @@ class Optimizely(object):
 
         # check if SDK is ready
         if not self.is_valid:
-            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide_for_keys'))
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('decide_for_keys'))
             return {}
 
         enabled_flags_only = False

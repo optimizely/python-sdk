@@ -1,4 +1,4 @@
-# Copyright 2016-2020, Optimizely
+# Copyright 2016-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -82,10 +82,10 @@ class DatafileVersions(object):
 
 class DecisionNotificationTypes(object):
     AB_TEST = 'ab-test'
+    ALL_FEATURE_VARIABLES = 'all-feature-variables'
     FEATURE = 'feature'
     FEATURE_TEST = 'feature-test'
     FEATURE_VARIABLE = 'feature-variable'
-    ALL_FEATURE_VARIABLES = 'all-feature-variables'
     FLAG = 'flag'
 
 
