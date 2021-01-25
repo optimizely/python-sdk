@@ -90,8 +90,12 @@ class Optimizely(object):
 
         if default_decide_options is None:
             self.default_decide_options = []
+        else:
+            self.default_decide_options = default_decide_options
 
-        if not isinstance(self.default_decide_options, list):
+        if isinstance(self.default_decide_options, list):
+            self.default_decide_options = self.default_decide_options[:]
+        else:
             self.logger.debug('Provided default decide options is not a list.')
             self.default_decide_options = []
 
@@ -1004,7 +1008,7 @@ class Optimizely(object):
 
         # Create Optimizely Decision Result.
         user_id = user_context.user_id
-        attributes = user_context.user_attributes
+        attributes = user_context.get_user_attributes()
         variation_key = None
         variation = None
         feature_enabled = False
@@ -1016,8 +1020,8 @@ class Optimizely(object):
         source_info = {}
         decision_event_dispatched = False
 
-        decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_context.user_id,
-                                                                   user_context.user_attributes,
+        decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_id,
+                                                                   attributes,
                                                                    OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in
                                                                    decide_options)
 

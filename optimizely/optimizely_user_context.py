@@ -13,6 +13,8 @@
 #    limitations under the License.
 #
 
+import threading
+
 
 class OptimizelyUserContext(object):
     """
@@ -33,7 +35,19 @@ class OptimizelyUserContext(object):
 
         self.client = optimizely_client
         self.user_id = user_id
-        self.user_attributes = user_attributes.copy() if user_attributes else {}
+
+        if not isinstance(user_attributes, dict):
+            user_attributes = {}
+
+        self._user_attributes = user_attributes.copy() if user_attributes else {}
+        self.lock = threading.Lock()
+
+    def _clone(self):
+        return OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes)
+
+    def get_user_attributes(self):
+        with self.lock:
+            return self._user_attributes.copy()
 
     def set_attribute(self, attribute_key, attribute_value):
         """
@@ -45,7 +59,8 @@ class OptimizelyUserContext(object):
         Returns:
         None
         """
-        self.user_attributes[attribute_key] = attribute_value
+        with self.lock:
+            self._user_attributes[attribute_key] = attribute_value
 
     def decide(self, key, options=None):
         """
@@ -57,7 +72,10 @@ class OptimizelyUserContext(object):
         Returns:
             Decision object
         """
-        return self.client._decide(self, key, options)
+        if isinstance(options, list):
+            options = options[:]
+
+        return self.client._decide(self._clone(), key, options)
 
     def decide_for_keys(self, keys, options=None):
         """
@@ -69,7 +87,10 @@ class OptimizelyUserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        return self.client._decide_for_keys(self, keys, options)
+        if isinstance(options, list):
+            options = options[:]
+
+        return self.client._decide_for_keys(self._clone(), keys, options)
 
     def decide_all(self, options=None):
         """
@@ -80,13 +101,16 @@ class OptimizelyUserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        return self.client._decide_all(self, options)
+        if isinstance(options, list):
+            options = options[:]
+
+        return self.client._decide_all(self._clone(), options)
 
     def track_event(self, event_key, event_tags=None):
-        return self.client.track(event_key, self.user_id, self.user_attributes, event_tags)
+        return self.client.track(event_key, self.user_id, self.get_user_attributes(), event_tags)
 
     def as_json(self):
         return {
             'user_id': self.user_id,
-            'attributes': self.user_attributes,
+            'attributes': self.get_user_attributes(),
         }

@@ -23,7 +23,7 @@ from optimizely.user_profile import UserProfileService, UserProfile
 from . import base
 
 
-class UserContextTests(base.BaseTest):
+class UserContextTest(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
         self.logger = logger.NoOpLogger()
@@ -33,12 +33,23 @@ class UserContextTests(base.BaseTest):
         tests user context creating and attributes
         """
         uc = OptimizelyUserContext(self.optimizely, "test_user")
-        self.assertEqual(uc.user_attributes, {}, "should have created default empty")
+        self.assertEqual(uc.get_user_attributes(), {}, "should have created default empty")
         self.assertEqual(uc.user_id, "test_user", "should have same user id")
         uc.set_attribute("key", "value")
-        self.assertEqual(uc.user_attributes["key"], "value", "should have added attribute")
+        self.assertEqual(uc.get_user_attributes()["key"], "value", "should have added attribute")
         uc.set_attribute("key", "value2")
-        self.assertEqual(uc.user_attributes["key"], "value2", "should have new attribute")
+        self.assertEqual(uc.get_user_attributes()["key"], "value2", "should have new attribute")
+
+    def test_decide_user_context(self):
+        """ Test that the user context in decide response is not the same object on which
+    the decide was called """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+        decision = user_context.decide('test_feature_in_rollout')
+        user_context.set_attribute("test_key", "test_value")
+        self.assertNotEqual(user_context.get_user_attributes(), decision.user_context.get_user_attributes())
 
     def test_decide_feature_test(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -360,38 +371,38 @@ class UserContextTests(base.BaseTest):
         attributes = {"browser": "chrome"}
         uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
         self.assertEquals("test_user", uc.user_id)
-        self.assertEqual(attributes, uc.user_attributes)
+        self.assertEqual(attributes, uc.get_user_attributes())
         self.assertIs(self.optimizely, uc.client)
 
     def test_set_attributes(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
         uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
-        self.assertEqual(attributes, uc.user_attributes)
+        self.assertEqual(attributes, uc.get_user_attributes())
         uc.set_attribute('color', 'red')
         self.assertEquals({
             "browser": "chrome",
-            "color": "red"}, uc.user_attributes)
+            "color": "red"}, uc.get_user_attributes())
 
     def test_set_attributes_overrides_value_of_existing_key(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
         uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
-        self.assertEquals(attributes, uc.user_attributes)
+        self.assertEquals(attributes, uc.get_user_attributes())
         uc.set_attribute('browser', 'firefox')
-        self.assertEquals({"browser": "firefox"}, uc.user_attributes)
+        self.assertEquals({"browser": "firefox"}, uc.get_user_attributes())
 
     def test_set_attribute_when_no_attributes_provided_in_constructor(self):
         user_id = 'test_user'
         uc = OptimizelyUserContext(self.optimizely, user_id)
-        self.assertEqual({}, uc.user_attributes)
+        self.assertEqual({}, uc.get_user_attributes())
         uc.set_attribute('browser', 'firefox')
-        self.assertEqual({'browser': 'firefox'}, uc.user_attributes)
+        self.assertEqual({'browser': 'firefox'}, uc.get_user_attributes())
 
     def test_attribute_when_no_update_on_caller_copy_update(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
         uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
-        self.assertEqual(attributes, uc.user_attributes)
+        self.assertEqual(attributes, uc.get_user_attributes())
         attributes['new_key'] = 'test_value'
-        self.assertNotEqual(attributes, uc.user_attributes)
+        self.assertNotEqual(attributes, uc.get_user_attributes())
