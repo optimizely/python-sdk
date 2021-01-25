@@ -952,7 +952,7 @@ class Optimizely(object):
 
         return OptimizelyUserContext(self, user_id, attributes)
 
-    def decide(self, user_context, key, decide_options=None):
+    def _decide(self, user_context, key, decide_options=None):
         """
         decide calls optimizely decide with feature key provided
         Args:
@@ -1085,7 +1085,7 @@ class Optimizely(object):
                                   user_context=user_context, reasons=reasons
                                   )
 
-    def decide_all(self, user_context, decide_options=None):
+    def _decide_all(self, user_context, decide_options=None):
         """
         decide_all will return a decision for every feature key in the current config
         Args:
@@ -1114,9 +1114,9 @@ class Optimizely(object):
         keys = []
         for f in config.feature_flags:
             keys.append(f['key'])
-        return self.decide_for_keys(user_context, keys, decide_options)
+        return self._decide_for_keys(user_context, keys, decide_options)
 
-    def decide_for_keys(self, user_context, keys, decide_options=None):
+    def _decide_for_keys(self, user_context, keys, decide_options=None):
         """
 
         Args:
@@ -1149,7 +1149,7 @@ class Optimizely(object):
 
         decisions = {}
         for key in keys:
-            decision = self.decide(user_context, key, decide_options)
+            decision = self._decide(user_context, key, decide_options)
             if enabled_flags_only and not decision.enabled:
                 continue
             decisions[key] = decision

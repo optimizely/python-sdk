@@ -57,7 +57,7 @@ class OptimizelyUserContext(object):
         Returns:
             Decision object
         """
-        return self.client.decide(self, key, options)
+        return self.client._decide(self, key, options)
 
     def decide_for_keys(self, keys, options=None):
         """
@@ -69,7 +69,7 @@ class OptimizelyUserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        return self.client.decide_for_keys(self, keys, options)
+        return self.client._decide_for_keys(self, keys, options)
 
     def decide_all(self, options=None):
         """
@@ -80,7 +80,7 @@ class OptimizelyUserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        return self.client.decide_all(self, options)
+        return self.client._decide_all(self, options)
 
     def track_event(self, event_key, event_tags=None):
         return self.client.track(event_key, self.user_id, self.user_attributes, event_tags)

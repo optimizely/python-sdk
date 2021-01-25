@@ -688,7 +688,7 @@ class OptimizelyTest(base.BaseTest):
             return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
         ):
             user_context = opt_obj.create_user_context('test_user')
-            decision = opt_obj.decide(user_context, 'test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
+            decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
             self.assertTrue(decision.enabled, "decision should be enabled")
 
     def test_activate__with_attributes__audience_match(self):

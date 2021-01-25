@@ -63,7 +63,7 @@ class UserContextTests(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
         user_context = opt_obj.create_user_context('test_user')
-        decision = opt_obj.decide(user_context, 'test_feature_in_rollout')
+        decision = user_context.decide('test_feature_in_rollout')
         self.assertFalse(decision.enabled)
         self.assertEqual(decision.flag_key, 'test_feature_in_rollout')
 
@@ -74,7 +74,7 @@ class UserContextTests(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
         user_context = opt_obj.create_user_context('test_user')
-        decisions = opt_obj.decide_for_keys(user_context, ['test_feature_in_rollout', 'test_feature_in_experiment'])
+        decisions = user_context.decide_for_keys(['test_feature_in_rollout', 'test_feature_in_experiment'])
         self.assertTrue(len(decisions) == 2)
 
         self.assertFalse(decisions['test_feature_in_rollout'].enabled)
@@ -90,7 +90,7 @@ class UserContextTests(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
         user_context = opt_obj.create_user_context('test_user')
-        decisions = opt_obj.decide_all(user_context)
+        decisions = user_context.decide_all()
         self.assertTrue(len(decisions) == 4)
 
         self.assertFalse(decisions['test_feature_in_rollout'].enabled)
@@ -113,7 +113,7 @@ class UserContextTests(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
 
         user_context = opt_obj.create_user_context('test_user')
-        decisions = opt_obj.decide_all(user_context, [DecideOption.ENABLED_FLAGS_ONLY])
+        decisions = user_context.decide_all([DecideOption.ENABLED_FLAGS_ONLY])
         self.assertTrue(len(decisions) == 0)
 
     def test_track(self):
