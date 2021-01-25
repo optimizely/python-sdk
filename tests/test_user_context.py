@@ -18,7 +18,7 @@ from optimizely import logger, optimizely, decision_service
 from optimizely.decision.decide_option import DecideOption
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
-from optimizely.user_context import UserContext
+from optimizely.optimizely_user_context import OptimizelyUserContext
 from optimizely.user_profile import UserProfileService, UserProfile
 from . import base
 
@@ -32,7 +32,7 @@ class UserContextTests(base.BaseTest):
         """
         tests user context creating and attributes
         """
-        uc = UserContext(self.optimizely, "test_user")
+        uc = OptimizelyUserContext(self.optimizely, "test_user")
         self.assertEqual(uc.user_attributes, {}, "should have created default empty")
         self.assertEqual(uc.user_id, "test_user", "should have same user id")
         uc.set_attribute("key", "value")
@@ -358,7 +358,7 @@ class UserContextTests(base.BaseTest):
     def test_optimizely_user_context_created_with_expected_values(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
-        uc = UserContext(self.optimizely, user_id, attributes)
+        uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
         self.assertEquals("test_user", uc.user_id)
         self.assertEqual(attributes, uc.user_attributes)
         self.assertIs(self.optimizely, uc.client)
@@ -366,7 +366,7 @@ class UserContextTests(base.BaseTest):
     def test_set_attributes(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
-        uc = UserContext(self.optimizely, user_id, attributes)
+        uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
         self.assertEqual(attributes, uc.user_attributes)
         uc.set_attribute('color', 'red')
         self.assertEquals({
@@ -376,14 +376,14 @@ class UserContextTests(base.BaseTest):
     def test_set_attributes_overrides_value_of_existing_key(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
-        uc = UserContext(self.optimizely, user_id, attributes)
+        uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
         self.assertEquals(attributes, uc.user_attributes)
         uc.set_attribute('browser', 'firefox')
         self.assertEquals({"browser": "firefox"}, uc.user_attributes)
 
     def test_set_attribute_when_no_attributes_provided_in_constructor(self):
         user_id = 'test_user'
-        uc = UserContext(self.optimizely, user_id)
+        uc = OptimizelyUserContext(self.optimizely, user_id)
         self.assertEqual({}, uc.user_attributes)
         uc.set_attribute('browser', 'firefox')
         self.assertEqual({'browser': 'firefox'}, uc.user_attributes)
@@ -391,7 +391,7 @@ class UserContextTests(base.BaseTest):
     def test_attribute_when_no_update_on_caller_copy_update(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
-        uc = UserContext(self.optimizely, user_id, attributes)
+        uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
         self.assertEqual(attributes, uc.user_attributes)
         attributes['new_key'] = 'test_value'
         self.assertNotEqual(attributes, uc.user_attributes)

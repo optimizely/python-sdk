@@ -14,7 +14,7 @@
 #
 
 
-class UserContext(object):
+class OptimizelyUserContext(object):
     """
     Representation of an Optimizely User Context using which APIs are to be called.
     """

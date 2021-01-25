@@ -21,9 +21,9 @@ from . import logger as _logging
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
 from .config_manager import StaticConfigManager
-from .decision.decide_option import DecideOption
-from .decision.decision import Decision
-from .decision.decision_message import DecisionMessage
+from .decision.optimizely_decide_option import OptimizelyDecideOption
+from .decision.optimizely_decision import OptimizelyDecision
+from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
 from .event.event_processor import ForwardingEventProcessor
@@ -32,7 +32,7 @@ from .helpers import enums, validator
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
 from .optimizely_config import OptimizelyConfigService
-from .user_context import UserContext
+from .optimizely_user_context import OptimizelyUserContext
 
 
 class Optimizely(object):
@@ -950,7 +950,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
             return None
 
-        return UserContext(self, user_id, attributes)
+        return OptimizelyUserContext(self, user_id, attributes)
 
     def decide(self, user_context, key, decide_options=None):
         """
@@ -958,14 +958,14 @@ class Optimizely(object):
         Args:
             user_context: UserContent with userid and attributes
             key: feature key
-            decide_options: list of DecideOption
+            decide_options: list of OptimizelyDecideOption
 
         Returns:
             Decision object
         """
 
         # raising on user context as it is internal and not provided directly by the user.
-        if not isinstance(user_context, UserContext):
+        if not isinstance(user_context, OptimizelyUserContext):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('user_context'))
 
         reasons = []
@@ -973,27 +973,27 @@ class Optimizely(object):
         # check if SDK is ready
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('decide'))
-            reasons.append(DecisionMessage.SDK_NOT_READY)
-            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
+            reasons.append(OptimizelyDecisionMessage.SDK_NOT_READY)
+            return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # validate that key is a string
         if not isinstance(key, string_types):
             self.logger.error('Key parameter is invalid')
-            reasons.append(DecisionMessage.FLAG_KEY_INVALID.format(key))
-            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
+            reasons.append(OptimizelyDecisionMessage.FLAG_KEY_INVALID.format(key))
+            return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # validate that key maps to a feature flag
         config = self.config_manager.get_config()
         if not config:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide'))
-            reasons.append(DecisionMessage.SDK_NOT_READY)
-            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
+            reasons.append(OptimizelyDecisionMessage.SDK_NOT_READY)
+            return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
         feature_flag = config.get_feature_from_key(key)
         if feature_flag is None:
             self.logger.error("No feature flag was found for key '#{key}'.")
-            reasons.append(DecisionMessage.FLAG_KEY_INVALID.format(key))
-            return Decision(flag_key=key, user_context=user_context, reasons=reasons)
+            reasons.append(OptimizelyDecisionMessage.FLAG_KEY_INVALID.format(key))
+            return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # merge decide_options and default_decide_options
         if isinstance(decide_options, list):
@@ -1018,7 +1018,7 @@ class Optimizely(object):
 
         decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_context.user_id,
                                                                    user_context.user_attributes,
-                                                                   DecideOption.IGNORE_USER_PROFILE_SERVICE in
+                                                                   OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in
                                                                    decide_options)
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
@@ -1035,7 +1035,7 @@ class Optimizely(object):
 
         # Send impression event if Decision came from a feature
         # test and decide options doesn't include disableDecisionEvent
-        if DecideOption.DISABLE_DECISION_EVENT not in decide_options:
+        if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
             if decision_source == DecisionSources.FEATURE_TEST or config.send_flag_decisions:
                 self._send_impression_event(config, experiment, variation, flag_key, rule_key or '',
                                             decision_source, feature_enabled,
@@ -1043,7 +1043,7 @@ class Optimizely(object):
                 decision_event_dispatched = True
 
         # Generate all variables map if decide options doesn't include excludeVariables
-        if DecideOption.EXCLUDE_VARIABLES not in decide_options:
+        if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options:
             for variable_key in feature_flag.variables:
                 variable = config.get_variable_for_feature(flag_key, variable_key)
                 variable_value = variable.defaultValue
@@ -1080,9 +1080,10 @@ class Optimizely(object):
             },
         )
 
-        return Decision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
-                        rule_key=rule_key,
-                        flag_key=flag_key, user_context=user_context, reasons=reasons)
+        return OptimizelyDecision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
+                                  rule_key=rule_key, flag_key=flag_key,
+                                  user_context=user_context, reasons=reasons
+                                  )
 
     def decide_all(self, user_context, decide_options=None):
         """
@@ -1095,7 +1096,7 @@ class Optimizely(object):
             A dictionary of feature key to Decision
         """
         # raising on user context as it is internal and not provided directly by the user.
-        if not isinstance(user_context, UserContext):
+        if not isinstance(user_context, OptimizelyUserContext):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('user_context'))
 
         # check if SDK is ready
@@ -1107,8 +1108,8 @@ class Optimizely(object):
         reasons = []
         if not config:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide'))
-            reasons.append(DecisionMessage.SDK_NOT_READY)
-            return Decision(user_context=user_context, reasons=reasons)
+            reasons.append(OptimizelyDecisionMessage.SDK_NOT_READY)
+            return OptimizelyDecision(user_context=user_context, reasons=reasons)
 
         keys = []
         for f in config.feature_flags:
@@ -1127,7 +1128,7 @@ class Optimizely(object):
             An dictionary of feature key to Decision
         """
         # raising on user context as it is internal and not provided directly by the user.
-        if not isinstance(user_context, UserContext):
+        if not isinstance(user_context, OptimizelyUserContext):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('user_context'))
 
         # check if SDK is ready
@@ -1137,7 +1138,7 @@ class Optimizely(object):
 
         enabled_flags_only = False
         if decide_options is not None:
-            enabled_flags_only = DecideOption.ENABLED_FLAGS_ONLY in decide_options
+            enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in decide_options
 
         decisions = {}
         for key in keys:

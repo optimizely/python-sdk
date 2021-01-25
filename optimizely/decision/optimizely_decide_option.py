@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class DecideOption(object):
+class OptimizelyDecideOption(object):
     DISABLE_DECISION_EVENT = 'DISABLE_DECISION_EVENT'
     ENABLED_FLAGS_ONLY = 'ENABLED_FLAGS_ONLY'
     IGNORE_USER_PROFILE_SERVICE = 'IGNORE_USER_PROFILE_SERVICE'
