@@ -43,7 +43,7 @@ class OptimizelyUserContext(object):
         self.lock = threading.Lock()
 
     def _clone(self):
-        return OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes)
+        return OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
 
     def get_user_attributes(self):
         with self.lock:

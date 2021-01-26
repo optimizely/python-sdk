@@ -1113,7 +1113,7 @@ class Optimizely(object):
         if not config:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide'))
             reasons.append(OptimizelyDecisionMessage.SDK_NOT_READY)
-            return OptimizelyDecision(user_context=user_context, reasons=reasons)
+            return {}
 
         keys = []
         for f in config.feature_flags:
