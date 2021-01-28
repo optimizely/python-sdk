@@ -41,7 +41,7 @@ def does_user_meet_audience_conditions(config,
     decide_reasons = []
     message = audience_logs.EVALUATING_AUDIENCES_COMBINED.format(logging_key, json.dumps(audience_conditions))
     logger.debug(message)
-    # decide_reasons.append(message)
+    decide_reasons.append(message)
 
     # Return True in case there are no audiences
     if audience_conditions is None or audience_conditions == []:
@@ -69,7 +69,6 @@ def does_user_meet_audience_conditions(config,
             return None
         _message = audience_logs.EVALUATING_AUDIENCE.format(audience_id, audience.conditions)
         logger.debug(_message)
-        decide_reasons.append(_message)
 
         result = condition_tree_evaluator.evaluate(
             audience.conditionStructure, lambda index: evaluate_custom_attr(audience_id, index),
@@ -78,7 +77,6 @@ def does_user_meet_audience_conditions(config,
         result_str = str(result).upper() if result is not None else 'UNKNOWN'
         _message = audience_logs.AUDIENCE_EVALUATION_RESULT.format(audience_id, result_str)
         logger.debug(_message)
-        decide_reasons.append(_message)
 
         return result
 

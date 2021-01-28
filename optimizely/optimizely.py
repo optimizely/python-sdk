@@ -264,8 +264,7 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
         variable_value = variable.defaultValue
-        (decision, _) = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id,
-                                                                        attributes)
+        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id, attributes)
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -348,7 +347,7 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
 
-        (decision, _) = self.decision_service.get_variation_for_feature(
+        decision, _ = self.decision_service.get_variation_for_feature(
             project_config, feature_flag, user_id, attributes)
         if decision.variation:
 
@@ -541,7 +540,7 @@ class Optimizely(object):
         if not self._validate_user_inputs(attributes):
             return None
 
-        (variation, _) = self.decision_service.get_variation(project_config, experiment, user_id, attributes)
+        variation, _ = self.decision_service.get_variation(project_config, experiment, user_id, attributes)
         if variation:
             variation_key = variation.key
 
@@ -598,7 +597,7 @@ class Optimizely(object):
 
         feature_enabled = False
         source_info = {}
-        (decision, _) = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
+        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
