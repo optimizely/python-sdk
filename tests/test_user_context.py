@@ -106,8 +106,8 @@ class UserContextTest(base.BaseTest):
 
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation_for_feature',
-                return_value=decision_service.Decision(mock_experiment, mock_variation,
-                                                       enums.DecisionSources.FEATURE_TEST),
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.FEATURE_TEST), []),
         ):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
@@ -204,7 +204,8 @@ class UserContextTest(base.BaseTest):
 
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation_for_feature',
-                return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+                return_value=(decision_service.Decision(mock_experiment,
+                                                        mock_variation, enums.DecisionSources.ROLLOUT), [])
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process, mock.patch(
@@ -248,7 +249,8 @@ class UserContextTest(base.BaseTest):
 
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation_for_feature',
-                return_value=decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.ROLLOUT),
+                return_value=(decision_service.Decision(mock_experiment,
+                                                        mock_variation, enums.DecisionSources.ROLLOUT), []),
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process, mock.patch(
@@ -308,7 +310,7 @@ class UserContextTest(base.BaseTest):
 
         with mock.patch(
                 'optimizely.bucketer.Bucketer.bucket',
-                return_value=mock_variation,
+                return_value=(mock_variation, []),
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process, mock.patch(
@@ -372,7 +374,7 @@ class UserContextTest(base.BaseTest):
 
         with mock.patch(
                 'optimizely.bucketer.Bucketer.bucket',
-                return_value=mock_variation,
+                return_value=(mock_variation, []),
         ), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ) as mock_process, mock.patch(

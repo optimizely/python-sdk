@@ -1,4 +1,4 @@
-# Copyright 2016-2020, Optimizely
+# Copyright 2016-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -264,8 +264,8 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
         variable_value = variable.defaultValue
-        decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id,
-                                                                   attributes)
+        (decision, _) = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id,
+                                                                        attributes)
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -348,7 +348,8 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
 
-        decision = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id, attributes)
+        (decision, _) = self.decision_service.get_variation_for_feature(
+            project_config, feature_flag, user_id, attributes)
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -540,7 +541,7 @@ class Optimizely(object):
         if not self._validate_user_inputs(attributes):
             return None
 
-        variation = self.decision_service.get_variation(project_config, experiment, user_id, attributes)
+        (variation, _) = self.decision_service.get_variation(project_config, experiment, user_id, attributes)
         if variation:
             variation_key = variation.key
 
@@ -597,7 +598,7 @@ class Optimizely(object):
 
         feature_enabled = False
         source_info = {}
-        decision = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
+        (decision, _) = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
@@ -909,7 +910,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_forced_variation'))
             return None
 
-        forced_variation = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
+        forced_variation, _ = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
 
     def get_optimizely_config(self):
@@ -1019,11 +1020,12 @@ class Optimizely(object):
         decision_source = DecisionSources.ROLLOUT
         source_info = {}
         decision_event_dispatched = False
+        ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in decide_options
 
-        decision = self.decision_service.get_variation_for_feature(config, feature_flag, user_id,
-                                                                   attributes,
-                                                                   OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in
-                                                                   decide_options)
+        decision, decision_reasons = self.decision_service.get_variation_for_feature(config, feature_flag, user_id,
+                                                                                     attributes, ignore_ups)
+
+        reasons += decision_reasons
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
         if decision.experiment is not None:
@@ -1066,6 +1068,10 @@ class Optimizely(object):
 
                 all_variables[variable_key] = actual_value
 
+        should_include_reasons = False
+        if OptimizelyDecideOption.INCLUDE_REASONS in decide_options:
+            should_include_reasons = True
+
         # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
@@ -1078,7 +1084,7 @@ class Optimizely(object):
                 'variables': all_variables,
                 'variation_key': variation_key,
                 'rule_key': rule_key,
-                'reasons': reasons,
+                'reasons': reasons if should_include_reasons else [],
                 'decision_event_dispatched': decision_event_dispatched
 
             },
@@ -1086,7 +1092,7 @@ class Optimizely(object):
 
         return OptimizelyDecision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                                   rule_key=rule_key, flag_key=flag_key,
-                                  user_context=user_context, reasons=reasons
+                                  user_context=user_context, reasons=reasons if should_include_reasons else []
                                   )
 
     def _decide_all(self, user_context, decide_options=None):

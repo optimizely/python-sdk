@@ -1,4 +1,4 @@
-# Copyright 2016-2017, 2019-2020 Optimizely
+# Copyright 2016-2017, 2019-2021 Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -71,21 +71,24 @@ class Bucketer(object):
             traffic_allocations: Traffic allocations representing traffic allotted to experiments or variations.
 
         Returns:
-            Entity ID which may represent experiment or variation.
+            Entity ID which may represent experiment or variation and
+            array of log messages representing decision making.
         """
-
+        decide_reasons = []
         bucketing_key = BUCKETING_ID_TEMPLATE.format(bucketing_id=bucketing_id, parent_id=parent_id)
         bucketing_number = self._generate_bucket_value(bucketing_key)
+        message = 'Assigned bucket %s to user with bucketing ID "%s".' % (bucketing_number, bucketing_id)
         project_config.logger.debug(
-            'Assigned bucket %s to user with bucketing ID "%s".' % (bucketing_number, bucketing_id)
+            message
         )
+        decide_reasons.append(message)
 
         for traffic_allocation in traffic_allocations:
             current_end_of_range = traffic_allocation.get('endOfRange')
             if bucketing_number < current_end_of_range:
-                return traffic_allocation.get('entityId')
+                return traffic_allocation.get('entityId'), decide_reasons
 
-        return None
+        return None, decide_reasons
 
     def bucket(self, project_config, experiment, user_id, bucketing_id):
         """ For a given experiment and bucketing ID determines variation to be shown to user.
@@ -97,11 +100,13 @@ class Bucketer(object):
             bucketing_id: ID to be used for bucketing the user.
 
         Returns:
-            Variation in which user with ID user_id will be put in. None if no variation.
+            Variation in which user with ID user_id will be put in. None if no variation
+            and array of log messages representing decision making.
+     */.
         """
-
+        decide_reasons = []
         if not experiment:
-            return None
+            return None, decide_reasons
 
         # Determine if experiment is in a mutually exclusive group.
         # This will not affect evaluation of rollout rules.
@@ -109,29 +114,44 @@ class Bucketer(object):
             group = project_config.get_group(experiment.groupId)
 
             if not group:
-                return None
+                return None, decide_reasons
 
-            user_experiment_id = self.find_bucket(
+            user_experiment_id, find_bucket_reasons = self.find_bucket(
                 project_config, bucketing_id, experiment.groupId, group.trafficAllocation,
             )
+            decide_reasons += find_bucket_reasons
             if not user_experiment_id:
-                project_config.logger.info('User "%s" is in no experiment.' % user_id)
-                return None
+                message = 'User "%s" is in no experiment.' % user_id
+                project_config.logger.info(message)
+                decide_reasons.append(message)
+                return None, decide_reasons
 
             if user_experiment_id != experiment.id:
+                message = 'User "%s" is not in experiment "%s" of group %s.' \
+                          % (user_id, experiment.key, experiment.groupId)
                 project_config.logger.info(
-                    'User "%s" is not in experiment "%s" of group %s.' % (user_id, experiment.key, experiment.groupId)
+                    message
                 )
-                return None
+                decide_reasons.append(message)
+                return None, decide_reasons
 
+            message = 'User "%s" is in experiment %s of group %s.' % (user_id, experiment.key, experiment.groupId)
             project_config.logger.info(
-                'User "%s" is in experiment %s of group %s.' % (user_id, experiment.key, experiment.groupId)
+                message
             )
+            decide_reasons.append(message)
 
         # Bucket user if not in white-list and in group (if any)
-        variation_id = self.find_bucket(project_config, bucketing_id, experiment.id, experiment.trafficAllocation)
+        variation_id, find_bucket_reasons = self.find_bucket(project_config, bucketing_id,
+                                                             experiment.id, experiment.trafficAllocation)
+        decide_reasons += find_bucket_reasons
         if variation_id:
             variation = project_config.get_variation_from_id(experiment.key, variation_id)
-            return variation
+            return variation, decide_reasons
 
-        return None
+        else:
+            message = 'Bucketed into an empty traffic range. Returning nil.'
+            project_config.logger.info(message)
+            decide_reasons.append(message)
+
+        return None, decide_reasons
