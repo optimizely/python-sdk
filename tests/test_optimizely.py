@@ -26,7 +26,7 @@ from optimizely import optimizely
 from optimizely import optimizely_config
 from optimizely import project_config
 from optimizely import version
-from optimizely.decision.decide_option import DecideOption
+from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
 from . import base
