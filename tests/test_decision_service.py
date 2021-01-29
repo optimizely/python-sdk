@@ -478,7 +478,7 @@ class DecisionServiceTest(base.BaseTest):
             return_value=[None, []],
         ), mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
-            return_value=[None, []],
+            return_value=None,
         ), mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ), mock.patch(
@@ -545,7 +545,7 @@ class DecisionServiceTest(base.BaseTest):
             return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
-            return_value=[entities.Variation("111128", "control"), []],
+            return_value=entities.Variation("111128", "control"),
         ) as mock_get_stored_variation, mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions"
         ) as mock_audience_check, mock.patch(
@@ -597,7 +597,7 @@ class DecisionServiceTest(base.BaseTest):
             return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
-            return_value=[None, []],
+            return_value=None,
         ) as mock_get_stored_variation, mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
@@ -706,7 +706,7 @@ class DecisionServiceTest(base.BaseTest):
             return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
-            return_value=[None, []],
+            return_value=None,
         ) as mock_get_stored_variation, mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[False, []]
         ) as mock_audience_check, mock.patch(

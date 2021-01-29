@@ -19,6 +19,7 @@ from optimizely.helpers import enums
 from . import base
 from optimizely import optimizely, decision_service
 from optimizely.optimizely_user_context import OptimizelyUserContext
+from optimizely.user_profile import UserProfileService
 
 
 class UserContextTest(base.BaseTest):
@@ -418,3 +419,697 @@ class UserContextTest(base.BaseTest):
 
         # assert event count
         self.assertEqual(0, mock_send_event.call_count)
+
+    def test_decide_feature_null_variation(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = None
+        mock_variation = None
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.ROLLOUT), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+            actual = user_context.decide('test_feature_in_experiment')
+
+        expected_variables = {
+            'is_working': True,
+            'environment': 'devel',
+            'cost': 10.99,
+            'count': 999,
+            'variable_without_usage': 45,
+            'object': {"test": 12},
+            'true_object': {"true_test": 23.54}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key=None,
+            rule_key=None,
+            enabled=False,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {'browser': 'chrome'},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': True,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(1, mock_send_event.call_count)
+
+        # assert event payload
+        mock_send_event.assert_called_with(
+            project_config,
+            mock_experiment,
+            mock_variation,
+            expected.flag_key,
+            '',
+            'rollout',
+            expected.enabled,
+            'test_user',
+            {'browser': 'chrome'}
+        )
+
+    def test_decide_feature_null_variation__send_flag_decision_false(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+        project_config.send_flag_decisions = False
+
+        mock_experiment = None
+        mock_variation = None
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.ROLLOUT), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+            actual = user_context.decide('test_feature_in_experiment')
+
+        expected_variables = {
+            'is_working': True,
+            'environment': 'devel',
+            'cost': 10.99,
+            'count': 999,
+            'variable_without_usage': 45,
+            'object': {"test": 12},
+            'true_object': {"true_test": 23.54}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key=None,
+            rule_key=None,
+            enabled=False,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {'browser': 'chrome'},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': False,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(0, mock_send_event.call_count)
+
+    def test_decide__option__disable_decision_event(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.FEATURE_TEST), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+            actual = user_context.decide('test_feature_in_experiment', ['DISABLE_DECISION_EVENT'])
+
+        expected_variables = {
+            'is_working': True,
+            'environment': 'staging',
+            'cost': 10.02,
+            'count': 4243,
+            'variable_without_usage': 45,
+            'object': {"test": 123},
+            'true_object': {"true_test": 1.4}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key='variation',
+            rule_key='test_experiment',
+            enabled=True,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {'browser': 'chrome'},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': False,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(0, mock_send_event.call_count)
+
+    def test_decide__default_option__disable_decision_event(self):
+        opt_obj = optimizely.Optimizely(
+            datafile=json.dumps(self.config_dict_with_features),
+            default_decide_options=['DISABLE_DECISION_EVENT']
+        )
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.FEATURE_TEST), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+            actual = user_context.decide('test_feature_in_experiment')
+
+        expected_variables = {
+            'is_working': True,
+            'environment': 'staging',
+            'cost': 10.02,
+            'count': 4243,
+            'variable_without_usage': 45,
+            'object': {"test": 123},
+            'true_object': {"true_test": 1.4}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key='variation',
+            rule_key='test_experiment',
+            enabled=True,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {'browser': 'chrome'},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': False,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(0, mock_send_event.call_count)
+
+    def test_decide__option__exclude_variables(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.FEATURE_TEST), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+            actual = user_context.decide('test_feature_in_experiment', ['EXCLUDE_VARIABLES'])
+
+        expected_variables = {}
+
+        expected = OptimizelyDecision(
+            variation_key='variation',
+            rule_key='test_experiment',
+            enabled=True,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {'browser': 'chrome'},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': True,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(1, mock_send_event.call_count)
+
+        # assert event payload
+        mock_send_event.assert_called_with(
+            project_config,
+            mock_experiment,
+            mock_variation,
+            expected.flag_key,
+            expected.rule_key,
+            'feature-test',
+            expected.enabled,
+            'test_user',
+            {'browser': 'chrome'}
+        )
+
+    def test_decide__option__include_reasons__feature_test(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+        actual = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+
+        expected_reasons = [
+            'Evaluating audiences for experiment "test_experiment": [].',
+            'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+            'User "test_user" is in variation "control" of experiment test_experiment.'
+        ]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide__option__include_reasons__feature_rollout(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_attributes = {'test_attribute': 'test_value_1'}
+        user_context = opt_obj.create_user_context('test_user', user_attributes)
+        actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
+
+        expected_reasons = [
+            'Evaluating audiences for rule 1: ["11154"].',
+            'Audiences for rule 1 collectively evaluated to TRUE.',
+            'User "test_user" meets audience conditions for targeting rule 1.',
+            'User "test_user" is in the traffic group of targeting rule 1.'
+        ]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide__option__enabled_flags_only(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        expected_experiment = project_config.get_experiment_from_key('211127')
+        expected_var = project_config.get_variation_from_key('211127', '211229')
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(expected_experiment, expected_var,
+                                                        enums.DecisionSources.ROLLOUT), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_attributes = {'test_attribute': 'test_value_1'}
+            user_context = opt_obj.create_user_context('test_user', user_attributes)
+            actual = user_context.decide('test_feature_in_rollout', 'ENABLED_FLAGS_ONLY')
+
+        expected_variables = {
+            'is_running': False,
+            'message': 'Hello',
+            'price': 99.99,
+            'count': 999,
+            'object': {"field": 1}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key='211229',
+            rule_key='211127',
+            enabled=False,
+            variables=expected_variables,
+            flag_key='test_feature_in_rollout',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification count
+        self.assertEqual(1, mock_broadcast_decision.call_count)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            user_attributes,
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': True,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(1, mock_send_event.call_count)
+
+        # assert event payload
+        mock_send_event.assert_called_with(
+            project_config,
+            expected_experiment,
+            expected_var,
+            expected.flag_key,
+            expected.rule_key,
+            'rollout',
+            expected.enabled,
+            'test_user',
+            user_attributes
+        )
+
+    def test_decide__default_options__with__options(self):
+        opt_obj = optimizely.Optimizely(
+            datafile=json.dumps(self.config_dict_with_features),
+            default_decide_options=['DISABLE_DECISION_EVENT']
+        )
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+                return_value=(decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.FEATURE_TEST), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
+            actual = user_context.decide('test_feature_in_experiment', ['EXCLUDE_VARIABLES'])
+
+        expected_variables = {}
+
+        expected = OptimizelyDecision(
+            variation_key='variation',
+            rule_key='test_experiment',
+            enabled=True,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {'browser': 'chrome'},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': False,
+                'variables': expected.variables,
+            },
+        )
+
+        # assert event count
+        self.assertEqual(0, mock_send_event.call_count)
+
+    def test_decide_for_keys(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        mocked_decision_1 = OptimizelyDecision(flag_key='test_feature_in_experiment', enabled=True)
+        mocked_decision_2 = OptimizelyDecision(flag_key='test_feature_in_rollout', enabled=False)
+
+        def side_effect(*args, **kwargs):
+            flag = args[1]
+            if flag == 'test_feature_in_experiment':
+                return mocked_decision_1
+            else:
+                return mocked_decision_2
+
+        with mock.patch(
+            'optimizely.optimizely.Optimizely._decide', side_effect=side_effect
+        ) as mock_decide, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
+            return_value=user_context
+        ):
+
+            flags = ['test_feature_in_rollout', 'test_feature_in_experiment']
+            options = []
+            decisions = user_context.decide_for_keys(flags, options)
+
+        self.assertEqual(2, len(decisions))
+
+        mock_decide.assert_any_call(
+            user_context,
+            'test_feature_in_experiment',
+            options
+        )
+
+        mock_decide.assert_any_call(
+            user_context,
+            'test_feature_in_rollout',
+            options
+        )
+
+        self.assertEqual(mocked_decision_1, decisions['test_feature_in_experiment'])
+        self.assertEqual(mocked_decision_2, decisions['test_feature_in_rollout'])
+
+    def test_decide_for_keys__option__enabled_flags_only(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        mocked_decision_1 = OptimizelyDecision(flag_key='test_feature_in_experiment', enabled=True)
+        mocked_decision_2 = OptimizelyDecision(flag_key='test_feature_in_rollout', enabled=False)
+
+        def side_effect(*args, **kwargs):
+            flag = args[1]
+            if flag == 'test_feature_in_experiment':
+                return mocked_decision_1
+            else:
+                return mocked_decision_2
+
+        with mock.patch(
+            'optimizely.optimizely.Optimizely._decide', side_effect=side_effect
+        ) as mock_decide, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
+            return_value=user_context
+        ):
+
+            flags = ['test_feature_in_rollout', 'test_feature_in_experiment']
+            options = ['ENABLED_FLAGS_ONLY']
+            decisions = user_context.decide_for_keys(flags, options)
+
+        self.assertEqual(1, len(decisions))
+
+        mock_decide.assert_any_call(
+            user_context,
+            'test_feature_in_experiment',
+            options
+        )
+
+        mock_decide.assert_any_call(
+            user_context,
+            'test_feature_in_rollout',
+            options
+        )
+
+        self.assertEqual(mocked_decision_1, decisions['test_feature_in_experiment'])
+
+    def test_decide_for_keys__default_options__with__options(self):
+        opt_obj = optimizely.Optimizely(
+            datafile=json.dumps(self.config_dict_with_features),
+            default_decide_options=['ENABLED_FLAGS_ONLY']
+        )
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch(
+            'optimizely.optimizely.Optimizely._decide'
+        ) as mock_decide, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
+            return_value=user_context
+        ):
+
+            flags = ['test_feature_in_experiment']
+            options = ['EXCLUDE_VARIABLES']
+            user_context.decide_for_keys(flags, options)
+
+        mock_decide.assert_called_with(
+            user_context,
+            'test_feature_in_experiment',
+            ['EXCLUDE_VARIABLES', 'ENABLED_FLAGS_ONLY']
+        )
+
+    def test_decide_for_all(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch(
+            'optimizely.optimizely.Optimizely._decide_for_keys', return_value='response from decide_for_keys'
+        ) as mock_decide, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
+            return_value=user_context
+        ):
+
+            options = ['DISABLE_DECISION_EVENT']
+            decisions = user_context.decide_all(options)
+
+        mock_decide.assert_called_with(
+            user_context,
+            [
+                'test_feature_in_experiment',
+                'test_feature_in_rollout',
+                'test_feature_in_group',
+                'test_feature_in_experiment_and_rollout'
+            ],
+            options
+        )
+
+        self.assertEqual('response from decide_for_keys', decisions)
+
+    def test_decide_options_bypass_UPS(self):
+        user_id = 'test_user'
+
+        lookup_profile = {
+            'user_id': user_id,
+            'experiment_bucket_map': {
+                '111127': {
+                    'variation_id': '111128'
+                }
+            }
+        }
+
+        save_profile = []
+
+        class Ups(UserProfileService):
+
+            def lookup(self, user_id):
+                return lookup_profile
+
+            def save(self, user_profile):
+                print(user_profile)
+                save_profile.append(user_profile)
+
+        ups = Ups()
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features), user_profile_service=ups)
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        with mock.patch(
+                'optimizely.bucketer.Bucketer.bucket',
+                return_value=(mock_variation, []),
+        ), mock.patch(
+            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ):
+            user_context = opt_obj.create_user_context(user_id)
+            options = [
+                'IGNORE_USER_PROFILE_SERVICE'
+            ]
+
+            actual = user_context.decide('test_feature_in_experiment', options)
+
+        expected_variables = {
+            'is_working': True,
+            'environment': 'staging',
+            'cost': 10.02,
+            'count': 4243,
+            'variable_without_usage': 45,
+            'object': {"test": 123},
+            'true_object': {"true_test": 1.4}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key='variation',
+            rule_key='test_experiment',
+            enabled=True,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context
+        )
+
+        self.compare_opt_decisions(expected, actual)
+
+        self.assertEqual([], save_profile)
