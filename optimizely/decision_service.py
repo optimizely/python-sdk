@@ -137,7 +137,6 @@ class DecisionService(object):
         if user_id not in self.forced_variation_map:
             message = 'User "%s" is not in the forced variation map.' % user_id
             self.logger.debug(message)
-            decide_reasons.append(message)
             return None, decide_reasons
 
         experiment = project_config.get_experiment_from_key(experiment_key)
@@ -152,14 +151,12 @@ class DecisionService(object):
             self.logger.debug(
                 message
             )
-            decide_reasons.append(message)
             return None, decide_reasons
 
         variation_id = experiment_to_variation_map.get(experiment.id)
         if variation_id is None:
             message = 'No variation mapped to experiment "%s" in the forced variation map.' % experiment_key
             self.logger.debug(message)
-            decide_reasons.append(message)
             return None, decide_reasons
 
         variation = project_config.get_variation_from_id(experiment_key, variation_id)
@@ -206,9 +203,8 @@ class DecisionService(object):
       user_profile: UserProfile object representing the user's profile.
 
     Returns:
-      Variation if available. None otherwise And an array of log messages representing decision making.
+      Variation if available. None otherwise.
     """
-        decide_reasons = []
         user_id = user_profile.user_id
         variation_id = user_profile.get_variation_for_experiment(experiment.id)
 
@@ -220,13 +216,12 @@ class DecisionService(object):
                 self.logger.info(
                     message
                 )
-                decide_reasons.append(message)
-                return variation, decide_reasons
+                return variation
 
-        return None, decide_reasons
+        return None
 
     def get_variation(
-        self, project_config, experiment, user_id, attributes, ignore_user_profile=False, decide_options=[]
+        self, project_config, experiment, user_id, attributes, ignore_user_profile=False
     ):
         """ Top-level function to help determine variation user should be put in.
 
@@ -242,7 +237,6 @@ class DecisionService(object):
       user_id: ID for user.
       attributes: Dict representing user attributes.
       ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
-      decideOptions: Options to customize evaluation.
 
     Returns:
       Variation user should see. None if user is not in experiment or experiment is not running

@@ -127,7 +127,7 @@ class UserContextTest(base.BaseTest):
 
     def test_decide__invalid_flag_key(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = opt_obj.create_user_context('test_user')
+        user_context = opt_obj.create_user_context('test_user', {'some-key': 'some-value'})
 
         expected = OptimizelyDecision(
             variation_key=None,
@@ -186,7 +186,7 @@ class UserContextTest(base.BaseTest):
             'optimizely.optimizely.Optimizely._send_impression_event'
         ) as mock_send_event:
 
-            user_context = opt_obj.create_user_context('test_user')
+            user_context = opt_obj.create_user_context('test_user', {'browser': 'chrome'})
             actual = user_context.decide('test_feature_in_experiment')
 
         expected_variables = {
@@ -215,7 +215,7 @@ class UserContextTest(base.BaseTest):
             enums.NotificationTypes.DECISION,
             'flag',
             'test_user',
-            {},
+            {'browser': 'chrome'},
             {
                 'flag_key': expected.flag_key,
                 'enabled': expected.enabled,
@@ -240,7 +240,7 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {}
+            {'browser': 'chrome'}
         )
 
     def test_decide__feature_test__send_flag_decision_false(self):

@@ -406,7 +406,7 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
-            variation, _ = self.decision_service.get_stored_variation(
+            variation = self.decision_service.get_stored_variation(
                 self.project_config, experiment, profile
             )
             self.assertEqual(
@@ -423,7 +423,7 @@ class DecisionServiceTest(base.BaseTest):
 
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         profile = user_profile.UserProfile("test_user")
-        variation, _ = self.decision_service.get_stored_variation(
+        variation = self.decision_service.get_stored_variation(
             self.project_config, experiment, profile
         )
         self.assertIsNone(

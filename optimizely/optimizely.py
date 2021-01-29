@@ -1067,9 +1067,7 @@ class Optimizely(object):
 
                 all_variables[variable_key] = actual_value
 
-        should_include_reasons = False
-        if OptimizelyDecideOption.INCLUDE_REASONS in decide_options:
-            should_include_reasons = True
+        should_include_reasons = OptimizelyDecideOption.INCLUDE_REASONS in decide_options
 
         # Send notification
         self.notification_center.send_notifications(
@@ -1114,10 +1112,8 @@ class Optimizely(object):
             return {}
 
         config = self.config_manager.get_config()
-        reasons = []
         if not config:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('decide'))
-            reasons.append(OptimizelyDecisionMessage.SDK_NOT_READY)
             return {}
 
         keys = []
