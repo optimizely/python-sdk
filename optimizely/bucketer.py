@@ -72,23 +72,20 @@ class Bucketer(object):
 
         Returns:
             Entity ID which may represent experiment or variation and
-            array of log messages representing decision making.
         """
-        decide_reasons = []
         bucketing_key = BUCKETING_ID_TEMPLATE.format(bucketing_id=bucketing_id, parent_id=parent_id)
         bucketing_number = self._generate_bucket_value(bucketing_key)
         message = 'Assigned bucket %s to user with bucketing ID "%s".' % (bucketing_number, bucketing_id)
         project_config.logger.debug(
             message
         )
-        decide_reasons.append(message)
 
         for traffic_allocation in traffic_allocations:
             current_end_of_range = traffic_allocation.get('endOfRange')
             if bucketing_number < current_end_of_range:
-                return traffic_allocation.get('entityId'), decide_reasons
+                return traffic_allocation.get('entityId')
 
-        return None, decide_reasons
+        return None
 
     def bucket(self, project_config, experiment, user_id, bucketing_id):
         """ For a given experiment and bucketing ID determines variation to be shown to user.
@@ -116,10 +113,10 @@ class Bucketer(object):
             if not group:
                 return None, decide_reasons
 
-            user_experiment_id, find_bucket_reasons = self.find_bucket(
+            user_experiment_id = self.find_bucket(
                 project_config, bucketing_id, experiment.groupId, group.trafficAllocation,
             )
-            decide_reasons += find_bucket_reasons
+
             if not user_experiment_id:
                 message = 'User "%s" is in no experiment.' % user_id
                 project_config.logger.info(message)
@@ -142,9 +139,8 @@ class Bucketer(object):
             decide_reasons.append(message)
 
         # Bucket user if not in white-list and in group (if any)
-        variation_id, find_bucket_reasons = self.find_bucket(project_config, bucketing_id,
-                                                             experiment.id, experiment.trafficAllocation)
-        decide_reasons += find_bucket_reasons
+        variation_id = self.find_bucket(project_config, bucketing_id,
+                                        experiment.id, experiment.trafficAllocation)
         if variation_id:
             variation = project_config.get_variation_from_id(experiment.key, variation_id)
             return variation, decide_reasons

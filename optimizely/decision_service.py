@@ -433,9 +433,8 @@ class DecisionService(object):
       and array of log messages representing decision making.
     """
         decide_reasons = []
-        experiment_id, reasons = self.bucketer.find_bucket(
+        experiment_id = self.bucketer.find_bucket(
             project_config, bucketing_id, group.id, group.trafficAllocation)
-        decide_reasons += reasons
         if experiment_id:
             experiment = project_config.get_experiment_from_id(experiment_id)
             if experiment:

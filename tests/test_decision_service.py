@@ -1447,7 +1447,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         group = self.project_config.get_group("19228")
         experiment = self.project_config.get_experiment_from_id("32222")
         with mock.patch(
-            "optimizely.bucketer.Bucketer.find_bucket", return_value=["32222", []]
+            "optimizely.bucketer.Bucketer.find_bucket", return_value="32222"
         ), self.mock_decision_logger as mock_decision_service_logging:
             variation_received, _ = self.decision_service.get_experiment_in_group(
                 self.project_config, group, "test_user"
@@ -1466,7 +1466,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         group = self.project_config.get_group("19228")
         with mock.patch(
-            "optimizely.bucketer.Bucketer.find_bucket", return_value=[None, []]
+            "optimizely.bucketer.Bucketer.find_bucket", return_value=None
         ), self.mock_decision_logger as mock_decision_service_logging:
             variation_received, _ = self.decision_service.get_experiment_in_group(
                 self.project_config, group, "test_user"
