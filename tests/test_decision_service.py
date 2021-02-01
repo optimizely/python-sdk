@@ -1,4 +1,4 @@
-# Copyright 2017-2020, Optimizely
+# Copyright 2017-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -33,16 +33,19 @@ class DecisionServiceTest(base.BaseTest):
         """ Test that _get_bucketing_id returns correct bucketing ID when there is no bucketing ID attribute. """
 
         # No attributes
+        bucketing_id, _ = self.decision_service._get_bucketing_id("test_user", None)
         self.assertEqual(
-            "test_user", self.decision_service._get_bucketing_id("test_user", None)
+            "test_user",
+            bucketing_id
         )
 
         # With attributes, but no bucketing ID
+        bucketing_id, _ = self.decision_service._get_bucketing_id(
+            "test_user", {"random_key": "random_value"}
+        )
         self.assertEqual(
             "test_user",
-            self.decision_service._get_bucketing_id(
-                "test_user", {"random_key": "random_value"}
-            ),
+            bucketing_id,
         )
 
     def test_get_bucketing_id__bucketing_id_attribute(self):
@@ -50,11 +53,12 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
+            bucketing_id, _ = self.decision_service._get_bucketing_id(
+                "test_user", {"$opt_bucketing_id": "user_bucket_value"}
+            )
             self.assertEqual(
                 "user_bucket_value",
-                self.decision_service._get_bucketing_id(
-                    "test_user", {"$opt_bucketing_id": "user_bucket_value"}
-                ),
+                bucketing_id,
             )
             mock_decision_service_logging.debug.assert_not_called()
 
@@ -63,33 +67,35 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
+            bucketing_id, _ = self.decision_service._get_bucketing_id(
+                "test_user", {"$opt_bucketing_id": True}
+            )
             self.assertEqual(
                 "test_user",
-                self.decision_service._get_bucketing_id(
-                    "test_user", {"$opt_bucketing_id": True}
-                ),
+                bucketing_id,
             )
             mock_decision_service_logging.warning.assert_called_once_with(
                 "Bucketing ID attribute is not a string. Defaulted to user_id."
             )
             mock_decision_service_logging.reset_mock()
 
+            bucketing_id, _ = self.decision_service._get_bucketing_id(
+                "test_user", {"$opt_bucketing_id": 5.9}
+            )
             self.assertEqual(
                 "test_user",
-                self.decision_service._get_bucketing_id(
-                    "test_user", {"$opt_bucketing_id": 5.9}
-                ),
+                bucketing_id,
             )
             mock_decision_service_logging.warning.assert_called_once_with(
                 "Bucketing ID attribute is not a string. Defaulted to user_id."
             )
             mock_decision_service_logging.reset_mock()
-
+            bucketing_id, _ = self.decision_service._get_bucketing_id(
+                "test_user", {"$opt_bucketing_id": 5}
+            )
             self.assertEqual(
                 "test_user",
-                self.decision_service._get_bucketing_id(
-                    "test_user", {"$opt_bucketing_id": 5}
-                ),
+                bucketing_id,
             )
             mock_decision_service_logging.warning.assert_called_once_with(
                 "Bucketing ID attribute is not a string. Defaulted to user_id."
@@ -154,10 +160,11 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config, "test_experiment", "test_user_1", "variation"
             )
         )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment", "test_user_1"
+        )
         self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment", "test_user_1"
-            ).key,
+            variation.key,
             "variation",
         )
         # same user, same experiment, different variation
@@ -166,10 +173,11 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config, "test_experiment", "test_user_1", "control"
             )
         )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment", "test_user_1"
+        )
         self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment", "test_user_1"
-            ).key,
+            variation.key,
             "control",
         )
         # same user, different experiment
@@ -178,10 +186,11 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config, "group_exp_1", "test_user_1", "group_exp_1_control"
             )
         )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "group_exp_1", "test_user_1"
+        )
         self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "group_exp_1", "test_user_1"
-            ).key,
+            variation.key,
             "group_exp_1_control",
         )
 
@@ -191,10 +200,11 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config, "test_experiment", "test_user_2", "variation"
             )
         )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment", "test_user_2"
+        )
         self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment", "test_user_2"
-            ).key,
+            variation.key,
             "variation",
         )
         # different user, different experiment
@@ -203,24 +213,27 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config, "group_exp_1", "test_user_2", "group_exp_1_control"
             )
         )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "group_exp_1", "test_user_2"
+        )
         self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "group_exp_1", "test_user_2"
-            ).key,
+            variation.key,
             "group_exp_1_control",
         )
 
         # make sure the first user forced variations are still valid
-        self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment", "test_user_1"
-            ).key,
-            "control",
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment", "test_user_1"
         )
         self.assertEqual(
-            self.decision_service.get_forced_variation(
-                self.project_config, "group_exp_1", "test_user_1"
-            ).key,
+            variation.key,
+            "control",
+        )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "group_exp_1", "test_user_1"
+        )
+        self.assertEqual(
+            variation.key,
             "group_exp_1_control",
         )
 
@@ -269,15 +282,17 @@ class DecisionServiceTest(base.BaseTest):
             "test_experiment"
         ] = "test_variation"
 
-        self.assertIsNone(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment", None
-            )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment", None
         )
         self.assertIsNone(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment", ""
-            )
+            variation
+        )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment", ""
+        )
+        self.assertIsNone(
+            variation
         )
 
     def test_get_forced_variation__invalid_experiment_key(self):
@@ -286,21 +301,23 @@ class DecisionServiceTest(base.BaseTest):
         self.decision_service.forced_variation_map["test_user"][
             "test_experiment"
         ] = "test_variation"
-
-        self.assertIsNone(
-            self.decision_service.get_forced_variation(
-                self.project_config, "test_experiment_not_in_datafile", "test_user"
-            )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "test_experiment_not_in_datafile", "test_user"
         )
         self.assertIsNone(
-            self.decision_service.get_forced_variation(
-                self.project_config, None, "test_user"
-            )
+            variation
+        )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, None, "test_user"
         )
         self.assertIsNone(
-            self.decision_service.get_forced_variation(
-                self.project_config, "", "test_user"
-            )
+            variation
+        )
+        variation, _ = self.decision_service.get_forced_variation(
+            self.project_config, "", "test_user"
+        )
+        self.assertIsNone(
+            variation
         )
 
     def test_get_forced_variation_with_none_set_for_user(self):
@@ -311,10 +328,11 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
+            variation, _ = self.decision_service.get_forced_variation(
+                self.project_config, "test_experiment", "test_user"
+            )
             self.assertIsNone(
-                self.decision_service.get_forced_variation(
-                    self.project_config, "test_experiment", "test_user"
-                )
+                variation
             )
         mock_decision_service_logging.debug.assert_called_once_with(
             'No experiment "test_experiment" mapped to user "test_user" in the forced variation map.'
@@ -331,10 +349,11 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
+            variation, _ = self.decision_service.get_forced_variation(
+                self.project_config, "test_experiment", "test_user"
+            )
             self.assertIsNone(
-                self.decision_service.get_forced_variation(
-                    self.project_config, "test_experiment", "test_user"
-                )
+                variation
             )
 
         mock_decision_service_logging.debug.assert_called_once_with(
@@ -348,11 +367,12 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
+            variation, _ = self.decision_service.get_whitelisted_variation(
+                self.project_config, experiment, "user_1"
+            )
             self.assertEqual(
                 entities.Variation("111128", "control"),
-                self.decision_service.get_whitelisted_variation(
-                    self.project_config, experiment, "user_1"
-                ),
+                variation,
             )
 
         mock_decision_service_logging.info.assert_called_once_with(
@@ -367,10 +387,11 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.project_config.ProjectConfig.get_variation_from_key",
             return_value=None,
         ) as mock_get_variation_id:
+            variation, _ = self.decision_service.get_whitelisted_variation(
+                self.project_config, experiment, "user_1"
+            )
             self.assertIsNone(
-                self.decision_service.get_whitelisted_variation(
-                    self.project_config, experiment, "user_1"
-                )
+                variation
             )
 
         mock_get_variation_id.assert_called_once_with("test_experiment", "control")
@@ -385,11 +406,12 @@ class DecisionServiceTest(base.BaseTest):
         with mock.patch.object(
             self.decision_service, "logger"
         ) as mock_decision_service_logging:
+            variation = self.decision_service.get_stored_variation(
+                self.project_config, experiment, profile
+            )
             self.assertEqual(
                 entities.Variation("111128", "control"),
-                self.decision_service.get_stored_variation(
-                    self.project_config, experiment, profile
-                ),
+                variation,
             )
 
         mock_decision_service_logging.info.assert_called_once_with(
@@ -401,10 +423,11 @@ class DecisionServiceTest(base.BaseTest):
 
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         profile = user_profile.UserProfile("test_user")
+        variation = self.decision_service.get_stored_variation(
+            self.project_config, experiment, profile
+        )
         self.assertIsNone(
-            self.decision_service.get_stored_variation(
-                self.project_config, experiment, profile
-            )
+            variation
         )
 
     def test_get_variation__experiment_not_running(self):
@@ -428,10 +451,11 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertIsNone(
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                )
+                variation
             )
 
         mock_decision_service_logging.info.assert_called_once_with(
@@ -451,16 +475,17 @@ class DecisionServiceTest(base.BaseTest):
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_forced_variation",
-            return_value=None,
+            return_value=[None, []],
         ), mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
             return_value=None,
         ), mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ), mock.patch(
-            "optimizely.bucketer.Bucketer.bucket"
+            "optimizely.bucketer.Bucketer.bucket",
+            return_value=[self.project_config.get_variation_from_id("211127", "211129"), []],
         ) as mock_bucket:
-            self.decision_service.get_variation(
+            variation, _ = self.decision_service.get_variation(
                 self.project_config,
                 experiment,
                 "test_user",
@@ -481,7 +506,7 @@ class DecisionServiceTest(base.BaseTest):
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=entities.Variation("111128", "control"),
+            return_value=[entities.Variation("111128", "control"), []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation"
         ) as mock_get_stored_variation, mock.patch(
@@ -493,11 +518,12 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111128", "control"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that forced variation is returned and stored decision or bucketing service are not involved
@@ -516,7 +542,7 @@ class DecisionServiceTest(base.BaseTest):
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
             return_value=entities.Variation("111128", "control"),
@@ -533,11 +559,12 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111128", "control"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that stored variation is returned and bucketing service is not involved
@@ -567,26 +594,27 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
             return_value=None,
         ) as mock_get_stored_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=entities.Variation("111129", "variation"),
+            return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.lookup",
             return_value={"user_id": "test_user", "experiment_bucket_map": {}},
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that user is bucketed and new decision is stored
@@ -627,24 +655,25 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation"
         ) as mock_get_stored_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=entities.Variation("111129", "variation"),
+            return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.lookup"
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that user is bucketed and new decision is not stored as user profile service is not available
@@ -674,12 +703,12 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
             return_value=None,
         ) as mock_get_stored_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=False
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[False, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket"
         ) as mock_bucket, mock.patch(
@@ -688,10 +717,11 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertIsNone(
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                )
+                variation
             )
 
         # Assert that user is bucketed and new decision is stored
@@ -721,25 +751,26 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation"
         ) as mock_get_stored_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=entities.Variation("111129", "variation"),
+            return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.lookup",
             return_value="invalid_profile",
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that user is bucketed and new decision is stored
@@ -778,25 +809,26 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation"
         ) as mock_get_stored_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=entities.Variation("111129", "variation"),
+            return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.lookup",
             side_effect=Exception("major problem"),
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that user is bucketed and new decision is stored
@@ -835,25 +867,26 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation"
         ) as mock_get_stored_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=entities.Variation("111129", "variation"),
+            return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.lookup", return_value=None
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save",
             side_effect=Exception("major problem"),
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config, experiment, "test_user", None
+            )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
-                self.decision_service.get_variation(
-                    self.project_config, experiment, "test_user", None
-                ),
+                variation,
             )
 
         # Assert that user is bucketed and new decision is stored
@@ -891,26 +924,27 @@ class DecisionServiceTest(base.BaseTest):
             self.decision_service, "logger"
         ) as mock_decision_service_logging, mock.patch(
             "optimizely.decision_service.DecisionService.get_whitelisted_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_whitelisted_variation, mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=entities.Variation("111129", "variation"),
+            return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.lookup"
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
+            variation, _ = self.decision_service.get_variation(
+                self.project_config,
+                experiment,
+                "test_user",
+                None,
+                ignore_user_profile=True,
+            )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
-                self.decision_service.get_variation(
-                    self.project_config,
-                    experiment,
-                    "test_user",
-                    None,
-                    ignore_user_profile=True,
-                ),
+                variation,
             )
 
         # Assert that user is bucketed and new decision is NOT stored
@@ -946,11 +980,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         with self.mock_config_logger as mock_logging:
             no_experiment_rollout = self.project_config.get_rollout_from_id("201111")
+            variation_received, _ = self.decision_service.get_variation_for_rollout(
+                self.project_config, no_experiment_rollout, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                self.decision_service.get_variation_for_rollout(
-                    self.project_config, no_experiment_rollout, "test_user"
-                ),
+                variation_received,
             )
 
         # Assert no log messages were generated
@@ -963,20 +998,21 @@ class FeatureFlagDecisionTests(base.BaseTest):
         rollout = self.project_config.get_rollout_from_id("211111")
 
         with mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ), self.mock_decision_logger as mock_decision_service_logging, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=self.project_config.get_variation_from_id("211127", "211129"),
+            return_value=[self.project_config.get_variation_from_id("211127", "211129"), []],
         ) as mock_bucket:
+            variation_received, _ = self.decision_service.get_variation_for_rollout(
+                self.project_config, rollout, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(
                     self.project_config.get_experiment_from_id("211127"),
                     self.project_config.get_variation_from_id("211127", "211129"),
                     enums.DecisionSources.ROLLOUT,
                 ),
-                self.decision_service.get_variation_for_rollout(
-                    self.project_config, rollout, "test_user"
-                ),
+                variation_received,
             )
 
         # Check all log messages
@@ -998,23 +1034,24 @@ class FeatureFlagDecisionTests(base.BaseTest):
         rollout = self.project_config.get_rollout_from_id("211111")
 
         with mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ), self.mock_decision_logger as mock_decision_service_logging, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
-            return_value=self.project_config.get_variation_from_id("211127", "211129"),
+            return_value=[self.project_config.get_variation_from_id("211127", "211129"), []],
         ) as mock_bucket:
+            variation_received, _ = self.decision_service.get_variation_for_rollout(
+                self.project_config,
+                rollout,
+                "test_user",
+                {"$opt_bucketing_id": "user_bucket_value"},
+            )
             self.assertEqual(
                 decision_service.Decision(
                     self.project_config.get_experiment_from_id("211127"),
                     self.project_config.get_variation_from_id("211127", "211129"),
                     enums.DecisionSources.ROLLOUT,
                 ),
-                self.decision_service.get_variation_for_rollout(
-                    self.project_config,
-                    rollout,
-                    "test_user",
-                    {"$opt_bucketing_id": "user_bucket_value"},
-                ),
+                variation_received,
             )
 
         # Check all log messages
@@ -1040,17 +1077,18 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
 
         with mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=True
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging, mock.patch(
-            "optimizely.bucketer.Bucketer.bucket", side_effect=[None, variation_to_mock]
+            "optimizely.bucketer.Bucketer.bucket", side_effect=[[None, []], [variation_to_mock, []]]
         ):
+            variation_received, _ = self.decision_service.get_variation_for_rollout(
+                self.project_config, rollout, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(
                     everyone_else_exp, variation_to_mock, enums.DecisionSources.ROLLOUT
                 ),
-                self.decision_service.get_variation_for_rollout(
-                    self.project_config, rollout, "test_user"
-                ),
+                variation_received,
             )
 
         # Check that after first experiment, it skips to the last experiment to check
@@ -1096,13 +1134,14 @@ class FeatureFlagDecisionTests(base.BaseTest):
         rollout = self.project_config.get_rollout_from_id("211111")
 
         with mock.patch(
-            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=False
+            "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[False, []]
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging:
+            variation_received, _ = self.decision_service.get_variation_for_rollout(
+                self.project_config, rollout, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                self.decision_service.get_variation_for_rollout(
-                    self.project_config, rollout, "test_user"
-                ),
+                variation_received,
             )
 
         # Check that all experiments in rollout layer were checked
@@ -1164,18 +1203,19 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         decision_patch = mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
-            return_value=expected_variation,
+            return_value=[expected_variation, []],
         )
         with decision_patch as mock_decision, self.mock_decision_logger:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
                 ),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
 
         mock_decision.assert_called_once_with(
@@ -1183,11 +1223,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("test_experiment"),
             "test_user",
             None,
+            False
         )
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_rollout(self):
         """ Test that get_variation_for_feature returns the variation of
-    the experiment in the rollout that the user is bucketed into. """
+        the experiment in the rollout that the user is bucketed into. """
 
         feature = self.project_config.get_feature_from_key("test_feature_in_rollout")
 
@@ -1196,16 +1237,16 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         get_variation_for_rollout_patch = mock.patch(
             "optimizely.decision_service.DecisionService.get_variation_for_rollout",
-            return_value=expected_variation,
+            return_value=[expected_variation, None],
         )
-        with \
-            get_variation_for_rollout_patch as mock_get_variation_for_rollout, \
+        with get_variation_for_rollout_patch as mock_get_variation_for_rollout, \
                 self.mock_decision_logger as mock_decision_service_logging:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 expected_variation,
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
 
         expected_rollout = self.project_config.get_rollout_from_id("211111")
@@ -1221,7 +1262,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         self,
     ):
         """ Test that get_variation_for_feature returns the variation of the experiment in the
-    feature's rollout even if the user is not bucketed into the feature's experiment. """
+            feature's rollout even if the user is not bucketed into the feature's experiment. """
 
         feature = self.project_config.get_feature_from_key(
             "test_feature_in_experiment_and_rollout"
@@ -1233,19 +1274,20 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         with mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions",
-            side_effect=[False, True],
+            side_effect=[[False, []], [True, []]],
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging, mock.patch(
-            "optimizely.bucketer.Bucketer.bucket", return_value=expected_variation
-        ):
+                "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
+
+            decision, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.ROLLOUT,
                 ),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                decision,
             )
 
         self.assertEqual(2, mock_audience_check.call_count)
@@ -1257,6 +1299,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             None,
             mock_decision_service_logging,
         )
+
         mock_audience_check.assert_any_call(
             self.project_config,
             self.project_config.get_experiment_from_key("211127").get_audience_conditions_or_ids(),
@@ -1278,30 +1321,32 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=self.project_config.get_experiment_from_key("group_exp_1"),
+            return_value=(self.project_config.get_experiment_from_key("group_exp_1"), []),
         ) as mock_get_experiment_in_group, mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
-            return_value=expected_variation,
+            return_value=(expected_variation, []),
         ) as mock_decision:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
                 ),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
 
         mock_get_experiment_in_group.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), "test_user"
-        )
+            self.project_config, self.project_config.get_group("19228"), 'test_user')
+
         mock_decision.assert_called_once_with(
             self.project_config,
             self.project_config.get_experiment_from_key("group_exp_1"),
             "test_user",
             None,
+            False
         )
 
     def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
@@ -1312,20 +1357,21 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_get_experiment_in_group, mock.patch(
             "optimizely.decision_service.DecisionService.get_variation"
         ) as mock_decision:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
 
         mock_get_experiment_in_group.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), "test_user"
-        )
+            self.project_config, self.project_config.get_group("19228"), "test_user")
+
         self.assertFalse(mock_decision.called)
 
     def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
@@ -1335,13 +1381,14 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
-            return_value=None,
+            return_value=[None, []],
         ) as mock_decision:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
 
         mock_decision.assert_called_once_with(
@@ -1349,6 +1396,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("test_experiment"),
             "test_user",
             None,
+            False
         )
 
     def test_get_variation_for_feature__returns_none_for_invalid_group_id(self):
@@ -1358,11 +1406,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
         feature.groupId = "aabbccdd"
 
         with self.mock_decision_logger as mock_decision_service_logging:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
         mock_decision_service_logging.error.assert_called_once_with(
             enums.Errors.INVALID_GROUP_ID.format("_get_variation_for_feature")
@@ -1378,13 +1427,14 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         with mock.patch(
             "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=self.project_config.get_experiment_from_key("group_exp_2"),
+            return_value=[self.project_config.get_experiment_from_key("group_exp_2"), []],
         ) as mock_decision:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                self.decision_service.get_variation_for_feature(
-                    self.project_config, feature, "test_user"
-                ),
+                variation_received,
             )
 
         mock_decision.assert_called_once_with(
@@ -1399,11 +1449,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             "optimizely.bucketer.Bucketer.find_bucket", return_value="32222"
         ), self.mock_decision_logger as mock_decision_service_logging:
+            variation_received, _ = self.decision_service.get_experiment_in_group(
+                self.project_config, group, "test_user"
+            )
             self.assertEqual(
                 experiment,
-                self.decision_service.get_experiment_in_group(
-                    self.project_config, group, "test_user"
-                ),
+                variation_received,
             )
 
         mock_decision_service_logging.info.assert_called_once_with(
@@ -1417,10 +1468,11 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             "optimizely.bucketer.Bucketer.find_bucket", return_value=None
         ), self.mock_decision_logger as mock_decision_service_logging:
+            variation_received, _ = self.decision_service.get_experiment_in_group(
+                self.project_config, group, "test_user"
+            )
             self.assertIsNone(
-                self.decision_service.get_experiment_in_group(
-                    self.project_config, group, "test_user"
-                )
+                variation_received
             )
 
         mock_decision_service_logging.info.assert_called_once_with(

@@ -1,4 +1,4 @@
-# Copyright 2016-2020, Optimizely
+# Copyright 2016-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -34,47 +34,48 @@ class AudienceTest(base.BaseTest):
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         experiment.audienceIds = []
         experiment.audienceConditions = []
+        user_meets_audience_conditions, _ = audience.does_user_meet_audience_conditions(
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            enums.ExperimentAudienceEvaluationLogs,
+            'test_experiment',
+            user_attributes,
+            self.mock_client_logger
+        )
         self.assertStrictTrue(
-            audience.does_user_meet_audience_conditions(
-                self.project_config,
-                experiment.get_audience_conditions_or_ids(),
-                enums.ExperimentAudienceEvaluationLogs,
-                'test_experiment',
-                user_attributes,
-                self.mock_client_logger
-            )
+            user_meets_audience_conditions
         )
 
         # Audience Ids exist but Audience Conditions is Empty
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         experiment.audienceIds = ['11154']
         experiment.audienceConditions = []
+        user_meets_audience_conditions, _ = audience.does_user_meet_audience_conditions(
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            enums.ExperimentAudienceEvaluationLogs,
+            'test_experiment',
+            user_attributes,
+            self.mock_client_logger
+        )
         self.assertStrictTrue(
-            audience.does_user_meet_audience_conditions(
-                self.project_config,
-                experiment.get_audience_conditions_or_ids(),
-                enums.ExperimentAudienceEvaluationLogs,
-                'test_experiment',
-                user_attributes,
-                self.mock_client_logger
-            )
-
+            user_meets_audience_conditions
         )
 
         # Audience Ids is Empty and  Audience Conditions is None
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         experiment.audienceIds = []
         experiment.audienceConditions = None
+        user_meets_audience_conditions, _ = audience.does_user_meet_audience_conditions(
+            self.project_config,
+            experiment.get_audience_conditions_or_ids(),
+            enums.ExperimentAudienceEvaluationLogs,
+            'test_experiment',
+            user_attributes,
+            self.mock_client_logger
+        )
         self.assertStrictTrue(
-            audience.does_user_meet_audience_conditions(
-                self.project_config,
-                experiment.get_audience_conditions_or_ids(),
-                enums.ExperimentAudienceEvaluationLogs,
-                'test_experiment',
-                user_attributes,
-                self.mock_client_logger
-            )
-
+            user_meets_audience_conditions
         )
 
     def test_does_user_meet_audience_conditions__with_audience(self):
@@ -160,16 +161,16 @@ class AudienceTest(base.BaseTest):
         user_attributes = {'test_attribute': 'test_value_1'}
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=True):
-
+            user_meets_audience_conditions, _ = audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                enums.ExperimentAudienceEvaluationLogs,
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
+            )
             self.assertStrictTrue(
-                audience.does_user_meet_audience_conditions(
-                    self.project_config,
-                    experiment.get_audience_conditions_or_ids(),
-                    enums.ExperimentAudienceEvaluationLogs,
-                    'test_experiment',
-                    user_attributes,
-                    self.mock_client_logger
-                )
+                user_meets_audience_conditions
             )
 
     def test_does_user_meet_audience_conditions_returns_false_when_condition_tree_evaluator_returns_none_or_false(self):
@@ -179,29 +180,29 @@ class AudienceTest(base.BaseTest):
         user_attributes = {'test_attribute': 'test_value_1'}
         experiment = self.project_config.get_experiment_from_key('test_experiment')
         with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=None):
-
+            user_meets_audience_conditions, _ = audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                enums.ExperimentAudienceEvaluationLogs,
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
+            )
             self.assertStrictFalse(
-                audience.does_user_meet_audience_conditions(
-                    self.project_config,
-                    experiment.get_audience_conditions_or_ids(),
-                    enums.ExperimentAudienceEvaluationLogs,
-                    'test_experiment',
-                    user_attributes,
-                    self.mock_client_logger
-                )
+                user_meets_audience_conditions
             )
 
         with mock.patch('optimizely.helpers.condition_tree_evaluator.evaluate', return_value=False):
-
+            user_meets_audience_conditions, _ = audience.does_user_meet_audience_conditions(
+                self.project_config,
+                experiment.get_audience_conditions_or_ids(),
+                enums.ExperimentAudienceEvaluationLogs,
+                'test_experiment',
+                user_attributes,
+                self.mock_client_logger
+            )
             self.assertStrictFalse(
-                audience.does_user_meet_audience_conditions(
-                    self.project_config,
-                    experiment.get_audience_conditions_or_ids(),
-                    enums.ExperimentAudienceEvaluationLogs,
-                    'test_experiment',
-                    user_attributes,
-                    self.mock_client_logger
-                )
+                user_meets_audience_conditions
             )
 
     def test_does_user_meet_audience_conditions__evaluates_audience_ids(self):

@@ -1,4 +1,4 @@
-# Copyright 2016, 2018-2020, Optimizely
+# Copyright 2016, 2018-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -35,15 +35,21 @@ def does_user_meet_audience_conditions(config,
         logger: Provides a logger to send log messages to.
 
     Returns:
-        Boolean representing if user satisfies audience conditions for any of the audiences or not.
+        Boolean representing if user satisfies audience conditions for any of the audiences or not
+        And an array of log messages representing decision making.
     """
-    logger.debug(audience_logs.EVALUATING_AUDIENCES_COMBINED.format(logging_key, json.dumps(audience_conditions)))
+    decide_reasons = []
+    message = audience_logs.EVALUATING_AUDIENCES_COMBINED.format(logging_key, json.dumps(audience_conditions))
+    logger.debug(message)
+    decide_reasons.append(message)
 
     # Return True in case there are no audiences
     if audience_conditions is None or audience_conditions == []:
-        logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(logging_key, 'TRUE'))
+        message = audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(logging_key, 'TRUE')
+        logger.info(message)
+        decide_reasons.append(message)
 
-        return True
+        return True, decide_reasons
 
     if attributes is None:
         attributes = {}
@@ -61,19 +67,22 @@ def does_user_meet_audience_conditions(config,
 
         if audience is None:
             return None
-
-        logger.debug(audience_logs.EVALUATING_AUDIENCE.format(audience_id, audience.conditions))
+        _message = audience_logs.EVALUATING_AUDIENCE.format(audience_id, audience.conditions)
+        logger.debug(_message)
 
         result = condition_tree_evaluator.evaluate(
             audience.conditionStructure, lambda index: evaluate_custom_attr(audience_id, index),
         )
 
         result_str = str(result).upper() if result is not None else 'UNKNOWN'
-        logger.debug(audience_logs.AUDIENCE_EVALUATION_RESULT.format(audience_id, result_str))
+        _message = audience_logs.AUDIENCE_EVALUATION_RESULT.format(audience_id, result_str)
+        logger.debug(_message)
 
         return result
 
     eval_result = condition_tree_evaluator.evaluate(audience_conditions, evaluate_audience)
     eval_result = eval_result or False
-    logger.info(audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(logging_key, str(eval_result).upper()))
-    return eval_result
+    message = audience_logs.AUDIENCE_EVALUATION_RESULT_COMBINED.format(logging_key, str(eval_result).upper())
+    logger.info(message)
+    decide_reasons.append(message)
+    return eval_result, decide_reasons
