@@ -135,7 +135,7 @@ class BaseTest(unittest.TestCase):
                 {
                     'key': 'test_experiment',
                     'status': 'Running',
-                    'forcedVariations': {},
+                    'forcedVariations': {'user_1': 'control'},
                     'layerId': '111182',
                     'audienceIds': [],
                     'trafficAllocation': [

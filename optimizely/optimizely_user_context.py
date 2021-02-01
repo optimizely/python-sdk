@@ -1,4 +1,4 @@
-#    Copyright 2020, Optimizely and contributors
+#    Copyright 2021, Optimizely and contributors
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-from . import logger as _logging
+
+import threading
 
 
-class UserContext(object):
+class OptimizelyUserContext(object):
     """
     Representation of an Optimizely User Context using which APIs are to be called.
     """
@@ -34,11 +35,19 @@ class UserContext(object):
 
         self.client = optimizely_client
         self.user_id = user_id
-        self.user_attributes = user_attributes.copy() if user_attributes else {}
 
-        self.logger_name = '.'.join([__name__, self.__class__.__name__])
+        if not isinstance(user_attributes, dict):
+            user_attributes = {}
 
-        self.logger = _logging.reset_logger(self.logger_name)
+        self._user_attributes = user_attributes.copy() if user_attributes else {}
+        self.lock = threading.Lock()
+
+    def _clone(self):
+        return OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
+
+    def get_user_attributes(self):
+        with self.lock:
+            return self._user_attributes.copy()
 
     def set_attribute(self, attribute_key, attribute_value):
         """
@@ -50,7 +59,8 @@ class UserContext(object):
         Returns:
         None
         """
-        self.user_attributes[attribute_key] = attribute_value
+        with self.lock:
+            self._user_attributes[attribute_key] = attribute_value
 
     def decide(self, key, options=None):
         """
@@ -62,11 +72,10 @@ class UserContext(object):
         Returns:
             Decision object
         """
-        if not self.client:
-            self.logger.error("Optimizely Client invalid")
-            return None
+        if isinstance(options, list):
+            options = options[:]
 
-        return self.client.decide(self, key, options)
+        return self.client._decide(self._clone(), key, options)
 
     def decide_for_keys(self, keys, options=None):
         """
@@ -78,11 +87,10 @@ class UserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        if not self.client:
-            self.logger.error("Optimizely Client invalid")
-            return None
+        if isinstance(options, list):
+            options = options[:]
 
-        self.client.decide_for_keys(self, keys, options)
+        return self.client._decide_for_keys(self._clone(), keys, options)
 
     def decide_all(self, options=None):
         """
@@ -93,11 +101,16 @@ class UserContext(object):
         Returns:
           Dictionary with feature_key keys and Decision object values
         """
-        if not self.client:
-            self.logger.error("Optimizely Client invalid")
-            return None
+        if isinstance(options, list):
+            options = options[:]
 
-        self.client.decide_all(self, options)
+        return self.client._decide_all(self._clone(), options)
 
     def track_event(self, event_key, event_tags=None):
-        self.client.track(event_key, self.user_id, self.user_attributes, event_tags)
+        return self.client.track(event_key, self.user_id, self.get_user_attributes(), event_tags)
+
+    def as_json(self):
+        return {
+            'user_id': self.user_id,
+            'attributes': self.get_user_attributes(),
+        }

@@ -1,4 +1,4 @@
-# Copyright 2020, Optimizely
+# Copyright 2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,9 +12,7 @@
 # limitations under the License.
 
 
-class DecideOption(object):
-    DISABLE_DECISION_EVENT = 'DISABLE_DECISION_EVENT'
-    ENABLED_FLAGS_ONLY = 'ENABLED_FLAGS_ONLY'
-    IGNORE_USER_PROFILE_SERVICE = 'IGNORE_USER_PROFILE_SERVICE'
-    INCLUDE_REASONS = 'INCLUDE_REASONS'
-    EXCLUDE_VARIABLES = 'EXCLUDE_VARIABLES'
+class OptimizelyDecisionMessage(object):
+    SDK_NOT_READY = 'Optimizely SDK not configured properly yet.'
+    FLAG_KEY_INVALID = 'No flag was found for key "{}".'
+    VARIABLE_VALUE_INVALID = 'Variable value for key "{}" is invalid or wrong type.'

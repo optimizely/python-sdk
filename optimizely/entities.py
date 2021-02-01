@@ -1,4 +1,4 @@
-# Copyright 2016-2020, Optimizely
+# Copyright 2016-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -71,6 +71,9 @@ class Experiment(BaseEntity):
         """ Returns audienceConditions if present, otherwise audienceIds. """
         return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
 
+    def __str__(self):
+        return self.key
+
 
 class FeatureFlag(BaseEntity):
     def __init__(self, id, key, experimentIds, rolloutId, variables, groupId=None, **kwargs):
@@ -122,3 +125,6 @@ class Variation(BaseEntity):
         self.key = key
         self.featureEnabled = featureEnabled
         self.variables = variables or []
+
+    def __str__(self):
+        return self.key

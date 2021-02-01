@@ -1,4 +1,4 @@
-# Copyright 2020, Optimizely
+# Copyright 2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,13 +12,9 @@
 # limitations under the License.
 
 
-class Decision(object):
-    def __init__(self, variation_key=None, enabled=None,
-                 variables=None, rule_key=None, flag_key=None, user_context=None, reasons=None):
-        self.variation_key = variation_key
-        self.enabled = enabled or False
-        self.variables = variables or {}
-        self.rule_key = rule_key
-        self.flag_key = flag_key
-        self.user_context = user_context
-        self.reasons = reasons or []
+class OptimizelyDecideOption(object):
+    DISABLE_DECISION_EVENT = 'DISABLE_DECISION_EVENT'
+    ENABLED_FLAGS_ONLY = 'ENABLED_FLAGS_ONLY'
+    IGNORE_USER_PROFILE_SERVICE = 'IGNORE_USER_PROFILE_SERVICE'
+    INCLUDE_REASONS = 'INCLUDE_REASONS'
+    EXCLUDE_VARIABLES = 'EXCLUDE_VARIABLES'
