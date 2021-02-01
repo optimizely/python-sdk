@@ -274,7 +274,6 @@ class DecisionService(object):
             if validator.is_user_profile_valid(retrieved_profile):
                 user_profile = UserProfile(**retrieved_profile)
                 variation = self.get_stored_variation(project_config, experiment, user_profile)
-                decide_reasons += reasons_received
                 if variation:
                     message = 'Returning previously activated variation ID "{}" of experiment ' \
                               '"{}" for user "{}" from user profile.'.format(variation, experiment, user_id)

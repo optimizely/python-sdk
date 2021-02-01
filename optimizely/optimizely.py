@@ -1142,15 +1142,15 @@ class Optimizely(object):
             return {}
 
         # merge decide_options and default_decide_options
+        merged_decide_options = []
         if isinstance(decide_options, list):
-            decide_options += self.default_decide_options
+            merged_decide_options = decide_options[:]
+            merged_decide_options += self.default_decide_options
         else:
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
-            decide_options = self.default_decide_options
+            merged_decide_options = self.default_decide_options
 
-        enabled_flags_only = False
-        if decide_options is not None:
-            enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in decide_options
+        enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in merged_decide_options
 
         decisions = {}
         for key in keys:

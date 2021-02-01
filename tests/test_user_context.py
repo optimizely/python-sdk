@@ -1016,7 +1016,7 @@ class UserContextTest(base.BaseTest):
         mock_decide.assert_called_with(
             user_context,
             'test_feature_in_experiment',
-            ['EXCLUDE_VARIABLES', 'ENABLED_FLAGS_ONLY']
+            ['EXCLUDE_VARIABLES']
         )
 
     def test_decide_for_all(self):
@@ -1113,3 +1113,135 @@ class UserContextTest(base.BaseTest):
         self.compare_opt_decisions(expected, actual)
 
         self.assertEqual([], save_profile)
+
+    def test_decide_reasons__hit_everyone_else_rule__fails_bucketing(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_attributes = {}
+        user_context = opt_obj.create_user_context('test_user', user_attributes)
+        actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
+
+        expected_reasons = [
+            'Evaluating audiences for rule 1: ["11154"].',
+            'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "test_user" does not meet conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].',
+            'Audiences for rule 2 collectively evaluated to FALSE.',
+            'User "test_user" does not meet conditions for targeting rule 2.',
+            'Evaluating audiences for rule Everyone Else: [].',
+            'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'Bucketed into an empty traffic range. Returning nil.'
+        ]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide_reasons__hit_everyone_else_rule(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_attributes = {}
+        user_context = opt_obj.create_user_context('abcde', user_attributes)
+        actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
+
+        expected_reasons = [
+            'Evaluating audiences for rule 1: ["11154"].',
+            'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "abcde" does not meet conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].',
+            'Audiences for rule 2 collectively evaluated to FALSE.',
+            'User "abcde" does not meet conditions for targeting rule 2.',
+            'Evaluating audiences for rule Everyone Else: [].',
+            'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'User "abcde" meets conditions for targeting rule "Everyone Else".'
+        ]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide_reasons__hit_rule2__fails_bucketing(self):
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_attributes = {'test_attribute': 'test_value_2'}
+        user_context = opt_obj.create_user_context('test_user', user_attributes)
+        actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
+
+        expected_reasons = [
+            'Evaluating audiences for rule 1: ["11154"].',
+            'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "test_user" does not meet conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].',
+            'Audiences for rule 2 collectively evaluated to TRUE.',
+            'User "test_user" meets audience conditions for targeting rule 2.',
+            'Bucketed into an empty traffic range. Returning nil.',
+            'User "test_user" is not in the traffic group for targeting rule 2. Checking "Everyone Else" rule now.',
+            'Evaluating audiences for rule Everyone Else: [].',
+            'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'Bucketed into an empty traffic range. Returning nil.'
+        ]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide_reasons__hit_user_profile_service(self):
+        user_id = 'test_user'
+
+        lookup_profile = {
+            'user_id': user_id,
+            'experiment_bucket_map': {
+                '111127': {
+                    'variation_id': '111128'
+                }
+            }
+        }
+
+        save_profile = []
+
+        class Ups(UserProfileService):
+
+            def lookup(self, user_id):
+                return lookup_profile
+
+            def save(self, user_profile):
+                print(user_profile)
+                save_profile.append(user_profile)
+
+        ups = Ups()
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features), user_profile_service=ups)
+
+        user_context = opt_obj.create_user_context(user_id)
+        options = ['INCLUDE_REASONS']
+
+        actual = user_context.decide('test_feature_in_experiment', options)
+
+        expected_reasons = [('Returning previously activated variation ID "control" of experiment '
+                             '"test_experiment" for user "test_user" from user profile.')]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide_reasons__forced_variation(self):
+        user_id = 'test_user'
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context(user_id)
+        options = ['INCLUDE_REASONS']
+
+        opt_obj.set_forced_variation('test_experiment', user_id, 'control')
+
+        actual = user_context.decide('test_feature_in_experiment', options)
+
+        expected_reasons = [('Variation "control" is mapped to experiment '
+                             '"test_experiment" and user "test_user" in the forced variation map')]
+
+        self.assertEquals(expected_reasons, actual.reasons)
+
+    def test_decide_reasons__whitelisted_variation(self):
+        user_id = 'user_1'
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+
+        user_context = opt_obj.create_user_context(user_id)
+        options = ['INCLUDE_REASONS']
+
+        actual = user_context.decide('test_feature_in_experiment', options)
+
+        expected_reasons = ['User "user_1" is forced in variation "control".']
+
+        self.assertEquals(expected_reasons, actual.reasons)
