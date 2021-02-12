@@ -1,17 +1,17 @@
 # Optimizely Python SDK Changelog
 
 ## 3.8.0
-February 11th, 2021
+February 12th, 2021
 
 ### New Features
 * New Features
-Introducing a new primary interface for retrieving feature flag status, configuration and associated experiment decisions for users ([#309](https://github.com/optimizely/python-sdk/pull/309)). The new OptimizelyUserContext class is instantiated with createUserContext and exposes the following APIs to get OptimizelyDecision:
+Introducing a new primary interface for retrieving feature flag status, configuration and associated experiment decisions for users ([#309](https://github.com/optimizely/python-sdk/pull/309)). The new `OptimizelyUserContext` class is instantiated with `create_user_context` and exposes the following APIs to get `OptimizelyDecision`:
 
-    - setAttribute
+    - set_attribute
     - decide
-    - decideAll
-    - decideForKeys
-    - trackEvent
+    - decide_all
+    - decide_for_keys
+    - track_event
 
 For details, refer to our documentation page: https://docs.developers.optimizely.com/full-stack/v4.0/docs/python-sdk.
 
