@@ -27,7 +27,7 @@ about_text = (
     'Optimizely X Full Stack is A/B testing and feature management for product development teams. '
     'Experiment in any application. Make every feature on your roadmap an opportunity to learn. '
     'Learn more at https://www.optimizely.com/products/full-stack/ or see our documentation at '
-    'https://developers.optimizely.com/x/solutions/sdks/reference/index.html?language=python.'
+    'https://docs.developers.optimizely.com/full-stack/docs.'
 )
 
 setup(
@@ -50,6 +50,8 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     packages=find_packages(exclude=['docs', 'tests']),
     extras_require={'test': TEST_REQUIREMENTS},
