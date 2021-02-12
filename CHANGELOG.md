@@ -5,7 +5,7 @@ February 11th, 2021
 
 ### New Features
 * New Features
-Introducing a new primary interface for retrieving feature flag status, configuration and associated experiment decisions for users ([#309](https://github.com/optimizely/python-sdk/pull/309), [#311](https://github.com/optimizely/python-sdk/pull/311), [#312](https://github.com/optimizely/python-sdk/pull/312), [#314](https://github.com/optimizely/python-sdk/pull/314)). The new OptimizelyUserContext class is instantiated with createUserContext and exposes the following APIs to get OptimizelyDecision:
+Introducing a new primary interface for retrieving feature flag status, configuration and associated experiment decisions for users ([#309](https://github.com/optimizely/python-sdk/pull/309)). The new OptimizelyUserContext class is instantiated with createUserContext and exposes the following APIs to get OptimizelyDecision:
 
     - setAttribute
     - decide
