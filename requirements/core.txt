@@ -1,4 +1,4 @@
 jsonschema==3.2.0
 pyrsistent==0.14.0
-mmh3==2.5.1
+mmh3==3.0.0
 requests[security]>=2.9.1
