@@ -4,8 +4,8 @@ python:
   - "3.4"
   - "3.5.5"
   - "3.6"
-# - "3.7" is handled in 'Test' job using xenial as Python 3.7 is not available for trusty.
-# - "3.8" is handled in 'Test' job using xenial as Python 3.8 is not available for trusty.
+  - "3.7"
+  - "3.8"
   - "pypy"
   - "pypy3"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
@@ -61,13 +61,6 @@ jobs:
         SDK=python
         SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
         FULLSTACK_TEST_REPO=ProdTesting
-
-    - stage: 'Test'
-      dist: xenial
-      python: "3.7"
-    - stage: 'Test'
-      dist: xenial
-      python: "3.8"
 
     - stage: 'Source Clear'
       if: type = cron
