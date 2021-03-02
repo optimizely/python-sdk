@@ -8,7 +8,8 @@ python:
   - "3.8"
   - "pypy2.7-7.3.1"
   - "pypy3.6-7.3.1"
-install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
+#install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
+install: "pip install --no-cache-dir --verbose -r requirements/core.txt --log LOG_PIP_CORE; pip install --no-cache-dir -r requirements/test.txt --log LOG_PIP_TEST"
 script: "pytest --cov=optimizely"
 after_success:
   - coveralls
