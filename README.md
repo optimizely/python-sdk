@@ -33,10 +33,9 @@ To install:
     pip install optimizely-sdk
 
 Note:  
-If you are running the SDK with PyPy or PyPy3, install this cryptography package first and then optimizely-sdk package:  
+If you are running the SDK with PyPy or PyPy3 and you are experiencing issues, install this cryptography package **first** and then optimizely-sdk package:  
 
     pip install "cryptography>=1.3.4,<=3.1.1"
-
 
 ### Feature Management Access
 
