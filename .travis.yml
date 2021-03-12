@@ -6,8 +6,8 @@ python:
   - "3.6"
 # - "3.7" is handled in 'Test' job using xenial as Python 3.7 is not available for trusty.
 # - "3.8" is handled in 'Test' job using xenial as Python 3.8 is not available for trusty.
-  - "pypy"
-  - "pypy3"
+#  - "pypy"
+#  - "pypy3"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
 script: "pytest --cov=optimizely"
 after_success:
@@ -61,7 +61,14 @@ jobs:
         SDK=python
         SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
         FULLSTACK_TEST_REPO=ProdTesting
-
+    - stage: 'Test'
+      python: "pypy"
+      before_install:
+        - pip install "cryptography>=1.3.4,<=3.1.1" # installing in before_install doesn't re-install the latest version of the same package in the next stage.
+    - stage: 'Test'
+      python: "pypy3"
+      before_install:
+        - pip install "cryptography>=1.3.4,<=3.1.1"
     - stage: 'Test'
       dist: xenial
       python: "3.7"
