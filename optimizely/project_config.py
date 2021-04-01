@@ -13,6 +13,8 @@
 
 import json
 
+import six
+
 from .helpers import condition as condition_helper
 from .helpers import enums
 from . import entities
@@ -40,7 +42,7 @@ class ProjectConfig(object):
         """
 
         config = json.loads(datafile)
-        self._datafile = u'{}'.format(datafile)
+        self._datafile = six.ensure_text(datafile)
         self.logger = logger
         self.error_handler = error_handler
         self.version = config.get('version')
