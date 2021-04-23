@@ -462,31 +462,18 @@ class DecisionService(object):
         decide_reasons = []
         bucketing_id, reasons = self._get_bucketing_id(user_id, attributes)
         decide_reasons += reasons
-        # First check if the feature is in a mutex group
-        if feature.groupId:
-            group = project_config.get_group(feature.groupId)
-            if group:
-                experiment, reasons = self.get_experiment_in_group(project_config, group, bucketing_id)
-                decide_reasons += reasons
-                if experiment and experiment.id in feature.experimentIds:
+
+        # Next check if the feature is being experimented on
+        if feature.experimentIds:
+            # the feature can only be associated with one experiment
+            for experiment in feature.experimentIds:
+                experiment = project_config.get_experiment_from_id(experiment)
+                if experiment:
                     variation, variation_reasons = self.get_variation(
                         project_config, experiment, user_id, attributes, ignore_user_profile)
                     decide_reasons += variation_reasons
                     if variation:
                         return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
-            else:
-                self.logger.error(enums.Errors.INVALID_GROUP_ID.format('_get_variation_for_feature'))
-
-        # Next check if the feature is being experimented on
-        elif feature.experimentIds:
-            # If an experiment is not in a group, then the feature can only be associated with one experiment
-            experiment = project_config.get_experiment_from_id(feature.experimentIds[0])
-            if experiment:
-                variation, variation_reasons = self.get_variation(
-                    project_config, experiment, user_id, attributes, ignore_user_profile)
-                decide_reasons += variation_reasons
-                if variation:
-                    return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
 
         # Next check if user is part of a rollout
         if feature.rolloutId:
