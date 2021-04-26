@@ -1467,7 +1467,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         group = self.project_config.get_group("19228")
         with mock.patch(
             "optimizely.bucketer.Bucketer.find_bucket", return_value=None
-        ), self.mock_decision_logger as mock_decision_service_logging:
+        ), self.mock_decision_logger as mock_decision_service_logging_1:
             variation_received, _ = self.decision_service.get_experiment_in_group(
                 self.project_config, group, "test_user"
             )
@@ -1475,7 +1475,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 variation_received
             )
 
-        mock_decision_service_logging.info.assert_called_once_with(
+        mock_decision_service_logging_1.info.assert_called_once_with(
             'User with bucketing ID "test_user" is not in any experiments of group 19228.'
         )
-        
