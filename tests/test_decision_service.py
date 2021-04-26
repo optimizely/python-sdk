@@ -1415,11 +1415,10 @@ class FeatureFlagDecisionTests(base.BaseTest):
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
         feature.groupId = "aabbccdd"
 
-        with self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, "test_user"
-            )
-            self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                variation_received,
-            )
+        variation_received, _ = self.decision_service.get_variation_for_feature(
+            self.project_config, feature, "test_user"
+        )
+        self.assertEqual(
+            decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+            variation_received,
+        )
