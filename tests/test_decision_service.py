@@ -1276,7 +1276,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             "optimizely.helpers.audience.does_user_meet_audience_conditions",
             side_effect=[[False, []], [True, []]],
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging, mock.patch(
-            "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
+                "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
             decision, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, "test_user"
             )
