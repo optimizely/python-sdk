@@ -1276,8 +1276,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             "optimizely.helpers.audience.does_user_meet_audience_conditions",
             side_effect=[[False, []], [True, []]],
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging, mock.patch(
-                "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
-
+            "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
             decision, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, "test_user"
             )
@@ -1309,52 +1308,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
             mock_decision_service_logging,
         )
 
-    def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
-        """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
-
-        feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
-
-        with mock.patch(
-            "optimizely.decision_service.DecisionService.get_variation",
-            return_value=[None, []],
-        ) as mock_decision:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, "test_user"
-            )
-            self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                variation_received,
-            )
-
-        mock_decision.assert_called_once_with(
-            self.project_config,
-            self.project_config.get_experiment_from_key("test_experiment"),
-            "test_user",
-            None,
-            False
-        )
-
-    def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
-        """ Test that get_variation_for_feature returns None for
-        user not in group and the feature is not part of a rollout. """
-
-        feature = self.project_config.get_feature_from_key("test_feature_in_group")
-
-        with mock.patch(
-                "optimizely.decision_service.DecisionService.get_variation",
-                return_value=[None, []],
-        ):
-            variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, "test_user"
-            )
-            self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                variation_received,
-            )
-
     def test_get_variation_for_feature__returns_variation_for_feature_in_group(self):
         """ Test that get_variation_for_feature returns the variation of
-         the experiment the user is bucketed in the feature's group. """
+     the experiment the user is bucketed in the feature's group. """
 
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
 
@@ -1386,11 +1342,68 @@ class FeatureFlagDecisionTests(base.BaseTest):
             False
         )
 
+    def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
+        """ Test that get_variation_for_feature returns None for
+    user not in group and the feature is not part of a rollout. """
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_group")
+
+        with mock.patch(
+                "optimizely.decision_service.DecisionService.get_variation",
+                return_value=[None, []],
+        ):
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
+            self.assertEqual(
+                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+                variation_received,
+            )
+
+    def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
+        """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
+
+        with mock.patch(
+            "optimizely.decision_service.DecisionService.get_variation",
+            return_value=[None, []],
+        ) as mock_decision:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user"
+            )
+            self.assertEqual(
+                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+                variation_received,
+            )
+
+        mock_decision.assert_called_once_with(
+            self.project_config,
+            self.project_config.get_experiment_from_key("test_experiment"),
+            "test_user",
+            None,
+            False
+        )
+
+    def test_get_variation_for_feature__returns_none_for_invalid_group_id(self):
+        """ Test that get_variation_for_feature returns None for unknown group ID. """
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_group")
+        feature.groupId = "aabbccdd"
+
+        variation_received, _ = self.decision_service.get_variation_for_feature(
+            self.project_config, feature, "test_user"
+        )
+        self.assertEqual(
+            decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+            variation_received,
+        )
+
     def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(
         self,
     ):
         """ Test that if a user is in the mutex group but the experiment is
-            not targeting a feature, then None is returned. """
+    not targeting a feature, then None is returned. """
 
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
         with mock.patch(
@@ -1407,18 +1420,4 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         mock_decision.assert_called_once_with(
             self.project_config, self.project_config.get_experiment_from_id("32222"), "test_user", None, False
-        )
-
-    def test_get_variation_for_feature__returns_none_for_invalid_group_id(self):
-        """ Test that get_variation_for_feature returns None for unknown group ID. """
-
-        feature = self.project_config.get_feature_from_key("test_feature_in_group")
-        feature.groupId = "aabbccdd"
-
-        variation_received, _ = self.decision_service.get_variation_for_feature(
-            self.project_config, feature, "test_user"
-        )
-        self.assertEqual(
-            decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-            variation_received,
         )
