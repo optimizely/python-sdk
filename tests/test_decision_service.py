@@ -1276,8 +1276,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             "optimizely.helpers.audience.does_user_meet_audience_conditions",
             side_effect=[[False, []], [True, []]],
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging, mock.patch(
-                "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
-
+            "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
             decision, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, "test_user"
             )
@@ -1320,9 +1319,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
             "group_exp_1", "28901"
         )
         with mock.patch(
-            "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=(self.project_config.get_experiment_from_key("group_exp_1"), []),
-        ) as mock_get_experiment_in_group, mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
             return_value=(expected_variation, []),
         ) as mock_decision:
@@ -1337,9 +1333,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 variation_received,
             )
-
-        mock_get_experiment_in_group.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), 'test_user')
 
         mock_decision.assert_called_once_with(
             self.project_config,
@@ -1356,11 +1349,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
 
         with mock.patch(
-            "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=[None, []],
-        ) as mock_get_experiment_in_group, mock.patch(
-            "optimizely.decision_service.DecisionService.get_variation"
-        ) as mock_decision:
+                "optimizely.decision_service.DecisionService.get_variation",
+                return_value=[None, []],
+        ):
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, "test_user"
             )
@@ -1368,11 +1359,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
                 variation_received,
             )
-
-        mock_get_experiment_in_group.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), "test_user")
-
-        self.assertFalse(mock_decision.called)
 
     def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
         """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
@@ -1405,16 +1391,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
         feature.groupId = "aabbccdd"
 
-        with self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, "test_user"
-            )
-            self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                variation_received,
-            )
-        mock_decision_service_logging.error.assert_called_once_with(
-            enums.Errors.INVALID_GROUP_ID.format("_get_variation_for_feature")
+        variation_received, _ = self.decision_service.get_variation_for_feature(
+            self.project_config, feature, "test_user"
+        )
+        self.assertEqual(
+            decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+            variation_received,
         )
 
     def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(
@@ -1424,10 +1406,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     not targeting a feature, then None is returned. """
 
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
-
         with mock.patch(
-            "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=[self.project_config.get_experiment_from_key("group_exp_2"), []],
+            "optimizely.decision_service.DecisionService.get_variation",
+            return_value=[None, []],
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, "test_user"
@@ -1438,43 +1419,5 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), "test_user"
-        )
-
-    def test_get_experiment_in_group(self):
-        """ Test that get_experiment_in_group returns the bucketed experiment for the user. """
-
-        group = self.project_config.get_group("19228")
-        experiment = self.project_config.get_experiment_from_id("32222")
-        with mock.patch(
-            "optimizely.bucketer.Bucketer.find_bucket", return_value="32222"
-        ), self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_experiment_in_group(
-                self.project_config, group, "test_user"
-            )
-            self.assertEqual(
-                experiment,
-                variation_received,
-            )
-
-        mock_decision_service_logging.info.assert_called_once_with(
-            'User with bucketing ID "test_user" is in experiment group_exp_1 of group 19228.'
-        )
-
-    def test_get_experiment_in_group__returns_none_if_user_not_in_group(self):
-        """ Test that get_experiment_in_group returns None if the user is not bucketed into the group. """
-
-        group = self.project_config.get_group("19228")
-        with mock.patch(
-            "optimizely.bucketer.Bucketer.find_bucket", return_value=None
-        ), self.mock_decision_logger as mock_decision_service_logging_1:
-            variation_received, _ = self.decision_service.get_experiment_in_group(
-                self.project_config, group, "test_user"
-            )
-            self.assertIsNone(
-                variation_received
-            )
-
-        mock_decision_service_logging_1.info.assert_called_once_with(
-            'User with bucketing ID "test_user" is not in any experiments of group 19228.'
+            self.project_config, self.project_config.get_experiment_from_id("32222"), "test_user", None, False
         )
