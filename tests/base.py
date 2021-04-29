@@ -204,12 +204,10 @@ class BaseTest(unittest.TestCase):
                     'id': '111134',
                     'forcedVariations': {},
                     'trafficAllocation': [
-                        {
-                        'entityId': '222239', 'endOfRange': 2500,
-                        'entityId': '', 'endOfRange': 5000,
-                        'entityId': '', 'endOfRange': 7500,
-                        'entityId': '', 'endOfRange': 10000
-                        }
+                        {'entityId': '222239', 'endOfRange': 2500}
+                        {'entityId': '', 'endOfRange': 5000},
+                        {'entityId': '', 'endOfRange': 7500},
+                        {'entityId': '', 'endOfRange': 10000}
                     ],
                     'variations': [
                         {
@@ -227,12 +225,10 @@ class BaseTest(unittest.TestCase):
                     'id': '111135',
                     'forcedVariations': {},
                     'trafficAllocation': [
-                        {
-                        'entityId': '', 'endOfRange': 2500,
-                        'entityId': '222240', 'endOfRange': 5000,
-                        'entityId': '', 'endOfRange': 7500,
-                        'entityId': '', 'endOfRange': 10000
-                        }
+                        {'entityId': '', 'endOfRange': 2500},
+                        {'entityId': '222240', 'endOfRange': 5000},
+                        {'entityId': '', 'endOfRange': 7500},
+                        {'entityId': '', 'endOfRange': 10000}
                     ],
                     'variations': [
                         {
@@ -250,12 +246,10 @@ class BaseTest(unittest.TestCase):
                     'id': '111136',
                     'forcedVariations': {},
                     'trafficAllocation': [
-                        {
-                        'entityId': '', 'endOfRange': 2500,
-                        'entityId': '', 'endOfRange': 5000,
-                        'entityId': '222241', 'endOfRange': 7500,
-                        'entityId': '', 'endOfRange': 10000
-                        }
+                        {'entityId': '', 'endOfRange': 2500},
+                        {'entityId': '', 'endOfRange': 5000},
+                        {'entityId': '222241', 'endOfRange': 7500},
+                        {'entityId': '', 'endOfRange': 10000}
                     ],
                     'variations': [
                         {
@@ -392,7 +386,8 @@ class BaseTest(unittest.TestCase):
                 },
                 {
                     'name': 'Test attribute users 3',
-                    'conditions': "[\"and\", [\"or\", [\"or\", {\"match\": \"exact\", \"name\": \"experiment_attr\", \"type\": \"custom_attribute\", \"value\": \"group_experiment\"}]]]",
+                    'conditions': "[\"and\", [\"or\", [\"or\", {\"match\": \"exact\", \"name\": \
+                        \"experiment_attr\", \"type\": \"custom_attribute\", \"value\": \"group_experiment\"}]]]",
                     'id': '11160',
                 }
             ],
