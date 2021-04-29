@@ -1040,7 +1040,9 @@ class UserContextTest(base.BaseTest):
                 'test_feature_in_experiment',
                 'test_feature_in_rollout',
                 'test_feature_in_group',
-                'test_feature_in_experiment_and_rollout'
+                'test_feature_in_experiment_and_rollout',
+                'test_feature_in_exclusion_group',
+                'test_feature_in_multiple_groups'
             ],
             options
         )
