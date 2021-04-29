@@ -327,7 +327,7 @@ class BaseTest(unittest.TestCase):
                         },
                         {
                             'id': '42223',
-                            'key': 'group_exp_2',
+                            'key': 'group_2_exp_2',
                             'status': 'Running',
                             "audienceConditions": [
                                 "or",
@@ -345,7 +345,7 @@ class BaseTest(unittest.TestCase):
                         },
                         {
                             'id': '42224',
-                            'key': 'group_exp_2',
+                            'key': 'group_2_exp_3',
                             'status': 'Running',
                             "audienceConditions": [
                                 "or",
