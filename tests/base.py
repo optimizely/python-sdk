@@ -204,7 +204,7 @@ class BaseTest(unittest.TestCase):
                     'id': '111134',
                     'forcedVariations': {},
                     'trafficAllocation': [
-                        {'entityId': '222239', 'endOfRange': 2500}
+                        {'entityId': '222239', 'endOfRange': 2500},
                         {'entityId': '', 'endOfRange': 5000},
                         {'entityId': '', 'endOfRange': 7500},
                         {'entityId': '', 'endOfRange': 10000}
