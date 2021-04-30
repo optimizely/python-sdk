@@ -508,7 +508,7 @@ class BaseTest(unittest.TestCase):
                 },
                 {
                     'id': '91116',
-                    'key': 'test_feature_in_multiple_groups',
+                    'key': 'test_feature_in_multiple_experiments',
                     'experimentIds': ['111134', '111135', '111136'],
                     'rolloutId': '211111',
                     'variables': [],

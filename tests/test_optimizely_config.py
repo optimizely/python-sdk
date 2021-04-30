@@ -589,7 +589,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     'id': '91115',
                     'key': 'test_feature_in_exclusion_group'
                 },
-                'test_feature_in_multiple_groups': {
+                'test_feature_in_multiple_experiments': {
                     'variables_map': {
 
                     },
@@ -638,7 +638,7 @@ class OptimizelyConfigTest(base.BaseTest):
                         }
                     },
                     'id': '91116',
-                    'key': 'test_feature_in_multiple_groups'
+                    'key': 'test_feature_in_multiple_experiments'
                 }
             },
             'revision': '1',
