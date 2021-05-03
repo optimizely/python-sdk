@@ -225,7 +225,6 @@ class BaseTest(unittest.TestCase):
                     'id': '111135',
                     'forcedVariations': {},
                     'trafficAllocation': [
-                        {'entityId': '', 'endOfRange': 2500},
                         {'entityId': '222240', 'endOfRange': 5000},
                         {'entityId': '', 'endOfRange': 7500},
                         {'entityId': '', 'endOfRange': 10000}
@@ -246,8 +245,6 @@ class BaseTest(unittest.TestCase):
                     'id': '111136',
                     'forcedVariations': {},
                     'trafficAllocation': [
-                        {'entityId': '', 'endOfRange': 2500},
-                        {'entityId': '', 'endOfRange': 5000},
                         {'entityId': '222241', 'endOfRange': 7500},
                         {'entityId': '', 'endOfRange': 10000}
                     ],
