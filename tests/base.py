@@ -200,7 +200,11 @@ class BaseTest(unittest.TestCase):
                     'key': 'test_experiment3',
                     'status': 'Running',
                     'layerId': '6',
-                    'audienceIds': [],
+                    "audienceConditions": [
+                        "or",
+                        "11160"
+                    ],
+                    'audienceIds': ['11160'],
                     'id': '111134',
                     'forcedVariations': {},
                     'trafficAllocation': [
@@ -221,7 +225,11 @@ class BaseTest(unittest.TestCase):
                     'key': 'test_experiment4',
                     'status': 'Running',
                     'layerId': '7',
-                    'audienceIds': [],
+                    "audienceConditions": [
+                        "or",
+                        "11160"
+                    ],
+                    'audienceIds': ['11160'],
                     'id': '111135',
                     'forcedVariations': {},
                     'trafficAllocation': [
@@ -241,7 +249,11 @@ class BaseTest(unittest.TestCase):
                     'key': 'test_experiment5',
                     'status': 'Running',
                     'layerId': '8',
-                    'audienceIds': [],
+                    "audienceConditions": [
+                        "or",
+                        "11160"
+                    ],
+                    'audienceIds': ['11160'],
                     'id': '111136',
                     'forcedVariations': {},
                     'trafficAllocation': [
