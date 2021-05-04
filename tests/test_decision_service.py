@@ -1320,9 +1320,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
             "group_exp_1", "28901"
         )
         with mock.patch(
-            "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=(self.project_config.get_experiment_from_key("group_exp_1"), []),
-        ) as mock_get_experiment_in_group, mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
             return_value=(expected_variation, []),
         ) as mock_decision:
@@ -1338,9 +1335,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 variation_received,
             )
 
-        mock_get_experiment_in_group.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), 'test_user')
-
         mock_decision.assert_called_once_with(
             self.project_config,
             self.project_config.get_experiment_from_key("group_exp_1"),
@@ -1348,31 +1342,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
             None,
             False
         )
-
-    def test_get_variation_for_feature__returns_none_for_user_not_in_group(self):
-        """ Test that get_variation_for_feature returns None for
-    user not in group and the feature is not part of a rollout. """
-
-        feature = self.project_config.get_feature_from_key("test_feature_in_group")
-
-        with mock.patch(
-            "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=[None, []],
-        ) as mock_get_experiment_in_group, mock.patch(
-            "optimizely.decision_service.DecisionService.get_variation"
-        ) as mock_decision:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, "test_user"
-            )
-            self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                variation_received,
-            )
-
-        mock_get_experiment_in_group.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), "test_user")
-
-        self.assertFalse(mock_decision.called)
 
     def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
         """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
@@ -1399,24 +1368,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
             False
         )
 
-    def test_get_variation_for_feature__returns_none_for_invalid_group_id(self):
-        """ Test that get_variation_for_feature returns None for unknown group ID. """
-
-        feature = self.project_config.get_feature_from_key("test_feature_in_group")
-        feature.groupId = "aabbccdd"
-
-        with self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, "test_user"
-            )
-            self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
-                variation_received,
-            )
-        mock_decision_service_logging.error.assert_called_once_with(
-            enums.Errors.INVALID_GROUP_ID.format("_get_variation_for_feature")
-        )
-
     def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(
         self,
     ):
@@ -1424,10 +1375,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     not targeting a feature, then None is returned. """
 
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
-
         with mock.patch(
-            "optimizely.decision_service.DecisionService.get_experiment_in_group",
-            return_value=[self.project_config.get_experiment_from_key("group_exp_2"), []],
+            "optimizely.decision_service.DecisionService.get_variation",
+            return_value=[None, []],
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, "test_user"
@@ -1438,43 +1388,301 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_group("19228"), "test_user"
+            self.project_config, self.project_config.get_experiment_from_id("32222"), "test_user", None, False
         )
 
-    def test_get_experiment_in_group(self):
-        """ Test that get_experiment_in_group returns the bucketed experiment for the user. """
+    def test_get_variation_for_feature__returns_variation_for_feature_in_mutex_group_bucket_less_than_2500(
+        self,
+    ):
+        """ Test that if a user is in the mutex group and the user bucket value should be less than 2500."""
 
-        group = self.project_config.get_group("19228")
-        experiment = self.project_config.get_experiment_from_id("32222")
+        feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
+        expected_experiment = self.project_config.get_experiment_from_key("group_2_exp_1")
+        expected_variation = self.project_config.get_variation_from_id(
+            "group_2_exp_1", "38901"
+        )
+        user_attr = {"experiment_attr": "group_experiment"}
         with mock.patch(
-            "optimizely.bucketer.Bucketer.find_bucket", return_value="32222"
-        ), self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_experiment_in_group(
-                self.project_config, group, "test_user"
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=2400) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
             )
+
             self.assertEqual(
-                experiment,
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                ),
                 variation_received,
             )
 
-        mock_decision_service_logging.info.assert_called_once_with(
-            'User with bucketing ID "test_user" is in experiment group_exp_1 of group 19228.'
+        mock_config_logging.debug.assert_called_with('Assigned bucket 2400 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user42222')
+
+    def test_get_variation_for_feature__returns_variation_for_feature_in_mutex_group_bucket_range_2500_5000(
+        self,
+    ):
+        """ Test that if a user is in the mutex group and the user bucket value should be equal to 2500
+        or less than 5000."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
+        expected_experiment = self.project_config.get_experiment_from_key("group_2_exp_2")
+        expected_variation = self.project_config.get_variation_from_id(
+            "group_2_exp_2", "38905"
         )
-
-    def test_get_experiment_in_group__returns_none_if_user_not_in_group(self):
-        """ Test that get_experiment_in_group returns None if the user is not bucketed into the group. """
-
-        group = self.project_config.get_group("19228")
+        user_attr = {"experiment_attr": "group_experiment"}
         with mock.patch(
-            "optimizely.bucketer.Bucketer.find_bucket", return_value=None
-        ), self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_experiment_in_group(
-                self.project_config, group, "test_user"
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4000) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
             )
-            self.assertIsNone(
-                variation_received
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                ),
+                variation_received,
+            )
+        mock_config_logging.debug.assert_called_with('Assigned bucket 4000 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user42223')
+
+    def test_get_variation_for_feature__returns_variation_for_feature_in_mutex_group_bucket_range_5000_7500(
+        self,
+    ):
+        """ Test that if a user is in the mutex group and the user bucket value should be equal to 5000
+        or less than 7500."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
+        expected_experiment = self.project_config.get_experiment_from_key("group_2_exp_3")
+        expected_variation = self.project_config.get_variation_from_id(
+            "group_2_exp_3", "38906"
+        )
+        user_attr = {"experiment_attr": "group_experiment"}
+
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=6500) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                ),
+                variation_received,
+            )
+        mock_config_logging.debug.assert_called_with('Assigned bucket 6500 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user42224')
+
+    def test_get_variation_for_feature__returns_variation_for_rollout_in_mutex_group_bucket_greater_than_7500(
+        self,
+    ):
+        """ Test that if a user is in the mutex group and the user bucket value should be greater than  7500."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
+        user_attr = {"experiment_attr": "group_experiment"}
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=8000) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    None,
+                    None,
+                    enums.DecisionSources.ROLLOUT,
+                ),
+                variation_received,
             )
 
-        mock_decision_service_logging.info.assert_called_once_with(
-            'User with bucketing ID "test_user" is not in any experiments of group 19228.'
+        mock_generate_bucket_value.assert_called_with('test_user211147')
+        mock_config_logging.debug.assert_called_with('Assigned bucket 8000 to user with bucketing ID "test_user".')
+
+    def test_get_variation_for_feature__returns_variation_for_feature_in_experiment_bucket_less_than_2500(
+        self,
+    ):
+        """ Test that if a user is in the non-mutex group and the user bucket value should be less than 2500."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
+        expected_experiment = self.project_config.get_experiment_from_key("test_experiment3")
+        expected_variation = self.project_config.get_variation_from_id(
+            "test_experiment3", "222239"
         )
+        user_attr = {"experiment_attr": "group_experiment"}
+
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=2400) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                ),
+                variation_received,
+            )
+        mock_config_logging.debug.assert_called_with('Assigned bucket 2400 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user111134')
+
+    def test_get_variation_for_feature__returns_variation_for_feature_in_experiment_bucket_range_2500_5000(
+        self,
+    ):
+        """ Test that if a user is in the non-mutex group and the user bucket value should be equal to 2500
+        or less than 5000."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
+        expected_experiment = self.project_config.get_experiment_from_key("test_experiment4")
+        expected_variation = self.project_config.get_variation_from_id(
+            "test_experiment4", "222240"
+        )
+        user_attr = {"experiment_attr": "group_experiment"}
+
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4000) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                ),
+                variation_received,
+            )
+        mock_config_logging.debug.assert_called_with('Assigned bucket 4000 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user111135')
+
+    def test_get_variation_for_feature__returns_variation_for_feature_in_experiment_bucket_range_5000_7500(
+        self,
+    ):
+        """ Test that if a user is in the non-mutex group and the user bucket value should be equal to 5000
+        or less than 7500."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
+        expected_experiment = self.project_config.get_experiment_from_key("test_experiment5")
+        expected_variation = self.project_config.get_variation_from_id(
+            "test_experiment5", "222241"
+        )
+        user_attr = {"experiment_attr": "group_experiment"}
+
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=6500) as mock_generate_bucket_value,\
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                ),
+                variation_received,
+            )
+        mock_config_logging.debug.assert_called_with('Assigned bucket 6500 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user111136')
+
+    def test_get_variation_for_feature__returns_variation_for_rollout_in_experiment_bucket_greater_than_7500(
+            self,
+    ):
+        """ Test that if a user is in the non-mutex group and the user bucket value should be greater than  7500."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
+        user_attr = {"experiment_attr": "group_experiment"}
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=8000) as mock_generate_bucket_value, \
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    None,
+                    None,
+                    enums.DecisionSources.ROLLOUT,
+                ),
+                variation_received,
+            )
+
+        mock_generate_bucket_value.assert_called_with('test_user211147')
+        mock_config_logging.debug.assert_called_with('Assigned bucket 8000 to user with bucketing ID "test_user".')
+
+    def test_get_variation_for_feature__returns_variation_for_rollout_in_mutex_group_audience_mismatch(
+            self,
+    ):
+        """ Test that if a user is in the mutex group and the user bucket value should be less than 2500 and
+        missing target by audience."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
+        expected_experiment = self.project_config.get_experiment_from_id("211147")
+        expected_variation = self.project_config.get_variation_from_id(
+            "211147", "211149"
+        )
+        user_attr = {"experiment_attr": "group_experiment_invalid"}
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=2400) as mock_generate_bucket_value, \
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.ROLLOUT,
+                ),
+                variation_received,
+            )
+
+        mock_config_logging.debug.assert_called_with('Assigned bucket 2400 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user211147')
+
+    def test_get_variation_for_feature_returns_rollout_in_experiment_bucket_range_2500_5000_audience_mismatch(
+            self,
+    ):
+        """ Test that if a user is in the non-mutex group and the user bucket value should be equal to 2500
+        or less than 5000 missing target by audience."""
+
+        feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
+        expected_experiment = self.project_config.get_experiment_from_id("211147")
+        expected_variation = self.project_config.get_variation_from_id(
+            "211147", "211149"
+        )
+        user_attr = {"experiment_attr": "group_experiment_invalid"}
+
+        with mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4000) as mock_generate_bucket_value, \
+                mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+            variation_received, _ = self.decision_service.get_variation_for_feature(
+                self.project_config, feature, "test_user", user_attr
+            )
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.ROLLOUT,
+                ),
+                variation_received,
+            )
+        mock_config_logging.debug.assert_called_with('Assigned bucket 4000 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with('test_user211147')
