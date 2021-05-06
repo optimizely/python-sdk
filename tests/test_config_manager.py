@@ -292,32 +292,25 @@ class PollingConfigManagerTest(base.BaseTest):
             test_url, config_manager.PollingConfigManager.get_datafile_url(test_sdk_key, test_url, test_url_template),
         )
 
-    def test_set_update_interval(self, _):
-        """ Test set_update_interval with different inputs. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
-            project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+    def test_polling_interval(self, _):
+        """ Test polling_interval with different inputs. """
 
         # Assert that if invalid update_interval is set, then exception is raised.
         with self.assertRaisesRegexp(
             optimizely_exceptions.InvalidInputException, 'Invalid update_interval "invalid interval" provided.',
         ):
-            project_config_manager.set_update_interval('invalid interval')
+            config_manager.PollingConfigManager.polling_interval('invalid interval')
 
         # Assert that update_interval cannot be set to less than allowed minimum and instead is set to default value.
-        project_config_manager.set_update_interval(-4.2)
         self.assertEqual(
-            enums.ConfigManager.DEFAULT_UPDATE_INTERVAL, project_config_manager.update_interval,
+            enums.ConfigManager.DEFAULT_UPDATE_INTERVAL, config_manager.PollingConfigManager.polling_interval(-4.2),
         )
-
-        # Assert that if no update_interval is provided, it is set to default value.
-        project_config_manager.set_update_interval(None)
+        # # Assert that if no update_interval is provided, it is set to default value.
         self.assertEqual(
-            enums.ConfigManager.DEFAULT_UPDATE_INTERVAL, project_config_manager.update_interval,
+            enums.ConfigManager.DEFAULT_UPDATE_INTERVAL, config_manager.PollingConfigManager.polling_interval(None),
         )
-
-        # Assert that if valid update_interval is provided, it is set to that value.
-        project_config_manager.set_update_interval(42)
-        self.assertEqual(42, project_config_manager.update_interval)
+        # # Assert that if valid update_interval is provided, it is set to that value.
+        self.assertEqual(42, config_manager.PollingConfigManager.polling_interval(42))
 
     def test_set_blocking_timeout(self, _):
         """ Test set_blocking_timeout with different inputs. """
