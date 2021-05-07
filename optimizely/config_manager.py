@@ -164,6 +164,7 @@ class PollingConfigManager(StaticConfigManager):
         error_handler=None,
         notification_center=None,
         skip_json_validation=False,
+        request_timeout=None,
     ):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
@@ -198,6 +199,7 @@ class PollingConfigManager(StaticConfigManager):
         )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
+        self.set_request_timeout(request_timeout)
         self.last_modified = None
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.setDaemon(True)
@@ -309,6 +311,32 @@ class PollingConfigManager(StaticConfigManager):
 
         self.blocking_timeout = blocking_timeout
 
+    def set_request_timeout(self, request_timeout):
+        """ Helper method to stop waiting for a response after a given number of seconds with the timeout parameter
+
+        Args:
+            request_timeout: Time in seconds to block the config call.
+        """
+        if request_timeout is None:
+            request_timeout = enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT
+            self.logger.debug('Setting config request timeout to default value {}.'.format(request_timeout))
+
+        if not isinstance(request_timeout, (numbers.Integral, float)):
+            raise optimizely_exceptions.InvalidInputException(
+                'Invalid request timeout "{}" provided.'.format(request_timeout)
+            )
+
+        # If request timeout is less than 0 then set it to default request timeout.
+        if request_timeout < 0:
+            self.logger.debug(
+                'request timeout value {} too small. Defaulting to {}'.format(
+                    request_timeout, enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT
+                )
+            )
+            request_timeout = enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT
+
+        self.request_timeout = request_timeout
+
     def set_last_modified(self, response_headers):
         """ Looks up and sets last modified time based on Last-Modified header in the response.
 
@@ -346,7 +374,7 @@ class PollingConfigManager(StaticConfigManager):
 
         try:
             response = requests.get(
-                self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+                self.datafile_url, headers=request_headers, timeout=self.request_timeout,
             )
         except requests_exceptions.RequestException as err:
             self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
@@ -418,7 +446,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
         try:
             response = requests.get(
-                self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+                self.datafile_url, headers=request_headers, timeout=self.request_timeout,
             )
         except requests_exceptions.RequestException as err:
             self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))

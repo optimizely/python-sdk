@@ -350,6 +350,37 @@ class PollingConfigManagerTest(base.BaseTest):
         project_config_manager.set_blocking_timeout(5)
         self.assertEqual(5, project_config_manager.blocking_timeout)
 
+    def test_set_request_timeout(self, _):
+        """ Test set_request_timeout with different inputs. """
+        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+            project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
+
+        # Assert that if invalid request_timeout is set, then exception is raised.
+        with self.assertRaisesRegexp(
+            optimizely_exceptions.InvalidInputException, 'Invalid request timeout "invalid timeout" provided.',
+        ):
+            project_config_manager.set_request_timeout('invalid timeout')
+
+        # Assert that request_timeout cannot be set to less than allowed minimum and instead is set to default value.
+        project_config_manager.set_request_timeout(-4)
+        self.assertEqual(
+            enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT, project_config_manager.request_timeout,
+        )
+
+        # Assert that request_timeout can be set to 0.
+        project_config_manager.set_request_timeout(0)
+        self.assertIs(0, project_config_manager.request_timeout)
+
+        # Assert that if no request_timeout is provided, it is set to default value.
+        project_config_manager.set_request_timeout(None)
+        self.assertEqual(
+            enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT, project_config_manager.request_timeout,
+        )
+
+        # Assert that if valid request_timeout is provided, it is set to that value.
+        project_config_manager.set_request_timeout(5)
+        self.assertEqual(5, project_config_manager.request_timeout)
+
     def test_set_last_modified(self, _):
         """ Test that set_last_modified sets last_modified field based on header. """
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
@@ -388,7 +419,7 @@ class PollingConfigManagerTest(base.BaseTest):
         mock_requests.assert_called_once_with(
             expected_datafile_url,
             headers={'If-Modified-Since': test_headers['Last-Modified']},
-            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            timeout=enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT,
         )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
@@ -424,7 +455,7 @@ class PollingConfigManagerTest(base.BaseTest):
         mock_requests.assert_called_once_with(
             expected_datafile_url,
             headers={'If-Modified-Since': test_headers['Last-Modified']},
-            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            timeout=enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT,
         )
         mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
             expected_datafile_url
@@ -463,7 +494,7 @@ class PollingConfigManagerTest(base.BaseTest):
         mock_requests.assert_called_once_with(
             expected_datafile_url,
             headers={'If-Modified-Since': test_headers['Last-Modified']},
-            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            timeout=enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT,
         )
         mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
             expected_datafile_url
@@ -527,7 +558,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
             expected_datafile_url,
             headers={'Authorization': 'Bearer {datafile_access_token}'.format(
                 datafile_access_token=datafile_access_token)},
-            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            timeout=enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT,
         )
 
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
@@ -558,7 +589,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
             expected_datafile_url,
             headers={'Authorization': 'Bearer {datafile_access_token}'.format(
                 datafile_access_token=datafile_access_token)},
-            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            timeout=enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT,
         )
 
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
@@ -577,7 +608,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
                 'Authorization': 'Bearer {datafile_access_token}'.format(
                     datafile_access_token=datafile_access_token),
             },
-            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+            timeout=enums.ConfigManager.DEFAULT_REQUEST_TIMEOUT,
         )
         mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
             expected_datafile_url
