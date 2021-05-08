@@ -184,6 +184,8 @@ class PollingConfigManager(StaticConfigManager):
             skip_json_validation: Optional boolean param which allows skipping JSON schema
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
+            request_timeout: Optional Time in seconds to block the fetch_datafile call
+                             until datafile object retrieved.
 
         """
         self._config_ready_event = threading.Event()
