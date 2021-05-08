@@ -172,9 +172,9 @@ class PollingConfigManager(StaticConfigManager):
             sdk_key: Optional string uniquely identifying the datafile.
             datafile: Optional JSON string representing the project.
             update_interval: Optional floating point number representing time interval in seconds
-                             at which to request datafile and set ProjectConfig.
+                             at which to request datafile and set ProjectConfig. (Default is 300 secs)
             blocking_timeout: Optional Time in seconds to block the get_config call until config object
-                              has been initialized.
+                              has been initialized. (Default is 10 secs)
             url: Optional string representing URL from where to fetch the datafile. If set it supersedes the sdk_key.
             url_template: Optional string template which in conjunction with sdk_key
                           determines URL from where to fetch the datafile.
@@ -185,7 +185,7 @@ class PollingConfigManager(StaticConfigManager):
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
             request_timeout: Optional Time in seconds to block the fetch_datafile call
-                             until datafile object retrieved.
+                             until datafile object retrieved. (Default is 10 secs)
 
         """
         self._config_ready_event = threading.Event()
