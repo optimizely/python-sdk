@@ -138,12 +138,13 @@ class OptimizelyFactory(object):
                datafile: Optional JSON string datafile.
                event_dispatcher: Optional EventDispatcherInterface Provides a dispatch_event method which if given a URL
                                 and params sends a request to it.
-               logger: Optional LoggerInterface Provides a log method to log messages. By default nothing would be logged.
+               logger: Optional LoggerInterface Provides a log method to log messages. 
+                       By default nothing would be logged.
                error_handler: Optional ErrorHandlerInterface which provides a handle_error method to handle exceptions.
-                                 By default all exceptions will be suppressed.
-
+                              By default all exceptions will be suppressed.
                skip_json_validation: Optional Boolean param to skip JSON schema validation of the provided datafile.
-               user_profile_service: Optional UserProfileServiceInterface Provides methods to store and retrieve user profiles.
+               user_profile_service: Optional UserProfileServiceInterface Provides methods to store and retrieve
+                                     user profiles.
                config_manager: Optional ConfigManagerInterface Responds to 'config' method.
                notification_center: Optional Instance of NotificationCenter.
         """
