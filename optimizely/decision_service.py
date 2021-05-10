@@ -413,39 +413,6 @@ class DecisionService(object):
 
         return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
-    def get_experiment_in_group(self, project_config, group, bucketing_id):
-        """ Determine which experiment in the group the user is bucketed into.
-
-    Args:
-      project_config: Instance of ProjectConfig.
-      group: The group to bucket the user into.
-      bucketing_id: ID to be used for bucketing the user.
-
-    Returns:
-      Experiment if the user is bucketed into an experiment in the specified group. None otherwise
-      and array of log messages representing decision making.
-    """
-        decide_reasons = []
-        experiment_id = self.bucketer.find_bucket(
-            project_config, bucketing_id, group.id, group.trafficAllocation)
-        if experiment_id:
-            experiment = project_config.get_experiment_from_id(experiment_id)
-            if experiment:
-                message = 'User with bucketing ID "%s" is in experiment %s of group %s.' % \
-                    (bucketing_id, experiment.key, group.id)
-                self.logger.info(
-                    message
-                )
-                decide_reasons.append(message)
-                return experiment, decide_reasons
-        message = 'User with bucketing ID "%s" is not in any experiments of group %s.' % (bucketing_id, group.id)
-        self.logger.info(
-            message
-        )
-        decide_reasons.append(message)
-
-        return None, decide_reasons
-
     def get_variation_for_feature(self, project_config, feature, user_id, attributes=None, ignore_user_profile=False):
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
@@ -462,31 +429,18 @@ class DecisionService(object):
         decide_reasons = []
         bucketing_id, reasons = self._get_bucketing_id(user_id, attributes)
         decide_reasons += reasons
-        # First check if the feature is in a mutex group
-        if feature.groupId:
-            group = project_config.get_group(feature.groupId)
-            if group:
-                experiment, reasons = self.get_experiment_in_group(project_config, group, bucketing_id)
-                decide_reasons += reasons
-                if experiment and experiment.id in feature.experimentIds:
+
+        # Check if the feature flag is under an experiment and the the user is bucketed into one of these experiments
+        if feature.experimentIds:
+            # Evaluate each experiment ID and return the first bucketed experiment variation
+            for experiment in feature.experimentIds:
+                experiment = project_config.get_experiment_from_id(experiment)
+                if experiment:
                     variation, variation_reasons = self.get_variation(
                         project_config, experiment, user_id, attributes, ignore_user_profile)
                     decide_reasons += variation_reasons
                     if variation:
                         return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
-            else:
-                self.logger.error(enums.Errors.INVALID_GROUP_ID.format('_get_variation_for_feature'))
-
-        # Next check if the feature is being experimented on
-        elif feature.experimentIds:
-            # If an experiment is not in a group, then the feature can only be associated with one experiment
-            experiment = project_config.get_experiment_from_id(feature.experimentIds[0])
-            if experiment:
-                variation, variation_reasons = self.get_variation(
-                    project_config, experiment, user_id, attributes, ignore_user_profile)
-                decide_reasons += variation_reasons
-                if variation:
-                    return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
 
         # Next check if user is part of a rollout
         if feature.rolloutId:
