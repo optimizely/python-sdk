@@ -196,7 +196,7 @@ class PollingConfigManager(StaticConfigManager):
         self.datafile_url = self.get_datafile_url(
             sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
-        self.update_interval = self.polling_interval(update_interval)
+        self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
         self.last_modified = None
         self._polling_thread = threading.Thread(target=self._run)
@@ -257,19 +257,15 @@ class PollingConfigManager(StaticConfigManager):
         self._config_ready_event.wait(self.blocking_timeout)
         return self._config
 
-    @staticmethod
-    def polling_interval(update_interval):
+    def set_update_interval(self, update_interval):
         """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
 
         Args:
             update_interval: Time in seconds after which to update datafile.
         """
-
-        logger = optimizely_logger.adapt_logger(optimizely_logger.NoOpLogger())
-
         if update_interval is None:
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
-            logger.debug('Setting config update interval to default value {}.'.format(update_interval))
+            self.logger.debug('Setting config update interval to default value {}.'.format(update_interval))
 
         if not isinstance(update_interval, (int, float)):
             raise optimizely_exceptions.InvalidInputException(
@@ -278,13 +274,14 @@ class PollingConfigManager(StaticConfigManager):
 
         # If polling interval is less than or equal to 0 then set it to default update interval.
         if update_interval <= 0:
-            logger.debug(
+            self.logger.debug(
                 'update_interval value {} too small. Defaulting to {}'.format(
                     update_interval, enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
                 )
             )
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
-        return update_interval
+
+        self.update_interval = update_interval
 
     def set_blocking_timeout(self, blocking_timeout):
         """ Helper method to set time in seconds to block the config call until config has been initialized.
