@@ -1,4 +1,4 @@
-# Copyright 2016-2021, Optimizely
+# Copyright 2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -81,13 +81,21 @@ class OptimizelyFactory(object):
         return OptimizelyFactory.max_event_flush_interval
 
     @staticmethod
-    def set_polling_interval(polling_interval_local):
-        OptimizelyFactory.polling_interval = polling_interval_local
+    def set_polling_interval(polling_interval):
+        """ Method to set frequency at which datafile has to be polled.
+            Args:
+              polling_interval: Time in seconds after which to update datafile.
+        """
+        OptimizelyFactory.polling_interval = polling_interval
         return OptimizelyFactory.polling_interval
 
     @staticmethod
-    def set_blocking_timeout(blocking_timeout_local):
-        OptimizelyFactory.blocking_timeout = blocking_timeout_local
+    def set_blocking_timeout(blocking_timeout):
+        """ Method to set time in seconds to block the config call until config has been initialized.
+            Args:
+              blocking_timeout: Time in seconds to block the config call.
+       """
+        OptimizelyFactory.blocking_timeout = blocking_timeout
         return OptimizelyFactory.blocking_timeout
 
     @staticmethod
