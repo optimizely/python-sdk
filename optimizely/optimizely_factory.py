@@ -32,16 +32,11 @@ class OptimizelyFactory(object):
     def set_batch_size(batch_size, logger=optimizely_logger.NoOpLogger().logger):
         """ Convenience method for setting the maximum number of events contained within a batch.
         Args:
-          batch_size: Sets size of EventQueue.
-          logger: Optional LoggerInterface Provides a log method to log messages.
+          batch_size: Sets size of event_queue.
+          logger: Optional logger interface provides a log method to log messages.
          """
 
-        if isinstance(batch_size, bool):
-            logger.error('Batch size is invalid, setting to default batch size # {0}'.format(
-                BatchEventProcessor._DEFAULT_BATCH_SIZE))
-            return
-
-        if not isinstance(batch_size, int):
+        if not isinstance(batch_size, int) or isinstance(batch_size, bool):
             logger.error('Batch size is invalid, setting to default batch size # {0}'.format(
                 BatchEventProcessor._DEFAULT_BATCH_SIZE))
             return
@@ -59,15 +54,10 @@ class OptimizelyFactory(object):
         """ Convenience method for setting the maximum time interval in milliseconds between event dispatches.
         Args:
           flush_interval: Time interval between event dispatches.
-          logger: Optional LoggerInterface Provides a log method to log messages.
+          logger: Optional logging interface provides a log method to log messages.
          """
 
-        if isinstance(flush_interval, bool):
-            logger.error('Flush interval is invalid, setting to default flush interval # {0}'.format(
-                BatchEventProcessor._DEFAULT_FLUSH_INTERVAL))
-            return
-
-        if not isinstance(flush_interval, int):
+        if not isinstance(flush_interval, int) or isinstance(flush_interval, bool):
             logger.error('Flush interval is invalid, setting to default flush interval # {0}'.format(
                 BatchEventProcessor._DEFAULT_FLUSH_INTERVAL))
             return
@@ -102,7 +92,7 @@ class OptimizelyFactory(object):
     def default_instance(sdk_key, datafile=None):
         """ Returns a new optimizely instance..
           Args:
-            sdk_key:  Required String uniquely identifying the fallback datafile corresponding to project.
+            sdk_key:  Required string uniquely identifying the fallback datafile corresponding to project.
             datafile: Optional JSON string datafile.
         """
         error_handler = NoOpErrorHandler()
@@ -121,15 +111,24 @@ class OptimizelyFactory(object):
 
         config_manager = PollingConfigManager(**config_manager_options)
 
+        event_processor = BatchEventProcessor(
+            event_dispatcher=EventDispatcher(),
+            logger=logger,
+            batch_size=OptimizelyFactory.max_event_batch_size,
+            flush_interval=OptimizelyFactory.max_event_flush_interval,
+            notification_center=notification_center,
+        )
+
         optimizely = Optimizely(
-            datafile, None, logger, error_handler, None, None, sdk_key, config_manager, notification_center
+            datafile, None, logger, error_handler, None, None, sdk_key, config_manager, notification_center,
+            event_processor
         )
         return optimizely
 
     @staticmethod
     def default_instance_with_config_manager(config_manager):
         return Optimizely(
-            None, None, None, None, None, None, None, config_manager
+            config_manager=config_manager
         )
 
     @staticmethod
@@ -139,21 +138,21 @@ class OptimizelyFactory(object):
 
         """ Returns a new optimizely instance.
              if max_event_batch_size and max_event_flush_interval are None then default batch_size and flush_interval
-             will be used to setup batchEventProcessor.
+             will be used to setup BatchEventProcessor.
 
              Args:
-               sdk_key: Required String uniquely identifying the fallback datafile corresponding to project.
+               sdk_key: Required string uniquely identifying the fallback datafile corresponding to project.
                datafile: Optional JSON string datafile.
-               event_dispatcher: Optional EventDispatcherInterface Provides a dispatch_event method which if given a URL
-                                and params sends a request to it.
-               logger: Optional LoggerInterface Provides a log method to log messages.
+               event_dispatcher: Optional EventDispatcher interface provides a dispatch_event method which if given a
+                                 URL and params sends a request to it.
+               logger: Optional Logger interface provides a log method to log messages.
                        By default nothing would be logged.
-               error_handler: Optional ErrorHandlerInterface which provides a handle_error method to handle exceptions.
+               error_handler: Optional ErrorHandler interface which provides a handle_error method to handle exceptions.
                               By default all exceptions will be suppressed.
-               skip_json_validation: Optional Boolean param to skip JSON schema validation of the provided datafile.
-               user_profile_service: Optional UserProfileServiceInterface Provides methods to store and retrieve
+               skip_json_validation: Optional boolean param to skip JSON schema validation of the provided datafile.
+               user_profile_service: Optional UserProfileService interface provides methods to store and retrieve
                                      user profiles.
-               config_manager: Optional ConfigManagerInterface Responds to 'config' method.
+               config_manager: Optional ConfigManager interface responds to 'config' method.
                notification_center: Optional Instance of NotificationCenter.
         """
 
