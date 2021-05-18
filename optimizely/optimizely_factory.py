@@ -29,43 +29,21 @@ class OptimizelyFactory(object):
     blocking_timeout = None
 
     @staticmethod
-    def set_batch_size(batch_size, logger=optimizely_logger.NoOpLogger().logger):
+    def set_batch_size(batch_size):
         """ Convenience method for setting the maximum number of events contained within a batch.
         Args:
           batch_size: Sets size of event_queue.
-          logger: Optional logger interface provides a log method to log messages.
          """
-
-        if not isinstance(batch_size, int) or isinstance(batch_size, bool):
-            logger.error('Batch size is invalid, setting to default batch size # {0}'.format(
-                BatchEventProcessor._DEFAULT_BATCH_SIZE))
-            return
-
-        if not batch_size > 0:
-            logger.error('Batch size is negative, setting to default batch size # {0}'.format(
-                BatchEventProcessor._DEFAULT_BATCH_SIZE))
-            return
 
         OptimizelyFactory.max_event_batch_size = batch_size
         return OptimizelyFactory.max_event_batch_size
 
     @staticmethod
-    def set_flush_interval(flush_interval, logger=optimizely_logger.NoOpLogger().logger):
+    def set_flush_interval(flush_interval):
         """ Convenience method for setting the maximum time interval in milliseconds between event dispatches.
         Args:
           flush_interval: Time interval between event dispatches.
-          logger: Optional logging interface provides a log method to log messages.
          """
-
-        if not isinstance(flush_interval, int) or isinstance(flush_interval, bool):
-            logger.error('Flush interval is invalid, setting to default flush interval # {0}'.format(
-                BatchEventProcessor._DEFAULT_FLUSH_INTERVAL))
-            return
-
-        if not flush_interval > 0:
-            logger.error('Flush interval is negative, setting to default flush interval # {0}'.format(
-                BatchEventProcessor._DEFAULT_FLUSH_INTERVAL))
-            return
 
         OptimizelyFactory.max_event_flush_interval = flush_interval
         return OptimizelyFactory.max_event_flush_interval
