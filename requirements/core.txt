@@ -1,4 +1,7 @@
 jsonschema==3.2.0
 pyrsistent==0.14.0
 mmh3==2.5.1
-requests[security]>=2.9.1
+requests>=2.25
+pyOpenSSL>=20.0.1           # lates ot greater
+cryptography>=3.4.7      # latest or gerater - >check - we have special import - see readme page. for PyPy, PyPy3. Can we use the latest version for non PyPy?
+idna>=3.1                # latest or gerater
