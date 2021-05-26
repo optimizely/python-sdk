@@ -128,13 +128,6 @@ class ProjectConfig(object):
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
 
-                experiment_in_feature = self.experiment_id_map[exp_id]
-                # Check if any of the experiments are in a group and add the group id for faster bucketing later on
-                if experiment_in_feature.groupId:
-                    feature.groupId = experiment_in_feature.groupId
-                    # Experiments in feature can only belong to one mutex group
-                    break
-
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
         """ Helper method to generate map from key to entity object for given list of dicts.

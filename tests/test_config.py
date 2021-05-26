@@ -501,7 +501,7 @@ class ConfigTest(base.BaseTest):
                 '211111',
                 {'number_of_projects': entities.Variable('131', 'number_of_projects', 'integer', '10')},
             ),
-            'test_feature_in_group': entities.FeatureFlag('91113', 'test_feature_in_group', ['32222'], '', {}, '19228'),
+            'test_feature_in_group': entities.FeatureFlag('91113', 'test_feature_in_group', ['32222'], '', {}),
         }
 
         expected_rollout_id_map = {

@@ -196,6 +196,90 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '32223',
                     'key': 'group_exp_2'
+                },
+                'group_2_exp_1': {
+                    'variations_map': {
+                        'var_1': {
+                            'variables_map': {
+
+                            },
+                            'id': '38901',
+                            'key': 'var_1',
+                            'feature_enabled': None
+                        },
+                    },
+                    'id': '42222',
+                    'key': 'group_2_exp_1'
+                },
+                'group_2_exp_2': {
+                    'variations_map': {
+                        'var_1': {
+                            'variables_map': {
+
+                            },
+                            'id': '38905',
+                            'key': 'var_1',
+                            'feature_enabled': None
+                        },
+                    },
+                    'id': '42223',
+                    'key': 'group_2_exp_2'
+                },
+                'group_2_exp_3': {
+                    'variations_map': {
+                        'var_1': {
+                            'variables_map': {
+
+                            },
+                            'id': '38906',
+                            'key': 'var_1',
+                            'feature_enabled': None
+                        },
+                    },
+                    'id': '42224',
+                    'key': 'group_2_exp_3'
+                },
+                'test_experiment3': {
+                    'variations_map': {
+                        'control': {
+                            'variables_map': {
+
+                            },
+                            'id': '222239',
+                            'key': 'control',
+                            'feature_enabled': None
+                        },
+                    },
+                    'id': '111134',
+                    'key': 'test_experiment3'
+                },
+                'test_experiment4': {
+                    'variations_map': {
+                        'control': {
+                            'variables_map': {
+
+                            },
+                            'id': '222240',
+                            'key': 'control',
+                            'feature_enabled': None
+                        },
+                    },
+                    'id': '111135',
+                    'key': 'test_experiment4'
+                },
+                'test_experiment5': {
+                    'variations_map': {
+                        'control': {
+                            'variables_map': {
+
+                            },
+                            'id': '222241',
+                            'key': 'control',
+                            'feature_enabled': None
+                        },
+                    },
+                    'id': '111136',
+                    'key': 'test_experiment5'
                 }
             },
             'features_map': {
@@ -453,6 +537,108 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '91114',
                     'key': 'test_feature_in_experiment_and_rollout'
+                },
+                'test_feature_in_exclusion_group': {
+                    'variables_map': {
+
+                    },
+                    'experiments_map': {
+                        'group_2_exp_1': {
+                            'variations_map': {
+                                'var_1': {
+                                    'variables_map': {
+
+                                    },
+                                    'id': '38901',
+                                    'key': 'var_1',
+                                    'feature_enabled': None
+                                },
+                            },
+                            'id': '42222',
+                            'key': 'group_2_exp_1'
+                        },
+                        'group_2_exp_2': {
+                            'variations_map': {
+                                'var_1': {
+                                    'variables_map': {
+
+                                    },
+                                    'id': '38905',
+                                    'key': 'var_1',
+                                    'feature_enabled': None
+                                },
+                            },
+                            'id': '42223',
+                            'key': 'group_2_exp_2'
+                        },
+                        'group_2_exp_3': {
+                            'variations_map': {
+                                'var_1': {
+                                    'variables_map': {
+
+                                    },
+                                    'id': '38906',
+                                    'key': 'var_1',
+                                    'feature_enabled': None
+                                },
+                            },
+                            'id': '42224',
+                            'key': 'group_2_exp_3'
+                        }
+                    },
+                    'id': '91115',
+                    'key': 'test_feature_in_exclusion_group'
+                },
+                'test_feature_in_multiple_experiments': {
+                    'variables_map': {
+
+                    },
+                    'experiments_map': {
+                        'test_experiment3': {
+                            'variations_map': {
+                                'control': {
+                                    'variables_map': {
+
+                                    },
+                                    'id': '222239',
+                                    'key': 'control',
+                                    'feature_enabled': None
+                                },
+                            },
+                            'id': '111134',
+                            'key': 'test_experiment3'
+                        },
+                        'test_experiment4': {
+                            'variations_map': {
+                                'control': {
+                                    'variables_map': {
+
+                                    },
+                                    'id': '222240',
+                                    'key': 'control',
+                                    'feature_enabled': None
+                                },
+                            },
+                            'id': '111135',
+                            'key': 'test_experiment4'
+                        },
+                        'test_experiment5': {
+                            'variations_map': {
+                                'control': {
+                                    'variables_map': {
+
+                                    },
+                                    'id': '222241',
+                                    'key': 'control',
+                                    'feature_enabled': None
+                                },
+                            },
+                            'id': '111136',
+                            'key': 'test_experiment5'
+                        }
+                    },
+                    'id': '91116',
+                    'key': 'test_feature_in_multiple_experiments'
                 }
             },
             'revision': '1',
