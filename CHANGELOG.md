@@ -1,6 +1,6 @@
 # Optimizely Python SDK Changelog
 
-## 3.8.1
+## 3.9.0
 May 28th, 2021
 
 ### New Features
