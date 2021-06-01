@@ -1,7 +1,7 @@
 # Optimizely Python SDK Changelog
 
 ## 3.9.0
-May 28th, 2021
+June 1st, 2021
 
 ### New Features
 * Added support for multiple concurrent prioritized experiments per flag. [#322](https://github.com/optimizely/python-sdk/pull/322)
