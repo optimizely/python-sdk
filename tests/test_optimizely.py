@@ -31,6 +31,8 @@ from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
 from . import base
 
+if not hasattr(base.BaseTest, 'assertRaisesRegex'):
+    base.BaseTest.assertRaisesRegex = getattr(base.BaseTest, 'assertRaisesRegexp')
 
 class OptimizelyTest(base.BaseTest):
 
