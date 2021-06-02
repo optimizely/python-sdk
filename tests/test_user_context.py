@@ -759,7 +759,7 @@ class UserContextTest(base.BaseTest):
             'User "test_user" is in variation "control" of experiment test_experiment.'
         ]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide__option__include_reasons__feature_rollout(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -775,7 +775,7 @@ class UserContextTest(base.BaseTest):
             'User "test_user" is in the traffic group of targeting rule 1.'
         ]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide__option__enabled_flags_only(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1135,7 +1135,7 @@ class UserContextTest(base.BaseTest):
             'Bucketed into an empty traffic range. Returning nil.'
         ]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide_reasons__hit_everyone_else_rule(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1156,7 +1156,7 @@ class UserContextTest(base.BaseTest):
             'User "abcde" meets conditions for targeting rule "Everyone Else".'
         ]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide_reasons__hit_rule2__fails_bucketing(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1179,7 +1179,7 @@ class UserContextTest(base.BaseTest):
             'Bucketed into an empty traffic range. Returning nil.'
         ]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide_reasons__hit_user_profile_service(self):
         user_id = 'test_user'
@@ -1215,7 +1215,7 @@ class UserContextTest(base.BaseTest):
         expected_reasons = [('Returning previously activated variation ID "control" of experiment '
                              '"test_experiment" for user "test_user" from user profile.')]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide_reasons__forced_variation(self):
         user_id = 'test_user'
@@ -1232,7 +1232,7 @@ class UserContextTest(base.BaseTest):
         expected_reasons = [('Variation "control" is mapped to experiment '
                              '"test_experiment" and user "test_user" in the forced variation map')]
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
 
     def test_decide_reasons__whitelisted_variation(self):
         user_id = 'user_1'
@@ -1246,4 +1246,4 @@ class UserContextTest(base.BaseTest):
 
         expected_reasons = ['User "user_1" is forced in variation "control".']
 
-        self.assertEquals(expected_reasons, actual.reasons)
+        self.assertEqual(expected_reasons, actual.reasons)
