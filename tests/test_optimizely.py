@@ -4633,7 +4633,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_activate__with_attributes__invalid_attributes(self):
         """ Test that activate raises exception if attributes are in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE_FORMAT,
             self.optimizely.activate,
@@ -4645,7 +4645,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_track__with_attributes__invalid_attributes(self):
         """ Test that track raises exception if attributes are in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE_FORMAT,
             self.optimizely.track,
@@ -4657,7 +4657,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_track__with_event_tag__invalid_event_tag(self):
         """ Test that track raises exception if event_tag is in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidEventTagException,
             enums.Errors.INVALID_EVENT_TAG_FORMAT,
             self.optimizely.track,
@@ -4669,7 +4669,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_get_variation__with_attributes__invalid_attributes(self):
         """ Test that get variation raises exception if attributes are in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE_FORMAT,
             self.optimizely.get_variation,
