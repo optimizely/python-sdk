@@ -32,7 +32,7 @@ class StaticConfigManagerTest(base.BaseTest):
         class InvalidLogger(object):
             pass
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Provided "logger" is in an invalid format.',
         ):
             config_manager.StaticConfigManager(logger=InvalidLogger())
@@ -43,7 +43,7 @@ class StaticConfigManagerTest(base.BaseTest):
         class InvalidErrorHandler(object):
             pass
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Provided "error_handler" is in an invalid format.',
         ):
             config_manager.StaticConfigManager(error_handler=InvalidErrorHandler())
@@ -54,7 +54,7 @@ class StaticConfigManagerTest(base.BaseTest):
         class InvalidNotificationCenter(object):
             pass
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Provided "notification_center" is in an invalid format.',
         ):
             config_manager.StaticConfigManager(notification_center=InvalidNotificationCenter())
@@ -222,7 +222,7 @@ class StaticConfigManagerTest(base.BaseTest):
 class PollingConfigManagerTest(base.BaseTest):
     def test_init__no_sdk_key_no_url__fails(self, _):
         """ Test that initialization fails if there is no sdk_key or url provided. """
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
             'Must provide at least one of sdk_key or url.',
             config_manager.PollingConfigManager,
@@ -232,7 +232,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_get_datafile_url__no_sdk_key_no_url_raises(self, _):
         """ Test that get_datafile_url raises exception if no sdk_key or url is provided. """
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
             'Must provide at least one of sdk_key or url.',
             config_manager.PollingConfigManager.get_datafile_url,
@@ -244,7 +244,7 @@ class PollingConfigManagerTest(base.BaseTest):
     def test_get_datafile_url__invalid_url_template_raises(self, _):
         """ Test that get_datafile_url raises if url_template is invalid. """
         # No url_template provided
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
             'Invalid url_template None provided',
             config_manager.PollingConfigManager.get_datafile_url,
@@ -255,7 +255,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
         # Incorrect url_template provided
         test_url_template = 'invalid_url_template_without_sdk_key_field_{key}'
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
             'Invalid url_template {} provided'.format(test_url_template),
             config_manager.PollingConfigManager.get_datafile_url,
@@ -298,7 +298,7 @@ class PollingConfigManagerTest(base.BaseTest):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         # Assert that if invalid update_interval is set, then exception is raised.
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Invalid update_interval "invalid interval" provided.',
         ):
             project_config_manager.set_update_interval('invalid interval')
@@ -325,7 +325,7 @@ class PollingConfigManagerTest(base.BaseTest):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         # Assert that if invalid blocking_timeout is set, then exception is raised.
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Invalid blocking timeout "invalid timeout" provided.',
         ):
             project_config_manager.set_blocking_timeout('invalid timeout')
@@ -484,7 +484,7 @@ class PollingConfigManagerTest(base.BaseTest):
 class AuthDatafilePollingConfigManagerTest(base.BaseTest):
     def test_init__datafile_access_token_none__fails(self, _):
         """ Test that initialization fails if datafile_access_token is None. """
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
             'datafile_access_token cannot be empty or None.',
             config_manager.AuthDatafilePollingConfigManager,
