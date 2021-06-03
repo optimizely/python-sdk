@@ -22,6 +22,8 @@ if PY3:
     def long(a):
         raise NotImplementedError('Tests should only call `long` if running in PY2')
 
+if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
+    unittest.TestCase.assertRaisesRegex = getattr(unittest.TestCase, 'assertRaisesRegexp')
 
 class BaseTest(unittest.TestCase):
     def assertStrictTrue(self, to_assert):

@@ -23,9 +23,6 @@ from optimizely.helpers import enums
 
 from . import base
 
-if not hasattr(base.BaseTest, 'assertRaisesRegex'):
-    base.BaseTest.assertRaisesRegex = getattr(base.BaseTest, 'assertRaisesRegexp')
-
 class ConfigTest(base.BaseTest):
     def test_init(self):
         """ Test that on creating object, properties are initiated correctly. """

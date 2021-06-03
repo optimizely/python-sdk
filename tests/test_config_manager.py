@@ -24,9 +24,6 @@ from optimizely.helpers import enums
 
 from . import base
 
-if not hasattr(base.BaseTest, 'assertRaisesRegex'):
-    base.BaseTest.assertRaisesRegex = getattr(base.BaseTest, 'assertRaisesRegexp')
-
 class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_logger_fails(self):
         """ Test that initialization fails if logger is invalid. """
