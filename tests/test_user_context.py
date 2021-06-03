@@ -21,6 +21,7 @@ from optimizely import optimizely, decision_service
 from optimizely.optimizely_user_context import OptimizelyUserContext
 from optimizely.user_profile import UserProfileService
 
+
 class UserContextTest(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')

@@ -25,6 +25,7 @@ if PY3:
 if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
     unittest.TestCase.assertRaisesRegex = getattr(unittest.TestCase, 'assertRaisesRegexp')
 
+
 class BaseTest(unittest.TestCase):
     def assertStrictTrue(self, to_assert):
         self.assertIs(to_assert, True)

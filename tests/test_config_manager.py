@@ -24,6 +24,7 @@ from optimizely.helpers import enums
 
 from . import base
 
+
 class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_logger_fails(self):
         """ Test that initialization fails if logger is invalid. """

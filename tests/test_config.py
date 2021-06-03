@@ -23,6 +23,7 @@ from optimizely.helpers import enums
 
 from . import base
 
+
 class ConfigTest(base.BaseTest):
     def test_init(self):
         """ Test that on creating object, properties are initiated correctly. """
