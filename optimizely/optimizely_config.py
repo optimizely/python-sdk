@@ -25,6 +25,7 @@ class OptimizelyConfig(object):
         self.sdk_key = sdk_key
         self.environment_key = environment_key
 
+
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
 
@@ -48,7 +49,6 @@ class OptimizelyConfig(object):
             A string containing environment key.
         """
         return self.environment_key
-
 
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
