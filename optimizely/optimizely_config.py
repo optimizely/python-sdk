@@ -28,6 +28,7 @@ class OptimizelyConfig(object):
         self.attributes = attributes or []
         self.events = events or []
 
+
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
 
@@ -51,7 +52,7 @@ class OptimizelyConfig(object):
             A string containing environment key.
         """
         return self.environment_key
-
+        
     def get_attributes(self):
         """ Get the attributes associated with OptimizelyConfig
 
@@ -67,7 +68,6 @@ class OptimizelyConfig(object):
             A list of events.
         """
         return self.events
-
 
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
