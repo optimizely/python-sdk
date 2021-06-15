@@ -28,7 +28,6 @@ class OptimizelyConfig(object):
         self.attributes = attributes or []
         self.events = events or []
 
-
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
 
