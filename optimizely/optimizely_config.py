@@ -25,7 +25,6 @@ class OptimizelyConfig(object):
         self.sdk_key = sdk_key
         self.environment_key = environment_key
 
-
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
 
