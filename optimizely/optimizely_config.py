@@ -23,7 +23,7 @@ class OptimizelyConfig(object):
         self.features_map = features_map
         self._datafile = datafile
         self.sdk_key = sdk_key
-        self.environemnt_key = environment_key
+        self.environment_key = environment_key
 
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
@@ -41,7 +41,7 @@ class OptimizelyConfig(object):
         """
         return self.sdk_key
 
-    def get_environemnt_key(self):
+    def get_environment_key(self):
         """ Get the environemnt key associated with OptimizelyConfig.
 
         Returns:

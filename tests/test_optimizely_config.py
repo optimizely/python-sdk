@@ -26,6 +26,8 @@ class OptimizelyConfigTest(base.BaseTest):
         self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
 
         self.expected_config = {
+            'sdk_key': None,
+            'environment_key': None,
             'experiments_map': {
                 'test_experiment2': {
                     'variations_map': {
