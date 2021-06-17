@@ -271,7 +271,7 @@ class OptimizelyTest(base.BaseTest):
             Test to confirm that default decide options passed not as a list will trigger setting
             self.deafulat_decide_options as an empty list.
         """
-        invalid_decide_options = {"testKey":"testOption"}
+        invalid_decide_options = {"testKey": "testOption"}
 
         mock_client_logger = mock.MagicMock()
         with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
