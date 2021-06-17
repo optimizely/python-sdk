@@ -47,7 +47,8 @@ class OptimizelyConfig(object):
         Returns:
             A string containing environment key.
         """
-        return self.environemnt_key
+        return self.environment_key
+
 
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
