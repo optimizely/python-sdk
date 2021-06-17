@@ -47,7 +47,8 @@ class OptimizelyConfig(object):
         Returns:
             A string containing environment key.
         """
-        return self.environemnt_key
+        return self.environment_key
+
 
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
@@ -117,7 +118,13 @@ class OptimizelyConfigService(object):
         experiments_key_map, experiments_id_map = self._get_experiments_maps()
         features_map = self._get_features_map(experiments_id_map)
 
-        return OptimizelyConfig(self.revision, experiments_key_map, features_map, self._datafile, self.sdk_key, self.environment_key)
+        return OptimizelyConfig(
+            self.revision,
+            experiments_key_map,
+            features_map,
+            self._datafile,
+            self.sdk_key,
+            self.environment_key)
 
     def _create_lookup_maps(self):
         """ Creates lookup maps to avoid redundant iteration of config objects.  """

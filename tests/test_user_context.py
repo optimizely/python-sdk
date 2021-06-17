@@ -60,6 +60,23 @@ class UserContextTest(base.BaseTest):
         self.assertEqual("firefox", uc.get_user_attributes()["browser"])
         self.assertEqual("red", uc.get_user_attributes()["color"])
 
+    def test_user_and_attributes_as_json(self):
+        """
+        tests user context as json
+        """
+        uc = OptimizelyUserContext(self.optimizely, "test_user")
+
+        # set an attribute
+        uc.set_attribute("browser", "safari")
+
+        # set expected json obj
+        expected_json = {
+            "user_id": uc.user_id,
+            "attributes": uc.get_user_attributes(),
+        }
+
+        self.assertEqual(uc.as_json(), expected_json)
+
     def test_attributes_are_cloned_when_passed_to_user_context(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
