@@ -265,6 +265,19 @@ class OptimizelyTest(base.BaseTest):
 
         self.assertIs(type(opt_obj.config_manager), config_manager.AuthDatafilePollingConfigManager)
 
+    def test_init__invalid_default_decide_options(self):
+        """
+            Test to confirm that default decide options passed not as a list will trigger setting
+            self.deafulat_decide_options as an empty list.
+        """
+        invalid_decide_options = {"testKey": "testOption"}
+
+        mock_client_logger = mock.MagicMock()
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+            opt_obj = optimizely.Optimizely(default_decide_options=invalid_decide_options)
+
+        self.assertEqual(opt_obj.default_decide_options, [])
+
     def test_invalid_json_raises_schema_validation_off(self):
         """ Test that invalid JSON logs error if schema validation is turned off. """
 
