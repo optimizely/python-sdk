@@ -65,7 +65,7 @@ class UserContextTest(base.BaseTest):
         tests user context as json
         """
         uc = OptimizelyUserContext(self.optimizely, "test_user")
- 
+
         # set an attribute
         uc.set_attribute("browser", "safari")
 
