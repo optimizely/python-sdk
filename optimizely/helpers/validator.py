@@ -147,7 +147,7 @@ def are_attributes_valid(attributes):
     Boolean depending upon whether attributes are in valid format or not.
   """
 
-    return type(attributes) is dict
+    return isinstance(attributes, dict)
 
 
 def are_event_tags_valid(event_tags):
@@ -160,7 +160,7 @@ def are_event_tags_valid(event_tags):
     Boolean depending upon whether event_tags are in valid format or not.
   """
 
-    return type(event_tags) is dict
+    return isinstance(event_tags, dict)
 
 
 def is_user_profile_valid(user_profile):
@@ -176,7 +176,7 @@ def is_user_profile_valid(user_profile):
     if not user_profile:
         return False
 
-    if not type(user_profile) is dict:
+    if not isinstance(user_profile, dict):
         return False
 
     if UserProfile.USER_ID_KEY not in user_profile:
@@ -186,11 +186,11 @@ def is_user_profile_valid(user_profile):
         return False
 
     experiment_bucket_map = user_profile.get(UserProfile.EXPERIMENT_BUCKET_MAP_KEY)
-    if not type(experiment_bucket_map) is dict:
+    if not isinstance(experiment_bucket_map, dict):
         return False
 
     for decision in experiment_bucket_map.values():
-        if type(decision) is not dict or UserProfile.VARIATION_ID_KEY not in decision:
+        if not isinstance(decision, dict) or UserProfile.VARIATION_ID_KEY not in decision:
             return False
 
     return True

@@ -950,7 +950,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
-        if attributes is not None and type(attributes) is not dict:
+        if attributes is not None and not isinstance(attributes, dict):
             self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
             return None
 
