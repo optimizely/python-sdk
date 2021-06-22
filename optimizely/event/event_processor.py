@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Optimizely
+# Copyright 2019-2021 Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -120,7 +120,7 @@ class BatchEventProcessor(BaseEventProcessor):
     @property
     def is_running(self):
         """ Property to check if consumer thread is alive or not. """
-        return self.executor.isAlive() if self.executor else False
+        return self.executor.is_alive() if self.executor else False
 
     def _validate_instantiation_props(self, prop, prop_name, default_value):
         """ Method to determine if instantiation properties like batch_size, flush_interval
