@@ -1,4 +1,4 @@
-# Copyright 2016-2020, Optimizely
+# Copyright 2016-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -21,6 +21,12 @@ if PY3:
 
     def long(a):
         raise NotImplementedError('Tests should only call `long` if running in PY2')
+
+# Check to verify if TestCase has the attribute assertRasesRegex or assertRaisesRegexp
+# This check depends on the version of python with assertRaisesRegexp being used by
+# python2.7. Later versions of python are using the non-deprecated assertRaisesRegex.
+if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
+    unittest.TestCase.assertRaisesRegex = getattr(unittest.TestCase, 'assertRaisesRegexp')
 
 
 class BaseTest(unittest.TestCase):
