@@ -13,6 +13,8 @@
 
 import copy
 
+from optimizely.helpers.validator import are_attributes_valid
+
 from .project_config import ProjectConfig
 
 
@@ -294,3 +296,37 @@ class OptimizelyConfigService(object):
             features_map[feature['key']] = optly_feature
 
         return features_map
+
+    def get_attributes_map(self):
+        """ Gets attributes map for the project config.
+
+        Returns:
+            dict -- Attribute key, OptimizelyAttribute map
+        """
+
+        attributes_map = {}
+
+        for attribute in self.attributes:
+            optly_attribute = OptimizelyAttribute(
+                attribute['id'], attribute['key']
+            )
+            attributes_map[attribute['key']] = optly_attribute
+
+        return attributes_map
+
+    def get_events_map(self):
+        """ Gets attributes map for the project config.
+
+        Returns:
+            dict -- Event key, OptimizelyEvent map
+        """
+
+        events_map = {}
+
+        for event in self.events:
+            optly_event = OptimizelyEvent(
+                event['id'], event['key'], event.get('experimentIds', [])
+            )
+            events_map[event['key']] = optly_event
+
+        return events_map
