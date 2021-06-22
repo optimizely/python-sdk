@@ -13,17 +13,22 @@
 
 import copy
 
+from optimizely.helpers.validator import are_attributes_valid
+
 from .project_config import ProjectConfig
 
 
 class OptimizelyConfig(object):
-    def __init__(self, revision, experiments_map, features_map, datafile=None, sdk_key=None, environment_key=None):
+    def __init__(self, revision, experiments_map, features_map, datafile=None,
+                 sdk_key=None, environment_key=None, attributes=None, events=None):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
         self._datafile = datafile
         self.sdk_key = sdk_key
         self.environment_key = environment_key
+        self.attributes = attributes
+        self.events = events
 
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
@@ -80,6 +85,19 @@ class OptimizelyVariable(object):
         self.value = value
 
 
+class OptimizelyAttribute(object):
+    def __init__(self, id, key):
+        self.id = id
+        self.key = key
+
+
+class OptimizelyEvent(object):
+    def __init__(self, id, key, experiment_ids):
+        self.id = id
+        self.key = key
+        self.experiment_ids = experiment_ids
+
+
 class OptimizelyConfigService(object):
     """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
@@ -101,6 +119,8 @@ class OptimizelyConfigService(object):
         self.revision = project_config.revision
         self.sdk_key = project_config.sdk_key
         self.environment_key = project_config.environment_key
+        self.attributes = project_config.attributes
+        self.events = project_config.events
 
         self._create_lookup_maps()
 
@@ -258,3 +278,37 @@ class OptimizelyConfigService(object):
             features_map[feature['key']] = optly_feature
 
         return features_map
+
+    def get_attributes_map(self):
+        """ Gets attributes map for the project config.
+
+        Returns:
+            dict -- Attribute key, OptimizelyAttribute map
+        """
+
+        attributes_map = {}
+
+        for attribute in self.attributes:
+            optly_attribute = OptimizelyAttribute(
+                attribute['id'], attribute['key']
+            )
+            attributes_map[attribute['key']] = optly_attribute
+
+        return attributes_map
+
+    def get_events_map(self):
+        """ Gets attributes map for the project config.
+
+        Returns:
+            dict -- Event key, OptimizelyEvent map
+        """
+
+        events_map = {}
+
+        for event in self.events:
+            optly_event = OptimizelyEvent(
+                event['id'], event['key'], event.get('experimentIds', [])
+            )
+            events_map[event['key']] = optly_event
+
+        return events_map
