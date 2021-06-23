@@ -27,8 +27,8 @@ class OptimizelyConfig(object):
         self._datafile = datafile
         self.sdk_key = sdk_key
         self.environment_key = environment_key
-        self.attributes = attributes
-        self.events = events
+        self.attributes = attributes or []
+        self.events = events or []
 
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
@@ -53,6 +53,22 @@ class OptimizelyConfig(object):
             A string containing environment key.
         """
         return self.environment_key
+
+    def get_attributes(self):
+        """ Get the attributes associated with OptimizelyConfig
+
+        returns:
+            A list of attributes.
+        """
+        return self.attributes
+
+    def get_events(self):
+        """ Get the events associated with OptimizelyConfig
+
+        returns:
+            A list of attributes.
+        """
+        return self.events
 
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
@@ -143,7 +159,9 @@ class OptimizelyConfigService(object):
             features_map,
             self._datafile,
             self.sdk_key,
-            self.environment_key)
+            self.environment_key,
+            self.attributes,
+            self.events)
 
     def _create_lookup_maps(self):
         """ Creates lookup maps to avoid redundant iteration of config objects.  """

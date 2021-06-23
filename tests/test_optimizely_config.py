@@ -28,6 +28,8 @@ class OptimizelyConfigTest(base.BaseTest):
         self.expected_config = {
             'sdk_key': None,
             'environment_key': None,
+            'attributes': [{'key': 'test_attribute', 'id': '111094'}],
+            'events': [{'key': 'test_event', 'experimentIds': ['111127'], 'id': '111095'}],
             'experiments_map': {
                 'test_experiment2': {
                     'variations_map': {
@@ -790,3 +792,74 @@ class OptimizelyConfigTest(base.BaseTest):
         invalid_value = 321
 
         self.assertNotEqual(invalid_value, config.get_environment_key())
+
+    def test__get_attributes(self):
+        """ Test that the get_attributes returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            attributes=[{
+                'id': '123',
+                'key': '123'
+            },
+                {
+                'id': '234',
+                'key': '234'
+            }]
+        )
+
+        expected_value = [{
+            'id': '123',
+            'key': '123'
+        },
+            {
+            'id': '234',
+            'key': '234'
+        }]
+
+        self.assertEqual(expected_value, config.get_attributes())
+        self.assertEqual(len(config.get_attributes()), 2)
+
+    def test__get_events(self):
+        """ Test that the get_events returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            events=[{
+                'id': '123',
+                'key': '123',
+                'experiment_ids': {
+                    '54321'
+                }
+            },
+                {
+                'id': '234',
+                'key': '234',
+                'experiment_ids': {
+                    '3211', '54365'
+                }
+            }]
+        )
+
+        expected_value = [{
+            'id': '123',
+            'key': '123',
+            'experiment_ids': {
+                '54321'
+            }
+        },
+            {
+            'id': '234',
+            'key': '234',
+            'experiment_ids': {
+                '3211',
+                '54365'
+            }
+        }]
+
+        self.assertEqual(expected_value, config.get_events())
+        self.assertEqual(len(config.get_events()), 2)
