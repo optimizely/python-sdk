@@ -26,7 +26,6 @@ from optimizely import optimizely
 from optimizely import optimizely_config
 from optimizely import project_config
 from optimizely import version
-from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
 from . import base
@@ -265,19 +264,6 @@ class OptimizelyTest(base.BaseTest):
             opt_obj = optimizely.Optimizely(datafile_access_token='test_datafile_access_token', sdk_key='test_sdk_key')
 
         self.assertIs(type(opt_obj.config_manager), config_manager.AuthDatafilePollingConfigManager)
-
-    def test_init__invalid_default_decide_options(self):
-        """
-            Test to confirm that default decide options passed not as a list will trigger setting
-            self.deafulat_decide_options as an empty list.
-        """
-        invalid_decide_options = {"testKey": "testOption"}
-
-        mock_client_logger = mock.MagicMock()
-        with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
-            opt_obj = optimizely.Optimizely(default_decide_options=invalid_decide_options)
-
-        self.assertEqual(opt_obj.default_decide_options, [])
 
     def test_invalid_json_raises_schema_validation_off(self):
         """ Test that invalid JSON logs error if schema validation is turned off. """
@@ -689,24 +675,6 @@ class OptimizelyTest(base.BaseTest):
         # Check that impression event is sent for rollout and send_flag_decisions = True
         self.assertEqual(1, mock_process.call_count)
         self.assertEqual(True, access_callback[0])
-
-    def test_decide_experiment(self):
-        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
-    Also confirm that no impression event is processed. """
-
-        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        project_config = opt_obj.config_manager.get_config()
-
-        mock_experiment = project_config.get_experiment_from_key('test_experiment')
-        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-        with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=(decision_service.Decision(mock_experiment,
-                                                    mock_variation, enums.DecisionSources.FEATURE_TEST), []),
-        ):
-            user_context = opt_obj.create_user_context('test_user')
-            decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
-            self.assertTrue(decision.enabled, "decision should be enabled")
 
     def test_activate__with_attributes__audience_match(self):
         """ Test that activate calls process with right params and returns expected

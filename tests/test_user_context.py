@@ -15,6 +15,7 @@ import json
 import mock
 
 from optimizely.decision.optimizely_decision import OptimizelyDecision
+from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
 from optimizely.helpers import enums
 from . import base
 from optimizely import optimizely, decision_service
@@ -1264,3 +1265,34 @@ class UserContextTest(base.BaseTest):
         expected_reasons = ['User "user_1" is forced in variation "control".']
 
         self.assertEqual(expected_reasons, actual.reasons)
+
+    def test_init__invalid_default_decide_options(self):
+        """
+            Test to confirm that default decide options passed not as a list will trigger setting
+            self.deafulat_decide_options as an empty list.
+        """
+        invalid_decide_options = {"testKey": "testOption"}
+
+        mock_client_logger = mock.MagicMock()
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
+            opt_obj = optimizely.Optimizely(default_decide_options=invalid_decide_options)
+
+        self.assertEqual(opt_obj.default_decide_options, [])
+
+    def test_decide_experiment(self):
+        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
+    Also confirm that no impression event is processed. """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            return_value=(decision_service.Decision(mock_experiment,
+                                                    mock_variation, enums.DecisionSources.FEATURE_TEST), []),
+        ):
+            user_context = opt_obj.create_user_context('test_user')
+            decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
+            self.assertTrue(decision.enabled, "decision should be enabled")
