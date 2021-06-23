@@ -70,6 +70,22 @@ class OptimizelyConfig(object):
         """
         return self.events
 
+    def get_attributes(self):
+        """ Get the attributes associated with OptimizelyConfig
+
+        returns:
+            A list of attributes.
+        """
+        return self.attributes
+
+    def get_events(self):
+        """ Get the events associated with OptimizelyConfig
+
+        returns:
+            A list of attributes.
+        """
+        return self.events
+
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
         self.id = id
