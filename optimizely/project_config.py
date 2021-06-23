@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2019, 2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -52,6 +52,8 @@ class ProjectConfig(object):
         self.account_id = config.get('accountId')
         self.project_id = config.get('projectId')
         self.revision = config.get('revision')
+        self.sdk_key = config.get('sdkKey', None)
+        self.environment_key = config.get('environmentKey', None)
         self.groups = config.get('groups', [])
         self.experiments = config.get('experiments', [])
         self.events = config.get('events', [])
@@ -212,6 +214,24 @@ class ProjectConfig(object):
         """
 
         return self.revision
+
+    def get_sdk_key(self):
+        """ Get sdk key from the datafile.
+
+        Returns:
+            Revision of the sdk key.
+        """
+
+        return self.sdk_key
+
+    def get_environment_key(self):
+        """ Get environment key from the datafile.
+
+        Returns:
+            Revision of the environment key.
+        """
+
+        return self.environment_key
 
     def get_account_id(self):
         """ Get account ID from the config.

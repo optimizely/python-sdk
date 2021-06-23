@@ -1,4 +1,4 @@
-# Copyright 2020, Optimizely
+# Copyright 2020-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -26,6 +26,8 @@ class OptimizelyConfigTest(base.BaseTest):
         self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
 
         self.expected_config = {
+            'sdk_key': None,
+            'environment_key': None,
             'experiments_map': {
                 'test_experiment2': {
                     'variations_map': {
@@ -732,3 +734,59 @@ class OptimizelyConfigTest(base.BaseTest):
         actual_datafile = self.actual_config.get_datafile()
 
         self.assertEqual(expected_datafile, actual_datafile)
+
+    def test__get_sdk_key(self):
+        """ Test that get_sdk_key returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            sdk_key='testSdkKey',
+        )
+
+        expected_value = 'testSdkKey'
+
+        self.assertEqual(expected_value, config.get_sdk_key())
+
+    def test__get_sdk_key_invalid(self):
+        """ Negative Test that tests get_sdk_key does not return the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            sdk_key='testSdkKey',
+        )
+
+        invalid_value = 123
+
+        self.assertNotEqual(invalid_value, config.get_sdk_key())
+
+    def test__get_environment_key(self):
+        """ Test that get_environment_key returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            environment_key='TestEnvironmentKey'
+        )
+
+        expected_value = 'TestEnvironmentKey'
+
+        self.assertEqual(expected_value, config.get_environment_key())
+
+    def test__get_environment_key_invalid(self):
+        """ Negative Test that tests get_environment_key does not return the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            environment_key='testEnvironmentKey'
+        )
+
+        invalid_value = 321
+
+        self.assertNotEqual(invalid_value, config.get_environment_key())
