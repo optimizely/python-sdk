@@ -70,6 +70,7 @@ class OptimizelyConfig(object):
         """
         return self.events
 
+
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map):
         self.id = id

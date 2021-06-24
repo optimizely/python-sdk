@@ -1296,4 +1296,3 @@ class UserContextTest(base.BaseTest):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
             self.assertTrue(decision.enabled, "decision should be enabled")
-            
