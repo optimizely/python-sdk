@@ -13,8 +13,6 @@
 
 import copy
 
-from optimizely.helpers.validator import are_attributes_valid
-
 from .project_config import ProjectConfig
 
 
