@@ -64,7 +64,7 @@ class OptimizelyConfig(object):
         """ Get the events associated with OptimizelyConfig
 
         returns:
-            A list of attributes.
+            A list of events.
         """
         return self.events
 
@@ -314,7 +314,7 @@ class OptimizelyConfigService(object):
         return attributes_map
 
     def get_events_map(self):
-        """ Gets attributes map for the project config.
+        """ Gets events map for the project config.
 
         Returns:
             dict -- Event key, OptimizelyEvent map
