@@ -26,7 +26,6 @@ from optimizely import optimizely
 from optimizely import optimizely_config
 from optimizely import project_config
 from optimizely import version
-from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
 from . import base
@@ -676,24 +675,6 @@ class OptimizelyTest(base.BaseTest):
         # Check that impression event is sent for rollout and send_flag_decisions = True
         self.assertEqual(1, mock_process.call_count)
         self.assertEqual(True, access_callback[0])
-
-    def test_decide_experiment(self):
-        """ Test that the feature is enabled for the user if bucketed into variation of a rollout.
-    Also confirm that no impression event is processed. """
-
-        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        project_config = opt_obj.config_manager.get_config()
-
-        mock_experiment = project_config.get_experiment_from_key('test_experiment')
-        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-        with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=(decision_service.Decision(mock_experiment,
-                                                    mock_variation, enums.DecisionSources.FEATURE_TEST), []),
-        ):
-            user_context = opt_obj.create_user_context('test_user')
-            decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
-            self.assertTrue(decision.enabled, "decision should be enabled")
 
     def test_activate__with_attributes__audience_match(self):
         """ Test that activate calls process with right params and returns expected
@@ -4633,7 +4614,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_activate__with_attributes__invalid_attributes(self):
         """ Test that activate raises exception if attributes are in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE_FORMAT,
             self.optimizely.activate,
@@ -4645,7 +4626,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_track__with_attributes__invalid_attributes(self):
         """ Test that track raises exception if attributes are in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE_FORMAT,
             self.optimizely.track,
@@ -4657,7 +4638,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_track__with_event_tag__invalid_event_tag(self):
         """ Test that track raises exception if event_tag is in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidEventTagException,
             enums.Errors.INVALID_EVENT_TAG_FORMAT,
             self.optimizely.track,
@@ -4669,7 +4650,7 @@ class OptimizelyWithExceptionTest(base.BaseTest):
     def test_get_variation__with_attributes__invalid_attributes(self):
         """ Test that get variation raises exception if attributes are in invalid format. """
 
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             exceptions.InvalidAttributeException,
             enums.Errors.INVALID_ATTRIBUTE_FORMAT,
             self.optimizely.get_variation,

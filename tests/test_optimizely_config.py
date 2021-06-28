@@ -1,4 +1,4 @@
-# Copyright 2020, Optimizely
+# Copyright 2020-2021, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -26,6 +26,10 @@ class OptimizelyConfigTest(base.BaseTest):
         self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
 
         self.expected_config = {
+            'sdk_key': None,
+            'environment_key': None,
+            'attributes': [{'key': 'test_attribute', 'id': '111094'}],
+            'events': [{'key': 'test_event', 'experimentIds': ['111127'], 'id': '111095'}],
             'experiments_map': {
                 'test_experiment2': {
                     'variations_map': {
@@ -732,3 +736,172 @@ class OptimizelyConfigTest(base.BaseTest):
         actual_datafile = self.actual_config.get_datafile()
 
         self.assertEqual(expected_datafile, actual_datafile)
+
+    def test__get_sdk_key(self):
+        """ Test that get_sdk_key returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            sdk_key='testSdkKey',
+        )
+
+        expected_value = 'testSdkKey'
+
+        self.assertEqual(expected_value, config.get_sdk_key())
+
+    def test__get_sdk_key_invalid(self):
+        """ Negative Test that tests get_sdk_key does not return the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            sdk_key='testSdkKey',
+        )
+
+        invalid_value = 123
+
+        self.assertNotEqual(invalid_value, config.get_sdk_key())
+
+    def test__get_environment_key(self):
+        """ Test that get_environment_key returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            environment_key='TestEnvironmentKey'
+        )
+
+        expected_value = 'TestEnvironmentKey'
+
+        self.assertEqual(expected_value, config.get_environment_key())
+
+    def test__get_environment_key_invalid(self):
+        """ Negative Test that tests get_environment_key does not return the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            environment_key='testEnvironmentKey'
+        )
+
+        invalid_value = 321
+
+        self.assertNotEqual(invalid_value, config.get_environment_key())
+
+    def test__get_attributes(self):
+        """ Test that the get_attributes returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            attributes=[{
+                'id': '123',
+                'key': '123'
+            },
+                {
+                'id': '234',
+                'key': '234'
+            }]
+        )
+
+        expected_value = [{
+            'id': '123',
+            'key': '123'
+        },
+            {
+            'id': '234',
+            'key': '234'
+        }]
+
+        self.assertEqual(expected_value, config.get_attributes())
+        self.assertEqual(len(config.get_attributes()), 2)
+
+    def test__get_events(self):
+        """ Test that the get_events returns the expected value. """
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            events=[{
+                'id': '123',
+                'key': '123',
+                'experiment_ids': {
+                    '54321'
+                }
+            },
+                {
+                'id': '234',
+                'key': '234',
+                'experiment_ids': {
+                    '3211', '54365'
+                }
+            }]
+        )
+
+        expected_value = [{
+            'id': '123',
+            'key': '123',
+            'experiment_ids': {
+                '54321'
+            }
+        },
+            {
+            'id': '234',
+            'key': '234',
+            'experiment_ids': {
+                '3211',
+                '54365'
+            }
+        }]
+
+        self.assertEqual(expected_value, config.get_events())
+        self.assertEqual(len(config.get_events()), 2)
+
+    def test__get_attributes_map(self):
+        """ Test to check get_attributes_map returns the correct value """
+
+        actual_attributes_map = self.opt_config_service.get_attributes_map()
+        expected_attributes = self.expected_config['attributes']
+
+        expected_attributes_map = {}
+
+        for expected_attribute in expected_attributes:
+            optly_attribute = optimizely_config.OptimizelyAttribute(
+                expected_attribute['id'], expected_attribute['key']
+            )
+            expected_attributes_map[expected_attribute['key']] = optly_attribute
+
+        for attribute in actual_attributes_map.values():
+            self.assertIsInstance(attribute, optimizely_config.OptimizelyAttribute)
+
+        self.assertEqual(len(expected_attributes), len(actual_attributes_map))
+        self.assertEqual(self.to_dict(actual_attributes_map), self.to_dict(expected_attributes_map))
+
+    def test__get_events_map(self):
+        """ Test to check that get_events_map returns the correct value """
+
+        actual_events_map = self.opt_config_service.get_events_map()
+        expected_events = self.expected_config['events']
+
+        expected_events_map = {}
+
+        for expected_event in expected_events:
+            optly_event = optimizely_config.OptimizelyEvent(
+                expected_event['id'],
+                expected_event['key'],
+                expected_event['experimentIds']
+            )
+            expected_events_map[expected_event['key']] = optly_event
+
+        for event in actual_events_map.values():
+            self.assertIsInstance(event, optimizely_config.OptimizelyEvent)
+
+        self.assertEqual(len(expected_events), len(actual_events_map))
+        self.assertEqual(self.to_dict(actual_events_map), self.to_dict(expected_events_map))

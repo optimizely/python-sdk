@@ -113,7 +113,6 @@ class OptimizelyFactory(object):
     def custom_instance(sdk_key, datafile=None, event_dispatcher=None, logger=None, error_handler=None,
                         skip_json_validation=None, user_profile_service=None, config_manager=None,
                         notification_center=None):
-
         """ Returns a new optimizely instance.
              if max_event_batch_size and max_event_flush_interval are None then default batch_size and flush_interval
              will be used to setup BatchEventProcessor.
