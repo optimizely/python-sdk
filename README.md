@@ -224,3 +224,10 @@ would be:
 ### Contributing
 
 Please see [CONTRIBUTING](https://github.com/optimizely/python-sdk/blob/master/CONTRIBUTING.md).
+
+### Additional Code
+This software incorporates code from the following open source repos:  
+requests (Apache-2.0 License: https://github.com/psf/requests/blob/master/LICENSE)  
+pyOpenSSL (Apache-2.0 License https://github.com/pyca/pyopenssl/blob/main/LICENSE)  
+cryptography (Apache-2.0 https://github.com/pyca/cryptography/blob/main/LICENSE.APACHE)  
+idna (BSD 3-Clause License https://github.com/kjd/idna/blob/master/LICENSE.md) 
