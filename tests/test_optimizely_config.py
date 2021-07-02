@@ -928,11 +928,11 @@ class OptimizelyConfigTest(base.BaseTest):
         audience_conditions = experiment.get('audienceConditions')
 
         audiences_map = {
-            '3468206642': 'US',
-            '3988293898': 'FEMALE',
-            '3988293899': 'MALE',
-            '3468206646': 'THEM',
-            '3468206647': 'ANYONE'
+            '3468206642': 'us',
+            '3988293898': 'female',
+            '3988293899': 'male',
+            '3468206646': 'them',
+            '3468206647': 'anyone'
         }
 
         config = optimizely_config.OptimizelyConfig(
@@ -949,7 +949,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         result = config_service.stringify_conditions(audience_conditions, audiences_map)
 
-        expected_result = '(("US" OR "FEMALE") AND ("MALE" OR "THEM" OR "ANYONE" OR "3468206644" OR "3468206643"))'
+        expected_result = '(("us" OR "female") AND ("male" OR "them" OR "anyone" OR "3468206644" OR "3468206643"))'
 
         self.assertEqual(result, expected_result)
 
