@@ -13,7 +13,6 @@
 
 import copy
 from optimizely.helpers.condition import ConditionOperatorTypes
-from optimizely.entities import Experiment
 
 from .project_config import ProjectConfig
 
