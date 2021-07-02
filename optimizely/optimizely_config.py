@@ -70,22 +70,6 @@ class OptimizelyConfig(object):
         """
         return self.events
 
-    def get_attributes(self):
-        """ Get the attributes associated with OptimizelyConfig
-
-        returns:
-            A list of attributes.
-        """
-        return self.attributes
-
-    def get_events(self):
-        """ Get the events associated with OptimizelyConfig
-
-        returns:
-            A list of events.
-        """
-        return self.events
-
     def get_audiences(self):
         """ Get the audiences associated with OptimizelyConfig
 
