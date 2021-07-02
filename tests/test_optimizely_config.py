@@ -899,7 +899,17 @@ class OptimizelyConfigTest(base.BaseTest):
                     'name': 'Test_Audience',
                     'id': '1234',
                     'conditions': [
-                        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]'
+                        ["and", 
+                            ["or", 
+                                ["or", 
+                                    {
+                                    "name": "test_attribute", 
+                                    "type": "custom_attribute", 
+                                    "value": "test_value_1"
+                                    }
+                                ]
+                            ]
+                        ]
                     ]
                 }
             ]
@@ -909,7 +919,17 @@ class OptimizelyConfigTest(base.BaseTest):
                 'name': 'Test_Audience',
                 'id': '1234',
                 'conditions': [
-                        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]'
+                        ["and", 
+                            ["or", 
+                                ["or", 
+                                    {
+                                        "name": "test_attribute", 
+                                        "type": "custom_attribute", 
+                                        "value": "test_value_1"
+                                    }
+                                ]
+                            ]
+                        ]
                 ]
             }
         ]
@@ -917,13 +937,14 @@ class OptimizelyConfigTest(base.BaseTest):
         self.assertEqual(expected_value, config.get_audiences())
 
     def test_stringify_conditions(self):
-        ''' 
+        '''
             Test to confirm converting from audienceConditions list to String represented conditions
-            Note* this also test lookup_name_from_id in OptimizelyConfig 
+            Note* this also test lookup_name_from_id in OptimizelyConfig
         '''
 
         experiment = {'audienceConditions': ['and', ['or', '3468206642', '3988293898'], [
-            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']], 'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
+            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']], 
+            'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
 
         audience_conditions = experiment.get('audienceConditions')
 

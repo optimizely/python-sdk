@@ -166,7 +166,9 @@ class OptimizelyConfigService(object):
 
         for old_audience in project_config.audiences:
             # check if old_audience.id exists in new_audiences.id from typed_audiences
-            if len([new_audience for new_audience in typed_audiences if new_audience.get('id') == old_audience.get('id')]) == 0:
+            if len([new_audience for new_audience in typed_audiences 
+                if new_audience.get('id') == old_audience.get('id')]) == 0:
+                    
                 if old_audience.get('id') == "$opt_dummy_audience":
                     continue
                 else:
@@ -202,7 +204,7 @@ class OptimizelyConfigService(object):
         experiment.audiences = audiences
 
     def replace_ids_with_names(self, conditions, audiences_map):
-        ''' 
+        '''
             Gets conditions and audiences_map [id:name]
 
             Returns:
@@ -210,7 +212,7 @@ class OptimizelyConfigService(object):
                 or None if no conditions found.
 
         '''
-        if conditions != None:
+        if conditions is not None:
             return self.stringify_conditions(conditions, audiences_map)
         else:
             return None
@@ -270,7 +272,7 @@ class OptimizelyConfigService(object):
                     else:
                         # Handle ID's here - Lookup name based on ID
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
-                        if audience_name != None:
+                        if audience_name is not None:
                             if i + 1 < length:
                                 ret += '"' + audience_name + '" ' + condition.upper() + ' '
                             else:
