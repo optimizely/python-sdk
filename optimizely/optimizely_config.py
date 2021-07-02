@@ -195,7 +195,7 @@ class OptimizelyConfigService(object):
         for audience in self.audiences:
             audiences_map[audience.get('id')] = audience.get('name')
 
-        # Updating each entities.Experiment found in the experiment_key_map
+        # Updating each OptimizelyExperiment based on the ID from entities.Experiment found in the experiment_key_map
         for ent_exp in project_config.experiment_key_map.values():
             experiments_by_key, experiments_by_id = self._get_experiments_maps()
             try:
@@ -206,18 +206,39 @@ class OptimizelyConfigService(object):
                 continue
 
     def update_experiment(self, experiment, conditions, audiences_map):
+        '''
+            Gets an OptimizelyExperiment to update, conditions from
+            the corresponding entities.Experiment and an audiences_map
+            in the form of [id:name]
 
+            Updates the OptimizelyExperiment.audiences with a string
+            of conditions and audience names.
+        '''
         audiences = self.replace_ids_with_names(conditions, audiences_map)
         experiment.audiences = audiences
 
     def replace_ids_with_names(self, conditions, audiences_map):
-        # Confirm where conditions are coming from...
+        ''' 
+            Gets conditions and audiences_map [id:name]
+
+            Returns:
+                a string of conditions with id's swapped with names
+                or None if no conditions found.
+
+        '''
         if conditions != None:
             return self.stringify_conditions(conditions, audiences_map)
         else:
             return None
 
     def lookup_name_from_id(self, audience_id, audiences_map):
+        '''
+            Gets and audience ID and audiences map
+
+            Returns:
+                The name corresponding to the ID
+                or None if not found
+        '''
         name = ""
         try:
             name = audiences_map[audience_id]
@@ -227,6 +248,14 @@ class OptimizelyConfigService(object):
         return name
 
     def stringify_conditions(self, conditions, audiences_map):
+        '''
+            Gets a list of conditions from an entities.Experiment
+            and an audiences_map [id:name]
+
+            Returns:
+                A string of conditions and names for the provided
+                list of conditions.
+        '''
         ARGS = ConditionOperatorTypes.operators
         condition = ""
         ret = "("
@@ -248,13 +277,14 @@ class OptimizelyConfigService(object):
                     condition = conditions[i]
                 else:
                     if type(conditions[i]) == list:
+                        # If the next item is a list, recursively call function on list
                         if i + 1 < length:
                             ret += self.stringify_conditions(conditions[i],
                                                              audiences_map) + ' ' + condition.upper() + ' '
                         else:
                             ret += self.stringify_conditions(conditions[i], audiences_map)
                     else:
-                        # Handle ID's here - Lookup required
+                        # Handle ID's here - Lookup name based on ID
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
                         if audience_name != None:
                             if i + 1 < length:
