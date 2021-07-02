@@ -12,13 +12,15 @@
 # limitations under the License.
 
 import copy
+from optimizely.helpers.condition import ConditionOperatorTypes
+from optimizely.entities import Experiment
 
 from .project_config import ProjectConfig
 
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
-                 sdk_key=None, environment_key=None, attributes=None, events=None):
+                 sdk_key=None, environment_key=None, attributes=None, events=None, audiences=None):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
@@ -27,6 +29,7 @@ class OptimizelyConfig(object):
         self.environment_key = environment_key
         self.attributes = attributes or []
         self.events = events or []
+        self.audiences = audiences or []
 
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
@@ -51,22 +54,6 @@ class OptimizelyConfig(object):
             A string containing environment key.
         """
         return self.environment_key
-        
-    def get_attributes(self):
-        """ Get the attributes associated with OptimizelyConfig
-
-        returns:
-            A list of attributes.
-        """
-        return self.attributes
-
-    def get_events(self):
-        """ Get the events associated with OptimizelyConfig
-
-        returns:
-            A list of events.
-        """
-        return self.events
 
     def get_attributes(self):
         """ Get the attributes associated with OptimizelyConfig
@@ -83,6 +70,30 @@ class OptimizelyConfig(object):
             A list of events.
         """
         return self.events
+
+    def get_attributes(self):
+        """ Get the attributes associated with OptimizelyConfig
+
+        returns:
+            A list of attributes.
+        """
+        return self.attributes
+
+    def get_events(self):
+        """ Get the events associated with OptimizelyConfig
+
+        returns:
+            A list of events.
+        """
+        return self.events
+
+    def get_audiences(self):
+        """ Get the audiences associated with OptimizelyConfig
+
+        returns:
+            A list of audiences.
+        """
+        return self.audiences
 
 
 class OptimizelyExperiment(object):
@@ -90,6 +101,7 @@ class OptimizelyExperiment(object):
         self.id = id
         self.key = key
         self.variations_map = variations_map
+        self.audiences = ""
 
 
 class OptimizelyFeature(object):
@@ -129,6 +141,13 @@ class OptimizelyEvent(object):
         self.experiment_ids = experiment_ids
 
 
+class OptimizelyAudience(object):
+    def __init__(self, id, name, conditions):
+        self.id = id
+        self.name = name
+        self.conditions = conditions
+
+
 class OptimizelyConfigService(object):
     """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
@@ -155,6 +174,97 @@ class OptimizelyConfigService(object):
 
         self._create_lookup_maps()
 
+        '''
+            Merging typed_audiences with audiences from project_config.
+            The typed_audiences has higher presidence.
+        '''
+
+        typed_audiences = project_config.typed_audiences or []
+
+        for old_audience in project_config.audiences:
+            # check if old_audience.id exists in new_audiences.id from typed_audiences
+            if len([new_audience for new_audience in typed_audiences if new_audience.get('id') == old_audience.get('id')]) == 0:
+                if old_audience.get('id') == "$opt_dummy_audience":
+                    continue
+                else:
+                    typed_audiences.append(old_audience)
+
+        self.audiences = typed_audiences
+
+        audiences_map = {}
+
+        for audience in self.audiences:
+            audiences_map[audience.get('id')] = audience.get('name')
+
+        # Updating each entities.Experiment found in the experiment_key_map
+        for ent_exp in project_config.experiment_key_map.values():
+            experiments_by_key, experiments_by_id = self._get_experiments_maps()
+            try:
+                optly_experiment = experiments_by_id[ent_exp.id]
+                self.update_experiment(optly_experiment, ent_exp.audienceConditions, audiences_map)
+            except KeyError:
+                # ID not in map
+                continue
+
+    def update_experiment(self, experiment, conditions, audiences_map):
+
+        audiences = self.replace_ids_with_names(conditions, audiences_map)
+        experiment.audiences = audiences
+
+    def replace_ids_with_names(self, conditions, audiences_map):
+        # Confirm where conditions are coming from...
+        if conditions != None:
+            return self.stringify_conditions(conditions, audiences_map)
+        else:
+            return None
+
+    def lookup_name_from_id(self, audience_id, audiences_map):
+        name = ""
+        try:
+            name = audiences_map[audience_id]
+        except KeyError:
+            name = audience_id
+
+        return name
+
+    def stringify_conditions(self, conditions, audiences_map):
+        ARGS = ConditionOperatorTypes.operators
+        condition = ""
+        ret = "("
+        length = len(conditions)
+
+        if length == 0:
+            return
+        if length == 1:
+            '''
+                Lookup ID and replace with name
+            '''
+            audience_name = self.lookup_name_from_id(conditions[0], audiences_map)
+
+            return audience_name
+
+        if length > 1:
+            for i in range(length):
+                if conditions[i] in ARGS:
+                    condition = conditions[i]
+                else:
+                    if type(conditions[i]) == list:
+                        if i + 1 < length:
+                            ret += self.stringify_conditions(conditions[i],
+                                                             audiences_map) + ' ' + condition.upper() + ' '
+                        else:
+                            ret += self.stringify_conditions(conditions[i], audiences_map)
+                    else:
+                        # Handle ID's here - Lookup required
+                        audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
+                        if audience_name != None:
+                            if i + 1 < length:
+                                ret += '"' + audience_name + '" ' + condition.upper() + ' '
+                            else:
+                                ret += '"' + audience_name + '"'
+
+        return ret + ")"
+
     def get_config(self):
         """ Gets instance of OptimizelyConfig
 
@@ -176,7 +286,8 @@ class OptimizelyConfigService(object):
             self.sdk_key,
             self.environment_key,
             self.attributes,
-            self.events)
+            self.events,
+            self.audiences)
 
     def _create_lookup_maps(self):
         """ Creates lookup maps to avoid redundant iteration of config objects.  """
@@ -311,37 +422,3 @@ class OptimizelyConfigService(object):
             features_map[feature['key']] = optly_feature
 
         return features_map
-
-    def get_attributes_map(self):
-        """ Gets attributes map for the project config.
-
-        Returns:
-            dict -- Attribute key, OptimizelyAttribute map
-        """
-
-        attributes_map = {}
-
-        for attribute in self.attributes:
-            optly_attribute = OptimizelyAttribute(
-                attribute['id'], attribute['key']
-            )
-            attributes_map[attribute['key']] = optly_attribute
-
-        return attributes_map
-
-    def get_events_map(self):
-        """ Gets events map for the project config.
-
-        Returns:
-            dict -- Event key, OptimizelyEvent map
-        """
-
-        events_map = {}
-
-        for event in self.events:
-            optly_event = OptimizelyEvent(
-                event['id'], event['key'], event.get('experimentIds', [])
-            )
-            events_map[event['key']] = optly_event
-
-        return events_map

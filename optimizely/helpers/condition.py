@@ -26,6 +26,7 @@ class ConditionOperatorTypes(object):
     AND = 'and'
     OR = 'or'
     NOT = 'not'
+    operators = [AND, OR, NOT]
 
 
 class ConditionMatchTypes(object):
