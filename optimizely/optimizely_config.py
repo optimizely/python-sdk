@@ -166,9 +166,8 @@ class OptimizelyConfigService(object):
 
         for old_audience in project_config.audiences:
             # check if old_audience.id exists in new_audiences.id from typed_audiences
-            if len([new_audience for new_audience in typed_audiences 
-                if new_audience.get('id') == old_audience.get('id')]) == 0:
-                    
+            if len([new_audience for new_audience in typed_audiences
+                    if new_audience.get('id') == old_audience.get('id')]) == 0:
                 if old_audience.get('id') == "$opt_dummy_audience":
                     continue
                 else:

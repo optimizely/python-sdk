@@ -899,17 +899,17 @@ class OptimizelyConfigTest(base.BaseTest):
                     'name': 'Test_Audience',
                     'id': '1234',
                     'conditions': [
-                        ["and", 
-                            ["or", 
-                                ["or", 
+                        ["and",
+                            ["or",
+                                ["or",
                                     {
-                                    "name": "test_attribute", 
-                                    "type": "custom_attribute", 
-                                    "value": "test_value_1"
+                                        "name": "test_attribute",
+                                        "type": "custom_attribute",
+                                        "value": "test_value_1"
                                     }
-                                ]
-                            ]
-                        ]
+                                 ]
+                             ]
+                         ]
                     ]
                 }
             ]
@@ -919,17 +919,17 @@ class OptimizelyConfigTest(base.BaseTest):
                 'name': 'Test_Audience',
                 'id': '1234',
                 'conditions': [
-                        ["and", 
-                            ["or", 
-                                ["or", 
+                        ["and",
+                            ["or",
+                                ["or",
                                     {
-                                        "name": "test_attribute", 
-                                        "type": "custom_attribute", 
+                                        "name": "test_attribute",
+                                        "type": "custom_attribute",
                                         "value": "test_value_1"
                                     }
-                                ]
-                            ]
-                        ]
+                                 ]
+                             ]
+                         ]
                 ]
             }
         ]
@@ -943,7 +943,7 @@ class OptimizelyConfigTest(base.BaseTest):
         '''
 
         experiment = {'audienceConditions': ['and', ['or', '3468206642', '3988293898'], [
-            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']], 
+            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']],
             'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
 
         audience_conditions = experiment.get('audienceConditions')
