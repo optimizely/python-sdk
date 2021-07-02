@@ -30,7 +30,26 @@ class OptimizelyConfigTest(base.BaseTest):
             'environment_key': None,
             'attributes': [{'key': 'test_attribute', 'id': '111094'}],
             'events': [{'key': 'test_event', 'experimentIds': ['111127'], 'id': '111095'}],
-            'audiences': [{'name': 'Test attribute users 1', 'conditions': '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]', 'id': '11154'}, {'name': 'Test attribute users 2', 'conditions': '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]', 'id': '11159'}, {'name': 'Test attribute users 3', 'conditions': '["and", ["or", ["or", {"match": "exact", "name":                         "experiment_attr", "type": "custom_attribute", "value": "group_experiment"}]]]', 'id': '11160'}],
+            'audiences': [
+                {
+                    'name': 'Test attribute users 1',
+                    'conditions': '["and", ["or", ["or", '
+                    '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]',
+                    'id': '11154'
+                },
+                {
+                    'name': 'Test attribute users 2',
+                    'conditions': '["and", ["or", ["or", '
+                    '{"name": "test_attribute", "type": "custom_attribute", "value": "test_value_2"}]]]',
+                    'id': '11159'
+                },
+                {
+                    'name': 'Test attribute users 3',
+                    'conditions': "[\"and\", [\"or\", [\"or\", {\"match\": \"exact\", \"name\": \
+                        \"experiment_attr\", \"type\": \"custom_attribute\", \"value\": \"group_experiment\"}]]]",
+                    'id': '11160',
+                }
+            ],
             'experiments_map': {
                 'test_experiment2': {
                     'variations_map': {
@@ -899,7 +918,17 @@ class OptimizelyConfigTest(base.BaseTest):
                     'name': 'Test_Audience',
                     'id': '1234',
                     'conditions': [
-                        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]'
+                        ["and",
+                            ["or",
+                                ["or",
+                                    {
+                                        "name": "test_attribute",
+                                        "type": "custom_attribute",
+                                        "value": "test_value_1"
+                                    }
+                                 ]
+                             ]
+                         ]
                     ]
                 }
             ]
@@ -909,7 +938,17 @@ class OptimizelyConfigTest(base.BaseTest):
                 'name': 'Test_Audience',
                 'id': '1234',
                 'conditions': [
-                        '["and", ["or", ["or", {"name": "test_attribute", "type": "custom_attribute", "value": "test_value_1"}]]]'
+                        ["and",
+                            ["or",
+                                ["or",
+                                    {
+                                        "name": "test_attribute",
+                                        "type": "custom_attribute",
+                                        "value": "test_value_1"
+                                    }
+                                 ]
+                             ]
+                         ]
                 ]
             }
         ]
@@ -917,22 +956,23 @@ class OptimizelyConfigTest(base.BaseTest):
         self.assertEqual(expected_value, config.get_audiences())
 
     def test_stringify_conditions(self):
-        ''' 
+        '''
             Test to confirm converting from audienceConditions list to String represented conditions
-            Note* this also test lookup_name_from_id in OptimizelyConfig 
+            Note* this also test lookup_name_from_id in OptimizelyConfig
         '''
 
         experiment = {'audienceConditions': ['and', ['or', '3468206642', '3988293898'], [
-            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']], 'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
+            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']],
+            'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
 
         audience_conditions = experiment.get('audienceConditions')
 
         audiences_map = {
-            '3468206642': 'US',
-            '3988293898': 'FEMALE',
-            '3988293899': 'MALE',
-            '3468206646': 'THEM',
-            '3468206647': 'ANYONE'
+            '3468206642': 'us',
+            '3988293898': 'female',
+            '3988293899': 'male',
+            '3468206646': 'them',
+            '3468206647': 'anyone'
         }
 
         config = optimizely_config.OptimizelyConfig(
@@ -949,7 +989,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         result = config_service.stringify_conditions(audience_conditions, audiences_map)
 
-        expected_result = '(("US" OR "FEMALE") AND ("MALE" OR "THEM" OR "ANYONE" OR "3468206644" OR "3468206643"))'
+        expected_result = '(("us" OR "female") AND ("male" OR "them" OR "anyone" OR "3468206644" OR "3468206643"))'
 
         self.assertEqual(result, expected_result)
 
