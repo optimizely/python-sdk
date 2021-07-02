@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import copy
-from optimizely.helpers.condition import ConditionOperatorTypes
+from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
 
