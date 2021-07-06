@@ -28,6 +28,7 @@ class OptimizelyConfigTest(base.BaseTest):
         self.expected_config = {
             'sdk_key': None,
             'environment_key': None,
+            'delivery_rules': [],
             'attributes': [{'key': 'test_attribute', 'id': '111094'}],
             'events': [{'key': 'test_event', 'experiment_ids': ['111127'], 'id': '111095'}],
             'audiences': [
@@ -1291,3 +1292,31 @@ class OptimizelyConfigTest(base.BaseTest):
             self.assertIsInstance(audience, optimizely_config.OptimizelyAudience)
 
         self.assertEqual(len(config_service.audiences), TOTAL_AUDEINCES_ONCE_MERGED)
+
+    def test__get_delivery_rules(self):
+        base_test = base.BaseTest()
+        base_test.setUp()
+        config_dict = base_test.config_dict_with_features
+
+        proj_conf = project_config.ProjectConfig(
+            json.dumps(config_dict),
+            logger=None,
+            error_handler=None
+        )
+
+        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
+
+        config = config_service.get_config()
+
+        for rule in config.get_delivery_rules():
+            self.assertIsInstance(rule, optimizely_config.OptimizelyAudience)
+
+        experiments_list = []
+
+        for rollout in config_service.rollouts:
+            experiments = rollout.get('experiments_map')
+            if experiments:
+                for exp in experiments:
+                    experiments_list.append(exp)
+
+        self.assertEqual(len(config.get_delivery_rules()), len(experiments_list))

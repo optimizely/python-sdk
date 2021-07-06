@@ -15,11 +15,13 @@ import copy
 from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
+from optimizely import project_config
 
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
-                 sdk_key=None, environment_key=None, attributes=None, events=None, audiences=None):
+                 sdk_key=None, environment_key=None, attributes=None, events=None,
+                 audiences=None, delivery_rules=None):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
@@ -29,6 +31,7 @@ class OptimizelyConfig(object):
         self.attributes = attributes or []
         self.events = events or []
         self.audiences = audiences or []
+        self.delivery_rules = delivery_rules or []
 
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
@@ -77,6 +80,14 @@ class OptimizelyConfig(object):
             A list of audiences.
         """
         return self.audiences
+
+    def get_delivery_rules(self):
+        """ Get the delivery rules list associated with OptimizelyConfig
+
+        Returns:
+            List of OptimizelyExperiments as DeliveryRules from Rollouts
+        """
+        return self.delivery_rules
 
 
 class OptimizelyExperiment(object):
@@ -154,6 +165,7 @@ class OptimizelyConfigService(object):
         self.environment_key = project_config.environment_key
         self.attributes = project_config.attributes
         self.events = project_config.events
+        self.rollouts = project_config.rollouts
 
         self._create_lookup_maps()
 
@@ -313,7 +325,9 @@ class OptimizelyConfigService(object):
             self.environment_key,
             self._get_attributes_list(self.attributes),
             self._get_events_list(self.events),
-            self.audiences)
+            self.audiences,
+            self._get_delivery_rules(self.rollouts)
+        )
 
     def _create_lookup_maps(self):
         """ Creates lookup maps to avoid redundant iteration of config objects.  """
@@ -457,6 +471,33 @@ class OptimizelyConfigService(object):
             features_map[feature['key']] = optly_feature
 
         return features_map
+
+    def _get_delivery_rules(self, rollouts):
+        """ Gets an array of rollouts for the project config
+
+        returns:
+            an array of OptimizelyExperiments as delivery rules
+        """
+        # Return list for delivery rules
+        delivery_rules = []
+        # Audiences map to use for updating experiments with new audience conditions string
+        audiences_map = {}
+
+        # Build map from OptimizelyAudience array
+        for optly_audience in self.audiences:
+            audiences_map[optly_audience.id] = optly_audience.name
+
+        for rollout in rollouts:
+            experiments = rollout.get('experiments_map')
+            if experiments:
+                for experiment in experiments:
+                    optly_exp = OptimizelyExperiment(
+                        experiment['id'], experiment['key'], self._get_variations_map(experiment)
+                    )
+                    self.update_experiment(optly_exp, experiment.get('audienceConditions', []), audiences_map)
+                    delivery_rules.append(optly_exp)
+
+        return delivery_rules
 
     def _get_attributes_list(self, attributes):
         """ Gets attributes list for the project config
