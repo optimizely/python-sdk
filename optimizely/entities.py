@@ -53,7 +53,6 @@ class Experiment(BaseEntity):
         audienceConditions=None,
         groupId=None,
         groupPolicy=None,
-        audiences=None,
         **kwargs
     ):
         self.id = id
@@ -67,7 +66,6 @@ class Experiment(BaseEntity):
         self.layerId = layerId
         self.groupId = groupId
         self.groupPolicy = groupPolicy
-        self.audiences = audiences
 
     def get_audience_conditions_or_ids(self):
         """ Returns audienceConditions if present, otherwise audienceIds. """

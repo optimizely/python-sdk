@@ -162,33 +162,32 @@ class OptimizelyConfigService(object):
             The typed_audiences has higher presidence.
         '''
 
-        typed_audiences = project_config.typed_audiences or []
+        typed_audiences = project_config.typed_audiences.copy()
+        optly_typed_audiences = []
+        for typed_audience in typed_audiences:
+            optly_audience = OptimizelyAudience(
+                typed_audience.get('id'),
+                typed_audience.get('name'),
+                typed_audience.get('conditions')
+            )
+            optly_typed_audiences.append(optly_audience)
 
         for old_audience in project_config.audiences:
             # check if old_audience.id exists in new_audiences.id from typed_audiences
-            if len([new_audience for new_audience in typed_audiences
+            if len([new_audience for new_audience in project_config.typed_audiences
                     if new_audience.get('id') == old_audience.get('id')]) == 0:
                 if old_audience.get('id') == "$opt_dummy_audience":
                     continue
                 else:
-                    typed_audiences.append(old_audience)
+                    # Convert audiences array to OptimizelyAudience array
+                    optly_audience = OptimizelyAudience(
+                        old_audience.get('id'),
+                        old_audience.get('name'),
+                        old_audience.get('conditions')
+                    )
+                    optly_typed_audiences.append(optly_audience)
 
-        self.audiences = typed_audiences
-
-        audiences_map = {}
-
-        for audience in self.audiences:
-            audiences_map[audience.get('id')] = audience.get('name')
-
-        # Updating each OptimizelyExperiment based on the ID from entities.Experiment found in the experiment_key_map
-        for ent_exp in project_config.experiment_key_map.values():
-            experiments_by_key, experiments_by_id = self._get_experiments_maps()
-            try:
-                optly_experiment = experiments_by_id[ent_exp.id]
-                self.update_experiment(optly_experiment, ent_exp.audienceConditions, audiences_map)
-            except KeyError:
-                # ID not in map
-                continue
+        self.audiences = optly_typed_audiences
 
     def update_experiment(self, experiment, conditions, audiences_map):
         '''
@@ -243,7 +242,7 @@ class OptimizelyConfigService(object):
         '''
         ARGS = ConditionOperatorTypes.operators
         condition = ""
-        ret = "("
+        ret = ""
         length = len(conditions)
 
         if length == 0:
@@ -254,20 +253,33 @@ class OptimizelyConfigService(object):
             '''
             audience_name = self.lookup_name_from_id(conditions[0], audiences_map)
 
-            return audience_name
+            return '"' + audience_name + '"'
 
-        if length > 1:
+        if length == 2:
+            if conditions[0] in ARGS:
+                condition = conditions[0]
+                audience_name = self.lookup_name_from_id(conditions[1], audiences_map)
+                return condition.upper() + ' "' + audience_name + '"'
+            else:
+                condition = 'OR'
+                return ('"' + self.lookup_name_from_id(conditions[0], audiences_map) + '" '
+                        + condition.upper() + ' "'
+                        + self.lookup_name_from_id(conditions[1], audiences_map) + '"')
+
+        if length > 2:
             for i in range(length):
                 if conditions[i] in ARGS:
                     condition = conditions[i]
                 else:
+                    if condition == "":
+                        condition = 'OR'
                     if type(conditions[i]) == list:
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
-                            ret += self.stringify_conditions(conditions[i],
-                                                             audiences_map) + ' ' + condition.upper() + ' '
+                            ret += '(' + self.stringify_conditions(conditions[i],
+                                                                   audiences_map) + ') ' + condition.upper() + ' '
                         else:
-                            ret += self.stringify_conditions(conditions[i], audiences_map)
+                            ret += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
                         # Handle ID's here - Lookup name based on ID
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
@@ -277,7 +289,7 @@ class OptimizelyConfigService(object):
                             else:
                                 ret += '"' + audience_name + '"'
 
-        return ret + ")"
+        return ret + ""
 
     def get_config(self):
         """ Gets instance of OptimizelyConfig
@@ -299,8 +311,8 @@ class OptimizelyConfigService(object):
             self._datafile,
             self.sdk_key,
             self.environment_key,
-            self.attributes,
-            self.events,
+            self._get_attributes_list(self.attributes),
+            self._get_events_list(self.events),
             self.audiences)
 
     def _create_lookup_maps(self):
@@ -389,7 +401,8 @@ class OptimizelyConfigService(object):
         return experiments
 
     def _get_experiments_maps(self):
-        """ Gets maps for all the experiments in the project config.
+        """ Gets maps for all the experiments in the project config and 
+        updates the experiment with updated experiment audiences string.
 
         Returns:
             dict, dict -- experiment key/id to OptimizelyExperiment maps.
@@ -398,12 +411,20 @@ class OptimizelyConfigService(object):
         experiments_key_map = {}
         # Id map comes in handy to figure out feature experiment.
         experiments_id_map = {}
+        # Audiences map to use for updating experiments with new audience conditions string
+        audiences_map = {}
+
+        # Build map from OptimizelyAudience array
+        for optly_audience in self.audiences:
+            audiences_map[optly_audience.id] = optly_audience.name
 
         all_experiments = self._get_all_experiments()
         for exp in all_experiments:
             optly_exp = OptimizelyExperiment(
                 exp['id'], exp['key'], self._get_variations_map(exp)
             )
+            # Updating each OptimizelyExperiment based on the ID from entities.Experiment found in the experiment_key_map
+            self.update_experiment(optly_exp, exp.get('audienceConditions', []), audiences_map)
 
             experiments_key_map[exp['key']] = optly_exp
             experiments_id_map[exp['id']] = optly_exp
@@ -436,3 +457,38 @@ class OptimizelyConfigService(object):
             features_map[feature['key']] = optly_feature
 
         return features_map
+
+    def _get_attributes_list(self, attributes):
+        """ Gets attributes list for the project config
+
+        Returns:
+            List - OptimizelyAttributes
+        """
+        attributes_list = []
+
+        for attribute in attributes:
+            optly_attribute = OptimizelyAttribute(
+                attribute['id'],
+                attribute['key']
+            )
+            attributes_list.append(optly_attribute)
+
+        return attributes_list
+
+    def _get_events_list(self, events):
+        """ Gets events list for the project_config
+
+        Returns:
+            List - OptimizelyEvents
+        """
+        events_list = []
+
+        for event in events:
+            optly_event = OptimizelyEvent(
+                event['id'],
+                event['key'],
+                event['experimentIds']
+            )
+            events_list.append(optly_event)
+
+        return events_list
