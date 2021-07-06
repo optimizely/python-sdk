@@ -273,8 +273,8 @@ class OptimizelyConfigService(object):
                 return condition.upper() + ' "' + audience_name + '"'
             else:
                 condition = 'OR'
-                return ('"' + self.lookup_name_from_id(conditions[0], audiences_map)
-                        + '" ' + condition.upper() + ' "' + self.lookup_name_from_id(conditions[1], audiences_map) + '"')
+                return ('"' + self.lookup_name_from_id(conditions[0], audiences_map) + '" ' +
+                    condition.upper() + ' "' + self.lookup_name_from_id(conditions[1], audiences_map) + '"')
 
         if length > 2:
             for i in range(length):
@@ -435,7 +435,7 @@ class OptimizelyConfigService(object):
             optly_exp = OptimizelyExperiment(
                 exp['id'], exp['key'], self._get_variations_map(exp)
             )
-            # Updating each OptimizelyExperiment based on the ID from entities.Experiment found in the experiment_key_map
+            # Updating each OptimizelyExperiment
             self.update_experiment(optly_exp, exp.get('audienceConditions', []), audiences_map)
 
             experiments_key_map[exp['key']] = optly_exp
