@@ -15,7 +15,6 @@ import copy
 from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
-from optimizely import project_config
 
 
 class OptimizelyConfig(object):
@@ -274,9 +273,8 @@ class OptimizelyConfigService(object):
                 return condition.upper() + ' "' + audience_name + '"'
             else:
                 condition = 'OR'
-                return ('"' + self.lookup_name_from_id(conditions[0], audiences_map) + '" '
-                        + condition.upper() + ' "'
-                        + self.lookup_name_from_id(conditions[1], audiences_map) + '"')
+                return ('"' + self.lookup_name_from_id(conditions[0], audiences_map)
+                        + '" ' + condition.upper() + ' "' + self.lookup_name_from_id(conditions[1], audiences_map) + '"')
 
         if length > 2:
             for i in range(length):
@@ -415,7 +413,7 @@ class OptimizelyConfigService(object):
         return experiments
 
     def _get_experiments_maps(self):
-        """ Gets maps for all the experiments in the project config and 
+        """ Gets maps for all the experiments in the project config and
         updates the experiment with updated experiment audiences string.
 
         Returns:
