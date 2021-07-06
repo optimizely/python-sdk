@@ -273,8 +273,9 @@ class OptimizelyConfigService(object):
                 return condition.upper() + ' "' + audience_name + '"'
             else:
                 condition = 'OR'
-                return ('"' + self.lookup_name_from_id(conditions[0], audiences_map) + '" ' +
-                    condition.upper() + ' "' + self.lookup_name_from_id(conditions[1], audiences_map) + '"')
+                name1 = self.lookup_name_from_id(conditions[0], audiences_map)
+                name2 = self.lookup_name_from_id(conditions[1], audiences_map)
+                return ('"' + name1 + '" ' + condition.upper() + ' "' + name2 + '"')
 
         if length > 2:
             for i in range(length):
