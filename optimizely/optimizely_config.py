@@ -173,7 +173,7 @@ class OptimizelyConfigService(object):
             The typed_audiences has higher presidence.
         '''
 
-        typed_audiences = project_config.typed_audiences.copy()
+        typed_audiences = project_config.typed_audiences[:]
         optly_typed_audiences = []
         for typed_audience in typed_audiences:
             optly_audience = OptimizelyAudience(
