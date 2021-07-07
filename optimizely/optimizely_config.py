@@ -278,15 +278,15 @@ class OptimizelyConfigService(object):
         if length > 2:
             for i in range(length):
                 if conditions[i] in ARGS:
-                    condition = conditions[i]
+                    condition = conditions[i].upper()
                 else:
                     if condition == "":
                         condition = 'OR'
                     if type(conditions[i]) == list:
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
-                            conditions_str += ('(' + self.stringify_conditions(conditions[i], audiences_map) +
-                                               ') ' + condition.upper() + ' ')
+                            conditions_str += ('(' + self.stringify_conditions(conditions[i],
+                                                                            audiences_map) + ') ' + condition + ' ')
                         else:
                             conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
@@ -294,7 +294,7 @@ class OptimizelyConfigService(object):
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
                         if audience_name is not None:
                             if i + 1 < length:
-                                conditions_str += '"' + audience_name + '" ' + condition.upper() + ' '
+                                conditions_str += '"' + audience_name + '" ' + condition + ' '
                             else:
                                 conditions_str += '"' + audience_name + '"'
 
