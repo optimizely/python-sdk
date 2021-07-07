@@ -286,7 +286,7 @@ class OptimizelyConfigService(object):
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
                             conditions_str += ('(' + self.stringify_conditions(conditions[i],
-                                                                            audiences_map) + ') ' + condition + ' ')
+                                                                                audiences_map) + ') ' + condition + ' ')
                         else:
                             conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
