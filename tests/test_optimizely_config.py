@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import json
+import unittest
 
 from optimizely import entities, optimizely, project_config
 from optimizely import optimizely_config
@@ -692,6 +693,209 @@ class OptimizelyConfigTest(base.BaseTest):
         self.actual_config = self.opt_config_service.get_config()
         self.actual_config_dict = self.to_dict(self.actual_config)
 
+        self.typed_audiences_config = {
+            'version': '2',
+            'rollouts': [],
+            'projectId': '10431130345',
+            'variables': [],
+            'featureFlags': [],
+            'experiments': [
+                {
+                    'status': 'Running',
+                    'key': 'ab_running_exp_untargeted',
+                    'layerId': '10417730432',
+                    'trafficAllocation': [{'entityId': '10418551353', 'endOfRange': 10000}],
+                    'audienceIds': [],
+                    'variations': [
+                        {'variables': [], 'id': '10418551353', 'key': 'all_traffic_variation'},
+                        {'variables': [], 'id': '10418510624', 'key': 'no_traffic_variation'},
+                    ],
+                    'forcedVariations': {},
+                    'id': '10420810910',
+                }
+            ],
+            'audiences': [
+                {
+                    'id': '3468206642',
+                    'name': 'exactString',
+                    'conditions': '["and", ["or", ["or", {"name": "house", '
+                                  '"type": "custom_attribute", "value": "Gryffindor"}]]]',
+                },
+                {
+                    'id': '3988293898',
+                    'name': '$$dummySubstringString',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '3988293899',
+                    'name': '$$dummyExists',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '3468206646',
+                    'name': '$$dummyExactNumber',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '3468206647',
+                    'name': '$$dummyGtNumber',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '3468206644',
+                    'name': '$$dummyLtNumber',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '3468206643',
+                    'name': '$$dummyExactBoolean',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '3468206645',
+                    'name': '$$dummyMultipleCustomAttrs',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+                {
+                    'id': '0',
+                    'name': '$$dummy',
+                    'conditions': '{ "type": "custom_attribute", '
+                                  '"name": "$opt_dummy_attribute", "value": "impossible_value" }',
+                },
+            ],
+            'typedAudiences': [
+                {
+                    'id': '3988293898',
+                    'name': 'substringString',
+                    'conditions': [
+                        'and',
+                        [
+                            'or',
+                            [
+                                'or',
+                                {
+                                    'name': 'house',
+                                    'type': 'custom_attribute',
+                                    'match': 'substring',
+                                    'value': 'Slytherin',
+                                },
+                            ],
+                        ],
+                    ],
+                },
+                {
+                    'id': '3988293899',
+                    'name': 'exists',
+                    'conditions': [
+                        'and',
+                        [
+                            'or',
+                            ['or', {'name': 'favorite_ice_cream', 'type': 'custom_attribute', 'match': 'exists'}],
+                        ],
+                    ],
+                },
+                {
+                    'id': '3468206646',
+                    'name': 'exactNumber',
+                    'conditions': [
+                        'and',
+                        [
+                            'or',
+                            ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'exact', 'value': 45.5}],
+                        ],
+                    ],
+                },
+                {
+                    'id': '3468206647',
+                    'name': 'gtNumber',
+                    'conditions': [
+                        'and',
+                        ['or', ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'gt', 'value': 70}]],
+                    ],
+                },
+                {
+                    'id': '3468206644',
+                    'name': 'ltNumber',
+                    'conditions': [
+                        'and',
+                        ['or', ['or', {'name': 'lasers', 'type': 'custom_attribute', 'match': 'lt', 'value': 1.0}]],
+                    ],
+                },
+                {
+                    'id': '3468206643',
+                    'name': 'exactBoolean',
+                    'conditions': [
+                        'and',
+                        [
+                            'or',
+                            [
+                                'or',
+                                {'name': 'should_do_it', 'type': 'custom_attribute', 'match': 'exact', 'value': True},
+                            ],
+                        ],
+                    ],
+                },
+                {
+                    'id': '3468206645',
+                    'name': 'multiple_custom_attrs',
+                    'conditions': [
+                        "and",
+                        [
+                            "or",
+                            [
+                                "or",
+                                {"type": "custom_attribute", "name": "browser", "value": "chrome"},
+                                {"type": "custom_attribute", "name": "browser", "value": "firefox"},
+                            ],
+                        ],
+                    ],
+                },
+                {
+                    "id": "18278344267",
+                    "name": "semverReleaseLt1.2.3Gt1.0.0",
+                    "conditions": [
+                        "and",
+                        [
+                            "or",
+                            [
+                                "or",
+                                {
+                                    "value": "1.2.3",
+                                    "type": "custom_attribute",
+                                    "name": "android-release",
+                                    "match": "semver_lt"
+                                }
+                            ]
+                        ],
+                        [
+                            "or",
+                            [
+                                "or",
+                                {
+                                    "value": "1.0.0",
+                                    "type": "custom_attribute",
+                                    "name": "android-release",
+                                    "match": "semver_gt"
+                                }
+                            ]
+                        ]
+                    ]
+                }
+            ],
+            'groups': [],
+            'attributes': [],
+            'accountId': '10367498574',
+            'events': [{'experimentIds': ['10420810910'], 'id': '10404198134', 'key': 'winning'}],
+            'revision': '1337',
+        }
+
     def to_dict(self, obj):
         return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
 
@@ -906,9 +1110,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
     def test_get_audiences(self):
         ''' Test to confirm get_audiences returns proper value '''
-        base_test = base.BaseTest()
-        base_test.setUp()
-        config_dict = base_test.config_dict_with_typed_audiences
+        config_dict = self.typed_audiences_config
 
         proj_conf = project_config.ProjectConfig(
             json.dumps(config_dict),
@@ -1274,9 +1476,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
     def test_optimizely_audience_conversion(self):
         ''' Test to confirm that audience conversion works and has expected output '''
-        base_test = base.BaseTest()
-        base_test.setUp()
-        config_dict = base_test.config_dict_with_typed_audiences
+        config_dict = self.typed_audiences_config
 
         TOTAL_AUDEINCES_ONCE_MERGED = 10
 
@@ -1294,9 +1494,7 @@ class OptimizelyConfigTest(base.BaseTest):
         self.assertEqual(len(config_service.audiences), TOTAL_AUDEINCES_ONCE_MERGED)
 
     def test__get_delivery_rules(self):
-        base_test = base.BaseTest()
-        base_test.setUp()
-        config_dict = base_test.config_dict_with_features
+        config_dict = self.typed_audiences_config
 
         proj_conf = project_config.ProjectConfig(
             json.dumps(config_dict),
