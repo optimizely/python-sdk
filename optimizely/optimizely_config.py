@@ -190,7 +190,7 @@ class OptimizelyConfigService(object):
                 if old_audience.get('id') == "$opt_dummy_audience":
                     continue
                 else:
-                    # Convert audiences array to OptimizelyAudience array
+                    # Convert audiences lists to OptimizelyAudience array
                     optly_audience = OptimizelyAudience(
                         old_audience.get('id'),
                         old_audience.get('name'),
@@ -253,15 +253,13 @@ class OptimizelyConfigService(object):
         '''
         ARGS = ConditionOperatorTypes.operators
         condition = ""
-        ret = ""
+        conditions_str = ""
         length = len(conditions)
 
         if length == 0:
             return
         if length == 1:
-            '''
-                Lookup ID and replace with name
-            '''
+            #Lookup ID and replace with name
             audience_name = self.lookup_name_from_id(conditions[0], audiences_map)
 
             return '"' + audience_name + '"'
@@ -287,20 +285,20 @@ class OptimizelyConfigService(object):
                     if type(conditions[i]) == list:
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
-                            ret += '(' + self.stringify_conditions(conditions[i],
+                            conditions_str += '(' + self.stringify_conditions(conditions[i],
                                                                    audiences_map) + ') ' + condition.upper() + ' '
                         else:
-                            ret += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
+                            conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
-                        # Handle ID's here - Lookup name based on ID
+                        # Handle IDs here - Lookup name based on ID
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
                         if audience_name is not None:
                             if i + 1 < length:
-                                ret += '"' + audience_name + '" ' + condition.upper() + ' '
+                                conditions_str += '"' + audience_name + '" ' + condition.upper() + ' '
                             else:
-                                ret += '"' + audience_name + '"'
+                                conditions_str += '"' + audience_name + '"'
 
-        return ret + ""
+        return conditions_str + ""
 
     def get_config(self):
         """ Gets instance of OptimizelyConfig

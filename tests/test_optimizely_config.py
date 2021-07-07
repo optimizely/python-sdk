@@ -1299,7 +1299,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
     def test_stringify_conditions_one_id(self):
         '''
-            TTest to confirm a single ID is handled properly by stringify_conditions functions
+            Test to confirm a single ID is handled properly by stringify_conditions functions
         '''
 
         experiment = {'audienceConditions': ['3468206642'],
