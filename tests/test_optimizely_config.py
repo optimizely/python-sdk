@@ -1431,16 +1431,13 @@ class OptimizelyConfigTest(base.BaseTest):
 
     def test_update_experiment(self):
         ''' Test that OptimizelyExperiment updates with proper conditions for audiences '''
-        ent_experiment = entities.Experiment(
+
+        audience_conditions=['and', ['or', '432', '321'], '543']
+
+        optly_experiment = optimizely_config.OptimizelyExperiment(
             '12345',
             'test_update_experiment',
-            'Running',
-            variations=None,
-            forcedVariations=None,
-            trafficAllocation=None,
-            layerId=None,
-            audienceIds=['432', '321', '543'],
-            audienceConditions=['and', ['or', '432', '321'], '543']
+            variations_map={}
         )
 
         audiences_map = {
@@ -1449,29 +1446,22 @@ class OptimizelyConfigTest(base.BaseTest):
             '543': 'adult'
         }
 
-        update_experiment = optimizely_config.OptimizelyExperiment(
-            '12345',
-            'test_update_experiment',
-            variations_map={}
-        )
-
         config = optimizely_config.OptimizelyConfig(
             revision='101',
-            experiments_map={},
+            experiments_map={optly_experiment.id: optly_experiment},
             features_map={},
             environment_key='TestEnvironmentKey',
             attributes={},
             events={},
-            audiences=None
         )
 
         config_service = optimizely_config.OptimizelyConfigService(config)
 
-        config_service.update_experiment(update_experiment, ent_experiment.audienceConditions, audiences_map)
+        config_service.update_experiment(optly_experiment, audience_conditions, audiences_map)
 
         expected_value = '("us" OR "female") AND "adult"'
 
-        self.assertEqual(update_experiment.audiences, expected_value)
+        self.assertEqual(optly_experiment.audiences, expected_value)
 
     def test_optimizely_audience_conversion(self):
         ''' Test to confirm that audience conversion works and has expected output '''
