@@ -259,7 +259,7 @@ class OptimizelyConfigService(object):
         if length == 0:
             return
         if length == 1:
-            #Lookup ID and replace with name
+            # Lookup ID and replace with name
             audience_name = self.lookup_name_from_id(conditions[0], audiences_map)
 
             return '"' + audience_name + '"'
@@ -286,7 +286,7 @@ class OptimizelyConfigService(object):
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
                             conditions_str += '(' + self.stringify_conditions(conditions[i],
-                                                                   audiences_map) + ') ' + condition.upper() + ' '
+                                                                                audiences_map) + ') ' + condition.upper() + ' '
                         else:
                             conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
