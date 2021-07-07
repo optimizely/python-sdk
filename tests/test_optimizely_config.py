@@ -13,7 +13,7 @@
 
 import json
 
-from optimizely import entities, optimizely, project_config
+from optimizely import optimizely, project_config
 from optimizely import optimizely_config
 from . import base
 
@@ -1432,7 +1432,7 @@ class OptimizelyConfigTest(base.BaseTest):
     def test_update_experiment(self):
         ''' Test that OptimizelyExperiment updates with proper conditions for audiences '''
 
-        audience_conditions=['and', ['or', '432', '321'], '543']
+        audience_conditions = ['and', ['or', '432', '321'], '543']
 
         optly_experiment = optimizely_config.OptimizelyExperiment(
             '12345',
