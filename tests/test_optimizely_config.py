@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import json
-import unittest
 
 from optimizely import entities, optimizely, project_config
 from optimizely import optimizely_config
