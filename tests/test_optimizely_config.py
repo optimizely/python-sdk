@@ -1507,8 +1507,8 @@ class OptimizelyConfigTest(base.BaseTest):
                     experiments_list.append(exp)
 
         self.assertEqual(len(config.get_delivery_rules()), len(experiments_list))
-    
-    def test__get_dvariations_from_experiment(self):
+
+    def test_get_variations_from_experiments_map(self):
         config_dict = self.typed_audiences_config
 
         proj_conf = project_config.ProjectConfig(
