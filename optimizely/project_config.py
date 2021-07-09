@@ -590,8 +590,8 @@ class ProjectConfig(object):
                 The variation for the experiment id and variation key
                 or empty dict if not found
         """
-        if (experiment_id in self.variation_key_map_by_experiment_id
-                and variation_key in self.variation_key_map_by_experiment_id[experiment_id]):
+        if (experiment_id in self.variation_key_map_by_experiment_id and 
+                variation_key in self.variation_key_map_by_experiment_id[experiment_id]):
             return self.variation_key_map_by_experiment_id[experiment_id][variation_key]
 
         self.logger.error('Variation with key "%s" not defined in the datafile for experiment "%s".',
