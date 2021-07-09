@@ -68,7 +68,7 @@ class ProjectConfig(object):
 
         # Utility maps for quick lookup
         self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
-        self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
+        self.experiment_id_map = self._generate_key_map(self.experiments, 'id', entities.Experiment)
         self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
         self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
 
@@ -84,24 +84,24 @@ class ProjectConfig(object):
         self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
         for layer in self.rollout_id_map.values():
             for experiment in layer.experiments:
-                self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
+                self.experiment_id_map[experiment['id']] = entities.Experiment(**experiment)
 
         self.audience_id_map = self._deserialize_audience(self.audience_id_map)
         for group in self.group_id_map.values():
-            experiments_in_group_key_map = self._generate_key_map(group.experiments, 'key', entities.Experiment)
-            for experiment in experiments_in_group_key_map.values():
+            experiments_in_group_id_map = self._generate_key_map(group.experiments, 'id', entities.Experiment)
+            for experiment in experiments_in_group_id_map.values():
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
-            self.experiment_key_map.update(experiments_in_group_key_map)
+            self.experiment_id_map.update(experiments_in_group_id_map)
 
-        self.experiment_id_map = {}
+        self.experiment_key_map = {}
         self.variation_key_map = {}
         self.variation_id_map = {}
         self.variation_variable_usage_map = {}
         self.variation_id_map_by_experiment_id = {}
         self.variation_key_map_by_experiment_id = {}
 
-        for experiment in self.experiment_key_map.values():
-            self.experiment_id_map[experiment.id] = experiment
+        for experiment in self.experiment_id_map.values():
+            self.experiment_key_map[experiment.key] = experiment
             self.variation_key_map[experiment.key] = self._generate_key_map(
                 experiment.variations, 'key', entities.Variation
             )
