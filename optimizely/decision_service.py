@@ -342,7 +342,7 @@ class DecisionService(object):
         if rollout and len(rollout.experiments) > 0:
             for idx in range(len(rollout.experiments) - 1):
                 logging_key = str(idx + 1)
-                rollout_rule = project_config.get_experiment_from_key(rollout.experiments[idx].get('key'))
+                rollout_rule = project_config.get_experiment_from_id(rollout.experiments[idx].get('id'))
 
                 # Check if user meets audience conditions for targeting rule
                 audience_conditions = rollout_rule.get_audience_conditions_or_ids()
@@ -387,7 +387,7 @@ class DecisionService(object):
                     break
 
             # Evaluate last rule i.e. "Everyone Else" rule
-            everyone_else_rule = project_config.get_experiment_from_key(rollout.experiments[-1].get('key'))
+            everyone_else_rule = project_config.get_experiment_from_id(rollout.experiments[-1].get('id'))
             audience_conditions = everyone_else_rule.get_audience_conditions_or_ids()
             audience_eval, audience_reasons = audience_helper.does_user_meet_audience_conditions(
                 project_config,
