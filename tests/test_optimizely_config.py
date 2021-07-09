@@ -1429,7 +1429,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         self.assertEqual(result, expected_result)
 
-    def test_update_experiment(self):
+    def test_replace_ids_with_names(self):
         ''' Test that OptimizelyExperiment updates with proper conditions for audiences '''
 
         audience_conditions = ['and', ['or', '432', '321'], '543']
@@ -1457,8 +1457,8 @@ class OptimizelyConfigTest(base.BaseTest):
 
         config_service = optimizely_config.OptimizelyConfigService(config)
 
-        config_service.update_experiment(optly_experiment, audience_conditions, audiences_map)
-
+        audiences = config_service.replace_ids_with_names(audience_conditions, audiences_map)
+        optly_experiment.audiences = audiences
         expected_value = '("us" OR "female") AND "adult"'
 
         self.assertEqual(optly_experiment.audiences, expected_value)
