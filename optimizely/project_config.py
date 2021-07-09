@@ -17,6 +17,7 @@ from .helpers import condition as condition_helper
 from .helpers import enums
 from . import entities
 from . import exceptions
+import copy
 
 SUPPORTED_VERSIONS = [
     enums.DatafileVersions.V2,
@@ -56,6 +57,7 @@ class ProjectConfig(object):
         self.environment_key = config.get('environmentKey', None)
         self.groups = config.get('groups', [])
         self.experiments = config.get('experiments', [])
+        self.mapexperiment = copy.deepcopy(self.experiments)
         self.events = config.get('events', [])
         self.attributes = config.get('attributes', [])
         self.audiences = config.get('audiences', [])
@@ -68,6 +70,7 @@ class ProjectConfig(object):
 
         # Utility maps for quick lookup
         self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
+        self.experimentID_map = self._generate_key_map(self.mapexperiment, 'id', entities.Experiment)
         self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
         self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
         self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
@@ -85,6 +88,7 @@ class ProjectConfig(object):
         for layer in self.rollout_id_map.values():
             for experiment in layer.experiments:
                 self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
+                self.experimentID_map[experiment['id']] = entities.Experiment(**experiment)
 
         self.audience_id_map = self._deserialize_audience(self.audience_id_map)
         for group in self.group_id_map.values():
@@ -92,11 +96,16 @@ class ProjectConfig(object):
             for experiment in experiments_in_group_key_map.values():
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
             self.experiment_key_map.update(experiments_in_group_key_map)
+            experiments_in_group_id_map = self._generate_key_map(group.experiments, 'id', entities.Experiment)
+            for experiment in experiments_in_group_id_map.values():
+                experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
+            self.experiment_key_map.update(experiments_in_group_id_map)
 
         self.experiment_id_map = {}
         self.variation_key_map = {}
         self.variation_id_map = {}
         self.variation_variable_usage_map = {}
+
         for experiment in self.experiment_key_map.values():
             self.experiment_id_map[experiment.id] = experiment
             self.variation_key_map[experiment.key] = self._generate_key_map(
@@ -108,6 +117,26 @@ class ProjectConfig(object):
                 self.variation_variable_usage_map[variation.id] = self._generate_key_map(
                     variation.variables, 'id', entities.Variation.VariableUsage
                 )
+        self.correct_variation_id_map = {}
+        self.temp_variation_id_map = {}
+        for experiment in self.experimentID_map.values():
+            self.temp_variation_id_map[experiment.id] = self._generate_key_map(
+                experiment.variations, 'id', entities.Variation
+            )
+            self.correct_variation_id_map[experiment.id] = {}
+            for variation in self.temp_variation_id_map.get(experiment.id).values():
+                self.correct_variation_id_map[experiment.id][variation.id] = variation
+                self.variation_variable_usage_map[variation.id] = self._generate_key_map(
+                    variation.variables, 'id', entities.Variation.VariableUsage
+                )
+
+
+
+
+
+
+
+
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
@@ -280,8 +309,8 @@ class ProjectConfig(object):
             Experiment corresponding to the provided experiment ID.
         """
 
-        experiment = self.experiment_id_map.get(experiment_id)
-
+        # experiment = self.experiment_id_map.get(experiment_id)
+        experiment = self.experimentID_map.get(experiment_id)
         if experiment:
             return experiment
 
@@ -362,8 +391,8 @@ class ProjectConfig(object):
             Object representing the variation.
         """
 
-        variation_map = self.variation_id_map.get(experiment_key)
-
+        #variation_map = self.variation_id_map.get(experiment_key)
+        variation_map = self.correct_variation_id_map.get(experiment_key)
         if variation_map:
             variation = variation_map.get(variation_id)
             if variation:

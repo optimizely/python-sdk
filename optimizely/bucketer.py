@@ -142,7 +142,7 @@ class Bucketer(object):
         variation_id = self.find_bucket(project_config, bucketing_id,
                                         experiment.id, experiment.trafficAllocation)
         if variation_id:
-            variation = project_config.get_variation_from_id(experiment.key, variation_id)
+            variation = project_config.get_variation_from_id(experiment.id, variation_id)
             return variation, decide_reasons
 
         else:

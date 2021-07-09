@@ -21,7 +21,6 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .user_profile import UserProfile
 
-
 Decision = namedtuple('Decision', 'experiment variation source')
 
 
@@ -342,8 +341,8 @@ class DecisionService(object):
         if rollout and len(rollout.experiments) > 0:
             for idx in range(len(rollout.experiments) - 1):
                 logging_key = str(idx + 1)
-                rollout_rule = project_config.get_experiment_from_key(rollout.experiments[idx].get('key'))
-
+                rollout_rule = project_config.get_experiment_from_id(rollout.experiments[idx].get('id'))
+                # rollout_rule = optimizely.entities.Experiment(**rollout.experiments[idx])
                 # Check if user meets audience conditions for targeting rule
                 audience_conditions = rollout_rule.get_audience_conditions_or_ids()
                 user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(
