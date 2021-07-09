@@ -1,14 +1,18 @@
-import json
+# Copyright 2021, Optimizely
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
 
-import mock
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from optimizely.decision.optimizely_decision import OptimizelyDecision
-from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
-from optimizely.helpers import enums
 from . import base
-from optimizely import optimizely, decision_service
-from optimizely.optimizely_user_context import OptimizelyUserContext
-from optimizely.user_profile import UserProfileService
 
 
 class SampleSdkTests(base.BaseTest):
@@ -63,5 +67,3 @@ class SampleSdkTests(base.BaseTest):
         print(expected.user_context.user_id, actual.user_context.user_id)
         self.assertEqual(actual.variation_key, expected.variation_key)
         self.assertEqual(actual.rule_key, expected.rule_key)
-
-

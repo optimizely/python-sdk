@@ -342,7 +342,6 @@ class DecisionService(object):
             for idx in range(len(rollout.experiments) - 1):
                 logging_key = str(idx + 1)
                 rollout_rule = project_config.get_experiment_from_id(rollout.experiments[idx].get('id'))
-                # rollout_rule = optimizely.entities.Experiment(**rollout.experiments[idx])
                 # Check if user meets audience conditions for targeting rule
                 audience_conditions = rollout_rule.get_audience_conditions_or_ids()
                 user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(

@@ -1262,205 +1262,204 @@ class BaseTest(unittest.TestCase):
             "revision": "25"
         }
         self.config_test_cases_key = {
-                "version": "4",
-                "rollouts": [
-                    {
-                        "experiments": [
-                            {
-                                "status": "Running",
-                                "audienceConditions": [],
-                                "audienceIds": [],
-                                "variations": [
-                                    {
-                                        "variables": [],
-                                        "id": "5452",
-                                        "key": "on",
-                                        "featureEnabled": True
-                                    }
-                                ],
-                                "forcedVariations": {},
-                                "key": "targeted_delivery",
-                                "layerId": "9300000004981",
-                                "trafficAllocation": [
-                                    {
-                                        "entityId": "5452",
-                                        "endOfRange": 10000
-                                    }
-                                ],
-                                "id": "9300000004981"
-                            },
-                            {
-                                "status": "Running",
-                                "audienceConditions": [],
-                                "audienceIds": [],
-                                "variations": [
-                                    {
-                                        "variables": [],
-                                        "id": "5451",
-                                        "key": "off",
-                                        "featureEnabled": False
-                                    }
-                                ],
-                                "forcedVariations": {},
-                                "key": "default-rollout-2029-20301771717",
-                                "layerId": "default-layer-rollout-2029-20301771717",
-                                "trafficAllocation": [
-                                    {
-                                        "entityId": "5451",
-                                        "endOfRange": 10000
-                                    }
-                                ],
-                                "id": "default-rollout-2029-20301771717"
-                            }
-                        ],
-                        "id": "rollout-2029-20301771717"
-                    },
-                    {
-                        "experiments": [
-                            {
-                                "status": "Running",
-                                "audienceConditions": [],
-                                "audienceIds": [],
-                                "variations": [
-                                    {
-                                        "variables": [],
-                                        "id": "5450",
-                                        "key": "on",
-                                        "featureEnabled": True
-                                    }
-                                ],
-                                "forcedVariations": {},
-                                "key": "targeted_delivery",
-                                "layerId": "9300000004979",
-                                "trafficAllocation": [
-                                    {
-                                        "entityId": "5450",
-                                        "endOfRange": 10000
-                                    }
-                                ],
-                                "id": "9300000004979"
-                            },
-                            {
-                                "status": "Running",
-                                "audienceConditions": [],
-                                "audienceIds": [],
-                                "variations": [
-                                    {
-                                        "variables": [],
-                                        "id": "5449",
-                                        "key": "off",
-                                        "featureEnabled": False
-                                    }
-                                ],
-                                "forcedVariations": {},
-                                "key": "default-rollout-2028-20301771717",
-                                "layerId": "default-layer-rollout-2028-20301771717",
-                                "trafficAllocation": [
-                                    {
-                                        "entityId": "5449",
-                                        "endOfRange": 10000
-                                    }
-                                ],
-                                "id": "default-rollout-2028-20301771717"
-                            }
-                        ],
-                        "id": "rollout-2028-20301771717"
-                    },
-                    {
-                        "experiments": [
-                            {
-                                "status": "Running",
-                                "audienceConditions": [],
-                                "audienceIds": [],
-                                "variations": [
-                                    {
-                                        "variables": [],
-                                        "id": "5448",
-                                        "key": "on",
-                                        "featureEnabled": True
-                                    }
-                                ],
-                                "forcedVariations": {},
-                                "key": "targeted_delivery",
-                                "layerId": "9300000004977",
-                                "trafficAllocation": [
-                                    {
-                                        "entityId": "5448",
-                                        "endOfRange": 10000
-                                    }
-                                ],
-                                "id": "9300000004977"
-                            },
-                            {
-                                "status": "Running",
-                                "audienceConditions": [],
-                                "audienceIds": [],
-                                "variations": [
-                                    {
-                                        "variables": [],
-                                        "id": "5447",
-                                        "key": "off",
-                                        "featureEnabled": False
-                                    }
-                                ],
-                                "forcedVariations": {},
-                                "key": "default-rollout-2027-20301771717",
-                                "layerId": "default-layer-rollout-2027-20301771717",
-                                "trafficAllocation": [
-                                    {
-                                        "entityId": "5447",
-                                        "endOfRange": 10000
-                                    }
-                                ],
-                                "id": "default-rollout-2027-20301771717"
-                            }
-                        ],
-                        "id": "rollout-2027-20301771717"
-                    }
-                ],
-                "typedAudiences": [],
-                "anonymizeIP": True,
-                "projectId": "20286295225",
-                "variables": [],
-                "featureFlags": [
-                    {
-                        "experimentIds": [],
-                        "rolloutId": "rollout-2029-20301771717",
-                        "variables": [],
-                        "id": "2029",
-                        "key": "flag_3"
-                    },
-                    {
-                        "experimentIds": [],
-                        "rolloutId": "rollout-2028-20301771717",
-                        "variables": [],
-                        "id": "2028",
-                        "key": "flag_2"
-                    },
-                    {
-                        "experimentIds": [],
-                        "rolloutId": "rollout-2027-20301771717",
-                        "variables": [],
-                        "id": "2027",
-                        "key": "flag_1"
-                    }
-                ],
-                "experiments": [],
-                "audiences": [
-                    {
-                        "conditions": "[\"or\", {\"match\": \"exact\", \"name\": \"$opt_dummy_attribute\", \"type\": \"custom_attribute\", \"value\": \"$opt_dummy_value\"}]",
-                        "id": "$opt_dummy_audience",
-                        "name": "Optimizely-Generated Audience for Backwards Compatibility"
-                    }
-                ],
-                "groups": [],
-                "attributes": [],
-                "botFiltering": False,
-                "accountId": "19947277778",
-                "events": [],
-                "revision": "11"
-            }
-
+            "version": "4",
+            "rollouts": [
+                {
+                    "experiments": [
+                        {
+                            "status": "Running",
+                            "audienceConditions": [],
+                            "audienceIds": [],
+                            "variations": [
+                                {
+                                    "variables": [],
+                                    "id": "5452",
+                                    "key": "on",
+                                    "featureEnabled": True
+                                }
+                            ],
+                            "forcedVariations": {},
+                            "key": "targeted_delivery",
+                            "layerId": "9300000004981",
+                            "trafficAllocation": [
+                                {
+                                    "entityId": "5452",
+                                    "endOfRange": 10000
+                                }
+                            ],
+                            "id": "9300000004981"
+                        },
+                        {
+                            "status": "Running",
+                            "audienceConditions": [],
+                            "audienceIds": [],
+                            "variations": [
+                                {
+                                    "variables": [],
+                                    "id": "5451",
+                                    "key": "off",
+                                    "featureEnabled": False
+                                }
+                            ],
+                            "forcedVariations": {},
+                            "key": "default-rollout-2029-20301771717",
+                            "layerId": "default-layer-rollout-2029-20301771717",
+                            "trafficAllocation": [
+                                {
+                                    "entityId": "5451",
+                                    "endOfRange": 10000
+                                }
+                            ],
+                            "id": "default-rollout-2029-20301771717"
+                        }
+                    ],
+                    "id": "rollout-2029-20301771717"
+                },
+                {
+                    "experiments": [
+                        {
+                            "status": "Running",
+                            "audienceConditions": [],
+                            "audienceIds": [],
+                            "variations": [
+                                {
+                                    "variables": [],
+                                    "id": "5450",
+                                    "key": "on",
+                                    "featureEnabled": True
+                                }
+                            ],
+                            "forcedVariations": {},
+                            "key": "targeted_delivery",
+                            "layerId": "9300000004979",
+                            "trafficAllocation": [
+                                {
+                                    "entityId": "5450",
+                                    "endOfRange": 10000
+                                }
+                            ],
+                            "id": "9300000004979"
+                        },
+                        {
+                            "status": "Running",
+                            "audienceConditions": [],
+                            "audienceIds": [],
+                            "variations": [
+                                {
+                                    "variables": [],
+                                    "id": "5449",
+                                    "key": "off",
+                                    "featureEnabled": False
+                                }
+                            ],
+                            "forcedVariations": {},
+                            "key": "default-rollout-2028-20301771717",
+                            "layerId": "default-layer-rollout-2028-20301771717",
+                            "trafficAllocation": [
+                                {
+                                    "entityId": "5449",
+                                    "endOfRange": 10000
+                                }
+                            ],
+                            "id": "default-rollout-2028-20301771717"
+                        }
+                    ],
+                    "id": "rollout-2028-20301771717"
+                },
+                {
+                    "experiments": [
+                        {
+                            "status": "Running",
+                            "audienceConditions": [],
+                            "audienceIds": [],
+                            "variations": [
+                                {
+                                    "variables": [],
+                                    "id": "5448",
+                                    "key": "on",
+                                    "featureEnabled": True
+                                }
+                            ],
+                            "forcedVariations": {},
+                            "key": "targeted_delivery",
+                            "layerId": "9300000004977",
+                            "trafficAllocation": [
+                                {
+                                    "entityId": "5448",
+                                    "endOfRange": 10000
+                                }
+                            ],
+                            "id": "9300000004977"
+                        },
+                        {
+                            "status": "Running",
+                            "audienceConditions": [],
+                            "audienceIds": [],
+                            "variations": [
+                                {
+                                    "variables": [],
+                                    "id": "5447",
+                                    "key": "off",
+                                    "featureEnabled": False
+                                }
+                            ],
+                            "forcedVariations": {},
+                            "key": "default-rollout-2027-20301771717",
+                            "layerId": "default-layer-rollout-2027-20301771717",
+                            "trafficAllocation": [
+                                {
+                                    "entityId": "5447",
+                                    "endOfRange": 10000
+                                }
+                            ],
+                            "id": "default-rollout-2027-20301771717"
+                        }
+                    ],
+                    "id": "rollout-2027-20301771717"
+                }
+            ],
+            "typedAudiences": [],
+            "anonymizeIP": True,
+            "projectId": "20286295225",
+            "variables": [],
+            "featureFlags": [
+                {
+                    "experimentIds": [],
+                    "rolloutId": "rollout-2029-20301771717",
+                    "variables": [],
+                    "id": "2029",
+                    "key": "flag_3"
+                },
+                {
+                    "experimentIds": [],
+                    "rolloutId": "rollout-2028-20301771717",
+                    "variables": [],
+                    "id": "2028",
+                    "key": "flag_2"
+                },
+                {
+                    "experimentIds": [],
+                    "rolloutId": "rollout-2027-20301771717",
+                    "variables": [],
+                    "id": "2027",
+                    "key": "flag_1"
+                }
+            ],
+            "experiments": [],
+            "audiences": [
+                {
+                    "conditions": "[\"or\", {\"match\": \"exact\", \"name\": \"$opt_dummy_attribute\", \"type\": \"custom_attribute\", \"value\": \"$opt_dummy_value\"}]",
+                    "id": "$opt_dummy_audience",
+                    "name": "Optimizely-Generated Audience for Backwards Compatibility"
+                }
+            ],
+            "groups": [],
+            "attributes": [],
+            "botFiltering": False,
+            "accountId": "19947277778",
+            "events": [],
+            "revision": "11"
+        }
 
         config = getattr(self, config_dict)
         self.optimizely = optimizely.Optimizely(json.dumps(config))

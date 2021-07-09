@@ -69,26 +69,26 @@ class ProjectConfig(object):
         self.bot_filtering = config.get('botFiltering', None)
 
         # Utility maps for quick lookup
-        self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
-        self.experimentID_map = self._generate_key_map(self.mapexperiment, 'id', entities.Experiment)
+        self.group_id_map = self._generate_id_map(self.groups, 'id', entities.Group)
+        self.experiment_id_map = self._generate_id_map(self.mapexperiment, 'id', entities.Experiment)
         self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
         self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
         self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
 
-        self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
+        self.audience_id_map = self._generate_id_map(self.audiences, 'id', entities.Audience)
 
         # Conditions of audiences in typedAudiences are not expected
         # to be string-encoded as they are in audiences.
         for typed_audience in self.typed_audiences:
             typed_audience['conditions'] = json.dumps(typed_audience['conditions'])
-        typed_audience_id_map = self._generate_key_map(self.typed_audiences, 'id', entities.Audience)
+        typed_audience_id_map = self._generate_id_map(self.typed_audiences, 'id', entities.Audience)
         self.audience_id_map.update(typed_audience_id_map)
 
-        self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
+        self.rollout_id_map = self._generate_id_map(self.rollouts, 'id', entities.Layer)
         for layer in self.rollout_id_map.values():
             for experiment in layer.experiments:
                 self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
-                self.experimentID_map[experiment['id']] = entities.Experiment(**experiment)
+                self.experiment_id_map[experiment['id']] = entities.Experiment(**experiment)
 
         self.audience_id_map = self._deserialize_audience(self.audience_id_map)
         for group in self.group_id_map.values():
@@ -96,7 +96,7 @@ class ProjectConfig(object):
             for experiment in experiments_in_group_key_map.values():
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
             self.experiment_key_map.update(experiments_in_group_key_map)
-            experiments_in_group_id_map = self._generate_key_map(group.experiments, 'id', entities.Experiment)
+            experiments_in_group_id_map = self._generate_id_map(group.experiments, 'id', entities.Experiment)
             for experiment in experiments_in_group_id_map.values():
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
             self.experiment_key_map.update(experiments_in_group_id_map)
@@ -114,29 +114,21 @@ class ProjectConfig(object):
             self.variation_id_map[experiment.key] = {}
             for variation in self.variation_key_map.get(experiment.key).values():
                 self.variation_id_map[experiment.key][variation.id] = variation
-                self.variation_variable_usage_map[variation.id] = self._generate_key_map(
+                self.variation_variable_usage_map[variation.id] = self._generate_id_map(
                     variation.variables, 'id', entities.Variation.VariableUsage
                 )
         self.correct_variation_id_map = {}
         self.temp_variation_id_map = {}
-        for experiment in self.experimentID_map.values():
-            self.temp_variation_id_map[experiment.id] = self._generate_key_map(
+        for experiment in self.experiment_id_map.values():
+            self.temp_variation_id_map[experiment.id] = self._generate_id_map(
                 experiment.variations, 'id', entities.Variation
             )
             self.correct_variation_id_map[experiment.id] = {}
             for variation in self.temp_variation_id_map.get(experiment.id).values():
                 self.correct_variation_id_map[experiment.id][variation.id] = variation
-                self.variation_variable_usage_map[variation.id] = self._generate_key_map(
+                self.variation_variable_usage_map[variation.id] = self._generate_id_map(
                     variation.variables, 'id', entities.Variation.VariableUsage
                 )
-
-
-
-
-
-
-
-
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
@@ -177,6 +169,25 @@ class ProjectConfig(object):
             key_map[obj[key]] = entity_class(**obj)
 
         return key_map
+
+    @staticmethod
+    def _generate_id_map(entity_list, id, entity_class):
+        """ Helper method to generate map from key to entity object for given list of dicts.
+
+        Args:
+            entity_list: List consisting of dict.
+            key: Key in each dict which will be key in the map.
+            entity_class: Class representing the entity.
+
+        Returns:
+            Map mapping key to entity object.
+        """
+
+        id_map = {}
+        for obj in entity_list:
+            id_map[obj[id]] = entity_class(**obj)
+
+        return id_map
 
     @staticmethod
     def _deserialize_audience(audience_map):
@@ -309,7 +320,6 @@ class ProjectConfig(object):
             Experiment corresponding to the provided experiment ID.
         """
 
-        # experiment = self.experiment_id_map.get(experiment_id)
         experiment = self.experimentID_map.get(experiment_id)
         if experiment:
             return experiment
@@ -391,7 +401,6 @@ class ProjectConfig(object):
             Object representing the variation.
         """
 
-        #variation_map = self.variation_id_map.get(experiment_key)
         variation_map = self.correct_variation_id_map.get(experiment_key)
         if variation_map:
             variation = variation_map.get(variation_id)
