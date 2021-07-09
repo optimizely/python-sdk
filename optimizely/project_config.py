@@ -568,7 +568,7 @@ class ProjectConfig(object):
         return experiment_id in self.experiment_feature_map
 
     def get_variation_from_id_by_experiment_id(self, experiment_id, variation_id):
-        """ Gets experiment id and variation id
+        """ Gets variation from variation id and specific experiment id
 
             Returns:
                 The variation for the experiment id and variation id
@@ -584,7 +584,7 @@ class ProjectConfig(object):
         return {}
 
     def get_variation_from_key_by_experiment_id(self, experiment_id, variation_key):
-        """ Gets experiment id and variation key
+        """ Gets variation from variation key and specific experiment id
 
             Returns:
                 The variation for the experiment id and variation key
