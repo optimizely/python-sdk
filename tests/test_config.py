@@ -41,6 +41,7 @@ class ConfigTest(base.BaseTest):
                 self.config_dict['groups'][0]['trafficAllocation'],
             )
         }
+
         expected_experiment_key_map = {
             'test_experiment': entities.Experiment(
                 '111127',
@@ -1213,3 +1214,27 @@ class ConfigExceptionTest(base.BaseTest):
 
         self.assertStrictFalse(project_config.is_feature_experiment(experiment.id))
         self.assertStrictTrue(project_config.is_feature_experiment(feature_experiment.id))
+
+    def test_get_variation_from_id_by_experiment_id(self):
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+        project_config = opt_obj.config_manager.get_config()
+
+        experiment_id = '111127'
+        variation_id = '111128'
+
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+
+        self.assertIsInstance(variation, entities.Variation)
+
+    def test_get_variation_from_key_by_experiment_id(self):
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+        project_config = opt_obj.config_manager.get_config()
+
+        experiment_id = '111127'
+        variation_key = 'control'
+
+        variation = project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)
+
+        self.assertIsInstance(variation, entities.Variation)
