@@ -1507,3 +1507,25 @@ class OptimizelyConfigTest(base.BaseTest):
                     experiments_list.append(exp)
 
         self.assertEqual(len(config.get_delivery_rules()), len(experiments_list))
+    
+    def test__get_dvariations_from_experiment(self):
+        config_dict = self.typed_audiences_config
+
+        proj_conf = project_config.ProjectConfig(
+            json.dumps(config_dict),
+            logger=None,
+            error_handler=None
+        )
+
+        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
+
+        experiments_key_map, experiments_id_map = config_service._get_experiments_maps()
+
+        optly_experiment = experiments_id_map['10420810910']
+
+        for variation in optly_experiment.variations_map.values():
+            self.assertIsInstance(variation, optimizely_config.OptimizelyVariation)
+            if variation.id == '10418551353':
+                self.assertEqual(variation.key, 'all_traffic_variation')
+            else:
+                self.assertEqual(variation.key, 'no_traffic_variation')
