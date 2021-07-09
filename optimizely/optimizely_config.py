@@ -84,7 +84,7 @@ class OptimizelyConfig(object):
         """ Get the delivery rules list associated with OptimizelyConfig
 
         Returns:
-            List of OptimizelyExperiments as DeliveryRules from Rollouts
+            List of OptimizelyExperiments as DeliveryRules from Rollouts.
         """
         return self.delivery_rules
 
@@ -480,8 +480,8 @@ class OptimizelyConfigService(object):
                     optly_exp = OptimizelyExperiment(
                         experiment['id'], experiment['key'], self._get_variations_map(experiment)
                     )
-                    self.update_experiment(optly_exp, experiment.get('audienceConditions', []), audiences_map)
-                    delivery_rules.append(optly_exp)
+                    audiences = self.replace_ids_with_names(experiment.get('audienceConditions', []), audiences_map)
+                    optly_exp.audiences = audiences
 
         return delivery_rules
 
