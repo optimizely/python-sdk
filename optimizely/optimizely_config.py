@@ -200,18 +200,6 @@ class OptimizelyConfigService(object):
 
         self.audiences = optly_typed_audiences
 
-    def update_experiment(self, experiment, conditions, audiences_map):
-        '''
-            Gets an OptimizelyExperiment to update, conditions from
-            the corresponding entities.Experiment and an audiences_map
-            in the form of [id:name]
-
-            Updates the OptimizelyExperiment.audiences with a string
-            of conditions and audience names.
-        '''
-        audiences = self.replace_ids_with_names(conditions, audiences_map)
-        experiment.audiences = audiences
-
     def replace_ids_with_names(self, conditions, audiences_map):
         '''
             Gets conditions and audiences_map [id:name]
@@ -232,7 +220,7 @@ class OptimizelyConfigService(object):
 
             Returns:
                 The name corresponding to the ID
-                or None if not found
+                or None if not found.
         '''
         name = ""
         try:
@@ -435,7 +423,8 @@ class OptimizelyConfigService(object):
                 exp['id'], exp['key'], self._get_variations_map(exp)
             )
             # Updating each OptimizelyExperiment
-            self.update_experiment(optly_exp, exp.get('audienceConditions', []), audiences_map)
+            audiences = self.replace_ids_with_names(exp.get('audienceConditions', []), audiences_map)
+            optly_exp.audiences = audiences
 
             experiments_key_map[exp['key']] = optly_exp
             experiments_id_map[exp['id']] = optly_exp
@@ -473,7 +462,7 @@ class OptimizelyConfigService(object):
         """ Gets an array of rollouts for the project config
 
         returns:
-            an array of OptimizelyExperiments as delivery rules
+            an array of OptimizelyExperiments as delivery rules.
         """
         # Return list for delivery rules
         delivery_rules = []
