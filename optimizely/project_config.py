@@ -66,7 +66,7 @@ class ProjectConfig(object):
 
         # Utility maps for quick lookup
         self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
-        self.experiment_key_map = self._generate_key_map(self.experiments, 'key', entities.Experiment)
+        self.experiment_id_map = self._generate_key_map(self.experiments, 'id', entities.Experiment)
         self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
         self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
 
@@ -82,27 +82,36 @@ class ProjectConfig(object):
         self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
         for layer in self.rollout_id_map.values():
             for experiment in layer.experiments:
-                self.experiment_key_map[experiment['key']] = entities.Experiment(**experiment)
+                self.experiment_id_map[experiment['id']] = entities.Experiment(**experiment)
 
         self.audience_id_map = self._deserialize_audience(self.audience_id_map)
         for group in self.group_id_map.values():
-            experiments_in_group_key_map = self._generate_key_map(group.experiments, 'key', entities.Experiment)
-            for experiment in experiments_in_group_key_map.values():
+            experiments_in_group_id_map = self._generate_key_map(group.experiments, 'id', entities.Experiment)
+            for experiment in experiments_in_group_id_map.values():
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
-            self.experiment_key_map.update(experiments_in_group_key_map)
+            self.experiment_id_map.update(experiments_in_group_id_map)
 
-        self.experiment_id_map = {}
+        self.experiment_key_map = {}
         self.variation_key_map = {}
         self.variation_id_map = {}
         self.variation_variable_usage_map = {}
-        for experiment in self.experiment_key_map.values():
-            self.experiment_id_map[experiment.id] = experiment
+        self.variation_id_map_by_experiment_id = {}
+        self.variation_key_map_by_experiment_id = {}
+
+        for experiment in self.experiment_id_map.values():
+            self.experiment_key_map[experiment.key] = experiment
             self.variation_key_map[experiment.key] = self._generate_key_map(
                 experiment.variations, 'key', entities.Variation
             )
+
             self.variation_id_map[experiment.key] = {}
+            self.variation_id_map_by_experiment_id[experiment.id] = {}
+            self.variation_key_map_by_experiment_id[experiment.id] = {}
+
             for variation in self.variation_key_map.get(experiment.key).values():
                 self.variation_id_map[experiment.key][variation.id] = variation
+                self.variation_id_map_by_experiment_id[experiment.id][variation.id] = variation
+                self.variation_key_map_by_experiment_id[experiment.id][variation.key] = variation
                 self.variation_variable_usage_map[variation.id] = self._generate_key_map(
                     variation.variables, 'id', entities.Variation.VariableUsage
                 )
@@ -537,3 +546,35 @@ class ProjectConfig(object):
         """
 
         return experiment_id in self.experiment_feature_map
+
+    def get_variation_from_id_by_experiment_id(self, experiment_id, variation_id):
+        """ Gets variation from variation id and specific experiment id
+
+            Returns:
+                The variation for the experiment id and variation id
+                or empty dict if not found
+        """
+        if (experiment_id in self.variation_id_map_by_experiment_id and
+                variation_id in self.variation_id_map_by_experiment_id[experiment_id]):
+            return self.variation_id_map_by_experiment_id[experiment_id][variation_id]
+
+        self.logger.error('Variation with id "%s" not defined in the datafile for experiment "%s".',
+                          variation_id, experiment_id)
+
+        return {}
+
+    def get_variation_from_key_by_experiment_id(self, experiment_id, variation_key):
+        """ Gets variation from variation key and specific experiment id
+
+            Returns:
+                The variation for the experiment id and variation key
+                or empty dict if not found
+        """
+        if (experiment_id in self.variation_key_map_by_experiment_id and
+                variation_key in self.variation_key_map_by_experiment_id[experiment_id]):
+            return self.variation_key_map_by_experiment_id[experiment_id][variation_key]
+
+        self.logger.error('Variation with key "%s" not defined in the datafile for experiment "%s".',
+                          variation_key, experiment_id)
+
+        return {}
