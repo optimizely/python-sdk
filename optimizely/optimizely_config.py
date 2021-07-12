@@ -16,6 +16,7 @@ from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
 
+
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
                  sdk_key=None, environment_key=None, attributes=None, events=None,
