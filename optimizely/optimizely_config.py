@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import copy
-from typing import List
 from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
@@ -253,10 +252,10 @@ class OptimizelyConfigService(object):
             return '"' + self.lookup_name_from_id(conditions[0], audiences_map) + '"'
 
         if length == 2:
-            if conditions[0] in ARGS and not isinstance(conditions[1], List):
+            if conditions[0] in ARGS and not type(conditions[1]) == list:
                 audience_name = self.lookup_name_from_id(conditions[1], audiences_map)
                 return conditions[0].upper() + ' "' + audience_name + '"'
-            elif conditions[0] == 'not' and isinstance(conditions[1], List):
+            elif conditions[0] == 'not' and type(conditions[1]) == list:
                 return conditions[0].upper() + ' (' + self.stringify_conditions(conditions[1], audiences_map) + ')'
             else:
                 name1 = self.lookup_name_from_id(conditions[0], audiences_map)
