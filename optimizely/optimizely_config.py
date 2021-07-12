@@ -15,12 +15,13 @@ import copy
 from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
+from optimizely import project_config
 
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
                  sdk_key=None, environment_key=None, attributes=None, events=None,
-                 audiences=None, delivery_rules=None):
+                 audiences=None):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
@@ -30,7 +31,6 @@ class OptimizelyConfig(object):
         self.attributes = attributes or []
         self.events = events or []
         self.audiences = audiences or []
-        self.delivery_rules = delivery_rules or []
 
     def get_datafile(self):
         """ Get the datafile associated with OptimizelyConfig.
@@ -103,6 +103,8 @@ class OptimizelyFeature(object):
         self.key = key
         self.experiments_map = experiments_map
         self.variables_map = variables_map
+        self.delivery_rules = []
+        self.experiment_rules = []
 
 
 class OptimizelyVariation(object):
@@ -305,8 +307,7 @@ class OptimizelyConfigService(object):
             self.environment_key,
             self._get_attributes_list(self.attributes),
             self._get_events_list(self.events),
-            self.audiences,
-            self._get_delivery_rules(self.rollouts)
+            self.audiences
         )
 
     def _create_lookup_maps(self):
@@ -436,24 +437,48 @@ class OptimizelyConfigService(object):
             dict -- feaure key to OptimizelyFeature map
         """
         features_map = {}
+        experiment_rules = []
 
         for feature in self.feature_flags:
+
+            """
+                TODO - 
+                
+                delivery Rules : Filter rollouts based on the feature.rolloutID and take the 
+                first item in the filtered list. the delivery rules are then that rollout
+                experiments. 
+
+                experiment Rules: feature.experimentIDs a list of experiments based on the feature.id matching
+                the experimentID.
+
+            """
+
+            delivery_rules = self._get_delivery_rules(self.rollouts, feature.get('rolloutId'))
+            experiment_rules = []
+
             exp_map = {}
             for experiment_id in feature.get('experimentIds', []):
                 optly_exp = experiments_id_map[experiment_id]
                 exp_map[optly_exp.key] = optly_exp
+
+                # Append the optly experiment to experiment rules
+                # The optly experiment has already been updated 
+                # during the experiment maps creation.
+                experiment_rules.append(optly_exp)
 
             variables_map = self.feature_key_variable_key_to_variable_map[feature['key']]
 
             optly_feature = OptimizelyFeature(
                 feature['id'], feature['key'], exp_map, variables_map
             )
+            optly_feature.experiment_rules = experiment_rules
+            optly_feature.delivery_rules = delivery_rules
 
             features_map[feature['key']] = optly_feature
 
         return features_map
 
-    def _get_delivery_rules(self, rollouts):
+    def _get_delivery_rules(self, rollouts, rollout_id):
         """ Gets an array of rollouts for the project config
 
         returns:
@@ -464,11 +489,16 @@ class OptimizelyConfigService(object):
         # Audiences map to use for updating experiments with new audience conditions string
         audiences_map = {}
 
-        # Build map from OptimizelyAudience array
-        for optly_audience in self.audiences:
-            audiences_map[optly_audience.id] = optly_audience.name
+        # Gets a rollout based on provided rollout_id
+        rollout = [rollout for rollout in rollouts if rollout.get('id') == rollout_id]
 
-        for rollout in rollouts:
+        if rollout:
+            rollout = rollout[0]
+            # Build map from OptimizelyAudience array
+            for optly_audience in self.audiences:
+                audiences_map[optly_audience.id] = optly_audience.name
+
+            # Get the experiments_map for that rollout
             experiments = rollout.get('experiments_map')
             if experiments:
                 for experiment in experiments:

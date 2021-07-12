@@ -28,7 +28,6 @@ class OptimizelyConfigTest(base.BaseTest):
         self.expected_config = {
             'sdk_key': None,
             'environment_key': None,
-            'delivery_rules': [],
             'attributes': [{'key': 'test_attribute', 'id': '111094'}],
             'events': [{'key': 'test_event', 'experiment_ids': ['111127'], 'id': '111095'}],
             'audiences': [
@@ -470,6 +469,114 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': None
                         }
                     },
+                    'delivery_rules': [],
+                    'experiment_rules': [
+                        {
+                            'id': '111127',
+                            'key': 'test_experiment',
+                            'variations_map': {
+                                'control': {
+                                    'id': '111128',
+                                    'key': 'control',
+                                    'feature_enabled': False,
+                                    'variables_map': {
+                                        'is_working': {
+                                            'id': '127',
+                                            'key': 'is_working',
+                                            'type': 'boolean',
+                                            'value': 'true'
+                                        },
+                                        'environment': {
+                                            'id': '128',
+                                            'key': 'environment',
+                                            'type': 'string',
+                                            'value': 'devel'
+                                        },
+                                        'cost': {
+                                            'id': '129',
+                                            'key': 'cost',
+                                            'type': 'double',
+                                            'value': '10.99'
+                                        },
+                                        'count': {
+                                            'id': '130',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'variable_without_usage': {
+                                            'id': '131',
+                                            'key': 'variable_without_usage',
+                                            'type': 'integer',
+                                            'value': '45'
+                                        },
+                                        'object': {
+                                            'id': '132',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"test": 12}'
+                                        },
+                                        'true_object': {
+                                            'id': '133',
+                                            'key': 'true_object',
+                                            'type': 'json',
+                                            'value': '{"true_test": 23.54}'
+                                        }
+                                    }
+                                },
+                                'variation': {
+                                    'id': '111129',
+                                    'key': 'variation',
+                                    'feature_enabled': True,
+                                    'variables_map': {
+                                        'is_working': {
+                                            'id': '127',
+                                            'key': 'is_working',
+                                            'type': 'boolean',
+                                            'value': 'true'
+                                        },
+                                        'environment': {
+                                            'id': '128',
+                                            'key': 'environment',
+                                            'type': 'string',
+                                            'value': 'staging'
+                                        },
+                                        'cost': {
+                                            'id': '129',
+                                            'key': 'cost',
+                                            'type': 'double',
+                                            'value': '10.02'
+                                        },
+                                        'count': {
+                                            'id': '130',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '4243'
+                                        },
+                                        'variable_without_usage': {
+                                            'id': '131',
+                                            'key': 'variable_without_usage',
+                                            'type': 'integer',
+                                            'value': '45'
+                                        },
+                                        'object': {
+                                            'id': '132',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"test": 123}'
+                                        },
+                                        'true_object': {
+                                            'id': '133',
+                                            'key': 'true_object',
+                                            'type': 'json',
+                                            'value': '{"true_test": 1.4}'
+                                        }
+                                    }
+                                }
+                            },
+                            'audiences': None
+                        }
+                    ],
                     'id': '91111',
                     'key': 'test_feature_in_experiment'
                 },
@@ -509,6 +616,8 @@ class OptimizelyConfigTest(base.BaseTest):
                     'experiments_map': {
 
                     },
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                     'id': '91112',
                     'key': 'test_feature_in_rollout'
                 },
@@ -541,6 +650,28 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': None
                         }
                     },
+                    'delivery_rules': [],
+                    'experiment_rules': [
+                        {
+                            'id': '32222',
+                            'key': 'group_exp_1',
+                            'variations_map': {
+                                'group_exp_1_control': {
+                                    'id': '28901',
+                                    'key': 'group_exp_1_control',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                },
+                                'group_exp_1_variation': {
+                                    'id': '28902',
+                                    'key': 'group_exp_1_variation',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': None
+                        }
+                    ],
                     'id': '91113',
                     'key': 'test_feature_in_group'
                 },
@@ -573,6 +704,28 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': None
                         }
                     },
+                    'delivery_rules': [],
+                    'experiment_rules': [
+                        {
+                            'id': '32223',
+                            'key': 'group_exp_2', 
+                            'variations_map': {
+                                'group_exp_2_control': {
+                                    'id': '28905',
+                                    'key': 'group_exp_2_control',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                },
+                                'group_exp_2_variation': {
+                                    'id': '28906',
+                                    'key': 'group_exp_2_variation',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                        'audiences': None
+                        }
+                    ],
                     'id': '91114',
                     'key': 'test_feature_in_experiment_and_rollout'
                 },
@@ -627,6 +780,48 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': 'OR "Test attribute users 3"'
                         }
                     },
+                    'delivery_rules': [],
+                    'experiment_rules': [
+                        {
+                            'id': '42222',
+                            'key': 'group_2_exp_1',
+                            'variations_map': {
+                                'var_1': {
+                                    'id': '38901',
+                                    'key': 'var_1',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': 'OR "Test attribute users 3"'
+                        },
+                        {
+                            'id': '42223',
+                            'key': 'group_2_exp_2',
+                            'variations_map': {
+                                'var_1': {
+                                    'id': '38905',
+                                    'key': 'var_1',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': 'OR "Test attribute users 3"'
+                        },
+                        {
+                            'id': '42224',
+                            'key': 'group_2_exp_3',
+                            'variations_map': {
+                                'var_1': {
+                                    'id': '38906',
+                                    'key': 'var_1',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': 'OR "Test attribute users 3"'
+                        }
+                    ],
                     'id': '91115',
                     'key': 'test_feature_in_exclusion_group'
                 },
@@ -681,6 +876,48 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': 'OR "Test attribute users 3"'
                         }
                     },
+                    'delivery_rules': [],
+                    'experiment_rules': [
+                        {
+                            'id': '111134',
+                            'key': 'test_experiment3',
+                            'variations_map': {
+                                'control': {
+                                    'id': '222239',
+                                    'key': 'control',
+                                    'feature_enabled': None, 
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': 'OR "Test attribute users 3"'
+                        },
+                        {
+                            'id': '111135',
+                            'key': 'test_experiment4',
+                            'variations_map': {
+                                'control': {
+                                    'id': '222240',
+                                    'key': 'control',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': 'OR "Test attribute users 3"'
+                        },
+                        {
+                            'id': '111136',
+                            'key': 'test_experiment5',
+                            'variations_map': {
+                                'control': {
+                                    'id': '222241',
+                                    'key': 'control',
+                                    'feature_enabled': None,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': 'OR "Test attribute users 3"'
+                        }
+                    ],
                     'id': '91116',
                     'key': 'test_feature_in_multiple_experiments'
                 }
@@ -1481,32 +1718,6 @@ class OptimizelyConfigTest(base.BaseTest):
             self.assertIsInstance(audience, optimizely_config.OptimizelyAudience)
 
         self.assertEqual(len(config_service.audiences), TOTAL_AUDEINCES_ONCE_MERGED)
-
-    def test__get_delivery_rules(self):
-        config_dict = self.typed_audiences_config
-
-        proj_conf = project_config.ProjectConfig(
-            json.dumps(config_dict),
-            logger=None,
-            error_handler=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
-
-        config = config_service.get_config()
-
-        for rule in config.get_delivery_rules():
-            self.assertIsInstance(rule, optimizely_config.OptimizelyAudience)
-
-        experiments_list = []
-
-        for rollout in config_service.rollouts:
-            experiments = rollout.get('experiments_map')
-            if experiments:
-                for exp in experiments:
-                    experiments_list.append(exp)
-
-        self.assertEqual(len(config.get_delivery_rules()), len(experiments_list))
 
     def test_get_variations_from_experiments_map(self):
         config_dict = self.typed_audiences_config

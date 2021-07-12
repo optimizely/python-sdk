@@ -485,6 +485,8 @@ class BaseTest(unittest.TestCase):
                          'subType': 'json'},
                         {'id': '133', 'key': 'true_object', 'defaultValue': '{"true_test": 23.54}', 'type': 'json'},
                     ],
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'id': '91112',
@@ -499,6 +501,8 @@ class BaseTest(unittest.TestCase):
                         {'id': '136', 'key': 'object', 'defaultValue': '{"field": 1}', 'type': 'string',
                          'subType': 'json'},
                     ],
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'id': '91113',
@@ -506,6 +510,8 @@ class BaseTest(unittest.TestCase):
                     'experimentIds': ['32222'],
                     'rolloutId': '',
                     'variables': [],
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'id': '91114',
@@ -513,6 +519,8 @@ class BaseTest(unittest.TestCase):
                     'experimentIds': ['32223'],
                     'rolloutId': '211111',
                     'variables': [],
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'id': '91115',
@@ -520,6 +528,8 @@ class BaseTest(unittest.TestCase):
                     'experimentIds': ['42222', '42223', '42224'],
                     'rolloutId': '211111',
                     'variables': [],
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'id': '91116',
@@ -527,6 +537,8 @@ class BaseTest(unittest.TestCase):
                     'experimentIds': ['111134', '111135', '111136'],
                     'rolloutId': '211111',
                     'variables': [],
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
             ],
         }
@@ -756,13 +768,15 @@ class BaseTest(unittest.TestCase):
             'projectId': '11624721371',
             'variables': [],
             'featureFlags': [
-                {'experimentIds': [], 'rolloutId': '11551226731', 'variables': [], 'id': '11477755619', 'key': 'feat'},
+                {'experimentIds': [], 'rolloutId': '11551226731', 'variables': [], 'id': '11477755619', 'key': 'feat', 'delivery_rules': [], 'experiment_rules': [],},
                 {
                     'experimentIds': ['11564051718'],
                     'rolloutId': '11638870867',
                     'variables': [{'defaultValue': 'x', 'type': 'string', 'id': '11535264366', 'key': 'x'}],
                     'id': '11567102051',
                     'key': 'feat_with_var',
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'experimentIds': [],
@@ -770,6 +784,8 @@ class BaseTest(unittest.TestCase):
                     'variables': [],
                     'id': '11567102052',
                     'key': 'feat2',
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
                 {
                     'experimentIds': ['1323241599'],
@@ -777,6 +793,8 @@ class BaseTest(unittest.TestCase):
                     'variables': [{'defaultValue': '10', 'type': 'integer', 'id': '11535264367', 'key': 'z'}],
                     'id': '11567102053',
                     'key': 'feat2_with_var',
+                    'delivery_rules': [],
+                    'experiment_rules': [],
                 },
             ],
             'experiments': [
