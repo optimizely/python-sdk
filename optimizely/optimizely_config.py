@@ -229,7 +229,7 @@ class OptimizelyConfigService(object):
         except KeyError:
             name = audience_id
         except TypeError:
-            name = ""
+            name = audience_id
 
         return name
 
