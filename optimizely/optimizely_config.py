@@ -228,6 +228,8 @@ class OptimizelyConfigService(object):
             name = audiences_map[audience_id]
         except KeyError:
             name = audience_id
+        except TypeError:
+            name = ""
 
         return name
 
