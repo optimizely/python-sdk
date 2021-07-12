@@ -1568,7 +1568,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
     def test_stringify_conditions_no_condition_word(self):
         '''
-            Test to confirm array of ID's is handled as OR by stringify_conditions functions
+            Test to confirm list of ID's is handled as OR by stringify_conditions functions
         '''
 
         experiment = {'audienceConditions': ['3468206642', '3988293898'],
@@ -1740,3 +1740,37 @@ class OptimizelyConfigTest(base.BaseTest):
                 self.assertEqual(variation.key, 'all_traffic_variation')
             else:
                 self.assertEqual(variation.key, 'no_traffic_variation')
+
+    def test_stringify_conditions_one_condition_and_list(self):
+        '''
+            Test to confirm list of IDs and operand preceded by NOT
+            is handeld correctly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['not', ['and', '3468206642', '3988293898']],
+                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map = {
+            '3468206642': 'us',
+            '3988293898': 'female'
+        }
+
+        config = optimizely_config.OptimizelyConfig(
+            revision='101',
+            experiments_map={},
+            features_map={},
+            environment_key='TestEnvironmentKey',
+            attributes={},
+            events={},
+            audiences=None
+        )
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = 'NOT ("us" AND "female")'
+
+        self.assertEqual(result, expected_result)
