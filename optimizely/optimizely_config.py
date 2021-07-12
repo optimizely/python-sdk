@@ -442,18 +442,6 @@ class OptimizelyConfigService(object):
 
         for feature in self.feature_flags:
 
-            """
-                TODO - 
-
-                delivery Rules : Filter rollouts based on the feature.rolloutID and take the 
-                first item in the filtered list. the delivery rules are then that rollout
-                experiments. 
-
-                experiment Rules: feature.experimentIDs a list of experiments based on the feature.id matching
-                the experimentID.
-
-            """
-
             delivery_rules = self._get_delivery_rules(self.rollouts, feature.get('rolloutId'))
             experiment_rules = []
 
@@ -461,10 +449,7 @@ class OptimizelyConfigService(object):
             for experiment_id in feature.get('experimentIds', []):
                 optly_exp = experiments_id_map[experiment_id]
                 exp_map[optly_exp.key] = optly_exp
-
-                # Append the optly experiment to experiment rules
-                # The optly experiment has already been updated
-                # during the experiment maps creation.
+                
                 experiment_rules.append(optly_exp)
 
             variables_map = self.feature_key_variable_key_to_variable_map[feature['key']]
