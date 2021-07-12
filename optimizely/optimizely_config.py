@@ -248,20 +248,16 @@ class OptimizelyConfigService(object):
             return
         if length == 1:
             # Lookup ID and replace with name
-            audience_name = self.lookup_name_from_id(conditions[0], audiences_map)
-
-            return '"' + audience_name + '"'
+            return '"' + self.lookup_name_from_id(conditions[0], audiences_map) + '"'
 
         if length == 2:
             if conditions[0] in ARGS:
-                condition = conditions[0]
                 audience_name = self.lookup_name_from_id(conditions[1], audiences_map)
-                return condition.upper() + ' "' + audience_name + '"'
+                return conditions[0].upper() + ' "' + audience_name + '"'
             else:
-                condition = 'OR'
                 name1 = self.lookup_name_from_id(conditions[0], audiences_map)
                 name2 = self.lookup_name_from_id(conditions[1], audiences_map)
-                return ('"' + name1 + '" ' + condition.upper() + ' "' + name2 + '"')
+                return ('"' + name1 + '" OR "' + name2 + '"')
 
         if length > 2:
             for i in range(length):
@@ -273,8 +269,7 @@ class OptimizelyConfigService(object):
                     if type(conditions[i]) == list:
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
-                            conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ') '
-                            conditions_str += condition + ' '
+                            conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ') ' + condition + ' '
                         else:
                             conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
@@ -286,7 +281,7 @@ class OptimizelyConfigService(object):
                             else:
                                 conditions_str += '"' + audience_name + '"'
 
-        return conditions_str + ""
+        return conditions_str
 
     def get_config(self):
         """ Gets instance of OptimizelyConfig
