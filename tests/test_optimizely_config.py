@@ -708,7 +708,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     'experiment_rules': [
                         {
                             'id': '32223',
-                            'key': 'group_exp_2', 
+                            'key': 'group_exp_2',
                             'variations_map': {
                                 'group_exp_2_control': {
                                     'id': '28905',
@@ -723,7 +723,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                        'audiences': None
+                            'audiences': None
                         }
                     ],
                     'id': '91114',
@@ -885,7 +885,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'control': {
                                     'id': '222239',
                                     'key': 'control',
-                                    'feature_enabled': None, 
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },

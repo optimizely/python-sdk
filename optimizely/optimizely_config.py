@@ -271,7 +271,8 @@ class OptimizelyConfigService(object):
                     if type(conditions[i]) == list:
                         # If the next item is a list, recursively call function on list
                         if i + 1 < length:
-                            conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ') ' + condition + ' '
+                            conditions_str += '(' + \
+                                self.stringify_conditions(conditions[i], audiences_map) + ') ' + condition + ' '
                         else:
                             conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
@@ -443,7 +444,7 @@ class OptimizelyConfigService(object):
 
             """
                 TODO - 
-                
+
                 delivery Rules : Filter rollouts based on the feature.rolloutID and take the 
                 first item in the filtered list. the delivery rules are then that rollout
                 experiments. 
@@ -462,7 +463,7 @@ class OptimizelyConfigService(object):
                 exp_map[optly_exp.key] = optly_exp
 
                 # Append the optly experiment to experiment rules
-                # The optly experiment has already been updated 
+                # The optly experiment has already been updated
                 # during the experiment maps creation.
                 experiment_rules.append(optly_exp)
 
