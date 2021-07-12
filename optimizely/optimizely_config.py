@@ -15,8 +15,6 @@ import copy
 from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
-from optimizely import project_config
-
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
