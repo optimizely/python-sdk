@@ -449,7 +449,6 @@ class OptimizelyConfigService(object):
             for experiment_id in feature.get('experimentIds', []):
                 optly_exp = experiments_id_map[experiment_id]
                 exp_map[optly_exp.key] = optly_exp
-                
                 experiment_rules.append(optly_exp)
 
             variables_map = self.feature_key_variable_key_to_variable_map[feature['key']]
