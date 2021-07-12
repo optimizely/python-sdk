@@ -225,7 +225,7 @@ class OptimizelyConfigService(object):
         '''
         name = ""
         try:
-            name = audiences_map[audience_id]
+            name = str(audiences_map[audience_id])
         except KeyError:
             name = audience_id
         except TypeError:
