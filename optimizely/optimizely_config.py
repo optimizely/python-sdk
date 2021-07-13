@@ -79,21 +79,13 @@ class OptimizelyConfig(object):
         """
         return self.audiences
 
-    def get_delivery_rules(self):
-        """ Get the delivery rules list associated with OptimizelyConfig
-
-        Returns:
-            List of OptimizelyExperiments as DeliveryRules from Rollouts.
-        """
-        return self.delivery_rules
-
 
 class OptimizelyExperiment(object):
-    def __init__(self, id, key, variations_map):
+    def __init__(self, id, key, variations_map, audiences=''):
         self.id = id
         self.key = key
         self.variations_map = variations_map
-        self.audiences = ""
+        self.audiences = audiences
 
 
 class OptimizelyFeature(object):
@@ -207,13 +199,13 @@ class OptimizelyConfigService(object):
 
             Returns:
                 a string of conditions with id's swapped with names
-                or None if no conditions found.
+                or empty string if no conditions found.
 
         '''
         if conditions is not None:
             return self.stringify_conditions(conditions, audiences_map)
         else:
-            return None
+            return ''
 
     def lookup_name_from_id(self, audience_id, audiences_map):
         '''
@@ -221,9 +213,9 @@ class OptimizelyConfigService(object):
 
             Returns:
                 The name corresponding to the ID
-                or None if not found.
+                or '' if not found.
         '''
-        name = ""
+        name = None
         try:
             name = audiences_map[audience_id]
         except KeyError:
@@ -242,14 +234,15 @@ class OptimizelyConfigService(object):
         '''
         ARGS = ConditionOperatorTypes.operators
         condition = 'OR'
-        conditions_str = ""
+        conditions_str = ''
         length = len(conditions)
 
         if length == 0:
             return
         if length == 1:
             return '"' + self.lookup_name_from_id(conditions[0], audiences_map) + '"'
-
+        if length == 2 and conditions[0] in ARGS and type(conditions[1]) is not list:
+            return '"' + self.lookup_name_from_id(conditions[1], audiences_map) + '"'
         if length > 1:
             for i in range(length):
                 if conditions[i] in ARGS:
@@ -408,7 +401,7 @@ class OptimizelyConfigService(object):
             )
             # Updating each OptimizelyExperiment
             audiences = self.replace_ids_with_names(exp.get('audienceConditions', []), audiences_map)
-            optly_exp.audiences = audiences
+            optly_exp.audiences = audiences or ''
 
             experiments_key_map[exp['key']] = optly_exp
             experiments_id_map[exp['id']] = optly_exp

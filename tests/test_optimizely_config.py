@@ -72,7 +72,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '111133',
                     'key': 'test_experiment2',
-                    'audiences': None
+                    'audiences': ''
                 },
                 'test_experiment': {
                     'variations_map': {
@@ -177,7 +177,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '111127',
                     'key': 'test_experiment',
-                    'audiences': None
+                    'audiences': ''
                 },
                 'group_exp_1': {
                     'variations_map': {
@@ -200,7 +200,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '32222',
                     'key': 'group_exp_1',
-                    'audiences': None
+                    'audiences': ''
                 },
                 'group_exp_2': {
                     'variations_map': {
@@ -223,7 +223,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '32223',
                     'key': 'group_exp_2',
-                    'audiences': None
+                    'audiences': ''
                 },
                 'group_2_exp_1': {
                     'variations_map': {
@@ -238,7 +238,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '42222',
                     'key': 'group_2_exp_1',
-                    'audiences': 'OR "Test attribute users 3"'
+                    'audiences': '"Test attribute users 3"'
                 },
                 'group_2_exp_2': {
                     'variations_map': {
@@ -253,7 +253,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '42223',
                     'key': 'group_2_exp_2',
-                    'audiences': 'OR "Test attribute users 3"'
+                    'audiences': '"Test attribute users 3"'
                 },
                 'group_2_exp_3': {
                     'variations_map': {
@@ -268,7 +268,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '42224',
                     'key': 'group_2_exp_3',
-                    'audiences': 'OR "Test attribute users 3"'
+                    'audiences': '"Test attribute users 3"'
                 },
                 'test_experiment3': {
                     'variations_map': {
@@ -283,7 +283,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '111134',
                     'key': 'test_experiment3',
-                    'audiences': 'OR "Test attribute users 3"'
+                    'audiences': '"Test attribute users 3"'
                 },
                 'test_experiment4': {
                     'variations_map': {
@@ -298,7 +298,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '111135',
                     'key': 'test_experiment4',
-                    'audiences': 'OR "Test attribute users 3"'
+                    'audiences': '"Test attribute users 3"'
                 },
                 'test_experiment5': {
                     'variations_map': {
@@ -313,7 +313,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     },
                     'id': '111136',
                     'key': 'test_experiment5',
-                    'audiences': 'OR "Test attribute users 3"'
+                    'audiences': '"Test attribute users 3"'
                 }
             },
             'features_map': {
@@ -466,7 +466,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '111127',
                             'key': 'test_experiment',
-                            'audiences': None
+                            'audiences': ''
                         }
                     },
                     'delivery_rules': [],
@@ -574,7 +574,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     }
                                 }
                             },
-                            'audiences': None
+                            'audiences': ''
                         }
                     ],
                     'id': '91111',
@@ -647,7 +647,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '32222',
                             'key': 'group_exp_1',
-                            'audiences': None
+                            'audiences': ''
                         }
                     },
                     'delivery_rules': [],
@@ -669,7 +669,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': None
+                            'audiences': ''
                         }
                     ],
                     'id': '91113',
@@ -701,7 +701,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '32223',
                             'key': 'group_exp_2',
-                            'audiences': None
+                            'audiences': ''
                         }
                     },
                     'delivery_rules': [],
@@ -723,7 +723,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': None
+                            'audiences': ''
                         }
                     ],
                     'id': '91114',
@@ -747,7 +747,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '42222',
                             'key': 'group_2_exp_1',
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         'group_2_exp_2': {
                             'variations_map': {
@@ -762,7 +762,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '42223',
                             'key': 'group_2_exp_2',
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         'group_2_exp_3': {
                             'variations_map': {
@@ -777,7 +777,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '42224',
                             'key': 'group_2_exp_3',
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         }
                     },
                     'delivery_rules': [],
@@ -793,7 +793,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         {
                             'id': '42223',
@@ -806,7 +806,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         {
                             'id': '42224',
@@ -819,7 +819,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         }
                     ],
                     'id': '91115',
@@ -843,7 +843,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '111134',
                             'key': 'test_experiment3',
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         'test_experiment4': {
                             'variations_map': {
@@ -858,7 +858,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '111135',
                             'key': 'test_experiment4',
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         'test_experiment5': {
                             'variations_map': {
@@ -873,7 +873,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '111136',
                             'key': 'test_experiment5',
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         }
                     },
                     'delivery_rules': [],
@@ -889,7 +889,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         {
                             'id': '111135',
@@ -902,7 +902,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         },
                         {
                             'id': '111136',
@@ -915,7 +915,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'variables_map': {}
                                 }
                             },
-                            'audiences': 'OR "Test attribute users 3"'
+                            'audiences': '"Test attribute users 3"'
                         }
                     ],
                     'id': '91116',
@@ -1366,253 +1366,13 @@ class OptimizelyConfigTest(base.BaseTest):
 
         self.assertEqual(len(config.get_audiences()), len(config_service.audiences))
 
-    def test_stringify_conditions_non_matching_ids(self):
-        '''
-            Test to confirm Non-matching ID's are handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', ['or', '3468206642', '3988293898'], [
-            'or', '3988293899', '3468206646', '3468206647', '3468206644', '3468206643']],
-            'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-            '3988293898': 'female',
-            '3988293899': 'male',
-            '3468206646': 'them',
-            '3468206647': 'anyone'
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '("us" OR "female") AND ("male" OR "them" OR "anyone" OR "3468206644" OR "3468206643")'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_or(self):
-        '''
-            Test to confirm OR is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['or', '3468206642', '3988293898'],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-            '3988293898': 'female'
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us" OR "female"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_and(self):
-        '''
-            Test to confirm AND is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', '3468206642', '3988293898', '3988346543'],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-            '3988293898': 'female',
-            '3988346543': 'adult'
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us" AND "female" AND "adult"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_not_one_id(self):
-        '''
-            Test to confirm Not and one ID is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['not', '3468206642'],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = 'NOT "us"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_and_one_id(self):
-        '''
-            Test to confirm AND and one ID is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', '3468206642'],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = 'AND "us"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_one_id(self):
-        '''
-            Test to confirm a single ID is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['3468206642'],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_no_condition_word(self):
-        '''
-            Test to confirm list of ID's is handled as OR by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['3468206642', '3988293898'],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map = {
-            '3468206642': 'us',
-            '3988293898': 'female'
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us" OR "female"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_and_or_and(self):
-        '''
-            Test to confirm [and[or][and]] is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', ['or', '1', ['and', '2', '3']], ['and', '11', ['or', '12', '13']]],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
-
-        audience_conditions = experiment.get('audienceConditions')
-
+    def get_config_and_audiences_map_for_test(self):
         audiences_map = {
             '1': 'us',
             '2': 'female',
             '3': 'adult',
+            '4': 'them',
+            '5': 'anyone',
             '11': 'fr',
             '12': 'male',
             '13': 'kid'
@@ -1627,6 +1387,152 @@ class OptimizelyConfigTest(base.BaseTest):
             events={},
             audiences=None
         )
+        return audiences_map, config
+
+    def test_stringify_conditions_non_matching_ids(self):
+        '''
+            Test to confirm Non-matching ID's are handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['and', ['or', '1', '2'], [
+            'or', '12', '4', '5', '3468206644', '3468206643']]}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '("us" OR "female") AND ("male" OR "them" OR "anyone" OR "3468206644" OR "3468206643")'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_or(self):
+        '''
+            Test to confirm OR is handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['or', '1', '2']}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '"us" OR "female"'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_and(self):
+        '''
+            Test to confirm AND is handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['and', '1', '2', '3']}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '"us" AND "female" AND "adult"'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_not_one_id(self):
+        '''
+            Test to confirm Not and one ID is handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['not', '1']}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '"us"'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_and_one_id(self):
+        '''
+            Test to confirm AND and one ID is handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['and', '1']}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '"us"'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_one_id(self):
+        '''
+            Test to confirm a single ID is handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['1'], }
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '"us"'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_no_condition_word(self):
+        '''
+            Test to confirm list of ID's is handled as OR by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['1', '2']}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
+
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
+        result = config_service.stringify_conditions(audience_conditions, audiences_map)
+
+        expected_result = '"us" OR "female"'
+
+        self.assertEqual(result, expected_result)
+
+    def test_stringify_conditions_and_or_and(self):
+        '''
+            Test to confirm [and[or][and]] is handled properly by stringify_conditions functions
+        '''
+
+        experiment = {'audienceConditions': ['and', ['or', '1', ['and', '2', '3']], ['and', '11', ['or', '12', '13']]]}
+
+        audience_conditions = experiment.get('audienceConditions')
+
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
 
         config_service = optimizely_config.OptimizelyConfigService(config)
 
@@ -1641,22 +1547,11 @@ class OptimizelyConfigTest(base.BaseTest):
             Test to confirm empty string is handled properly by stringify_conditions functions
         '''
 
-        experiment = {'audienceConditions': '',
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
+        experiment = {'audienceConditions': ''}
 
         audience_conditions = experiment.get('audienceConditions')
 
-        audiences_map = {}
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
 
         config_service = optimizely_config.OptimizelyConfigService(config)
 
@@ -1669,7 +1564,7 @@ class OptimizelyConfigTest(base.BaseTest):
     def test_replace_ids_with_names(self):
         ''' Test that OptimizelyExperiment updates with proper conditions for audiences '''
 
-        audience_conditions = ['and', ['or', '432', '321'], '543']
+        audience_conditions = ['and', ['or', '1', '2'], '3']
 
         optly_experiment = optimizely_config.OptimizelyExperiment(
             '12345',
@@ -1677,20 +1572,7 @@ class OptimizelyConfigTest(base.BaseTest):
             variations_map={}
         )
 
-        audiences_map = {
-            '432': 'us',
-            '321': 'female',
-            '543': 'adult'
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={optly_experiment.id: optly_experiment},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-        )
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
 
         config_service = optimizely_config.OptimizelyConfigService(config)
 
@@ -1747,25 +1629,11 @@ class OptimizelyConfigTest(base.BaseTest):
             is handeld correctly by stringify_conditions functions
         '''
 
-        experiment = {'audienceConditions': ['not', ['and', '3468206642', '3988293898']],
-                      'audienceIds': ['0'], 'forcedVariations': {}, 'id': '1323241598'}
+        experiment = {'audienceConditions': ['not', ['and', '1', '2']]}
 
         audience_conditions = experiment.get('audienceConditions')
 
-        audiences_map = {
-            '3468206642': 'us',
-            '3988293898': 'female'
-        }
-
-        config = optimizely_config.OptimizelyConfig(
-            revision='101',
-            experiments_map={},
-            features_map={},
-            environment_key='TestEnvironmentKey',
-            attributes={},
-            events={},
-            audiences=None
-        )
+        audiences_map, config = self.get_config_and_audiences_map_for_test()
 
         config_service = optimizely_config.OptimizelyConfigService(config)
 
