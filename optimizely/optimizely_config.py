@@ -241,49 +241,35 @@ class OptimizelyConfigService(object):
                 list of conditions.
         '''
         ARGS = ConditionOperatorTypes.operators
-        condition = ""
+        condition = 'OR'
         conditions_str = ""
         length = len(conditions)
 
         if length == 0:
             return
         if length == 1:
-            # Lookup ID and replace with name
             return '"' + self.lookup_name_from_id(conditions[0], audiences_map) + '"'
 
-        if length == 2:
-            if conditions[0] in ARGS and not type(conditions[1]) == list:
-                audience_name = self.lookup_name_from_id(conditions[1], audiences_map)
-                return conditions[0].upper() + ' "' + audience_name + '"'
-            elif conditions[0] == 'not' and type(conditions[1]) == list:
-                return conditions[0].upper() + ' (' + self.stringify_conditions(conditions[1], audiences_map) + ')'
-            else:
-                name1 = self.lookup_name_from_id(conditions[0], audiences_map)
-                name2 = self.lookup_name_from_id(conditions[1], audiences_map)
-                return ('"' + name1 + '" OR "' + name2 + '"')
-
-        if length > 2:
+        if length > 1:
             for i in range(length):
                 if conditions[i] in ARGS:
                     condition = conditions[i].upper()
                 else:
-                    if condition == "":
-                        condition = 'OR'
                     if type(conditions[i]) == list:
-                        # If the next item is a list, recursively call function on list
                         if i + 1 < length:
-                            conditions_str += '(' + \
-                                self.stringify_conditions(conditions[i], audiences_map) + ') ' + condition + ' '
+                            conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ') '
                         else:
-                            conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ')'
+                            conditions_str += condition + \
+                                ' (' + self.stringify_conditions(conditions[i], audiences_map) + ')'
                     else:
-                        # Handle IDs here - Lookup name based on ID
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
                         if audience_name is not None:
-                            if i + 1 < length:
+                            if i + 1 < length - 1:
                                 conditions_str += '"' + audience_name + '" ' + condition + ' '
+                            elif i + 1 == length:
+                                conditions_str += condition + ' "' + audience_name + '"'
                             else:
-                                conditions_str += '"' + audience_name + '"'
+                                conditions_str += '"' + audience_name + '" '
 
         return conditions_str
 
