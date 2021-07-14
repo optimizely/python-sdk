@@ -479,6 +479,8 @@ class OptimizelyConfigService(object):
                     audiences = self.replace_ids_with_names(experiment.get('audienceConditions', []), audiences_map)
                     optly_exp.audiences = audiences
 
+                    delivery_rules.append(optly_exp)
+
         return delivery_rules
 
     def _get_attributes_list(self, attributes):
