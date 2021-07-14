@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import copy
-from os import pread
 from .helpers.condition import ConditionOperatorTypes
 
 from .project_config import ProjectConfig
