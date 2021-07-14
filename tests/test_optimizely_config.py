@@ -1366,13 +1366,11 @@ class OptimizelyConfigTest(base.BaseTest):
 
         self.assertEqual(len(config.get_audiences()), len(config_service.audiences))
 
-    def get_config_and_audiences_map_for_test(self):
+    def test_stringify_audience_conditions_all_cases(self):
         audiences_map = {
             '1': 'us',
             '2': 'female',
             '3': 'adult',
-            '4': 'them',
-            '5': 'anyone',
             '11': 'fr',
             '12': 'male',
             '13': 'kid'
@@ -1387,200 +1385,43 @@ class OptimizelyConfigTest(base.BaseTest):
             events={},
             audiences=None
         )
-        return audiences_map, config
 
-    def test_stringify_conditions_non_matching_ids(self):
-        '''
-            Test to confirm Non-matching ID's are handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', ['or', '1', '2'], [
-            'or', '12', '4', '5', '3468206644', '3468206643']]}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '("us" OR "female") AND ("male" OR "them" OR "anyone" OR "3468206644" OR "3468206643")'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_or(self):
-        '''
-            Test to confirm OR is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['or', '1', '2']}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us" OR "female"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_and(self):
-        '''
-            Test to confirm AND is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', '1', '2', '3']}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us" AND "female" AND "adult"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_not_one_id(self):
-        '''
-            Test to confirm Not and one ID is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['not', '1']}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_and_one_id(self):
-        '''
-            Test to confirm AND and one ID is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', '1']}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_one_id(self):
-        '''
-            Test to confirm a single ID is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['1'], }
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_no_condition_word(self):
-        '''
-            Test to confirm list of ID's is handled as OR by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['1', '2']}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '"us" OR "female"'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_and_or_and(self):
-        '''
-            Test to confirm [and[or][and]] is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['and', ['or', '1', ['and', '2', '3']], ['and', '11', ['or', '12', '13']]]}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = '("us" OR ("female" AND "adult")) AND ("fr" AND ("male" OR "kid"))'
-
-        self.assertEqual(result, expected_result)
-
-    def test_stringify_conditions_empty_string(self):
-        '''
-            Test to confirm empty string is handled properly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ''}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = None
-
-        self.assertEqual(result, expected_result)
-
-    def test_replace_ids_with_names(self):
-        ''' Test that OptimizelyExperiment updates with proper conditions for audiences '''
-
-        audience_conditions = ['and', ['or', '1', '2'], '3']
-
-        optly_experiment = optimizely_config.OptimizelyExperiment(
-            '12345',
-            'test_update_experiment',
-            variations_map={}
-        )
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        audiences = config_service.replace_ids_with_names(audience_conditions, audiences_map)
-        optly_experiment.audiences = audiences
-        expected_value = '("us" OR "female") AND "adult"'
-
-        self.assertEqual(optly_experiment.audiences, expected_value)
+        audiences_input = [
+            [],
+            ["or", "1", "2"],
+            ["and", "1", "2", "3"],
+            ["not", "1"],
+            ["or", "1"],
+            ["and", "1"],
+            ["1"],
+            ["1", "2"],
+            ["and", ["or", "1", "2"], "3"],
+            ["and", ["or", "1", ["and", "2", "3"]], ["and", "11", ["or", "12", "13"]]],
+            ["not", ["and", "1", "2"]],
+            ["or", "1", "100000"],
+            ["and", "and"]
+        ]
+
+        audiences_output = [
+            '',
+            '"us" OR "female"',
+            '"us" AND "female" AND "adult"',
+            'NOT "us"',
+            '"us"',
+            '"us"',
+            '"us"',
+            '"us" OR "female"',
+            '("us" OR "female") AND "adult"',
+            '("us" OR ("female" AND "adult")) AND ("fr" AND ("male" OR "kid"))',
+            'NOT ("us" AND "female")',
+            '"us" OR "100000"',
+            ''
+        ]
+
+        for i in range(len(audiences_input)):
+            config_service = optimizely_config.OptimizelyConfigService(config)
+            result = config_service.stringify_conditions(audiences_input[i], audiences_map)
+            self.assertEqual(audiences_output[i], result)
 
     def test_optimizely_audience_conversion(self):
         ''' Test to confirm that audience conversion works and has expected output '''
@@ -1622,23 +1463,3 @@ class OptimizelyConfigTest(base.BaseTest):
                 self.assertEqual(variation.key, 'all_traffic_variation')
             else:
                 self.assertEqual(variation.key, 'no_traffic_variation')
-
-    def test_stringify_conditions_one_condition_and_list(self):
-        '''
-            Test to confirm list of IDs and operand preceded by NOT
-            is handeld correctly by stringify_conditions functions
-        '''
-
-        experiment = {'audienceConditions': ['not', ['and', '1', '2']]}
-
-        audience_conditions = experiment.get('audienceConditions')
-
-        audiences_map, config = self.get_config_and_audiences_map_for_test()
-
-        config_service = optimizely_config.OptimizelyConfigService(config)
-
-        result = config_service.stringify_conditions(audience_conditions, audiences_map)
-
-        expected_result = 'NOT ("us" AND "female")'
-
-        self.assertEqual(result, expected_result)

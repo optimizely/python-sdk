@@ -238,11 +238,17 @@ class OptimizelyConfigService(object):
         length = len(conditions)
 
         if length == 0:
-            return
+            return ''
         if length == 1:
             return '"' + self.lookup_name_from_id(conditions[0], audiences_map) + '"'
-        if length == 2 and conditions[0] in ARGS and type(conditions[1]) is not list:
-            return '"' + self.lookup_name_from_id(conditions[1], audiences_map) + '"'
+        if length == 2 and conditions[0] in ARGS and \
+            type(conditions[1]) is not list and \
+                conditions[1] not in ARGS:
+            if conditions[0] != "not":
+                return '"' + self.lookup_name_from_id(conditions[1], audiences_map) + '"'
+            else:
+                return conditions[0].upper() + \
+                    ' "' + self.lookup_name_from_id(conditions[1], audiences_map) + '"'
         if length > 1:
             for i in range(length):
                 if conditions[i] in ARGS:
@@ -264,7 +270,7 @@ class OptimizelyConfigService(object):
                             else:
                                 conditions_str += '"' + audience_name + '" '
 
-        return conditions_str
+        return conditions_str or ''
 
     def get_config(self):
         """ Gets instance of OptimizelyConfig
