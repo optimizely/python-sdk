@@ -1418,8 +1418,9 @@ class OptimizelyConfigTest(base.BaseTest):
             ''
         ]
 
+        config_service = optimizely_config.OptimizelyConfigService(config)
+
         for i in range(len(audiences_input)):
-            config_service = optimizely_config.OptimizelyConfigService(config)
             result = config_service.stringify_conditions(audiences_input[i], audiences_map)
             self.assertEqual(audiences_output[i], result)
 
