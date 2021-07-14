@@ -39,46 +39,6 @@ class OptimizelyConfig(object):
         """
         return self._datafile
 
-    def get_sdk_key(self):
-        """ Get the sdk key associated with OptimizelyConfig.
-
-        Returns:
-            A string containing sdk key.
-        """
-        return self.sdk_key
-
-    def get_environment_key(self):
-        """ Get the environemnt key associated with OptimizelyConfig.
-
-        Returns:
-            A string containing environment key.
-        """
-        return self.environment_key
-
-    def get_attributes(self):
-        """ Get the attributes associated with OptimizelyConfig
-
-        returns:
-            A list of attributes.
-        """
-        return self.attributes
-
-    def get_events(self):
-        """ Get the events associated with OptimizelyConfig
-
-        returns:
-            A list of events.
-        """
-        return self.events
-
-    def get_audiences(self):
-        """ Get the audiences associated with OptimizelyConfig
-
-        returns:
-            A list of audiences.
-        """
-        return self.audiences
-
 
 class OptimizelyExperiment(object):
     def __init__(self, id, key, variations_map, audiences=''):

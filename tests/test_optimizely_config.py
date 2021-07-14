@@ -1229,7 +1229,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         expected_value = 'testSdkKey'
 
-        self.assertEqual(expected_value, config.get_sdk_key())
+        self.assertEqual(expected_value, config.sdk_key)
 
     def test__get_sdk_key_invalid(self):
         """ Negative Test that tests get_sdk_key does not return the expected value. """
@@ -1243,7 +1243,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         invalid_value = 123
 
-        self.assertNotEqual(invalid_value, config.get_sdk_key())
+        self.assertNotEqual(invalid_value, config.sdk_key)
 
     def test__get_environment_key(self):
         """ Test that get_environment_key returns the expected value. """
@@ -1257,7 +1257,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         expected_value = 'TestEnvironmentKey'
 
-        self.assertEqual(expected_value, config.get_environment_key())
+        self.assertEqual(expected_value, config.environment_key)
 
     def test__get_environment_key_invalid(self):
         """ Negative Test that tests get_environment_key does not return the expected value. """
@@ -1271,7 +1271,7 @@ class OptimizelyConfigTest(base.BaseTest):
 
         invalid_value = 321
 
-        self.assertNotEqual(invalid_value, config.get_environment_key())
+        self.assertNotEqual(invalid_value, config.environment_key)
 
     def test__get_attributes(self):
         """ Test that the get_attributes returns the expected value. """
@@ -1299,8 +1299,8 @@ class OptimizelyConfigTest(base.BaseTest):
             'key': '234'
         }]
 
-        self.assertEqual(expected_value, config.get_attributes())
-        self.assertEqual(len(config.get_attributes()), 2)
+        self.assertEqual(expected_value, config.attributes)
+        self.assertEqual(len(config.attributes), 2)
 
     def test__get_events(self):
         """ Test that the get_events returns the expected value. """
@@ -1341,8 +1341,8 @@ class OptimizelyConfigTest(base.BaseTest):
             }
         }]
 
-        self.assertEqual(expected_value, config.get_events())
-        self.assertEqual(len(config.get_events()), 2)
+        self.assertEqual(expected_value, config.events)
+        self.assertEqual(len(config.events), 2)
 
     def test_get_audiences(self):
         ''' Test to confirm get_audiences returns proper value '''
@@ -1361,10 +1361,10 @@ class OptimizelyConfigTest(base.BaseTest):
 
         config = config_service.get_config()
 
-        for audience in config.get_audiences():
+        for audience in config.audiences:
             self.assertIsInstance(audience, optimizely_config.OptimizelyAudience)
 
-        self.assertEqual(len(config.get_audiences()), len(config_service.audiences))
+        self.assertEqual(len(config.audiences), len(config_service.audiences))
 
     def test_stringify_audience_conditions_all_cases(self):
         audiences_map = {
