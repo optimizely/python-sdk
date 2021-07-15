@@ -5,6 +5,7 @@ July 14th, 2021
 
 ### Bug Fixes:
 * Fixed issue with serving incorrect variation in projects containing multiple flags with duplicate keys. [#347] (https://github.com/optimizely/python-sdk/pull/347)
+* Fixed issue with serving incorrect variation in create_impression_event in user_event_factory.py. [#350] (https://github.com/optimizely/python-sdk/pull/350)
 
 ## 3.9.0
 June 1st, 2021
