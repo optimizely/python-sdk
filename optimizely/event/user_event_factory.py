@@ -45,12 +45,12 @@ class UserEventFactory(object):
         if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
             return None
 
-        variation, experiment_key = None, None
+        variation, experiment_id = None, None
         if activated_experiment:
-            experiment_key = activated_experiment.key
+            experiment_id = activated_experiment.id
 
-        if variation_id and experiment_key:
-            variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        if variation_id and experiment_id:
+            variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
         event_context = user_event.EventContext(
             project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
         )
