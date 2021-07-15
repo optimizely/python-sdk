@@ -1,11 +1,17 @@
 # Optimizely Python SDK Changelog
 
+## 3.9.1
+July 14th, 2021
+
+### Bug Fixes:
+* Fixed issue with serving incorrect variation in projects containing multiple flags with duplicate keys. [#347] (https://github.com/optimizely/python-sdk/pull/347)
+* Fixed issue with serving incorrect variation in create_impression_event in user_event_factory.py. [#350] (https://github.com/optimizely/python-sdk/pull/350)
+
 ## 3.9.0
 June 1st, 2021
 
 ### New Features
 * Added support for multiple concurrent prioritized experiments per flag. [#322](https://github.com/optimizely/python-sdk/pull/322)
-
 
 ## 3.8.0
 February 12th, 2021
