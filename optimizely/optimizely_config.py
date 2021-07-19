@@ -123,11 +123,12 @@ class OptimizelyConfigService(object):
 
         '''
             Merging typed_audiences with audiences from project_config.
-            The typed_audiences has higher presidence.
+            The typed_audiences has higher precidence.
         '''
 
         typed_audiences = project_config.typed_audiences[:]
         optly_typed_audiences = []
+        id_lookup_dict = {}
         for typed_audience in typed_audiences:
             optly_audience = OptimizelyAudience(
                 typed_audience.get('id'),
@@ -135,21 +136,18 @@ class OptimizelyConfigService(object):
                 typed_audience.get('conditions')
             )
             optly_typed_audiences.append(optly_audience)
+            id_lookup_dict[typed_audience.get('id')] = typed_audience.get('id')
 
         for old_audience in project_config.audiences:
             # check if old_audience.id exists in new_audiences.id from typed_audiences
-            if len([new_audience for new_audience in project_config.typed_audiences
-                    if new_audience.get('id') == old_audience.get('id')]) == 0:
-                if old_audience.get('id') == "$opt_dummy_audience":
-                    continue
-                else:
-                    # Convert audiences lists to OptimizelyAudience array
-                    optly_audience = OptimizelyAudience(
-                        old_audience.get('id'),
-                        old_audience.get('name'),
-                        old_audience.get('conditions')
-                    )
-                    optly_typed_audiences.append(optly_audience)
+            if old_audience.get('id') not in id_lookup_dict and old_audience.get('id') != "$opt_dummy_audience":
+                # Convert audiences lists to OptimizelyAudience array
+                optly_audience = OptimizelyAudience(
+                    old_audience.get('id'),
+                    old_audience.get('name'),
+                    old_audience.get('conditions')
+                )
+                optly_typed_audiences.append(optly_audience)
 
         self.audiences = optly_typed_audiences
 
@@ -193,13 +191,14 @@ class OptimizelyConfigService(object):
                 list of conditions.
         '''
         ARGS = ConditionOperatorTypes.operators
-        condition = 'OR'
+        operand = 'OR'
         conditions_str = ''
         length = len(conditions)
 
+        # Edge cases for lengths 0, 1 or 2
         if length == 0:
             return ''
-        if length == 1:
+        if length == 1 and conditions[0] not in ARGS:
             return '"' + self.lookup_name_from_id(conditions[0], audiences_map) + '"'
         if length == 2 and conditions[0] in ARGS and \
             type(conditions[1]) is not list and \
@@ -209,24 +208,31 @@ class OptimizelyConfigService(object):
             else:
                 return conditions[0].upper() + \
                     ' "' + self.lookup_name_from_id(conditions[1], audiences_map) + '"'
+        # If length is 2 (where the one elemnt is a list) or greater
         if length > 1:
             for i in range(length):
+                # Operand is handled here and made Upper Case
                 if conditions[i] in ARGS:
-                    condition = conditions[i].upper()
+                    operand = conditions[i].upper()
                 else:
+                    # Check if element is a list or not
                     if type(conditions[i]) == list:
+                        # Check if at the end or not to determine where to add the operand
+                        # Recursive call to call stringify on embedded list
                         if i + 1 < length:
                             conditions_str += '(' + self.stringify_conditions(conditions[i], audiences_map) + ') '
                         else:
-                            conditions_str += condition + \
+                            conditions_str += operand + \
                                 ' (' + self.stringify_conditions(conditions[i], audiences_map) + ')'
+                    # Not a list so we handle as and ID to lookup no recursion needed
                     else:
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
                         if audience_name is not None:
+                            # Below handles all cases for one ID or greater
                             if i + 1 < length - 1:
-                                conditions_str += '"' + audience_name + '" ' + condition + ' '
+                                conditions_str += '"' + audience_name + '" ' + operand + ' '
                             elif i + 1 == length:
-                                conditions_str += condition + ' "' + audience_name + '"'
+                                conditions_str += operand + ' "' + audience_name + '"'
                             else:
                                 conditions_str += '"' + audience_name + '" '
 

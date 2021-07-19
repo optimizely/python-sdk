@@ -1399,7 +1399,8 @@ class OptimizelyConfigTest(base.BaseTest):
             ["and", ["or", "1", ["and", "2", "3"]], ["and", "11", ["or", "12", "13"]]],
             ["not", ["and", "1", "2"]],
             ["or", "1", "100000"],
-            ["and", "and"]
+            ["and", "and"],
+            ["and"]
         ]
 
         audiences_output = [
@@ -1415,6 +1416,7 @@ class OptimizelyConfigTest(base.BaseTest):
             '("us" OR ("female" AND "adult")) AND ("fr" AND ("male" OR "kid"))',
             'NOT ("us" AND "female")',
             '"us" OR "100000"',
+            '',
             ''
         ]
 
