@@ -123,7 +123,7 @@ class OptimizelyConfigService(object):
 
         '''
             Merging typed_audiences with audiences from project_config.
-            The typed_audiences has higher precidence.
+            The typed_audiences has higher precedence.
         '''
 
         typed_audiences = project_config.typed_audiences[:]
