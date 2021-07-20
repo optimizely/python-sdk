@@ -756,7 +756,8 @@ class BaseTest(unittest.TestCase):
             'projectId': '11624721371',
             'variables': [],
             'featureFlags': [
-                {'experimentIds': [], 'rolloutId': '11551226731', 'variables': [], 'id': '11477755619', 'key': 'feat'},
+                {'experimentIds': [], 'rolloutId': '11551226731', 'variables': [], 'id': '11477755619',
+                    'key': 'feat'},
                 {
                     'experimentIds': ['11564051718'],
                     'rolloutId': '11638870867',

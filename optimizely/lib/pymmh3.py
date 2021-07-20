@@ -127,25 +127,25 @@ def hash128(key, seed=0x0, x64arch=True):
         for block_start in xrange(0, nblocks * 8, 8):
             # ??? big endian?
             k1 = (
-                key[2 * block_start + 7] << 56
-                | key[2 * block_start + 6] << 48
-                | key[2 * block_start + 5] << 40
-                | key[2 * block_start + 4] << 32
-                | key[2 * block_start + 3] << 24
-                | key[2 * block_start + 2] << 16
-                | key[2 * block_start + 1] << 8
-                | key[2 * block_start + 0]
+                key[2 * block_start + 7] << 56 |
+                key[2 * block_start + 6] << 48 |
+                key[2 * block_start + 5] << 40 |
+                key[2 * block_start + 4] << 32 |
+                key[2 * block_start + 3] << 24 |
+                key[2 * block_start + 2] << 16 |
+                key[2 * block_start + 1] << 8 |
+                key[2 * block_start + 0]
             )
 
             k2 = (
-                key[2 * block_start + 15] << 56
-                | key[2 * block_start + 14] << 48
-                | key[2 * block_start + 13] << 40
-                | key[2 * block_start + 12] << 32
-                | key[2 * block_start + 11] << 24
-                | key[2 * block_start + 10] << 16
-                | key[2 * block_start + 9] << 8
-                | key[2 * block_start + 8]
+                key[2 * block_start + 15] << 56 |
+                key[2 * block_start + 14] << 48 |
+                key[2 * block_start + 13] << 40 |
+                key[2 * block_start + 12] << 32 |
+                key[2 * block_start + 11] << 24 |
+                key[2 * block_start + 10] << 16 |
+                key[2 * block_start + 9] << 8 |
+                key[2 * block_start + 8]
             )
 
             k1 = (c1 * k1) & 0xFFFFFFFFFFFFFFFF
@@ -258,31 +258,31 @@ def hash128(key, seed=0x0, x64arch=True):
         # body
         for block_start in xrange(0, nblocks * 16, 16):
             k1 = (
-                key[block_start + 3] << 24
-                | key[block_start + 2] << 16
-                | key[block_start + 1] << 8
-                | key[block_start + 0]
+                key[block_start + 3] << 24 |
+                key[block_start + 2] << 16 |
+                key[block_start + 1] << 8 |
+                key[block_start + 0]
             )
 
             k2 = (
-                key[block_start + 7] << 24
-                | key[block_start + 6] << 16
-                | key[block_start + 5] << 8
-                | key[block_start + 4]
+                key[block_start + 7] << 24 |
+                key[block_start + 6] << 16 |
+                key[block_start + 5] << 8 |
+                key[block_start + 4]
             )
 
             k3 = (
-                key[block_start + 11] << 24
-                | key[block_start + 10] << 16
-                | key[block_start + 9] << 8
-                | key[block_start + 8]
+                key[block_start + 11] << 24 |
+                key[block_start + 10] << 16 |
+                key[block_start + 9] << 8 |
+                key[block_start + 8]
             )
 
             k4 = (
-                key[block_start + 15] << 24
-                | key[block_start + 14] << 16
-                | key[block_start + 13] << 8
-                | key[block_start + 12]
+                key[block_start + 15] << 24 |
+                key[block_start + 14] << 16 |
+                key[block_start + 13] << 8 |
+                key[block_start + 12]
             )
 
             k1 = (c1 * k1) & 0xFFFFFFFF
