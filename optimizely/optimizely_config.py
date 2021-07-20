@@ -224,7 +224,7 @@ class OptimizelyConfigService(object):
                         else:
                             conditions_str += operand + \
                                 ' (' + self.stringify_conditions(conditions[i], audiences_map) + ')'
-                    # Not a list so we handle as and ID to lookup no recursion needed
+                    # If the item is not a list, we process as an audience ID and retrieve the name
                     else:
                         audience_name = self.lookup_name_from_id(conditions[i], audiences_map)
                         if audience_name is not None:
