@@ -616,7 +616,53 @@ class OptimizelyConfigTest(base.BaseTest):
                     'experiments_map': {
 
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [],
                     'id': '91112',
                     'key': 'test_feature_in_rollout'
@@ -677,7 +723,7 @@ class OptimizelyConfigTest(base.BaseTest):
                 },
                 'test_feature_in_experiment_and_rollout': {
                     'variables_map': {
-
+                        
                     },
                     'experiments_map': {
                         'group_exp_2': {
@@ -704,7 +750,53 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': ''
                         }
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            }, 
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [
                         {
                             'id': '32223',
@@ -780,7 +872,53 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': '"Test attribute users 3"'
                         }
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            }, 
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [
                         {
                             'id': '42222',
@@ -876,7 +1014,53 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': '"Test attribute users 3"'
                         }
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            }, 
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [
                         {
                             'id': '111134',
