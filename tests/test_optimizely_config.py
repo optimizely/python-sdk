@@ -723,7 +723,7 @@ class OptimizelyConfigTest(base.BaseTest):
                 },
                 'test_feature_in_experiment_and_rollout': {
                     'variables_map': {
-                        
+
                     },
                     'experiments_map': {
                         'group_exp_2': {
@@ -793,7 +793,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'feature_enabled': True,
                                     'variables_map': {}
                                 }
-                            }, 
+                            },
                             'audiences': ''
                         }
                     ],
@@ -915,7 +915,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'feature_enabled': True,
                                     'variables_map': {}
                                 }
-                            }, 
+                            },
                             'audiences': ''
                         }
                     ],
@@ -1057,7 +1057,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'feature_enabled': True,
                                     'variables_map': {}
                                 }
-                            }, 
+                            },
                             'audiences': ''
                         }
                     ],
