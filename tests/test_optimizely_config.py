@@ -1650,3 +1650,15 @@ class OptimizelyConfigTest(base.BaseTest):
                 self.assertEqual(variation.key, 'all_traffic_variation')
             else:
                 self.assertEqual(variation.key, 'no_traffic_variation')
+
+    def test_get_delivery_rules(self):
+        expected_features_map_dict = self.expected_config.get('features_map')
+        actual_features_map_dict = self.actual_config_dict.get('features_map')
+        actual_features_map = self.actual_config.features_map
+
+        for optly_feature in actual_features_map.values():
+            self.assertIsInstance(optly_feature, optimizely_config.OptimizelyFeature)
+            for delivery_rule in optly_feature.delivery_rules:
+                self.assertIsInstance(delivery_rule, optimizely_config.OptimizelyExperiment)
+
+        self.assertEqual(expected_features_map_dict, actual_features_map_dict)
