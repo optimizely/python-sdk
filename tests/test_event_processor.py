@@ -113,7 +113,6 @@ class CustomEventDispatcher(object):
 class BatchEventProcessorTest(base.BaseTest):
 
     DEFAULT_QUEUE_CAPACITY = 1000
-    # DEFAULT_QUEUE_CAPACITY = 5
     MAX_BATCH_SIZE = 10
     MAX_DURATION_SEC = 0.2
     MAX_TIMEOUT_INTERVAL_SEC = 0.1
