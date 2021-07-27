@@ -113,6 +113,7 @@ class CustomEventDispatcher(object):
 class BatchEventProcessorTest(base.BaseTest):
 
     DEFAULT_QUEUE_CAPACITY = 1000
+    # DEFAULT_QUEUE_CAPACITY = 5
     MAX_BATCH_SIZE = 10
     MAX_DURATION_SEC = 0.2
     MAX_TIMEOUT_INTERVAL_SEC = 0.1
@@ -493,6 +494,34 @@ class BatchEventProcessorTest(base.BaseTest):
         self.assertEqual(
             1, len(self.optimizely.notification_center.notification_listeners[enums.NotificationTypes.LOG_EVENT]),
         )
+
+    def test_warning_log_level_on_queue_overflow(self):
+        """ Test that a warning log is created when events overflow the queue. """
+
+        # create scenario where the batch size (MAX_BATCH_SIZE=10) is larger than the queue size (7)
+        test_max_queue_size = 7
+
+        event_dispatcher = CustomEventDispatcher()
+
+        with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
+            self.event_processor = BatchEventProcessor(
+                    event_dispatcher,
+                    self.optimizely.logger,
+                    True,
+                    queue.Queue(maxsize=test_max_queue_size),
+                )
+
+        for i in range(0, self.MAX_BATCH_SIZE):
+            user_event = self._build_conversion_event(self.event_name)
+            self.event_processor.process(user_event)
+            event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
+
+        time.sleep(self.TEST_TIMEOUT)
+
+        # queue is flushed, even though events overflew
+        self.assertEqual(0, self.event_processor.event_queue.qsize())
+        mock_config_logging.warning.assert_called_with('Payload not accepted by the queue. Current size: {}'
+                                                       .format(str(test_max_queue_size)))
 
 
 class CustomForwardingEventDispatcher(object):
