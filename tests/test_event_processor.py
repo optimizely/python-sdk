@@ -505,11 +505,11 @@ class BatchEventProcessorTest(base.BaseTest):
 
         with mock.patch.object(self.optimizely, 'logger') as mock_config_logging:
             self.event_processor = BatchEventProcessor(
-                    event_dispatcher,
-                    self.optimizely.logger,
-                    True,
-                    queue.Queue(maxsize=test_max_queue_size),
-                )
+                event_dispatcher,
+                self.optimizely.logger,
+                True,
+                queue.Queue(maxsize=test_max_queue_size),
+            )
 
         for i in range(0, self.MAX_BATCH_SIZE):
             user_event = self._build_conversion_event(self.event_name)
