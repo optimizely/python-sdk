@@ -59,7 +59,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '122239',
                             'key': 'control',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                         'variation': {
                             'variables_map': {
@@ -67,7 +67,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '122240',
                             'key': 'variation',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         }
                     },
                     'id': '111133',
@@ -187,7 +187,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '28902',
                             'key': 'group_exp_1_variation',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                         'group_exp_1_control': {
                             'variables_map': {
@@ -195,7 +195,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '28901',
                             'key': 'group_exp_1_control',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         }
                     },
                     'id': '32222',
@@ -210,7 +210,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '28906',
                             'key': 'group_exp_2_variation',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                         'group_exp_2_control': {
                             'variables_map': {
@@ -218,7 +218,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '28905',
                             'key': 'group_exp_2_control',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         }
                     },
                     'id': '32223',
@@ -233,7 +233,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '38901',
                             'key': 'var_1',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                     },
                     'id': '42222',
@@ -248,7 +248,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '38905',
                             'key': 'var_1',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                     },
                     'id': '42223',
@@ -263,7 +263,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '38906',
                             'key': 'var_1',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                     },
                     'id': '42224',
@@ -278,7 +278,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '222239',
                             'key': 'control',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                     },
                     'id': '111134',
@@ -293,7 +293,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '222240',
                             'key': 'control',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                     },
                     'id': '111135',
@@ -308,7 +308,7 @@ class OptimizelyConfigTest(base.BaseTest):
                             },
                             'id': '222241',
                             'key': 'control',
-                            'feature_enabled': False
+                            'feature_enabled': None
                         },
                     },
                     'id': '111136',
@@ -680,7 +680,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '28902',
                                     'key': 'group_exp_1_variation',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                                 'group_exp_1_control': {
                                     'variables_map': {
@@ -688,7 +688,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '28901',
                                     'key': 'group_exp_1_control',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 }
                             },
                             'id': '32222',
@@ -705,13 +705,13 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'group_exp_1_control': {
                                     'id': '28901',
                                     'key': 'group_exp_1_control',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 },
                                 'group_exp_1_variation': {
                                     'id': '28902',
                                     'key': 'group_exp_1_variation',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -734,7 +734,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '28906',
                                     'key': 'group_exp_2_variation',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                                 'group_exp_2_control': {
                                     'variables_map': {
@@ -742,7 +742,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '28905',
                                     'key': 'group_exp_2_control',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 }
                             },
                             'id': '32223',
@@ -805,13 +805,13 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'group_exp_2_control': {
                                     'id': '28905',
                                     'key': 'group_exp_2_control',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 },
                                 'group_exp_2_variation': {
                                     'id': '28906',
                                     'key': 'group_exp_2_variation',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -834,7 +834,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '38901',
                                     'key': 'var_1',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                             },
                             'id': '42222',
@@ -849,7 +849,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '38905',
                                     'key': 'var_1',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                             },
                             'id': '42223',
@@ -864,7 +864,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '38906',
                                     'key': 'var_1',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                             },
                             'id': '42224',
@@ -927,7 +927,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'var_1': {
                                     'id': '38901',
                                     'key': 'var_1',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -940,7 +940,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'var_1': {
                                     'id': '38905',
                                     'key': 'var_1',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -953,7 +953,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'var_1': {
                                     'id': '38906',
                                     'key': 'var_1',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -976,7 +976,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '222239',
                                     'key': 'control',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                             },
                             'id': '111134',
@@ -991,7 +991,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '222240',
                                     'key': 'control',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                             },
                             'id': '111135',
@@ -1006,7 +1006,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                     },
                                     'id': '222241',
                                     'key': 'control',
-                                    'feature_enabled': False
+                                    'feature_enabled': None
                                 },
                             },
                             'id': '111136',
@@ -1069,7 +1069,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'control': {
                                     'id': '222239',
                                     'key': 'control',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -1082,7 +1082,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'control': {
                                     'id': '222240',
                                     'key': 'control',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
@@ -1095,7 +1095,7 @@ class OptimizelyConfigTest(base.BaseTest):
                                 'control': {
                                     'id': '222241',
                                     'key': 'control',
-                                    'feature_enabled': False,
+                                    'feature_enabled': None,
                                     'variables_map': {}
                                 }
                             },
