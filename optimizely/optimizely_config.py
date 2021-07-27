@@ -325,7 +325,7 @@ class OptimizelyConfigService(object):
 
         for variation in experiment.get('variations', []):
             variables_map = self._get_variables_map(experiment, variation)
-            feature_enabled = variation.get('featureEnabled', None)
+            feature_enabled = variation.get('featureEnabled', False)
 
             optly_variation = OptimizelyVariation(
                 variation['id'], variation['key'], feature_enabled, variables_map

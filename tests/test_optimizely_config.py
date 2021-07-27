@@ -1584,7 +1584,8 @@ class OptimizelyConfigTest(base.BaseTest):
             ["not", ["and", "1", "2"]],
             ["or", "1", "100000"],
             ["and", "and"],
-            ["and"]
+            ["and"],
+            ["and", ["or", "1", ["and", "2", "3"]], ["and", "11", ["or", "12", "3"]]]
         ]
 
         audiences_output = [
@@ -1601,7 +1602,8 @@ class OptimizelyConfigTest(base.BaseTest):
             'NOT ("us" AND "female")',
             '"us" OR "100000"',
             '',
-            ''
+            '',
+            '("us" OR ("female" AND "adult")) AND ("fr" AND ("male" OR "adult"))'
         ]
 
         config_service = optimizely_config.OptimizelyConfigService(config)
