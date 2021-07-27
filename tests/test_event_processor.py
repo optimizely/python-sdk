@@ -518,7 +518,7 @@ class BatchEventProcessorTest(base.BaseTest):
 
         time.sleep(self.TEST_TIMEOUT)
 
-        # queue is flushed, even though events overflew
+        # queue is flushed, even though events overflow
         self.assertEqual(0, self.event_processor.event_queue.qsize())
         mock_config_logging.warning.assert_called_with('Payload not accepted by the queue. Current size: {}'
                                                        .format(str(test_max_queue_size)))
