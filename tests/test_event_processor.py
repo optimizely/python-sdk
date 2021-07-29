@@ -512,7 +512,6 @@ class BatchEventProcessorTest(base.BaseTest):
                 queue.Queue(maxsize=test_max_queue_size),
             )
 
-
         for i in range(0, self.MAX_BATCH_SIZE):
             user_event = self._build_conversion_event(self.event_name)
             self.event_processor.process(user_event)
