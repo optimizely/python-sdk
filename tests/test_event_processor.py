@@ -497,11 +497,9 @@ class BatchEventProcessorTest(base.BaseTest):
     def test_warning_log_level_on_queue_overflow(self):
         """ Test that a warning log is created when events overflow the queue. """
 
-        # create scenario where the batch size (MAX_BATCH_SIZE) is larger than the queue size
+        # create scenario where the batch size (MAX_BATCH_SIZE) is significantly larger than the queue size
         # use smaller batch size and higher timeout to avoid test flakiness
         test_max_queue_size = 2
-        self.MAX_BATCH_SIZE = self.MAX_BATCH_SIZE - 7
-        self.TEST_TIMEOUT = 1
 
         event_dispatcher = CustomEventDispatcher()
 
