@@ -500,6 +500,7 @@ class BatchEventProcessorTest(base.BaseTest):
         # create scenario where the batch size (MAX_BATCH_SIZE) is significantly larger than the queue size
         # use smaller batch size and higher timeout to avoid test flakiness
         test_max_queue_size = 2
+        self.MAX_BATCH_SIZE = 100
 
         event_dispatcher = CustomEventDispatcher()
 
@@ -510,6 +511,7 @@ class BatchEventProcessorTest(base.BaseTest):
                 True,
                 queue.Queue(maxsize=test_max_queue_size),
             )
+
 
         for i in range(0, self.MAX_BATCH_SIZE):
             user_event = self._build_conversion_event(self.event_name)
