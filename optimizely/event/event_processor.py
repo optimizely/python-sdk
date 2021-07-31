@@ -259,7 +259,7 @@ class BatchEventProcessor(BaseEventProcessor):
         try:
             self.event_queue.put_nowait(user_event)
         except queue.Full:
-            self.logger.debug(
+            self.logger.warning(
                 'Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize()))
             )
 
