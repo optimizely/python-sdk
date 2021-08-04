@@ -133,7 +133,7 @@ class OptimizelyConfigService(object):
             optly_audience = OptimizelyAudience(
                 typed_audience.get('id'),
                 typed_audience.get('name'),
-                typed_audience.get('conditions')
+                str(typed_audience.get('conditions'))
             )
             optly_typed_audiences.append(optly_audience)
             id_lookup_dict[typed_audience.get('id')] = typed_audience.get('id')
@@ -145,7 +145,7 @@ class OptimizelyConfigService(object):
                 optly_audience = OptimizelyAudience(
                     old_audience.get('id'),
                     old_audience.get('name'),
-                    old_audience.get('conditions')
+                    str(old_audience.get('conditions'))
                 )
                 optly_typed_audiences.append(optly_audience)
 
