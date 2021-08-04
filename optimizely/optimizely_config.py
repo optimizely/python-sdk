@@ -25,8 +25,8 @@ class OptimizelyConfig(object):
         self.experiments_map = experiments_map
         self.features_map = features_map
         self._datafile = datafile
-        self.sdk_key = sdk_key or ""
-        self.environment_key = environment_key or ""
+        self.sdk_key = sdk_key or ''
+        self.environment_key = environment_key or ''
         self.attributes = attributes or []
         self.events = events or []
         self.audiences = audiences or []
