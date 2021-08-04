@@ -26,8 +26,8 @@ class OptimizelyConfigTest(base.BaseTest):
         self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
 
         self.expected_config = {
-            'sdk_key': None,
-            'environment_key': None,
+            'sdk_key': '',
+            'environment_key': '',
             'attributes': [{'key': 'test_attribute', 'id': '111094'}],
             'events': [{'key': 'test_event', 'experiment_ids': ['111127'], 'id': '111095'}],
             'audiences': [
@@ -625,13 +625,75 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'id': '211129',
                                     'key': '211129',
                                     'feature_enabled': True,
-                                    'variables_map': {}
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
                                 },
                                 '211229': {
                                     'id': '211229',
                                     'key': '211229',
                                     'feature_enabled': False,
-                                    'variables_map': {}
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
                                 }
                             },
                             'audiences': ''
@@ -644,7 +706,38 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'id': '211139',
                                     'key': '211139',
                                     'feature_enabled': True,
-                                    'variables_map': {}
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
                                 }
                             },
                             'audiences': ''
@@ -657,7 +750,38 @@ class OptimizelyConfigTest(base.BaseTest):
                                     'id': '211149',
                                     'key': '211149',
                                     'feature_enabled': True,
-                                    'variables_map': {}
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
                                 }
                             },
                             'audiences': ''

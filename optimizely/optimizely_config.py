@@ -19,14 +19,14 @@ from .project_config import ProjectConfig
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
-                 sdk_key=None, environment_key=None, attributes=None, events=None,
+                 sdk_key="", environment_key="", attributes=None, events=None,
                  audiences=None):
         self.revision = revision
         self.experiments_map = experiments_map
         self.features_map = features_map
         self._datafile = datafile
-        self.sdk_key = sdk_key
-        self.environment_key = environment_key
+        self.sdk_key = sdk_key or ""
+        self.environment_key = environment_key or ""
         self.attributes = attributes or []
         self.events = events or []
         self.audiences = audiences or []
@@ -269,6 +269,8 @@ class OptimizelyConfigService(object):
         self.exp_id_to_feature_map = {}
         self.feature_key_variable_key_to_variable_map = {}
         self.feature_key_variable_id_to_variable_map = {}
+        self.feature_id_variable_id_to_feature_variables_map = {}
+        self.feature_id_variable_key_to_feature_variables_map = {}
 
         for feature in self.feature_flags:
             for experiment_id in feature['experimentIds']:
@@ -283,10 +285,12 @@ class OptimizelyConfigService(object):
                 variables_key_map[variable['key']] = opt_variable
                 variables_id_map[variable['id']] = opt_variable
 
+            self.feature_id_variable_id_to_feature_variables_map[feature['id']] = variables_id_map
+            self.feature_id_variable_key_to_feature_variables_map[feature['id']] = variables_key_map
             self.feature_key_variable_key_to_variable_map[feature['key']] = variables_key_map
             self.feature_key_variable_id_to_variable_map[feature['key']] = variables_id_map
 
-    def _get_variables_map(self, experiment, variation):
+    def _get_variables_map(self, experiment, variation, feature_id=None):
         """ Gets variables map for given experiment and variation.
 
         Args:
@@ -296,23 +300,27 @@ class OptimizelyConfigService(object):
         Returns:
             dict - Map of variable key to OptimizelyVariable for the given variation.
         """
+        variables_map = {}
+
         feature_flag = self.exp_id_to_feature_map.get(experiment['id'], None)
-        if feature_flag is None:
+        if feature_flag is None and feature_id is None:
             return {}
 
         # set default variables for each variation
-        variables_map = {}
-        variables_map = copy.deepcopy(self.feature_key_variable_key_to_variable_map[feature_flag['key']])
+        if feature_id:
+            variables_map = copy.deepcopy(self.feature_id_variable_key_to_feature_variables_map[feature_id])
+        else:
+            variables_map = copy.deepcopy(self.feature_key_variable_key_to_variable_map[feature_flag['key']])
 
-        # set variation specific variable value if any
-        if variation.get('featureEnabled'):
-            for variable in variation.get('variables', []):
-                feature_variable = self.feature_key_variable_id_to_variable_map[feature_flag['key']][variable['id']]
-                variables_map[feature_variable.key].value = variable['value']
+            # set variation specific variable value if any
+            if variation.get('featureEnabled'):
+                for variable in variation.get('variables', []):
+                    feature_variable = self.feature_key_variable_id_to_variable_map[feature_flag['key']][variable['id']]
+                    variables_map[feature_variable.key].value = variable['value']
 
         return variables_map
 
-    def _get_variations_map(self, experiment):
+    def _get_variations_map(self, experiment, feature_id=None):
         """ Gets variation map for the given experiment.
 
         Args:
@@ -324,7 +332,7 @@ class OptimizelyConfigService(object):
         variations_map = {}
 
         for variation in experiment.get('variations', []):
-            variables_map = self._get_variables_map(experiment, variation)
+            variables_map = self._get_variables_map(experiment, variation, feature_id)
             feature_enabled = variation.get('featureEnabled', None)
 
             optly_variation = OptimizelyVariation(
@@ -394,7 +402,7 @@ class OptimizelyConfigService(object):
 
         for feature in self.feature_flags:
 
-            delivery_rules = self._get_delivery_rules(self.rollouts, feature.get('rolloutId'))
+            delivery_rules = self._get_delivery_rules(self.rollouts, feature.get('rolloutId'), feature['id'])
             experiment_rules = []
 
             exp_map = {}
@@ -415,7 +423,7 @@ class OptimizelyConfigService(object):
 
         return features_map
 
-    def _get_delivery_rules(self, rollouts, rollout_id):
+    def _get_delivery_rules(self, rollouts, rollout_id, feature_id):
         """ Gets an array of rollouts for the project config
 
         returns:
@@ -440,7 +448,7 @@ class OptimizelyConfigService(object):
             if experiments:
                 for experiment in experiments:
                     optly_exp = OptimizelyExperiment(
-                        experiment['id'], experiment['key'], self._get_variations_map(experiment)
+                        experiment['id'], experiment['key'], self._get_variations_map(experiment, feature_id)
                     )
                     audiences = self.replace_ids_with_names(experiment.get('audienceConditions', []), audiences_map)
                     optly_exp.audiences = audiences
