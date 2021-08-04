@@ -19,7 +19,7 @@ from .project_config import ProjectConfig
 
 class OptimizelyConfig(object):
     def __init__(self, revision, experiments_map, features_map, datafile=None,
-                 sdk_key="", environment_key="", attributes=None, events=None,
+                 sdk_key=None, environment_key=None, attributes=None, events=None,
                  audiences=None):
         self.revision = revision
         self.experiments_map = experiments_map
