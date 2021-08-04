@@ -443,7 +443,7 @@ class OptimizelyConfigService(object):
             for optly_audience in self.audiences:
                 audiences_map[optly_audience.id] = optly_audience.name
 
-            # Get the experiments_map for that rollout
+            # Get the experiments for that rollout
             experiments = rollout.get('experiments')
             if experiments:
                 for experiment in experiments:
