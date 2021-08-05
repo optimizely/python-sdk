@@ -126,14 +126,13 @@ class OptimizelyConfigService(object):
             The typed_audiences has higher precedence.
         '''
 
-        typed_audiences = project_config.typed_audiences[:]
         optly_typed_audiences = []
         id_lookup_dict = {}
-        for typed_audience in typed_audiences:
+        for typed_audience in project_config.typed_audiences:
             optly_audience = OptimizelyAudience(
                 typed_audience.get('id'),
                 typed_audience.get('name'),
-                str(typed_audience.get('conditions'))
+                typed_audience.get('conditions')
             )
             optly_typed_audiences.append(optly_audience)
             id_lookup_dict[typed_audience.get('id')] = typed_audience.get('id')
@@ -145,7 +144,7 @@ class OptimizelyConfigService(object):
                 optly_audience = OptimizelyAudience(
                     old_audience.get('id'),
                     old_audience.get('name'),
-                    str(old_audience.get('conditions'))
+                    old_audience.get('conditions')
                 )
                 optly_typed_audiences.append(optly_audience)
 
