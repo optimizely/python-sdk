@@ -125,7 +125,6 @@ class OptimizelyConfigService(object):
             Merging typed_audiences with audiences from project_config.
             The typed_audiences has higher precedence.
         '''
-
         optly_typed_audiences = []
         id_lookup_dict = {}
         for typed_audience in project_config.typed_audiences:
