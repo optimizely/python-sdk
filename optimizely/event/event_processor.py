@@ -180,14 +180,16 @@ class BatchEventProcessor(BaseEventProcessor):
     """
         try:
             while True:
-                if self._get_time() >= self.flushing_interval_deadline:
+                loop_time = self._get_time()
+                loop_time_flush_interval = self._get_time(self.flush_interval.total_seconds())
+
+                if loop_time >= self.flushing_interval_deadline:
                     self._flush_batch()
-                    self.flushing_interval_deadline = self._get_time() + \
-                        self._get_time(self.flush_interval.total_seconds())
+                    self.flushing_interval_deadline = loop_time + loop_time_flush_interval
                     self.logger.debug('Flush interval deadline. Flushed batch.')
 
                 try:
-                    interval = self.flushing_interval_deadline - self._get_time()
+                    interval = self.flushing_interval_deadline - loop_time
                     item = self.event_queue.get(True, interval)
 
                     if item is None:
