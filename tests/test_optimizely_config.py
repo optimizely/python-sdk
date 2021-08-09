@@ -26,8 +26,8 @@ class OptimizelyConfigTest(base.BaseTest):
         self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
 
         self.expected_config = {
-            'sdk_key': None,
-            'environment_key': None,
+            'sdk_key': '',
+            'environment_key': '',
             'attributes': [{'key': 'test_attribute', 'id': '111094'}],
             'events': [{'key': 'test_event', 'experiment_ids': ['111127'], 'id': '111095'}],
             'audiences': [
@@ -616,7 +616,177 @@ class OptimizelyConfigTest(base.BaseTest):
                     'experiments_map': {
 
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {
+                                        'is_running': {
+                                            'id': '132',
+                                            'key': 'is_running',
+                                            'type': 'boolean',
+                                            'value': 'false'
+                                        },
+                                        'message': {
+                                            'id': '133',
+                                            'key': 'message',
+                                            'type': 'string',
+                                            'value': 'Hello'
+                                        },
+                                        'price': {
+                                            'id': '134',
+                                            'key': 'price',
+                                            'type': 'double',
+                                            'value': '99.99'
+                                        },
+                                        'count': {
+                                            'id': '135',
+                                            'key': 'count',
+                                            'type': 'integer',
+                                            'value': '999'
+                                        },
+                                        'object': {
+                                            'id': '136',
+                                            'key': 'object',
+                                            'type': 'json',
+                                            'value': '{"field": 1}'
+                                        }
+                                    }
+                                }
+                            },
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [],
                     'id': '91112',
                     'key': 'test_feature_in_rollout'
@@ -704,7 +874,53 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': ''
                         }
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [
                         {
                             'id': '32223',
@@ -780,7 +996,53 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': '"Test attribute users 3"'
                         }
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [
                         {
                             'id': '42222',
@@ -876,7 +1138,53 @@ class OptimizelyConfigTest(base.BaseTest):
                             'audiences': '"Test attribute users 3"'
                         }
                     },
-                    'delivery_rules': [],
+                    'delivery_rules': [
+                        {
+                            'id': '211127',
+                            'key': '211127',
+                            'variations_map': {
+                                '211129': {
+                                    'id': '211129',
+                                    'key': '211129',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                },
+                                '211229': {
+                                    'id': '211229',
+                                    'key': '211229',
+                                    'feature_enabled': False,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211137',
+                            'key': '211137',
+                            'variations_map': {
+                                '211139': {
+                                    'id': '211139',
+                                    'key': '211139',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        },
+                        {
+                            'id': '211147',
+                            'key': '211147',
+                            'variations_map': {
+                                '211149': {
+                                    'id': '211149',
+                                    'key': '211149',
+                                    'feature_enabled': True,
+                                    'variables_map': {}
+                                }
+                            },
+                            'audiences': ''
+                        }
+                    ],
                     'experiment_rules': [
                         {
                             'id': '111134',
@@ -1400,7 +1708,8 @@ class OptimizelyConfigTest(base.BaseTest):
             ["not", ["and", "1", "2"]],
             ["or", "1", "100000"],
             ["and", "and"],
-            ["and"]
+            ["and"],
+            ["and", ["or", "1", ["and", "2", "3"]], ["and", "11", ["or", "12", "3"]]]
         ]
 
         audiences_output = [
@@ -1417,7 +1726,8 @@ class OptimizelyConfigTest(base.BaseTest):
             'NOT ("us" AND "female")',
             '"us" OR "100000"',
             '',
-            ''
+            '',
+            '("us" OR ("female" AND "adult")) AND ("fr" AND ("male" OR "adult"))'
         ]
 
         config_service = optimizely_config.OptimizelyConfigService(config)
@@ -1466,3 +1776,15 @@ class OptimizelyConfigTest(base.BaseTest):
                 self.assertEqual(variation.key, 'all_traffic_variation')
             else:
                 self.assertEqual(variation.key, 'no_traffic_variation')
+
+    def test_get_delivery_rules(self):
+        expected_features_map_dict = self.expected_config.get('features_map')
+        actual_features_map_dict = self.actual_config_dict.get('features_map')
+        actual_features_map = self.actual_config.features_map
+
+        for optly_feature in actual_features_map.values():
+            self.assertIsInstance(optly_feature, optimizely_config.OptimizelyFeature)
+            for delivery_rule in optly_feature.delivery_rules:
+                self.assertIsInstance(delivery_rule, optimizely_config.OptimizelyExperiment)
+
+        self.assertEqual(expected_features_map_dict, actual_features_map_dict)
