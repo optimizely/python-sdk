@@ -94,6 +94,7 @@ class Group(BaseEntity):
 
 
 class Layer(BaseEntity):
+    """Layer acts as rollout."""
     def __init__(self, id, experiments, **kwargs):
         self.id = id
         self.experiments = experiments

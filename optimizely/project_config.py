@@ -134,10 +134,42 @@ class ProjectConfig(object):
         self.experiment_feature_map = {}
         for feature in self.feature_key_map.values():
             feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
-
             for exp_id in feature.experimentIds:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
+
+        # TODO - make sure to add a test for multiple flags. My test datafile only has a single flag. Because for loop needs to work across all flags.
+        # all rules(experiment rules and delivery rules) for each flag
+        self.flag_rules_map = {}
+        for flag in self.feature_flags:
+
+            experiments = [self.experiment_id_map[exp_id] for exp_id in flag['experimentIds']]
+            rollout = self.rollout_id_map[flag['rolloutId']]
+
+            rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)     # TODO - not happy that _generate_key_map funciton is here. I can move this chunk out like other lookups. But the it's not ideal either
+            rollout_experiments = [exper for exper in rollout_experiments_id_map.values()]
+
+            if rollout and rollout.experiments:
+                experiments.extend(rollout_experiments)
+
+            self.flag_rules_map[flag['key']] = experiments
+
+        # All variations for each flag
+        # Datafile does not contain a separate entity for this.
+        # We collect variations used in each rule (experiment rules and delivery rules)
+        self.flag_variations_map = {}
+
+        for flag_key, rules in self.flag_rules_map.items():
+            variations = []
+            for rule in rules:
+                # get variations as objects (rule.variations gives list)
+                variation_objects = self.variation_key_map[rule.key].values()
+
+                for variation in variation_objects:
+                    if variation.id not in [var.id for var in variations]:
+                        variations.append(variation)
+
+            self.flag_variations_map[flag_key] = variations
 
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
