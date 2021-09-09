@@ -35,13 +35,13 @@ To install:
 Note:  
 - If you are running the SDK with PyPy or PyPy3 and you are experiencing issues, install this cryptography package **first** and then optimizely-sdk package:  
 
-    pip install "cryptography>=1.3.4,<=3.1.1"
+    ```pip install "cryptography>=1.3.4,<=3.1.1"```
 
 
 - After v3.0.0 mmh3 is no longer a mandatory dependency to removed to remove the c++ build requirement.
 If you are experiencing (performance) problems, install this explicitly and it will continue to be honoured by code:
 
-     pip install "mmh3==2.5.1"
+     ```pip install "mmh3==2.5.1"```
 
 ### Feature Management Access
 
