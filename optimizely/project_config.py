@@ -118,6 +118,7 @@ class ProjectConfig(object):
                     variation.variables, 'id', entities.Variation.VariableUsage
                 )
 
+        # TODO - NEW
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
         # As we cannot create json variables in datafile directly, here we convert
@@ -138,6 +139,7 @@ class ProjectConfig(object):
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
 
+        # TODO - NEW
         # TODO - make sure to add a test for multiple flags. My test datafile only has a single flag. Because for loop needs to work across all flags.
         # all rules(experiment rules and delivery rules) for each flag
         self.flag_rules_map = {}

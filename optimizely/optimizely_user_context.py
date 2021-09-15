@@ -14,12 +14,14 @@
 #
 
 import threading
+import copy
 
 
 class OptimizelyUserContext(object):
     """
     Representation of an Optimizely User Context using which APIs are to be called.
     """
+    forced_decisions = []
 
     def __init__(self, optimizely_client, user_id, user_attributes=None):
         """ Create an instance of the Optimizely User Context.
@@ -42,8 +44,39 @@ class OptimizelyUserContext(object):
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
 
+    # TODO - ADD FORCED DECISION class
+    """
+    struct ForcedDecision {
+        let flagKey: String
+        let ruleKey: String?
+        var variationKey: String
+    }
+    var forcedDecisions = AtomicArray<ForcedDecision>()
+    """
+    class ForcedDecision(object):
+        def __init__(self, flag_key, rule_key, variation_key):
+            self.flag_key = flag_key
+            self.rule_key = rule_key
+            self.variation_key = variation_key
+
+
+    # TODO - NEW
     def _clone(self):
-        return OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
+        if not self.client:
+            return None
+
+        user_context = OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
+
+        if len(self.forced_decisions) > 0:
+            # Jae:
+            # Make sure the assigning is to make a copy. Some langs use ref and other make a copy when assigning array/map.
+            # Swift makes a copy automatically when assigning value type. Not sure about python.
+            # So it needs to be pass by value. So the original object is not changed. Change is only in the new object. Here I’ll need to call copy.deepcopy()
+            # The opposite. We won’t change the contents of the copied one. But the original can be changed any time later.
+            user_context.forced_decisions = copy.deepcopy(self.forced_decisions)      # TODO - IMPORTANT -> CHECK IF WE NEED DEEPCOPY OR NOT - SEE SLACK W JAE
+
+        return user_context
+
 
     def get_user_attributes(self):
         with self.lock:
@@ -114,3 +147,142 @@ class OptimizelyUserContext(object):
             'user_id': self.user_id,
             'attributes': self.get_user_attributes(),
         }
+
+
+    # TODO - NEW
+    def set_forced_decision(self, flag_key, rule_key, variation_key):
+        """
+        Sets the forced decision (variation key) for a given flag and an optional rule.
+
+        Args:
+            flag_key: A flag key.
+            rule_key: An experiment or delivery rule key (optional).
+            variation_key: A variation key.
+
+        Returns:
+            True if the forced decision has been set successfully.
+        """
+        config = self.client.get_optimizely_config()
+
+        if self.client is None or config is None:      # TODO - check if to use "is not" or "not =="
+            # TODO log error sdk key not ready - whichlogger, to show in console, logger for optimizely_client,loggger for what? where do we want it to log?
+
+            return False
+
+        if rule_key:
+            print('xxx1 ', self.forced_decisions)
+            for decision in self.forced_decisions:
+                if decision.flag_key == flag_key and decision.rule_key == rule_key:
+                    decision.variation_key = variation_key                          # TODO check if .variation_key needs to be a dict key instead of dot notation object
+
+        self.forced_decisions.append(self.ForcedDecision(flag_key, rule_key, variation_key))
+        print('xxx2 ', self.forced_decisions[0].variation_key)
+
+        return True
+
+
+    # TODO - NEW
+    def get_forced_decision(self, flag_key, rule_key):
+        """
+        Sets the forced decision (variation key) for a given flag and an optional rule.
+
+        Args:
+            flag_key: A flag key.
+            rule_key: An experiment or delivery rule key (optional).
+
+        Returns:
+            A variation key or None if forced decisions are not set for the parameters.
+        """
+        config = self.client.get_optimizely_config()
+
+        if self.client is None or config is None:  # TODO - check if to use "is not" or "not =="
+            # TODO log error sdk key not ready - whichlogger, to sho win console, logger for optimizely_client,loggger for what? where do we want it to log?
+
+            return False
+
+        return self.find_forced_decision(flag_key, rule_key)
+
+
+    # TODO - NEW
+    def remove_forced_decision(self, flag_key, *arg):       # making rule_key here optional arg - WHAT ABOUT IF RULE_KEY IS KEYWORD ARG????? <--- CHECK THIS!
+        """
+        Removes the forced decision for a given flag and an optional rule.
+
+        Args:
+            flag_key: A flag key.
+            rule_key: An experiment or delivery rule key (optional).
+
+        Returns:
+            Returns: true if the forced decision has been removed successfully.
+        """
+        config = self.client.get_optimizely_config()
+
+        if self.client is None or config is None:  # TODO - check if to use "is not" or "not =="
+            # TODO log error sdk key not ready - whichlogger, to sho win console, logger for optimizely_client,loggger for what? where do we want it to log?
+
+            return False
+
+        # remove() built-in function by default removes the first occurrence of the element that meets the condition
+        for decision in self.forced_decisions:
+            if decision.flag_key == flag_key and decision.rule_key == arg:
+                self.forced_decisions.remove(decision)                  #TODO - check if it needs to only remove the first occurrence and no other!!! Test separately if rmoe removes all occurences!
+
+        return False
+
+    # TODO - NEW
+    def remove_all_forced_decisions(self):
+        """
+        Removes all forced decisions bound to this user context.
+
+        Returns:
+            True if forced decisions have been removed successfully.
+        """
+        config = self.client.get_optimizely_config()
+
+        if self.client is None or config is None:  # TODO - check if to use "is not" or "not =="
+            # TODO log error sdk key not ready - whichlogger, to sho win console, logger for optimizely_client,loggger for what? where do we want it to log?
+
+            return False
+
+        self.forced_decisions.clear()
+
+        return True
+
+    # TODO - NEW
+    def find_forced_decision(self, flag_key, rule_key):
+        if len(self.forced_decisions) == 0:
+            return None
+
+        for decision in self.forced_decisions:
+            if decision.flag_key == flag_key and decision.rule_key == rule_key:
+                return decision.variation_key
+
+
+
+    # TODO - For dding logger see this: https://github.com/optimizely/javascript-sdk/compare/pnguen/forced-decisions#diff-2bb39c11f271344df01b662f4313312870714813ceb8508ce7bdb851f09b5666R182-R192
+    # TODO - NEW
+    def find_validated_forced_decision(self, flag_key, rule_key, options):
+        reasons = []        # TODO - what to do with reasons?? Jae has reasons. Do we need them?
+        variation_key = self.find_forced_decision(flag_key, rule_key)
+        if variation_key:
+            self.client.get_flag_variation_by_key(flag_key, variation_key)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1021,6 +1021,7 @@ class Optimizely(object):
         decision_event_dispatched = False
         ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in decide_options
 
+
         decision, decision_reasons = self.decision_service.get_variation_for_feature(config, feature_flag, user_id,
                                                                                      attributes, ignore_ups)
 
@@ -1123,7 +1124,6 @@ class Optimizely(object):
 
     def _decide_for_keys(self, user_context, keys, decide_options=None):
         """
-
         Args:
             user_context: UserContent
             keys: list of feature keys to run decide on.
@@ -1159,3 +1159,30 @@ class Optimizely(object):
                 continue
             decisions[key] = decision
         return decisions
+
+    # TODO - NEW
+    def get_flag_variation_by_key(self, flag_key, variation_key):
+        config = self.config_manager.get_config()
+        variations = config.flag_variations_map[flag_key]
+
+        print('VARIATIONS ', variations)
+
+        if not config:
+            return None
+
+        if variations.key == variation_key:
+            return variations.key
+
+
+
+
+
+
+
+
+
+
+
+
+
+
