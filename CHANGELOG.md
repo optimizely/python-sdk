@@ -1,6 +1,6 @@
 # Optimizely Python SDK Changelog
 
-## 3.9.2
+## 3.10.0
 September 16th, 2021
 
 ### New Features
@@ -12,6 +12,8 @@ September 16th, 2021
     - [351] (https://github.com/optimizely/python-sdk/pull/351/files)
 * For details please refer to our documentation page:
   - Python-sdk: [https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python]
+
+* Added deprecation for OptimizelyFeature.experiments_map and OptimizelyConfig.experiments_map
 
 ### Bug Fixes
 * Fix event processor negative timeout interval when retrieving events from queue. [#356] (https://github.com/optimizely/python-sdk/pull/356)
