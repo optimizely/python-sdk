@@ -23,7 +23,7 @@ class OptimizelyConfig(object):
                  audiences=None):
         self.revision = revision
 
-        # This experimentsMap is for experiments of legacy projects only.
+        # This experiments_map is for experiments of legacy projects only.
         # For flag projects, experiment keys are not guaranteed to be unique
         # across multiple flags, so this map may not include all experiments
         # when keys conflict.
