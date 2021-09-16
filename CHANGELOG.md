@@ -13,7 +13,7 @@ September 16th, 2021
 * For details please refer to our documentation page:
   - Python-sdk: [https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python]
 
-* OptimizelyFeature.experiments_map is now deprecated. Please use OptimizelyFeature.experiment_rules and OptimizelyFeature.delivery_rules. [360] (https://github.com/optimizely/python-sdk/pull/360)
+* OptimizelyFeature.experiments_map is now deprecated. Please use OptimizelyFeature.experiment_rules and OptimizelyFeature.delivery_rules. [#360] (https://github.com/optimizely/python-sdk/pull/360)
 
 ### Bug Fixes
 * Fix event processor negative timeout interval when retrieving events from queue. [#356] (https://github.com/optimizely/python-sdk/pull/356)
