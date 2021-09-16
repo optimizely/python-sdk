@@ -13,7 +13,7 @@ September 16th, 2021
 * For details please refer to our documentation page:
   - Python-sdk: [https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python]
 
-### Bug Fixes:
+### Bug Fixes
 * Fix event processor negative timeout interval when retrieving events from queue. [#356] (https://github.com/optimizely/python-sdk/pull/356)
 
 ## 3.9.1
