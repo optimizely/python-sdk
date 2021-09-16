@@ -8,8 +8,8 @@ September 16th, 2021
   - sdk_key and environment_key [#338] (https://github.com/optimizely/python-sdk/pull/338)
   - attributes and events [#339] (https://github.com/optimizely/python-sdk/pull/339)
   - experiment_rules, delivery_rules, audiences and audiences in OptimizelyExperiment 
-    - [342] (https://github.com/optimizely/python-sdk/pull/342)
-    - [351] (https://github.com/optimizely/python-sdk/pull/351/files)
+    - [#342] (https://github.com/optimizely/python-sdk/pull/342)
+    - [#351] (https://github.com/optimizely/python-sdk/pull/351/files)
 * For details please refer to our documentation page:
   - Python-sdk: [https://docs.developers.optimizely.com/full-stack/docs/optimizelyconfig-python]
 
