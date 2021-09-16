@@ -62,7 +62,7 @@ class OptimizelyFeature(object):
         # This experiments_map is now deprecated,
         # Please use delivery_rules and experiment_rules
         self.experiments_map = experiments_map
-        
+
         self.variables_map = variables_map
         self.delivery_rules = []
         self.experiment_rules = []
