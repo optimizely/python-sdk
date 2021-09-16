@@ -22,7 +22,13 @@ class OptimizelyConfig(object):
                  sdk_key=None, environment_key=None, attributes=None, events=None,
                  audiences=None):
         self.revision = revision
+
+        # This experiments_map is for experiments of legacy projects only.
+        # For flag projects, experiment keys are not guaranteed to be unique
+        # across multiple flags, so this map may not include all experiments
+        # when keys conflict.
         self.experiments_map = experiments_map
+
         self.features_map = features_map
         self._datafile = datafile
         self.sdk_key = sdk_key or ''
@@ -52,7 +58,11 @@ class OptimizelyFeature(object):
     def __init__(self, id, key, experiments_map, variables_map):
         self.id = id
         self.key = key
+
+        # This experiments_map is now deprecated,
+        # Please use delivery_rules and experiment_rules
         self.experiments_map = experiments_map
+
         self.variables_map = variables_map
         self.delivery_rules = []
         self.experiment_rules = []
