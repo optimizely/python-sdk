@@ -13,10 +13,10 @@
 
 import json
 
-from .helpers import condition as condition_helper
-from .helpers import enums
 from . import entities
 from . import exceptions
+from .helpers import condition as condition_helper
+from .helpers import enums
 
 SUPPORTED_VERSIONS = [
     enums.DatafileVersions.V2,
@@ -118,7 +118,6 @@ class ProjectConfig(object):
                     variation.variables, 'id', entities.Variation.VariableUsage
                 )
 
-        # TODO - NEW
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
         # As we cannot create json variables in datafile directly, here we convert
@@ -139,8 +138,6 @@ class ProjectConfig(object):
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
 
-        # TODO - NEW
-        # TODO - make sure to add a test for multiple flags. My test datafile only has a single flag. Because for loop needs to work across all flags.
         # all rules(experiment rules and delivery rules) for each flag
         self.flag_rules_map = {}
         for flag in self.feature_flags:
@@ -148,8 +145,7 @@ class ProjectConfig(object):
             experiments = [self.experiment_id_map[exp_id] for exp_id in flag['experimentIds']]
             rollout = self.rollout_id_map[flag['rolloutId']]
 
-            rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)     # TODO - not happy that _generate_key_map funciton is here. I can move this chunk out like other lookups. But the it's not ideal either
-            rollout_experiments = [exper for exper in rollout_experiments_id_map.values()]
+            rollout_experiments = self.get_rollout_experiments_map(rollout)
 
             if rollout and rollout.experiments:
                 experiments.extend(rollout_experiments)
@@ -208,6 +204,20 @@ class ProjectConfig(object):
             audience.__dict__.update({'conditionStructure': condition_structure, 'conditionList': condition_list})
 
         return audience_map
+
+    def get_rollout_experiments_map(self, rollout):
+        """ Helper method to get rollout experiments as a map.
+
+        Args:
+            rollout: rollout
+
+        Returns:
+            Mapped rollout experiments.
+        """
+        rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)
+        rollout_experiments = [exper for exper in rollout_experiments_id_map.values()]
+
+        return rollout_experiments
 
     def get_typecast_value(self, value, type):
         """ Helper method to determine actual value based on type of feature variable.
@@ -456,8 +466,8 @@ class ProjectConfig(object):
             if has_reserved_prefix:
                 self.logger.warning(
                     (
-                        'Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
-                        'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)
+                            'Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
+                            'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)
                     )
                 )
 
@@ -519,7 +529,6 @@ class ProjectConfig(object):
 
         if not variable or not variation:
             return None
-
         if variation.id not in self.variation_variable_usage_map:
             self.logger.error('Variation with ID "%s" is not in the datafile.' % variation.id)
             return None
