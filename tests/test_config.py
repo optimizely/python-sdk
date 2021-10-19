@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import json
+
 import mock
 
 from optimizely import entities
@@ -20,7 +21,6 @@ from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
 from optimizely.helpers import enums
-
 from . import base
 
 
@@ -610,6 +610,7 @@ class ConfigTest(base.BaseTest):
         # Assert bot filtering is retrieved as provided in the data file
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         project_config = opt_obj.config_manager.get_config()
+
         self.assertEqual(
             self.config_dict_with_features['botFiltering'], project_config.get_bot_filtering_value(),
         )

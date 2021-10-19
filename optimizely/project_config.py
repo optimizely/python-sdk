@@ -142,15 +142,19 @@ class ProjectConfig(object):
         self.flag_rules_map = {}
         for flag in self.feature_flags:
 
-            experiments = [self.experiment_id_map[exp_id] for exp_id in flag['experimentIds']]
-            rollout = self.rollout_id_map[flag['rolloutId']]
+            experiments = []
+            if not flag['experimentIds'] == '':
+                for exp_id in flag['experimentIds']:
+                    experiments.append(self.experiment_id_map[exp_id])
+            if not flag['rolloutId'] == '':
+                rollout = self.rollout_id_map[flag['rolloutId']]
 
-            rollout_experiments = self.get_rollout_experiments_map(rollout)
+                rollout_experiments = self.get_rollout_experiments_map(rollout)
 
-            if rollout and rollout.experiments:
-                experiments.extend(rollout_experiments)
+                if rollout and rollout.experiments:
+                    experiments.extend(rollout_experiments)
 
-            self.flag_rules_map[flag['key']] = experiments
+                self.flag_rules_map[flag['key']] = experiments
 
         # All variations for each flag
         # Datafile does not contain a separate entity for this.
@@ -378,31 +382,40 @@ class ProjectConfig(object):
         self.logger.error('Audience ID "%s" is not in datafile.' % audience_id)
         self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE)))
 
-    def get_variation_from_key(self, experiment_key, variation_key):
-        """ Get variation given experiment and variation key.
+    def get_variation_from_key(self, experiment_key, variation):
+        """ Get variation given experiment and variation.
 
         Args:
             experiment: Key representing parent experiment of variation.
             variation_key: Key representing the variation.
+            Variation is of type variation object or None.
 
         Returns
             Object representing the variation.
         """
 
-        variation_map = self.variation_key_map.get(experiment_key)
+        variation_key = None
 
-        if variation_map:
-            variation = variation_map.get(variation_key)
-            if variation:
-                return variation
+        if isinstance(variation, tuple):
+            if isinstance(variation[0], entities.Variation):
+                variation_key, received_reasons = variation
+        else:
+            variation_map = self.variation_key_map.get(experiment_key)
+
+            if variation_map:
+                variation_key = variation_map.get(variation)
             else:
-                self.logger.error('Variation key "%s" is not in datafile.' % variation_key)
-                self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
+                self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
+                self.error_handler.handle_error(
+                    exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
                 return None
 
-        self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
-        self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
-        return None
+        if variation_key:
+            return variation_key
+        else:
+            self.logger.error('Variation key "%s" is not in datafile.' % variation)
+            self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
+            return None
 
     def get_variation_from_id(self, experiment_key, variation_id):
         """ Get variation given experiment and variation ID.
@@ -466,8 +479,8 @@ class ProjectConfig(object):
             if has_reserved_prefix:
                 self.logger.warning(
                     (
-                            'Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
-                            'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)
+                        'Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
+                        'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)
                     )
                 )
 

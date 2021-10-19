@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from warnings import warn
-
 from six import string_types
 
 from . import decision_service
@@ -64,10 +62,12 @@ class Optimizely(object):
           logger: Optional component which provides a log method to log messages. By default nothing would be logged.
           error_handler: Optional component which provides a handle_error method to handle exceptions.
                          By default all exceptions will be suppressed.
-          skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
+          skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object
+          invocation.
                                 By default JSON schema validation will be performed.
           user_profile_service: Optional component which provides methods to store and manage user profiles.
-          sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment combination.
+          sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment
+          combination.
                    Must provide at least one of datafile or sdk_key.
           config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
           notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
@@ -76,7 +76,8 @@ class Optimizely(object):
           event_processor: Optional component which processes the given event(s).
                            By default optimizely.event.event_processor.ForwardingEventProcessor is used
                            which simply forwards events to the event dispatcher.
-                           To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
+                           To enable event batching configure and use
+                           optimizely.event.event_processor.BatchEventProcessor.
           datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
           default_decide_options: Optional list of decide options used with the decide APIs.
         """
@@ -445,7 +446,13 @@ class Optimizely(object):
 
         variation_key = self.get_variation(experiment_key, user_id, attributes)
 
+        # check for case where variation_key can be None when attributes are invalid
         if not variation_key:
+            self.logger.info('Not activating user "%s".' % user_id)
+            return None
+
+        # variation_key is normally a tuple object
+        if not variation_key[0]:
             self.logger.info('Not activating user "%s".' % user_id)
             return None
 
@@ -566,10 +573,7 @@ class Optimizely(object):
         return variation_key
 
     def is_feature_enabled(self, feature_key, user_id, attributes=None):
-        """ Warning: This method is deprecated. Use the decide API instead.
-            Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns true if the feature is enabled for the given user.
+        """ Returns true if the feature is enabled for the given user.
 
         Args:
           feature_key: The key of the feature for which we are determining if it is enabled or not for the given user.
@@ -579,10 +583,6 @@ class Optimizely(object):
         Returns:
           True if the feature is enabled for the user. False otherwise.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('is_feature_enabled'))
@@ -657,10 +657,7 @@ class Optimizely(object):
         return feature_enabled
 
     def get_enabled_features(self, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the decide API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns the list of features that are enabled for the user.
+        """ Returns the list of features that are enabled for the user.
 
         Args:
           user_id: ID for user.
@@ -669,10 +666,6 @@ class Optimizely(object):
         Returns:
           A list of the keys of the features that are enabled for the user.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         enabled_features = []
         if not self.is_valid:
@@ -698,10 +691,7 @@ class Optimizely(object):
         return enabled_features
 
     def get_feature_variable(self, feature_key, variable_key, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns value for a variable attached to a feature flag.
+        """ Returns value for a variable attached to a feature flag.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -722,10 +712,7 @@ class Optimizely(object):
         return self._get_feature_variable_for_type(project_config, feature_key, variable_key, None, user_id, attributes)
 
     def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns value for a certain boolean variable attached to a feature flag.
+        """ Returns value for a certain boolean variable attached to a feature flag.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -739,10 +726,6 @@ class Optimizely(object):
           - Variable key is invalid.
           - Mismatch with type of variable.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         variable_type = entities.Variable.Type.BOOLEAN
         project_config = self.config_manager.get_config()
@@ -755,10 +738,7 @@ class Optimizely(object):
         )
 
     def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns value for a certain double variable attached to a feature flag.
+        """ Returns value for a certain double variable attached to a feature flag.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -772,10 +752,6 @@ class Optimizely(object):
           - Variable key is invalid.
           - Mismatch with type of variable.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         variable_type = entities.Variable.Type.DOUBLE
         project_config = self.config_manager.get_config()
@@ -788,10 +764,7 @@ class Optimizely(object):
         )
 
     def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns value for a certain integer variable attached to a feature flag.
+        """ Returns value for a certain integer variable attached to a feature flag.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -805,10 +778,6 @@ class Optimizely(object):
           - Variable key is invalid.
           - Mismatch with type of variable.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         variable_type = entities.Variable.Type.INTEGER
         project_config = self.config_manager.get_config()
@@ -821,10 +790,7 @@ class Optimizely(object):
         )
 
     def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns value for a certain string variable attached to a feature.
+        """ Returns value for a certain string variable attached to a feature.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -838,10 +804,6 @@ class Optimizely(object):
           - Variable key is invalid.
           - Mismatch with type of variable.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         variable_type = entities.Variable.Type.STRING
         project_config = self.config_manager.get_config()
@@ -854,10 +816,7 @@ class Optimizely(object):
         )
 
     def get_feature_variable_json(self, feature_key, variable_key, user_id, attributes=None):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-        Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns value for a certain JSON variable attached to a feature.
+        """ Returns value for a certain JSON variable attached to a feature.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -871,10 +830,6 @@ class Optimizely(object):
           - Variable key is invalid.
           - Mismatch with type of variable.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         variable_type = entities.Variable.Type.JSON
         project_config = self.config_manager.get_config()
@@ -887,10 +842,7 @@ class Optimizely(object):
         )
 
     def get_all_feature_variables(self, feature_key, user_id, attributes):
-        """Warning: This method is deprecated. Use the __decide__ API instead.
-           Refer to [the migration guide](https://docs.developers.optimizely.com/full-stack/v4.0/docs/migrate-from-older-versions-python).
-
-        Returns dictionary of all variables and their corresponding values in the context of a feature.
+        """ Returns dictionary of all variables and their corresponding values in the context of a feature.
 
         Args:
           feature_key: Key of the feature whose variable's value is being accessed.
@@ -901,10 +853,6 @@ class Optimizely(object):
           Dictionary mapping variable key to variable value. None if:
           - Feature key is invalid.
         """
-        warn(
-            "Use 'decide' methods of 'OptimizelyUserContext' instead.",
-            DeprecationWarning
-        )
 
         project_config = self.config_manager.get_config()
         if not project_config:
@@ -1247,10 +1195,11 @@ class Optimizely(object):
             Variation as a map.
         """
         config = self.config_manager.get_config()
-        variations = config.flag_variations_map[flag_key]
 
         if not config:
             return None
+
+        variations = config.flag_variations_map[flag_key]
 
         for variation in variations:
             if variation.key == variation_key:

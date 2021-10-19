@@ -26,7 +26,6 @@ class OptimizelyUserContext(object):
     """
     Representation of an Optimizely User Context using which APIs are to be called.
     """
-    forced_decisions = []
 
     def __init__(self, optimizely_client, user_id, user_attributes=None):
         """ Create an instance of the Optimizely User Context.
@@ -48,10 +47,10 @@ class OptimizelyUserContext(object):
 
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
+        self.forced_decisions = {}
+        self.log = logger.SimpleLogger(min_level=enums.LogLevels.INFO)
 
-    log = logger.SimpleLogger(min_level=enums.LogLevels.INFO)
-
-    ForcedDecision = namedtuple('ForcedDecision', 'flag_key rule_key variation_key')
+    ForcedDecisionKeys = namedtuple('ForcedDecisionKeys', 'flag_key rule_key')
 
     def _clone(self):
         if not self.client:
@@ -59,7 +58,7 @@ class OptimizelyUserContext(object):
 
         user_context = OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
 
-        if len(self.forced_decisions) > 0:
+        if self.forced_decisions:
             user_context.forced_decisions = copy.deepcopy(self.forced_decisions)
 
         return user_context
@@ -152,18 +151,14 @@ class OptimizelyUserContext(object):
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
-        for decision in self.forced_decisions:
-            if decision.flag_key == flag_key and decision.rule_key == rule_key:
-                self.forced_decisions.variation_key = variation_key
-            return True
-
-        self.forced_decisions.append(self.ForcedDecision(flag_key, rule_key, variation_key))
+        forced_decision_key = self.ForcedDecisionKeys(flag_key, rule_key)
+        self.forced_decisions[forced_decision_key] = variation_key
 
         return True
 
     def get_forced_decision(self, flag_key, rule_key):
         """
-        Sets the forced decision (variation key) for a given flag and an optional rule.
+        Gets the forced decision (variation key) for a given flag and an optional rule.
 
         Args:
             flag_key: A flag key.
@@ -178,7 +173,9 @@ class OptimizelyUserContext(object):
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return None
 
-        return self.find_forced_decision(flag_key, rule_key)
+        forced_decision_key = self.find_forced_decision(flag_key, rule_key)
+
+        return forced_decision_key if forced_decision_key else None
 
     def remove_forced_decision(self, flag_key, rule_key):
         """
@@ -197,11 +194,9 @@ class OptimizelyUserContext(object):
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
-        # remove() built-in function by default removes the first occurrence of the element that meets the condition
-        for decision in self.forced_decisions:
-            if decision.flag_key == flag_key and decision.rule_key == rule_key:
-                self.forced_decisions.remove(decision)
-            return True
+        forced_decision_key = self.ForcedDecisionKeys(flag_key, rule_key)
+        if self.forced_decisions[forced_decision_key]:
+            del self.forced_decisions[forced_decision_key]
 
         return False
 
@@ -224,14 +219,13 @@ class OptimizelyUserContext(object):
 
     def find_forced_decision(self, flag_key, rule_key):
 
-        if len(self.forced_decisions) == 0:
+        if not self.forced_decisions:
             return None
 
-        variation = ""
-        for decision in self.forced_decisions:
-            if decision.flag_key == flag_key and decision.rule_key == rule_key:
-                variation = decision.variation_key
-        return variation
+        forced_decision_key = self.ForcedDecisionKeys(flag_key, rule_key)
+        variation_key = self.forced_decisions.get(forced_decision_key, None)
+
+        return variation_key if variation_key else None
 
     def find_validated_forced_decision(self, flag_key, rule_key, options):
 
@@ -241,39 +235,36 @@ class OptimizelyUserContext(object):
 
         if variation_key:
             variation = self.client.get_flag_variation_by_key(flag_key, variation_key)
-            if rule_key:
-                user_has_forced_decision = enums.ForcedDecisionNotificationTypes.USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(
-                    variation_key,
-                    flag_key,
-                    rule_key,
-                    self.user_id)
+            if variation:
+                if rule_key:
+                    user_has_forced_decision = enums.ForcedDecisionLogs\
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(variation_key,
+                                                                             flag_key,
+                                                                             rule_key,
+                                                                             self.user_id)
 
-            else:
-                user_has_forced_decision = enums.ForcedDecisionNotificationTypes.USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(
-                    variation_key,
-                    flag_key,
-                    self.user_id
-                )
+                else:
+                    user_has_forced_decision = enums.ForcedDecisionLogs\
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(variation_key,
+                                                                                flag_key,
+                                                                                self.user_id)
 
-            reasons.append(user_has_forced_decision)
-            self.log.logger.info(user_has_forced_decision)
+                reasons.append(user_has_forced_decision)
+                self.log.logger.debug(user_has_forced_decision)
 
             return variation, reasons
 
         else:
             if rule_key:
-                user_has_forced_decision_but_invalid = enums.ForcedDecisionNotificationTypes.USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(
-                    flag_key,
-                    rule_key,
-                    self.user_id
-                )
+                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs\
+                    .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
+                                                                                     rule_key,
+                                                                                     self.user_id)
             else:
-                user_has_forced_decision_but_invalid = enums.ForcedDecisionNotificationTypes.USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(
-                    flag_key,
-                    self.user_id
-                )
+                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs\
+                    .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
 
             reasons.append(user_has_forced_decision_but_invalid)
-            self.log.logger.info(user_has_forced_decision_but_invalid)
+            self.log.logger.debug(user_has_forced_decision_but_invalid)
 
-        return None, reasons
+            return None, reasons
