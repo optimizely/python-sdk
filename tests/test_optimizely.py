@@ -648,10 +648,9 @@ class OptimizelyTest(base.BaseTest):
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
 
         with mock.patch(
-                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
                 return_value=(
-                        decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST),
-                        []),
+                    decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST), []),
         ) as mock_decision, mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'):
             self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
@@ -677,7 +676,7 @@ class OptimizelyTest(base.BaseTest):
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
         with mock.patch(
-                'optimizely.decision_service.DecisionService.get_variation_for_feature',
+            'optimizely.decision_service.DecisionService.get_variation_for_feature',
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
@@ -697,7 +696,7 @@ class OptimizelyTest(base.BaseTest):
     variation when attributes are provided and audience conditions are met. """
 
         with mock.patch(
-                'optimizely.decision_service.DecisionService.get_variation',
+            'optimizely.decision_service.DecisionService.get_variation',
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
         ) as mock_get_variation, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
@@ -768,7 +767,7 @@ class OptimizelyTest(base.BaseTest):
     variation when different types of attributes are provided and audience conditions are met. """
 
         with mock.patch(
-                'optimizely.bucketer.Bucketer.bucket',
+            'optimizely.bucketer.Bucketer.bucket',
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
         ) as mock_bucket, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
@@ -1040,7 +1039,7 @@ class OptimizelyTest(base.BaseTest):
     when attributes (including bucketing ID) are provided and audience conditions are met. """
 
         with mock.patch(
-                'optimizely.decision_service.DecisionService.get_variation',
+            'optimizely.decision_service.DecisionService.get_variation',
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
         ) as mock_get_variation, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
@@ -1187,7 +1186,7 @@ class OptimizelyTest(base.BaseTest):
         """ Test that activate returns None and does not process event when user is in no variation. """
 
         with mock.patch(
-                'optimizely.helpers.audience.does_user_meet_audience_conditions',
+            'optimizely.helpers.audience.does_user_meet_audience_conditions',
                 return_value=(True, [])), mock.patch(
             'optimizely.bucketer.Bucketer.bucket',
             return_value=(None, [])) as mock_bucket, mock.patch(

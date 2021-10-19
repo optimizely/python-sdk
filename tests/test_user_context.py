@@ -1150,14 +1150,18 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and user (test_user) in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) and user (test_user) in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout) and user (test_user) '
+            'in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) and user (test_user) '
+            'in the forced decision map.',
             'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
             'User "test_user" does not meet audience conditions for targeting rule 1.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) and user (test_user) in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) and user (test_user) '
+            'in the forced decision map.',
             'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to FALSE.',
             'User "test_user" does not meet audience conditions for targeting rule 2.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211147) and user (test_user) in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211147) and user (test_user) '
+            'in the forced decision map.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule Everyone Else.',
@@ -1174,16 +1178,20 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and user (abcde) in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) and user (abcde) in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout) and user (abcde) '
+            'in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) and user (abcde) '
+            'in the forced decision map.',
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to FALSE.',
             'User "abcde" does not meet audience conditions for targeting rule 1.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) and user (abcde) in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) and user (abcde) '
+            'in the forced decision map.',
             'Evaluating audiences for rule 2: ["11159"].',
             'Audiences for rule 2 collectively evaluated to FALSE.',
             'User "abcde" does not meet audience conditions for targeting rule 2.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211147) and user (abcde) in the forced decision map.',
+            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211147) and user (abcde) '
+            'in the forced decision map.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
             'User "abcde" meets audience conditions for targeting rule Everyone Else.',
