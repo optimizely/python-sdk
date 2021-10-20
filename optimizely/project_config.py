@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import json
+from collections import OrderedDict
 
 from . import entities
 from . import exceptions
@@ -186,7 +187,10 @@ class ProjectConfig(object):
             Map mapping key to entity object.
         """
 
-        key_map = {}
+        # using ordered dict here to preserve insertion order of entities
+        # OrderedDict() is needed for Py versions 3.5 and less to work.
+        # Insertion order has been made default in dicts since Py 3.6
+        key_map = OrderedDict()
         for obj in entity_list:
             key_map[obj[key]] = entity_class(**obj)
 
@@ -218,6 +222,7 @@ class ProjectConfig(object):
         Returns:
             Mapped rollout experiments.
         """
+
         rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)
         rollout_experiments = [exper for exper in rollout_experiments_id_map.values()]
 
