@@ -17,7 +17,7 @@ import copy
 import threading
 from collections import namedtuple
 
-from optimizely import logger
+from . import logger
 from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .helpers import enums
 
@@ -237,14 +237,14 @@ class OptimizelyUserContext(object):
             variation = self.client.get_flag_variation_by_key(flag_key, variation_key)
             if variation:
                 if rule_key:
-                    user_has_forced_decision = enums.ForcedDecisionLogs\
+                    user_has_forced_decision = enums.ForcedDecisionLogs \
                         .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(variation_key,
                                                                              flag_key,
                                                                              rule_key,
                                                                              self.user_id)
 
                 else:
-                    user_has_forced_decision = enums.ForcedDecisionLogs\
+                    user_has_forced_decision = enums.ForcedDecisionLogs \
                         .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(variation_key,
                                                                                 flag_key,
                                                                                 self.user_id)
@@ -256,12 +256,12 @@ class OptimizelyUserContext(object):
 
         else:
             if rule_key:
-                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs\
+                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
                     .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
                                                                                      rule_key,
                                                                                      self.user_id)
             else:
-                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs\
+                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
                     .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
 
             reasons.append(user_has_forced_decision_but_invalid)
