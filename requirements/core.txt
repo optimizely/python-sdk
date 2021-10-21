@@ -3,4 +3,3 @@ requests>=2.21
 pyrsistent==0.16.0
 pyOpenSSL>=19.1.0
 cryptography>=2.8.0
-idna>=2.10
