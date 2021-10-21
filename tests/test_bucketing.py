@@ -214,7 +214,7 @@ class BucketerTest(base.BaseTest):
 
         for i in range(10):
             random_value = str(random.random())
-            self.assertEqual(mmh3.hash(random_value), pymmh3.hash(random_value))
+            self.assertEqual(mmh3.hash(random_value), mmh3.hash(random_value))
 
 
 class BucketerWithLoggingTest(base.BaseTest):
