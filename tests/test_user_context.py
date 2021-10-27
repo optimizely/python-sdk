@@ -1337,3 +1337,41 @@ class UserContextTest(base.BaseTest):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
             self.assertTrue(decision.enabled, "decision should be enabled")
+
+    def test_forced_decision_return_status__invalid_datafile(self):
+        """
+        Should return invalid status for invalid datafile in forced decision calls.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps("invalid datafile"))
+        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertFalse(status)
+        status = user_context.get_forced_decision(context)
+        self.assertIsNone(status)
+        status = user_context.remove_forced_decision(context)
+        self.assertFalse(status)
+        status = user_context.remove_all_forced_decisions()
+        self.assertFalse(status)
+
+    def test_forced_decision_return_status(self):
+        """
+        Should return valid status for a valid datafile in forced decision calls.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, '211129')
+        status = user_context.remove_forced_decision(context)
+        self.assertTrue(status)
+        status = user_context.remove_all_forced_decisions()
+        self.assertTrue(status)

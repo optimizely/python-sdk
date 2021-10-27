@@ -20,6 +20,7 @@ from .helpers import audience as audience_helper
 from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
+from .optimizely_user_context import OptimizelyUserContext
 from .user_profile import UserProfile
 
 Decision = namedtuple('Decision', 'experiment variation source')
@@ -407,7 +408,11 @@ class DecisionService(object):
         decide_reasons = []
 
         # check forced decision first
-        forced_decision_variation, reasons_received = user.find_validated_forced_decision(flag_key, rule.key, options)
+        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key, rule.key)
+
+        forced_decision_variation, reasons_received = user.find_validated_forced_decision(
+            optimizely_decision_context,
+            options)
         decide_reasons += reasons_received
 
         if forced_decision_variation:
@@ -442,9 +447,10 @@ class DecisionService(object):
 
         # check forced decision first
         rule = rules[rule_index]
-        forced_decision_variation, reasons_received = user.find_validated_forced_decision(feature.key,
-                                                                                          rule.key,
+        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
+        forced_decision_variation, reasons_received = user.find_validated_forced_decision(optimizely_decision_context,
                                                                                           options)
+
         decide_reasons += reasons_received
 
         if forced_decision_variation:

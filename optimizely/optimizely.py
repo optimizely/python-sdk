@@ -1036,7 +1036,8 @@ class Optimizely(object):
         ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in decide_options
 
         # Check forced decisions first
-        forced_decision_response = user_context.find_validated_forced_decision(flag_key=key, rule_key=rule_key,
+        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
+        forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context,
                                                                                options=decide_options)
 
         variation, received_response = forced_decision_response
@@ -1187,6 +1188,9 @@ class Optimizely(object):
 
     def get_flag_variation_by_key(self, flag_key, variation_key):
         """
+        Gets variation by key.
+        variation_key can be a string or in case of forced decisions, it can be an object.
+
         Args:
             flag_key: flag key
             variation_key: variation key
@@ -1198,6 +1202,10 @@ class Optimizely(object):
 
         if not config:
             return None
+
+        # this will take care of force decision objects which contain variation_key inside them
+        if isinstance(variation_key, OptimizelyUserContext.OptimizelyForcedDecision):
+            variation_key = variation_key.variation_key
 
         variations = config.flag_variations_map[flag_key]
 
