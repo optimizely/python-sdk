@@ -51,7 +51,7 @@ class OptimizelyUserContext(object):
 
     # decision context
     class OptimizelyDecisionContext(object):
-        def __init__(self, flag_key, rule_key):
+        def __init__(self, flag_key, rule_key=None):
             self.flag_key = flag_key
             self.rule_key = rule_key
 
