@@ -248,7 +248,7 @@ class OptimizelyUserContext(object):
         rule_key = OptimizelyDecisionContext.rule_key
 
         if forced_decision_response:
-            variation = self.client.get_flag_variation_by_key(flag_key, forced_decision_response)
+            variation = self.client.get_flag_variation_by_key(flag_key, forced_decision_response.variation_key)
             if variation:
                 if rule_key:
                     user_has_forced_decision = enums.ForcedDecisionLogs \
