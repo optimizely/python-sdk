@@ -259,7 +259,7 @@ class OptimizelyUserContext(object):
 
                 else:
                     user_has_forced_decision = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision_response,
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision_response.variation_key,
                                                                                 flag_key,
                                                                                 self.user_id)
 
