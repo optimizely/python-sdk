@@ -13,10 +13,7 @@
 
 import math
 
-try:
-    import mmh3
-except ImportError:
-    from .lib import pymmh3 as mmh3
+from .lib import pymmh3 as mmh3
 
 
 MAX_TRAFFIC_VALUE = 10000
