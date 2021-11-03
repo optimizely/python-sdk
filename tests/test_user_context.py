@@ -13,6 +13,7 @@
 import json
 
 import mock
+import threading
 
 from optimizely import optimizely, decision_service
 from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
@@ -1793,3 +1794,113 @@ class UserContextTest(base.BaseTest):
         self.assertTrue(status)
         status = user_context.remove_all_forced_decisions()
         self.assertTrue(status)
+
+    def test_forced_decision_clone_return_valid_forced_decision(self):
+        """
+        Should return valid forced decision on cloning.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+
+        context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+        context_with_rule = OptimizelyUserContext.OptimizelyDecisionContext('f1', 'r1')
+        decision_for_rule = OptimizelyUserContext.OptimizelyForcedDecision('v2')
+        context_with_empty_rule = OptimizelyUserContext.OptimizelyDecisionContext('f1', '')
+        decision_for_empty_rule = OptimizelyUserContext.OptimizelyForcedDecision('v3')
+
+        user_context.set_forced_decision(context_with_flag, decision_for_flag)
+        user_context.set_forced_decision(context_with_rule, decision_for_rule)
+        user_context.set_forced_decision(context_with_empty_rule, decision_for_empty_rule)
+
+        user_context_2 = user_context._clone()
+        self.assertEqual(user_context_2.user_id, 'test_user')
+        self.assertEqual(user_context_2.get_user_attributes(), {})
+        self.assertIsNotNone(user_context_2.forced_decisions)
+
+        self.assertEqual(user_context_2.get_forced_decision(context_with_flag).variation_key, 'v1')
+        self.assertEqual(user_context_2.get_forced_decision(context_with_rule).variation_key, 'v2')
+        self.assertEqual(user_context_2.get_forced_decision(context_with_empty_rule).variation_key, 'v3')
+
+        context_with_rule = OptimizelyUserContext.OptimizelyDecisionContext('x', 'y')
+        decision_for_rule = OptimizelyUserContext.OptimizelyForcedDecision('z')
+        user_context.set_forced_decision(context_with_rule, decision_for_rule)
+        self.assertEqual(user_context.get_forced_decision(context_with_rule).variation_key, 'z')
+        self.assertIsNone(user_context_2.get_forced_decision(context_with_rule))
+
+    def test_forced_decision_sync_return_correct_number_of_calls(self):
+        """
+        Should return valid number of call on running forced decision calls in thread.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        context_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+        context_2 = OptimizelyUserContext.OptimizelyDecisionContext('f2', None)
+        decision_2 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+
+        with mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.set_forced_decision'
+        ) as set_forced_decision_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.get_forced_decision'
+        ) as get_forced_decision_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.remove_forced_decision'
+        ) as remove_forced_decision_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.remove_all_forced_decisions'
+        ) as remove_all_forced_decisions_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext._clone'
+        ) as clone_mock:
+            def set_forced_decision_loop(user_context, context, decision):
+                for x in range(100):
+                    user_context.set_forced_decision(context, decision)
+
+            def get_forced_decision_loop(user_context, context):
+                for x in range(100):
+                    user_context.get_forced_decision(context)
+
+            def remove_forced_decision_loop(user_context, context):
+                for x in range(100):
+                    user_context.remove_forced_decision(context)
+
+            def remove_all_forced_decisions_loop(user_context):
+                for x in range(100):
+                    user_context.remove_all_forced_decisions()
+
+            def clone_loop(user_context):
+                for x in range(100):
+                    user_context._clone()
+
+            set_thread_1 = threading.Thread(target=set_forced_decision_loop, args=(user_context, context_1, decision_1))
+            set_thread_2 = threading.Thread(target=set_forced_decision_loop, args=(user_context, context_2, decision_2))
+            set_thread_3 = threading.Thread(target=get_forced_decision_loop, args=(user_context, context_1))
+            set_thread_4 = threading.Thread(target=get_forced_decision_loop, args=(user_context, context_2))
+            set_thread_5 = threading.Thread(target=remove_forced_decision_loop, args=(user_context, context_1))
+            set_thread_6 = threading.Thread(target=remove_forced_decision_loop, args=(user_context, context_2))
+            set_thread_7 = threading.Thread(target=remove_all_forced_decisions_loop, args=(user_context,))
+            set_thread_8 = threading.Thread(target=clone_loop, args=(user_context,))
+
+            # Starting the threads
+            set_thread_1.start()
+            set_thread_2.start()
+            set_thread_3.start()
+            set_thread_4.start()
+            set_thread_5.start()
+            set_thread_6.start()
+            set_thread_7.start()
+            set_thread_8.start()
+
+            # Waiting for all the threads to finish executing
+            set_thread_1.join()
+            set_thread_2.join()
+            set_thread_3.join()
+            set_thread_4.join()
+            set_thread_5.join()
+            set_thread_6.join()
+            set_thread_7.join()
+            set_thread_8.join()
+
+        self.assertEqual(200, set_forced_decision_mock.call_count)
+        self.assertEqual(200, get_forced_decision_mock.call_count)
+        self.assertEqual(200, remove_forced_decision_mock.call_count)
+        self.assertEqual(100, remove_all_forced_decisions_mock.call_count)
+        self.assertEqual(100, clone_mock.call_count)
