@@ -207,7 +207,7 @@ class OptimizelyUserContext(object):
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
-        if self.forced_decisions[OptimizelyDecisionContext]:
+        if self.forced_decisions.get(OptimizelyDecisionContext):
             del self.forced_decisions[OptimizelyDecisionContext]
             return True
 
