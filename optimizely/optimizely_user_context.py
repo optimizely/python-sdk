@@ -46,7 +46,8 @@ class OptimizelyUserContext(object):
 
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
-        self.forced_decisions = {}
+        with self.lock:
+            self.forced_decisions = {}
         self.log = logger.SimpleLogger(min_level=enums.LogLevels.INFO)
 
     # decision context
@@ -72,8 +73,9 @@ class OptimizelyUserContext(object):
 
         user_context = OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
 
-        if self.forced_decisions:
-            user_context.forced_decisions = copy.deepcopy(self.forced_decisions)
+        with self.lock:
+            if self.forced_decisions:
+                user_context.forced_decisions = copy.deepcopy(self.forced_decisions)
 
         return user_context
 
@@ -167,7 +169,8 @@ class OptimizelyUserContext(object):
         context = OptimizelyDecisionContext
         decision = OptimizelyForcedDecision
 
-        self.forced_decisions[context] = decision
+        with self.lock:
+            self.forced_decisions[context] = decision
 
         return True
 
@@ -207,9 +210,10 @@ class OptimizelyUserContext(object):
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
-        if self.forced_decisions.get(OptimizelyDecisionContext):
-            del self.forced_decisions[OptimizelyDecisionContext]
-            return True
+        with self.lock:
+            if OptimizelyDecisionContext in self.forced_decisions.keys():g
+                del self.forced_decisions[OptimizelyDecisionContext]
+                return True
 
         return False
 
@@ -226,17 +230,19 @@ class OptimizelyUserContext(object):
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
-        self.forced_decisions.clear()
+        with self.lock:
+            self.forced_decisions.clear()
 
         return True
 
     def find_forced_decision(self, OptimizelyDecisionContext):
 
-        if not self.forced_decisions:
-            return None
+        with self.lock:
+            if not self.forced_decisions:
+                return None
 
-        # must allow None to be returned for the Flags only case
-        return self.forced_decisions.get(OptimizelyDecisionContext)
+            # must allow None to be returned for the Flags only case
+            return self.forced_decisions.get(OptimizelyDecisionContext)
 
     def find_validated_forced_decision(self, OptimizelyDecisionContext, options):
 

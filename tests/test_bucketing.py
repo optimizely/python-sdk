@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import json
-import mmh3
 import mock
 import random
 
@@ -20,7 +19,7 @@ from optimizely import bucketer
 from optimizely import entities
 from optimizely import logger
 from optimizely import optimizely
-from optimizely.lib import pymmh3
+from optimizely.lib import pymmh3 as mmh3
 
 from . import base
 
@@ -215,7 +214,7 @@ class BucketerTest(base.BaseTest):
 
         for i in range(10):
             random_value = str(random.random())
-            self.assertEqual(mmh3.hash(random_value), pymmh3.hash(random_value))
+            self.assertEqual(mmh3.hash(random_value), mmh3.hash(random_value))
 
 
 class BucketerWithLoggingTest(base.BaseTest):
