@@ -211,7 +211,7 @@ class OptimizelyUserContext(object):
             return False
 
         with self.lock:
-            if OptimizelyDecisionContext in self.forced_decisions.keys():g
+            if OptimizelyDecisionContext in self.forced_decisions.keys():
                 del self.forced_decisions[OptimizelyDecisionContext]
                 return True
 
