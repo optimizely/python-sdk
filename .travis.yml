@@ -8,8 +8,6 @@ python:
 # - "3.8" is handled in 'Test' job using xenial as Python 3.8 is not available for trusty.
 #  - "pypy"
 #  - "pypy3"
-before_install:
-  - pip uninstall PyYaml
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
 script: "pytest --cov=optimizely"
 after_success:
