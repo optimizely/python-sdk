@@ -1,6 +1,6 @@
-jsonschema==4.1.0
+jsonschema==3.2.0
 pyrsistent==0.16.0
 requests>=2.21
 pyOpenSSL>=19.1.0
-cryptography>=3.4.5
+cryptography>=2.8.0
 idna>=2.10
