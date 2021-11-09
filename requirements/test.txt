@@ -5,4 +5,4 @@ mock==1.3.0
 pytest>=4.6.0
 pytest-cov
 python-coveralls
-pyyaml==5.2
+pyyaml>=5.4
