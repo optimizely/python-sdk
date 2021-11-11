@@ -272,19 +272,19 @@ class OptimizelyUserContext(object):
                 reasons.append(user_has_forced_decision)
                 self.log.logger.debug(user_has_forced_decision)
 
-            return variation, reasons
+                return variation, reasons
 
-        else:
-            if rule_key:
-                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
-                    .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
-                                                                                     rule_key,
-                                                                                     self.user_id)
             else:
-                user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
-                    .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
+                if rule_key:
+                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
+                                                                                         rule_key,
+                                                                                         self.user_id)
+                else:
+                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
 
-            reasons.append(user_has_forced_decision_but_invalid)
-            self.log.logger.debug(user_has_forced_decision_but_invalid)
+                reasons.append(user_has_forced_decision_but_invalid)
+                self.log.logger.debug(user_has_forced_decision_but_invalid)
 
-            return None, reasons
+        return None, reasons
