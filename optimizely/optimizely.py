@@ -1040,7 +1040,7 @@ class Optimizely(object):
         forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context,
                                                                                options=decide_options)
 
-        variation, received_response = forced_decision_response
+        variation, decision_reasons = forced_decision_response
         reasons += received_response
 
         if variation:
