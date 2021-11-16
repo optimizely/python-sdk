@@ -46,8 +46,7 @@ class OptimizelyUserContext(object):
 
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
-        with self.lock:
-            self.forced_decisions = {}
+        self.forced_decisions = {}
         self.log = logger.SimpleLogger(min_level=enums.LogLevels.INFO)
 
     # decision context
@@ -149,70 +148,61 @@ class OptimizelyUserContext(object):
             'attributes': self.get_user_attributes(),
         }
 
-    def set_forced_decision(self, OptimizelyDecisionContext, OptimizelyForcedDecision):
+    def set_forced_decision(self, decision_context, decision):
         """
         Sets the forced decision for a given decision context.
 
         Args:
-            OptimizelyDecisionContext: a decision context.
-            OptimizelyForcedDecision: a forced decision.
+            decision_context: a decision context.
+            decision: a forced decision.
 
         Returns:
             True if the forced decision has been set successfully.
         """
-        config = self.client.get_optimizely_config()
-
-        if self.client is None or config is None:
+        if not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
-        context = OptimizelyDecisionContext
-        decision = OptimizelyForcedDecision
-
         with self.lock:
-            self.forced_decisions[context] = decision
+            self.forced_decisions[decision_context] = decision
 
         return True
 
-    def get_forced_decision(self, OptimizelyDecisionContext):
+    def get_forced_decision(self, decision_context):
         """
         Gets the forced decision (variation key) for a given decision context.
 
         Args:
-            OptimizelyDecisionContext: a decision context.
+            decision_context: a decision context.
 
         Returns:
             A variation key or None if forced decisions are not set for the parameters.
         """
-        config = self.client.get_optimizely_config()
-
-        if self.client is None or config is None:
+        if not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return None
 
-        forced_decision_key = self.find_forced_decision(OptimizelyDecisionContext)
+        forced_decision_key = self.find_forced_decision(decision_context)
 
         return forced_decision_key if forced_decision_key else None
 
-    def remove_forced_decision(self, OptimizelyDecisionContext):
+    def remove_forced_decision(self, decision_context):
         """
         Removes the forced decision for a given flag and an optional rule.
 
         Args:
-            OptimizelyDecisionContext: a decision context.
+            decision_context: a decision context.
 
         Returns:
             Returns: true if the forced decision has been removed successfully.
         """
-        config = self.client.get_optimizely_config()
-
-        if self.client is None or config is None:
+        if not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
         with self.lock:
-            if OptimizelyDecisionContext in self.forced_decisions.keys():
-                del self.forced_decisions[OptimizelyDecisionContext]
+            if decision_context in self.forced_decisions.keys():
+                del self.forced_decisions[decision_context]
                 return True
 
         return False
@@ -224,9 +214,7 @@ class OptimizelyUserContext(object):
         Returns:
             True if forced decisions have been removed successfully.
         """
-        config = self.client.get_optimizely_config()
-
-        if self.client is None or config is None:
+        if not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
@@ -235,23 +223,23 @@ class OptimizelyUserContext(object):
 
         return True
 
-    def find_forced_decision(self, OptimizelyDecisionContext):
+    def find_forced_decision(self, decision_context):
 
         with self.lock:
             if not self.forced_decisions:
                 return None
 
             # must allow None to be returned for the Flags only case
-            return self.forced_decisions.get(OptimizelyDecisionContext)
+            return self.forced_decisions.get(decision_context)
 
-    def find_validated_forced_decision(self, OptimizelyDecisionContext, options):
+    def find_validated_forced_decision(self, decision_context, options):
 
         reasons = []
 
-        forced_decision_response = self.find_forced_decision(OptimizelyDecisionContext)
+        forced_decision_response = self.find_forced_decision(decision_context)
 
-        flag_key = OptimizelyDecisionContext.flag_key
-        rule_key = OptimizelyDecisionContext.rule_key
+        flag_key = decision_context.flag_key
+        rule_key = decision_context.rule_key
 
         if forced_decision_response:
             variation = self.client.get_flag_variation_by_key(flag_key, forced_decision_response.variation_key)

@@ -773,10 +773,6 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_experiment) and user (test_user) '
-            'in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) and '
-            'user (test_user) in the forced decision map.',
             'Evaluating audiences for experiment "test_experiment": [].',
             'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
             'User "test_user" is in variation "control" of experiment test_experiment.'
@@ -792,10 +788,6 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_rollout) '
-            'and user (test_user) in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) '
-            'and user (test_user) in the forced decision map.',
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule 1.',
@@ -1151,18 +1143,12 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and user (test_user) '
-            'in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) and user (test_user) '
-            'in the forced decision map.',
-            'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
+            'Evaluating audiences for rule 1: ["11154"].',
+            'Audiences for rule 1 collectively evaluated to FALSE.',
             'User "test_user" does not meet audience conditions for targeting rule 1.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) and user (test_user) '
-            'in the forced decision map.',
-            'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to FALSE.',
+            'Evaluating audiences for rule 2: ["11159"].',
+            'Audiences for rule 2 collectively evaluated to FALSE.',
             'User "test_user" does not meet audience conditions for targeting rule 2.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211147) and user (test_user) '
-            'in the forced decision map.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule Everyone Else.',
@@ -1179,20 +1165,12 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and user (abcde) '
-            'in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) and user (abcde) '
-            'in the forced decision map.',
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to FALSE.',
             'User "abcde" does not meet audience conditions for targeting rule 1.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) and user (abcde) '
-            'in the forced decision map.',
             'Evaluating audiences for rule 2: ["11159"].',
             'Audiences for rule 2 collectively evaluated to FALSE.',
             'User "abcde" does not meet audience conditions for targeting rule 2.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211147) and user (abcde) '
-            'in the forced decision map.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
             'User "abcde" meets audience conditions for targeting rule Everyone Else.',
@@ -1209,19 +1187,14 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and '
-            'user (test_user) in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211127) '
-            'and user (test_user) in the forced decision map.',
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to FALSE.',
             'User "test_user" does not meet audience conditions for targeting rule 1.',
-            'Invalid variation is mapped to flag (test_feature_in_rollout), rule (211137) '
-            'and user (test_user) in the forced decision map.',
             'Evaluating audiences for rule 2: ["11159"].',
             'Audiences for rule 2 collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule 2.',
-            'User "test_user" bucketed into a targeting rule 2.']
+            'User "test_user" bucketed into a targeting rule 2.'
+        ]
 
         self.assertEqual(expected_reasons, actual.reasons)
 
@@ -1257,12 +1230,9 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_experiment', options)
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_experiment) and user (test_user) '
-            'in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) '
-            'and user (test_user) in the forced decision map.',
-            'Returning previously activated variation ID "control" of experiment "test_experiment" '
-            'for user "test_user" from user profile.']
+            'Returning previously activated variation ID "control" of experiment '
+            '"test_experiment" for user "test_user" from user profile.'
+        ]
 
         self.assertEqual(expected_reasons, actual.reasons)
 
@@ -1279,12 +1249,8 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_experiment', options)
 
         expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_experiment) and user (test_user) '
-            'in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) '
-            'and user (test_user) in the forced decision map.',
-            'Variation "control" is mapped to experiment "test_experiment" '
-            'and user "test_user" in the forced variation map'
+            'Variation "control" is mapped to experiment "test_experiment" and '
+            'user "test_user" in the forced variation map'
         ]
 
         self.assertEqual(expected_reasons, actual.reasons)
@@ -1298,13 +1264,7 @@ class UserContextTest(base.BaseTest):
         options = ['INCLUDE_REASONS']
 
         actual = user_context.decide('test_feature_in_experiment', options)
-
-        expected_reasons = [
-            'Invalid variation is mapped to flag (test_feature_in_experiment) and user (user_1) '
-            'in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) '
-            'and user (user_1) in the forced decision map.',
-            'User "user_1" is forced in variation "control".']
+        expected_reasons = ['User "user_1" is forced in variation "control".']
 
         self.assertEqual(expected_reasons, actual.reasons)
 
@@ -1463,6 +1423,9 @@ class UserContextTest(base.BaseTest):
             {}
         )
 
+        self.assertTrue('Variation (211129) is mapped to flag (test_feature_in_rollout) '
+                        'and user (test_user) in the forced decision map.' in decide_decision.reasons)
+
         status = user_context.remove_forced_decision(context)
         self.assertTrue(status)
 
@@ -1473,10 +1436,6 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
-        self.assertTrue(set(decide_decision.reasons).issuperset(set([
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and '
-            'user (test_user) in the forced decision map.'
-        ])))
 
     def test_delivery_rule_return_decision__forced_decision(self):
         """
@@ -1514,10 +1473,20 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
-        self.assertTrue(set(decide_decision.reasons).issuperset(set([
-            'Invalid variation is mapped to flag (test_feature_in_rollout) '
-            'and user (test_user) in the forced decision map.'
-        ])))
+
+        expected_reasons = [
+            'Evaluating audiences for rule 1: ["11154"].',
+            'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].',
+            'Audiences for rule 2 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 2.',
+            'Evaluating audiences for rule Everyone Else: [].',
+            'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'User "test_user" meets audience conditions for targeting rule Everyone Else.',
+            'User "test_user" bucketed into a targeting rule Everyone Else.'
+        ]
+        self.assertEqual(decide_decision.reasons, expected_reasons)
 
     def test_experiment_rule_return_decision__forced_decision(self):
         """
@@ -1557,12 +1526,15 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment_and_rollout')
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
-        self.assertTrue(set(decide_decision.reasons).issuperset(set([
-            'Invalid variation is mapped to flag (test_feature_in_experiment_and_rollout) '
-            'and user (test_user) in the forced decision map.',
-            'Invalid variation is mapped to flag (test_feature_in_experiment_and_rollout), '
-            'rule (group_exp_2) and user (test_user) in the forced decision map.'
-        ])))
+
+        expected_reasons = [
+            'Evaluating audiences for experiment "group_exp_2": [].',
+            'Audiences for experiment "group_exp_2" collectively evaluated to TRUE.',
+            'User "test_user" is in experiment group_exp_2 of group 19228.',
+            'User "test_user" is in variation "group_exp_2_control" of experiment group_exp_2.'
+        ]
+
+        self.assertEqual(decide_decision.reasons, expected_reasons)
 
     def test_invalid_delivery_rule_return_decision__forced_decision(self):
         """
@@ -1587,13 +1559,13 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
         self.assertTrue(set(decide_decision.reasons).issuperset(set([
-            'Invalid variation is mapped to flag (test_feature_in_rollout) '
-            'and user (test_user) in the forced decision map.'
+            'Invalid variation is mapped to flag (test_feature_in_rollout), '
+            'rule (211127) and user (test_user) in the forced decision map.'
         ])))
 
     def test_invalid_experiment_rule_return_decision__forced_decision(self):
         """
-        Should return valid decision after setting invalid experiemnt
+        Should return valid decision after setting invalid experiment
         rule variation in forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1615,10 +1587,19 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
-        self.assertTrue(set(decide_decision.reasons).issuperset(set([
-            'Invalid variation is mapped to flag (test_feature_in_rollout) and '
-            'user (test_user) in the forced decision map.'
-        ])))
+
+        expected_reasons = [
+            'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 2.',
+            'Evaluating audiences for rule Everyone Else: [].',
+            'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'User "test_user" meets audience conditions for targeting rule Everyone Else.',
+            'User "test_user" bucketed into a targeting rule Everyone Else.'
+        ]
+
+        self.assertEqual(decide_decision.reasons, expected_reasons)
 
     def test_conflicts_return_valid_decision__forced_decision(self):
         """

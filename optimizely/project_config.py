@@ -150,7 +150,7 @@ class ProjectConfig(object):
             if not flag['rolloutId'] == '':
                 rollout = self.rollout_id_map[flag['rolloutId']]
 
-                rollout_experiments = self.get_rollout_experiments_map(rollout)
+                rollout_experiments = self.get_rollout_experiments(rollout)
 
                 if rollout and rollout.experiments:
                     experiments.extend(rollout_experiments)
@@ -213,7 +213,7 @@ class ProjectConfig(object):
 
         return audience_map
 
-    def get_rollout_experiments_map(self, rollout):
+    def get_rollout_experiments(self, rollout):
         """ Helper method to get rollout experiments as a map.
 
         Args:
@@ -387,8 +387,8 @@ class ProjectConfig(object):
         self.logger.error('Audience ID "%s" is not in datafile.' % audience_id)
         self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE)))
 
-    def get_variation_from_key(self, experiment_key, variation):
-        """ Get variation given experiment and variation.
+    def get_variation_from_key(self, experiment_key, variation_key):
+        """ Get variation given experiment and variation key.
 
         Args:
             experiment: Key representing parent experiment of variation.
@@ -399,28 +399,20 @@ class ProjectConfig(object):
             Object representing the variation.
         """
 
-        variation_key = None
+        variation_map = self.variation_key_map.get(experiment_key)
 
-        if isinstance(variation, tuple):
-            if isinstance(variation[0], entities.Variation):
-                variation_key, received_reasons = variation
-        else:
-            variation_map = self.variation_key_map.get(experiment_key)
-
-            if variation_map:
-                variation_key = variation_map.get(variation)
+        if variation_map:
+            variation = variation_map.get(variation_key)
+            if variation:
+                return variation
             else:
-                self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
-                self.error_handler.handle_error(
-                    exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
+                self.logger.error('Variation key "%s" is not in datafile.' % variation_key)
+                self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
                 return None
 
-        if variation_key:
-            return variation_key
-        else:
-            self.logger.error('Variation key "%s" is not in datafile.' % variation)
-            self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
-            return None
+        self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
+        self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
+        return None
 
     def get_variation_from_id(self, experiment_key, variation_id):
         """ Get variation given experiment and variation ID.

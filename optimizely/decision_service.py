@@ -357,7 +357,7 @@ class DecisionService(object):
             decide_reasons.append(message)
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
-        rollout_rules = project_config.get_rollout_experiments_map(rollout)
+        rollout_rules = project_config.get_rollout_experiments(rollout)
 
         if not rollout_rules:
             message = 'Rollout {} has no experiments.'.format(rollout.id)

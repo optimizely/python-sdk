@@ -444,20 +444,20 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
             return None
 
-        variation_key = self.get_variation(experiment_key, user_id, attributes)
+        variation = self.get_variation(experiment_key, user_id, attributes)
 
-        # check for case where variation_key can be None when attributes are invalid
+        if not variation:
+            self.logger.info('Not activating user "%s".' % user_id)
+            return None
+
+        variation_key, reasons = variation
+
         if not variation_key:
             self.logger.info('Not activating user "%s".' % user_id)
             return None
 
-        # variation_key is normally a tuple object
-        if not variation_key[0]:
-            self.logger.info('Not activating user "%s".' % user_id)
-            return None
-
         experiment = project_config.get_experiment_from_key(experiment_key)
-        variation = project_config.get_variation_from_key(experiment_key, variation_key)
+        variation = project_config.get_variation_from_key(experiment_key, variation_key.key)
 
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
@@ -1040,8 +1040,8 @@ class Optimizely(object):
         forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context,
                                                                                options=decide_options)
 
-        variation, received_response = forced_decision_response
-        reasons += received_response
+        variation, decision_reasons = forced_decision_response
+        reasons += decision_reasons
 
         if variation:
             decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
@@ -1203,12 +1203,10 @@ class Optimizely(object):
         if not config:
             return None
 
-        # this will take care of force decision objects which contain variation_key inside them
-        if isinstance(variation_key, OptimizelyUserContext.OptimizelyForcedDecision):
-            variation_key = variation_key.variation_key
-
         variations = config.flag_variations_map[flag_key]
 
         for variation in variations:
             if variation.key == variation_key:
                 return variation
+
+        return None
