@@ -1048,8 +1048,8 @@ class Optimizely(object):
         else:
             # Regular decision
             decision, decision_reasons = self.decision_service.get_variation_for_feature(config,
-                                                                       feature_flag,
-                                                                       user_context, ignore_ups)
+                                                                                         feature_flag,
+                                                                                         user_context, ignore_ups)
 
             reasons += decision_reasons
 

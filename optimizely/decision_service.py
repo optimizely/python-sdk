@@ -349,6 +349,9 @@ class DecisionService(object):
         if not feature:
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
+        if not feature.rolloutId:
+            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
 
         if not rollout:
@@ -375,7 +378,11 @@ class DecisionService(object):
 
                 decide_reasons += reasons_received
 
-                if decision_response:
+                if not decision_response:
+                    # TODO - MATJAZ - careful - check how this exists the loop and terminates properly
+                    #  when return is hit
+                    return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+                else:
                     variation, skip_to_everyone_else = decision_response
 
                 if variation:
@@ -431,6 +438,7 @@ class DecisionService(object):
           config: Instance of ProjectConfig.
           flag_key: Key of the flag.
           rules: Experiment rule.
+          rule_index: integer index of the rule in the list.
           user: ID and attributes for user.
           options: Decide options.
 
@@ -459,7 +467,8 @@ class DecisionService(object):
         # regular decision
         user_id = user.user_id
         attributes = user.get_user_attributes()
-        bucketing_id = self._get_bucketing_id(user_id, attributes)
+        # TODO this bucket_reasons go somewhere?
+        bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
 
         everyone_else = (rule_index == len(rules) - 1)
         logging_key = "Everyone Else" if everyone_else else str(rule_index + 1)
@@ -473,7 +482,6 @@ class DecisionService(object):
         decide_reasons += reasons_received_audience
 
         if audience_decision_response:
-
             message = 'User "{}" meets audience conditions for targeting rule {}.'.format(user_id, logging_key)
             self.logger.debug(message)
             decide_reasons.append(message)
@@ -534,10 +542,6 @@ class DecisionService(object):
         # Next check if user is part of a rollout
         if feature.rolloutId:
             return self.get_variation_for_rollout(project_config, feature, user_context, ignore_user_profile)
-
-        # check if not part of experiment
-        if not feature.experimentIds:
-            return Decision(None, None, enums.DecisionSources.FEATURE_TEST), decide_reasons
 
         # check if not part of rollout
         if not feature.rolloutId:

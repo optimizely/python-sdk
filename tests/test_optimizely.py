@@ -5074,4 +5074,3 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         """
         # TODO mock function get_flag_variation_by_key?
         pass
-

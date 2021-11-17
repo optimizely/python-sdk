@@ -214,7 +214,7 @@ class ProjectConfig(object):
         return audience_map
 
     def get_rollout_experiments(self, rollout):
-        """ Helper method to get rollout experiments as.
+        """ Helper method to get rollout experiments.
 
         Args:
             rollout: rollout
