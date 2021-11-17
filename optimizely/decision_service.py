@@ -467,8 +467,9 @@ class DecisionService(object):
         # regular decision
         user_id = user.user_id
         attributes = user.get_user_attributes()
-        # TODO this bucket_reasons go somewhere?
+
         bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
+        decide_reasons += bucket_reasons
 
         everyone_else = (rule_index == len(rules) - 1)
         logging_key = "Everyone Else" if everyone_else else str(rule_index + 1)
