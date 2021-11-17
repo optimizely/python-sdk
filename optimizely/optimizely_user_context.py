@@ -176,19 +176,19 @@ class OptimizelyUserContext(object):
             decision_context: a decision context.
 
         Returns:
-            A variation key or None if forced decisions are not set for the parameters.
+            A forced_decision or None if forced decisions are not set for the parameters.
         """
         if not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return None
 
-        forced_decision_key = self.find_forced_decision(decision_context)
+        forced_decision = self.find_forced_decision(decision_context)
 
-        return forced_decision_key if forced_decision_key else None
+        return forced_decision if forced_decision else None
 
     def remove_forced_decision(self, decision_context):
         """
-        Removes the forced decision for a given flag and an optional rule.
+        Removes the forced decision for a given decision context.
 
         Args:
             decision_context: a decision context.
@@ -201,7 +201,7 @@ class OptimizelyUserContext(object):
             return False
 
         with self.lock:
-            if decision_context in self.forced_decisions.keys():
+            if decision_context in self.forced_decisions:
                 del self.forced_decisions[decision_context]
                 return True
 

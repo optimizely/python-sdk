@@ -5067,3 +5067,11 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         for u in user_ids:
             uc = self.optimizely.create_user_context(u)
             self.assertIsNone(uc, "invalid user id should return none")
+
+    def test_invalid_flag_key(self):
+        """
+        Tests invalid flag key in function get_flag_variation_by_key().
+        """
+        # TODO mock function get_flag_variation_by_key?
+        pass
+

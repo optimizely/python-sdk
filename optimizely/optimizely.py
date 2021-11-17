@@ -293,6 +293,9 @@ class Optimizely(object):
             )
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
+
+            print('DECISION.EXPERIMENT - ', decision.experiment)
+
             source_info = {
                 'experiment_key': decision.experiment.key,
                 'variation_key': decision.variation.key,
@@ -444,20 +447,14 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
             return None
 
-        variation = self.get_variation(experiment_key, user_id, attributes)
-
-        if not variation:
-            self.logger.info('Not activating user "%s".' % user_id)
-            return None
-
-        variation_key, reasons = variation
+        variation_key = self.get_variation(experiment_key, user_id, attributes)
 
         if not variation_key:
             self.logger.info('Not activating user "%s".' % user_id)
             return None
 
         experiment = project_config.get_experiment_from_key(experiment_key)
-        variation = project_config.get_variation_from_key(experiment_key, variation_key.key)
+        variation = project_config.get_variation_from_key(experiment_key, variation_key)
 
         # Create and dispatch impression event
         self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
@@ -555,7 +552,10 @@ class Optimizely(object):
             return None
 
         user_context = self.create_user_context(user_id, attributes)
-        variation_key = self.decision_service.get_variation(project_config, experiment, user_context)
+
+        variation, _ = self.decision_service.get_variation(project_config, experiment, user_context)
+        if variation:
+            variation_key = variation.key
 
         if project_config.is_feature_experiment(experiment.id):
             decision_notification_type = enums.DecisionNotificationTypes.FEATURE_TEST
@@ -841,7 +841,7 @@ class Optimizely(object):
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
         )
 
-    def get_all_feature_variables(self, feature_key, user_id, attributes):
+    def get_all_feature_variables(self, feature_key, user_id, attributes=None):
         """ Returns dictionary of all variables and their corresponding values in the context of a feature.
 
         Args:
@@ -1047,10 +1047,10 @@ class Optimizely(object):
             decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
         else:
             # Regular decision
-            decision = decision_service.DecisionService.get_variation_for_feature(self.decision_service, config,
-                                                                                  feature_flag,
-                                                                                  user_context, ignore_ups)
-            decision, decision_reasons = decision
+            decision, decision_reasons = self.decision_service.get_variation_for_feature(config,
+                                                                       feature_flag,
+                                                                       user_context, ignore_ups)
+
             reasons += decision_reasons
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
@@ -1203,7 +1203,10 @@ class Optimizely(object):
         if not config:
             return None
 
-        variations = config.flag_variations_map[flag_key]
+        if not flag_key:
+            return None
+
+        variations = config.flag_variations_map.get(flag_key)
 
         for variation in variations:
             if variation.key == variation_key:

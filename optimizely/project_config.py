@@ -155,7 +155,7 @@ class ProjectConfig(object):
                 if rollout and rollout.experiments:
                     experiments.extend(rollout_experiments)
 
-                self.flag_rules_map[flag['key']] = experiments
+            self.flag_rules_map[flag['key']] = experiments
 
         # All variations for each flag
         # Datafile does not contain a separate entity for this.
@@ -214,7 +214,7 @@ class ProjectConfig(object):
         return audience_map
 
     def get_rollout_experiments(self, rollout):
-        """ Helper method to get rollout experiments as a map.
+        """ Helper method to get rollout experiments as.
 
         Args:
             rollout: rollout
