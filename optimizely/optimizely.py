@@ -198,6 +198,19 @@ class Optimizely(object):
           user_id: ID for user.
           attributes: Dict representing user attributes and values which need to be recorded.
         """
+        if not experiment:
+            experiment = entities.Experiment(
+                id='',
+                key='',
+                layerId='',
+                status='',
+                variations=[],
+                trafficAllocation=[],
+                audienceIds=[],
+                audienceConditions=[],
+                forcedVariations={}
+            )
+
         variation_id = variation.id if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(
             project_config, experiment, variation_id, flag_key, rule_key, rule_type, enabled, user_id, attributes
@@ -1057,7 +1070,7 @@ class Optimizely(object):
         if decision.experiment is not None:
             experiment = decision.experiment
             source_info["experiment"] = experiment
-            rule_key = experiment.key
+            rule_key = experiment.key if experiment else None
         if decision.variation is not None:
             variation = decision.variation
             variation_key = variation.key

@@ -166,8 +166,8 @@ class ProjectConfig(object):
             variations = []
             for rule in rules:
                 # get variations as objects (rule.variations gives list)
-                variation_objects = self.variation_key_map[rule.key].values()
 
+                variation_objects = self.variation_id_map_by_experiment_id[rule.id].values()
                 for variation in variation_objects:
                     if variation.id not in [var.id for var in variations]:
                         variations.append(variation)
@@ -651,3 +651,26 @@ class ProjectConfig(object):
                           variation_key, experiment_id)
 
         return {}
+
+    def get_flag_variation_by_id(self, flag_key, variation_id):
+        """
+        Gets variation by id.
+        variation_id can be a string or in case of forced decisions, it can be an object.
+
+        Args:
+            flag_key: flag key
+            variation_key: variation id
+
+        Returns:
+            Variation as a map.
+        """
+
+        if not flag_key:
+            return None
+
+        variations = self.flag_variations_map.get(flag_key)
+        for variation in variations:
+            if variation.id == variation_id:
+                return variation
+
+        return None
