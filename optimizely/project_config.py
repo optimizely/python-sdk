@@ -124,27 +124,26 @@ class ProjectConfig(object):
         # As we cannot create json variables in datafile directly, here we convert
         # the variables of string type and json subType to json type
         # This is needed to fully support json variables
-        for feature in self.feature_key_map:
-            for variable in self.feature_key_map[feature].variables:
+        self.experiment_feature_map = {}
+        self.flag_rules_map = {}
+
+        for feature_key, feature_value in self.feature_key_map.items():
+            for variable in self.feature_key_map[feature_key].variables:
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON
 
-        # Dict containing map of experiment ID to feature ID.
-        # for checking that experiment is a feature experiment or not.
-        self.experiment_feature_map = {}
-        for feature in self.feature_key_map.values():
-            feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
-            for exp_id in feature.experimentIds:
+            # loop over features=flags already happening
+            # get feature variables for eacg flag/feature
+            feature_value.variables = self._generate_key_map(feature_value.variables, 'key', entities.Variable)
+            for exp_id in feature_value.experimentIds:
                 # Add this experiment in experiment-feature map.
-                self.experiment_feature_map[exp_id] = [feature.id]
+                self.experiment_feature_map[exp_id] = [feature_value.id]
 
         # all rules(experiment rules and delivery rules) for each flag
-        self.flag_rules_map = {}
         for flag in self.feature_flags:
-
             experiments = []
-            if not flag['experimentIds'] == '':
+            if len(flag['experimentIds']) > 0:
                 for exp_id in flag['experimentIds']:
                     experiments.append(self.experiment_id_map[exp_id])
             if not flag['rolloutId'] == '':
@@ -160,19 +159,7 @@ class ProjectConfig(object):
         # All variations for each flag
         # Datafile does not contain a separate entity for this.
         # We collect variations used in each rule (experiment rules and delivery rules)
-        self.flag_variations_map = {}
-
-        for flag_key, rules in self.flag_rules_map.items():
-            variations = []
-            for rule in rules:
-                # get variations as objects (rule.variations gives list)
-
-                variation_objects = self.variation_id_map_by_experiment_id[rule.id].values()
-                for variation in variation_objects:
-                    if variation.id not in [var.id for var in variations]:
-                        variations.append(variation)
-
-            self.flag_variations_map[flag_key] = variations
+        self.flag_variations_map = self.get_all_variations_for_each_rule(self.flag_rules_map)
 
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
@@ -674,3 +661,29 @@ class ProjectConfig(object):
                 return variation
 
         return None
+
+    def get_all_variations_for_each_rule(self, flag_rules_map):
+        """ Helper method to get all variation objects from each flag.
+            collects variations used in each rule (experiment rules and delivery rules).
+
+        Args:
+            flag_rules_map: A dictionary. A map of all rules per flag.
+
+        Returns:
+            Map of flag variations.
+        """
+        flag_variations_map = {}
+
+        for flag_key, rules in flag_rules_map.items():
+            variations = []
+            for rule in rules:
+                # get variations as objects (rule.variations gives list)
+                variation_objects = self.variation_id_map_by_experiment_id[rule.id].values()
+                for variation in variation_objects:
+                    # append variation if it's not already in the list
+                    if variation not in variations:
+                        variations.append(variation)
+
+            flag_variations_map[flag_key] = variations
+
+        return flag_variations_map

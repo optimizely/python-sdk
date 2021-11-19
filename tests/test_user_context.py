@@ -1568,8 +1568,10 @@ class UserContextTest(base.BaseTest):
             'rule (211127) and user (test_user) in the forced decision map.'
         ])))
 
-    # TODO - JAE: Can we change the test name and description? Not clear which part is invalid. Also, I see the forced set flag and decide flag is different. Is it intentional?
-    def test_invalid_experiment_rule_return_decision__forced_decision(self):            # TODO - CHECK WITH JAE if this test should return valid decision like docstring says!
+    # TODO - JAE: Can we change the test name and description? Not clear which part is invalid.
+    #  Also, I see the forced set flag and decide flag is different. Is it intentional?
+    # TODO - CHECK WITH JAE if this test should return valid decision like docstring says!
+    def test_invalid_experiment_rule_return_decision__forced_decision(self):
         """
         Should return valid decision after setting invalid experiment
         rule variation in forced decision.
@@ -1595,7 +1597,6 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.variation_key, None)
         self.assertEqual(decide_decision.rule_key, None)
         self.assertFalse(decide_decision.enabled)
-
 
         self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
