@@ -21,6 +21,7 @@ from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .optimizely_user_context import OptimizelyUserContext
+from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .user_profile import UserProfile
 
 Decision = namedtuple('Decision', 'experiment variation source')
@@ -224,9 +225,7 @@ class DecisionService(object):
 
         return None
 
-    def get_variation(
-            self, project_config, experiment, user_context, ignore_user_profile=False
-    ):
+    def get_variation(self, project_config, experiment, user_context, options=None):
         """ Top-level function to help determine variation user should be put in.
 
     First, check if experiment is running.
@@ -239,7 +238,7 @@ class DecisionService(object):
       project_config: Instance of ProjectConfig.
       experiment: Experiment for which user variation needs to be determined.
       user_context: contains user id and attributes
-      ignore_user_profile: True to ignore the user profile lookup. Defaults to False.
+      options: Decide options.
 
     Returns:
       Variation user should see. None if user is not in experiment or experiment is not running
@@ -247,6 +246,11 @@ class DecisionService(object):
     """
         user_id = user_context.user_id
         attributes = user_context.get_user_attributes()
+
+        if options:
+            ignore_user_profile = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
+        else:
+            ignore_user_profile = False
 
         decide_reasons = []
         # Check if experiment is running
@@ -346,10 +350,7 @@ class DecisionService(object):
     """
         decide_reasons = []
 
-        if not feature:
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
-
-        if not feature.rolloutId:
+        if not feature or not feature.rolloutId:
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
@@ -378,12 +379,7 @@ class DecisionService(object):
 
                 decide_reasons += reasons_received
 
-                if not decision_response:
-                    # TODO - MATJAZ - careful - check how this exists the loop and terminates properly
-                    #  when return is hit
-                    return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
-                else:
-                    variation, skip_to_everyone_else = decision_response
+                variation, skip_to_everyone_else = decision_response
 
                 if variation:
                     rule = rollout_rules[index]
@@ -513,7 +509,7 @@ class DecisionService(object):
 
         return (bucketed_variation, skip_to_everyone_else), decide_reasons
 
-    def get_variation_for_feature(self, project_config, feature, user_context, ignore_user_profile=False):
+    def get_variation_for_feature(self, project_config, feature, user_context, options=None):
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
     Args:
@@ -521,7 +517,7 @@ class DecisionService(object):
       feature: Feature for which we are determining if it is enabled or not for the given user.
       user: user context for user.
       attributes: Dict representing user attributes.
-      ignore_user_profile: True if we should bypass the user profile service
+      options: Decide options.
 
     Returns:
       Decision namedtuple consisting of experiment and variation for the user.
@@ -535,15 +531,13 @@ class DecisionService(object):
                 experiment = project_config.get_experiment_from_id(experiment)
                 if experiment:
                     variation, variation_reasons = self.get_variation_from_experiment_rule(
-                        project_config, feature.key, experiment, user_context, ignore_user_profile)
+                        project_config, feature.key, experiment, user_context, options)
                     decide_reasons += variation_reasons
                     if variation:
                         return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
 
         # Next check if user is part of a rollout
         if feature.rolloutId:
-            return self.get_variation_for_rollout(project_config, feature, user_context, ignore_user_profile)
-
-        # check if not part of rollout
-        if not feature.rolloutId:
+            return self.get_variation_for_rollout(project_config, feature, user_context, options)
+        else:
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons

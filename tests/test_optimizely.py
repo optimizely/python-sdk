@@ -462,7 +462,7 @@ class OptimizelyTest(base.BaseTest):
                     'ab-test',
                     'test_user',
                     {},
-                    {'experiment_key': 'test_experiment', 'variation_key': variation},
+                    {'experiment_key': 'test_experiment', 'variation_key': variation[0].key},
                 ),
                 mock.call(
                     enums.NotificationTypes.ACTIVATE,
@@ -505,7 +505,7 @@ class OptimizelyTest(base.BaseTest):
                     'ab-test',
                     'test_user',
                     {'test_attribute': 'test_value'},
-                    {'experiment_key': 'test_experiment', 'variation_key': variation},
+                    {'experiment_key': 'test_experiment', 'variation_key': variation[0].key},
                 ),
                 mock.call(
                     enums.NotificationTypes.ACTIVATE,
@@ -545,7 +545,7 @@ class OptimizelyTest(base.BaseTest):
             'ab-test',
             'test_user',
             {},
-            {'experiment_key': 'test_experiment', 'variation_key': (None, [])},
+            {'experiment_key': 'test_experiment', 'variation_key': None},
         )
 
     def test_track_listener(self):
@@ -1781,9 +1781,8 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
         ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
             variation = self.optimizely.get_variation('test_experiment', 'test_user')
-            variation_key = variation[0].key
             self.assertEqual(
-                'variation', variation_key,
+                'variation', variation,
             )
 
         self.assertEqual(mock_broadcast.call_count, 1)
@@ -1808,8 +1807,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(project_config.get_variation_from_id('test_experiment', '111129'), []),
         ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
             variation = opt_obj.get_variation('test_experiment', 'test_user')
-            variation_key = variation[0].key
-            self.assertEqual('variation', variation_key)
+            self.assertEqual('variation', variation)
 
         self.assertEqual(mock_broadcast.call_count, 1)
 
@@ -1829,7 +1827,7 @@ class OptimizelyTest(base.BaseTest):
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast:
             self.assertEqual(
-                (None, []),
+                None,
                 self.optimizely.get_variation(
                     'test_experiment', 'test_user', attributes={'test_attribute': 'test_value'},
                 ),
@@ -1842,7 +1840,7 @@ class OptimizelyTest(base.BaseTest):
             'ab-test',
             'test_user',
             {'test_attribute': 'test_value'},
-            {'experiment_key': 'test_experiment', 'variation_key': (None, [])},
+            {'experiment_key': 'test_experiment', 'variation_key': None},
         )
 
     def test_get_variation__invalid_object(self):
@@ -4899,7 +4897,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         variation_key = self.optimizely.get_variation(
             'test_experiment', 'test_user', attributes={'test_attribute': 'test_value'}
         )
-        variation_key = variation_key[0].key
         self.assertEqual('variation', variation_key)
 
     def test_get_variation__experiment_not_running__forced_bucketing(self):
@@ -4915,7 +4912,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             variation_key = self.optimizely.get_variation(
                 'test_experiment', 'test_user', attributes={'test_attribute': 'test_value'},
             )
-            self.assertIsNone(variation_key[0])
+            self.assertIsNone(variation_key)
             mock_is_experiment_running.assert_called_once_with(
                 self.project_config.get_experiment_from_key('test_experiment')
             )
@@ -4929,7 +4926,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         variation_key = self.optimizely.get_variation(
             'group_exp_1', 'user_1', attributes={'test_attribute': 'test_value'}
         )
-        variation_key = variation_key[0].key
         self.assertEqual('group_exp_1_variation', variation_key)
 
     def test_get_variation__user_profile__forced_bucketing(self):
@@ -4945,7 +4941,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             variation_key = self.optimizely.get_variation(
                 'test_experiment', 'test_user', attributes={'test_attribute': 'test_value'},
             )
-            variation_key = variation_key[0].key
             self.assertEqual('variation', variation_key)
 
     def test_get_variation__invalid_attributes__forced_bucketing(self):
@@ -4958,7 +4953,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         variation_key = self.optimizely.get_variation(
             'test_experiment', 'test_user', attributes={'test_attribute': 'test_value_invalid'},
         )
-        variation_key = variation_key[0].key
+        variation_key = variation_key
         self.assertEqual('variation', variation_key)
 
     def test_set_forced_variation__invalid_object(self):

@@ -306,9 +306,6 @@ class Optimizely(object):
             )
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
-
-            print('DECISION.EXPERIMENT - ', decision.experiment)
-
             source_info = {
                 'experiment_key': decision.experiment.key,
                 'variation_key': decision.variation.key,
@@ -1046,7 +1043,6 @@ class Optimizely(object):
         decision_source = DecisionSources.ROLLOUT
         source_info = {}
         decision_event_dispatched = False
-        ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in decide_options
 
         # Check forced decisions first
         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
@@ -1062,7 +1058,7 @@ class Optimizely(object):
             # Regular decision
             decision, decision_reasons = self.decision_service.get_variation_for_feature(config,
                                                                                          feature_flag,
-                                                                                         user_context, ignore_ups)
+                                                                                         user_context, decide_options)
 
             reasons += decision_reasons
 
@@ -1085,6 +1081,7 @@ class Optimizely(object):
                 self._send_impression_event(config, experiment, variation, flag_key, rule_key or '',
                                             decision_source, feature_enabled,
                                             user_id, attributes)
+
                 decision_event_dispatched = True
 
         # Generate all variables map if decide options doesn't include excludeVariables

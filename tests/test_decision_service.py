@@ -964,7 +964,7 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config,
                 experiment,
                 user,
-                ignore_user_profile=True,
+                options=['IGNORE_USER_PROFILE_SERVICE'],
             )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
@@ -1059,7 +1059,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_id("211127"),
             "test_user",
-            ('test_user', []),
+            'test_user',
         )
 
     def test_get_variation_for_rollout__calls_bucket_with_bucketing_id(self):
@@ -1099,7 +1099,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_id("211127"),
             "test_user",
-            ('user_bucket_value', [])
+            'user_bucket_value'
         )
 
     def test_get_variation_for_rollout__skips_to_everyone_else_rule(self):
@@ -1245,7 +1245,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         with decision_patch as mock_decision, self.mock_decision_logger:
             variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, user, ignore_user_profile=False
+                self.project_config, feature, user, options=None
             )
             self.assertEqual(
                 decision_service.Decision(
@@ -1260,7 +1260,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_key("test_experiment"),
             user,
-            False
+            None
         )
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_rollout(self):
@@ -1366,7 +1366,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 return_value=(expected_variation, []),
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
-                self.project_config, feature, user
+                self.project_config, feature, user, options=None
             )
             self.assertEqual(
                 decision_service.Decision(
@@ -1381,7 +1381,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_key("group_exp_1"),
             user,
-            False
+            None
         )
 
     def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
@@ -1407,7 +1407,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_key("test_experiment"),
             user,
-            False
+            None
         )
 
     def test_get_variation_for_feature__returns_none_for_user_in_group_experiment_not_associated_with_feature(
@@ -1553,9 +1553,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 variation_received,
             )
 
-        mock_generate_bucket_value.assert_called_with("('test_user', [])211147")
+        mock_generate_bucket_value.assert_called_with("test_user211147")
         mock_config_logging.debug.assert_called_with(
-            'Assigned bucket 8000 to user with bucketing ID "(\'test_user\', [])".')
+            'Assigned bucket 8000 to user with bucketing ID "test_user".')
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_experiment_bucket_less_than_2500(
             self,
@@ -1671,9 +1671,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 variation_received,
             )
-        mock_generate_bucket_value.assert_called_with("('test_user', [])211147")
+        mock_generate_bucket_value.assert_called_with("test_user211147")
         mock_config_logging.debug.assert_called_with(
-            'Assigned bucket 8000 to user with bucketing ID "(\'test_user\', [])".')
+            'Assigned bucket 8000 to user with bucketing ID "test_user".')
 
     def test_get_variation_for_feature__returns_variation_for_rollout_in_mutex_group_audience_mismatch(
             self,
@@ -1705,8 +1705,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_config_logging.debug.assert_called_with(
-            'Assigned bucket 2400 to user with bucketing ID "(\'test_user\', [])".')
-        mock_generate_bucket_value.assert_called_with("('test_user', [])211147")
+            'Assigned bucket 2400 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with("test_user211147")
 
     def test_get_variation_for_feature_returns_rollout_in_experiment_bucket_range_2500_5000_audience_mismatch(
             self,
@@ -1738,5 +1738,5 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 variation_received,
             )
         mock_config_logging.debug.assert_called_with(
-            'Assigned bucket 4000 to user with bucketing ID "(\'test_user\', [])".')
-        mock_generate_bucket_value.assert_called_with("('test_user', [])211147")
+            'Assigned bucket 4000 to user with bucketing ID "test_user".')
+        mock_generate_bucket_value.assert_called_with("test_user211147")
