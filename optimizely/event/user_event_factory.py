@@ -43,7 +43,7 @@ class UserEventFactory(object):
     """
 
         if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
-            return None                                                 # TODO - we get this when event not sent. Now we allow None for activated_experiment
+            return None
 
         variation, experiment_id = None, None
         if activated_experiment:
@@ -51,6 +51,7 @@ class UserEventFactory(object):
 
         if variation_id and experiment_id:
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+        # need this condition when we send events involving forced decisions
         elif variation_id and flag_key:
             variation = project_config.get_flag_variation_by_id(flag_key, variation_id)
         event_context = user_event.EventContext(
@@ -60,11 +61,11 @@ class UserEventFactory(object):
         return user_event.ImpressionEvent(
             event_context,
             user_id,
-            activated_experiment,                       # TODO - check here also. that exper is used, that is not as None,  - or pass empty strings etc
+            activated_experiment,
             event_factory.EventFactory.build_attribute_list(user_attributes, project_config),
             variation,
             flag_key,
-            rule_key,           # TODO needs to be ampty string here - in relevnt APIs? or is variation that needs to be ampty string?
+            rule_key,
             rule_type,
             enabled,
             project_config.get_bot_filtering_value(),

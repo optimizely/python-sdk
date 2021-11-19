@@ -354,44 +354,36 @@ class DecisionService(object):
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
+        rollout_rules = project_config.get_rollout_experiments(rollout)
 
-        if not rollout:
+        if not rollout or not rollout_rules:
             message = 'There is no rollout of feature {}.'.format(feature.key)
             self.logger.debug(message)
             decide_reasons.append(message)
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
-        rollout_rules = project_config.get_rollout_experiments(rollout)
+        index = 0
+        while index < len(rollout_rules):
+            decision_response, reasons_received = self.get_variation_from_delivery_rule(project_config,
+                                                                                        feature,
+                                                                                        rollout_rules, index, user,
+                                                                                        options)
 
-        if not rollout_rules:
-            message = 'Rollout {} has no experiments.'.format(rollout.id)
-            self.logger.debug(message)
-            decide_reasons.append(message)
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            decide_reasons += reasons_received
 
-        if rollout and len(rollout_rules) > 0:
-            index = 0
-            while index < len(rollout_rules):
-                decision_response, reasons_received = self.get_variation_from_delivery_rule(project_config,
-                                                                                            feature,
-                                                                                            rollout_rules, index, user,
-                                                                                            options)
+            variation, skip_to_everyone_else = decision_response
 
-                decide_reasons += reasons_received
+            if variation:
+                rule = rollout_rules[index]
+                feature_decision = Decision(experiment=rule, variation=variation,
+                                            source=enums.DecisionSources.ROLLOUT)
 
-                variation, skip_to_everyone_else = decision_response
+                return feature_decision, decide_reasons
 
-                if variation:
-                    rule = rollout_rules[index]
-                    feature_decision = Decision(experiment=rule, variation=variation,
-                                                source=enums.DecisionSources.ROLLOUT)
+            # the last rule is special for "Everyone Else"
+            index = len(rollout_rules) - 1 if skip_to_everyone_else else index + 1
 
-                    return feature_decision, decide_reasons
-
-                # the last rule is special for "Everyone Else"
-                index = len(rollout_rules) - 1 if skip_to_everyone_else else index + 1
-
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+        return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
     def get_variation_from_experiment_rule(self, config, flag_key, rule, user, options):
         """ Checks for experiment rule if decision is forced and returns it.

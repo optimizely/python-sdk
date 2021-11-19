@@ -1048,7 +1048,6 @@ class Optimizely(object):
         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
         forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context,
                                                                                options=decide_options)
-
         variation, decision_reasons = forced_decision_response
         reasons += decision_reasons
 

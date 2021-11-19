@@ -1338,7 +1338,6 @@ class UserContextTest(base.BaseTest):
         status = user_context.remove_all_forced_decisions()
         self.assertTrue(status)
 
-    # TODO - EXAMPLE - THIS TEST IS NOW REFACTORED AND WORKS ----> FIX REMAINING THREE FAILING TESTS JUST LIKE THIS ONE (use flag "test_feature_in_experiment")
     def test_should_return_valid_decision_after_setting_and_removing_forced_decision(self):
         """
         Should return valid forced decision after setting and removing forced decision.
@@ -1592,10 +1591,7 @@ class UserContextTest(base.BaseTest):
         # self.assertEqual(decide_decision.rule_key, '211147')
         # self.assertTrue(decide_decision.enabled)
 
-        # TODO - NEW UPDATED - are they supposed to be None ?
-        # TODO THIS DECISION IS DISABLED !!!!!! NOT WHAT TEST DOCSTRING SAYS !!!
-        #  - CHECK W JAE IF THIS TEST IS DOING WHAT IS SUPPOSED TO - IF DOCSTRING IS CORRECT
-        #  - SHOULD IT REALLY RETURN A VALID DECISION??? cause we get None and disabled decision.
+        # TODO - BELOW ARE NEW UPDATED - are they supposed to be None ?
         self.assertEqual(decide_decision.variation_key, None)
         self.assertEqual(decide_decision.rule_key, None)
         self.assertFalse(decide_decision.enabled)
@@ -1616,7 +1612,7 @@ class UserContextTest(base.BaseTest):
         #     'User "test_user" bucketed into a targeting rule Everyone Else.'
         # ]
 
-        # TODO - NEW UPDATED REASONS
+        # TODO - BELOW ARE NEW UPDATED REASONS
         expected_reasons = [
             'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
             'User "test_user" does not meet audience conditions for targeting rule 1.',
@@ -1825,7 +1821,7 @@ class UserContextTest(base.BaseTest):
         user_context_2 = user_context._clone()
         self.assertEqual(user_context_2.user_id, 'test_user')
         self.assertEqual(user_context_2.get_user_attributes(), {})
-        self.assertIsNotNone(user_context_2.forced_decisions)
+        self.assertIsNotNone(user_context_2.forced_decisions_map)
 
         self.assertEqual(user_context_2.get_forced_decision(context_with_flag).variation_key, 'v1')
         self.assertEqual(user_context_2.get_forced_decision(context_with_rule).variation_key, 'v2')

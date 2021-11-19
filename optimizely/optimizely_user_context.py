@@ -46,7 +46,7 @@ class OptimizelyUserContext(object):
 
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
-        self.forced_decisions = {}
+        self.forced_decisions_map = {}
         self.log = logger.SimpleLogger(min_level=enums.LogLevels.INFO)
 
     # decision context
@@ -73,8 +73,8 @@ class OptimizelyUserContext(object):
         user_context = OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
 
         with self.lock:
-            if self.forced_decisions:
-                user_context.forced_decisions = copy.deepcopy(self.forced_decisions)
+            if self.forced_decisions_map:
+                user_context.forced_decisions_map = copy.deepcopy(self.forced_decisions_map)
 
         return user_context
 
@@ -159,12 +159,12 @@ class OptimizelyUserContext(object):
         Returns:
             True if the forced decision has been set successfully.
         """
-        if not self.client.config_manager.get_config():
+        if not self.client or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
         with self.lock:
-            self.forced_decisions[decision_context] = decision
+            self.forced_decisions_map[decision_context] = decision
 
         return True
 
@@ -178,7 +178,7 @@ class OptimizelyUserContext(object):
         Returns:
             A forced_decision or None if forced decisions are not set for the parameters.
         """
-        if not self.client.config_manager.get_config():
+        if not self.client or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return None
 
@@ -196,13 +196,13 @@ class OptimizelyUserContext(object):
         Returns:
             Returns: true if the forced decision has been removed successfully.
         """
-        if not self.client.config_manager.get_config():
+        if not self.client or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
         with self.lock:
-            if decision_context in self.forced_decisions:
-                del self.forced_decisions[decision_context]
+            if decision_context in self.forced_decisions_map:
+                del self.forced_decisions_map[decision_context]
                 return True
 
         return False
@@ -219,41 +219,41 @@ class OptimizelyUserContext(object):
             return False
 
         with self.lock:
-            self.forced_decisions.clear()
+            self.forced_decisions_map.clear()
 
         return True
 
     def find_forced_decision(self, decision_context):
 
         with self.lock:
-            if not self.forced_decisions:
+            if not self.forced_decisions_map:
                 return None
 
             # must allow None to be returned for the Flags only case
-            return self.forced_decisions.get(decision_context)
+            return self.forced_decisions_map.get(decision_context)
 
     def find_validated_forced_decision(self, decision_context, options):
 
         reasons = []
 
-        forced_decision_response = self.find_forced_decision(decision_context)
+        forced_decision = self.find_forced_decision(decision_context)
 
         flag_key = decision_context.flag_key
         rule_key = decision_context.rule_key
 
-        if forced_decision_response:
-            variation = self.client.get_flag_variation_by_key(flag_key, forced_decision_response.variation_key)
+        if forced_decision:
+            variation = self.client.get_flag_variation_by_key(flag_key, forced_decision.variation_key)
             if variation:
                 if rule_key:
                     user_has_forced_decision = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(forced_decision_response.variation_key,
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(forced_decision.variation_key,
                                                                              flag_key,
                                                                              rule_key,
                                                                              self.user_id)
 
                 else:
                     user_has_forced_decision = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision_response.variation_key,
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision.variation_key,
                                                                                 flag_key,
                                                                                 self.user_id)
 

@@ -224,7 +224,7 @@ class ProjectConfig(object):
         """
 
         rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)
-        rollout_experiments = [exper for exper in rollout_experiments_id_map.values()]
+        rollout_experiments = [experiment for experiment in rollout_experiments_id_map.values()]
 
         return rollout_experiments
 
