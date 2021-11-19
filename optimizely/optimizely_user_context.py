@@ -159,7 +159,7 @@ class OptimizelyUserContext(object):
         Returns:
             True if the forced decision has been set successfully.
         """
-        if not self.client or not self.client.config_manager.get_config():
+        if not self.client.is_valid or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
@@ -178,7 +178,7 @@ class OptimizelyUserContext(object):
         Returns:
             A forced_decision or None if forced decisions are not set for the parameters.
         """
-        if not self.client or not self.client.config_manager.get_config():
+        if not self.client.is_valid or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return None
 
@@ -196,7 +196,7 @@ class OptimizelyUserContext(object):
         Returns:
             Returns: true if the forced decision has been removed successfully.
         """
-        if not self.client or not self.client.config_manager.get_config():
+        if not self.client.is_valid or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
@@ -214,7 +214,7 @@ class OptimizelyUserContext(object):
         Returns:
             True if forced decisions have been removed successfully.
         """
-        if not self.client.config_manager.get_config():
+        if not self.client.is_valid or not self.client.config_manager.get_config():
             self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
