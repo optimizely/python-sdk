@@ -199,17 +199,7 @@ class Optimizely(object):
           attributes: Dict representing user attributes and values which need to be recorded.
         """
         if not experiment:
-            experiment = entities.Experiment(
-                id='',
-                key='',
-                layerId='',
-                status='',
-                variations=[],
-                trafficAllocation=[],
-                audienceIds=[],
-                audienceConditions=[],
-                forcedVariations={}
-            )
+            experiment = entities.Experiment.get_default()
 
         variation_id = variation.id if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(

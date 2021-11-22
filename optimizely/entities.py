@@ -74,6 +74,23 @@ class Experiment(BaseEntity):
     def __str__(self):
         return self.key
 
+    @staticmethod
+    def get_default():
+        """ returns an empty experiment object. """
+        experiment = Experiment(
+            id='',
+            key='',
+            layerId='',
+            status='',
+            variations=[],
+            trafficAllocation=[],
+            audienceIds=[],
+            audienceConditions=[],
+            forcedVariations={}
+        )
+
+        return experiment
+
 
 class FeatureFlag(BaseEntity):
     def __init__(self, id, key, experimentIds, rolloutId, variables, groupId=None, **kwargs):

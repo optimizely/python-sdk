@@ -1568,9 +1568,6 @@ class UserContextTest(base.BaseTest):
             'rule (211127) and user (test_user) in the forced decision map.'
         ])))
 
-    # TODO - JAE: Can we change the test name and description? Not clear which part is invalid.
-    #  Also, I see the forced set flag and decide flag is different. Is it intentional?
-    # TODO - CHECK WITH JAE if this test should return valid decision like docstring says!
     def test_should_return_valid_decision_after_setting_invalid_experiment_rule_variation_in_forced_decision(self):
         """
         Should return valid decision after setting invalid experiment rule variation in forced decision.
@@ -1596,18 +1593,6 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
 
-        # expected_reasons = [
-        #     'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
-        #     'User "test_user" does not meet audience conditions for targeting rule 1.',
-        #     'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to FALSE.',
-        #     'User "test_user" does not meet audience conditions for targeting rule 2.',
-        #     'Evaluating audiences for rule Everyone Else: [].',
-        #     'Audiences for rule Everyone Else collectively evaluated to TRUE.',
-        #     'User "test_user" meets audience conditions for targeting rule Everyone Else.',
-        #     'User "test_user" bucketed into a targeting rule Everyone Else.'
-        # ]
-
-        # TODO - BELOW ARE NEW UPDATED REASONS
         expected_reasons = [
             'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) '
             'and user (test_user) in the forced decision map.',
