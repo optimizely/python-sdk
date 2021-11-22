@@ -1571,16 +1571,15 @@ class UserContextTest(base.BaseTest):
     # TODO - JAE: Can we change the test name and description? Not clear which part is invalid.
     #  Also, I see the forced set flag and decide flag is different. Is it intentional?
     # TODO - CHECK WITH JAE if this test should return valid decision like docstring says!
-    def test_invalid_experiment_rule_return_decision__forced_decision(self):
+    def test_should_return_valid_decision_after_setting_invalid_experiment_rule_variation_in_forced_decision(self):
         """
-        Should return valid decision after setting invalid experiment
-        rule variation in forced decision.
+        Should return valid decision after setting invalid experiment rule variation in forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         user_context = OptimizelyUserContext(opt_obj, "test_user", {})
 
-        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment_and_rollout',
-                                                                  'group_exp_2')
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment',
+                                                                  'test_experiment')
         decision = OptimizelyUserContext.OptimizelyForcedDecision('invalid')
 
         status = user_context.set_forced_decision(context, decision)
@@ -1588,17 +1587,12 @@ class UserContextTest(base.BaseTest):
         status = user_context.get_forced_decision(context)
         self.assertEqual(status.variation_key, 'invalid')
 
-        decide_decision = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
-        # self.assertEqual(decide_decision.variation_key, '211149')
-        # self.assertEqual(decide_decision.rule_key, '211147')
-        # self.assertTrue(decide_decision.enabled)
-
-        # TODO - BELOW ARE NEW UPDATED - are they supposed to be None ?
-        self.assertEqual(decide_decision.variation_key, None)
-        self.assertEqual(decide_decision.rule_key, None)
+        decide_decision = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, 'control')
+        self.assertEqual(decide_decision.rule_key, 'test_experiment')
         self.assertFalse(decide_decision.enabled)
 
-        self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment')
         self.assertEqual(decide_decision.user_context.user_id, 'test_user')
         self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
 
@@ -1615,14 +1609,12 @@ class UserContextTest(base.BaseTest):
 
         # TODO - BELOW ARE NEW UPDATED REASONS
         expected_reasons = [
-            'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
-            'User "test_user" does not meet audience conditions for targeting rule 1.',
-            'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to FALSE.',
-            'User "test_user" does not meet audience conditions for targeting rule 2.',
-            'Evaluating audiences for rule Everyone Else: [].',
-            'Audiences for rule Everyone Else collectively evaluated to TRUE.',
-            'User "test_user" meets audience conditions for targeting rule Everyone Else.',
-            'Bucketed into an empty traffic range. Returning nil.']
+            'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) '
+            'and user (test_user) in the forced decision map.',
+            'Evaluating audiences for experiment "test_experiment": [].',
+            'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+            'User "test_user" is in variation "control" of experiment test_experiment.'
+        ]
 
         self.assertEqual(decide_decision.reasons, expected_reasons)
 
