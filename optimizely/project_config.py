@@ -140,26 +140,18 @@ class ProjectConfig(object):
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature_value.id]
 
-        # all rules(experiment rules and delivery rules) for each flag
-        for flag in self.feature_flags:
-            experiments = []
-            if len(flag['experimentIds']) > 0:
-                for exp_id in flag['experimentIds']:
-                    experiments.append(self.experiment_id_map[exp_id])
-            if not flag['rolloutId'] == '':
-                rollout = self.rollout_id_map[flag['rolloutId']]
-
-                rollout_experiments = self.get_rollout_experiments(rollout)
-
-                if rollout and rollout.experiments:
-                    experiments.extend(rollout_experiments)
-
-            self.flag_rules_map[flag['key']] = experiments
-
         # All variations for each flag
         # Datafile does not contain a separate entity for this.
         # We collect variations used in each rule (experiment rules and delivery rules)
-        self.flag_variations_map = self.get_all_variations_for_each_rule(self.flag_rules_map)
+        self.flag_variations_map = {}
+        if self.feature_flags is not None:
+            for flag in self.feature_flags:
+                variationIdToVariationsMap = {}
+                for rule in self.get_all_rules_for_flag(flag):
+                    for variation in rule.variations:
+                        if(variation['id'] not in variationIdToVariationsMap):
+                            variationIdToVariationsMap[variation['id']] = variation
+                self.flag_variations_map[flag['key']] = variationIdToVariationsMap.values
 
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
@@ -200,20 +192,23 @@ class ProjectConfig(object):
 
         return audience_map
 
-    def get_rollout_experiments(self, rollout):
-        """ Helper method to get rollout experiments.
-
-        Args:
-            rollout: rollout
-
-        Returns:
-            Mapped rollout experiments.
+    def get_all_rules_for_flag(self, flag):
         """
-
-        rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)
-        rollout_experiments = [experiment for experiment in rollout_experiments_id_map.values()]
-
-        return rollout_experiments
+            Helper method to grab all rules for a flag. 
+            
+            Args:
+                flag: The flag to grab all the rules from
+            
+            Returns:
+                Returns a list of Experiments as rules
+        """
+        rules = []
+        rollout = self.get_rollout_from_id(flag.rolloutId)
+        for experimentId in flag.experimentIds:
+            rules.append(self.experiment_id_map[experimentId])
+        if (rollout is not None):
+            rules.append(rollout.experiments)
+        return rules
 
     def get_typecast_value(self, value, type):
         """ Helper method to determine actual value based on type of feature variable.
@@ -237,6 +232,8 @@ class ProjectConfig(object):
         else:
             return value
 
+    def get_flag_variations_map(self):
+        return self.flag_variations_map
     def to_datafile(self):
         """ Get the datafile corresponding to ProjectConfig.
 

@@ -14,7 +14,6 @@
 from collections import namedtuple
 
 from six import string_types
-
 from . import bucketer
 from .helpers import audience as audience_helper
 from .helpers import enums
@@ -418,7 +417,7 @@ class DecisionService(object):
         decide_reasons += variation_reasons
         return decision_variation, decide_reasons
 
-    def get_variation_from_delivery_rule(self, config, feature, rules, rule_index, user, options):
+    def get_variation_from_delivery_rule(self, config, feature, rules, rule_index, user):
         """ Checks for delivery rule if decision is forced and returns it.
             Otherwise returns a regular decision.
 
@@ -428,7 +427,6 @@ class DecisionService(object):
           rules: Experiment rule.
           rule_index: integer index of the rule in the list.
           user: ID and attributes for user.
-          options: Decide options.
 
         Returns:
           If forced decision, it returns namedtuple consisting of forced_decision_variation and skip_to_everyone_else
@@ -444,8 +442,7 @@ class DecisionService(object):
         # check forced decision first
         rule = rules[rule_index]
         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
-        forced_decision_variation, reasons_received = user.find_validated_forced_decision(optimizely_decision_context,
-                                                                                          options)
+        forced_decision_variation, reasons_received = user.find_validated_forced_decision(optimizely_decision_context)
 
         decide_reasons += reasons_received
 
