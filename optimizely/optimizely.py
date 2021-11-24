@@ -1036,8 +1036,7 @@ class Optimizely(object):
 
         # Check forced decisions first
         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
-        forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context,
-                                                                               options=decide_options)
+        forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context)
         variation, decision_reasons = forced_decision_response
         reasons += decision_reasons
 
@@ -1184,31 +1183,3 @@ class Optimizely(object):
                 continue
             decisions[key] = decision
         return decisions
-
-    def get_flag_variation_by_key(self, flag_key, variation_key):
-        """
-        Gets variation by key.
-        variation_key can be a string or in case of forced decisions, it can be an object.
-
-        Args:
-            flag_key: flag key
-            variation_key: variation key
-
-        Returns:
-            Variation as a map.
-        """
-        config = self.config_manager.get_config()
-
-        if not config:
-            return None
-
-        if not flag_key:
-            return None
-
-        variations = config.flag_variations_map.get(flag_key)
-
-        for variation in variations:
-            if variation.key == variation_key:
-                return variation
-
-        return None

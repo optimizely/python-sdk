@@ -51,6 +51,10 @@ class OptimizelyUserContext(object):
 
     # decision context
     class OptimizelyDecisionContext(object):
+        """ Using class with attributes here instead of namedtuple because
+            class is extensible, it's easy to add another attribute if we wanted
+            to extend decision context.
+        """
         def __init__(self, flag_key, rule_key=None):
             self.flag_key = flag_key
             self.rule_key = rule_key
@@ -184,7 +188,7 @@ class OptimizelyUserContext(object):
 
         forced_decision = self.find_forced_decision(decision_context)
 
-        return forced_decision if forced_decision else None
+        return forced_decision
 
     def remove_forced_decision(self, decision_context):
         """
@@ -224,7 +228,15 @@ class OptimizelyUserContext(object):
         return True
 
     def find_forced_decision(self, decision_context):
+        """
+        Gets forced decision from forced decision map.
 
+        Args:
+            decision_context: a decision context.
+
+        Returns:
+            Forced decision.
+        """
         with self.lock:
             if not self.forced_decisions_map:
                 return None
@@ -232,8 +244,16 @@ class OptimizelyUserContext(object):
             # must allow None to be returned for the Flags only case
             return self.forced_decisions_map.get(decision_context)
 
-    def find_validated_forced_decision(self, decision_context, options):
+    def find_validated_forced_decision(self, decision_context):
+        """
+        Gets forced decisions based on flag key, rule key and variation.
 
+        Args:
+            decision context: a decision context
+
+        Returns:
+            Variation of the forced decision.
+        """
         reasons = []
 
         forced_decision = self.find_forced_decision(decision_context)
@@ -242,7 +262,10 @@ class OptimizelyUserContext(object):
         rule_key = decision_context.rule_key
 
         if forced_decision:
-            variation = self.client.get_flag_variation_by_key(flag_key, forced_decision.variation_key)
+            # we use config here so we can use get_flag_variation() function which is defined in project_config
+            # otherwise we would us self.client instead of config
+            config = self.client.config_manager.get_config() if self.client else None
+            variation = config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
             if variation:
                 if rule_key:
                     user_has_forced_decision = enums.ForcedDecisionLogs \

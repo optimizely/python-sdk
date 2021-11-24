@@ -1012,7 +1012,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with self.mock_config_logger as mock_logging:
             feature = None
             variation_received, _ = self.decision_service.get_variation_for_rollout(
-                self.project_config, feature, user, None
+                self.project_config, feature, user
             )
 
             self.assertEqual(
@@ -1038,7 +1038,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             return_value=[self.project_config.get_variation_from_id("211127", "211129"), []],
         ) as mock_bucket:
             variation_received, _ = self.decision_service.get_variation_for_rollout(
-                self.project_config, feature, user, None
+                self.project_config, feature, user
             )
             self.assertEqual(
                 decision_service.Decision(
@@ -1078,8 +1078,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             variation_received, _ = self.decision_service.get_variation_for_rollout(
                 self.project_config,
                 feature,
-                user,
-                None
+                user
             )
             self.assertEqual(
                 decision_service.Decision(
@@ -1120,7 +1119,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             "optimizely.bucketer.Bucketer.bucket", side_effect=[[None, []], [variation_to_mock, []]]
         ):
             variation_received, _ = self.decision_service.get_variation_for_rollout(
-                self.project_config, feature, user, None
+                self.project_config, feature, user
             )
             self.assertEqual(
                 decision_service.Decision(
@@ -1173,7 +1172,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[False, []]
         ) as mock_audience_check, self.mock_decision_logger as mock_decision_service_logging:
             variation_received, _ = self.decision_service.get_variation_for_rollout(
-                self.project_config, feature, user, None
+                self.project_config, feature, user
             )
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
@@ -1289,7 +1288,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_get_variation_for_rollout.assert_called_once_with(
-            self.project_config, feature, user, False
+            self.project_config, feature, user
         )
 
         # Assert no log messages were generated

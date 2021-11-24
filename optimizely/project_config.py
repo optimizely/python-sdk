@@ -639,29 +639,6 @@ class ProjectConfig(object):
 
         return {}
 
-    def get_flag_variation_by_id(self, flag_key, variation_id):
-        """
-        Gets variation by id.
-        variation_id can be a string or in case of forced decisions, it can be an object.
-
-        Args:
-            flag_key: flag key
-            variation_key: variation id
-
-        Returns:
-            Variation as a map.
-        """
-
-        if not flag_key:
-            return None
-
-        variations = self.flag_variations_map.get(flag_key)
-        for variation in variations:
-            if variation.id == variation_id:
-                return variation
-
-        return None
-
     def get_all_variations_for_each_rule(self, flag_rules_map):
         """ Helper method to get all variation objects from each flag.
             collects variations used in each rule (experiment rules and delivery rules).
@@ -687,3 +664,37 @@ class ProjectConfig(object):
             flag_variations_map[flag_key] = variations
 
         return flag_variations_map
+
+    def get_flag_variation(self, flag_key, variation_attribute, target_value):
+        """
+        Gets variation by specified variation attribute.
+        For example if variation_attribute is id, the function gets variation by using variation_id.
+        If object_attribute is key, the function gets variation by using variation_key.
+
+        We used to have two separate functions:
+        get_flag_variation_by_id()
+        get_flag_variation_by_key()
+
+        This function consolidates both functions into one.
+
+        Important to always relate object_attribute to the target value.
+        Should never enter for example object_attribute=key and target_value=variation_id.
+        Correct is object_attribute=key and target_value=variation_key.
+
+        Args:
+            flag_key: flag key
+            variation_attribute: id or key for example. The part after the dot notation (id in variation.id)
+            target_value: target value we want to get for example variation_id or variation_key
+
+        Returns:
+            Variation as a map.
+        """
+        if not flag_key:
+            return None
+
+        variations = self.flag_variations_map.get(flag_key)
+        for variation in variations:
+            if getattr(variation, variation_attribute) == target_value:
+                return variation
+
+        return None
