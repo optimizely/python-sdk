@@ -454,12 +454,6 @@ class DecisionService(object):
                 decision_variation = None
 
                 if experiment:
-                    # variation, variation_reasons = self.get_variation_from_experiment_rule(
-                    #     project_config, feature.key, experiment, user_context, options)
-                    # decide_reasons += variation_reasons
-                    # if variation:
-                    #     return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
-
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
                                                                                                   experiment.key)
 
