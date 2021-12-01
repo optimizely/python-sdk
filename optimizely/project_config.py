@@ -121,19 +121,19 @@ class ProjectConfig(object):
                 )
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
-        # As we cannot create json variables in datafile directly, here we convert
-        # the variables of string type and json subType to json type
-        # This is needed to fully support json variables
-        for feature in self.feature_key_map:
-            for variable in self.feature_key_map[feature].variables:
+
+        # Dictionary containing dictionary of experiment ID to feature ID.
+        # for checking that experiment is a feature experiment or not.
+        self.experiment_feature_map = {}
+        for feature in self.feature_key_map.values():
+            # As we cannot create json variables in datafile directly, here we convert
+            # the variables of string type and json subType to json type
+            # This is needed to fully support json variables
+            for variable in self.feature_key_map[feature.key].variables:
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON
 
-        # Dict containing map of experiment ID to feature ID.
-        # for checking that experiment is a feature experiment or not.
-        self.experiment_feature_map = {}
-        for feature in self.feature_key_map.values():
             feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
             rules = []
