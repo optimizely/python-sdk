@@ -121,7 +121,6 @@ class ProjectConfig(object):
                 )
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
-        self.flag_variations_map = self.generate_feature_variation_map(self.feature_flags)
         # As we cannot create json variables in datafile directly, here we convert
         # the variables of string type and json subType to json type
         # This is needed to fully support json variables
@@ -137,9 +136,24 @@ class ProjectConfig(object):
         for feature in self.feature_key_map.values():
             feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
+            rules = []
+            variations = []
             for exp_id in feature.experimentIds:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
+                rules.append(self.experiment_id_map[exp_id])
+            rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
+            if rollout:
+                for exp in rollout.experiments:
+                    rules.append(self.experiment_id_map[exp['id']])
+
+            for rule in rules:
+                # variation_id_map_by_experiment_id gives variation entity object while
+                # experiment_id_map will give us dictionary
+                for rule_variation in self.variation_id_map_by_experiment_id.get(rule.id).values():
+                    if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
+                        variations.append(rule_variation)
+            self.flag_variations_map[feature.key] = variations
 
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
@@ -194,28 +208,6 @@ class ProjectConfig(object):
         rollout_experiments = [experiment for experiment in rollout_experiments_id_map.values()]
 
         return rollout_experiments
-
-    def get_rules_for_flag(self, feature_flag):
-        rules = map(lambda exp_id: self.experiment_id_map[exp_id], feature_flag['experimentIds'])
-        rules = list(rules)
-        rollout = None if len(feature_flag['rolloutId']) == 0 else self.rollout_id_map[feature_flag['rolloutId']]
-
-        if rollout:
-            rollout_experiments = rollout.experiments
-            for exp in rollout_experiments:
-                rules.append(self.experiment_id_map[exp['id']])
-        return rules
-
-    def generate_feature_variation_map(self, feature_flags):
-        flag_variations_map = {}
-        for flag in feature_flags:
-            variations = []
-            for rule in self.get_rules_for_flag(flag):
-                for rule_variation in self.variation_id_map_by_experiment_id.get(rule.id).values():
-                    if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
-                        variations.append(rule_variation)
-            flag_variations_map[flag['key']] = variations
-        return flag_variations_map
 
     def get_typecast_value(self, value, type):
         """ Helper method to determine actual value based on type of feature variable.
