@@ -435,7 +435,9 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__experiment_not_running(self):
         """ Test that get_variation returns None if experiment is not Running. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         # Mark experiment paused
@@ -477,6 +479,7 @@ class DecisionServiceTest(base.BaseTest):
         """ Test that get_variation calls bucket with correct bucketing ID if provided. """
 
         user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
                                                              user_id="test_user",
                                                              user_attributes={
                                                                  "random_key": "random_value",
@@ -509,7 +512,8 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__user_whitelisted_for_variation(self):
         """ Test that get_variation returns whitelisted variation if user is whitelisted. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
@@ -547,7 +551,8 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__user_has_stored_decision(self):
         """ Test that get_variation returns stored decision if user has variation available for given experiment. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
@@ -599,7 +604,9 @@ class DecisionServiceTest(base.BaseTest):
         """ Test that get_variation buckets and returns variation if no forced variation or decision available.
     Also, stores decision if user profile service is available. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -662,7 +669,9 @@ class DecisionServiceTest(base.BaseTest):
         # Unset user profile service
         self.decision_service.user_profile_service = None
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -712,7 +721,9 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__user_does_not_meet_audience_conditions(self):
         """ Test that get_variation returns None if user is not in experiment. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -762,7 +773,9 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__user_profile_in_invalid_format(self):
         """ Test that get_variation handles invalid user profile gracefully. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -822,7 +835,9 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__user_profile_lookup_fails(self):
         """ Test that get_variation acts gracefully when lookup fails. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -882,7 +897,9 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__user_profile_save_fails(self):
         """ Test that get_variation acts gracefully when save fails. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -942,7 +959,9 @@ class DecisionServiceTest(base.BaseTest):
     def test_get_variation__ignore_user_profile_when_specified(self):
         """ Test that we ignore the user profile service if specified. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
@@ -1006,7 +1025,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
             rolloutId is tied to feature. That's why we make feature None which means there are no experiments.
         """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
 
         with self.mock_config_logger as mock_logging:
@@ -1027,7 +1048,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that get_variation_for_rollout returns Decision with experiment/variation
      if user meets targeting conditions for a rollout rule. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_rollout")
 
@@ -1065,7 +1088,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     def test_get_variation_for_rollout__calls_bucket_with_bucketing_id(self):
         """ Test that get_variation_for_rollout calls Bucketer.bucket with bucketing ID when provided. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"$opt_bucketing_id": "user_bucket_value"})
         feature = self.project_config.get_feature_from_key("test_feature_in_rollout")
 
@@ -1105,7 +1130,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in an audience, but does not qualify
     for the experiment, then it skips to the Everyone Else rule. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_rollout")
         everyone_else_exp = self.project_config.get_experiment_from_id("211147")
@@ -1164,7 +1191,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     def test_get_variation_for_rollout__returns_none_for_user_not_in_rollout(self):
         """ Test that get_variation_for_rollout returns None for the user not in the associated rollout. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_rollout")
 
@@ -1228,7 +1257,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that get_variation_for_feature returns the variation
         of the experiment the feature is associated with. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
 
@@ -1266,7 +1297,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that get_variation_for_feature returns the variation of
         the experiment in the rollout that the user is bucketed into. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_rollout")
 
@@ -1301,7 +1334,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that get_variation_for_feature returns the variation of the experiment in the
             feature's rollout even if the user is not bucketed into the feature's experiment. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key(
             "test_feature_in_experiment_and_rollout"
@@ -1352,7 +1387,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that get_variation_for_feature returns the variation of
      the experiment the user is bucketed in the feature's group. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
 
@@ -1386,7 +1423,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     def test_get_variation_for_feature__returns_none_for_user_not_in_experiment(self):
         """ Test that get_variation_for_feature returns None for user not in the associated experiment. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
 
@@ -1415,7 +1454,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the mutex group but the experiment is
     not targeting a feature, then None is returned. """
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={})
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
         with mock.patch(
@@ -1439,7 +1480,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     ):
         """ Test that if a user is in the mutex group and the user bucket value should be less than 2500."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
         expected_experiment = self.project_config.get_experiment_from_key("group_2_exp_1")
@@ -1471,7 +1514,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the mutex group and the user bucket value should be equal to 2500
         or less than 5000."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
 
         feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
@@ -1502,7 +1547,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the mutex group and the user bucket value should be equal to 5000
         or less than 7500."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
         expected_experiment = self.project_config.get_experiment_from_key("group_2_exp_3")
@@ -1532,7 +1579,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     ):
         """ Test that if a user is in the mutex group and the user bucket value should be greater than  7500."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
 
@@ -1561,7 +1610,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     ):
         """ Test that if a user is in the non-mutex group and the user bucket value should be less than 2500."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
         expected_experiment = self.project_config.get_experiment_from_key("test_experiment3")
@@ -1592,7 +1643,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the non-mutex group and the user bucket value should be equal to 2500
         or less than 5000."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
         expected_experiment = self.project_config.get_experiment_from_key("test_experiment4")
@@ -1622,7 +1675,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the non-mutex group and the user bucket value should be equal to 5000
         or less than 7500."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
         expected_experiment = self.project_config.get_experiment_from_key("test_experiment5")
@@ -1652,7 +1707,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
     ):
         """ Test that if a user is in the non-mutex group and the user bucket value should be greater than  7500."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={"experiment_attr": "group_experiment"})
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
 
@@ -1680,7 +1737,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the mutex group and the user bucket value should be less than 2500 and
         missing target by audience."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={
                                                                  "experiment_attr": "group_experiment_invalid"})
         feature = self.project_config.get_feature_from_key("test_feature_in_exclusion_group")
@@ -1713,7 +1772,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         """ Test that if a user is in the non-mutex group and the user bucket value should be equal to 2500
         or less than 5000 missing target by audience."""
 
-        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, user_id="test_user",
+        user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
+                                                             logger=None,
+                                                             user_id="test_user",
                                                              user_attributes={
                                                                  "experiment_attr": "group_experiment_invalid"})
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")

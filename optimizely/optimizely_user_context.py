@@ -16,7 +16,6 @@
 import copy
 import threading
 
-from . import logger
 from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .helpers import enums
 
@@ -26,11 +25,12 @@ class OptimizelyUserContext(object):
     Representation of an Optimizely User Context using which APIs are to be called.
     """
 
-    def __init__(self, optimizely_client, user_id, user_attributes=None):
+    def __init__(self, optimizely_client, logger, user_id, user_attributes=None):
         """ Create an instance of the Optimizely User Context.
 
         Args:
           optimizely_client: client used when calling decisions for this user context
+          logger: logger for logging
           user_id: user id of this user context
           user_attributes: user attributes to use for this user context
 
@@ -39,6 +39,7 @@ class OptimizelyUserContext(object):
         """
 
         self.client = optimizely_client
+        self.logger = logger
         self.user_id = user_id
 
         if not isinstance(user_attributes, dict):
@@ -47,7 +48,6 @@ class OptimizelyUserContext(object):
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
         self.forced_decisions_map = {}
-        self.log = logger.SimpleLogger(min_level=enums.LogLevels.INFO)
 
     # decision context
     class OptimizelyDecisionContext(object):
@@ -74,7 +74,7 @@ class OptimizelyUserContext(object):
         if not self.client:
             return None
 
-        user_context = OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
+        user_context = OptimizelyUserContext(self.client, self.logger, self.user_id, self.get_user_attributes())
 
         with self.lock:
             if self.forced_decisions_map:
@@ -164,7 +164,7 @@ class OptimizelyUserContext(object):
             True if the forced decision has been set successfully.
         """
         if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
+            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
         with self.lock:
@@ -183,7 +183,7 @@ class OptimizelyUserContext(object):
             A forced_decision or None if forced decisions are not set for the parameters.
         """
         if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
+            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return None
 
         forced_decision = self.find_forced_decision(decision_context)
@@ -201,7 +201,7 @@ class OptimizelyUserContext(object):
             Returns: true if the forced decision has been removed successfully.
         """
         if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
+            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
         with self.lock:
@@ -219,7 +219,7 @@ class OptimizelyUserContext(object):
             True if forced decisions have been removed successfully.
         """
         if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.log.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
+            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
             return False
 
         with self.lock:
@@ -281,7 +281,7 @@ class OptimizelyUserContext(object):
                                                                                 self.user_id)
 
                 reasons.append(user_has_forced_decision)
-                self.log.logger.debug(user_has_forced_decision)
+                self.logger.debug(user_has_forced_decision)
 
                 return variation, reasons
 
@@ -296,6 +296,6 @@ class OptimizelyUserContext(object):
                         .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
 
                 reasons.append(user_has_forced_decision_but_invalid)
-                self.log.logger.debug(user_has_forced_decision_but_invalid)
+                self.logger.debug(user_has_forced_decision_but_invalid)
 
         return None, reasons

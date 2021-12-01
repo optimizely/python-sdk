@@ -41,7 +41,7 @@ class UserContextTest(base.BaseTest):
         """
         tests user context creating and setting attributes
         """
-        uc = OptimizelyUserContext(self.optimizely, "test_user")
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user")
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
@@ -66,7 +66,7 @@ class UserContextTest(base.BaseTest):
         """
         tests user context as json
         """
-        uc = OptimizelyUserContext(self.optimizely, "test_user")
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user")
 
         # set an attribute
         uc.set_attribute("browser", "safari")
@@ -82,25 +82,25 @@ class UserContextTest(base.BaseTest):
     def test_attributes_are_cloned_when_passed_to_user_context(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
-        uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
+        uc = OptimizelyUserContext(self.optimizely, None, user_id, attributes)
         self.assertEqual(attributes, uc.get_user_attributes())
         attributes['new_key'] = 'test_value'
         self.assertNotEqual(attributes, uc.get_user_attributes())
 
     def test_attributes_default_to_dict_when_passes_as_non_dict(self):
-        uc = OptimizelyUserContext(self.optimizely, "test_user", True)
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", True)
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
-        uc = OptimizelyUserContext(self.optimizely, "test_user", 10)
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", 10)
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
-        uc = OptimizelyUserContext(self.optimizely, "test_user", 'helloworld')
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", 'helloworld')
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
-        uc = OptimizelyUserContext(self.optimizely, "test_user", [])
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", [])
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
@@ -1305,7 +1305,7 @@ class UserContextTest(base.BaseTest):
         Should return invalid status for invalid datafile in forced decision calls.
         """
         opt_obj = optimizely.Optimizely(json.dumps("invalid datafile"))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
         decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
@@ -1324,7 +1324,7 @@ class UserContextTest(base.BaseTest):
         Should return valid status for valid datafile in forced decision calls.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
         decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
@@ -1344,7 +1344,7 @@ class UserContextTest(base.BaseTest):
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         project_config = opt_obj.config_manager.get_config()
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment', None)
         decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
@@ -1453,7 +1453,7 @@ class UserContextTest(base.BaseTest):
         Should return valid delivery rule decision after setting forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment', None)
         decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
@@ -1497,7 +1497,7 @@ class UserContextTest(base.BaseTest):
         Should return valid experiment decision after setting forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment_and_rollout',
                                                                   'group_exp_2')
@@ -1545,7 +1545,7 @@ class UserContextTest(base.BaseTest):
         Should return valid decision after setting invalid delivery rule variation in forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', '211127')
         decision = OptimizelyUserContext.OptimizelyForcedDecision('invalid')
@@ -1573,7 +1573,7 @@ class UserContextTest(base.BaseTest):
         Should return valid decision after setting invalid experiment rule variation in forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment',
                                                                   'test_experiment')
@@ -1608,7 +1608,7 @@ class UserContextTest(base.BaseTest):
         Should return valid forced decision after setting conflicting forced decisions.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
         decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('211129')
@@ -1639,7 +1639,7 @@ class UserContextTest(base.BaseTest):
         Should return valid forced decision on getting forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context_with_flag_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_for_flag_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
@@ -1684,7 +1684,7 @@ class UserContextTest(base.BaseTest):
         Should remove forced decision on removing forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context_with_flag_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_for_flag_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
@@ -1724,7 +1724,7 @@ class UserContextTest(base.BaseTest):
         Should remove all forced decision on removing all forced decision.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context_with_flag_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_for_flag_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
@@ -1764,7 +1764,7 @@ class UserContextTest(base.BaseTest):
         Should return valid status for a valid datafile in forced decision calls.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
         decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
@@ -1783,7 +1783,7 @@ class UserContextTest(base.BaseTest):
         Should return valid forced decision on cloning.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
 
         context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('v1')
@@ -1816,7 +1816,7 @@ class UserContextTest(base.BaseTest):
         Should return valid number of call on running forced decision calls in thread.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
-        user_context = OptimizelyUserContext(opt_obj, "test_user", {})
+        user_context = opt_obj.create_user_context("test_user", {})
         context_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
         context_2 = OptimizelyUserContext.OptimizelyDecisionContext('f2', None)
