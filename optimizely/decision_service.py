@@ -376,7 +376,8 @@ class DecisionService(object):
             decide_reasons += reasons_received
 
             if forced_decision_variation:
-                return (forced_decision_variation, skip_to_everyone_else), decide_reasons
+                return Decision(experiment=rule, variation=forced_decision_variation,
+                                source=enums.DecisionSources.ROLLOUT), decide_reasons
 
             bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
             decide_reasons += bucket_reasons
