@@ -1292,8 +1292,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
 
         # Assert no log messages were generated
-        self.assertEqual(0, mock_decision_service_logging.debug.call_count)
-        self.assertEqual(0, len(mock_decision_service_logging.method_calls))
+        self.assertEqual(1, mock_decision_service_logging.debug.call_count)
+        self.assertEqual(1, len(mock_decision_service_logging.method_calls))
 
     def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(
             self,
