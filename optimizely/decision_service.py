@@ -356,10 +356,17 @@ class DecisionService(object):
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
+
+        if not rollout:
+            message = 'There is no rollout of feature {}.'.format(feature.key)
+            self.logger.debug(message)
+            decide_reasons.append(message)
+            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+
         rollout_rules = project_config.get_rollout_experiments(rollout)
 
-        if not rollout or not rollout_rules:
-            message = 'There is no rollout of feature {}.'.format(feature.key)
+        if not rollout_rules:
+            message = 'Rollout {} has no experiments.'.format(rollout.id)
             self.logger.debug(message)
             decide_reasons.append(message)
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
@@ -478,4 +485,7 @@ class DecisionService(object):
         message = 'User "{}" is not bucketed into any of the experiments on the feature "{}".'.format(
             user_context.user_id, feature.key)
         self.logger.debug(message)
-        return self.get_variation_for_rollout(project_config, feature, user_context)
+        variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
+        if rollout_variation_reasons:
+            decide_reasons += rollout_variation_reasons
+        return variation, decide_reasons
