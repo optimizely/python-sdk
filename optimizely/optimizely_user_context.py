@@ -37,7 +37,7 @@ class OptimizelyUserContext(object):
         Returns:
           UserContext instance
         """
-
+g
         self.client = optimizely_client
         self.logger = logger
         self.user_id = user_id
@@ -163,10 +163,6 @@ class OptimizelyUserContext(object):
         Returns:
             True if the forced decision has been set successfully.
         """
-        if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
-            return False
-
         with self.lock:
             self.forced_decisions_map[decision_context] = decision
 
@@ -182,12 +178,7 @@ class OptimizelyUserContext(object):
         Returns:
             A forced_decision or None if forced decisions are not set for the parameters.
         """
-        if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
-            return None
-
         forced_decision = self.find_forced_decision(decision_context)
-
         return forced_decision
 
     def remove_forced_decision(self, decision_context):
@@ -200,10 +191,6 @@ class OptimizelyUserContext(object):
         Returns:
             Returns: true if the forced decision has been removed successfully.
         """
-        if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
-            return False
-
         with self.lock:
             if decision_context in self.forced_decisions_map:
                 del self.forced_decisions_map[decision_context]
@@ -218,10 +205,6 @@ class OptimizelyUserContext(object):
         Returns:
             True if forced decisions have been removed successfully.
         """
-        if not self.client.is_valid or not self.client.config_manager.get_config():
-            self.logger.error(OptimizelyDecisionMessage.SDK_NOT_READY)
-            return False
-
         with self.lock:
             self.forced_decisions_map.clear()
 
