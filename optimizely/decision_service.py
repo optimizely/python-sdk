@@ -349,153 +349,94 @@ class DecisionService(object):
           array of log messages representing decision making.
         """
         decide_reasons = []
+        user_id = user.user_id
+        attributes = user.get_user_attributes()
 
         if not feature or not feature.rolloutId:
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
+
+        if not rollout:
+            message = 'There is no rollout of feature {}.'.format(feature.key)
+            self.logger.debug(message)
+            decide_reasons.append(message)
+            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+
         rollout_rules = project_config.get_rollout_experiments(rollout)
 
-        if not rollout or not rollout_rules:
-            message = 'There is no rollout of feature {}.'.format(feature.key)
+        if not rollout_rules:
+            message = 'Rollout {} has no experiments.'.format(rollout.id)
             self.logger.debug(message)
             decide_reasons.append(message)
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
         index = 0
         while index < len(rollout_rules):
-            decision_response, reasons_received = self.get_variation_from_delivery_rule(project_config,
-                                                                                        feature,
-                                                                                        rollout_rules, index, user)
+            skip_to_everyone_else = False
 
+            # check forced decision first
+            rule = rollout_rules[index]
+            optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
+            forced_decision_variation, reasons_received = user.find_validated_forced_decision(
+                optimizely_decision_context)
             decide_reasons += reasons_received
 
-            variation, skip_to_everyone_else = decision_response
+            if forced_decision_variation:
+                return Decision(experiment=rule, variation=forced_decision_variation,
+                                source=enums.DecisionSources.ROLLOUT), decide_reasons
 
-            if variation:
-                rule = rollout_rules[index]
-                feature_decision = Decision(experiment=rule, variation=variation,
-                                            source=enums.DecisionSources.ROLLOUT)
+            bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
+            decide_reasons += bucket_reasons
 
-                return feature_decision, decide_reasons
+            everyone_else = (index == len(rollout_rules) - 1)
+            logging_key = "Everyone Else" if everyone_else else str(index + 1)
+
+            rollout_rule = project_config.get_experiment_from_id(rule.id)
+            audience_conditions = rollout_rule.get_audience_conditions_or_ids()
+
+            audience_decision_response, reasons_received_audience = audience_helper.does_user_meet_audience_conditions(
+                project_config, audience_conditions, enums.RolloutRuleAudienceEvaluationLogs,
+                logging_key, attributes, self.logger)
+
+            decide_reasons += reasons_received_audience
+
+            if audience_decision_response:
+                message = 'User "{}" meets audience conditions for targeting rule {}.'.format(user_id, logging_key)
+                self.logger.debug(message)
+                decide_reasons.append(message)
+
+                bucketed_variation, bucket_reasons = self.bucketer.bucket(project_config, rollout_rule, user_id,
+                                                                          bucketing_id)
+                decide_reasons.extend(bucket_reasons)
+
+                if bucketed_variation:
+                    message = 'User "{}" bucketed into a targeting rule {}.'.format(user_id, logging_key)
+                    self.logger.debug(message)
+                    decide_reasons.append(message)
+                    return Decision(experiment=rule, variation=bucketed_variation,
+                                    source=enums.DecisionSources.ROLLOUT), decide_reasons
+
+                elif not everyone_else:
+                    # skip this logging for EveryoneElse since this has a message not for everyone_else
+                    message = 'User "{}" not bucketed into a targeting rule {}. ' \
+                              'Checking "Everyone Else" rule now.'.format(user_id, logging_key)
+                    self.logger.debug(message)
+                    decide_reasons.append(message)
+
+                    # skip the rest of rollout rules to the everyone-else rule if audience matches but not bucketed.
+                    skip_to_everyone_else = True
+
+            else:
+                message = 'User "{}" does not meet audience conditions for targeting rule {}.'.format(
+                    user_id, logging_key)
+                self.logger.debug(message)
+                decide_reasons.append(message)
 
             # the last rule is special for "Everyone Else"
             index = len(rollout_rules) - 1 if skip_to_everyone_else else index + 1
 
         return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
-
-    def get_variation_from_experiment_rule(self, config, flag_key, rule, user, options):
-        """ Checks for experiment rule if decision is forced and returns it.
-            Otherwise returns a regular decision.
-
-        Args:
-          config: Instance of ProjectConfig.
-          flag_key: Key of the flag.
-          rule: Experiment rule.
-          user: ID and attributes for user.
-          options: Decide options.
-
-        Returns:
-          Decision namedtuple consisting of experiment and variation for the user and
-          array of log messages representing decision making.
-        """
-        decide_reasons = []
-
-        # check forced decision first
-        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key, rule.key)
-
-        forced_decision_variation, reasons_received = user.find_validated_forced_decision(
-            optimizely_decision_context)
-        decide_reasons += reasons_received
-
-        if forced_decision_variation:
-            return forced_decision_variation, decide_reasons
-
-        # regular decision
-        decision_variation, variation_reasons = self.get_variation(config, rule, user, options)
-        decide_reasons += variation_reasons
-        return decision_variation, decide_reasons
-
-    def get_variation_from_delivery_rule(self, config, feature, rules, rule_index, user):
-        """ Checks for delivery rule if decision is forced and returns it.
-            Otherwise returns a regular decision.
-
-        Args:
-          config: Instance of ProjectConfig.
-          flag_key: Key of the flag.
-          rules: Experiment rule.
-          rule_index: integer index of the rule in the list.
-          user: ID and attributes for user.
-
-        Returns:
-          If forced decision, it returns namedtuple consisting of forced_decision_variation and skip_to_everyone_else
-          and decision reason log messages.
-
-          If regular decision it returns a tuple of bucketed_variation and skip_to_everyone_else
-          and decision reason log messages
-        """
-        decide_reasons = []
-        skip_to_everyone_else = False
-        bucketed_variation = None
-
-        # check forced decision first
-        rule = rules[rule_index]
-        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
-        forced_decision_variation, reasons_received = user.find_validated_forced_decision(optimizely_decision_context)
-
-        decide_reasons += reasons_received
-
-        if forced_decision_variation:
-            return (forced_decision_variation, skip_to_everyone_else), decide_reasons
-
-        # regular decision
-        user_id = user.user_id
-        attributes = user.get_user_attributes()
-
-        bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
-        decide_reasons += bucket_reasons
-
-        everyone_else = (rule_index == len(rules) - 1)
-        logging_key = "Everyone Else" if everyone_else else str(rule_index + 1)
-
-        rollout_rule = config.get_experiment_from_id(rule.id)
-        audience_conditions = rollout_rule.get_audience_conditions_or_ids()
-
-        audience_decision_response, reasons_received_audience = audience_helper.does_user_meet_audience_conditions(
-            config, audience_conditions, enums.RolloutRuleAudienceEvaluationLogs, logging_key, attributes, self.logger)
-
-        decide_reasons += reasons_received_audience
-
-        if audience_decision_response:
-            message = 'User "{}" meets audience conditions for targeting rule {}.'.format(user_id, logging_key)
-            self.logger.debug(message)
-            decide_reasons.append(message)
-
-            bucketed_variation, bucket_reasons = self.bucketer.bucket(config, rollout_rule, user_id,
-                                                                      bucketing_id)
-            decide_reasons.extend(bucket_reasons)
-
-            if bucketed_variation:
-                message = 'User "{}" bucketed into a targeting rule {}.'.format(user_id, logging_key)
-                self.logger.debug(message)
-                decide_reasons.append(message)
-
-            elif not everyone_else:
-                # skip this logging for EveryoneElse since this has a message not for everyone_else
-                message = 'User "{}" not bucketed into a targeting rule {}. ' \
-                          'Checking "Everyone Else" rule now.'.format(user_id, logging_key)
-                self.logger.debug(message)
-                decide_reasons.append(message)
-
-                # skip the rest of rollout rules to the everyone-else rule if audience matches but not bucketed.
-                skip_to_everyone_else = True
-
-        else:
-            message = 'User "{}" does not meet audience conditions for targeting rule {}.'.format(user_id, logging_key)
-            self.logger.debug(message)
-            decide_reasons.append(message)
-
-        return (bucketed_variation, skip_to_everyone_else), decide_reasons
 
     def get_variation_for_feature(self, project_config, feature, user_context, options=None):
         """ Returns the experiment/variation the user is bucketed in for the given feature.
@@ -517,11 +458,34 @@ class DecisionService(object):
             # Evaluate each experiment ID and return the first bucketed experiment variation
             for experiment in feature.experimentIds:
                 experiment = project_config.get_experiment_from_id(experiment)
-                if experiment:
-                    variation, variation_reasons = self.get_variation_from_experiment_rule(
-                        project_config, feature.key, experiment, user_context, options)
-                    decide_reasons += variation_reasons
-                    if variation:
-                        return Decision(experiment, variation, enums.DecisionSources.FEATURE_TEST), decide_reasons
+                decision_variation = None
 
-        return self.get_variation_for_rollout(project_config, feature, user_context)
+                if experiment:
+                    optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
+                                                                                                  experiment.key)
+
+                    forced_decision_variation, reasons_received = user_context.find_validated_forced_decision(
+                        optimizely_decision_context)
+                    decide_reasons += reasons_received
+
+                    if forced_decision_variation:
+                        decision_variation = forced_decision_variation
+                    else:
+                        decision_variation, variation_reasons = self.get_variation(project_config,
+                                                                                   experiment, user_context, options)
+                        decide_reasons += variation_reasons
+
+                    if decision_variation:
+                        message = 'User "{}" bucketed into a experiment "{}" of feature "{}".'.format(
+                            user_context.user_id, experiment.key, feature.key)
+                        self.logger.debug(message)
+                        return Decision(experiment, decision_variation,
+                                        enums.DecisionSources.FEATURE_TEST), decide_reasons
+
+        message = 'User "{}" is not bucketed into any of the experiments on the feature "{}".'.format(
+            user_context.user_id, feature.key)
+        self.logger.debug(message)
+        variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
+        if rollout_variation_reasons:
+            decide_reasons += rollout_variation_reasons
+        return variation, decide_reasons

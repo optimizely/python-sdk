@@ -100,6 +100,7 @@ class ProjectConfig(object):
         self.variation_variable_usage_map = {}
         self.variation_id_map_by_experiment_id = {}
         self.variation_key_map_by_experiment_id = {}
+        self.flag_variations_map = {}
 
         for experiment in self.experiment_id_map.values():
             self.experiment_key_map[experiment.key] = experiment
@@ -121,45 +122,38 @@ class ProjectConfig(object):
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
-        # As we cannot create json variables in datafile directly, here we convert
-        # the variables of string type and json subType to json type
-        # This is needed to fully support json variables
+        # Dictionary containing dictionary of experiment ID to feature ID.
+        # for checking that experiment is a feature experiment or not.
         self.experiment_feature_map = {}
-        self.flag_rules_map = {}
-
-        for feature_key, feature_value in self.feature_key_map.items():
-            for variable in self.feature_key_map[feature_key].variables:
+        for feature in self.feature_key_map.values():
+            # As we cannot create json variables in datafile directly, here we convert
+            # the variables of string type and json subType to json type
+            # This is needed to fully support json variables
+            for variable in self.feature_key_map[feature.key].variables:
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON
 
-            # loop over features=flags already happening
-            # get feature variables for eacg flag/feature
-            feature_value.variables = self._generate_key_map(feature_value.variables, 'key', entities.Variable)
-            for exp_id in feature_value.experimentIds:
+            feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
+
+            rules = []
+            variations = []
+            for exp_id in feature.experimentIds:
                 # Add this experiment in experiment-feature map.
-                self.experiment_feature_map[exp_id] = [feature_value.id]
+                self.experiment_feature_map[exp_id] = [feature.id]
+                rules.append(self.experiment_id_map[exp_id])
+            rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
+            if rollout:
+                for exp in rollout.experiments:
+                    rules.append(self.experiment_id_map[exp['id']])
 
-        # all rules(experiment rules and delivery rules) for each flag
-        for flag in self.feature_flags:
-            experiments = []
-            if len(flag['experimentIds']) > 0:
-                for exp_id in flag['experimentIds']:
-                    experiments.append(self.experiment_id_map[exp_id])
-            if not flag['rolloutId'] == '':
-                rollout = self.rollout_id_map[flag['rolloutId']]
-
-                rollout_experiments = self.get_rollout_experiments(rollout)
-
-                if rollout and rollout.experiments:
-                    experiments.extend(rollout_experiments)
-
-            self.flag_rules_map[flag['key']] = experiments
-
-        # All variations for each flag
-        # Datafile does not contain a separate entity for this.
-        # We collect variations used in each rule (experiment rules and delivery rules)
-        self.flag_variations_map = self.get_all_variations_for_each_rule(self.flag_rules_map)
+            for rule in rules:
+                # variation_id_map_by_experiment_id gives variation entity object while
+                # experiment_id_map will give us dictionary
+                for rule_variation in self.variation_id_map_by_experiment_id.get(rule.id).values():
+                    if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
+                        variations.append(rule_variation)
+            self.flag_variations_map[feature.key] = variations
 
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
@@ -638,32 +632,6 @@ class ProjectConfig(object):
                           variation_key, experiment_id)
 
         return {}
-
-    def get_all_variations_for_each_rule(self, flag_rules_map):
-        """ Helper method to get all variation objects from each flag.
-            collects variations used in each rule (experiment rules and delivery rules).
-
-        Args:
-            flag_rules_map: A dictionary. A map of all rules per flag.
-
-        Returns:
-            Map of flag variations.
-        """
-        flag_variations_map = {}
-
-        for flag_key, rules in flag_rules_map.items():
-            variations = []
-            for rule in rules:
-                # get variations as objects (rule.variations gives list)
-                variation_objects = self.variation_id_map_by_experiment_id[rule.id].values()
-                for variation in variation_objects:
-                    # append variation if it's not already in the list
-                    if variation not in variations:
-                        variations.append(variation)
-
-            flag_variations_map[flag_key] = variations
-
-        return flag_variations_map
 
     def get_flag_variation(self, flag_key, variation_attribute, target_value):
         """
