@@ -16,7 +16,6 @@
 import copy
 import threading
 
-from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .helpers import enums
 
 
@@ -37,7 +36,7 @@ class OptimizelyUserContext(object):
         Returns:
           UserContext instance
         """
-g
+
         self.client = optimizely_client
         self.logger = logger
         self.user_id = user_id
