@@ -637,7 +637,7 @@ class ProjectConfig(object):
         """
         Gets variation by specified variation attribute.
         For example if variation_attribute is id, the function gets variation by using variation_id.
-        If object_attribute is key, the function gets variation by using variation_key.
+        If variation_attribute is key, the function gets variation by using variation_key.
 
         We used to have two separate functions:
         get_flag_variation_by_id()
@@ -645,13 +645,13 @@ class ProjectConfig(object):
 
         This function consolidates both functions into one.
 
-        Important to always relate object_attribute to the target value.
-        Should never enter for example object_attribute=key and target_value=variation_id.
+        Important to always relate variation_attribute to the target value.
+        Should never enter for example variation_attribute=key and target_value=variation_id.
         Correct is object_attribute=key and target_value=variation_key.
 
         Args:
             flag_key: flag key
-            variation_attribute: id or key for example. The part after the dot notation (id in variation.id)
+            variation_attribute: (string) id or key for example. The part after the dot notation (id in variation.id)
             target_value: target value we want to get for example variation_id or variation_key
 
         Returns:

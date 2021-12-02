@@ -265,6 +265,8 @@ class OptimizelyUserContext(object):
             # we use config here so we can use get_flag_variation() function which is defined in project_config
             # otherwise we would us self.client instead of config
             config = self.client.config_manager.get_config() if self.client else None
+            if not config:
+                return None
             variation = config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
             if variation:
                 if rule_key:
