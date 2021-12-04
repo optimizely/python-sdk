@@ -248,7 +248,7 @@ class OptimizelyUserContext(object):
             # otherwise we would us self.client instead of config
             config = self.client.config_manager.get_config() if self.client else None
             if not config:
-                return None
+                return None, reasons
             variation = config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
             if variation:
                 if rule_key:
