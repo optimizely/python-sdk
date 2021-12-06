@@ -13,14 +13,15 @@
 import json
 
 import mock
+import threading
 
-from optimizely.decision.optimizely_decision import OptimizelyDecision
-from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
-from optimizely.helpers import enums
-from . import base
 from optimizely import optimizely, decision_service
+from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption as DecideOption
+from optimizely.decision.optimizely_decision import OptimizelyDecision
+from optimizely.helpers import enums
 from optimizely.optimizely_user_context import OptimizelyUserContext
 from optimizely.user_profile import UserProfileService
+from . import base
 
 
 class UserContextTest(base.BaseTest):
@@ -40,7 +41,7 @@ class UserContextTest(base.BaseTest):
         """
         tests user context creating and setting attributes
         """
-        uc = OptimizelyUserContext(self.optimizely, "test_user")
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user")
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
@@ -65,7 +66,7 @@ class UserContextTest(base.BaseTest):
         """
         tests user context as json
         """
-        uc = OptimizelyUserContext(self.optimizely, "test_user")
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user")
 
         # set an attribute
         uc.set_attribute("browser", "safari")
@@ -81,25 +82,25 @@ class UserContextTest(base.BaseTest):
     def test_attributes_are_cloned_when_passed_to_user_context(self):
         user_id = 'test_user'
         attributes = {"browser": "chrome"}
-        uc = OptimizelyUserContext(self.optimizely, user_id, attributes)
+        uc = OptimizelyUserContext(self.optimizely, None, user_id, attributes)
         self.assertEqual(attributes, uc.get_user_attributes())
         attributes['new_key'] = 'test_value'
         self.assertNotEqual(attributes, uc.get_user_attributes())
 
     def test_attributes_default_to_dict_when_passes_as_non_dict(self):
-        uc = OptimizelyUserContext(self.optimizely, "test_user", True)
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", True)
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
-        uc = OptimizelyUserContext(self.optimizely, "test_user", 10)
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", 10)
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
-        uc = OptimizelyUserContext(self.optimizely, "test_user", 'helloworld')
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", 'helloworld')
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
-        uc = OptimizelyUserContext(self.optimizely, "test_user", [])
+        uc = OptimizelyUserContext(self.optimizely, None, "test_user", [])
         # user attribute should be empty dict
         self.assertEqual({}, uc.get_user_attributes())
 
@@ -790,7 +791,7 @@ class UserContextTest(base.BaseTest):
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule 1.',
-            'User "test_user" is in the traffic group of targeting rule 1.'
+            'User "test_user" bucketed into a targeting rule 1.'
         ]
 
         self.assertEqual(expected_reasons, actual.reasons)
@@ -1142,14 +1143,13 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Evaluating audiences for rule 1: ["11154"].',
-            'Audiences for rule 1 collectively evaluated to FALSE.',
-            'User "test_user" does not meet conditions for targeting rule 1.',
-            'Evaluating audiences for rule 2: ["11159"].',
-            'Audiences for rule 2 collectively evaluated to FALSE.',
-            'User "test_user" does not meet conditions for targeting rule 2.',
+            'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 2.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'User "test_user" meets audience conditions for targeting rule Everyone Else.',
             'Bucketed into an empty traffic range. Returning nil.'
         ]
 
@@ -1165,13 +1165,14 @@ class UserContextTest(base.BaseTest):
         expected_reasons = [
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to FALSE.',
-            'User "abcde" does not meet conditions for targeting rule 1.',
+            'User "abcde" does not meet audience conditions for targeting rule 1.',
             'Evaluating audiences for rule 2: ["11159"].',
             'Audiences for rule 2 collectively evaluated to FALSE.',
-            'User "abcde" does not meet conditions for targeting rule 2.',
+            'User "abcde" does not meet audience conditions for targeting rule 2.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
-            'User "abcde" meets conditions for targeting rule "Everyone Else".'
+            'User "abcde" meets audience conditions for targeting rule Everyone Else.',
+            'User "abcde" bucketed into a targeting rule Everyone Else.'
         ]
 
         self.assertEqual(expected_reasons, actual.reasons)
@@ -1184,16 +1185,15 @@ class UserContextTest(base.BaseTest):
         actual = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
 
         expected_reasons = [
-            'Evaluating audiences for rule 1: ["11154"].',
-            'Audiences for rule 1 collectively evaluated to FALSE.',
-            'User "test_user" does not meet conditions for targeting rule 1.',
-            'Evaluating audiences for rule 2: ["11159"].',
-            'Audiences for rule 2 collectively evaluated to TRUE.',
+            'Evaluating audiences for rule 1: ["11154"].', 'Audiences for rule 1 collectively evaluated to FALSE.',
+            'User "test_user" does not meet audience conditions for targeting rule 1.',
+            'Evaluating audiences for rule 2: ["11159"].', 'Audiences for rule 2 collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule 2.',
             'Bucketed into an empty traffic range. Returning nil.',
-            'User "test_user" is not in the traffic group for targeting rule 2. Checking "Everyone Else" rule now.',
+            'User "test_user" not bucketed into a targeting rule 2. Checking "Everyone Else" rule now.',
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
+            'User "test_user" meets audience conditions for targeting rule Everyone Else.',
             'Bucketed into an empty traffic range. Returning nil.'
         ]
 
@@ -1230,8 +1230,10 @@ class UserContextTest(base.BaseTest):
 
         actual = user_context.decide('test_feature_in_experiment', options)
 
-        expected_reasons = [('Returning previously activated variation ID "control" of experiment '
-                             '"test_experiment" for user "test_user" from user profile.')]
+        expected_reasons = [
+            'Returning previously activated variation ID "control" of experiment '
+            '"test_experiment" for user "test_user" from user profile.'
+        ]
 
         self.assertEqual(expected_reasons, actual.reasons)
 
@@ -1247,8 +1249,10 @@ class UserContextTest(base.BaseTest):
 
         actual = user_context.decide('test_feature_in_experiment', options)
 
-        expected_reasons = [('Variation "control" is mapped to experiment '
-                             '"test_experiment" and user "test_user" in the forced variation map')]
+        expected_reasons = [
+            'Variation "control" is mapped to experiment "test_experiment" and '
+            'user "test_user" in the forced variation map'
+        ]
 
         self.assertEqual(expected_reasons, actual.reasons)
 
@@ -1261,7 +1265,6 @@ class UserContextTest(base.BaseTest):
         options = ['INCLUDE_REASONS']
 
         actual = user_context.decide('test_feature_in_experiment', options)
-
         expected_reasons = ['User "user_1" is forced in variation "control".']
 
         self.assertEqual(expected_reasons, actual.reasons)
@@ -1296,3 +1299,572 @@ class UserContextTest(base.BaseTest):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
             self.assertTrue(decision.enabled, "decision should be enabled")
+
+    def test_forced_decision_return_status__valid_datafile(self):
+        """
+        Should return valid status for valid datafile in forced decision calls.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, '211129')
+        status = user_context.remove_forced_decision(context)
+        self.assertTrue(status)
+        status = user_context.remove_all_forced_decisions()
+        self.assertTrue(status)
+
+    def test_should_return_valid_decision_after_setting_and_removing_forced_decision(self):
+        """
+        Should return valid forced decision after setting and removing forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment', None)
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, '211129')
+
+        with mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast_decision, mock.patch(
+            'optimizely.optimizely.Optimizely._send_impression_event'
+        ) as mock_send_event:
+            decide_decision = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+
+            self.assertEqual(decide_decision.variation_key, 'control')
+            self.assertEqual(decide_decision.rule_key, 'test_experiment')
+            self.assertFalse(decide_decision.enabled)
+            self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment')
+            self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+            self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+            self.assertEqual(decide_decision.reasons, [
+                'Invalid variation is mapped to flag (test_feature_in_experiment) '
+                'and user (test_user) in the forced decision map.',
+                'Evaluating audiences for experiment "test_experiment": [].',
+                'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+                'User "test_user" is in variation "control" of experiment test_experiment.'])
+
+        expected_variables = {
+            'is_working': True,
+            'environment': 'devel',
+            'cost': 10.99,
+            'count': 999,
+            'variable_without_usage': 45,
+            'object': {'test': 12},
+            'true_object': {'true_test': 23.54}
+        }
+
+        expected = OptimizelyDecision(
+            variation_key='control',
+            rule_key='test_experiment',
+            enabled=False,
+            variables=expected_variables,
+            flag_key='test_feature_in_experiment',
+            user_context=user_context,
+            reasons=['Invalid variation is mapped to flag (test_feature_in_experiment) '
+                     'and user (test_user) in the forced decision map.',
+                     'Evaluating audiences for experiment "test_experiment": [].',
+                     'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+                     'User "test_user" is in variation "control" of experiment test_experiment.']
+        )
+
+        # assert notification count
+        self.assertEqual(1, mock_broadcast_decision.call_count)
+
+        # assert notification
+        mock_broadcast_decision.assert_called_with(
+            enums.NotificationTypes.DECISION,
+            'flag',
+            'test_user',
+            {},
+            {
+                'flag_key': expected.flag_key,
+                'enabled': expected.enabled,
+                'variation_key': expected.variation_key,
+                'rule_key': expected.rule_key,
+                'reasons': expected.reasons,
+                'decision_event_dispatched': True,
+                'variables': expected.variables,
+            },
+        )
+
+        expected_experiment = project_config.get_experiment_from_key(expected.rule_key)
+        expected_var = project_config.get_variation_from_key('test_experiment', expected.variation_key)
+
+        mock_send_event.assert_called_with(
+            project_config,
+            expected_experiment,
+            expected_var,
+            expected.flag_key,
+            'test_experiment',
+            'feature-test',
+            expected.enabled,
+            'test_user',
+            {}
+        )
+
+        self.assertTrue('User "test_user" is in variation "control" of experiment test_experiment.'
+                        in decide_decision.reasons)
+
+        status = user_context.remove_forced_decision(context)
+        self.assertTrue(status)
+
+        decide_decision = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+
+        self.assertEqual(decide_decision.variation_key, 'control')
+        self.assertEqual(decide_decision.rule_key, 'test_experiment')
+        self.assertFalse(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+
+    def test_should_return_valid_delivery_rule_decision_after_setting_forced_decision(self):
+        """
+        Should return valid delivery rule decision after setting forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment', None)
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, '211129')
+
+        decide_decision = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, 'control')
+        self.assertEqual(decide_decision.rule_key, 'test_experiment')
+        self.assertFalse(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+        self.assertEqual(decide_decision.reasons, [
+            'Invalid variation is mapped to flag (test_feature_in_experiment) and user (test_user) in the '
+            'forced decision map.', 'Evaluating audiences for experiment "test_experiment": [].',
+            'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+            'User "test_user" is in variation "control" of experiment test_experiment.'])
+        status = user_context.remove_forced_decision(context)
+        self.assertTrue(status)
+
+        decide_decision = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, 'control')
+        self.assertEqual(decide_decision.rule_key, 'test_experiment')
+        self.assertFalse(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+
+        expected_reasons = [
+            'Evaluating audiences for experiment "test_experiment": [].',
+            'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+            'User "test_user" is in variation "control" of experiment test_experiment.']
+        self.assertEqual(decide_decision.reasons, expected_reasons)
+
+    def test_should_return_valid_experiment_decision_after_setting_forced_decision(self):
+        """
+        Should return valid experiment decision after setting forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment_and_rollout',
+                                                                  'group_exp_2')
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('group_exp_2_variation')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, 'group_exp_2_variation')
+
+        decide_decision = user_context.decide('test_feature_in_experiment_and_rollout', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, 'group_exp_2_variation')
+        self.assertEqual(decide_decision.rule_key, 'group_exp_2')
+        self.assertFalse(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment_and_rollout')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+        self.assertTrue(set(decide_decision.reasons).issuperset(set([
+            'Variation (group_exp_2_variation) is mapped to flag '
+            '(test_feature_in_experiment_and_rollout), rule (group_exp_2) and '
+            'user (test_user) in the forced decision map.'
+        ])))
+        status = user_context.remove_forced_decision(context)
+        self.assertTrue(status)
+
+        decide_decision = user_context.decide('test_feature_in_experiment_and_rollout', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, 'group_exp_2_control')
+        self.assertEqual(decide_decision.rule_key, 'group_exp_2')
+        self.assertFalse(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment_and_rollout')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+
+        expected_reasons = [
+            'Evaluating audiences for experiment "group_exp_2": [].',
+            'Audiences for experiment "group_exp_2" collectively evaluated to TRUE.',
+            'User "test_user" is in experiment group_exp_2 of group 19228.',
+            'User "test_user" is in variation "group_exp_2_control" of experiment group_exp_2.'
+        ]
+
+        self.assertEqual(decide_decision.reasons, expected_reasons)
+
+    def test_should_return_valid_decision_after_setting_invalid_delivery_rule_variation_in_forced_decision(self):
+        """
+        Should return valid decision after setting invalid delivery rule variation in forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', '211127')
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('invalid')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, 'invalid')
+
+        decide_decision = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
+
+        self.assertEqual(decide_decision.variation_key, None)
+        self.assertEqual(decide_decision.rule_key, None)
+        self.assertFalse(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+        self.assertTrue(set(decide_decision.reasons).issuperset(set([
+            'Invalid variation is mapped to flag (test_feature_in_rollout), '
+            'rule (211127) and user (test_user) in the forced decision map.'
+        ])))
+
+    def test_should_return_valid_decision_after_setting_invalid_experiment_rule_variation_in_forced_decision(self):
+        """
+        Should return valid decision after setting invalid experiment rule variation in forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment',
+                                                                  'test_experiment')
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('invalid')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, 'invalid')
+
+        decide_decision = user_context.decide('test_feature_in_experiment', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, 'control')
+        self.assertEqual(decide_decision.rule_key, 'test_experiment')
+        self.assertFalse(decide_decision.enabled)
+
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+
+        expected_reasons = [
+            'Invalid variation is mapped to flag (test_feature_in_experiment), rule (test_experiment) '
+            'and user (test_user) in the forced decision map.',
+            'Evaluating audiences for experiment "test_experiment": [].',
+            'Audiences for experiment "test_experiment" collectively evaluated to TRUE.',
+            'User "test_user" is in variation "control" of experiment test_experiment.'
+        ]
+
+        self.assertEqual(decide_decision.reasons, expected_reasons)
+
+    def test_conflicts_return_valid_decision__forced_decision(self):
+        """
+        Should return valid forced decision after setting conflicting forced decisions.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
+        decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        context_with_rule = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', '211127')
+        decision_for_rule = OptimizelyUserContext.OptimizelyForcedDecision('211229')
+
+        status = user_context.set_forced_decision(context_with_flag, decision_for_flag)
+        self.assertTrue(status)
+
+        status = user_context.set_forced_decision(context_with_rule, decision_for_rule)
+        self.assertTrue(status)
+
+        decide_decision = user_context.decide('test_feature_in_rollout', ['INCLUDE_REASONS'])
+        self.assertEqual(decide_decision.variation_key, '211129')
+        self.assertIsNone(decide_decision.rule_key)
+        self.assertTrue(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_rollout')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+        self.assertTrue(set(decide_decision.reasons).issuperset(set([
+            'Variation (211129) is mapped to flag (test_feature_in_rollout) and '
+            'user (test_user) in the forced decision map.'
+        ])))
+
+    def test_get_forced_decision_return_valid_decision__forced_decision(self):
+        """
+        Should return valid forced decision on getting forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context_with_flag_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_for_flag_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+
+        context_with_flag_2 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_for_flag_2 = OptimizelyUserContext.OptimizelyForcedDecision('v2')
+        status = user_context.set_forced_decision(context_with_flag_1, decision_for_flag_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertEqual(status.variation_key, decision_for_flag_1.variation_key)
+
+        status = user_context.set_forced_decision(context_with_flag_2, decision_for_flag_2)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_flag_2)
+        self.assertEqual(status.variation_key, decision_for_flag_2.variation_key)
+
+        context_with_rule_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', 'r1')
+        decision_for_rule_1 = OptimizelyUserContext.OptimizelyForcedDecision('v3')
+
+        context_with_rule_2 = OptimizelyUserContext.OptimizelyDecisionContext('f1', 'r2')
+        decision_for_rule_2 = OptimizelyUserContext.OptimizelyForcedDecision('v4')
+
+        status = user_context.set_forced_decision(context_with_rule_1, decision_for_rule_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_rule_1)
+        self.assertEqual(status.variation_key, decision_for_rule_1.variation_key)
+
+        status = user_context.set_forced_decision(context_with_rule_2, decision_for_rule_2)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_rule_2)
+        self.assertEqual(status.variation_key, decision_for_rule_2.variation_key)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertEqual(status.variation_key, decision_for_flag_2.variation_key)
+
+    def test_remove_forced_decision_return_valid_decision__forced_decision(self):
+        """
+        Should remove forced decision on removing forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context_with_flag_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_for_flag_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+
+        status = user_context.set_forced_decision(context_with_flag_1, decision_for_flag_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertEqual(status.variation_key, decision_for_flag_1.variation_key)
+
+        status = user_context.remove_forced_decision(context_with_flag_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertIsNone(status)
+
+        context_with_rule_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', 'r1')
+        decision_for_rule_1 = OptimizelyUserContext.OptimizelyForcedDecision('v3')
+
+        status = user_context.set_forced_decision(context_with_rule_1, decision_for_rule_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_rule_1)
+        self.assertEqual(status.variation_key, decision_for_rule_1.variation_key)
+
+        status = user_context.remove_forced_decision(context_with_rule_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_rule_1)
+        self.assertIsNone(status)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertIsNone(status)
+
+    def test_remove_all_forced_decision_return_valid_decision__forced_decision(self):
+        """
+        Should remove all forced decision on removing all forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context_with_flag_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_for_flag_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+
+        status = user_context.remove_all_forced_decisions()
+        self.assertTrue(status)
+
+        status = user_context.set_forced_decision(context_with_flag_1, decision_for_flag_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertEqual(status.variation_key, decision_for_flag_1.variation_key)
+
+        context_with_rule_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', 'r1')
+        decision_for_rule_1 = OptimizelyUserContext.OptimizelyForcedDecision('v3')
+
+        status = user_context.set_forced_decision(context_with_rule_1, decision_for_rule_1)
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_rule_1)
+        self.assertEqual(status.variation_key, decision_for_rule_1.variation_key)
+
+        status = user_context.remove_all_forced_decisions()
+        self.assertTrue(status)
+
+        status = user_context.get_forced_decision(context_with_rule_1)
+        self.assertIsNone(status)
+
+        status = user_context.get_forced_decision(context_with_flag_1)
+        self.assertIsNone(status)
+
+        status = user_context.remove_all_forced_decisions()
+        self.assertTrue(status)
+
+    def test_forced_decision_return_status(self):
+        """
+        Should return valid status for a valid datafile in forced decision calls.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_rollout', None)
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, '211129')
+        status = user_context.remove_forced_decision(context)
+        self.assertTrue(status)
+        status = user_context.remove_all_forced_decisions()
+        self.assertTrue(status)
+
+    def test_forced_decision_clone_return_valid_forced_decision(self):
+        """
+        Should return valid forced decision on cloning.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+        context_with_rule = OptimizelyUserContext.OptimizelyDecisionContext('f1', 'r1')
+        decision_for_rule = OptimizelyUserContext.OptimizelyForcedDecision('v2')
+        context_with_empty_rule = OptimizelyUserContext.OptimizelyDecisionContext('f1', '')
+        decision_for_empty_rule = OptimizelyUserContext.OptimizelyForcedDecision('v3')
+
+        user_context.set_forced_decision(context_with_flag, decision_for_flag)
+        user_context.set_forced_decision(context_with_rule, decision_for_rule)
+        user_context.set_forced_decision(context_with_empty_rule, decision_for_empty_rule)
+
+        user_context_2 = user_context._clone()
+        self.assertEqual(user_context_2.user_id, 'test_user')
+        self.assertEqual(user_context_2.get_user_attributes(), {})
+        self.assertIsNotNone(user_context_2.forced_decisions_map)
+
+        self.assertEqual(user_context_2.get_forced_decision(context_with_flag).variation_key, 'v1')
+        self.assertEqual(user_context_2.get_forced_decision(context_with_rule).variation_key, 'v2')
+        self.assertEqual(user_context_2.get_forced_decision(context_with_empty_rule).variation_key, 'v3')
+
+        context_with_rule = OptimizelyUserContext.OptimizelyDecisionContext('x', 'y')
+        decision_for_rule = OptimizelyUserContext.OptimizelyForcedDecision('z')
+        user_context.set_forced_decision(context_with_rule, decision_for_rule)
+        self.assertEqual(user_context.get_forced_decision(context_with_rule).variation_key, 'z')
+        self.assertIsNone(user_context_2.get_forced_decision(context_with_rule))
+
+    def test_forced_decision_sync_return_correct_number_of_calls(self):
+        """
+        Should return valid number of call on running forced decision calls in thread.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+        context_1 = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
+        decision_1 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+        context_2 = OptimizelyUserContext.OptimizelyDecisionContext('f2', None)
+        decision_2 = OptimizelyUserContext.OptimizelyForcedDecision('v1')
+
+        with mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.set_forced_decision'
+        ) as set_forced_decision_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.get_forced_decision'
+        ) as get_forced_decision_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.remove_forced_decision'
+        ) as remove_forced_decision_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext.remove_all_forced_decisions'
+        ) as remove_all_forced_decisions_mock, mock.patch(
+            'optimizely.optimizely_user_context.OptimizelyUserContext._clone'
+        ) as clone_mock:
+            def set_forced_decision_loop(user_context, context, decision):
+                for x in range(100):
+                    user_context.set_forced_decision(context, decision)
+
+            def get_forced_decision_loop(user_context, context):
+                for x in range(100):
+                    user_context.get_forced_decision(context)
+
+            def remove_forced_decision_loop(user_context, context):
+                for x in range(100):
+                    user_context.remove_forced_decision(context)
+
+            def remove_all_forced_decisions_loop(user_context):
+                for x in range(100):
+                    user_context.remove_all_forced_decisions()
+
+            def clone_loop(user_context):
+                for x in range(100):
+                    user_context._clone()
+
+            set_thread_1 = threading.Thread(target=set_forced_decision_loop, args=(user_context, context_1, decision_1))
+            set_thread_2 = threading.Thread(target=set_forced_decision_loop, args=(user_context, context_2, decision_2))
+            set_thread_3 = threading.Thread(target=get_forced_decision_loop, args=(user_context, context_1))
+            set_thread_4 = threading.Thread(target=get_forced_decision_loop, args=(user_context, context_2))
+            set_thread_5 = threading.Thread(target=remove_forced_decision_loop, args=(user_context, context_1))
+            set_thread_6 = threading.Thread(target=remove_forced_decision_loop, args=(user_context, context_2))
+            set_thread_7 = threading.Thread(target=remove_all_forced_decisions_loop, args=(user_context,))
+            set_thread_8 = threading.Thread(target=clone_loop, args=(user_context,))
+
+            # Starting the threads
+            set_thread_1.start()
+            set_thread_2.start()
+            set_thread_3.start()
+            set_thread_4.start()
+            set_thread_5.start()
+            set_thread_6.start()
+            set_thread_7.start()
+            set_thread_8.start()
+
+            # Waiting for all the threads to finish executing
+            set_thread_1.join()
+            set_thread_2.join()
+            set_thread_3.join()
+            set_thread_4.join()
+            set_thread_5.join()
+            set_thread_6.join()
+            set_thread_7.join()
+            set_thread_8.join()
+
+        self.assertEqual(200, set_forced_decision_mock.call_count)
+        self.assertEqual(200, get_forced_decision_mock.call_count)
+        self.assertEqual(200, remove_forced_decision_mock.call_count)
+        self.assertEqual(100, remove_all_forced_decisions_mock.call_count)
+        self.assertEqual(100, clone_mock.call_count)

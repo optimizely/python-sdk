@@ -115,6 +115,17 @@ class Errors(object):
     UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
 
 
+class ForcedDecisionLogs(object):
+    USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED = 'Variation ({}) is mapped to flag ({}), rule ({}) and user ({}) ' \
+                                                   'in the forced decision map.'
+    USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED = 'Variation ({}) is mapped to flag ({}) and user ({}) ' \
+                                                      'in the forced decision map.'
+    USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID = 'Invalid variation is mapped to flag ({}), rule ({}) ' \
+                                                               'and user ({}) in the forced decision map.'
+    USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID = 'Invalid variation is mapped to flag ({}) ' \
+                                                                  'and user ({}) in the forced decision map.'
+
+
 class HTTPHeaders(object):
     AUTHORIZATION = 'Authorization'
     IF_MODIFIED_SINCE = 'If-Modified-Since'

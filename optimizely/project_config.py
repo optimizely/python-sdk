@@ -12,11 +12,12 @@
 # limitations under the License.
 
 import json
+from collections import OrderedDict
 
-from .helpers import condition as condition_helper
-from .helpers import enums
 from . import entities
 from . import exceptions
+from .helpers import condition as condition_helper
+from .helpers import enums
 
 SUPPORTED_VERSIONS = [
     enums.DatafileVersions.V2,
@@ -99,6 +100,7 @@ class ProjectConfig(object):
         self.variation_variable_usage_map = {}
         self.variation_id_map_by_experiment_id = {}
         self.variation_key_map_by_experiment_id = {}
+        self.flag_variations_map = {}
 
         for experiment in self.experiment_id_map.values():
             self.experiment_key_map[experiment.key] = experiment
@@ -120,24 +122,38 @@ class ProjectConfig(object):
 
         self.feature_key_map = self._generate_key_map(self.feature_flags, 'key', entities.FeatureFlag)
 
-        # As we cannot create json variables in datafile directly, here we convert
-        # the variables of string type and json subType to json type
-        # This is needed to fully support json variables
-        for feature in self.feature_key_map:
-            for variable in self.feature_key_map[feature].variables:
+        # Dictionary containing dictionary of experiment ID to feature ID.
+        # for checking that experiment is a feature experiment or not.
+        self.experiment_feature_map = {}
+        for feature in self.feature_key_map.values():
+            # As we cannot create json variables in datafile directly, here we convert
+            # the variables of string type and json subType to json type
+            # This is needed to fully support json variables
+            for variable in self.feature_key_map[feature.key].variables:
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON
 
-        # Dict containing map of experiment ID to feature ID.
-        # for checking that experiment is a feature experiment or not.
-        self.experiment_feature_map = {}
-        for feature in self.feature_key_map.values():
             feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
+            rules = []
+            variations = []
             for exp_id in feature.experimentIds:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
+                rules.append(self.experiment_id_map[exp_id])
+            rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
+            if rollout:
+                for exp in rollout.experiments:
+                    rules.append(self.experiment_id_map[exp['id']])
+
+            for rule in rules:
+                # variation_id_map_by_experiment_id gives variation entity object while
+                # experiment_id_map will give us dictionary
+                for rule_variation in self.variation_id_map_by_experiment_id.get(rule.id).values():
+                    if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
+                        variations.append(rule_variation)
+            self.flag_variations_map[feature.key] = variations
 
     @staticmethod
     def _generate_key_map(entity_list, key, entity_class):
@@ -152,7 +168,10 @@ class ProjectConfig(object):
             Map mapping key to entity object.
         """
 
-        key_map = {}
+        # using ordered dict here to preserve insertion order of entities
+        # OrderedDict() is needed for Py versions 3.5 and less to work.
+        # Insertion order has been made default in dicts since Py 3.6
+        key_map = OrderedDict()
         for obj in entity_list:
             key_map[obj[key]] = entity_class(**obj)
 
@@ -174,6 +193,21 @@ class ProjectConfig(object):
             audience.__dict__.update({'conditionStructure': condition_structure, 'conditionList': condition_list})
 
         return audience_map
+
+    def get_rollout_experiments(self, rollout):
+        """ Helper method to get rollout experiments.
+
+        Args:
+            rollout: rollout
+
+        Returns:
+            Mapped rollout experiments.
+        """
+
+        rollout_experiments_id_map = self._generate_key_map(rollout.experiments, 'id', entities.Experiment)
+        rollout_experiments = [experiment for experiment in rollout_experiments_id_map.values()]
+
+        return rollout_experiments
 
     def get_typecast_value(self, value, type):
         """ Helper method to determine actual value based on type of feature variable.
@@ -340,6 +374,7 @@ class ProjectConfig(object):
         Args:
             experiment: Key representing parent experiment of variation.
             variation_key: Key representing the variation.
+            Variation is of type variation object or None.
 
         Returns
             Object representing the variation.
@@ -485,7 +520,6 @@ class ProjectConfig(object):
 
         if not variable or not variation:
             return None
-
         if variation.id not in self.variation_variable_usage_map:
             self.logger.error('Variation with ID "%s" is not in the datafile.' % variation.id)
             return None
@@ -598,3 +632,37 @@ class ProjectConfig(object):
                           variation_key, experiment_id)
 
         return {}
+
+    def get_flag_variation(self, flag_key, variation_attribute, target_value):
+        """
+        Gets variation by specified variation attribute.
+        For example if variation_attribute is id, the function gets variation by using variation_id.
+        If variation_attribute is key, the function gets variation by using variation_key.
+
+        We used to have two separate functions:
+        get_flag_variation_by_id()
+        get_flag_variation_by_key()
+
+        This function consolidates both functions into one.
+
+        Important to always relate variation_attribute to the target value.
+        Should never enter for example variation_attribute=key and target_value=variation_id.
+        Correct is object_attribute=key and target_value=variation_key.
+
+        Args:
+            flag_key: flag key
+            variation_attribute: (string) id or key for example. The part after the dot notation (id in variation.id)
+            target_value: target value we want to get for example variation_id or variation_key
+
+        Returns:
+            Variation as a map.
+        """
+        if not flag_key:
+            return None
+
+        variations = self.flag_variations_map.get(flag_key)
+        for variation in variations:
+            if getattr(variation, variation_attribute) == target_value:
+                return variation
+
+        return None
