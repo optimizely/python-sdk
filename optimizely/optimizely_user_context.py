@@ -13,7 +13,10 @@
 #    limitations under the License.
 #
 
+import copy
 import threading
+
+from .helpers import enums
 
 
 class OptimizelyUserContext(object):
@@ -21,11 +24,12 @@ class OptimizelyUserContext(object):
     Representation of an Optimizely User Context using which APIs are to be called.
     """
 
-    def __init__(self, optimizely_client, user_id, user_attributes=None):
+    def __init__(self, optimizely_client, logger, user_id, user_attributes=None):
         """ Create an instance of the Optimizely User Context.
 
         Args:
           optimizely_client: client used when calling decisions for this user context
+          logger: logger for logging
           user_id: user id of this user context
           user_attributes: user attributes to use for this user context
 
@@ -34,6 +38,7 @@ class OptimizelyUserContext(object):
         """
 
         self.client = optimizely_client
+        self.logger = logger
         self.user_id = user_id
 
         if not isinstance(user_attributes, dict):
@@ -41,9 +46,40 @@ class OptimizelyUserContext(object):
 
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
+        self.forced_decisions_map = {}
+
+    # decision context
+    class OptimizelyDecisionContext(object):
+        """ Using class with attributes here instead of namedtuple because
+            class is extensible, it's easy to add another attribute if we wanted
+            to extend decision context.
+        """
+        def __init__(self, flag_key, rule_key=None):
+            self.flag_key = flag_key
+            self.rule_key = rule_key
+
+        def __hash__(self):
+            return hash((self.flag_key, self.rule_key))
+
+        def __eq__(self, other):
+            return (self.flag_key, self.rule_key) == (other.flag_key, other.rule_key)
+
+    # forced decision
+    class OptimizelyForcedDecision(object):
+        def __init__(self, variation_key):
+            self.variation_key = variation_key
 
     def _clone(self):
-        return OptimizelyUserContext(self.client, self.user_id, self.get_user_attributes())
+        if not self.client:
+            return None
+
+        user_context = OptimizelyUserContext(self.client, self.logger, self.user_id, self.get_user_attributes())
+
+        with self.lock:
+            if self.forced_decisions_map:
+                user_context.forced_decisions_map = copy.deepcopy(self.forced_decisions_map)
+
+        return user_context
 
     def get_user_attributes(self):
         with self.lock:
@@ -114,3 +150,136 @@ class OptimizelyUserContext(object):
             'user_id': self.user_id,
             'attributes': self.get_user_attributes(),
         }
+
+    def set_forced_decision(self, decision_context, decision):
+        """
+        Sets the forced decision for a given decision context.
+
+        Args:
+            decision_context: a decision context.
+            decision: a forced decision.
+
+        Returns:
+            True if the forced decision has been set successfully.
+        """
+        with self.lock:
+            self.forced_decisions_map[decision_context] = decision
+
+        return True
+
+    def get_forced_decision(self, decision_context):
+        """
+        Gets the forced decision (variation key) for a given decision context.
+
+        Args:
+            decision_context: a decision context.
+
+        Returns:
+            A forced_decision or None if forced decisions are not set for the parameters.
+        """
+        forced_decision = self.find_forced_decision(decision_context)
+        return forced_decision
+
+    def remove_forced_decision(self, decision_context):
+        """
+        Removes the forced decision for a given decision context.
+
+        Args:
+            decision_context: a decision context.
+
+        Returns:
+            Returns: true if the forced decision has been removed successfully.
+        """
+        with self.lock:
+            if decision_context in self.forced_decisions_map:
+                del self.forced_decisions_map[decision_context]
+                return True
+
+        return False
+
+    def remove_all_forced_decisions(self):
+        """
+        Removes all forced decisions bound to this user context.
+
+        Returns:
+            True if forced decisions have been removed successfully.
+        """
+        with self.lock:
+            self.forced_decisions_map.clear()
+
+        return True
+
+    def find_forced_decision(self, decision_context):
+        """
+        Gets forced decision from forced decision map.
+
+        Args:
+            decision_context: a decision context.
+
+        Returns:
+            Forced decision.
+        """
+        with self.lock:
+            if not self.forced_decisions_map:
+                return None
+
+            # must allow None to be returned for the Flags only case
+            return self.forced_decisions_map.get(decision_context)
+
+    def find_validated_forced_decision(self, decision_context):
+        """
+        Gets forced decisions based on flag key, rule key and variation.
+
+        Args:
+            decision context: a decision context
+
+        Returns:
+            Variation of the forced decision.
+        """
+        reasons = []
+
+        forced_decision = self.find_forced_decision(decision_context)
+
+        flag_key = decision_context.flag_key
+        rule_key = decision_context.rule_key
+
+        if forced_decision:
+            # we use config here so we can use get_flag_variation() function which is defined in project_config
+            # otherwise we would us self.client instead of config
+            config = self.client.config_manager.get_config() if self.client else None
+            if not config:
+                return None, reasons
+            variation = config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
+            if variation:
+                if rule_key:
+                    user_has_forced_decision = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(forced_decision.variation_key,
+                                                                             flag_key,
+                                                                             rule_key,
+                                                                             self.user_id)
+
+                else:
+                    user_has_forced_decision = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision.variation_key,
+                                                                                flag_key,
+                                                                                self.user_id)
+
+                reasons.append(user_has_forced_decision)
+                self.logger.debug(user_has_forced_decision)
+
+                return variation, reasons
+
+            else:
+                if rule_key:
+                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
+                                                                                         rule_key,
+                                                                                         self.user_id)
+                else:
+                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
+
+                reasons.append(user_has_forced_decision_but_invalid)
+                self.logger.debug(user_has_forced_decision_but_invalid)
+
+        return None, reasons

@@ -24,6 +24,7 @@ from .config_manager import StaticConfigManager
 from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .decision.optimizely_decision import OptimizelyDecision
 from .decision.optimizely_decision_message import OptimizelyDecisionMessage
+from .decision_service import Decision
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
 from .event.event_processor import ForwardingEventProcessor
@@ -55,28 +56,31 @@ class Optimizely(object):
     ):
         """ Optimizely init method for managing Custom projects.
 
-    Args:
-      datafile: Optional JSON string representing the project. Must provide at least one of datafile or sdk_key.
-      event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
-      logger: Optional component which provides a log method to log messages. By default nothing would be logged.
-      error_handler: Optional component which provides a handle_error method to handle exceptions.
-                     By default all exceptions will be suppressed.
-      skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object invocation.
-                            By default JSON schema validation will be performed.
-      user_profile_service: Optional component which provides methods to store and manage user profiles.
-      sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment combination.
-               Must provide at least one of datafile or sdk_key.
-      config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
-      notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
-                           config_manager.BaseConfigManager implementation which can be using the
-                           same NotificationCenter instance.
-      event_processor: Optional component which processes the given event(s).
-                       By default optimizely.event.event_processor.ForwardingEventProcessor is used
-                       which simply forwards events to the event dispatcher.
-                       To enable event batching configure and use optimizely.event.event_processor.BatchEventProcessor.
-      datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
-      default_decide_options: Optional list of decide options used with the decide APIs.
-    """
+        Args:
+          datafile: Optional JSON string representing the project. Must provide at least one of datafile or sdk_key.
+          event_dispatcher: Provides a dispatch_event method which if given a URL and params sends a request to it.
+          logger: Optional component which provides a log method to log messages. By default nothing would be logged.
+          error_handler: Optional component which provides a handle_error method to handle exceptions.
+                         By default all exceptions will be suppressed.
+          skip_json_validation: Optional boolean param which allows skipping JSON schema validation upon object
+          invocation.
+                                By default JSON schema validation will be performed.
+          user_profile_service: Optional component which provides methods to store and manage user profiles.
+          sdk_key: Optional string uniquely identifying the datafile corresponding to project and environment
+          combination.
+                   Must provide at least one of datafile or sdk_key.
+          config_manager: Optional component which implements optimizely.config_manager.BaseConfigManager.
+          notification_center: Optional instance of notification_center.NotificationCenter. Useful when providing own
+                               config_manager.BaseConfigManager implementation which can be using the
+                               same NotificationCenter instance.
+          event_processor: Optional component which processes the given event(s).
+                           By default optimizely.event.event_processor.ForwardingEventProcessor is used
+                           which simply forwards events to the event dispatcher.
+                           To enable event batching configure and use
+                           optimizely.event.event_processor.BatchEventProcessor.
+          datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
+          default_decide_options: Optional list of decide options used with the decide APIs.
+        """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
         self.event_dispatcher = event_dispatcher or default_event_dispatcher
@@ -134,9 +138,9 @@ class Optimizely(object):
     def _validate_instantiation_options(self):
         """ Helper method to validate all instantiation parameters.
 
-    Raises:
-      Exception if provided instantiation options are valid.
-    """
+        Raises:
+          Exception if provided instantiation options are valid.
+        """
         if self.config_manager and not validator.is_config_manager_valid(self.config_manager):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('config_manager'))
 
@@ -158,14 +162,14 @@ class Optimizely(object):
     def _validate_user_inputs(self, attributes=None, event_tags=None):
         """ Helper method to validate user inputs.
 
-    Args:
-      attributes: Dict representing user attributes.
-      event_tags: Dict representing metadata associated with an event.
+        Args:
+          attributes: Dict representing user attributes.
+          event_tags: Dict representing metadata associated with an event.
 
-    Returns:
-      Boolean True if inputs are valid. False otherwise.
+        Returns:
+          Boolean True if inputs are valid. False otherwise.
 
-    """
+        """
 
         if attributes and not validator.are_attributes_valid(attributes):
             self.logger.error('Provided attributes are in an invalid format.')
@@ -183,17 +187,20 @@ class Optimizely(object):
                                user_id, attributes):
         """ Helper method to send impression event.
 
-    Args:
-      project_config: Instance of ProjectConfig.
-      experiment: Experiment for which impression event is being sent.
-      variation: Variation picked for user for the given experiment.
-      flag_key: key for a feature flag.
-      rule_key: key for an experiment.
-      rule_type: type for the source.
-      enabled: boolean representing if feature is enabled
-      user_id: ID for user.
-      attributes: Dict representing user attributes and values which need to be recorded.
-    """
+        Args:
+          project_config: Instance of ProjectConfig.
+          experiment: Experiment for which impression event is being sent.
+          variation: Variation picked for user for the given experiment.
+          flag_key: key for a feature flag.
+          rule_key: key for an experiment.
+          rule_type: type for the source.
+          enabled: boolean representing if feature is enabled
+          user_id: ID for user.
+          attributes: Dict representing user attributes and values which need to be recorded.
+        """
+        if not experiment:
+            experiment = entities.Experiment.get_default()
+
         variation_id = variation.id if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(
             project_config, experiment, variation_id, flag_key, rule_key, rule_type, enabled, user_id, attributes
@@ -215,20 +222,20 @@ class Optimizely(object):
     ):
         """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
-    Args:
-      project_config: Instance of ProjectConfig.
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      variable_type: Type of variable which could be one of boolean/double/integer/string.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          project_config: Instance of ProjectConfig.
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          variable_type: Type of variable which could be one of boolean/double/integer/string.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
+        Returns:
+          Value of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+          - Mismatch with type of variable.
+        """
         if not validator.is_non_empty_string(feature_key):
             self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
             return None
@@ -264,7 +271,10 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
         variable_value = variable.defaultValue
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_id, attributes)
+
+        user_context = self.create_user_context(user_id, attributes)
+        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -315,20 +325,20 @@ class Optimizely(object):
         return actual_value
 
     def _get_all_feature_variables_for_type(
-        self, project_config, feature_key, user_id, attributes,
+            self, project_config, feature_key, user_id, attributes,
     ):
         """ Helper method to determine value for all variables attached to a feature flag.
 
-    Args:
-      project_config: Instance of ProjectConfig.
-      feature_key: Key of the feature whose variable's value is being accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          project_config: Instance of ProjectConfig.
+          feature_key: Key of the feature whose variable's value is being accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Dictionary of all variables. None if:
-      - Feature key is invalid.
-    """
+        Returns:
+          Dictionary of all variables. None if:
+          - Feature key is invalid.
+        """
         if not validator.is_non_empty_string(feature_key):
             self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
             return None
@@ -347,8 +357,9 @@ class Optimizely(object):
         feature_enabled = False
         source_info = {}
 
-        decision, _ = self.decision_service.get_variation_for_feature(
-            project_config, feature_flag, user_id, attributes)
+        user_context = self.create_user_context(user_id, attributes)
+        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -409,15 +420,15 @@ class Optimizely(object):
     def activate(self, experiment_key, user_id, attributes=None):
         """ Buckets visitor and sends impression event to Optimizely.
 
-    Args:
-      experiment_key: Experiment which needs to be activated.
-      user_id: ID for user.
-      attributes: Dict representing user attributes and values which need to be recorded.
+        Args:
+          experiment_key: Experiment which needs to be activated.
+          user_id: ID for user.
+          attributes: Dict representing user attributes and values which need to be recorded.
 
-    Returns:
-      Variation key representing the variation the user will be bucketed in.
-      None if user is not in experiment or if experiment is not Running.
-    """
+        Returns:
+          Variation key representing the variation the user will be bucketed in.
+          None if user is not in experiment or if experiment is not Running.
+        """
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('activate'))
@@ -455,12 +466,12 @@ class Optimizely(object):
     def track(self, event_key, user_id, attributes=None, event_tags=None):
         """ Send conversion event to Optimizely.
 
-    Args:
-      event_key: Event key representing the event which needs to be recorded.
-      user_id: ID for user.
-      attributes: Dict representing visitor attributes and values which need to be recorded.
-      event_tags: Dict representing metadata associated with the event.
-    """
+        Args:
+          event_key: Event key representing the event which needs to be recorded.
+          user_id: ID for user.
+          attributes: Dict representing visitor attributes and values which need to be recorded.
+          event_tags: Dict representing metadata associated with the event.
+        """
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('track'))
@@ -503,15 +514,15 @@ class Optimizely(object):
     def get_variation(self, experiment_key, user_id, attributes=None):
         """ Gets variation where user will be bucketed.
 
-    Args:
-      experiment_key: Experiment for which user variation needs to be determined.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          experiment_key: Experiment for which user variation needs to be determined.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Variation key representing the variation the user will be bucketed in.
-      None if user is not in experiment or if experiment is not Running.
-    """
+        Returns:
+          Variation key representing the variation the user will be bucketed in.
+          None if user is not in experiment or if experiment is not Running.
+        """
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_variation'))
@@ -540,7 +551,9 @@ class Optimizely(object):
         if not self._validate_user_inputs(attributes):
             return None
 
-        variation, _ = self.decision_service.get_variation(project_config, experiment, user_id, attributes)
+        user_context = self.create_user_context(user_id, attributes)
+
+        variation, _ = self.decision_service.get_variation(project_config, experiment, user_context)
         if variation:
             variation_key = variation.key
 
@@ -562,14 +575,14 @@ class Optimizely(object):
     def is_feature_enabled(self, feature_key, user_id, attributes=None):
         """ Returns true if the feature is enabled for the given user.
 
-    Args:
-      feature_key: The key of the feature for which we are determining if it is enabled or not for the given user.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: The key of the feature for which we are determining if it is enabled or not for the given user.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      True if the feature is enabled for the user. False otherwise.
-    """
+        Returns:
+          True if the feature is enabled for the user. False otherwise.
+        """
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('is_feature_enabled'))
@@ -597,7 +610,8 @@ class Optimizely(object):
 
         feature_enabled = False
         source_info = {}
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_id, attributes)
+        user_context = self.create_user_context(user_id, attributes)
+        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
@@ -645,13 +659,13 @@ class Optimizely(object):
     def get_enabled_features(self, user_id, attributes=None):
         """ Returns the list of features that are enabled for the user.
 
-    Args:
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      A list of the keys of the features that are enabled for the user.
-    """
+        Returns:
+          A list of the keys of the features that are enabled for the user.
+        """
 
         enabled_features = []
         if not self.is_valid:
@@ -679,17 +693,17 @@ class Optimizely(object):
     def get_feature_variable(self, feature_key, variable_key, user_id, attributes=None):
         """ Returns value for a variable attached to a feature flag.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-    """
+        Returns:
+          Value of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+        """
         project_config = self.config_manager.get_config()
         if not project_config:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable'))
@@ -700,18 +714,18 @@ class Optimizely(object):
     def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
         """ Returns value for a certain boolean variable attached to a feature flag.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Boolean value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
+        Returns:
+          Boolean value of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+          - Mismatch with type of variable.
+        """
 
         variable_type = entities.Variable.Type.BOOLEAN
         project_config = self.config_manager.get_config()
@@ -726,18 +740,18 @@ class Optimizely(object):
     def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
         """ Returns value for a certain double variable attached to a feature flag.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Double value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
+        Returns:
+          Double value of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+          - Mismatch with type of variable.
+        """
 
         variable_type = entities.Variable.Type.DOUBLE
         project_config = self.config_manager.get_config()
@@ -752,18 +766,18 @@ class Optimizely(object):
     def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
         """ Returns value for a certain integer variable attached to a feature flag.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Integer value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
+        Returns:
+          Integer value of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+          - Mismatch with type of variable.
+        """
 
         variable_type = entities.Variable.Type.INTEGER
         project_config = self.config_manager.get_config()
@@ -778,18 +792,18 @@ class Optimizely(object):
     def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
         """ Returns value for a certain string variable attached to a feature.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      String value of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
+        Returns:
+          String value of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+          - Mismatch with type of variable.
+        """
 
         variable_type = entities.Variable.Type.STRING
         project_config = self.config_manager.get_config()
@@ -804,18 +818,18 @@ class Optimizely(object):
     def get_feature_variable_json(self, feature_key, variable_key, user_id, attributes=None):
         """ Returns value for a certain JSON variable attached to a feature.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      variable_key: Key of the variable whose value is to be accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          variable_key: Key of the variable whose value is to be accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Dictionary object of the variable. None if:
-      - Feature key is invalid.
-      - Variable key is invalid.
-      - Mismatch with type of variable.
-    """
+        Returns:
+          Dictionary object of the variable. None if:
+          - Feature key is invalid.
+          - Variable key is invalid.
+          - Mismatch with type of variable.
+        """
 
         variable_type = entities.Variable.Type.JSON
         project_config = self.config_manager.get_config()
@@ -830,15 +844,15 @@ class Optimizely(object):
     def get_all_feature_variables(self, feature_key, user_id, attributes=None):
         """ Returns dictionary of all variables and their corresponding values in the context of a feature.
 
-    Args:
-      feature_key: Key of the feature whose variable's value is being accessed.
-      user_id: ID for user.
-      attributes: Dict representing user attributes.
+        Args:
+          feature_key: Key of the feature whose variable's value is being accessed.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
-    Returns:
-      Dictionary mapping variable key to variable value. None if:
-      - Feature key is invalid.
-    """
+        Returns:
+          Dictionary mapping variable key to variable value. None if:
+          - Feature key is invalid.
+        """
 
         project_config = self.config_manager.get_config()
         if not project_config:
@@ -852,15 +866,15 @@ class Optimizely(object):
     def set_forced_variation(self, experiment_key, user_id, variation_key):
         """ Force a user into a variation for a given experiment.
 
-    Args:
-     experiment_key: A string key identifying the experiment.
-     user_id: The user ID.
-     variation_key: A string variation key that specifies the variation which the user.
-     will be forced into. If null, then clear the existing experiment-to-variation mapping.
+        Args:
+         experiment_key: A string key identifying the experiment.
+         user_id: The user ID.
+         variation_key: A string variation key that specifies the variation which the user.
+         will be forced into. If null, then clear the existing experiment-to-variation mapping.
 
-    Returns:
-      A boolean value that indicates if the set completed successfully.
-    """
+        Returns:
+          A boolean value that indicates if the set completed successfully.
+        """
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('set_forced_variation'))
@@ -884,13 +898,13 @@ class Optimizely(object):
     def get_forced_variation(self, experiment_key, user_id):
         """ Gets the forced variation for a given user and experiment.
 
-    Args:
-      experiment_key: A string key identifying the experiment.
-      user_id: The user ID.
+        Args:
+          experiment_key: A string key identifying the experiment.
+          user_id: The user ID.
 
-    Returns:
-      The forced variation key. None if no forced variation key.
-    """
+        Returns:
+          The forced variation key. None if no forced variation key.
+        """
 
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_forced_variation'))
@@ -954,7 +968,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
             return None
 
-        return OptimizelyUserContext(self, user_id, attributes)
+        return OptimizelyUserContext(self, self.logger, user_id, attributes)
 
     def _decide(self, user_context, key, decide_options=None):
         """
@@ -1019,18 +1033,28 @@ class Optimizely(object):
         decision_source = DecisionSources.ROLLOUT
         source_info = {}
         decision_event_dispatched = False
-        ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in decide_options
 
-        decision, decision_reasons = self.decision_service.get_variation_for_feature(config, feature_flag, user_id,
-                                                                                     attributes, ignore_ups)
-
+        # Check forced decisions first
+        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
+        forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context)
+        variation, decision_reasons = forced_decision_response
         reasons += decision_reasons
+
+        if variation:
+            decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
+        else:
+            # Regular decision
+            decision, decision_reasons = self.decision_service.get_variation_for_feature(config,
+                                                                                         feature_flag,
+                                                                                         user_context, decide_options)
+
+            reasons += decision_reasons
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
         if decision.experiment is not None:
             experiment = decision.experiment
             source_info["experiment"] = experiment
-            rule_key = experiment.key
+            rule_key = experiment.key if experiment else None
         if decision.variation is not None:
             variation = decision.variation
             variation_key = variation.key
@@ -1045,6 +1069,7 @@ class Optimizely(object):
                 self._send_impression_event(config, experiment, variation, flag_key, rule_key or '',
                                             decision_source, feature_enabled,
                                             user_id, attributes)
+
                 decision_event_dispatched = True
 
         # Generate all variables map if decide options doesn't include excludeVariables
@@ -1123,7 +1148,6 @@ class Optimizely(object):
 
     def _decide_for_keys(self, user_context, keys, decide_options=None):
         """
-
         Args:
             user_context: UserContent
             keys: list of feature keys to run decide on.

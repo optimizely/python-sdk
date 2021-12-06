@@ -20,7 +20,6 @@ from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
 from optimizely.helpers import enums
-
 from . import base
 
 
