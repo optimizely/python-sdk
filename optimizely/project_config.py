@@ -661,8 +661,9 @@ class ProjectConfig(object):
             return None
 
         variations = self.flag_variations_map.get(flag_key)
-        for variation in variations:
-            if getattr(variation, variation_attribute) == target_value:
-                return variation
+        if variations:
+            for variation in variations:
+                if getattr(variation, variation_attribute) == target_value:
+                    return variation
 
         return None

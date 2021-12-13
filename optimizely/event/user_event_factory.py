@@ -51,7 +51,7 @@ class UserEventFactory(object):
 
         if variation_id and flag_key:
             variation = project_config.get_flag_variation(flag_key, 'id', variation_id)
-        elif variation_id and experiment_id:
+        if not variation and variation_id and experiment_id:
             # need this condition when we send events involving forced decisions
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
         
