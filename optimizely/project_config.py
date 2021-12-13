@@ -612,8 +612,8 @@ class ProjectConfig(object):
                 variation_id in self.variation_id_map_by_experiment_id[experiment_id]):
             return self.variation_id_map_by_experiment_id[experiment_id][variation_id]
 
-        self.logger.error('Variation with id "%s" not defined in the datafile for experiment "%s".',
-                          variation_id, experiment_id)
+        self.logger.error('Variation with id "%s" not defined in the datafile for experiment "%s".' %
+                          (variation_id, experiment_id))
 
         return {}
 
@@ -628,8 +628,8 @@ class ProjectConfig(object):
                 variation_key in self.variation_key_map_by_experiment_id[experiment_id]):
             return self.variation_key_map_by_experiment_id[experiment_id][variation_key]
 
-        self.logger.error('Variation with key "%s" not defined in the datafile for experiment "%s".',
-                          variation_key, experiment_id)
+        self.logger.error('Variation with key "%s" not defined in the datafile for experiment "%s".' %
+                          (variation_key, experiment_id))
 
         return {}
 
