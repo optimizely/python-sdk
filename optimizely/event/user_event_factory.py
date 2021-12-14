@@ -54,7 +54,7 @@ class UserEventFactory(object):
         if not variation and variation_id and experiment_id:
             # need this condition when we send events involving forced decisions
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
-        
+
         event_context = user_event.EventContext(
             project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
         )

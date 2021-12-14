@@ -70,6 +70,17 @@ class UserEventFactoryTest(base.BaseTest):
             [x.__dict__ for x in expected_attrs], [x.__dict__ for x in impression_event.visitor_attributes],
         )
 
+    def test_impression_event__no_active_experiment(self):
+        project_config = self.project_config
+        user_id = 'test_user'
+
+        user_attributes = {'test_attribute': 'test_value', 'boolean_key': True}
+
+        impression_event = UserEventFactory.create_impression_event(
+            project_config, None, '111128', 'flag_key', 'rule_key', 'rule_type', True, user_id, user_attributes
+        )
+        self.assertIsNone(impression_event)
+
     def test_conversion_event(self):
         project_config = self.project_config
         user_id = 'test_user'
