@@ -265,7 +265,7 @@ class OptimizelyUserContext(object):
                                                                                 self.user_id)
 
                 reasons.append(user_has_forced_decision)
-                self.logger.debug(user_has_forced_decision)
+                self.logger.info(user_has_forced_decision)
 
                 return variation, reasons
 
@@ -280,6 +280,6 @@ class OptimizelyUserContext(object):
                         .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
 
                 reasons.append(user_has_forced_decision_but_invalid)
-                self.logger.debug(user_has_forced_decision_but_invalid)
+                self.logger.info(user_has_forced_decision_but_invalid)
 
         return None, reasons
