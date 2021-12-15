@@ -1521,6 +1521,31 @@ class UserContextTest(base.BaseTest):
 
         self.assertEqual(decide_decision.reasons, expected_reasons)
 
+    def test_should_return_valid_decision_after_setting_variation_of_different_experiment_in_forced_decision(self):
+        """
+        Should return valid decision after setting setting variation of different experiment in forced decision.
+        """
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        user_context = opt_obj.create_user_context("test_user", {})
+
+        context = OptimizelyUserContext.OptimizelyDecisionContext('test_feature_in_experiment_and_rollout',
+                                                                  'group_exp_2')
+        decision = OptimizelyUserContext.OptimizelyForcedDecision('211129')
+
+        status = user_context.set_forced_decision(context, decision)
+        self.assertTrue(status)
+        status = user_context.get_forced_decision(context)
+        self.assertEqual(status.variation_key, '211129')
+
+        decide_decision = user_context.decide('test_feature_in_experiment_and_rollout', ['INCLUDE_REASONS'])
+
+        self.assertEqual(decide_decision.variation_key, '211129')
+        self.assertEqual(decide_decision.rule_key, 'group_exp_2')
+        self.assertTrue(decide_decision.enabled)
+        self.assertEqual(decide_decision.flag_key, 'test_feature_in_experiment_and_rollout')
+        self.assertEqual(decide_decision.user_context.user_id, 'test_user')
+        self.assertEqual(decide_decision.user_context.get_user_attributes(), {})
+
     def test_should_return_valid_decision_after_setting_invalid_delivery_rule_variation_in_forced_decision(self):
         """
         Should return valid decision after setting invalid delivery rule variation in forced decision.
