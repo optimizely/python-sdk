@@ -28,7 +28,7 @@ class UserEventFactoryTest(base.BaseTest):
         variation = self.project_config.get_variation_from_id(experiment.key, '111128')
         user_id = 'test_user'
 
-        impression_event = UserEventFactory.create_impression_event(project_config, experiment, '111128', 'flag_key',
+        impression_event = UserEventFactory.create_impression_event(project_config, experiment, '111128', '',
                                                                     'rule_key', 'rule_type', True, user_id, None)
 
         self.assertEqual(self.project_config.project_id, impression_event.event_context.project_id)
@@ -51,7 +51,7 @@ class UserEventFactoryTest(base.BaseTest):
         user_attributes = {'test_attribute': 'test_value', 'boolean_key': True}
 
         impression_event = UserEventFactory.create_impression_event(
-            project_config, experiment, '111128', 'flag_key', 'rule_key', 'rule_type', True, user_id, user_attributes
+            project_config, experiment, '111128', '', 'rule_key', 'rule_type', True, user_id, user_attributes
         )
 
         expected_attrs = EventFactory.build_attribute_list(user_attributes, project_config)
