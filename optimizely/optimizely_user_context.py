@@ -16,8 +16,6 @@
 import copy
 import threading
 
-from .helpers import enums
-
 
 class OptimizelyUserContext(object):
     """
@@ -225,61 +223,3 @@ class OptimizelyUserContext(object):
 
             # must allow None to be returned for the Flags only case
             return self.forced_decisions_map.get(decision_context)
-
-    def find_validated_forced_decision(self, decision_context):
-        """
-        Gets forced decisions based on flag key, rule key and variation.
-
-        Args:
-            decision context: a decision context
-
-        Returns:
-            Variation of the forced decision.
-        """
-        reasons = []
-
-        forced_decision = self.find_forced_decision(decision_context)
-
-        flag_key = decision_context.flag_key
-        rule_key = decision_context.rule_key
-
-        if forced_decision:
-            # we use config here so we can use get_flag_variation() function which is defined in project_config
-            # otherwise we would us self.client instead of config
-            config = self.client.config_manager.get_config() if self.client else None
-            if not config:
-                return None, reasons
-            variation = config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
-            if variation:
-                if rule_key:
-                    user_has_forced_decision = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(forced_decision.variation_key,
-                                                                             flag_key,
-                                                                             rule_key,
-                                                                             self.user_id)
-
-                else:
-                    user_has_forced_decision = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision.variation_key,
-                                                                                flag_key,
-                                                                                self.user_id)
-
-                reasons.append(user_has_forced_decision)
-                self.logger.info(user_has_forced_decision)
-
-                return variation, reasons
-
-            else:
-                if rule_key:
-                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
-                                                                                         rule_key,
-                                                                                         self.user_id)
-                else:
-                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
-                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key, self.user_id)
-
-                reasons.append(user_has_forced_decision_but_invalid)
-                self.logger.info(user_has_forced_decision_but_invalid)
-
-        return None, reasons
