@@ -1,4 +1,4 @@
-# Copyright 2017-2021, Optimizely
+# Copyright 2017-2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -378,8 +378,8 @@ class DecisionService(object):
             # check forced decision first
             rule = rollout_rules[index]
             optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
-            forced_decision_variation, reasons_received = user.find_validated_forced_decision(
-                optimizely_decision_context)
+            forced_decision_variation, reasons_received = self.validated_forced_decision(
+                project_config, optimizely_decision_context, user)
             decide_reasons += reasons_received
 
             if forced_decision_variation:
@@ -464,8 +464,8 @@ class DecisionService(object):
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
                                                                                                   experiment.key)
 
-                    forced_decision_variation, reasons_received = user_context.find_validated_forced_decision(
-                        optimizely_decision_context)
+                    forced_decision_variation, reasons_received = self.validated_forced_decision(
+                        project_config, optimizely_decision_context, user_context)
                     decide_reasons += reasons_received
 
                     if forced_decision_variation:
@@ -489,3 +489,61 @@ class DecisionService(object):
         if rollout_variation_reasons:
             decide_reasons += rollout_variation_reasons
         return variation, decide_reasons
+
+    def validated_forced_decision(self, project_config, decision_context, user_context):
+        """
+        Gets forced decisions based on flag key, rule key and variation.
+
+        Args:
+            project_config: a project config
+            decision context: a decision context
+            user_context context: a user context
+
+        Returns:
+            Variation of the forced decision.
+        """
+        reasons = []
+
+        forced_decision = user_context.get_forced_decision(decision_context)
+
+        flag_key = decision_context.flag_key
+        rule_key = decision_context.rule_key
+
+        if forced_decision:
+            if not project_config:
+                return None, reasons
+            variation = project_config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
+            if variation:
+                if rule_key:
+                    user_has_forced_decision = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED.format(forced_decision.variation_key,
+                                                                             flag_key,
+                                                                             rule_key,
+                                                                             user_context.user_id)
+
+                else:
+                    user_has_forced_decision = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED.format(forced_decision.variation_key,
+                                                                                flag_key,
+                                                                                user_context.user_id)
+
+                reasons.append(user_has_forced_decision)
+                user_context.logger.info(user_has_forced_decision)
+
+                return variation, reasons
+
+            else:
+                if rule_key:
+                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
+                                                                                         rule_key,
+                                                                                         user_context.user_id)
+                else:
+                    user_has_forced_decision_but_invalid = enums.ForcedDecisionLogs \
+                        .USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID.format(flag_key,
+                                                                                            user_context.user_id)
+
+                reasons.append(user_has_forced_decision_but_invalid)
+                user_context.logger.info(user_has_forced_decision_but_invalid)
+
+        return None, reasons
