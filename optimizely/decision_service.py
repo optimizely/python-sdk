@@ -379,7 +379,7 @@ class DecisionService(object):
             rule = rollout_rules[index]
             optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
             forced_decision_variation, reasons_received = self.validated_forced_decision(
-                optimizely_decision_context, user)
+                project_config, optimizely_decision_context, user)
             decide_reasons += reasons_received
 
             if forced_decision_variation:
@@ -465,7 +465,7 @@ class DecisionService(object):
                                                                                                   experiment.key)
 
                     forced_decision_variation, reasons_received = self.validated_forced_decision(
-                        optimizely_decision_context, user_context)
+                        project_config, optimizely_decision_context, user_context)
                     decide_reasons += reasons_received
 
                     if forced_decision_variation:
@@ -490,11 +490,12 @@ class DecisionService(object):
             decide_reasons += rollout_variation_reasons
         return variation, decide_reasons
 
-    def validated_forced_decision(self, decision_context, user_context):
+    def validated_forced_decision(self, project_config, decision_context, user_context):
         """
         Gets forced decisions based on flag key, rule key and variation.
 
         Args:
+            project_config: a project config
             decision context: a decision context
             user_context context: a user context
 
@@ -503,18 +504,15 @@ class DecisionService(object):
         """
         reasons = []
 
-        forced_decision = user_context.find_forced_decision(decision_context)
+        forced_decision = user_context.get_forced_decision(decision_context)
 
         flag_key = decision_context.flag_key
         rule_key = decision_context.rule_key
 
         if forced_decision:
-            # we use config here so we can use get_flag_variation() function which is defined in project_config
-            # otherwise we would us user_context.client instead of config
-            config = user_context.client.config_manager.get_config() if user_context.client else None
-            if not config:
+            if not project_config:
                 return None, reasons
-            variation = config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
+            variation = project_config.get_flag_variation(flag_key, 'key', forced_decision.variation_key)
             if variation:
                 if rule_key:
                     user_has_forced_decision = enums.ForcedDecisionLogs \

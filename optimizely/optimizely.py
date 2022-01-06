@@ -1036,7 +1036,8 @@ class Optimizely(object):
 
         # Check forced decisions first
         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
-        forced_decision_response = self.decision_service.validated_forced_decision(optimizely_decision_context,
+        forced_decision_response = self.decision_service.validated_forced_decision(config,
+                                                                                   optimizely_decision_context,
                                                                                    user_context)
         variation, decision_reasons = forced_decision_response
         reasons += decision_reasons
