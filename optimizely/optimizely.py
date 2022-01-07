@@ -1,4 +1,4 @@
-# Copyright 2016-2021, Optimizely
+# Copyright 2016-2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -1036,7 +1036,9 @@ class Optimizely(object):
 
         # Check forced decisions first
         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
-        forced_decision_response = user_context.find_validated_forced_decision(optimizely_decision_context)
+        forced_decision_response = self.decision_service.validated_forced_decision(config,
+                                                                                   optimizely_decision_context,
+                                                                                   user_context)
         variation, decision_reasons = forced_decision_response
         reasons += decision_reasons
 
