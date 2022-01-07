@@ -12,9 +12,8 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
-#  - "3.10"
-before_install:
-  - python -m pip install --upgrade pip
+  - "3.10"
+before_install: "python -m pip install --upgrade pip"
 install: "pip install -r requirements/core.txt;pip install -r requirements/test.txt"
 script: "pytest --cov=optimizely"
 after_success:
@@ -69,10 +68,9 @@ jobs:
         SDK_BRANCH=$TRAVIS_PULL_REQUEST_BRANCH
         FULLSTACK_TEST_REPO=ProdTesting
     - stage: 'Test'
-      python: "pypy3.7-7.3.5"
+      python: "pypy3"
       before_install:
-#        - pip install "cryptography>=1.3.4,<=3.1.1"     # TODO: check if these versions can now be simplified - remove upper boundary <=3.1.1?
-        - pip install "cryptography>=1.3.4"     # TODO: check if these versions can now be simplified - remove upper boundary <=3.1.1?
+        - pip install "cryptography>=1.3.4,<=3.1.1"
     - stage: 'Test'
       dist: focal
       python: "3.7"
@@ -82,9 +80,9 @@ jobs:
     - stage: 'Test'
       dist: focal
       python: "3.9"
-#    - stage: 'Test'
-#      dist: focal
-#      python: "3.10"
+    - stage: 'Test'
+      dist: focal
+      python: "3.10"
 
     - stage: 'Source Clear'
       if: type = cron
