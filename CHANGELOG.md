@@ -4,7 +4,7 @@
 January 6th, 2022
 
 ### New Features
-* Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#369](https://github.com/optimizely/python-sdk/pull/369), [#365](https://github.com/optimizely/python-sdk/pull/365), [#361](https://github.com/optimizely/python-sdk/pull/361)):
+* Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#361](https://github.com/optimizely/python-sdk/pull/361), [#365](https://github.com/optimizely/python-sdk/pull/365), [#369](https://github.com/optimizely/python-sdk/pull/369)):
 	- setForcedDecision
 	- getForcedDecision
 	- removeForcedDecision
