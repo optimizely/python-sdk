@@ -1,7 +1,7 @@
 # Optimizely Python SDK Changelog
 
 ## 3.11.0
-January 6th, 2022
+January 10th, 2022
 
 ### New Features
 * Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#361](https://github.com/optimizely/python-sdk/pull/361), [#365](https://github.com/optimizely/python-sdk/pull/365), [#369](https://github.com/optimizely/python-sdk/pull/369)):
