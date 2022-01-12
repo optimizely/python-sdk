@@ -13,7 +13,6 @@
 
 import json
 import mock
-from six import PY2
 
 from optimizely.helpers import condition as condition_helper
 
@@ -394,13 +393,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
     def test_exact_int__returns_true__when_user_provided_value_is_equal_to_condition_value(self, ):
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                exact_int_condition_list, {'lasers_count': long(9000)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_int_condition_list, {'lasers_count': 9000}, self.mock_client_logger
         )
@@ -414,13 +406,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         self.assertStrictTrue(evaluator.evaluate(0))
 
     def test_exact_float__returns_true__when_user_provided_value_is_equal_to_condition_value(self, ):
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                exact_float_condition_list, {'lasers_count': long(9000)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             exact_float_condition_list, {'lasers_count': 9000}, self.mock_client_logger
@@ -599,13 +584,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                gt_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_greater_than_float__returns_true__when_user_value_greater_than_condition_value(self, ):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -619,13 +597,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         )
 
         self.assertStrictTrue(evaluator.evaluate(0))
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                gt_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
 
     def test_greater_than_int__returns_false__when_user_value_not_greater_than_condition_value(self, ):
 
@@ -641,13 +612,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                gt_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
-
     def test_greater_than_float__returns_false__when_user_value_not_greater_than_condition_value(self, ):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -661,13 +625,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         )
 
         self.assertStrictFalse(evaluator.evaluate(0))
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                gt_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
 
     def test_greater_than_int__returns_null__when_user_value_is_not_a_number(self):
 
@@ -733,13 +690,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                gt_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_greater_than_or_equal_float__returns_true__when_user_value_greater_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -760,13 +710,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                ge_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_greater_than_or_equal_int__returns_false__when_user_value_not_greater_than_or_equal_condition_value(
             self):
 
@@ -782,13 +725,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                ge_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
-
     def test_greater_than_or_equal_float__returns_false__when_user_value_not_greater_than_or_equal_condition_value(
             self):
 
@@ -803,13 +739,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         )
 
         self.assertStrictFalse(evaluator.evaluate(0))
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                ge_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
 
     def test_greater_than_or_equal_int__returns_null__when_user_value_is_not_a_number(self):
 
@@ -869,13 +798,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                lt_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_less_than_float__returns_true__when_user_value_less_than_condition_value(self, ):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -889,13 +811,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         )
 
         self.assertStrictTrue(evaluator.evaluate(0))
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                lt_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
 
     def test_less_than_int__returns_false__when_user_value_not_less_than_condition_value(self, ):
 
@@ -911,13 +826,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                lt_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
-
     def test_less_than_float__returns_false__when_user_value_not_less_than_condition_value(self, ):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -931,13 +839,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         )
 
         self.assertStrictFalse(evaluator.evaluate(0))
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                lt_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
 
     def test_less_than_int__returns_null__when_user_value_is_not_a_number(self):
 
@@ -991,19 +892,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                le_int_condition_list, {'meters_travelled': long(47)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                le_int_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_less_than_or_equal_float__returns_true__when_user_value_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -1024,13 +912,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictTrue(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                le_float_condition_list, {'meters_travelled': long(48)}, self.mock_client_logger,
-            )
-
-            self.assertStrictTrue(evaluator.evaluate(0))
-
     def test_less_than_or_equal_int__returns_false__when_user_value_not_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -1045,13 +926,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
 
         self.assertStrictFalse(evaluator.evaluate(0))
 
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                le_int_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
-
     def test_less_than_or_equal_float__returns_false__when_user_value_not_less_than_or_equal_condition_value(self):
 
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
@@ -1065,13 +939,6 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         )
 
         self.assertStrictFalse(evaluator.evaluate(0))
-
-        if PY2:
-            evaluator = condition_helper.CustomAttributeConditionEvaluator(
-                le_float_condition_list, {'meters_travelled': long(49)}, self.mock_client_logger,
-            )
-
-            self.assertStrictFalse(evaluator.evaluate(0))
 
     def test_less_than_or_equal_int__returns_null__when_user_value_is_not_a_number(self):
 
