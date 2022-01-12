@@ -14,8 +14,6 @@
 import json
 import mock
 
-from six import PY2
-
 from optimizely import config_manager
 from optimizely import error_handler
 from optimizely import event_dispatcher
@@ -230,12 +228,6 @@ class ValidatorTest(base.BaseTest):
 
         mock_is_finite.assert_called_once_with(5.5)
 
-        if PY2:
-            with mock.patch('optimizely.helpers.validator.is_finite_number', return_value=None) as mock_is_finite:
-                self.assertIsNone(validator.is_attribute_valid('test_attribute', long(5)))
-
-            mock_is_finite.assert_called_once_with(long(5))
-
     def test_is_finite_number(self):
         """ Test that it returns true if value is a number and not NAN, INF, -INF or greater than 2^53.
         Otherwise False.
@@ -257,9 +249,6 @@ class ValidatorTest(base.BaseTest):
         self.assertFalse(validator.is_finite_number(-int(2 ** 53) - 1))
         self.assertFalse(validator.is_finite_number(float(2 ** 53) + 2.0))
         self.assertFalse(validator.is_finite_number(-float(2 ** 53) - 2.0))
-        if PY2:
-            self.assertFalse(validator.is_finite_number(long(2 ** 53) + 1))
-            self.assertFalse(validator.is_finite_number(-long(2 ** 53) - 1))
 
         # test valid numbers
         self.assertTrue(validator.is_finite_number(0))
@@ -269,8 +258,6 @@ class ValidatorTest(base.BaseTest):
         self.assertTrue(validator.is_finite_number(float(2 ** 53) + 1.0))
         self.assertTrue(validator.is_finite_number(-float(2 ** 53) - 1.0))
         self.assertTrue(validator.is_finite_number(int(2 ** 53)))
-        if PY2:
-            self.assertTrue(validator.is_finite_number(long(2 ** 53)))
 
 
 class DatafileValidationTests(base.BaseTest):
