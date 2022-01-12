@@ -1,7 +1,7 @@
 # Optimizely Python SDK Changelog
 
-## 3.11.0
-January 10th, 2022
+## 4.0.0
+January 12th, 2022
 
 ### New Features
 * Add a set of new APIs for overriding and managing user-level flag, experiment and delivery rule decisions. These methods can be used for QA and automated testing purposes. They are an extension of the OptimizelyUserContext interface ([#361](https://github.com/optimizely/python-sdk/pull/361), [#365](https://github.com/optimizely/python-sdk/pull/365), [#369](https://github.com/optimizely/python-sdk/pull/369)):
@@ -11,6 +11,12 @@ January 10th, 2022
 	- removeAllForcedDecisions
 
 * For details, refer to our documentation pages: [OptimizelyUserContext](https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyusercontext-python) and [Forced Decision methods](https://docs.developers.optimizely.com/full-stack/v4.0/docs/forced-decision-methods-python).
+
+### Breaking:
+
+* Support for `Python v3.4` has been dropped as of this release due to a security vulnerability with `PyYAML <v5.4`. ([#366](https://github.com/optimizely/python-sdk/pull/366))
+* We no longer support `Python v2.7, v3.5, and v3.6` including `PyPy` as of this release. ([#377](https://github.com/optimizely/python-sdk/pull/373))
+* We now support `Python v3.7 and above` including `PyPy3`.
 
 ## 3.10.0
 September 16th, 2021
