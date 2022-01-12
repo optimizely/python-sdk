@@ -12,7 +12,7 @@ January 12th, 2022
 
 * For details, refer to our documentation pages: [OptimizelyUserContext](https://docs.developers.optimizely.com/full-stack/v4.0/docs/optimizelyusercontext-python) and [Forced Decision methods](https://docs.developers.optimizely.com/full-stack/v4.0/docs/forced-decision-methods-python).
 
-### Breaking:
+### Breaking Changes:
 
 * Support for `Python v3.4` has been dropped as of this release due to a security vulnerability with `PyYAML <v5.4`. ([#366](https://github.com/optimizely/python-sdk/pull/366))
 * We no longer support `Python v2.7, v3.5, and v3.6` including `PyPy` as of this release. ([#377](https://github.com/optimizely/python-sdk/pull/373))
