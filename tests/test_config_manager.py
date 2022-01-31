@@ -77,7 +77,7 @@ class StaticConfigManagerTest(base.BaseTest):
         mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
 
         self.assertIsInstance(
-            project_config_manager.optimizely_config,
+            project_config_manager.get_optimizely_config(),
             optimizely_config.OptimizelyConfig
         )
 
@@ -99,7 +99,7 @@ class StaticConfigManagerTest(base.BaseTest):
         )
         self.assertEqual(1, mock_logger.debug.call_count)
         mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
-        self.assertEqual(1, mock_opt_service.call_count)
+        self.assertEqual(0, mock_opt_service.call_count)
 
         mock_logger.reset_mock()
         mock_notification_center.reset_mock()
@@ -128,7 +128,7 @@ class StaticConfigManagerTest(base.BaseTest):
         )
         self.assertEqual(1, mock_logger.debug.call_count)
         mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
-        self.assertEqual('1', project_config_manager.optimizely_config.revision)
+        self.assertEqual('1', project_config_manager.get_optimizely_config().revision)
 
         mock_logger.reset_mock()
         mock_notification_center.reset_mock()
@@ -141,7 +141,7 @@ class StaticConfigManagerTest(base.BaseTest):
         )
         self.assertEqual(1, mock_logger.debug.call_count)
         mock_notification_center.send_notifications.assert_called_once_with('OPTIMIZELY_CONFIG_UPDATE')
-        self.assertEqual('42', project_config_manager.optimizely_config.revision)
+        self.assertEqual('42', project_config_manager.get_optimizely_config().revision)
 
     def test_set_config__schema_validation(self):
         """ Test set_config calls or does not call schema validation based on skip_json_validation value. """

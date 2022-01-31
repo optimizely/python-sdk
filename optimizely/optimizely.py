@@ -944,7 +944,7 @@ class Optimizely(object):
 
         # Customized Config Manager may not have optimizely_config defined.
         if hasattr(self.config_manager, 'optimizely_config'):
-            return self.config_manager.optimizely_config
+            return self.config_manager.get_optimizely_config()
 
         return OptimizelyConfigService(project_config).get_config()
 

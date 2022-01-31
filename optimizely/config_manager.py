@@ -130,7 +130,8 @@ class StaticConfigManager(BaseConfigManager):
             return
 
         self._config = config
-        self.optimizely_config = OptimizelyConfigService(config).get_config()
+        if self.optimizely_config is not None:
+            self.optimizely_config = OptimizelyConfigService(self._config).get_config()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
@@ -145,6 +146,12 @@ class StaticConfigManager(BaseConfigManager):
         """
 
         return self._config
+
+    def get_optimizely_config(self):
+        if self.optimizely_config is None:
+            self.optimizely_config = OptimizelyConfigService(self._config).get_config()
+
+        return self.optimizely_config
 
 
 class PollingConfigManager(StaticConfigManager):
