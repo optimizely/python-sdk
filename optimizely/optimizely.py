@@ -52,7 +52,10 @@ class Optimizely(object):
             notification_center=None,
             event_processor=None,
             datafile_access_token=None,
-            default_decide_options=None
+            default_decide_options=None,
+            batch_size=1,
+            flush_interval=30,
+            timeout_interval=5
     ):
         """ Optimizely init method for managing Custom projects.
 
@@ -90,7 +93,7 @@ class Optimizely(object):
         self.notification_center = notification_center or NotificationCenter(self.logger)
         self.event_processor = event_processor or BatchEventProcessor(
             self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
-            batch_size=1
+            batch_size=batch_size, flush_interval=flush_interval, timeout_interval=timeout_interval
         )
 
         if default_decide_options is None:
