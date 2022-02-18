@@ -27,7 +27,7 @@ from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .decision_service import Decision
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
-from .event.event_processor import ForwardingEventProcessor
+from .event.event_processor import BatchEventProcessor
 from .event_dispatcher import EventDispatcher as default_event_dispatcher
 from .helpers import enums, validator
 from .helpers.enums import DecisionSources
@@ -88,8 +88,9 @@ class Optimizely(object):
         self.error_handler = error_handler or noop_error_handler
         self.config_manager = config_manager
         self.notification_center = notification_center or NotificationCenter(self.logger)
-        self.event_processor = event_processor or ForwardingEventProcessor(
+        self.event_processor = event_processor or BatchEventProcessor(
             self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
+            batch_size=1
         )
 
         if default_decide_options is None:
