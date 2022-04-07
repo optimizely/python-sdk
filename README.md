@@ -12,15 +12,12 @@ Full Stack and Optimizely Rollouts.
 Optimizely Full Stack is A/B testing and feature flag management for
 product development teams. Experiment in any application. Make every
 feature on your roadmap an opportunity to learn. Learn more at
-<https://www.optimizely.com/platform/full-stack/>, or see the [Full
-Stack
-documentation](https://docs.developers.optimizely.com/full-stack/docs).
+<https://www.optimizely.com/platform/full-stack/>, or see the [Full Stack documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/welcome).
 
 Optimizely Rollouts is free feature flags for development teams. Easily
 roll out and roll back features in any application without code deploys.
 Mitigate risk for every feature on your roadmap. Learn more at
-<https://www.optimizely.com/rollouts/>, or see the [Rollouts
-documentation](https://docs.developers.optimizely.com/rollouts/docs).
+<https://www.optimizely.com/rollouts/>, or see the [Rollouts documentation](https://docs.developers.optimizely.com/experimentation/v3.1.0-full-stack/docs/introduction-to-rollouts).
 
 ## Getting Started
 
@@ -158,8 +155,7 @@ notifications, use:
 notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)
 ```
 
-For Further details see the Optimizely [Full Stack documentation](https://docs.developers.optimizely.com/full-stack/docs)
-to learn how to set up your first Python project and use the SDK.
+For Further details see the Optimizely Full Stack Python SDK [developer documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/python-sdk) to learn how to set up your first Python project and use the SDK.
 
 ## Development
 
