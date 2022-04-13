@@ -34,7 +34,7 @@ jobs:
         echo "TRAVIS_BRANCH=${{ github.ref_name }}" >> $GITHUB_ENV
     - name: Trigger build
       env:
-        SDK: java
+        SDK: python
         FULLSTACK_TEST_REPO: ${{ inputs.FULLSTACK_TEST_REPO }}
         BUILD_NUMBER: ${{ github.run_id }}
         TESTAPP_BRANCH: master
