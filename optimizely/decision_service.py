@@ -89,16 +89,15 @@ class DecisionService(object):
                 if experiment_id in experiment_to_variation_map:
                     del self.forced_variation_map[user_id][experiment_id]
                     self.logger.debug(
-                        'Variation mapped to experiment "%s" has been removed for user "%s".'
-                        % (experiment_key, user_id)
+                        f'Variation mapped to experiment "{experiment_key}" has been removed for user "{user_id}".'
                     )
                 else:
                     self.logger.debug(
-                        'Nothing to remove. Variation mapped to experiment "%s" for user "%s" does not exist.'
-                        % (experiment_key, user_id)
+                        f'Nothing to remove. Variation mapped to experiment "{experiment_key}" for '
+                        f'user "{user_id}" does not exist.'
                     )
             else:
-                self.logger.debug('Nothing to remove. User "%s" does not exist in the forced variation map.' % user_id)
+                self.logger.debug(f'Nothing to remove. User "{user_id}" does not exist in the forced variation map.')
             return True
 
         if not validator.is_non_empty_string(variation_key):
@@ -118,8 +117,8 @@ class DecisionService(object):
             self.forced_variation_map[user_id][experiment_id] = variation_id
 
         self.logger.debug(
-            'Set variation "%s" for experiment "%s" and user "%s" in the forced variation map.'
-            % (variation_id, experiment_id, user_id)
+            f'Set variation "{variation_id}" for experiment "{experiment_id}" and '
+            f'user "{user_id}" in the forced variation map.'
         )
         return True
 
@@ -137,7 +136,7 @@ class DecisionService(object):
         """
         decide_reasons = []
         if user_id not in self.forced_variation_map:
-            message = 'User "%s" is not in the forced variation map.' % user_id
+            message = f'User "{user_id}" is not in the forced variation map.'
             self.logger.debug(message)
             return None, decide_reasons
 
@@ -149,24 +148,20 @@ class DecisionService(object):
         experiment_to_variation_map = self.forced_variation_map.get(user_id)
 
         if not experiment_to_variation_map:
-            message = 'No experiment "%s" mapped to user "%s" in the forced variation map.' % (experiment_key, user_id)
-            self.logger.debug(
-                message
-            )
+            message = f'No experiment "{experiment_key}" mapped to user "{user_id}" in the forced variation map.'
+            self.logger.debug(message)
             return None, decide_reasons
 
         variation_id = experiment_to_variation_map.get(experiment.id)
         if variation_id is None:
-            message = 'No variation mapped to experiment "%s" in the forced variation map.' % experiment_key
+            message = f'No variation mapped to experiment "{experiment_key}" in the forced variation map.'
             self.logger.debug(message)
             return None, decide_reasons
 
         variation = project_config.get_variation_from_id(experiment_key, variation_id)
-        message = 'Variation "%s" is mapped to experiment "%s" and user "%s" in the forced variation map' \
-                  % (variation.key, experiment_key, user_id)
-        self.logger.debug(
-            message
-        )
+        message = f'Variation "{variation.key}" is mapped to experiment "{experiment_key}" and ' \
+                  f'user "{user_id}" in the forced variation map'
+        self.logger.debug(message)
         decide_reasons.append(message)
         return variation, decide_reasons
 
@@ -191,7 +186,7 @@ class DecisionService(object):
             forced_variation = project_config.get_variation_from_key(experiment.key, forced_variation_key)
 
             if forced_variation:
-                message = 'User "%s" is forced in variation "%s".' % (user_id, forced_variation_key)
+                message = f'User "{user_id}" is forced in variation "{forced_variation_key}".'
                 self.logger.info(message)
                 decide_reasons.append(message)
 
@@ -216,11 +211,9 @@ class DecisionService(object):
         if variation_id:
             variation = project_config.get_variation_from_id(experiment.key, variation_id)
             if variation:
-                message = 'Found a stored decision. User "%s" is in variation "%s" of experiment "%s".' \
-                          % (user_id, variation.key, experiment.key)
-                self.logger.info(
-                    message
-                )
+                message = f'Found a stored decision. User "{user_id}" is in ' \
+                          f'variation "{variation.key}" of experiment "{experiment.key}".'
+                self.logger.info(message)
                 return variation
 
         return None
@@ -255,7 +248,7 @@ class DecisionService(object):
         decide_reasons = []
         # Check if experiment is running
         if not experiment_helper.is_experiment_running(experiment):
-            message = 'Experiment "%s" is not running.' % experiment.key
+            message = f'Experiment "{experiment.key}" is not running.'
             self.logger.info(message)
             decide_reasons.append(message)
             return None, decide_reasons
@@ -278,15 +271,15 @@ class DecisionService(object):
             try:
                 retrieved_profile = self.user_profile_service.lookup(user_id)
             except:
-                self.logger.exception('Unable to retrieve user profile for user "{}" as lookup failed.'.format(user_id))
+                self.logger.exception(f'Unable to retrieve user profile for user "{user_id}" as lookup failed.')
                 retrieved_profile = None
 
             if validator.is_user_profile_valid(retrieved_profile):
                 user_profile = UserProfile(**retrieved_profile)
                 variation = self.get_stored_variation(project_config, experiment, user_profile)
                 if variation:
-                    message = 'Returning previously activated variation ID "{}" of experiment ' \
-                              '"{}" for user "{}" from user profile.'.format(variation, experiment, user_id)
+                    message = f'Returning previously activated variation ID "{variation}" of experiment ' \
+                              f'"{experiment}" for user "{user_id}" from user profile.'
                     self.logger.info(message)
                     decide_reasons.append(message)
                     return variation, decide_reasons
@@ -302,10 +295,8 @@ class DecisionService(object):
             attributes, self.logger)
         decide_reasons += reasons_received
         if not user_meets_audience_conditions:
-            message = 'User "{}" does not meet conditions to be in experiment "{}".'.format(user_id, experiment.key)
-            self.logger.info(
-                message
-            )
+            message = f'User "{user_id}" does not meet conditions to be in experiment "{experiment.key}".'
+            self.logger.info(message)
             decide_reasons.append(message)
             return None, decide_reasons
 
@@ -315,10 +306,8 @@ class DecisionService(object):
         variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
         decide_reasons += bucket_reasons
         if variation:
-            message = 'User "%s" is in variation "%s" of experiment %s.' % (user_id, variation.key, experiment.key)
-            self.logger.info(
-                message
-            )
+            message = f'User "{user_id}" is in variation "{variation.key}" of experiment {experiment.key}.'
+            self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
             if not ignore_user_profile and self.user_profile_service:
@@ -326,9 +315,9 @@ class DecisionService(object):
                     user_profile.save_variation_for_experiment(experiment.id, variation.id)
                     self.user_profile_service.save(user_profile.__dict__)
                 except:
-                    self.logger.exception('Unable to save user profile for user "{}".'.format(user_id))
+                    self.logger.exception(f'Unable to save user profile for user "{user_id}".')
             return variation, decide_reasons
-        message = 'User "%s" is in no variation.' % user_id
+        message = f'User "{user_id}" is in no variation.'
         self.logger.info(message)
         decide_reasons.append(message)
         return None, decide_reasons
@@ -358,7 +347,7 @@ class DecisionService(object):
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
 
         if not rollout:
-            message = 'There is no rollout of feature {}.'.format(feature.key)
+            message = f'There is no rollout of feature {feature.key}.'
             self.logger.debug(message)
             decide_reasons.append(message)
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
@@ -366,7 +355,7 @@ class DecisionService(object):
         rollout_rules = project_config.get_rollout_experiments(rollout)
 
         if not rollout_rules:
-            message = 'Rollout {} has no experiments.'.format(rollout.id)
+            message = f'Rollout {rollout.id} has no experiments.'
             self.logger.debug(message)
             decide_reasons.append(message)
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
@@ -402,7 +391,7 @@ class DecisionService(object):
             decide_reasons += reasons_received_audience
 
             if audience_decision_response:
-                message = 'User "{}" meets audience conditions for targeting rule {}.'.format(user_id, logging_key)
+                message = f'User "{user_id}" meets audience conditions for targeting rule {logging_key}.'
                 self.logger.debug(message)
                 decide_reasons.append(message)
 
@@ -411,7 +400,7 @@ class DecisionService(object):
                 decide_reasons.extend(bucket_reasons)
 
                 if bucketed_variation:
-                    message = 'User "{}" bucketed into a targeting rule {}.'.format(user_id, logging_key)
+                    message = f'User "{user_id}" bucketed into a targeting rule {logging_key}.'
                     self.logger.debug(message)
                     decide_reasons.append(message)
                     return Decision(experiment=rule, variation=bucketed_variation,
@@ -419,8 +408,8 @@ class DecisionService(object):
 
                 elif not everyone_else:
                     # skip this logging for EveryoneElse since this has a message not for everyone_else
-                    message = 'User "{}" not bucketed into a targeting rule {}. ' \
-                              'Checking "Everyone Else" rule now.'.format(user_id, logging_key)
+                    message = f'User "{user_id}" not bucketed into a targeting rule {logging_key}. ' \
+                              'Checking "Everyone Else" rule now.'
                     self.logger.debug(message)
                     decide_reasons.append(message)
 
@@ -428,8 +417,7 @@ class DecisionService(object):
                     skip_to_everyone_else = True
 
             else:
-                message = 'User "{}" does not meet audience conditions for targeting rule {}.'.format(
-                    user_id, logging_key)
+                message = f'User "{user_id}" does not meet audience conditions for targeting rule {logging_key}.'
                 self.logger.debug(message)
                 decide_reasons.append(message)
 
@@ -476,14 +464,14 @@ class DecisionService(object):
                         decide_reasons += variation_reasons
 
                     if decision_variation:
-                        message = 'User "{}" bucketed into a experiment "{}" of feature "{}".'.format(
-                            user_context.user_id, experiment.key, feature.key)
+                        message = f'User "{user_context.user_id}" bucketed into a ' \
+                                  f'experiment "{experiment.key}" of feature "{feature.key}".'
                         self.logger.debug(message)
                         return Decision(experiment, decision_variation,
                                         enums.DecisionSources.FEATURE_TEST), decide_reasons
 
-        message = 'User "{}" is not bucketed into any of the experiments on the feature "{}".'.format(
-            user_context.user_id, feature.key)
+        message = f'User "{user_context.user_id}" is not bucketed into any of the ' \
+                  f'experiments on the feature "{feature.key}".'
         self.logger.debug(message)
         variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
         if rollout_variation_reasons:

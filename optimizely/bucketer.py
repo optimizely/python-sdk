@@ -72,9 +72,8 @@ class Bucketer(object):
         """
         bucketing_key = BUCKETING_ID_TEMPLATE.format(bucketing_id=bucketing_id, parent_id=parent_id)
         bucketing_number = self._generate_bucket_value(bucketing_key)
-        message = 'Assigned bucket %s to user with bucketing ID "%s".' % (bucketing_number, bucketing_id)
         project_config.logger.debug(
-            message
+            f'Assigned bucket {bucketing_number} to user with bucketing ID "{bucketing_id}".'
         )
 
         for traffic_allocation in traffic_allocations:
@@ -115,24 +114,19 @@ class Bucketer(object):
             )
 
             if not user_experiment_id:
-                message = 'User "%s" is in no experiment.' % user_id
+                message = f'User "{user_id}" is in no experiment.'
                 project_config.logger.info(message)
                 decide_reasons.append(message)
                 return None, decide_reasons
 
             if user_experiment_id != experiment.id:
-                message = 'User "%s" is not in experiment "%s" of group %s.' \
-                          % (user_id, experiment.key, experiment.groupId)
-                project_config.logger.info(
-                    message
-                )
+                message = f'User "{user_id}" is not in experiment "{experiment.key}" of group {experiment.groupId}.'
+                project_config.logger.info(message)
                 decide_reasons.append(message)
                 return None, decide_reasons
 
-            message = 'User "%s" is in experiment %s of group %s.' % (user_id, experiment.key, experiment.groupId)
-            project_config.logger.info(
-                message
-            )
+            message = f'User "{user_id}" is in experiment {experiment.key} of group {experiment.groupId}.'
+            project_config.logger.info(message)
             decide_reasons.append(message)
 
         # Bucket user if not in white-list and in group (if any)

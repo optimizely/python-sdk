@@ -105,7 +105,7 @@ class GetLoggerTests(unittest.TestCase):
 
     def test_reset_logger__replaces_handlers(self):
         """Test that reset_logger replaces existing handlers with a StreamHandler."""
-        logger_name = 'test-logger-{}'.format(uuid.uuid4())
+        logger_name = f'test-logger-{uuid.uuid4()}'
         logger = logging.getLogger(logger_name)
         logger.handlers = [logging.StreamHandler() for _ in range(10)]
 
@@ -121,7 +121,7 @@ class GetLoggerTests(unittest.TestCase):
     def test_reset_logger__with_handler__existing(self):
         """Test that reset_logger deals with provided handlers correctly."""
         existing_handler = logging.NullHandler()
-        logger_name = 'test-logger-{}'.format(uuid.uuid4())
+        logger_name = f'test-logger-{uuid.uuid4()}'
         reset_logger = _logger.reset_logger(logger_name, handler=existing_handler)
         self.assertEqual(1, len(reset_logger.handlers))
 
@@ -133,6 +133,6 @@ class GetLoggerTests(unittest.TestCase):
 
     def test_reset_logger__with_level(self):
         """Test that reset_logger sets log levels correctly."""
-        logger_name = 'test-logger-{}'.format(uuid.uuid4())
+        logger_name = f'test-logger-{uuid.uuid4()}'
         reset_logger = _logger.reset_logger(logger_name, level=logging.DEBUG)
         self.assertEqual(logging.DEBUG, reset_logger.level)

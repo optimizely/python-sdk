@@ -134,7 +134,7 @@ class StaticConfigManager(BaseConfigManager):
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
         self.logger.debug(
             'Received new datafile and updated config. '
-            'Old revision number: {}. New revision number: {}.'.format(previous_revision, config.get_revision())
+            f'Old revision number: {previous_revision}. New revision number: {config.get_revision()}.'
         )
 
     def get_config(self):
@@ -231,7 +231,7 @@ class PollingConfigManager(StaticConfigManager):
                 return url_template.format(sdk_key=sdk_key)
             except (AttributeError, KeyError):
                 raise optimizely_exceptions.InvalidInputException(
-                    'Invalid url_template {} provided.'.format(url_template)
+                    f'Invalid url_template {url_template} provided.'
                 )
 
         return url
@@ -265,19 +265,18 @@ class PollingConfigManager(StaticConfigManager):
         """
         if update_interval is None:
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
-            self.logger.debug('Setting config update interval to default value {}.'.format(update_interval))
+            self.logger.debug(f'Setting config update interval to default value {update_interval}.')
 
         if not isinstance(update_interval, (int, float)):
             raise optimizely_exceptions.InvalidInputException(
-                'Invalid update_interval "{}" provided.'.format(update_interval)
+                f'Invalid update_interval "{update_interval}" provided.'
             )
 
         # If polling interval is less than or equal to 0 then set it to default update interval.
         if update_interval <= 0:
             self.logger.debug(
-                'update_interval value {} too small. Defaulting to {}'.format(
-                    update_interval, enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
-                )
+                f'update_interval value {update_interval} too small. '
+                f'Defaulting to {enums.ConfigManager.DEFAULT_UPDATE_INTERVAL}'
             )
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
@@ -291,19 +290,18 @@ class PollingConfigManager(StaticConfigManager):
         """
         if blocking_timeout is None:
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
-            self.logger.debug('Setting config blocking timeout to default value {}.'.format(blocking_timeout))
+            self.logger.debug(f'Setting config blocking timeout to default value {blocking_timeout}.')
 
         if not isinstance(blocking_timeout, (numbers.Integral, float)):
             raise optimizely_exceptions.InvalidInputException(
-                'Invalid blocking timeout "{}" provided.'.format(blocking_timeout)
+                f'Invalid blocking timeout "{blocking_timeout}" provided.'
             )
 
         # If blocking timeout is less than 0 then set it to default blocking timeout.
         if blocking_timeout < 0:
             self.logger.debug(
-                'blocking timeout value {} too small. Defaulting to {}'.format(
-                    blocking_timeout, enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
-                )
+                f'blocking timeout value {blocking_timeout} too small. '
+                f'Defaulting to {enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT}'
             )
             blocking_timeout = enums.ConfigManager.DEFAULT_BLOCKING_TIMEOUT
 
@@ -326,12 +324,12 @@ class PollingConfigManager(StaticConfigManager):
         try:
             response.raise_for_status()
         except requests_exceptions.RequestException as err:
-            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+            self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
 
         # Leave datafile and config unchanged if it has not been modified.
         if response.status_code == http_status_codes.not_modified:
-            self.logger.debug('Not updating config as datafile has not updated since {}.'.format(self.last_modified))
+            self.logger.debug(f'Not updating config as datafile has not updated since {self.last_modified}.')
             return
 
         self.set_last_modified(response.headers)
@@ -349,7 +347,7 @@ class PollingConfigManager(StaticConfigManager):
                 self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
             )
         except requests_exceptions.RequestException as err:
-            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+            self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
 
         self._handle_response(response)
@@ -367,7 +365,7 @@ class PollingConfigManager(StaticConfigManager):
                 time.sleep(self.update_interval)
         except (OSError, OverflowError) as err:
             self.logger.error(
-                'Error in time.sleep. ' 'Provided update_interval value may be too big. Error: {}'.format(str(err))
+                f'Error in time.sleep. Provided update_interval value may be too big. Error: {err}'
             )
             raise
 
@@ -421,7 +419,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
                 self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
             )
         except requests_exceptions.RequestException as err:
-            self.logger.error('Fetching datafile from {} failed. Error: {}'.format(self.datafile_url, str(err)))
+            self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
 
         self._handle_response(response)

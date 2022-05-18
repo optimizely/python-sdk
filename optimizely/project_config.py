@@ -309,7 +309,7 @@ class ProjectConfig(object):
         if experiment:
             return experiment
 
-        self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
+        self.logger.error(f'Experiment key "{experiment_key}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
@@ -328,7 +328,7 @@ class ProjectConfig(object):
         if experiment:
             return experiment
 
-        self.logger.error('Experiment ID "%s" is not in datafile.' % experiment_id)
+        self.logger.error(f'Experiment ID "{experiment_id}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
@@ -347,7 +347,7 @@ class ProjectConfig(object):
         if group:
             return group
 
-        self.logger.error('Group ID "%s" is not in datafile.' % group_id)
+        self.logger.error(f'Group ID "{group_id}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidGroupException(enums.Errors.INVALID_GROUP_ID))
         return None
 
@@ -365,7 +365,7 @@ class ProjectConfig(object):
         if audience:
             return audience
 
-        self.logger.error('Audience ID "%s" is not in datafile.' % audience_id)
+        self.logger.error(f'Audience ID "{audience_id}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE)))
 
     def get_variation_from_key(self, experiment_key, variation_key):
@@ -387,11 +387,11 @@ class ProjectConfig(object):
             if variation:
                 return variation
             else:
-                self.logger.error('Variation key "%s" is not in datafile.' % variation_key)
+                self.logger.error(f'Variation key "{variation_key}" is not in datafile.')
                 self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
                 return None
 
-        self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
+        self.logger.error(f'Experiment key "{experiment_key}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
@@ -413,11 +413,11 @@ class ProjectConfig(object):
             if variation:
                 return variation
             else:
-                self.logger.error('Variation ID "%s" is not in datafile.' % variation_id)
+                self.logger.error(f'Variation ID "{variation_id}" is not in datafile.')
                 self.error_handler.handle_error(exceptions.InvalidVariationException(enums.Errors.INVALID_VARIATION))
                 return None
 
-        self.logger.error('Experiment key "%s" is not in datafile.' % experiment_key)
+        self.logger.error(f'Experiment key "{experiment_key}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
@@ -436,7 +436,7 @@ class ProjectConfig(object):
         if event:
             return event
 
-        self.logger.error('Event "%s" is not in datafile.' % event_key)
+        self.logger.error(f'Event "{event_key}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY))
         return None
 
@@ -457,8 +457,8 @@ class ProjectConfig(object):
             if has_reserved_prefix:
                 self.logger.warning(
                     (
-                        'Attribute %s unexpectedly has reserved prefix %s; using attribute ID '
-                        'instead of reserved attribute name.' % (attribute_key, RESERVED_ATTRIBUTE_PREFIX)
+                        f'Attribute {attribute_key} unexpectedly has reserved prefix {RESERVED_ATTRIBUTE_PREFIX};'
+                        f' using attribute ID instead of reserved attribute name.'
                     )
                 )
 
@@ -467,7 +467,7 @@ class ProjectConfig(object):
         if has_reserved_prefix:
             return attribute_key
 
-        self.logger.error('Attribute "%s" is not in datafile.' % attribute_key)
+        self.logger.error(f'Attribute "{attribute_key}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE))
         return None
 
@@ -486,7 +486,7 @@ class ProjectConfig(object):
         if feature:
             return feature
 
-        self.logger.error('Feature "%s" is not in datafile.' % feature_key)
+        self.logger.error(f'Feature "{feature_key}" is not in datafile.')
         return None
 
     def get_rollout_from_id(self, rollout_id):
@@ -504,7 +504,7 @@ class ProjectConfig(object):
         if layer:
             return layer
 
-        self.logger.error('Rollout with ID "%s" is not in datafile.' % rollout_id)
+        self.logger.error(f'Rollout with ID "{rollout_id}" is not in datafile.')
         return None
 
     def get_variable_value_for_variation(self, variable, variation):
@@ -521,7 +521,7 @@ class ProjectConfig(object):
         if not variable or not variation:
             return None
         if variation.id not in self.variation_variable_usage_map:
-            self.logger.error('Variation with ID "%s" is not in the datafile.' % variation.id)
+            self.logger.error(f'Variation with ID "{variation.id}" is not in the datafile.')
             return None
 
         # Get all variable usages for the given variation
@@ -553,11 +553,11 @@ class ProjectConfig(object):
 
         feature = self.feature_key_map.get(feature_key)
         if not feature:
-            self.logger.error('Feature with key "%s" not found in the datafile.' % feature_key)
+            self.logger.error(f'Feature with key "{feature_key}" not found in the datafile.')
             return None
 
         if variable_key not in feature.variables:
-            self.logger.error('Variable with key "%s" not found in the datafile.' % variable_key)
+            self.logger.error(f'Variable with key "{variable_key}" not found in the datafile.')
             return None
 
         return feature.variables.get(variable_key)
@@ -612,8 +612,9 @@ class ProjectConfig(object):
                 variation_id in self.variation_id_map_by_experiment_id[experiment_id]):
             return self.variation_id_map_by_experiment_id[experiment_id][variation_id]
 
-        self.logger.error('Variation with id "%s" not defined in the datafile for experiment "%s".' %
-                          (variation_id, experiment_id))
+        self.logger.error(
+            f'Variation with id "{variation_id}" not defined in the datafile for experiment "{experiment_id}".'
+        )
 
         return {}
 
@@ -628,8 +629,9 @@ class ProjectConfig(object):
                 variation_key in self.variation_key_map_by_experiment_id[experiment_id]):
             return self.variation_key_map_by_experiment_id[experiment_id][variation_key]
 
-        self.logger.error('Variation with key "%s" not defined in the datafile for experiment "%s".' %
-                          (variation_key, experiment_id))
+        self.logger.error(
+            f'Variation with key "{variation_key}" not defined in the datafile for experiment "{experiment_id}".'
+        )
 
         return {}
 

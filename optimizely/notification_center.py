@@ -45,7 +45,7 @@ class NotificationCenter(object):
     """
 
         if notification_type not in NOTIFICATION_TYPES:
-            self.logger.error('Invalid notification_type: {} provided. Not adding listener.'.format(notification_type))
+            self.logger.error(f'Invalid notification_type: {notification_type} provided. Not adding listener.')
             return -1
 
         for _, listener in self.notification_listeners[notification_type]:
@@ -86,7 +86,7 @@ class NotificationCenter(object):
 
         if notification_type not in NOTIFICATION_TYPES:
             self.logger.error(
-                'Invalid notification_type: {} provided. Not removing any listener.'.format(notification_type)
+                f'Invalid notification_type: {notification_type} provided. Not removing any listener.'
             )
         self.notification_listeners[notification_type] = []
 
@@ -120,7 +120,7 @@ class NotificationCenter(object):
 
         if notification_type not in NOTIFICATION_TYPES:
             self.logger.error(
-                'Invalid notification_type: {} provided. ' 'Not triggering any notification.'.format(notification_type)
+                f'Invalid notification_type: {notification_type} provided. ' 'Not triggering any notification.'
             )
             return
 
@@ -130,5 +130,5 @@ class NotificationCenter(object):
                     callback(*args)
                 except:
                     self.logger.exception(
-                        'Unknown problem when sending "{}" type notification.'.format(notification_type)
+                        f'Unknown problem when sending "{notification_type}" type notification.'
                     )

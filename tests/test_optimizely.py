@@ -376,7 +376,7 @@ class OptimizelyTest(base.BaseTest):
                 self.assertTrue(isinstance(attributes, dict))
             self.assertTrue(isinstance(variation, entities.Variation))
             # self.assertTrue(isinstance(event, event_builder.Event))
-            print("Activated experiment {0}".format(experiment.key))
+            print(f"Activated experiment {experiment.key}")
             callbackhit[0] = True
 
         notification_id = self.optimizely.notification_center.add_notification_listener(
@@ -4721,7 +4721,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.optimizely.track(event_key, user_id)
 
         mock_client_logging.info.assert_has_calls(
-            [mock.call('Tracking event "%s" for user "%s".' % (event_key, user_id))]
+            [mock.call(f'Tracking event "{event_key}" for user "{user_id}".')]
         )
 
     def test_activate__experiment_not_running(self):

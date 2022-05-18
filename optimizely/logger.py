@@ -79,7 +79,7 @@ class SimpleLogger(BaseLogger):
     def log(self, log_level, message):
         # Log a deprecation/runtime warning.
         # Clients should be using standard loggers instead of this wrapper.
-        warning = '{} is deprecated. Please use standard python loggers.'.format(self.__class__)
+        warning = f'{self.__class__} is deprecated. Please use standard python loggers.'
         warnings.warn(warning, DeprecationWarning)
 
         # Log the message.

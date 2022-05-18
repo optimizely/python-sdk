@@ -521,8 +521,9 @@ class BatchEventProcessorTest(base.BaseTest):
 
         # queue is flushed, even though events overflow
         self.assertEqual(0, self.event_processor.event_queue.qsize())
-        mock_config_logging.warning.assert_called_with('Payload not accepted by the queue. Current size: {}'
-                                                       .format(str(test_max_queue_size)))
+        mock_config_logging.warning.assert_called_with(
+            f'Payload not accepted by the queue. Current size: {test_max_queue_size}'
+        )
 
 
 class CustomForwardingEventDispatcher(object):
@@ -568,7 +569,7 @@ class ForwardingEventProcessorTest(base.BaseTest):
             event_processor.process(user_event)
 
         mock_client_logging.exception.assert_called_once_with(
-            'Error dispatching event: ' + str(log_event) + ' Failed to send.'
+            f'Error dispatching event: {log_event} Failed to send.'
         )
 
     def test_event_processor__with_test_event_dispatcher(self):
