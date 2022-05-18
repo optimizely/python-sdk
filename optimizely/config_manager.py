@@ -200,7 +200,7 @@ class PollingConfigManager(StaticConfigManager):
         self.set_blocking_timeout(blocking_timeout)
         self.last_modified = None
         self._polling_thread = threading.Thread(target=self._run)
-        self._polling_thread.setDaemon(True)
+        self._polling_thread.daemon = True
         self._polling_thread.start()
 
     @staticmethod
