@@ -294,7 +294,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_update_interval(self, _):
         """ Test set_update_interval with different inputs. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+        with mock.patch('threading.Thread.start'):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         # Assert that if invalid update_interval is set, then exception is raised.
@@ -321,7 +321,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_blocking_timeout(self, _):
         """ Test set_blocking_timeout with different inputs. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+        with mock.patch('threading.Thread.start'):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         # Assert that if invalid blocking_timeout is set, then exception is raised.
@@ -352,7 +352,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_last_modified(self, _):
         """ Test that set_last_modified sets last_modified field based on header. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+        with mock.patch('threading.Thread.start'):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
         last_modified_time = 'Test Last Modified Time'
@@ -479,6 +479,9 @@ class PollingConfigManagerTest(base.BaseTest):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
             self.assertTrue(project_config_manager.is_running)
 
+        # Prevent the polling thread from running fetch_datafile if it hasn't already
+        project_config_manager._polling_thread._is_stopped = True
+
 
 @mock.patch('requests.get')
 class AuthDatafilePollingConfigManagerTest(base.BaseTest):
@@ -495,7 +498,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         """ Test that datafile_access_token is properly set as instance variable. """
         datafile_access_token = 'some_token'
         sdk_key = 'some_key'
-        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
+        with mock.patch('threading.Thread.start'):
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
                 datafile_access_token=datafile_access_token, sdk_key=sdk_key)
 
