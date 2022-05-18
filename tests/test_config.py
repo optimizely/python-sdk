@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import json
-import mock
+from unittest import mock
 
 from optimizely import entities
 from optimizely import error_handler

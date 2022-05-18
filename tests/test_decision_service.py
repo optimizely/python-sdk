@@ -13,7 +13,7 @@
 
 import json
 
-import mock
+from unittest import mock
 
 from optimizely import decision_service
 from optimizely import entities

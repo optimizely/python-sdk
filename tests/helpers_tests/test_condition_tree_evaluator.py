@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+from unittest import mock
 
 from optimizely.helpers.condition_tree_evaluator import evaluate
 from tests import base

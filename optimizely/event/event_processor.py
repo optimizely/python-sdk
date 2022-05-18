@@ -17,7 +17,7 @@ import threading
 import time
 
 from datetime import timedelta
-from six.moves import queue
+import queue
 
 from optimizely import logger as _logging
 from optimizely import notification_center as _notification_center

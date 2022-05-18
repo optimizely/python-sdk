@@ -12,9 +12,9 @@
 # limitations under the License.
 
 import datetime
-import mock
+from unittest import mock
 import time
-from six.moves import queue
+import queue
 
 from optimizely.event.payload import Decision, Visitor
 from optimizely.event.event_processor import (

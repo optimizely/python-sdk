@@ -14,8 +14,7 @@
 import json
 from operator import itemgetter
 
-import mock
-import six
+from unittest import mock
 
 from optimizely import config_manager
 from optimizely import decision_service
@@ -37,12 +36,12 @@ class OptimizelyTest(base.BaseTest):
     strTest = None
 
     try:
-        isinstance("test", six.string_types)  # attempt to evaluate string
+        isinstance("test", str)  # attempt to evaluate string
 
         _expected_notification_failure = 'Problem calling notify callback.'
 
         def isstr(self, s):
-            return isinstance(s, six.string_types)
+            return isinstance(s, str)
 
         strTest = isstr
 

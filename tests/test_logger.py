@@ -14,7 +14,7 @@ import logging
 import unittest
 import uuid
 
-import mock
+from unittest import mock
 
 from optimizely import logger as _logger
 

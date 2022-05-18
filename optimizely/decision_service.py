@@ -13,8 +13,6 @@
 
 from collections import namedtuple
 
-from six import string_types
-
 from . import bucketer
 from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .helpers import audience as audience_helper
@@ -57,7 +55,7 @@ class DecisionService(object):
         bucketing_id = attributes.get(enums.ControlAttributes.BUCKETING_ID)
 
         if bucketing_id is not None:
-            if isinstance(bucketing_id, string_types):
+            if isinstance(bucketing_id, str):
                 return bucketing_id, decide_reasons
             message = 'Bucketing ID attribute is not a string. Defaulted to user_id.'
             self.logger.warning(message)

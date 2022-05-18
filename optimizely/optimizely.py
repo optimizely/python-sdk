@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from six import string_types
-
 from . import decision_service
 from . import entities
 from . import event_builder
@@ -244,7 +242,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('variable_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -343,7 +341,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -438,7 +436,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -481,7 +479,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('event_key'))
             return
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return
 
@@ -532,7 +530,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -592,7 +590,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
             return False
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return False
 
@@ -672,7 +670,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_enabled_features'))
             return enabled_features
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return enabled_features
 
@@ -884,7 +882,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return False
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return False
 
@@ -914,7 +912,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -960,7 +958,7 @@ class Optimizely(object):
         Returns:
             UserContext instance or None if the user id or attributes are invalid.
         """
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -995,7 +993,7 @@ class Optimizely(object):
             return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # validate that key is a string
-        if not isinstance(key, string_types):
+        if not isinstance(key, str):
             self.logger.error('Key parameter is invalid')
             reasons.append(OptimizelyDecisionMessage.FLAG_KEY_INVALID.format(key))
             return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
