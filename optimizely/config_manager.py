@@ -86,7 +86,7 @@ class StaticConfigManager(BaseConfigManager):
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
         """
-        super(StaticConfigManager, self).__init__(
+        super().__init__(
             logger=logger, error_handler=error_handler, notification_center=notification_center,
         )
         self._config = None
@@ -186,7 +186,7 @@ class PollingConfigManager(StaticConfigManager):
 
         """
         self._config_ready_event = threading.Event()
-        super(PollingConfigManager, self).__init__(
+        super().__init__(
             datafile=datafile,
             logger=logger,
             error_handler=error_handler,
@@ -243,7 +243,7 @@ class PollingConfigManager(StaticConfigManager):
             datafile: JSON string representing the Optimizely project.
         """
         if datafile or self._config_ready_event.is_set():
-            super(PollingConfigManager, self)._set_config(datafile=datafile)
+            super()._set_config(datafile=datafile)
             self._config_ready_event.set()
 
     def get_config(self):
@@ -394,7 +394,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             **kwargs: Refer to keyword arguments descriptions in PollingConfigManager.
         """
         self._set_datafile_access_token(datafile_access_token)
-        super(AuthDatafilePollingConfigManager, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _set_datafile_access_token(self, datafile_access_token):
         """ Checks for valid access token input and sets it. """
