@@ -1009,7 +1009,7 @@ class Optimizely(object):
 
         feature_flag = config.get_feature_from_key(key)
         if feature_flag is None:
-            self.logger.error("No feature flag was found for key '#{key}'.")
+            self.logger.error(f"No feature flag was found for key '{key}'.")
             reasons.append(OptimizelyDecisionMessage.FLAG_KEY_INVALID.format(key))
             return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
