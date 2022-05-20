@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
+from abc import ABC, abstractmethod
 import numbers
 import threading
 import time
@@ -27,13 +27,11 @@ from optimizely.helpers import validator
 from .event_factory import EventFactory
 from .user_event import UserEvent
 
-ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
-
 
 class BaseEventProcessor(ABC):
     """ Class encapsulating event processing. Override with your own implementation. """
 
-    @abc.abstractmethod
+    @abstractmethod
     def process(self, user_event):
         """ Method to provide intermediary processing stage within event production.
     Args:

@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
+from abc import ABC, abstractmethod
 import numbers
 import requests
 import threading
@@ -27,8 +27,6 @@ from .notification_center import NotificationCenter
 from .helpers import enums
 from .helpers import validator
 from .optimizely_config import OptimizelyConfigService
-
-ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
 
 
 class BaseConfigManager(ABC):
@@ -62,7 +60,7 @@ class BaseConfigManager(ABC):
         if not validator.is_notification_center_valid(self.notification_center):
             raise optimizely_exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('notification_center'))
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_config(self):
         """ Get config for use by optimizely.Optimizely.
         The config should be an instance of project_config.ProjectConfig."""
