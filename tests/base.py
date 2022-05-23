@@ -21,13 +21,6 @@ def long(a):
     raise NotImplementedError('Tests should only call `long` if running in PY2')
 
 
-# Check to verify if TestCase has the attribute assertRasesRegex or assertRaisesRegexp
-# This check depends on the version of python with assertRaisesRegexp being used by
-# python2.7. Later versions of python are using the non-deprecated assertRaisesRegex.
-if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
-    unittest.TestCase.assertRaisesRegex = getattr(unittest.TestCase, 'assertRaisesRegexp')
-
-
 class BaseTest(unittest.TestCase):
     def assertStrictTrue(self, to_assert):
         self.assertIs(to_assert, True)
