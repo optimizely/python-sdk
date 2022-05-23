@@ -34,7 +34,7 @@ from .optimizely_config import OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext
 
 
-class Optimizely(object):
+class Optimizely:
     """ Class encapsulating all SDK functionality. """
 
     def __init__(

@@ -20,7 +20,7 @@ NOTIFICATION_TYPES = tuple(
 )
 
 
-class NotificationCenter(object):
+class NotificationCenter:
     """ Class encapsulating methods to manage notifications and their listeners.
   The enums.NotificationTypes includes predefined notifications."""
 

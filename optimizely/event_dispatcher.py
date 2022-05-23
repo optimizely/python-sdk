@@ -22,7 +22,7 @@ from .helpers import enums
 REQUEST_TIMEOUT = 10
 
 
-class EventDispatcher(object):
+class EventDispatcher:
     @staticmethod
     def dispatch_event(event):
         """ Dispatch the event being represented by the Event object.

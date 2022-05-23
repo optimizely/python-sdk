@@ -25,7 +25,7 @@ from .user_profile import UserProfile
 Decision = namedtuple('Decision', 'experiment variation source')
 
 
-class DecisionService(object):
+class DecisionService:
     """ Class encapsulating all decision related capabilities. """
 
     def __init__(self, logger, user_profile_service):

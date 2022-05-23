@@ -20,7 +20,7 @@ from .helpers import event_tag_utils
 from .helpers import validator
 
 
-class Event(object):
+class Event:
     """ Representation of an event which can be sent to the Optimizely logging endpoint. """
 
     def __init__(self, url, params, http_verb=None, headers=None):
@@ -30,7 +30,7 @@ class Event(object):
         self.headers = headers
 
 
-class EventBuilder(object):
+class EventBuilder:
     """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (batch). """
 
@@ -38,7 +38,7 @@ class EventBuilder(object):
     HTTP_VERB = 'POST'
     HTTP_HEADERS = {'Content-Type': 'application/json'}
 
-    class EventParams(object):
+    class EventParams:
         ACCOUNT_ID = 'account_id'
         PROJECT_ID = 'project_id'
         EXPERIMENT_ID = 'experiment_id'

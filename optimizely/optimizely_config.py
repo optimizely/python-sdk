@@ -17,7 +17,7 @@ from .helpers.condition import ConditionOperatorTypes
 from .project_config import ProjectConfig
 
 
-class OptimizelyConfig(object):
+class OptimizelyConfig:
     def __init__(self, revision, experiments_map, features_map, datafile=None,
                  sdk_key=None, environment_key=None, attributes=None, events=None,
                  audiences=None):
@@ -46,7 +46,7 @@ class OptimizelyConfig(object):
         return self._datafile
 
 
-class OptimizelyExperiment(object):
+class OptimizelyExperiment:
     def __init__(self, id, key, variations_map, audiences=''):
         self.id = id
         self.key = key
@@ -54,7 +54,7 @@ class OptimizelyExperiment(object):
         self.audiences = audiences
 
 
-class OptimizelyFeature(object):
+class OptimizelyFeature:
     def __init__(self, id, key, experiments_map, variables_map):
         self.id = id
         self.key = key
@@ -68,7 +68,7 @@ class OptimizelyFeature(object):
         self.experiment_rules = []
 
 
-class OptimizelyVariation(object):
+class OptimizelyVariation:
     def __init__(self, id, key, feature_enabled, variables_map):
         self.id = id
         self.key = key
@@ -76,7 +76,7 @@ class OptimizelyVariation(object):
         self.variables_map = variables_map
 
 
-class OptimizelyVariable(object):
+class OptimizelyVariable:
     def __init__(self, id, key, variable_type, value):
         self.id = id
         self.key = key
@@ -84,27 +84,27 @@ class OptimizelyVariable(object):
         self.value = value
 
 
-class OptimizelyAttribute(object):
+class OptimizelyAttribute:
     def __init__(self, id, key):
         self.id = id
         self.key = key
 
 
-class OptimizelyEvent(object):
+class OptimizelyEvent:
     def __init__(self, id, key, experiment_ids):
         self.id = id
         self.key = key
         self.experiment_ids = experiment_ids
 
 
-class OptimizelyAudience(object):
+class OptimizelyAudience:
     def __init__(self, id, name, conditions):
         self.id = id
         self.name = name
         self.conditions = conditions
 
 
-class OptimizelyConfigService(object):
+class OptimizelyConfigService:
     """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
     def __init__(self, project_config):

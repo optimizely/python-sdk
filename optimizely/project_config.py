@@ -28,7 +28,7 @@ SUPPORTED_VERSIONS = [
 RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
 
-class ProjectConfig(object):
+class ProjectConfig:
     """ Representation of the Optimizely project config. """
 
     def __init__(self, datafile, logger, error_handler):

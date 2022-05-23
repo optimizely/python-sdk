@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class UserProfile(object):
+class UserProfile:
     """ Class encapsulating information representing a user's profile.
 
    user_id: User's identifier.
@@ -54,7 +54,7 @@ class UserProfile(object):
         self.experiment_bucket_map.update({experiment_id: {self.VARIATION_ID_KEY: variation_id}})
 
 
-class UserProfileService(object):
+class UserProfileService:
     """ Class encapsulating user profile service functionality.
   Override with your own implementation for storing and retrieving the user profile. """
 

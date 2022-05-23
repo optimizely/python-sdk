@@ -30,7 +30,7 @@ from optimizely.logger import NoOpLogger
 from . import base
 
 
-class CanonicalEvent(object):
+class CanonicalEvent:
     def __init__(self, experiment_id, variation_id, event_name, visitor_id, attributes, tags):
         self._experiment_id = experiment_id
         self._variation_id = variation_id
@@ -46,7 +46,7 @@ class CanonicalEvent(object):
         return self.__dict__ == other.__dict__
 
 
-class CustomEventDispatcher(object):
+class CustomEventDispatcher:
 
     IMPRESSION_EVENT_NAME = 'campaign_activated'
 
@@ -526,7 +526,7 @@ class BatchEventProcessorTest(base.BaseTest):
         )
 
 
-class CustomForwardingEventDispatcher(object):
+class CustomForwardingEventDispatcher:
     def __init__(self, is_updated=False):
         self.is_updated = is_updated
 

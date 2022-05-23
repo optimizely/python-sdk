@@ -24,7 +24,7 @@ BUCKETING_ID_TEMPLATE = '{bucketing_id}{parent_id}'
 GROUP_POLICIES = ['random']
 
 
-class Bucketer(object):
+class Bucketer:
     """ Optimizely bucketing algorithm that evenly distributes visitors. """
 
     def __init__(self):

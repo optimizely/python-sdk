@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class BaseErrorHandler(object):
+class BaseErrorHandler:
     """ Class encapsulating exception handling functionality.
   Override with your own exception handler providing handle_error method. """
 

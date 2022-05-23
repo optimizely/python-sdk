@@ -29,7 +29,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_logger_fails(self):
         """ Test that initialization fails if logger is invalid. """
 
-        class InvalidLogger(object):
+        class InvalidLogger:
             pass
 
         with self.assertRaisesRegex(
@@ -40,7 +40,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_error_handler_fails(self):
         """ Test that initialization fails if error_handler is invalid. """
 
-        class InvalidErrorHandler(object):
+        class InvalidErrorHandler:
             pass
 
         with self.assertRaisesRegex(
@@ -51,7 +51,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_notification_center_fails(self):
         """ Test that initialization fails if notification_center is invalid. """
 
-        class InvalidNotificationCenter(object):
+        class InvalidNotificationCenter:
             pass
 
         with self.assertRaisesRegex(
@@ -459,7 +459,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_fetch_datafile__status_exception_raised(self, _):
         """ Test that config_manager keeps running if status code exception is raised when fetching datafile. """
-        class MockExceptionResponse(object):
+        class MockExceptionResponse:
             def raise_for_status(self):
                 raise requests.exceptions.RequestException('Error Error !!')
 

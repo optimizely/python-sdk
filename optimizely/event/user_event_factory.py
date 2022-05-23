@@ -16,7 +16,7 @@ from . import user_event
 from optimizely.helpers import enums
 
 
-class UserEventFactory(object):
+class UserEventFactory:
     """ UserEventFactory builds impression and conversion events from a given UserEvent. """
 
     @classmethod

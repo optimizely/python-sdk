@@ -52,7 +52,7 @@ def reset_logger(name, level=None, handler=None):
     return logger
 
 
-class BaseLogger(object):
+class BaseLogger:
     """ Class encapsulating logging functionality. Override with your own logger providing log method. """
 
     @staticmethod

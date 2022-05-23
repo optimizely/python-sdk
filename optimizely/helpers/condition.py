@@ -20,14 +20,14 @@ from .enums import Errors
 from .enums import VersionType
 
 
-class ConditionOperatorTypes(object):
+class ConditionOperatorTypes:
     AND = 'and'
     OR = 'or'
     NOT = 'not'
     operators = [AND, OR, NOT]
 
 
-class ConditionMatchTypes(object):
+class ConditionMatchTypes:
     EXACT = 'exact'
     EXISTS = 'exists'
     GREATER_THAN = 'gt'
@@ -42,7 +42,7 @@ class ConditionMatchTypes(object):
     SUBSTRING = 'substring'
 
 
-class CustomAttributeConditionEvaluator(object):
+class CustomAttributeConditionEvaluator:
     """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
     CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
@@ -703,7 +703,7 @@ class CustomAttributeConditionEvaluator(object):
         return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)
 
 
-class ConditionDecoder(object):
+class ConditionDecoder:
     """ Class which provides an object_hook method for decoding dict
   objects into a list when given a condition_decoder. """
 

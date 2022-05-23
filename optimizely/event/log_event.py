@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class LogEvent(object):
+class LogEvent:
     """ Representation of an event which can be sent to Optimizely events API. """
 
     def __init__(self, url, params, http_verb=None, headers=None):
