@@ -12,12 +12,15 @@
 # limitations under the License.
 
 
+from typing import Any
+
+
 class BaseErrorHandler:
     """ Class encapsulating exception handling functionality.
   Override with your own exception handler providing handle_error method. """
 
     @staticmethod
-    def handle_error(*args):
+    def handle_error(*args: Any) -> None:
         pass
 
 
@@ -29,5 +32,5 @@ class RaiseExceptionErrorHandler(BaseErrorHandler):
     """ Class providing handle_error method which raises provided exception. """
 
     @staticmethod
-    def handle_error(error):
+    def handle_error(error: Any) -> None:  # type: ignore
         raise error

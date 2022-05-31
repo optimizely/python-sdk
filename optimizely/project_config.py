@@ -10,9 +10,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from __future__ import annotations
 import json
-from collections import OrderedDict
+from typing import Optional, Type, TypeVar, cast, Any, Iterable
 
 from . import entities
 from . import exceptions
@@ -27,11 +27,13 @@ SUPPORTED_VERSIONS = [
 
 RESERVED_ATTRIBUTE_PREFIX = '$opt_'
 
+EntityClass = TypeVar('EntityClass')
+
 
 class ProjectConfig:
     """ Representation of the Optimizely project config. """
 
-    def __init__(self, datafile, logger, error_handler):
+    def __init__(self, datafile: str | bytes, logger: Any, error_handler: Any):
         """ ProjectConfig init method to load and set project config data.
 
         Args:
@@ -44,36 +46,42 @@ class ProjectConfig:
         self._datafile = datafile.decode('utf-8') if isinstance(datafile, bytes) else datafile
         self.logger = logger
         self.error_handler = error_handler
-        self.version = config.get('version')
+        self.version: str = config.get('version')
         if self.version not in SUPPORTED_VERSIONS:
             raise exceptions.UnsupportedDatafileVersionException(
                 enums.Errors.UNSUPPORTED_DATAFILE_VERSION.format(self.version)
             )
 
-        self.account_id = config.get('accountId')
-        self.project_id = config.get('projectId')
-        self.revision = config.get('revision')
-        self.sdk_key = config.get('sdkKey', None)
-        self.environment_key = config.get('environmentKey', None)
-        self.groups = config.get('groups', [])
-        self.experiments = config.get('experiments', [])
-        self.events = config.get('events', [])
-        self.attributes = config.get('attributes', [])
-        self.audiences = config.get('audiences', [])
-        self.typed_audiences = config.get('typedAudiences', [])
-        self.feature_flags = config.get('featureFlags', [])
-        self.rollouts = config.get('rollouts', [])
-        self.anonymize_ip = config.get('anonymizeIP', False)
-        self.send_flag_decisions = config.get('sendFlagDecisions', False)
-        self.bot_filtering = config.get('botFiltering', None)
+        self.account_id: str = config.get('accountId')
+        self.project_id: str = config.get('projectId')
+        self.revision: str = config.get('revision')
+        self.sdk_key: Optional[str] = config.get('sdkKey', None)
+        self.environment_key: Optional[str] = config.get('environmentKey', None)
+        self.groups: list = config.get('groups', [])
+        self.experiments: list[dict] = config.get('experiments', [])
+        self.events: list[dict] = config.get('events', [])
+        self.attributes: list[dict] = config.get('attributes', [])
+        self.audiences: list[dict] = config.get('audiences', [])
+        self.typed_audiences: list[dict] = config.get('typedAudiences', [])
+        self.feature_flags: list[dict] = config.get('featureFlags', [])
+        self.rollouts: list[dict] = config.get('rollouts', [])
+        self.anonymize_ip: bool = config.get('anonymizeIP', False)
+        self.send_flag_decisions: bool = config.get('sendFlagDecisions', False)
+        self.bot_filtering: Optional[bool] = config.get('botFiltering', None)
 
         # Utility maps for quick lookup
-        self.group_id_map = self._generate_key_map(self.groups, 'id', entities.Group)
-        self.experiment_id_map = self._generate_key_map(self.experiments, 'id', entities.Experiment)
-        self.event_key_map = self._generate_key_map(self.events, 'key', entities.Event)
-        self.attribute_key_map = self._generate_key_map(self.attributes, 'key', entities.Attribute)
+        self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
+        self.experiment_id_map: dict[str, entities.Experiment] = self._generate_key_map(
+            self.experiments, 'id', entities.Experiment
+        )
+        self.event_key_map: dict[str, entities.Event] = self._generate_key_map(self.events, 'key', entities.Event)
+        self.attribute_key_map: dict[str, entities.Attribute] = self._generate_key_map(
+            self.attributes, 'key', entities.Attribute
+        )
 
-        self.audience_id_map = self._generate_key_map(self.audiences, 'id', entities.Audience)
+        self.audience_id_map: dict[str, entities.Audience] = self._generate_key_map(
+            self.audiences, 'id', entities.Audience
+        )
 
         # Conditions of audiences in typedAudiences are not expected
         # to be string-encoded as they are in audiences.
@@ -94,13 +102,13 @@ class ProjectConfig:
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
             self.experiment_id_map.update(experiments_in_group_id_map)
 
-        self.experiment_key_map = {}
-        self.variation_key_map = {}
-        self.variation_id_map = {}
-        self.variation_variable_usage_map = {}
-        self.variation_id_map_by_experiment_id = {}
-        self.variation_key_map_by_experiment_id = {}
-        self.flag_variations_map = {}
+        self.experiment_key_map: dict[str, entities.Experiment] = {}
+        self.variation_key_map: dict[str, dict[str, entities.Variation]] = {}
+        self.variation_id_map: dict[str, dict[str, entities.Variation]] = {}
+        self.variation_variable_usage_map: dict[str, dict[str, entities.Variation.VariableUsage]] = {}
+        self.variation_id_map_by_experiment_id: dict[str, dict[str, entities.Variation]] = {}
+        self.variation_key_map_by_experiment_id: dict[str, dict[str, entities.Variation]] = {}
+        self.flag_variations_map: dict[str, list[entities.Variation]] = {}
 
         for experiment in self.experiment_id_map.values():
             self.experiment_key_map[experiment.key] = experiment
@@ -124,20 +132,21 @@ class ProjectConfig:
 
         # Dictionary containing dictionary of experiment ID to feature ID.
         # for checking that experiment is a feature experiment or not.
-        self.experiment_feature_map = {}
+        self.experiment_feature_map: dict[str, list[str]] = {}
         for feature in self.feature_key_map.values():
             # As we cannot create json variables in datafile directly, here we convert
             # the variables of string type and json subType to json type
             # This is needed to fully support json variables
-            for variable in self.feature_key_map[feature.key].variables:
+            variable: dict
+            for variable in cast(list, self.feature_key_map[feature.key].variables):
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON
 
             feature.variables = self._generate_key_map(feature.variables, 'key', entities.Variable)
 
-            rules = []
-            variations = []
+            rules: list[entities.Experiment] = []
+            variations: list[entities.Variation] = []
             for exp_id in feature.experimentIds:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
@@ -156,7 +165,7 @@ class ProjectConfig:
             self.flag_variations_map[feature.key] = variations
 
     @staticmethod
-    def _generate_key_map(entity_list, key, entity_class):
+    def _generate_key_map(entity_list: Iterable, key: str, entity_class: Type[EntityClass]) -> dict[str, EntityClass]:
         """ Helper method to generate map from key to entity object for given list of dicts.
 
         Args:
@@ -178,7 +187,7 @@ class ProjectConfig:
         return key_map
 
     @staticmethod
-    def _deserialize_audience(audience_map):
+    def _deserialize_audience(audience_map: dict[str, entities.Audience]) -> dict[str, entities.Audience]:
         """ Helper method to de-serialize and populate audience map with the condition list and structure.
 
         Args:
@@ -194,7 +203,7 @@ class ProjectConfig:
 
         return audience_map
 
-    def get_rollout_experiments(self, rollout):
+    def get_rollout_experiments(self, rollout: entities.Layer) -> list[entities.Experiment]:
         """ Helper method to get rollout experiments.
 
         Args:
@@ -209,7 +218,7 @@ class ProjectConfig:
 
         return rollout_experiments
 
-    def get_typecast_value(self, value, type):
+    def get_typecast_value(self, value: str, type: str) -> Any:
         """ Helper method to determine actual value based on type of feature variable.
 
         Args:
@@ -231,7 +240,7 @@ class ProjectConfig:
         else:
             return value
 
-    def to_datafile(self):
+    def to_datafile(self) -> str:
         """ Get the datafile corresponding to ProjectConfig.
 
         Returns:
@@ -240,7 +249,7 @@ class ProjectConfig:
 
         return self._datafile
 
-    def get_version(self):
+    def get_version(self) -> str:
         """ Get version of the datafile.
 
         Returns:
@@ -249,7 +258,7 @@ class ProjectConfig:
 
         return self.version
 
-    def get_revision(self):
+    def get_revision(self) -> str:
         """ Get revision of the datafile.
 
         Returns:
@@ -258,7 +267,7 @@ class ProjectConfig:
 
         return self.revision
 
-    def get_sdk_key(self):
+    def get_sdk_key(self) -> Optional[str]:
         """ Get sdk key from the datafile.
 
         Returns:
@@ -267,7 +276,7 @@ class ProjectConfig:
 
         return self.sdk_key
 
-    def get_environment_key(self):
+    def get_environment_key(self) -> Optional[str]:
         """ Get environment key from the datafile.
 
         Returns:
@@ -276,7 +285,7 @@ class ProjectConfig:
 
         return self.environment_key
 
-    def get_account_id(self):
+    def get_account_id(self) -> str:
         """ Get account ID from the config.
 
         Returns:
@@ -285,7 +294,7 @@ class ProjectConfig:
 
         return self.account_id
 
-    def get_project_id(self):
+    def get_project_id(self) -> str:
         """ Get project ID from the config.
 
         Returns:
@@ -294,7 +303,7 @@ class ProjectConfig:
 
         return self.project_id
 
-    def get_experiment_from_key(self, experiment_key):
+    def get_experiment_from_key(self, experiment_key: str) -> Optional[entities.Experiment]:
         """ Get experiment for the provided experiment key.
 
         Args:
@@ -313,7 +322,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
-    def get_experiment_from_id(self, experiment_id):
+    def get_experiment_from_id(self, experiment_id: str) -> Optional[entities.Experiment]:
         """ Get experiment for the provided experiment ID.
 
         Args:
@@ -332,7 +341,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
-    def get_group(self, group_id):
+    def get_group(self, group_id: Optional[str]) -> Optional[entities.Group]:
         """ Get group for the provided group ID.
 
         Args:
@@ -342,7 +351,7 @@ class ProjectConfig:
             Group corresponding to the provided group ID.
         """
 
-        group = self.group_id_map.get(group_id)
+        group = self.group_id_map.get(group_id)  # type: ignore
 
         if group:
             return group
@@ -351,7 +360,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidGroupException(enums.Errors.INVALID_GROUP_ID))
         return None
 
-    def get_audience(self, audience_id):
+    def get_audience(self, audience_id: str) -> Optional[entities.Audience]:
         """ Get audience object for the provided audience ID.
 
         Args:
@@ -368,7 +377,7 @@ class ProjectConfig:
         self.logger.error(f'Audience ID "{audience_id}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE)))
 
-    def get_variation_from_key(self, experiment_key, variation_key):
+    def get_variation_from_key(self, experiment_key: str, variation_key: str) -> Optional[entities.Variation]:
         """ Get variation given experiment and variation key.
 
         Args:
@@ -395,7 +404,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
-    def get_variation_from_id(self, experiment_key, variation_id):
+    def get_variation_from_id(self, experiment_key: str, variation_id: str) -> Optional[entities.Variation]:
         """ Get variation given experiment and variation ID.
 
         Args:
@@ -421,7 +430,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidExperimentException(enums.Errors.INVALID_EXPERIMENT_KEY))
         return None
 
-    def get_event(self, event_key):
+    def get_event(self, event_key: str) -> Optional[entities.Event]:
         """ Get event for the provided event key.
 
         Args:
@@ -440,7 +449,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidEventException(enums.Errors.INVALID_EVENT_KEY))
         return None
 
-    def get_attribute_id(self, attribute_key):
+    def get_attribute_id(self, attribute_key: str) -> Optional[str]:
         """ Get attribute ID for the provided attribute key.
 
         Args:
@@ -471,7 +480,7 @@ class ProjectConfig:
         self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE))
         return None
 
-    def get_feature_from_key(self, feature_key):
+    def get_feature_from_key(self, feature_key: str) -> Optional[entities.FeatureFlag]:
         """ Get feature for the provided feature key.
 
         Args:
@@ -489,7 +498,7 @@ class ProjectConfig:
         self.logger.error(f'Feature "{feature_key}" is not in datafile.')
         return None
 
-    def get_rollout_from_id(self, rollout_id):
+    def get_rollout_from_id(self, rollout_id: str) -> Optional[entities.Layer]:
         """ Get rollout for the provided ID.
 
         Args:
@@ -507,7 +516,9 @@ class ProjectConfig:
         self.logger.error(f'Rollout with ID "{rollout_id}" is not in datafile.')
         return None
 
-    def get_variable_value_for_variation(self, variable, variation):
+    def get_variable_value_for_variation(
+        self, variable: Optional[entities.Variable], variation: Optional[entities.Variation]
+    ) -> Optional[str]:
         """ Get the variable value for the given variation.
 
         Args:
@@ -540,7 +551,7 @@ class ProjectConfig:
 
         return variable_value
 
-    def get_variable_for_feature(self, feature_key, variable_key):
+    def get_variable_for_feature(self, feature_key: str, variable_key: str) -> Optional[entities.Variable]:
         """ Get the variable with the given variable key for the given feature.
 
         Args:
@@ -562,7 +573,7 @@ class ProjectConfig:
 
         return feature.variables.get(variable_key)
 
-    def get_anonymize_ip_value(self):
+    def get_anonymize_ip_value(self) -> bool:
         """ Gets the anonymize IP value.
 
         Returns:
@@ -571,7 +582,7 @@ class ProjectConfig:
 
         return self.anonymize_ip
 
-    def get_send_flag_decisions_value(self):
+    def get_send_flag_decisions_value(self) -> bool:
         """ Gets the Send Flag Decisions value.
 
         Returns:
@@ -580,7 +591,7 @@ class ProjectConfig:
 
         return self.send_flag_decisions
 
-    def get_bot_filtering_value(self):
+    def get_bot_filtering_value(self) -> Optional[bool]:
         """ Gets the bot filtering value.
 
         Returns:
@@ -589,7 +600,7 @@ class ProjectConfig:
 
         return self.bot_filtering
 
-    def is_feature_experiment(self, experiment_id):
+    def is_feature_experiment(self, experiment_id: str) -> bool:
         """ Determines if given experiment is a feature test.
 
         Args:
@@ -601,7 +612,9 @@ class ProjectConfig:
 
         return experiment_id in self.experiment_feature_map
 
-    def get_variation_from_id_by_experiment_id(self, experiment_id, variation_id):
+    def get_variation_from_id_by_experiment_id(
+        self, experiment_id: str, variation_id: str
+    ) -> dict | entities.Variation:
         """ Gets variation from variation id and specific experiment id
 
             Returns:
@@ -618,7 +631,9 @@ class ProjectConfig:
 
         return {}
 
-    def get_variation_from_key_by_experiment_id(self, experiment_id, variation_key):
+    def get_variation_from_key_by_experiment_id(
+        self, experiment_id: str, variation_key: str
+    ) -> dict | entities.Variation:
         """ Gets variation from variation key and specific experiment id
 
             Returns:
@@ -635,7 +650,9 @@ class ProjectConfig:
 
         return {}
 
-    def get_flag_variation(self, flag_key, variation_attribute, target_value):
+    def get_flag_variation(
+        self, flag_key: str, variation_attribute: str, target_value: str
+    ) -> Optional[entities.Variation]:
         """
         Gets variation by specified variation attribute.
         For example if variation_attribute is id, the function gets variation by using variation_id.

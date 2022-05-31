@@ -11,10 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Optional
+from optimizely import optimizely_user_context
+
 
 class OptimizelyDecision:
-    def __init__(self, variation_key=None, enabled=None,
-                 variables=None, rule_key=None, flag_key=None, user_context=None, reasons=None):
+    def __init__(
+        self, variation_key: Optional[str] = None, enabled: Optional[bool] = None,
+        variables: Optional[dict] = None, rule_key: Optional[str] = None,
+        flag_key: Optional[str] = None,
+        user_context: Optional[optimizely_user_context.OptimizelyUserContext] = None,
+        reasons: Optional[list] = None
+    ):
         self.variation_key = variation_key
         self.enabled = enabled or False
         self.variables = variables or {}

@@ -11,10 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from optimizely import entities
+
+
 ALLOWED_EXPERIMENT_STATUS = ['Running']
 
 
-def is_experiment_running(experiment):
+def is_experiment_running(experiment: entities.Experiment) -> bool:
     """ Determine for given experiment if experiment is running.
 
   Args:

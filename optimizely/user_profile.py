@@ -11,6 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Any, Optional
+
 
 class UserProfile:
     """ Class encapsulating information representing a user's profile.
@@ -24,14 +27,14 @@ class UserProfile:
     EXPERIMENT_BUCKET_MAP_KEY = 'experiment_bucket_map'
     VARIATION_ID_KEY = 'variation_id'
 
-    def __init__(self, user_id, experiment_bucket_map=None, **kwargs):
+    def __init__(self, user_id: str, experiment_bucket_map: Optional[dict] = None, **kwargs: Any):
         self.user_id = user_id
         self.experiment_bucket_map = experiment_bucket_map or {}
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__dict__ == other.__dict__
 
-    def get_variation_for_experiment(self, experiment_id):
+    def get_variation_for_experiment(self, experiment_id: str) -> Optional[str]:
         """ Helper method to retrieve variation ID for given experiment.
 
     Args:
@@ -43,7 +46,7 @@ class UserProfile:
 
         return self.experiment_bucket_map.get(experiment_id, {self.VARIATION_ID_KEY: None}).get(self.VARIATION_ID_KEY)
 
-    def save_variation_for_experiment(self, experiment_id, variation_id):
+    def save_variation_for_experiment(self, experiment_id: str, variation_id: str) -> None:
         """ Helper method to save new experiment/variation as part of the user's profile.
 
     Args:
@@ -58,7 +61,7 @@ class UserProfileService:
     """ Class encapsulating user profile service functionality.
   Override with your own implementation for storing and retrieving the user profile. """
 
-    def lookup(self, user_id):
+    def lookup(self, user_id: str) -> dict[str, Any]:
         """ Fetch the user profile dict corresponding to the user ID.
 
     Args:
@@ -69,7 +72,7 @@ class UserProfileService:
     """
         return UserProfile(user_id).__dict__
 
-    def save(self, user_profile):
+    def save(self, user_profile: dict) -> None:
         """ Save the user profile dict sent to this method.
 
     Args:

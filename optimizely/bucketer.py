@@ -11,7 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Optional
 import math
+
+from . import project_config
+from . import entities
 
 from .lib import pymmh3 as mmh3
 
@@ -27,12 +32,12 @@ GROUP_POLICIES = ['random']
 class Bucketer:
     """ Optimizely bucketing algorithm that evenly distributes visitors. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """ Bucketer init method to set bucketing seed and logger instance. """
 
         self.bucket_seed = HASH_SEED
 
-    def _generate_unsigned_hash_code_32_bit(self, bucketing_id):
+    def _generate_unsigned_hash_code_32_bit(self, bucketing_id: str) -> int:
         """ Helper method to retrieve hash code.
 
         Args:
@@ -45,7 +50,7 @@ class Bucketer:
         # Adjusting MurmurHash code to be unsigned
         return mmh3.hash(bucketing_id, self.bucket_seed) & UNSIGNED_MAX_32_BIT_VALUE
 
-    def _generate_bucket_value(self, bucketing_id):
+    def _generate_bucket_value(self, bucketing_id: str) -> int:
         """ Helper function to generate bucket value in half-closed interval [0, MAX_TRAFFIC_VALUE).
 
         Args:
@@ -58,7 +63,10 @@ class Bucketer:
         ratio = float(self._generate_unsigned_hash_code_32_bit(bucketing_id)) / MAX_HASH_VALUE
         return math.floor(ratio * MAX_TRAFFIC_VALUE)
 
-    def find_bucket(self, project_config, bucketing_id, parent_id, traffic_allocations):
+    def find_bucket(
+        self, project_config: project_config.ProjectConfig, bucketing_id: str,
+        parent_id: Optional[str], traffic_allocations: list[entities.TrafficAllocation]
+    ) -> Optional[str]:
         """ Determine entity based on bucket value and traffic allocations.
 
         Args:
@@ -83,7 +91,10 @@ class Bucketer:
 
         return None
 
-    def bucket(self, project_config, experiment, user_id, bucketing_id):
+    def bucket(
+        self, project_config: project_config.ProjectConfig,
+        experiment: entities.Experiment, user_id: str, bucketing_id: str
+    ) -> tuple[None | dict | entities.Variation, list[str]]:
         """ For a given experiment and bucketing ID determines variation to be shown to user.
 
         Args:
@@ -97,7 +108,7 @@ class Bucketer:
             and array of log messages representing decision making.
      */.
         """
-        decide_reasons = []
+        decide_reasons: list[str] = []
         if not experiment:
             return None, decide_reasons
 

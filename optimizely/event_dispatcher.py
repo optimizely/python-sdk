@@ -11,20 +11,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import json
 import logging
 import requests
 
 from requests import exceptions as request_exception
+from typing import Optional
+from typing_extensions import Protocol
 
 from .helpers import enums
+from . import event_builder
 
 REQUEST_TIMEOUT = 10
 
 
+class CustomEventDispatcher(Protocol):
+    """Interface to enforce required method"""
+    def dispatch_event(self, event: Optional[event_builder.Event]) -> None:
+        ...
+
+
 class EventDispatcher:
     @staticmethod
-    def dispatch_event(event):
+    def dispatch_event(event: Optional[event_builder.Event]) -> None:
         """ Dispatch the event being represented by the Event object.
 
     Args:

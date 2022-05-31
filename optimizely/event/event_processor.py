@@ -11,17 +11,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
 import threading
 import time
 
+from typing import Any, Optional
 from datetime import timedelta
 import queue
 
 from optimizely import logger as _logging
 from optimizely import notification_center as _notification_center
-from optimizely.event_dispatcher import EventDispatcher as default_event_dispatcher
+from optimizely.event_dispatcher import EventDispatcher, CustomEventDispatcher
 from optimizely.helpers import enums
 from optimizely.helpers import validator
 from .event_factory import EventFactory
@@ -32,7 +34,7 @@ class BaseEventProcessor(ABC):
     """ Class encapsulating event processing. Override with your own implementation. """
 
     @abstractmethod
-    def process(self, user_event):
+    def process(self, user_event: UserEvent) -> None:
         """ Method to provide intermediary processing stage within event production.
     Args:
       user_event: UserEvent instance that needs to be processed and dispatched.
@@ -59,14 +61,14 @@ class BatchEventProcessor(BaseEventProcessor):
 
     def __init__(
         self,
-        event_dispatcher,
-        logger=None,
-        start_on_init=False,
-        event_queue=None,
-        batch_size=None,
-        flush_interval=None,
-        timeout_interval=None,
-        notification_center=None,
+        event_dispatcher: Optional[EventDispatcher | CustomEventDispatcher] = None,
+        logger: Any = None,
+        start_on_init: bool = False,
+        event_queue: Any = None,
+        batch_size: Optional[int] = None,
+        flush_interval: Optional[float] = None,
+        timeout_interval: Optional[float] = None,
+        notification_center: Optional[_notification_center.NotificationCenter] = None,
     ):
         """ BatchEventProcessor init method to configure event batching.
 
@@ -84,43 +86,48 @@ class BatchEventProcessor(BaseEventProcessor):
                         thread.
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
-        self.event_dispatcher = event_dispatcher or default_event_dispatcher
+        self.event_dispatcher = event_dispatcher or EventDispatcher
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
-        self.batch_size = (
-            batch_size
+        self.batch_size: int = (
+            batch_size  # type: ignore
             if self._validate_instantiation_props(batch_size, 'batch_size', self._DEFAULT_BATCH_SIZE)
             else self._DEFAULT_BATCH_SIZE
         )
-        self.flush_interval = (
-            timedelta(seconds=flush_interval)
+        self.flush_interval: timedelta = (
+            timedelta(seconds=flush_interval)  # type: ignore
             if self._validate_instantiation_props(flush_interval, 'flush_interval', self._DEFAULT_FLUSH_INTERVAL)
             else timedelta(seconds=self._DEFAULT_FLUSH_INTERVAL)
         )
-        self.timeout_interval = (
-            timedelta(seconds=timeout_interval)
+        self.timeout_interval: timedelta = (
+            timedelta(seconds=timeout_interval)  # type: ignore
             if self._validate_instantiation_props(timeout_interval, 'timeout_interval', self._DEFAULT_TIMEOUT_INTERVAL)
             else timedelta(seconds=self._DEFAULT_TIMEOUT_INTERVAL)
         )
 
         self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
-        self._current_batch = list()
+        self._current_batch: list[UserEvent] = []
 
         if not validator.is_notification_center_valid(self.notification_center):
             self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
             self.logger.debug('Creating notification center for use.')
             self.notification_center = _notification_center.NotificationCenter(self.logger)
 
-        self.executor = None
+        self.executor: Optional[threading.Thread] = None
         if start_on_init is True:
             self.start()
 
     @property
-    def is_running(self):
+    def is_running(self) -> bool:
         """ Property to check if consumer thread is alive or not. """
         return self.executor.is_alive() if self.executor else False
 
-    def _validate_instantiation_props(self, prop, prop_name, default_value):
+    def _validate_instantiation_props(
+        self,
+        prop: Optional[numbers.Integral | int | float],
+        prop_name: str,
+        default_value: numbers.Integral | int | float
+    ) -> bool:
         """ Method to determine if instantiation properties like batch_size, flush_interval
     and timeout_interval are valid.
 
@@ -147,7 +154,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
         return is_valid
 
-    def _get_time(self, _time=None):
+    def _get_time(self, _time: Optional[float] = None) -> float:
         """ Method to return time as float in seconds. If _time is None, uses current time.
 
     Args:
@@ -161,7 +168,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
         return _time
 
-    def start(self):
+    def start(self) -> None:
         """ Starts the batch processing thread to batch events. """
         if hasattr(self, 'executor') and self.is_running:
             self.logger.warning('BatchEventProcessor already started.')
@@ -172,7 +179,7 @@ class BatchEventProcessor(BaseEventProcessor):
         self.executor.daemon = True
         self.executor.start()
 
-    def _run(self):
+    def _run(self) -> None:
         """ Triggered as part of the thread which batches events or flushes event_queue and hangs on get
     for flush interval if queue is empty.
     """
@@ -215,12 +222,12 @@ class BatchEventProcessor(BaseEventProcessor):
             self.logger.info('Exiting processing loop. Attempting to flush pending events.')
             self._flush_batch()
 
-    def flush(self):
+    def flush(self) -> None:
         """ Adds flush signal to event_queue. """
 
         self.event_queue.put(self._FLUSH_SIGNAL)
 
-    def _flush_batch(self):
+    def _flush_batch(self) -> None:
         """ Flushes current batch by dispatching event. """
         batch_len = len(self._current_batch)
         if batch_len == 0:
@@ -242,7 +249,7 @@ class BatchEventProcessor(BaseEventProcessor):
         except Exception as e:
             self.logger.error(f'Error dispatching event: {log_event} {e}')
 
-    def process(self, user_event):
+    def process(self, user_event: UserEvent) -> None:
         """ Method to process the user_event by putting it in event_queue.
 
     Args:
@@ -263,7 +270,7 @@ class BatchEventProcessor(BaseEventProcessor):
                 f'Payload not accepted by the queue. Current size: {self.event_queue.qsize()}'
             )
 
-    def _add_to_batch(self, user_event):
+    def _add_to_batch(self, user_event: UserEvent) -> None:
         """ Method to append received user event to current batch.
 
     Args:
@@ -283,7 +290,7 @@ class BatchEventProcessor(BaseEventProcessor):
             self.logger.debug('Flushing on batch size.')
             self._flush_batch()
 
-    def _should_split(self, user_event):
+    def _should_split(self, user_event: UserEvent) -> bool:
         """ Method to check if current event batch should split into two.
 
     Args:
@@ -308,7 +315,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
         return False
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stops and disposes batch event processor. """
         self.event_queue.put(self._SHUTDOWN_SIGNAL)
         self.logger.warning('Stopping Scheduler.')
@@ -327,7 +334,10 @@ class ForwardingEventProcessor(BaseEventProcessor):
   The ForwardingEventProcessor sends the LogEvent to EventDispatcher as soon as it is received.
   """
 
-    def __init__(self, event_dispatcher, logger=None, notification_center=None):
+    def __init__(
+        self, event_dispatcher: type[EventDispatcher] | CustomEventDispatcher,
+        logger: Any = None, notification_center: Optional[_notification_center.NotificationCenter] = None
+    ):
         """ ForwardingEventProcessor init method to configure event dispatching.
 
     Args:
@@ -335,7 +345,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
       logger: Optional component which provides a log method to log messages. By default nothing would be logged.
       notification_center: Optional instance of notification_center.NotificationCenter.
     """
-        self.event_dispatcher = event_dispatcher or default_event_dispatcher
+        self.event_dispatcher = event_dispatcher or EventDispatcher
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.notification_center = notification_center or _notification_center.NotificationCenter(self.logger)
 
@@ -343,7 +353,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
             self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
             self.notification_center = _notification_center.NotificationCenter()
 
-    def process(self, user_event):
+    def process(self, user_event: Optional[UserEvent]) -> None:
         """ Method to process the user_event by dispatching it.
 
     Args:

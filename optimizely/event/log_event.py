@@ -12,14 +12,17 @@
 # limitations under the License.
 
 
+from typing import Optional
+
+
 class LogEvent:
     """ Representation of an event which can be sent to Optimizely events API. """
 
-    def __init__(self, url, params, http_verb=None, headers=None):
+    def __init__(self, url: str, params: dict, http_verb: Optional[str] = None, headers: Optional[dict] = None):
         self.url = url
         self.params = params
         self.http_verb = http_verb or 'POST'
         self.headers = headers
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.__class__}: {self.__dict__}'

@@ -11,16 +11,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import copy
-from .helpers.condition import ConditionOperatorTypes
+from typing import Any, Optional
 
+from .helpers.condition import ConditionOperatorTypes
 from .project_config import ProjectConfig
 
 
 class OptimizelyConfig:
-    def __init__(self, revision, experiments_map, features_map, datafile=None,
-                 sdk_key=None, environment_key=None, attributes=None, events=None,
-                 audiences=None):
+    def __init__(
+        self, revision: str, experiments_map: dict, features_map: dict, datafile: Optional[str] = None,
+        sdk_key: Optional[str] = None, environment_key: Optional[str] = None, attributes: Optional[list] = None,
+        events: Optional[list] = None, audiences: Optional[list] = None
+    ):
         self.revision = revision
 
         # This experiments_map is for experiments of legacy projects only.
@@ -37,7 +41,7 @@ class OptimizelyConfig:
         self.events = events or []
         self.audiences = audiences or []
 
-    def get_datafile(self):
+    def get_datafile(self) -> Optional[str]:
         """ Get the datafile associated with OptimizelyConfig.
 
         Returns:
@@ -47,7 +51,7 @@ class OptimizelyConfig:
 
 
 class OptimizelyExperiment:
-    def __init__(self, id, key, variations_map, audiences=''):
+    def __init__(self, id: str, key: str, variations_map: dict, audiences: str = ''):
         self.id = id
         self.key = key
         self.variations_map = variations_map
@@ -55,7 +59,7 @@ class OptimizelyExperiment:
 
 
 class OptimizelyFeature:
-    def __init__(self, id, key, experiments_map, variables_map):
+    def __init__(self, id: str, key: str, experiments_map: dict, variables_map: dict):
         self.id = id
         self.key = key
 
@@ -64,12 +68,12 @@ class OptimizelyFeature:
         self.experiments_map = experiments_map
 
         self.variables_map = variables_map
-        self.delivery_rules = []
-        self.experiment_rules = []
+        self.delivery_rules: list[OptimizelyExperiment] = []
+        self.experiment_rules: list[OptimizelyExperiment] = []
 
 
 class OptimizelyVariation:
-    def __init__(self, id, key, feature_enabled, variables_map):
+    def __init__(self, id: str, key: str, feature_enabled: bool, variables_map: dict):
         self.id = id
         self.key = key
         self.feature_enabled = feature_enabled
@@ -77,7 +81,7 @@ class OptimizelyVariation:
 
 
 class OptimizelyVariable:
-    def __init__(self, id, key, variable_type, value):
+    def __init__(self, id: str, key: str, variable_type: str, value: Any):
         self.id = id
         self.key = key
         self.type = variable_type
@@ -85,20 +89,20 @@ class OptimizelyVariable:
 
 
 class OptimizelyAttribute:
-    def __init__(self, id, key):
+    def __init__(self, id: str, key: str):
         self.id = id
         self.key = key
 
 
 class OptimizelyEvent:
-    def __init__(self, id, key, experiment_ids):
+    def __init__(self, id: str, key: str, experiment_ids: list[str]):
         self.id = id
         self.key = key
         self.experiment_ids = experiment_ids
 
 
 class OptimizelyAudience:
-    def __init__(self, id, name, conditions):
+    def __init__(self, id: Optional[str], name: Optional[str], conditions: Optional[list]):
         self.id = id
         self.name = name
         self.conditions = conditions
@@ -107,7 +111,7 @@ class OptimizelyAudience:
 class OptimizelyConfigService:
     """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
-    def __init__(self, project_config):
+    def __init__(self, project_config: ProjectConfig):
         """
         Args:
             project_config ProjectConfig
@@ -135,7 +139,7 @@ class OptimizelyConfigService:
             Merging typed_audiences with audiences from project_config.
             The typed_audiences has higher precedence.
         '''
-        optly_typed_audiences = []
+        optly_typed_audiences: list[OptimizelyAudience] = []
         id_lookup_dict = {}
         for typed_audience in project_config.typed_audiences:
             optly_audience = OptimizelyAudience(
@@ -159,7 +163,7 @@ class OptimizelyConfigService:
 
         self.audiences = optly_typed_audiences
 
-    def replace_ids_with_names(self, conditions, audiences_map):
+    def replace_ids_with_names(self, conditions: str, audiences_map: dict[str, str]) -> str:
         '''
             Gets conditions and audiences_map [id:name]
 
@@ -173,7 +177,7 @@ class OptimizelyConfigService:
         else:
             return ''
 
-    def lookup_name_from_id(self, audience_id, audiences_map):
+    def lookup_name_from_id(self, audience_id: str, audiences_map: dict[str, str]) -> str:
         '''
             Gets and audience ID and audiences map
 
@@ -189,7 +193,7 @@ class OptimizelyConfigService:
 
         return name
 
-    def stringify_conditions(self, conditions, audiences_map):
+    def stringify_conditions(self, conditions: str | list, audiences_map: dict[str, str]) -> str:
         '''
             Gets a list of conditions from an entities.Experiment
             and an audiences_map [id:name]
@@ -246,7 +250,7 @@ class OptimizelyConfigService:
 
         return conditions_str or ''
 
-    def get_config(self):
+    def get_config(self) -> Optional[OptimizelyConfig]:
         """ Gets instance of OptimizelyConfig
 
         Returns:
@@ -271,7 +275,7 @@ class OptimizelyConfigService:
             self.audiences
         )
 
-    def _create_lookup_maps(self):
+    def _create_lookup_maps(self) -> None:
         """ Creates lookup maps to avoid redundant iteration of config objects.  """
 
         self.exp_id_to_feature_map = {}
@@ -298,7 +302,9 @@ class OptimizelyConfigService:
             self.feature_key_variable_key_to_variable_map[feature['key']] = variables_key_map
             self.feature_key_variable_id_to_variable_map[feature['key']] = variables_id_map
 
-    def _get_variables_map(self, experiment, variation, feature_id=None):
+    def _get_variables_map(
+        self, experiment: dict, variation: dict, feature_id: Optional[str] = None
+    ) -> dict:
         """ Gets variables map for given experiment and variation.
 
         Args:
@@ -328,7 +334,7 @@ class OptimizelyConfigService:
 
         return variables_map
 
-    def _get_variations_map(self, experiment, feature_id=None):
+    def _get_variations_map(self, experiment: dict, feature_id: Optional[str] = None) -> dict:
         """ Gets variation map for the given experiment.
 
         Args:
@@ -351,7 +357,7 @@ class OptimizelyConfigService:
 
         return variations_map
 
-    def _get_all_experiments(self):
+    def _get_all_experiments(self) -> list[dict]:
         """ Gets all experiments in the project config.
 
         Returns:
@@ -364,7 +370,7 @@ class OptimizelyConfigService:
 
         return experiments
 
-    def _get_experiments_maps(self):
+    def _get_experiments_maps(self) -> tuple[dict[str, OptimizelyExperiment], dict[str, OptimizelyExperiment]]:
         """ Gets maps for all the experiments in the project config and
         updates the experiment with updated experiment audiences string.
 
@@ -376,7 +382,7 @@ class OptimizelyConfigService:
         # Id map comes in handy to figure out feature experiment.
         experiments_id_map = {}
         # Audiences map to use for updating experiments with new audience conditions string
-        audiences_map = {}
+        audiences_map: dict = {}
 
         # Build map from OptimizelyAudience array
         for optly_audience in self.audiences:
@@ -396,7 +402,7 @@ class OptimizelyConfigService:
 
         return experiments_key_map, experiments_id_map
 
-    def _get_features_map(self, experiments_id_map):
+    def _get_features_map(self, experiments_id_map: dict[str, OptimizelyExperiment]) -> dict[str, OptimizelyFeature]:
         """ Gets features map for the project config.
 
         Args:
@@ -406,7 +412,7 @@ class OptimizelyConfigService:
             dict -- feaure key to OptimizelyFeature map
         """
         features_map = {}
-        experiment_rules = []
+        experiment_rules: list[OptimizelyExperiment] = []
 
         for feature in self.feature_flags:
 
@@ -431,7 +437,9 @@ class OptimizelyConfigService:
 
         return features_map
 
-    def _get_delivery_rules(self, rollouts, rollout_id, feature_id):
+    def _get_delivery_rules(
+        self, rollouts: list[dict], rollout_id: Optional[str], feature_id: str
+    ) -> list[OptimizelyExperiment]:
         """ Gets an array of rollouts for the project config
 
         returns:
@@ -440,7 +448,7 @@ class OptimizelyConfigService:
         # Return list for delivery rules
         delivery_rules = []
         # Audiences map to use for updating experiments with new audience conditions string
-        audiences_map = {}
+        audiences_map: dict = {}
 
         # Gets a rollout based on provided rollout_id
         rollout = [rollout for rollout in rollouts if rollout.get('id') == rollout_id]
@@ -465,7 +473,7 @@ class OptimizelyConfigService:
 
         return delivery_rules
 
-    def _get_attributes_list(self, attributes):
+    def _get_attributes_list(self, attributes: list[dict]) -> list[OptimizelyAttribute]:
         """ Gets attributes list for the project config
 
         Returns:
@@ -482,7 +490,7 @@ class OptimizelyConfigService:
 
         return attributes_list
 
-    def _get_events_list(self, events):
+    def _get_events_list(self, events: list[dict]) -> list[OptimizelyEvent]:
         """ Gets events list for the project_config
 
         Returns:

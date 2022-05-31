@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Any, Callable
 from .helpers import enums
 from . import logger as optimizely_logger
 
@@ -24,14 +26,14 @@ class NotificationCenter:
     """ Class encapsulating methods to manage notifications and their listeners.
   The enums.NotificationTypes includes predefined notifications."""
 
-    def __init__(self, logger=None):
+    def __init__(self, logger: Any = None):
         self.listener_id = 1
-        self.notification_listeners = {}
+        self.notification_listeners: dict[str, list] = {}
         for notification_type in NOTIFICATION_TYPES:
             self.notification_listeners[notification_type] = []
         self.logger = optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
 
-    def add_notification_listener(self, notification_type, notification_callback):
+    def add_notification_listener(self, notification_type: str, notification_callback: Callable) -> int:
         """ Add a notification callback to the notification center for a given notification type.
 
     Args:
@@ -59,7 +61,7 @@ class NotificationCenter:
 
         return current_listener_id
 
-    def remove_notification_listener(self, notification_id):
+    def remove_notification_listener(self, notification_id: int) -> bool:
         """ Remove a previously added notification callback.
 
     Args:
@@ -77,7 +79,7 @@ class NotificationCenter:
 
         return False
 
-    def clear_notification_listeners(self, notification_type):
+    def clear_notification_listeners(self, notification_type: str) -> None:
         """ Remove notification listeners for a certain notification type.
 
     Args:
@@ -90,7 +92,7 @@ class NotificationCenter:
             )
         self.notification_listeners[notification_type] = []
 
-    def clear_notifications(self, notification_type):
+    def clear_notifications(self, notification_type: str) -> None:
         """ (DEPRECATED since 3.2.0, use clear_notification_listeners)
     Remove notification listeners for a certain notification type.
 
@@ -99,17 +101,17 @@ class NotificationCenter:
     """
         self.clear_notification_listeners(notification_type)
 
-    def clear_all_notification_listeners(self):
+    def clear_all_notification_listeners(self) -> None:
         """ Remove all notification listeners. """
         for notification_type in self.notification_listeners.keys():
             self.clear_notification_listeners(notification_type)
 
-    def clear_all_notifications(self):
+    def clear_all_notifications(self) -> None:
         """ (DEPRECATED since 3.2.0, use clear_all_notification_listeners)
     Remove all notification listeners. """
         self.clear_all_notification_listeners()
 
-    def send_notifications(self, notification_type, *args):
+    def send_notifications(self, notification_type: str, *args: Any) -> None:
         """ Fires off the notification for the specific event.  Uses var args to pass in a
         arbitrary list of parameter according to which notification type was fired.
 

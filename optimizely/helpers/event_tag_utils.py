@@ -11,6 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Any, Optional
 from . import enums
 import math
 import numbers
@@ -19,7 +21,7 @@ REVENUE_METRIC_TYPE = 'revenue'
 NUMERIC_METRIC_TYPE = 'value'
 
 
-def get_revenue_value(event_tags):
+def get_revenue_value(event_tags: Optional[dict[str, Any]]) -> Optional[numbers.Integral]:
     if event_tags is None:
         return None
 
@@ -40,7 +42,7 @@ def get_revenue_value(event_tags):
     return raw_value
 
 
-def get_numeric_value(event_tags, logger=None):
+def get_numeric_value(event_tags: Optional[dict[str, Any]], logger: Any = None) -> Optional[float]:
     """
   A smart getter of the numeric value from the event tags.
 

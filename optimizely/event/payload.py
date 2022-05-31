@@ -11,7 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import json
+from numbers import Integral
+from typing import Any, Optional
 
 
 class EventBatch:
@@ -19,14 +22,14 @@ class EventBatch:
 
     def __init__(
         self,
-        account_id,
-        project_id,
-        revision,
-        client_name,
-        client_version,
-        anonymize_ip,
-        enrich_decisions=True,
-        visitors=None,
+        account_id: str,
+        project_id: str,
+        revision: str,
+        client_name: str,
+        client_version: str,
+        anonymize_ip: bool,
+        enrich_decisions: bool = True,
+        visitors: Optional[list] = None,
     ):
         self.account_id = account_id
         self.project_id = project_id
@@ -37,11 +40,11 @@ class EventBatch:
         self.enrich_decisions = enrich_decisions
         self.visitors = visitors or []
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         batch_obj = self.get_event_params()
         return batch_obj == other
 
-    def _dict_clean(self, obj):
+    def _dict_clean(self, obj: list[tuple[Any, Any]]) -> dict:
         """ Helper method to remove keys from dictionary with None values. """
 
         result = {}
@@ -52,7 +55,7 @@ class EventBatch:
                 result[k] = v
         return result
 
-    def get_event_params(self):
+    def get_event_params(self) -> dict:
         """ Method to return valid params for LogEvent payload. """
 
         return json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__), object_pairs_hook=self._dict_clean,)
@@ -61,7 +64,7 @@ class EventBatch:
 class Decision:
     """ Class respresenting Decision. """
 
-    def __init__(self, campaign_id, experiment_id, variation_id, metadata):
+    def __init__(self, campaign_id: str, experiment_id: str, variation_id: str, metadata: Metadata):
         self.campaign_id = campaign_id
         self.experiment_id = experiment_id
         self.variation_id = variation_id
@@ -71,7 +74,7 @@ class Decision:
 class Metadata:
     """ Class respresenting Metadata. """
 
-    def __init__(self, flag_key, rule_key, rule_type, variation_key, enabled):
+    def __init__(self, flag_key: str, rule_key: str, rule_type: str, variation_key: str, enabled: bool):
         self.flag_key = flag_key
         self.rule_key = rule_key
         self.rule_type = rule_type
@@ -82,7 +85,7 @@ class Metadata:
 class Snapshot:
     """ Class representing Snapshot. """
 
-    def __init__(self, events, decisions=None):
+    def __init__(self, events: list[SnapshotEvent], decisions: Optional[list[Decision]] = None):
         self.events = events
         self.decisions = decisions
 
@@ -90,7 +93,10 @@ class Snapshot:
 class SnapshotEvent:
     """ Class representing Snapshot Event. """
 
-    def __init__(self, entity_id, uuid, key, timestamp, revenue=None, value=None, tags=None):
+    def __init__(
+        self, entity_id: str, uuid: str, key: str, timestamp: int,
+        revenue: Optional[Integral] = None, value: Any = None, tags: Optional[dict[str, Any]] = None
+    ):
         self.entity_id = entity_id
         self.uuid = uuid
         self.key = key
@@ -103,7 +109,7 @@ class SnapshotEvent:
 class Visitor:
     """ Class representing Visitor. """
 
-    def __init__(self, snapshots, attributes, visitor_id):
+    def __init__(self, snapshots: list[Snapshot], attributes: list[VisitorAttribute], visitor_id: str):
         self.snapshots = snapshots
         self.attributes = attributes
         self.visitor_id = visitor_id
@@ -112,7 +118,7 @@ class Visitor:
 class VisitorAttribute:
     """ Class representing Visitor Attribute. """
 
-    def __init__(self, entity_id, key, attribute_type, value):
+    def __init__(self, entity_id: str, key: str, attribute_type: str, value: Any):
         self.entity_id = entity_id
         self.key = key
         self.type = attribute_type
