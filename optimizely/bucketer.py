@@ -86,7 +86,7 @@ class Bucketer:
 
         for traffic_allocation in traffic_allocations:
             current_end_of_range = traffic_allocation.get('endOfRange')
-            if bucketing_number < current_end_of_range:
+            if current_end_of_range is not None and bucketing_number < current_end_of_range:
                 return traffic_allocation.get('entityId')
 
         return None

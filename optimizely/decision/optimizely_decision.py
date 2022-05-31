@@ -32,13 +32,13 @@ class OptimizelyDecision:
         self.user_context = user_context
         self.reasons = reasons or []
 
-    def as_json(self):
+    def as_json(self) -> dict:
         return {
             'variation_key': self.variation_key,
             'enabled': self.enabled,
             'variables': self.variables,
             'rule_key': self.rule_key,
             'flag_key': self.flag_key,
-            'user_context': self.user_context.as_json(),
+            'user_context': self.user_context.as_json() if self.user_context else None,
             'reasons': self.reasons
         }

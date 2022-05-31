@@ -40,6 +40,8 @@ class EventDispatcher:
     Args:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
+        if not event:
+            return
 
         try:
             if event.http_verb == enums.HTTPVerbs.GET:

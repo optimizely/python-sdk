@@ -13,9 +13,10 @@
 
 
 from typing import Optional
+from optimizely import event_builder
 
 
-class LogEvent:
+class LogEvent(event_builder.Event):
     """ Representation of an event which can be sent to Optimizely events API. """
 
     def __init__(self, url: str, params: dict, http_verb: Optional[str] = None, headers: Optional[dict] = None):

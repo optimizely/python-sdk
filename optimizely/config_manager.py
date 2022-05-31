@@ -119,6 +119,7 @@ class StaticConfigManager(BaseConfigManager):
         config = None
 
         try:
+            assert datafile is not None
             config = project_config.ProjectConfig(datafile, self.logger, self.error_handler)
         except optimizely_exceptions.UnsupportedDatafileVersionException as error:
             error_msg = error.args[0]
@@ -127,7 +128,7 @@ class StaticConfigManager(BaseConfigManager):
             error_msg = enums.Errors.INVALID_INPUT.format('datafile')
             error_to_handle = optimizely_exceptions.InvalidInputException(error_msg)
         finally:
-            if error_msg:
+            if error_msg or config is None:
                 self.logger.error(error_msg)
                 self.error_handler.handle_error(error_to_handle)
                 return
@@ -236,8 +237,9 @@ class PollingConfigManager(StaticConfigManager):
         # Return URL if one is provided or use template and SDK key to get it.
         if url is None:
             try:
+                assert url_template is not None
                 return url_template.format(sdk_key=sdk_key)
-            except (AttributeError, KeyError):
+            except (AssertionError, AttributeError, KeyError):
                 raise optimizely_exceptions.InvalidInputException(
                     f'Invalid url_template {url_template} provided.'
                 )

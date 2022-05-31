@@ -95,7 +95,7 @@ class DecisionService:
         experiment_id = experiment.id
         if variation_key is None:
             if user_id in self.forced_variation_map:
-                experiment_to_variation_map = self.forced_variation_map.get(user_id)
+                experiment_to_variation_map = self.forced_variation_map[user_id]
                 if experiment_id in experiment_to_variation_map:
                     del self.forced_variation_map[user_id][experiment_id]
                     self.logger.debug(
@@ -171,6 +171,10 @@ class DecisionService:
             return None, decide_reasons
 
         variation = project_config.get_variation_from_id(experiment_key, variation_id)
+        # this case is logged in get_variation_from_id
+        if variation is None:
+            return None, decide_reasons
+
         message = f'Variation "{variation.key}" is mapped to experiment "{experiment_key}" and ' \
                   f'user "{user_id}" in the forced variation map'
         self.logger.debug(message)
@@ -196,7 +200,7 @@ class DecisionService:
         forced_variations = experiment.forcedVariations
 
         if forced_variations and user_id in forced_variations:
-            forced_variation_key = forced_variations.get(user_id)
+            forced_variation_key = forced_variations[user_id]
             forced_variation = project_config.get_variation_from_key(experiment.key, forced_variation_key)
 
             if forced_variation:
@@ -328,7 +332,7 @@ class DecisionService:
         decide_reasons += bucketing_id_reasons
         variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
         decide_reasons += bucket_reasons
-        if variation:
+        if isinstance(variation, entities.Variation):
             message = f'User "{user_id}" is in variation "{variation.key}" of experiment {experiment.key}.'
             self.logger.info(message)
             decide_reasons.append(message)
@@ -407,6 +411,9 @@ class DecisionService:
             logging_key = "Everyone Else" if everyone_else else str(index + 1)
 
             rollout_rule = project_config.get_experiment_from_id(rule.id)
+            # error is logged in get_experiment_from_id
+            if rollout_rule is None:
+                continue
             audience_conditions = rollout_rule.get_audience_conditions_or_ids()
 
             audience_decision_response, reasons_received_audience = audience_helper.does_user_meet_audience_conditions(
@@ -424,7 +431,7 @@ class DecisionService:
                                                                           bucketing_id)
                 decide_reasons.extend(bucket_reasons)
 
-                if bucketed_variation:
+                if isinstance(bucketed_variation, entities.Variation):
                     message = f'User "{user_id}" bucketed into a targeting rule {logging_key}.'
                     self.logger.debug(message)
                     decide_reasons.append(message)
@@ -475,8 +482,8 @@ class DecisionService:
         # Check if the feature flag is under an experiment and the the user is bucketed into one of these experiments
         if feature.experimentIds:
             # Evaluate each experiment ID and return the first bucketed experiment variation
-            for experiment in feature.experimentIds:
-                experiment = project_config.get_experiment_from_id(experiment)
+            for experiment_id in feature.experimentIds:
+                experiment = project_config.get_experiment_from_id(experiment_id)
                 decision_variation = None
 
                 if experiment:

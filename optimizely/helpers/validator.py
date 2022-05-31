@@ -32,6 +32,8 @@ def is_datafile_valid(datafile: Optional[str | bytes]) -> bool:
   Returns:
     Boolean depending upon whether datafile is valid or not.
   """
+    if datafile is None:
+        return False
 
     try:
         datafile_json = json.loads(datafile)

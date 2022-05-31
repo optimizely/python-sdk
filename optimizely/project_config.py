@@ -92,8 +92,8 @@ class ProjectConfig:
 
         self.rollout_id_map = self._generate_key_map(self.rollouts, 'id', entities.Layer)
         for layer in self.rollout_id_map.values():
-            for experiment in layer.experiments:
-                self.experiment_id_map[experiment['id']] = entities.Experiment(**experiment)
+            for experiment_dict in layer.experiments:
+                self.experiment_id_map[experiment_dict['id']] = entities.Experiment(**experiment_dict)
 
         self.audience_id_map = self._deserialize_audience(self.audience_id_map)
         for group in self.group_id_map.values():
@@ -120,7 +120,7 @@ class ProjectConfig:
             self.variation_id_map_by_experiment_id[experiment.id] = {}
             self.variation_key_map_by_experiment_id[experiment.id] = {}
 
-            for variation in self.variation_key_map.get(experiment.key).values():
+            for variation in self.variation_key_map[experiment.key].values():
                 self.variation_id_map[experiment.key][variation.id] = variation
                 self.variation_id_map_by_experiment_id[experiment.id][variation.id] = variation
                 self.variation_key_map_by_experiment_id[experiment.id][variation.key] = variation
@@ -159,7 +159,7 @@ class ProjectConfig:
             for rule in rules:
                 # variation_id_map_by_experiment_id gives variation entity object while
                 # experiment_id_map will give us dictionary
-                for rule_variation in self.variation_id_map_by_experiment_id.get(rule.id).values():
+                for rule_variation in self.variation_id_map_by_experiment_id[rule.id].values():
                     if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
                         variations.append(rule_variation)
             self.flag_variations_map[feature.key] = variations
@@ -177,10 +177,7 @@ class ProjectConfig:
             Map mapping key to entity object.
         """
 
-        # using ordered dict here to preserve insertion order of entities
-        # OrderedDict() is needed for Py versions 3.5 and less to work.
-        # Insertion order has been made default in dicts since Py 3.6
-        key_map = OrderedDict()
+        key_map = {}
         for obj in entity_list:
             key_map[obj[key]] = entity_class(**obj)
 
@@ -376,6 +373,7 @@ class ProjectConfig:
 
         self.logger.error(f'Audience ID "{audience_id}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidAudienceException((enums.Errors.INVALID_AUDIENCE)))
+        return None
 
     def get_variation_from_key(self, experiment_key: str, variation_key: str) -> Optional[entities.Variation]:
         """ Get variation given experiment and variation key.

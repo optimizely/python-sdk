@@ -323,7 +323,7 @@ class OptimizelyConfigService:
         # set default variables for each variation
         if feature_id:
             variables_map = copy.deepcopy(self.feature_id_variable_key_to_feature_variables_map[feature_id])
-        else:
+        elif feature_flag:
             variables_map = copy.deepcopy(self.feature_key_variable_key_to_variable_map[feature_flag['key']])
 
             # set variation specific variable value if any
@@ -454,13 +454,13 @@ class OptimizelyConfigService:
         rollout = [rollout for rollout in rollouts if rollout.get('id') == rollout_id]
 
         if rollout:
-            rollout = rollout[0]
+            found_rollout = rollout[0]
             # Build map from OptimizelyAudience array
             for optly_audience in self.audiences:
                 audiences_map[optly_audience.id] = optly_audience.name
 
             # Get the experiments for that rollout
-            experiments = rollout.get('experiments')
+            experiments = found_rollout.get('experiments')
             if experiments:
                 for experiment in experiments:
                     optly_exp = OptimizelyExperiment(
