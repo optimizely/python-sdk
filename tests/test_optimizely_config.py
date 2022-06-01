@@ -1525,6 +1525,18 @@ class OptimizelyConfigTest(base.BaseTest):
 
         self.assertEqual(expected_datafile, actual_datafile)
 
+    def test__get_datafile_from_bytes(self):
+        """ Test that get_datafile returns the expected datafile when provided as bytes. """
+
+        expected_datafile = json.dumps(self.config_dict_with_features)
+        bytes_datafile = bytes(expected_datafile, 'utf-8')
+
+        opt_instance = optimizely.Optimizely(bytes_datafile)
+        opt_config = opt_instance.config_manager.optimizely_config
+        actual_datafile = opt_config.get_datafile()
+
+        self.assertEqual(expected_datafile, actual_datafile)
+
     def test__get_sdk_key(self):
         """ Test that get_sdk_key returns the expected value. """
 

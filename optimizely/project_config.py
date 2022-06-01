@@ -41,7 +41,7 @@ class ProjectConfig(object):
         """
 
         config = json.loads(datafile)
-        self._datafile = u'{}'.format(datafile)
+        self._datafile = datafile.decode('utf-8') if isinstance(datafile, bytes) else datafile
         self.logger = logger
         self.error_handler = error_handler
         self.version = config.get('version')
