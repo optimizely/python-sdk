@@ -12,7 +12,7 @@
 # limitations under the License.
 import json
 
-import mock
+from unittest import mock
 import threading
 
 from optimizely import optimizely, decision_service
