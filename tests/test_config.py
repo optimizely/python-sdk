@@ -1011,6 +1011,19 @@ class ConfigTest(base.BaseTest):
 
         self.assertEqual(expected_datafile, actual_datafile)
 
+    def test_to_datafile_from_bytes(self):
+        """ Test that to_datafile returns the expected datafile when given bytes. """
+
+        expected_datafile = json.dumps(self.config_dict_with_features)
+        bytes_datafile = bytes(expected_datafile, 'utf-8')
+
+        opt_obj = optimizely.Optimizely(bytes_datafile)
+        project_config = opt_obj.config_manager.get_config()
+
+        actual_datafile = project_config.to_datafile()
+
+        self.assertEqual(expected_datafile, actual_datafile)
+
 
 class ConfigLoggingTest(base.BaseTest):
     def setUp(self):
