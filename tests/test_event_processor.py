@@ -12,9 +12,9 @@
 # limitations under the License.
 
 import datetime
-import mock
+from unittest import mock
 import time
-from six.moves import queue
+import queue
 
 from optimizely.event.payload import Decision, Visitor
 from optimizely.event.event_processor import (
@@ -30,7 +30,7 @@ from optimizely.logger import NoOpLogger
 from . import base
 
 
-class CanonicalEvent(object):
+class CanonicalEvent:
     def __init__(self, experiment_id, variation_id, event_name, visitor_id, attributes, tags):
         self._experiment_id = experiment_id
         self._variation_id = variation_id
@@ -46,7 +46,7 @@ class CanonicalEvent(object):
         return self.__dict__ == other.__dict__
 
 
-class CustomEventDispatcher(object):
+class CustomEventDispatcher:
 
     IMPRESSION_EVENT_NAME = 'campaign_activated'
 
@@ -116,7 +116,7 @@ class BatchEventProcessorTest(base.BaseTest):
     MAX_BATCH_SIZE = 10
     MAX_DURATION_SEC = 0.2
     MAX_TIMEOUT_INTERVAL_SEC = 0.1
-    TEST_TIMEOUT = 0.3
+    TEST_TIMEOUT = 10
 
     def setUp(self, *args, **kwargs):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
@@ -155,7 +155,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events() or not self.event_processor.event_queue.empty():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -170,7 +174,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -187,7 +195,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events() or mock_config_logging.debug.call_count < 3:
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -209,7 +221,11 @@ class BatchEventProcessorTest(base.BaseTest):
             self.event_processor.process(user_event)
             event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -229,7 +245,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.flush()
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -254,7 +274,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event_2)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -279,7 +303,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event_2)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.assertEqual(0, self.event_processor.event_queue.qsize())
@@ -294,7 +322,11 @@ class BatchEventProcessorTest(base.BaseTest):
         self.event_processor.process(user_event)
         event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not event_dispatcher.compare_events():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         self.assertStrictTrue(event_dispatcher.compare_events())
         self.event_processor.stop()
@@ -517,15 +549,29 @@ class BatchEventProcessorTest(base.BaseTest):
             self.event_processor.process(user_event)
             event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        time.sleep(self.TEST_TIMEOUT)
+        # wait for events to finish processing and queue to clear, up to TEST_TIMEOUT
+        start_time = time.time()
+        while not self.event_processor.event_queue.empty():
+            if time.time() - start_time >= self.TEST_TIMEOUT:
+                break
 
         # queue is flushed, even though events overflow
         self.assertEqual(0, self.event_processor.event_queue.qsize())
-        mock_config_logging.warning.assert_called_with('Payload not accepted by the queue. Current size: {}'
-                                                       .format(str(test_max_queue_size)))
+
+        class AnyStringWith(str):
+            '''allows a partial match on the log message'''
+            def __eq__(self, other):
+                return self in other
+
+        # the qsize method is approximate and since no lock is taken on the queue
+        # it can return an indeterminate count
+        # thus we can't rely on this error message to always report the max_queue_size
+        mock_config_logging.warning.assert_called_with(
+            AnyStringWith('Payload not accepted by the queue. Current size: ')
+        )
 
 
-class CustomForwardingEventDispatcher(object):
+class CustomForwardingEventDispatcher:
     def __init__(self, is_updated=False):
         self.is_updated = is_updated
 
@@ -568,7 +614,7 @@ class ForwardingEventProcessorTest(base.BaseTest):
             event_processor.process(user_event)
 
         mock_client_logging.exception.assert_called_once_with(
-            'Error dispatching event: ' + str(log_event) + ' Failed to send.'
+            f'Error dispatching event: {log_event} Failed to send.'
         )
 
     def test_event_processor__with_test_event_dispatcher(self):

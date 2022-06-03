@@ -21,7 +21,7 @@ from . import user_event
 CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
 
-class EventFactory(object):
+class EventFactory:
     """ EventFactory builds LogEvent object from a given UserEvent.
   This class serves to separate concerns between events in the SDK and the API used
   to record the events via the Optimizely Events API ("https://developers.optimizely.com/x/events/api/index.html")

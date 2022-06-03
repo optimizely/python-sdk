@@ -87,9 +87,7 @@ def get_numeric_value(event_tags, logger=None):
                 if not isinstance(cast_numeric_metric_value, float) or \
                    math.isnan(cast_numeric_metric_value) or \
                    math.isinf(cast_numeric_metric_value):
-                    logger_message_debug = 'Provided numeric value {} is in an invalid format.'.format(
-                        numeric_metric_value
-                    )
+                    logger_message_debug = f'Provided numeric value {numeric_metric_value} is in an invalid format.'
                     numeric_metric_value = None
                 else:
                     # Handle booleans as a special case.
@@ -116,15 +114,14 @@ def get_numeric_value(event_tags, logger=None):
         if logger:
             logger.log(
                 enums.LogLevels.INFO,
-                'The numeric metric value {} will be sent to results.'.format(numeric_metric_value),
+                f'The numeric metric value {numeric_metric_value} will be sent to results.'
             )
     else:
         if logger:
             logger.log(
                 enums.LogLevels.WARNING,
-                'The provided numeric metric value {} is in an invalid format and will not be sent to results.'.format(
-                    numeric_metric_value
-                ),
+                f'The provided numeric metric value {numeric_metric_value}'
+                ' is in an invalid format and will not be sent to results.'
             )
 
     return numeric_metric_value

@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mock
+from unittest import mock
 import unittest
 
 from optimizely import notification_center
@@ -309,5 +309,5 @@ class NotificationCenterTest(unittest.TestCase):
         # Not providing any of the 2 expected arguments during send.
         test_notification_center.send_notifications(enums.NotificationTypes.ACTIVATE)
         mock_logger.exception.assert_called_once_with(
-            'Unknown problem when sending "{}" type notification.'.format(enums.NotificationTypes.ACTIVATE)
+            f'Unknown problem when sending "{enums.NotificationTypes.ACTIVATE}" type notification.'
         )

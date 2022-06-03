@@ -14,8 +14,7 @@
 import json
 from operator import itemgetter
 
-import mock
-import six
+from unittest import mock
 
 from optimizely import config_manager
 from optimizely import decision_service
@@ -37,12 +36,12 @@ class OptimizelyTest(base.BaseTest):
     strTest = None
 
     try:
-        isinstance("test", six.string_types)  # attempt to evaluate string
+        isinstance("test", str)  # attempt to evaluate string
 
         _expected_notification_failure = 'Problem calling notify callback.'
 
         def isstr(self, s):
-            return isinstance(s, six.string_types)
+            return isinstance(s, str)
 
         strTest = isstr
 
@@ -118,7 +117,7 @@ class OptimizelyTest(base.BaseTest):
     def test_init__invalid_config_manager__logs_error(self):
         """ Test that invalid config_manager logs error on init. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         mock_client_logger = mock.MagicMock()
@@ -131,7 +130,7 @@ class OptimizelyTest(base.BaseTest):
     def test_init__invalid_event_dispatcher__logs_error(self):
         """ Test that invalid event_dispatcher logs error on init. """
 
-        class InvalidDispatcher(object):
+        class InvalidDispatcher:
             pass
 
         mock_client_logger = mock.MagicMock()
@@ -144,7 +143,7 @@ class OptimizelyTest(base.BaseTest):
     def test_init__invalid_event_processor__logs_error(self):
         """ Test that invalid event_processor logs error on init. """
 
-        class InvalidProcessor(object):
+        class InvalidProcessor:
             pass
 
         mock_client_logger = mock.MagicMock()
@@ -157,7 +156,7 @@ class OptimizelyTest(base.BaseTest):
     def test_init__invalid_logger__logs_error(self):
         """ Test that invalid logger logs error on init. """
 
-        class InvalidLogger(object):
+        class InvalidLogger:
             pass
 
         mock_client_logger = mock.MagicMock()
@@ -170,7 +169,7 @@ class OptimizelyTest(base.BaseTest):
     def test_init__invalid_error_handler__logs_error(self):
         """ Test that invalid error_handler logs error on init. """
 
-        class InvalidErrorHandler(object):
+        class InvalidErrorHandler:
             pass
 
         mock_client_logger = mock.MagicMock()
@@ -183,7 +182,7 @@ class OptimizelyTest(base.BaseTest):
     def test_init__invalid_notification_center__logs_error(self):
         """ Test that invalid notification_center logs error on init. """
 
-        class InvalidNotificationCenter(object):
+        class InvalidNotificationCenter:
             pass
 
         mock_client_logger = mock.MagicMock()
@@ -376,7 +375,7 @@ class OptimizelyTest(base.BaseTest):
                 self.assertTrue(isinstance(attributes, dict))
             self.assertTrue(isinstance(variation, entities.Variation))
             # self.assertTrue(isinstance(event, event_builder.Event))
-            print("Activated experiment {0}".format(experiment.key))
+            print(f"Activated experiment {experiment.key}")
             callbackhit[0] = True
 
         notification_id = self.optimizely.notification_center.add_notification_listener(
@@ -1207,7 +1206,7 @@ class OptimizelyTest(base.BaseTest):
     def test_activate__invalid_object(self):
         """ Test that activate logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -1731,7 +1730,7 @@ class OptimizelyTest(base.BaseTest):
     def test_track__invalid_object(self):
         """ Test that track logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -1847,7 +1846,7 @@ class OptimizelyTest(base.BaseTest):
     def test_get_variation__invalid_object(self):
         """ Test that get_variation logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -2458,7 +2457,7 @@ class OptimizelyTest(base.BaseTest):
     def test_is_feature_enabled__invalid_object(self):
         """ Test that is_feature_enabled returns False and logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -2628,7 +2627,7 @@ class OptimizelyTest(base.BaseTest):
     def test_get_enabled_features__invalid_object(self):
         """ Test that get_enabled_features returns empty list if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -4572,7 +4571,7 @@ class OptimizelyTest(base.BaseTest):
     def test_get_optimizely_config__invalid_object(self):
         """ Test that get_optimizely_config logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -4609,7 +4608,7 @@ class OptimizelyTest(base.BaseTest):
         some_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         return_config = some_obj.config_manager.get_config()
 
-        class SomeConfigManager(object):
+        class SomeConfigManager:
             def get_config(self):
                 return return_config
 
@@ -4721,7 +4720,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.optimizely.track(event_key, user_id)
 
         mock_client_logging.info.assert_has_calls(
-            [mock.call('Tracking event "%s" for user "%s".' % (event_key, user_id))]
+            [mock.call(f'Tracking event "{event_key}" for user "{user_id}".')]
         )
 
     def test_activate__experiment_not_running(self):
@@ -4960,7 +4959,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     def test_set_forced_variation__invalid_object(self):
         """ Test that set_forced_variation logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())
@@ -5008,7 +5007,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     def test_get_forced_variation__invalid_object(self):
         """ Test that get_forced_variation logs error if Optimizely instance is invalid. """
 
-        class InvalidConfigManager(object):
+        class InvalidConfigManager:
             pass
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict), config_manager=InvalidConfigManager())

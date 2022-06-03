@@ -14,7 +14,7 @@
 import json
 
 
-class EventBatch(object):
+class EventBatch:
     """ Class respresenting Event Batch. """
 
     def __init__(
@@ -58,7 +58,7 @@ class EventBatch(object):
         return json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__), object_pairs_hook=self._dict_clean,)
 
 
-class Decision(object):
+class Decision:
     """ Class respresenting Decision. """
 
     def __init__(self, campaign_id, experiment_id, variation_id, metadata):
@@ -68,7 +68,7 @@ class Decision(object):
         self.metadata = metadata
 
 
-class Metadata(object):
+class Metadata:
     """ Class respresenting Metadata. """
 
     def __init__(self, flag_key, rule_key, rule_type, variation_key, enabled):
@@ -79,7 +79,7 @@ class Metadata(object):
         self.enabled = enabled
 
 
-class Snapshot(object):
+class Snapshot:
     """ Class representing Snapshot. """
 
     def __init__(self, events, decisions=None):
@@ -87,7 +87,7 @@ class Snapshot(object):
         self.decisions = decisions
 
 
-class SnapshotEvent(object):
+class SnapshotEvent:
     """ Class representing Snapshot Event. """
 
     def __init__(self, entity_id, uuid, key, timestamp, revenue=None, value=None, tags=None):
@@ -100,7 +100,7 @@ class SnapshotEvent(object):
         self.tags = tags
 
 
-class Visitor(object):
+class Visitor:
     """ Class representing Visitor. """
 
     def __init__(self, snapshots, attributes, visitor_id):
@@ -109,7 +109,7 @@ class Visitor(object):
         self.visitor_id = visitor_id
 
 
-class VisitorAttribute(object):
+class VisitorAttribute:
     """ Class representing Visitor Attribute. """
 
     def __init__(self, entity_id, key, attribute_type, value):

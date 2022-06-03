@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import json
-import mock
+from unittest import mock
 
 from optimizely import optimizely
 from optimizely.helpers import audience
@@ -361,11 +361,11 @@ class ExperimentAudienceLoggingTest(base.BaseTest):
             [
                 mock.call.debug('Evaluating audiences for experiment "test_experiment": ["11154", "11159"].'),
                 mock.call.debug(
-                    'Starting to evaluate audience "11154" with conditions: ' + audience_11154.conditions + '.'
+                    f'Starting to evaluate audience "11154" with conditions: {audience_11154.conditions}.'
                 ),
                 mock.call.debug('Audience "11154" evaluated to UNKNOWN.'),
                 mock.call.debug(
-                    'Starting to evaluate audience "11159" with conditions: ' + audience_11159.conditions + '.'
+                    f'Starting to evaluate audience "11159" with conditions: {audience_11159.conditions}.'
                 ),
                 mock.call.debug('Audience "11159" evaluated to UNKNOWN.'),
                 mock.call.info('Audiences for experiment "test_experiment" collectively evaluated to FALSE.'),
@@ -409,17 +409,17 @@ class ExperimentAudienceLoggingTest(base.BaseTest):
                 ),
                 mock.call.debug(
                     'Starting to evaluate audience "3468206642" with '
-                    'conditions: ' + audience_3468206642.conditions + '.'
+                    f'conditions: {audience_3468206642.conditions}.'
                 ),
                 mock.call.debug('Audience "3468206642" evaluated to FALSE.'),
                 mock.call.debug(
                     'Starting to evaluate audience "3988293898" with '
-                    'conditions: ' + audience_3988293898.conditions + '.'
+                    f'conditions: {audience_3988293898.conditions}.'
                 ),
                 mock.call.debug('Audience "3988293898" evaluated to UNKNOWN.'),
                 mock.call.debug(
                     'Starting to evaluate audience "3988293899" with '
-                    'conditions: ' + audience_3988293899.conditions + '.'
+                    f'conditions: {audience_3988293899.conditions}.'
                 ),
                 mock.call.debug('Audience "3988293899" evaluated to TRUE.'),
                 mock.call.info(
@@ -484,11 +484,11 @@ class RolloutRuleAudienceLoggingTest(base.BaseTest):
             [
                 mock.call.debug('Evaluating audiences for rule test_rule: ["11154", "11159"].'),
                 mock.call.debug(
-                    'Starting to evaluate audience "11154" with conditions: ' + audience_11154.conditions + '.'
+                    f'Starting to evaluate audience "11154" with conditions: {audience_11154.conditions}.'
                 ),
                 mock.call.debug('Audience "11154" evaluated to UNKNOWN.'),
                 mock.call.debug(
-                    'Starting to evaluate audience "11159" with conditions: ' + audience_11159.conditions + '.'
+                    f'Starting to evaluate audience "11159" with conditions: {audience_11159.conditions}.'
                 ),
                 mock.call.debug('Audience "11159" evaluated to UNKNOWN.'),
                 mock.call.info('Audiences for rule test_rule collectively evaluated to FALSE.'),
@@ -533,17 +533,17 @@ class RolloutRuleAudienceLoggingTest(base.BaseTest):
                 ),
                 mock.call.debug(
                     'Starting to evaluate audience "3468206642" with '
-                    'conditions: ' + audience_3468206642.conditions + '.'
+                    f'conditions: {audience_3468206642.conditions}.'
                 ),
                 mock.call.debug('Audience "3468206642" evaluated to FALSE.'),
                 mock.call.debug(
                     'Starting to evaluate audience "3988293898" with '
-                    'conditions: ' + audience_3988293898.conditions + '.'
+                    f'conditions: {audience_3988293898.conditions}.'
                 ),
                 mock.call.debug('Audience "3988293898" evaluated to UNKNOWN.'),
                 mock.call.debug(
                     'Starting to evaluate audience "3988293899" with '
-                    'conditions: ' + audience_3988293899.conditions + '.'
+                    f'conditions: {audience_3988293899.conditions}.'
                 ),
                 mock.call.debug('Audience "3988293899" evaluated to TRUE.'),
                 mock.call.info(

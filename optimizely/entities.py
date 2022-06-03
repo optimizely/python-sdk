@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class BaseEntity(object):
+class BaseEntity:
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -118,7 +118,7 @@ class Layer(BaseEntity):
 
 
 class Variable(BaseEntity):
-    class Type(object):
+    class Type:
         BOOLEAN = 'boolean'
         DOUBLE = 'double'
         INTEGER = 'integer'
@@ -134,7 +134,7 @@ class Variable(BaseEntity):
 
 class Variation(BaseEntity):
     class VariableUsage(BaseEntity):
-        def __init__(self, id, value, **kwards):
+        def __init__(self, id, value, **kwargs):
             self.id = id
             self.value = value
 

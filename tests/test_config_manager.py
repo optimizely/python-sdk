@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import json
-import mock
+from unittest import mock
 import requests
 import time
 
@@ -29,7 +29,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_logger_fails(self):
         """ Test that initialization fails if logger is invalid. """
 
-        class InvalidLogger(object):
+        class InvalidLogger:
             pass
 
         with self.assertRaisesRegex(
@@ -40,7 +40,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_error_handler_fails(self):
         """ Test that initialization fails if error_handler is invalid. """
 
-        class InvalidErrorHandler(object):
+        class InvalidErrorHandler:
             pass
 
         with self.assertRaisesRegex(
@@ -51,7 +51,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_notification_center_fails(self):
         """ Test that initialization fails if notification_center is invalid. """
 
-        class InvalidNotificationCenter(object):
+        class InvalidNotificationCenter:
             pass
 
         with self.assertRaisesRegex(
@@ -289,7 +289,7 @@ class PollingConfigManagerTest(base.BaseTest):
         test_url_template = 'invalid_url_template_without_sdk_key_field_{key}'
         self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
-            'Invalid url_template {} provided'.format(test_url_template),
+            f'Invalid url_template {test_url_template} provided',
             config_manager.PollingConfigManager.get_datafile_url,
             'optly_datafile_key',
             None,
@@ -459,7 +459,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_fetch_datafile__status_exception_raised(self, _):
         """ Test that config_manager keeps running if status code exception is raised when fetching datafile. """
-        class MockExceptionResponse(object):
+        class MockExceptionResponse:
             def raise_for_status(self):
                 raise requests.exceptions.RequestException('Error Error !!')
 
@@ -505,9 +505,9 @@ class PollingConfigManagerTest(base.BaseTest):
             headers={'If-Modified-Since': test_headers['Last-Modified']},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
-        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
-            expected_datafile_url
-        ))
+        mock_logger.error.assert_called_once_with(
+            f'Fetching datafile from {expected_datafile_url} failed. Error: Error Error !!'
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         # Confirm that config manager keeps running
@@ -563,9 +563,9 @@ class PollingConfigManagerTest(base.BaseTest):
             headers={'If-Modified-Since': test_headers['Last-Modified']},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
-        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
-            expected_datafile_url
-        ))
+        mock_logger.error.assert_called_once_with(
+            f'Fetching datafile from {expected_datafile_url} failed. Error: Error Error !!'
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         # Confirm that config manager keeps running
@@ -633,8 +633,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
 
         mock_request.assert_called_once_with(
             expected_datafile_url,
-            headers={'Authorization': 'Bearer {datafile_access_token}'.format(
-                datafile_access_token=datafile_access_token)},
+            headers={'Authorization': f'Bearer {datafile_access_token}'},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
 
@@ -670,8 +669,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
 
         mock_request.assert_called_once_with(
             expected_datafile_url,
-            headers={'Authorization': 'Bearer {datafile_access_token}'.format(
-                datafile_access_token=datafile_access_token)},
+            headers={'Authorization': f'Bearer {datafile_access_token}'},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
 
@@ -692,14 +690,13 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
             expected_datafile_url,
             headers={
                 'If-Modified-Since': test_headers['Last-Modified'],
-                'Authorization': 'Bearer {datafile_access_token}'.format(
-                    datafile_access_token=datafile_access_token),
+                'Authorization': f'Bearer {datafile_access_token}',
             },
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
-        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
-            expected_datafile_url
-        ))
+        mock_logger.error.assert_called_once_with(
+            f'Fetching datafile from {expected_datafile_url} failed. Error: Error Error !!'
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         # Confirm that config manager keeps running

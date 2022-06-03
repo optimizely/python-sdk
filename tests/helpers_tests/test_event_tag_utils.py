@@ -115,39 +115,39 @@ class EventTagUtilsTest(unittest.TestCase):
         self.assertIsNone(event_tag_utils.get_numeric_value({'value': None}, self.logger))
 
         numeric_value_nan = event_tag_utils.get_numeric_value({'value': float('nan')}, self.logger)
-        self.assertIsNone(numeric_value_nan, 'nan numeric value is {}'.format(numeric_value_nan))
+        self.assertIsNone(numeric_value_nan, f'nan numeric value is {numeric_value_nan}')
 
         numeric_value_array = event_tag_utils.get_numeric_value({'value': []}, self.logger)
-        self.assertIsNone(numeric_value_array, 'Array numeric value is {}'.format(numeric_value_array))
+        self.assertIsNone(numeric_value_array, f'Array numeric value is {numeric_value_array}')
 
         numeric_value_dict = event_tag_utils.get_numeric_value({'value': []}, self.logger)
-        self.assertIsNone(numeric_value_dict, 'Dict numeric value is {}'.format(numeric_value_dict))
+        self.assertIsNone(numeric_value_dict, f'Dict numeric value is {numeric_value_dict}')
 
         numeric_value_none = event_tag_utils.get_numeric_value({'value': None}, self.logger)
-        self.assertIsNone(numeric_value_none, 'None numeric value is {}'.format(numeric_value_none))
+        self.assertIsNone(numeric_value_none, f'None numeric value is {numeric_value_none}')
 
         numeric_value_invalid_literal = event_tag_utils.get_numeric_value(
             {'value': '1,234'}, self.logger
         )
         self.assertIsNone(
-            numeric_value_invalid_literal, 'Invalid string literal value is {}'.format(numeric_value_invalid_literal),
+            numeric_value_invalid_literal, f'Invalid string literal value is {numeric_value_invalid_literal}',
         )
 
         numeric_value_overflow = event_tag_utils.get_numeric_value(
             {'value': sys.float_info.max * 10}, self.logger
         )
         self.assertIsNone(
-            numeric_value_overflow, 'Max numeric value is {}'.format(numeric_value_overflow),
+            numeric_value_overflow, f'Max numeric value is {numeric_value_overflow}',
         )
 
         numeric_value_inf = event_tag_utils.get_numeric_value({'value': float('inf')}, self.logger)
-        self.assertIsNone(numeric_value_inf, 'Infinity numeric value is {}'.format(numeric_value_inf))
+        self.assertIsNone(numeric_value_inf, f'Infinity numeric value is {numeric_value_inf}')
 
         numeric_value_neg_inf = event_tag_utils.get_numeric_value(
             {'value': float('-inf')}, self.logger
         )
         self.assertIsNone(
-            numeric_value_neg_inf, 'Negative infinity numeric value is {}'.format(numeric_value_neg_inf),
+            numeric_value_neg_inf, f'Negative infinity numeric value is {numeric_value_neg_inf}',
         )
 
         self.assertEqual(

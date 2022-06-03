@@ -14,7 +14,7 @@
 import logging
 
 
-class CommonAudienceEvaluationLogs(object):
+class CommonAudienceEvaluationLogs:
     AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
     EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: {}.'
     INFINITE_ATTRIBUTE_VALUE = (
@@ -56,7 +56,7 @@ class RolloutRuleAudienceEvaluationLogs(CommonAudienceEvaluationLogs):
     EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for rule {}: {}.'
 
 
-class ConfigManager(object):
+class ConfigManager:
     AUTHENTICATED_DATAFILE_URL_TEMPLATE = 'https://config.optimizely.com/datafiles/auth/{sdk_key}.json'
     AUTHORIZATION_HEADER_DATA_TEMPLATE = 'Bearer {datafile_access_token}'
     DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
@@ -68,19 +68,19 @@ class ConfigManager(object):
     REQUEST_TIMEOUT = 10
 
 
-class ControlAttributes(object):
+class ControlAttributes:
     BOT_FILTERING = '$opt_bot_filtering'
     BUCKETING_ID = '$opt_bucketing_id'
     USER_AGENT = '$opt_user_agent'
 
 
-class DatafileVersions(object):
+class DatafileVersions:
     V2 = '2'
     V3 = '3'
     V4 = '4'
 
 
-class DecisionNotificationTypes(object):
+class DecisionNotificationTypes:
     AB_TEST = 'ab-test'
     ALL_FEATURE_VARIABLES = 'all-feature-variables'
     FEATURE = 'feature'
@@ -89,13 +89,13 @@ class DecisionNotificationTypes(object):
     FLAG = 'flag'
 
 
-class DecisionSources(object):
+class DecisionSources:
     EXPERIMENT = 'experiment'
     FEATURE_TEST = 'feature-test'
     ROLLOUT = 'rollout'
 
 
-class Errors(object):
+class Errors:
     INVALID_ATTRIBUTE = 'Provided attribute is not in datafile.'
     INVALID_ATTRIBUTE_FORMAT = 'Attributes provided are in an invalid format.'
     INVALID_AUDIENCE = 'Provided audience is not in datafile.'
@@ -115,7 +115,7 @@ class Errors(object):
     UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
 
 
-class ForcedDecisionLogs(object):
+class ForcedDecisionLogs:
     USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED = 'Variation ({}) is mapped to flag ({}), rule ({}) and user ({}) ' \
                                                    'in the forced decision map.'
     USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED = 'Variation ({}) is mapped to flag ({}) and user ({}) ' \
@@ -126,18 +126,18 @@ class ForcedDecisionLogs(object):
                                                                   'and user ({}) in the forced decision map.'
 
 
-class HTTPHeaders(object):
+class HTTPHeaders:
     AUTHORIZATION = 'Authorization'
     IF_MODIFIED_SINCE = 'If-Modified-Since'
     LAST_MODIFIED = 'Last-Modified'
 
 
-class HTTPVerbs(object):
+class HTTPVerbs:
     GET = 'GET'
     POST = 'POST'
 
 
-class LogLevels(object):
+class LogLevels:
     NOTSET = logging.NOTSET
     DEBUG = logging.DEBUG
     INFO = logging.INFO
@@ -146,7 +146,7 @@ class LogLevels(object):
     CRITICAL = logging.CRITICAL
 
 
-class NotificationTypes(object):
+class NotificationTypes:
     """ NotificationTypes for the notification_center.NotificationCenter
       format is NOTIFICATION TYPE: list of parameters to callback.
 
@@ -172,6 +172,6 @@ class NotificationTypes(object):
     LOG_EVENT = 'LOG_EVENT:log_event'
 
 
-class VersionType(object):
+class VersionType:
     IS_PRE_RELEASE = '-'
     IS_BUILD = '+'

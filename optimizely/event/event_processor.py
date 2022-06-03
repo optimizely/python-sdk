@@ -11,13 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
+from abc import ABC, abstractmethod
 import numbers
 import threading
 import time
 
 from datetime import timedelta
-from six.moves import queue
+import queue
 
 from optimizely import logger as _logging
 from optimizely import notification_center as _notification_center
@@ -27,13 +27,11 @@ from optimizely.helpers import validator
 from .event_factory import EventFactory
 from .user_event import UserEvent
 
-ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
-
 
 class BaseEventProcessor(ABC):
     """ Class encapsulating event processing. Override with your own implementation. """
 
-    @abc.abstractmethod
+    @abstractmethod
     def process(self, user_event):
         """ Method to provide intermediary processing stage within event production.
     Args:
@@ -145,7 +143,7 @@ class BatchEventProcessor(BaseEventProcessor):
             is_valid = False
 
         if is_valid is False:
-            self.logger.info('Using default value {} for {}.'.format(default_value, prop_name))
+            self.logger.info(f'Using default value {default_value} for {prop_name}.')
 
         return is_valid
 
@@ -171,7 +169,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
         self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
         self.executor = threading.Thread(target=self._run)
-        self.executor.setDaemon(True)
+        self.executor.daemon = True
         self.executor.start()
 
     def _run(self):
@@ -211,7 +209,7 @@ class BatchEventProcessor(BaseEventProcessor):
                     self._add_to_batch(item)
 
         except Exception as exception:
-            self.logger.error('Uncaught exception processing buffer. Error: ' + str(exception))
+            self.logger.error(f'Uncaught exception processing buffer. Error: {exception}')
 
         finally:
             self.logger.info('Exiting processing loop. Attempting to flush pending events.')
@@ -229,7 +227,7 @@ class BatchEventProcessor(BaseEventProcessor):
             self.logger.debug('Nothing to flush.')
             return
 
-        self.logger.debug('Flushing batch size ' + str(batch_len))
+        self.logger.debug(f'Flushing batch size {batch_len}')
 
         with self.LOCK:
             to_process_batch = list(self._current_batch)
@@ -242,7 +240,7 @@ class BatchEventProcessor(BaseEventProcessor):
         try:
             self.event_dispatcher.dispatch_event(log_event)
         except Exception as e:
-            self.logger.error('Error dispatching event: ' + str(log_event) + ' ' + str(e))
+            self.logger.error(f'Error dispatching event: {log_event} {e}')
 
     def process(self, user_event):
         """ Method to process the user_event by putting it in event_queue.
@@ -255,14 +253,14 @@ class BatchEventProcessor(BaseEventProcessor):
             return
 
         self.logger.debug(
-            'Received event of type {} for user {}.'.format(type(user_event).__name__, user_event.user_id)
+            f'Received event of type {type(user_event).__name__} for user {user_event.user_id}.'
         )
 
         try:
             self.event_queue.put_nowait(user_event)
         except queue.Full:
             self.logger.warning(
-                'Payload not accepted by the queue. Current size: {}'.format(str(self.event_queue.qsize()))
+                f'Payload not accepted by the queue. Current size: {self.event_queue.qsize()}'
             )
 
     def _add_to_batch(self, user_event):
@@ -319,7 +317,7 @@ class BatchEventProcessor(BaseEventProcessor):
             self.executor.join(self.timeout_interval.total_seconds())
 
         if self.is_running:
-            self.logger.error('Timeout exceeded while attempting to close for ' + str(self.timeout_interval) + ' ms.')
+            self.logger.error(f'Timeout exceeded while attempting to close for {self.timeout_interval} ms.')
 
 
 class ForwardingEventProcessor(BaseEventProcessor):
@@ -356,7 +354,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
             return
 
         self.logger.debug(
-            'Received event of type {} for user {}.'.format(type(user_event).__name__, user_event.user_id)
+            f'Received event of type {type(user_event).__name__} for user {user_event.user_id}.'
         )
 
         log_event = EventFactory.create_log_event(user_event, self.logger)
@@ -366,4 +364,4 @@ class ForwardingEventProcessor(BaseEventProcessor):
         try:
             self.event_dispatcher.dispatch_event(log_event)
         except Exception as e:
-            self.logger.exception('Error dispatching event: ' + str(log_event) + ' ' + str(e))
+            self.logger.exception(f'Error dispatching event: {log_event} {e}')
