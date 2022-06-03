@@ -116,7 +116,7 @@ class BatchEventProcessorTest(base.BaseTest):
     MAX_BATCH_SIZE = 10
     MAX_DURATION_SEC = 0.2
     MAX_TIMEOUT_INTERVAL_SEC = 0.1
-    TEST_TIMEOUT = 5
+    TEST_TIMEOUT = 10
 
     def setUp(self, *args, **kwargs):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
@@ -157,7 +157,7 @@ class BatchEventProcessorTest(base.BaseTest):
 
         # wait for events to finish processing, up to TEST_TIMEOUT
         start_time = time.time()
-        while not event_dispatcher.compare_events():
+        while not event_dispatcher.compare_events() or not self.event_processor.event_queue.empty():
             if time.time() - start_time >= self.TEST_TIMEOUT:
                 break
 
@@ -197,7 +197,7 @@ class BatchEventProcessorTest(base.BaseTest):
 
         # wait for events to finish processing, up to TEST_TIMEOUT
         start_time = time.time()
-        while not event_dispatcher.compare_events():
+        while not event_dispatcher.compare_events() or mock_config_logging.debug.call_count < 3:
             if time.time() - start_time >= self.TEST_TIMEOUT:
                 break
 
@@ -549,20 +549,26 @@ class BatchEventProcessorTest(base.BaseTest):
             self.event_processor.process(user_event)
             event_dispatcher.expect_conversion(self.event_name, self.test_user_id)
 
-        expected_warning = f'Payload not accepted by the queue. Current size: {test_max_queue_size}'
-
         # wait for events to finish processing and queue to clear, up to TEST_TIMEOUT
         start_time = time.time()
-        while (
-            self.event_processor.event_queue.qsize() > 0 or
-            mock.call.warning(expected_warning) not in mock_config_logging.mock_calls
-        ):
+        while not self.event_processor.event_queue.empty():
             if time.time() - start_time >= self.TEST_TIMEOUT:
                 break
 
         # queue is flushed, even though events overflow
         self.assertEqual(0, self.event_processor.event_queue.qsize())
-        mock_config_logging.warning.assert_called_with(expected_warning)
+
+        class AnyStringWith(str):
+            '''allows a partial match on the log message'''
+            def __eq__(self, other):
+                return self in other
+
+        # the qsize method is approximate and since no lock is taken on the queue
+        # it can return an indeterminate count
+        # thus we can't rely on this error message to always report the max_queue_size
+        mock_config_logging.warning.assert_called_with(
+            AnyStringWith('Payload not accepted by the queue. Current size: ')
+        )
 
 
 class CustomForwardingEventDispatcher:
