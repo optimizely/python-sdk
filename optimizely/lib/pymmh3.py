@@ -17,27 +17,12 @@ This module is written to have the same format as mmh3 python package found here
 https://pypi.python.org/pypi/mmh3/2.3.1
 '''
 
-import sys as _sys
 
-if _sys.version_info > (3, 0):
-
-    def xrange(a, b, c):
-        return range(a, b, c)
-
-    def xencode(x):
-        if isinstance(x, bytes) or isinstance(x, bytearray):
-            return x
-        else:
-            return x.encode()
-
-
-else:
-
-    def xencode(x):
+def xencode(x):
+    if isinstance(x, bytes) or isinstance(x, bytearray):
         return x
-
-
-del _sys
+    else:
+        return x.encode()
 
 
 def hash(key, seed=0x0):
@@ -62,7 +47,7 @@ def hash(key, seed=0x0):
     c2 = 0x1B873593
 
     # body
-    for block_start in xrange(0, nblocks * 4, 4):
+    for block_start in range(0, nblocks * 4, 4):
         # ??? big endian?
         k1 = key[block_start + 3] << 24 | key[block_start + 2] << 16 | key[block_start + 1] << 8 | key[block_start + 0]
 
@@ -124,7 +109,7 @@ def hash128(key, seed=0x0, x64arch=True):
         c2 = 0x4CF5AD432745937F
 
         # body
-        for block_start in xrange(0, nblocks * 8, 8):
+        for block_start in range(0, nblocks * 8, 8):
             # ??? big endian?
             k1 = (
                 key[2 * block_start + 7] << 56 |
@@ -256,7 +241,7 @@ def hash128(key, seed=0x0, x64arch=True):
         c4 = 0xA1E38B93
 
         # body
-        for block_start in xrange(0, nblocks * 16, 16):
+        for block_start in range(0, nblocks * 16, 16):
             k1 = (
                 key[block_start + 3] << 24 |
                 key[block_start + 2] << 16 |
@@ -449,7 +434,7 @@ def hash_bytes(key, seed=0x0, x64arch=True):
 
     bytestring = ''
 
-    for i in xrange(0, 16, 1):
+    for i in range(0, 16, 1):
         lsbyte = hash_128 & 0xFF
         bytestring = bytestring + str(chr(lsbyte))
         hash_128 = hash_128 >> 8
@@ -459,6 +444,7 @@ def hash_bytes(key, seed=0x0, x64arch=True):
 
 if __name__ == "__main__":
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser('pymurmur3', 'pymurmur [options] "string to hash"')
     parser.add_argument('--seed', type=int, default=0)
@@ -467,4 +453,4 @@ if __name__ == "__main__":
     opts = parser.parse_args()
 
     for str_to_hash in opts.strings:
-        sys.stdout.write('"%s" = 0x%08X\n' % (str_to_hash, hash(str_to_hash)))
+        sys.stdout.write(f'"{str_to_hash}" = 0x{hash(str_to_hash):08X}\n')

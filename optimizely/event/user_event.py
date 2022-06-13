@@ -19,7 +19,7 @@ from optimizely import version
 CLIENT_NAME = 'python-sdk'
 
 
-class UserEvent(object):
+class UserEvent:
     """ Class respresenting User Event. """
 
     def __init__(self, event_context, user_id, visitor_attributes, bot_filtering=None):
@@ -44,7 +44,7 @@ class ImpressionEvent(UserEvent):
         self, event_context, user_id, experiment, visitor_attributes, variation, flag_key,
         rule_key, rule_type, enabled, bot_filtering=None
     ):
-        super(ImpressionEvent, self).__init__(event_context, user_id, visitor_attributes, bot_filtering)
+        super().__init__(event_context, user_id, visitor_attributes, bot_filtering)
         self.experiment = experiment
         self.variation = variation
         self.flag_key = flag_key
@@ -59,12 +59,12 @@ class ConversionEvent(UserEvent):
     def __init__(
         self, event_context, event, user_id, visitor_attributes, event_tags, bot_filtering=None,
     ):
-        super(ConversionEvent, self).__init__(event_context, user_id, visitor_attributes, bot_filtering)
+        super().__init__(event_context, user_id, visitor_attributes, bot_filtering)
         self.event = event
         self.event_tags = event_tags
 
 
-class EventContext(object):
+class EventContext:
     """ Class respresenting User Event Context. """
 
     def __init__(self, account_id, project_id, revision, anonymize_ip):

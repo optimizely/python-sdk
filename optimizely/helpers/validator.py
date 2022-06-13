@@ -15,7 +15,6 @@ import json
 import jsonschema
 import math
 import numbers
-from six import string_types
 
 from optimizely.notification_center import NotificationCenter
 from optimizely.user_profile import UserProfile
@@ -205,7 +204,7 @@ def is_non_empty_string(input_id_key):
   Returns:
     Boolean depending upon whether input is valid or not.
   """
-    if input_id_key and isinstance(input_id_key, string_types):
+    if input_id_key and isinstance(input_id_key, str):
         return True
 
     return False
@@ -224,10 +223,10 @@ def is_attribute_valid(attribute_key, attribute_value):
     True otherwise
   """
 
-    if not isinstance(attribute_key, string_types):
+    if not isinstance(attribute_key, str):
         return False
 
-    if isinstance(attribute_value, (string_types, bool)):
+    if isinstance(attribute_value, (str, bool)):
         return True
 
     if isinstance(attribute_value, (numbers.Integral, float)):
@@ -281,7 +280,7 @@ def are_values_same_type(first_val, second_val):
     second_val_type = type(second_val)
 
     # use isinstance to accomodate Python 2 unicode and str types.
-    if isinstance(first_val, string_types) and isinstance(second_val, string_types):
+    if isinstance(first_val, str) and isinstance(second_val, str):
         return True
 
     # Compare types if one of the values is bool because bool is a subclass on Integer.

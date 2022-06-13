@@ -1,4 +1,4 @@
-# Copyright 2019-2021, Optimizely
+# Copyright 2019-2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import json
-import mock
+from unittest import mock
 import requests
 import time
 
@@ -29,7 +29,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_logger_fails(self):
         """ Test that initialization fails if logger is invalid. """
 
-        class InvalidLogger(object):
+        class InvalidLogger:
             pass
 
         with self.assertRaisesRegex(
@@ -40,7 +40,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_error_handler_fails(self):
         """ Test that initialization fails if error_handler is invalid. """
 
-        class InvalidErrorHandler(object):
+        class InvalidErrorHandler:
             pass
 
         with self.assertRaisesRegex(
@@ -51,7 +51,7 @@ class StaticConfigManagerTest(base.BaseTest):
     def test_init__invalid_notification_center_fails(self):
         """ Test that initialization fails if notification_center is invalid. """
 
-        class InvalidNotificationCenter(object):
+        class InvalidNotificationCenter:
             pass
 
         with self.assertRaisesRegex(
@@ -218,6 +218,38 @@ class StaticConfigManagerTest(base.BaseTest):
         self.assertEqual(1, round(end_time - start_time))
 
 
+class MockPollingConfigManager(config_manager.PollingConfigManager):
+    ''' Wrapper class to allow manual call of fetch_datafile in the polling thread by
+    overriding the _run method.'''
+    def __init__(self, *args, **kwargs):
+        self.run = False
+        self.stop = False
+        super().__init__(*args, **kwargs)
+
+    def _run(self):
+        '''Parent thread can use self.run to start fetch_datafile in polling thread and wait for it to complete.'''
+        while self.is_running and not self.stop:
+            if self.run:
+                self.fetch_datafile()
+                self.run = False
+
+
+class MockAuthDatafilePollingConfigManager(config_manager.AuthDatafilePollingConfigManager):
+    ''' Wrapper class to allow manual call of fetch_datafile in the polling thread by
+    overriding the _run method.'''
+    def __init__(self, *args, **kwargs):
+        self.run = False
+        self.stop = False
+        super().__init__(*args, **kwargs)
+
+    def _run(self):
+        '''Parent thread can use self.run to start fetch_datafile and wait for it to complete.'''
+        while self.is_running and not self.stop:
+            if self.run:
+                self.fetch_datafile()
+                self.run = False
+
+
 @mock.patch('requests.get')
 class PollingConfigManagerTest(base.BaseTest):
     def test_init__no_sdk_key_no_url__fails(self, _):
@@ -257,7 +289,7 @@ class PollingConfigManagerTest(base.BaseTest):
         test_url_template = 'invalid_url_template_without_sdk_key_field_{key}'
         self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
-            'Invalid url_template {} provided'.format(test_url_template),
+            f'Invalid url_template {test_url_template} provided',
             config_manager.PollingConfigManager.get_datafile_url,
             'optly_datafile_key',
             None,
@@ -294,9 +326,13 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_update_interval(self, _):
         """ Test set_update_interval with different inputs. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+
+        # prevent polling thread from starting in PollingConfigManager.__init__
+        # otherwise it can outlive this test and get out of sync with pytest
+        with mock.patch('threading.Thread.start') as mock_thread:
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
+        mock_thread.assert_called_once()
         # Assert that if invalid update_interval is set, then exception is raised.
         with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Invalid update_interval "invalid interval" provided.',
@@ -321,9 +357,13 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_blocking_timeout(self, _):
         """ Test set_blocking_timeout with different inputs. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+
+        # prevent polling thread from starting in PollingConfigManager.__init__
+        # otherwise it can outlive this test and get out of sync with pytest
+        with mock.patch('threading.Thread.start') as mock_thread:
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
+        mock_thread.assert_called_once()
         # Assert that if invalid blocking_timeout is set, then exception is raised.
         with self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException, 'Invalid blocking timeout "invalid timeout" provided.',
@@ -352,9 +392,13 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_set_last_modified(self, _):
         """ Test that set_last_modified sets last_modified field based on header. """
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
+
+        # prevent polling thread from starting in PollingConfigManager.__init__
+        # otherwise it can outlive this test and get out of sync with pytest
+        with mock.patch('threading.Thread.start') as mock_thread:
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
 
+        mock_thread.assert_called_once()
         last_modified_time = 'Test Last Modified Time'
         test_response_headers = {
             'Last-Modified': last_modified_time,
@@ -366,8 +410,11 @@ class PollingConfigManagerTest(base.BaseTest):
     def test_fetch_datafile(self, _):
         """ Test that fetch_datafile sets config and last_modified based on response. """
         sdk_key = 'some_key'
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
-            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key)
+
+        # use wrapper class to control start and stop of fetch_datafile
+        # this prevents the polling thread from outliving the test
+        # and getting out of sync with pytest
+        project_config_manager = MockPollingConfigManager(sdk_key=sdk_key)
         expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
@@ -375,15 +422,28 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.status_code = 200
         test_response.headers = test_headers
         test_response._content = test_datafile
-        with mock.patch('requests.get', return_value=test_response):
-            project_config_manager.fetch_datafile()
+        with mock.patch('requests.get', return_value=test_response) as mock_request:
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers={},
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
         # Call fetch_datafile again and assert that request to URL is with If-Modified-Since header.
         with mock.patch('requests.get', return_value=test_response) as mock_requests:
-            project_config_manager.fetch_datafile()
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
         mock_requests.assert_called_once_with(
             expected_datafile_url,
@@ -394,16 +454,17 @@ class PollingConfigManagerTest(base.BaseTest):
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         self.assertTrue(project_config_manager.is_running)
 
+        # Shut down the polling thread
+        project_config_manager.stop = True
+
     def test_fetch_datafile__status_exception_raised(self, _):
         """ Test that config_manager keeps running if status code exception is raised when fetching datafile. """
-        class MockExceptionResponse(object):
+        class MockExceptionResponse:
             def raise_for_status(self):
                 raise requests.exceptions.RequestException('Error Error !!')
 
         sdk_key = 'some_key'
         mock_logger = mock.Mock()
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
-            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
         expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
@@ -411,35 +472,59 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.status_code = 200
         test_response.headers = test_headers
         test_response._content = test_datafile
-        with mock.patch('requests.get', return_value=test_response):
-            project_config_manager.fetch_datafile()
 
+        # use wrapper class to control start and stop of fetch_datafile
+        # this prevents the polling thread from outliving the test
+        # and getting out of sync with pytest
+        project_config_manager = MockPollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
+        with mock.patch('requests.get', return_value=test_response) as mock_request:
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
+
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers={},
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
         # Call fetch_datafile again, but raise exception this time
         with mock.patch('requests.get', return_value=MockExceptionResponse()) as mock_requests:
-            project_config_manager.fetch_datafile()
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
         mock_requests.assert_called_once_with(
             expected_datafile_url,
             headers={'If-Modified-Since': test_headers['Last-Modified']},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
-        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
-            expected_datafile_url
-        ))
+        mock_logger.error.assert_called_once_with(
+            f'Fetching datafile from {expected_datafile_url} failed. Error: Error Error !!'
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         # Confirm that config manager keeps running
         self.assertTrue(project_config_manager.is_running)
 
+        # Shut down the polling thread
+        project_config_manager.stop = True
+
     def test_fetch_datafile__request_exception_raised(self, _):
         """ Test that config_manager keeps running if a request exception is raised when fetching datafile. """
         sdk_key = 'some_key'
         mock_logger = mock.Mock()
-        with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
-            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
+
+        # use wrapper class to control start and stop of fetch_datafile
+        # this prevents the polling thread from outliving the test
+        # and getting out of sync with pytest
+        project_config_manager = MockPollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
         expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
@@ -447,9 +532,18 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.status_code = 200
         test_response.headers = test_headers
         test_response._content = test_datafile
-        with mock.patch('requests.get', return_value=test_response):
-            project_config_manager.fetch_datafile()
+        with mock.patch('requests.get', return_value=test_response) as mock_request:
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers={},
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
@@ -458,26 +552,36 @@ class PollingConfigManagerTest(base.BaseTest):
             'requests.get',
             side_effect=requests.exceptions.RequestException('Error Error !!'),
         ) as mock_requests:
-            project_config_manager.fetch_datafile()
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
         mock_requests.assert_called_once_with(
             expected_datafile_url,
             headers={'If-Modified-Since': test_headers['Last-Modified']},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
-        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
-            expected_datafile_url
-        ))
+        mock_logger.error.assert_called_once_with(
+            f'Fetching datafile from {expected_datafile_url} failed. Error: Error Error !!'
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         # Confirm that config manager keeps running
         self.assertTrue(project_config_manager.is_running)
+
+        # Shut down the polling thread
+        project_config_manager.stop = True
 
     def test_is_running(self, _):
         """ Test that polling thread is running after instance of PollingConfigManager is created. """
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
             project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key')
             self.assertTrue(project_config_manager.is_running)
+
+        # Prevent the polling thread from running fetch_datafile if it hasn't already
+        project_config_manager._polling_thread._is_stopped = True
 
 
 @mock.patch('requests.get')
@@ -495,10 +599,14 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         """ Test that datafile_access_token is properly set as instance variable. """
         datafile_access_token = 'some_token'
         sdk_key = 'some_key'
-        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
+
+        # prevent polling thread from starting in PollingConfigManager.__init__
+        # otherwise it can outlive this test and get out of sync with pytest
+        with mock.patch('threading.Thread.start') as mock_thread:
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
                 datafile_access_token=datafile_access_token, sdk_key=sdk_key)
 
+        mock_thread.assert_called_once()
         self.assertEqual(datafile_access_token, project_config_manager.datafile_access_token)
 
     def test_fetch_datafile(self, _):
@@ -525,8 +633,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
 
         mock_request.assert_called_once_with(
             expected_datafile_url,
-            headers={'Authorization': 'Bearer {datafile_access_token}'.format(
-                datafile_access_token=datafile_access_token)},
+            headers={'Authorization': f'Bearer {datafile_access_token}'},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
 
@@ -538,9 +645,11 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         sdk_key = 'some_key'
         mock_logger = mock.Mock()
 
-        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'):
-            project_config_manager = config_manager.AuthDatafilePollingConfigManager(
-                datafile_access_token=datafile_access_token, sdk_key=sdk_key, logger=mock_logger)
+        # use wrapper class to control start and stop of fetch_datafile
+        # this prevents the polling thread from outliving the test
+        # and getting out of sync with pytest
+        project_config_manager = MockAuthDatafilePollingConfigManager(datafile_access_token=datafile_access_token,
+                                                                      sdk_key=sdk_key, logger=mock_logger)
         expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
         test_headers = {'Last-Modified': 'New Time'}
         test_datafile = json.dumps(self.config_dict_with_features)
@@ -552,12 +661,15 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         # Call fetch_datafile and assert that request was sent with correct authorization header
         with mock.patch('requests.get',
                         return_value=test_response) as mock_request:
-            project_config_manager.fetch_datafile()
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
         mock_request.assert_called_once_with(
             expected_datafile_url,
-            headers={'Authorization': 'Bearer {datafile_access_token}'.format(
-                datafile_access_token=datafile_access_token)},
+            headers={'Authorization': f'Bearer {datafile_access_token}'},
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
 
@@ -568,21 +680,27 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
             'requests.get',
             side_effect=requests.exceptions.RequestException('Error Error !!'),
         ) as mock_requests:
-            project_config_manager.fetch_datafile()
+            # manually trigger fetch_datafile in the polling thread
+            project_config_manager.run = True
+            # Wait for polling thread to finish
+            while project_config_manager.run:
+                pass
 
         mock_requests.assert_called_once_with(
             expected_datafile_url,
             headers={
                 'If-Modified-Since': test_headers['Last-Modified'],
-                'Authorization': 'Bearer {datafile_access_token}'.format(
-                    datafile_access_token=datafile_access_token),
+                'Authorization': f'Bearer {datafile_access_token}',
             },
             timeout=enums.ConfigManager.REQUEST_TIMEOUT,
         )
-        mock_logger.error.assert_called_once_with('Fetching datafile from {} failed. Error: Error Error !!'.format(
-            expected_datafile_url
-        ))
+        mock_logger.error.assert_called_once_with(
+            f'Fetching datafile from {expected_datafile_url} failed. Error: Error Error !!'
+        )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
         # Confirm that config manager keeps running
         self.assertTrue(project_config_manager.is_running)
+
+        # Shut down the polling thread
+        project_config_manager.stop = True

@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import json
-import mock
+from unittest import mock
 
 from optimizely.helpers import condition as condition_helper
 
@@ -118,7 +118,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_equal_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertTrue(result, custom_err_msg)
 
     def test_semver_eq__returns_false(self):
@@ -128,7 +128,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_equal_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertFalse(result, custom_err_msg)
 
     def test_semver_le__returns_true(self):
@@ -138,7 +138,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_less_than_or_equal_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertTrue(result, custom_err_msg)
 
     def test_semver_le__returns_false(self):
@@ -148,7 +148,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_less_than_or_equal_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertFalse(result, custom_err_msg)
 
     def test_semver_ge__returns_true(self):
@@ -158,7 +158,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_or_equal_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertTrue(result, custom_err_msg)
 
     def test_semver_ge__returns_false(self):
@@ -168,7 +168,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_or_equal_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertFalse(result, custom_err_msg)
 
     def test_semver_lt__returns_true(self):
@@ -178,7 +178,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_less_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertTrue(result, custom_err_msg)
 
     def test_semver_lt__returns_false(self):
@@ -188,7 +188,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_less_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertFalse(result, custom_err_msg)
 
     def test_semver_gt__returns_true(self):
@@ -198,7 +198,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertTrue(result, custom_err_msg)
 
     def test_semver_gt__returns_false(self):
@@ -208,7 +208,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertFalse(result, custom_err_msg)
 
     def test_evaluate__returns_None__when_user_version_is_not_string(self):
@@ -218,7 +218,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertIsNone(result, custom_err_msg)
 
     def test_evaluate__returns_None__when_user_version_with_invalid_semantic(self):
@@ -228,7 +228,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertIsNone(result, custom_err_msg)
 
     def test_compare_user_version_with_target_version_equal_to_0(self):
@@ -245,11 +245,8 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.compare_user_version_with_target_version(target_version, user_version)
-            custom_err_msg = "Got {} in result. Failed for user version:" \
-                             " {} and target version: {}".format(result,
-                                                                 user_version,
-                                                                 target_version
-                                                                 )
+            custom_err_msg = f"Got {result} in result. Failed for user version:" \
+                             f" {user_version} and target version: {target_version}"
             self.assertEqual(result, 0, custom_err_msg)
 
     def test_compare_user_version_with_target_version_greater_than_0(self):
@@ -270,10 +267,8 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.compare_user_version_with_target_version(target_version, user_version)
-            custom_err_msg = "Got {} in result. Failed for user version:" \
-                             " {} and target version: {}".format(result,
-                                                                 user_version,
-                                                                 target_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version:" \
+                             f" {user_version} and target version: {target_version}"
             self.assertEqual(result, 1, custom_err_msg)
 
     def test_compare_user_version_with_target_version_less_than_0(self):
@@ -294,10 +289,8 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.compare_user_version_with_target_version(target_version, user_version)
-            custom_err_msg = "Got {} in result. Failed for user version: {} " \
-                             "and target version: {}".format(result,
-                                                             user_version,
-                                                             target_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version:" \
+                             f" {user_version} and target version: {target_version}"
             self.assertEqual(result, -1, custom_err_msg)
 
     def test_compare_invalid_user_version_with(self):
@@ -310,7 +303,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             evaluator = condition_helper.CustomAttributeConditionEvaluator(
                 semver_greater_than_2_0_condition_list, {'Android': user_version}, self.mock_client_logger)
             result = evaluator.compare_user_version_with_target_version(user_version, target_version)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertIsNone(result, custom_err_msg)
 
     def test_exists__returns_false__when_no_user_provided_value(self):
@@ -1159,7 +1152,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
                 semver_less_than_or_equal_2_0_1_condition_list, {'Android': user_version}, self.mock_client_logger)
 
             result = evaluator.evaluate(0)
-            custom_err_msg = "Got {} in result. Failed for user version: {}".format(result, user_version)
+            custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertIsNone(result, custom_err_msg)
 
 
@@ -1211,10 +1204,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" uses an unknown match '
-                'type. You may need to upgrade to a newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" uses an unknown match '
+            'type. You may need to upgrade to a newer release of the Optimizely SDK.'
         )
 
     def test_evaluate__condition_type__invalid(self):
@@ -1237,10 +1228,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" uses an unknown condition type. '
-                'You may need to upgrade to a newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" uses an unknown condition type. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
         )
 
     def test_exact__user_value__missing(self):
@@ -1263,10 +1252,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition {} evaluated to UNKNOWN because '
-                'no value was passed for user attribute "favorite_constellation".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition {json.dumps(expected_condition_log)} evaluated to UNKNOWN because '
+            'no value was passed for user attribute "favorite_constellation".'
         )
 
     def test_greater_than__user_value__missing(self):
@@ -1289,10 +1276,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition {} evaluated to UNKNOWN because no value was passed for user '
-                'attribute "meters_travelled".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition {json.dumps(expected_condition_log)} evaluated to UNKNOWN '
+            'because no value was passed for user attribute "meters_travelled".'
         )
 
     def test_less_than__user_value__missing(self):
@@ -1315,10 +1300,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition {} evaluated to UNKNOWN because no value was passed for user attribute '
-                '"meters_travelled".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition {json.dumps(expected_condition_log)} evaluated to UNKNOWN '
+            'because no value was passed for user attribute "meters_travelled".'
         )
 
     def test_substring__user_value__missing(self):
@@ -1341,10 +1324,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition {} evaluated to UNKNOWN because no value was passed for '
-                'user attribute "headline_text".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition {json.dumps(expected_condition_log)} evaluated to UNKNOWN '
+            'because no value was passed for user attribute "headline_text".'
         )
 
     def test_exists__user_value__missing(self):
@@ -1381,10 +1362,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a null value was passed for user attribute '
-                '"favorite_constellation".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN '
+            'because a null value was passed for user attribute "favorite_constellation".'
         )
 
     def test_greater_than__user_value__None(self):
@@ -1407,10 +1386,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a null value was passed for '
-                'user attribute "meters_travelled".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN '
+            'because a null value was passed for user attribute "meters_travelled".'
         )
 
     def test_less_than__user_value__None(self):
@@ -1433,10 +1410,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a null value was passed '
-                'for user attribute "meters_travelled".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN '
+            'because a null value was passed for user attribute "meters_travelled".'
         )
 
     def test_substring__user_value__None(self):
@@ -1459,10 +1434,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a null value was '
-                'passed for user attribute "headline_text".'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN '
+            'because a null value was passed for user attribute "headline_text".'
         )
 
     def test_exists__user_value__None(self):
@@ -1499,10 +1472,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
-                'user attribute "favorite_constellation".'
-            ).format(json.dumps(expected_condition_log), type({}))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN because '
+            f'a value of type "{dict}" was passed for user attribute "favorite_constellation".'
         )
 
     def test_greater_than__user_value__unexpected_type(self):
@@ -1525,11 +1496,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}"'
-                ' evaluated to UNKNOWN because a value of type "{}" was passed for user attribute '
-                '"meters_travelled".'
-            ).format(json.dumps(expected_condition_log), type('48'))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN because '
+            f'a value of type "{str}" was passed for user attribute "meters_travelled".'
         )
 
     def test_less_than__user_value__unexpected_type(self):
@@ -1552,11 +1520,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}"'
-                ' evaluated to UNKNOWN because a value of type "{}" was passed for user attribute '
-                '"meters_travelled".'
-            ).format(json.dumps(expected_condition_log), type(True))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN because '
+            f'a value of type "{bool}" was passed for user attribute "meters_travelled".'
         )
 
     def test_substring__user_value__unexpected_type(self):
@@ -1579,10 +1544,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
-                'user attribute "headline_text".'
-            ).format(json.dumps(expected_condition_log), type(1234))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN because '
+            f'a value of type "{int}" was passed for user attribute "headline_text".'
         )
 
     def test_exact__user_value__infinite(self):
@@ -1605,10 +1568,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because the number value for '
-                'user attribute "meters_travelled" is not in the range [-2^53, +2^53].'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN because '
+            'the number value for user attribute "meters_travelled" is not in the range [-2^53, +2^53].'
         )
 
     def test_greater_than__user_value__infinite(self):
@@ -1631,11 +1592,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" '
-                'evaluated to UNKNOWN because the number value for user attribute "meters_travelled" is not'
-                ' in the range [-2^53, +2^53].'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" '
+            'evaluated to UNKNOWN because the number value for user attribute "meters_travelled" is not'
+            ' in the range [-2^53, +2^53].'
         )
 
     def test_less_than__user_value__infinite(self):
@@ -1658,11 +1617,9 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" '
-                'evaluated to UNKNOWN because the number value for user attribute "meters_travelled" is not in '
-                'the range [-2^53, +2^53].'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" '
+            'evaluated to UNKNOWN because the number value for user attribute "meters_travelled" is not in '
+            'the range [-2^53, +2^53].'
         )
 
     def test_exact__user_value_type_mismatch(self):
@@ -1685,10 +1642,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed for '
-                'user attribute "favorite_constellation".'
-            ).format(json.dumps(expected_condition_log), type(5))
+            f'Audience condition "{json.dumps(expected_condition_log)}" evaluated to UNKNOWN because '
+            f'a value of type "{int}" was passed for user attribute "favorite_constellation".'
         )
 
     def test_exact__condition_value_invalid(self):
@@ -1711,10 +1666,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
-                'newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" has an unsupported condition value. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
         )
 
     def test_exact__condition_value_infinite(self):
@@ -1737,10 +1690,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
-                'newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" has an unsupported condition value. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
         )
 
     def test_greater_than__condition_value_invalid(self):
@@ -1763,10 +1714,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
-                'newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" has an unsupported condition value. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
         )
 
     def test_less_than__condition_value_invalid(self):
@@ -1789,10 +1738,8 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
-                'newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" has an unsupported condition value. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
         )
 
     def test_substring__condition_value_invalid(self):
@@ -1815,8 +1762,6 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
 
         mock_log = getattr(self.mock_client_logger, log_level)
         mock_log.assert_called_once_with(
-            (
-                'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
-                'newer release of the Optimizely SDK.'
-            ).format(json.dumps(expected_condition_log))
+            f'Audience condition "{json.dumps(expected_condition_log)}" has an unsupported condition value. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
         )

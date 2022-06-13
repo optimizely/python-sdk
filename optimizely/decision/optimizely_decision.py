@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class OptimizelyDecision(object):
+class OptimizelyDecision:
     def __init__(self, variation_key=None, enabled=None,
                  variables=None, rule_key=None, flag_key=None, user_context=None, reasons=None):
         self.variation_key = variation_key

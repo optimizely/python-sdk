@@ -17,7 +17,7 @@ import copy
 import threading
 
 
-class OptimizelyUserContext(object):
+class OptimizelyUserContext:
     """
     Representation of an Optimizely User Context using which APIs are to be called.
     """
@@ -47,7 +47,7 @@ class OptimizelyUserContext(object):
         self.forced_decisions_map = {}
 
     # decision context
-    class OptimizelyDecisionContext(object):
+    class OptimizelyDecisionContext:
         """ Using class with attributes here instead of namedtuple because
             class is extensible, it's easy to add another attribute if we wanted
             to extend decision context.
@@ -63,7 +63,7 @@ class OptimizelyUserContext(object):
             return (self.flag_key, self.rule_key) == (other.flag_key, other.rule_key)
 
     # forced decision
-    class OptimizelyForcedDecision(object):
+    class OptimizelyForcedDecision:
         def __init__(self, variation_key):
             self.variation_key = variation_key
 

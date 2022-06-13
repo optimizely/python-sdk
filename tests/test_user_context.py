@@ -1,4 +1,4 @@
-# Copyright 2021, Optimizely
+# Copyright 2021-2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,7 +12,7 @@
 # limitations under the License.
 import json
 
-import mock
+from unittest import mock
 import threading
 
 from optimizely import optimizely, decision_service
@@ -1859,6 +1859,28 @@ class UserContextTest(base.BaseTest):
                 for x in range(100):
                     user_context._clone()
 
+            # custom call counter because the mock call_count is not thread safe
+            class MockCounter:
+                def __init__(self):
+                    self.lock = threading.Lock()
+                    self.call_count = 0
+
+                def increment(self, *args):
+                    with self.lock:
+                        self.call_count += 1
+
+            set_forced_decision_counter = MockCounter()
+            get_forced_decision_counter = MockCounter()
+            remove_forced_decision_counter = MockCounter()
+            remove_all_forced_decisions_counter = MockCounter()
+            clone_counter = MockCounter()
+
+            set_forced_decision_mock.side_effect = set_forced_decision_counter.increment
+            get_forced_decision_mock.side_effect = get_forced_decision_counter.increment
+            remove_forced_decision_mock.side_effect = remove_forced_decision_counter.increment
+            remove_all_forced_decisions_mock.side_effect = remove_all_forced_decisions_counter.increment
+            clone_mock.side_effect = clone_counter.increment
+
             set_thread_1 = threading.Thread(target=set_forced_decision_loop, args=(user_context, context_1, decision_1))
             set_thread_2 = threading.Thread(target=set_forced_decision_loop, args=(user_context, context_2, decision_2))
             set_thread_3 = threading.Thread(target=get_forced_decision_loop, args=(user_context, context_1))
@@ -1888,8 +1910,8 @@ class UserContextTest(base.BaseTest):
             set_thread_7.join()
             set_thread_8.join()
 
-        self.assertEqual(200, set_forced_decision_mock.call_count)
-        self.assertEqual(200, get_forced_decision_mock.call_count)
-        self.assertEqual(200, remove_forced_decision_mock.call_count)
-        self.assertEqual(100, remove_all_forced_decisions_mock.call_count)
-        self.assertEqual(100, clone_mock.call_count)
+        self.assertEqual(200, set_forced_decision_counter.call_count)
+        self.assertEqual(200, get_forced_decision_counter.call_count)
+        self.assertEqual(200, remove_forced_decision_counter.call_count)
+        self.assertEqual(100, remove_all_forced_decisions_counter.call_count)
+        self.assertEqual(100, clone_counter.call_count)

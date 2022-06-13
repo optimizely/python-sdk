@@ -12,7 +12,7 @@
 # limitations under the License.
 
 
-class BaseUserProfileService(object):
+class BaseUserProfileService:
     def __init__(self, user_profiles):
         self.user_profiles = {profile['user_id']: profile for profile in user_profiles} if user_profiles else {}
 

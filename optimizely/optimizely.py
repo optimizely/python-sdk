@@ -11,8 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from six import string_types
-
 from . import decision_service
 from . import entities
 from . import event_builder
@@ -36,7 +34,7 @@ from .optimizely_config import OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext
 
 
-class Optimizely(object):
+class Optimizely:
     """ Class encapsulating all SDK functionality. """
 
     def __init__(
@@ -248,7 +246,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('variable_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -267,8 +265,8 @@ class Optimizely(object):
         variable_type = variable_type or variable.type
         if variable.type != variable_type:
             self.logger.warning(
-                'Requested variable type "%s", but variable is of type "%s". '
-                'Use correct API to retrieve value. Returning None.' % (variable_type, variable.type)
+                f'Requested variable type "{variable_type}", but variable is of '
+                f'type "{variable.type}". Use correct API to retrieve value. Returning None.'
             )
             return None
 
@@ -285,18 +283,18 @@ class Optimizely(object):
             if feature_enabled:
                 variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
                 self.logger.info(
-                    'Got variable value "%s" for variable "%s" of feature flag "%s".'
-                    % (variable_value, variable_key, feature_key)
+                    f'Got variable value "{variable_value}" for '
+                    f'variable "{variable_key}" of feature flag "{feature_key}".'
                 )
             else:
                 self.logger.info(
-                    'Feature "%s" is not enabled for user "%s". '
-                    'Returning the default variable value "%s".' % (feature_key, user_id, variable_value)
+                    f'Feature "{feature_key}" is not enabled for user "{user_id}". '
+                    f'Returning the default variable value "{variable_value}".'
                 )
         else:
             self.logger.info(
-                'User "%s" is not in any variation or rollout rule. '
-                'Returning default value for variable "%s" of feature flag "%s".' % (user_id, variable_key, feature_key)
+                f'User "{user_id}" is not in any variation or rollout rule. '
+                f'Returning default value for variable "{variable_key}" of feature flag "{feature_key}".'
             )
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
@@ -347,7 +345,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -369,16 +367,16 @@ class Optimizely(object):
             feature_enabled = decision.variation.featureEnabled
             if feature_enabled:
                 self.logger.info(
-                    'Feature "%s" is enabled for user "%s".' % (feature_key, user_id)
+                    f'Feature "{feature_key}" is enabled for user "{user_id}".'
                 )
             else:
                 self.logger.info(
-                    'Feature "%s" is not enabled for user "%s".' % (feature_key, user_id)
+                    f'Feature "{feature_key}" is not enabled for user "{user_id}".'
                 )
         else:
             self.logger.info(
-                'User "%s" is not in any variation or rollout rule. '
-                'Returning default value for all variables of feature flag "%s".' % (user_id, feature_key)
+                f'User "{user_id}" is not in any variation or rollout rule. '
+                f'Returning default value for all variables of feature flag "{feature_key}".'
             )
 
         all_variables = {}
@@ -388,8 +386,8 @@ class Optimizely(object):
             if feature_enabled:
                 variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
                 self.logger.debug(
-                    'Got variable value "%s" for variable "%s" of feature flag "%s".'
-                    % (variable_value, variable_key, feature_key)
+                    f'Got variable value "{variable_value}" for '
+                    f'variable "{variable_key}" of feature flag "{feature_key}".'
                 )
 
             try:
@@ -442,7 +440,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -454,14 +452,14 @@ class Optimizely(object):
         variation_key = self.get_variation(experiment_key, user_id, attributes)
 
         if not variation_key:
-            self.logger.info('Not activating user "%s".' % user_id)
+            self.logger.info(f'Not activating user "{user_id}".')
             return None
 
         experiment = project_config.get_experiment_from_key(experiment_key)
         variation = project_config.get_variation_from_key(experiment_key, variation_key)
 
         # Create and dispatch impression event
-        self.logger.info('Activating user "%s" in experiment "%s".' % (user_id, experiment.key))
+        self.logger.info(f'Activating user "{user_id}" in experiment "{experiment.key}".')
         self._send_impression_event(project_config, experiment, variation, '', experiment.key,
                                     enums.DecisionSources.EXPERIMENT, True, user_id, attributes)
 
@@ -485,7 +483,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('event_key'))
             return
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return
 
@@ -499,7 +497,7 @@ class Optimizely(object):
 
         event = project_config.get_event(event_key)
         if not event:
-            self.logger.info('Not tracking user "%s" for event "%s".' % (user_id, event_key))
+            self.logger.info(f'Not tracking user "{user_id}" for event "{event_key}".')
             return
 
         user_event = user_event_factory.UserEventFactory.create_conversion_event(
@@ -507,7 +505,7 @@ class Optimizely(object):
         )
 
         self.event_processor.process(user_event)
-        self.logger.info('Tracking event "%s" for user "%s".' % (event_key, user_id))
+        self.logger.info(f'Tracking event "{event_key}" for user "{user_id}".')
 
         if len(self.notification_center.notification_listeners[enums.NotificationTypes.TRACK]) > 0:
             log_event = event_factory.EventFactory.create_log_event(user_event, self.logger)
@@ -536,7 +534,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -549,7 +547,7 @@ class Optimizely(object):
         variation_key = None
 
         if not experiment:
-            self.logger.info('Experiment key "%s" is invalid. Not activating user "%s".' % (experiment_key, user_id))
+            self.logger.info(f'Experiment key "{experiment_key}" is invalid. Not activating user "{user_id}".')
             return None
 
         if not self._validate_user_inputs(attributes):
@@ -596,7 +594,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('feature_key'))
             return False
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return False
 
@@ -641,9 +639,9 @@ class Optimizely(object):
             )
 
         if feature_enabled:
-            self.logger.info('Feature "%s" is enabled for user "%s".' % (feature_key, user_id))
+            self.logger.info(f'Feature "{feature_key}" is enabled for user "{user_id}".')
         else:
-            self.logger.info('Feature "%s" is not enabled for user "%s".' % (feature_key, user_id))
+            self.logger.info(f'Feature "{feature_key}" is not enabled for user "{user_id}".')
 
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
@@ -676,7 +674,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_enabled_features'))
             return enabled_features
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return enabled_features
 
@@ -888,7 +886,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return False
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return False
 
@@ -918,7 +916,7 @@ class Optimizely(object):
             self.logger.error(enums.Errors.INVALID_INPUT.format('experiment_key'))
             return None
 
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -964,7 +962,7 @@ class Optimizely(object):
         Returns:
             UserContext instance or None if the user id or attributes are invalid.
         """
-        if not isinstance(user_id, string_types):
+        if not isinstance(user_id, str):
             self.logger.error(enums.Errors.INVALID_INPUT.format('user_id'))
             return None
 
@@ -999,7 +997,7 @@ class Optimizely(object):
             return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
         # validate that key is a string
-        if not isinstance(key, string_types):
+        if not isinstance(key, str):
             self.logger.error('Key parameter is invalid')
             reasons.append(OptimizelyDecisionMessage.FLAG_KEY_INVALID.format(key))
             return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
@@ -1013,7 +1011,7 @@ class Optimizely(object):
 
         feature_flag = config.get_feature_from_key(key)
         if feature_flag is None:
-            self.logger.error("No feature flag was found for key '#{key}'.")
+            self.logger.error(f"No feature flag was found for key '{key}'.")
             reasons.append(OptimizelyDecisionMessage.FLAG_KEY_INVALID.format(key))
             return OptimizelyDecision(flag_key=key, user_context=user_context, reasons=reasons)
 
@@ -1086,8 +1084,8 @@ class Optimizely(object):
                 if feature_enabled:
                     variable_value = config.get_variable_value_for_variation(variable, decision.variation)
                     self.logger.debug(
-                        'Got variable value "%s" for variable "%s" of feature flag "%s".'
-                        % (variable_value, variable_key, flag_key)
+                        f'Got variable value "{variable_value}" for '
+                        f'variable "{variable_key}" of feature flag "{flag_key}".'
                     )
 
                 try:

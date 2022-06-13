@@ -1,7 +1,6 @@
 coverage
 flake8 >= 4.0.1
 funcsigs >= 0.4
-mock >= 4.0.0
 pytest >= 6.2.0
 pytest-cov
 python-coveralls

@@ -12,7 +12,7 @@
 # limitations under the License.
 
 import json
-import mock
+from unittest import mock
 
 from optimizely import config_manager
 from optimizely import error_handler
@@ -34,7 +34,7 @@ class ValidatorTest(base.BaseTest):
     def test_is_config_manager_valid__returns_false(self):
         """ Test that invalid config_manager returns False for invalid config manager implementation. """
 
-        class CustomConfigManager(object):
+        class CustomConfigManager:
             def some_other_method(self):
                 pass
 
@@ -48,7 +48,7 @@ class ValidatorTest(base.BaseTest):
     def test_is_event_processor_valid__returns_false(self):
         """ Test that invalid event_processor returns False. """
 
-        class CustomEventProcessor(object):
+        class CustomEventProcessor:
             def some_other_method(self):
                 pass
 
@@ -72,7 +72,7 @@ class ValidatorTest(base.BaseTest):
     def test_is_event_dispatcher_valid__returns_false(self):
         """ Test that invalid event_dispatcher returns False. """
 
-        class CustomEventDispatcher(object):
+        class CustomEventDispatcher:
             def some_other_method(self):
                 pass
 
@@ -86,7 +86,7 @@ class ValidatorTest(base.BaseTest):
     def test_is_logger_valid__returns_false(self):
         """ Test that invalid logger returns False. """
 
-        class CustomLogger(object):
+        class CustomLogger:
             def some_other_method(self):
                 pass
 
@@ -100,7 +100,7 @@ class ValidatorTest(base.BaseTest):
     def test_is_error_handler_valid__returns_false(self):
         """ Test that invalid error_handler returns False. """
 
-        class CustomErrorHandler(object):
+        class CustomErrorHandler:
             def some_other_method(self):
                 pass
 

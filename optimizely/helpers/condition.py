@@ -14,22 +14,20 @@
 import json
 import numbers
 
-from six import string_types
-
 from . import validator
 from .enums import CommonAudienceEvaluationLogs as audience_logs
 from .enums import Errors
 from .enums import VersionType
 
 
-class ConditionOperatorTypes(object):
+class ConditionOperatorTypes:
     AND = 'and'
     OR = 'or'
     NOT = 'not'
     operators = [AND, OR, NOT]
 
 
-class ConditionMatchTypes(object):
+class ConditionMatchTypes:
     EXACT = 'exact'
     EXISTS = 'exists'
     GREATER_THAN = 'gt'
@@ -44,7 +42,7 @@ class ConditionMatchTypes(object):
     SUBSTRING = 'substring'
 
 
-class CustomAttributeConditionEvaluator(object):
+class CustomAttributeConditionEvaluator:
     """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
     CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
@@ -83,7 +81,7 @@ class CustomAttributeConditionEvaluator(object):
       Boolean: True if value is a string, boolean, or number. Otherwise False.
     """
         # No need to check for bool since bool is a subclass of int
-        if isinstance(value, string_types) or isinstance(value, (numbers.Integral, float)):
+        if isinstance(value, str) or isinstance(value, (numbers.Integral, float)):
             return True
 
         return False
@@ -405,11 +403,11 @@ class CustomAttributeConditionEvaluator(object):
         condition_value = self.condition_data[index][1]
         user_value = self.attributes.get(condition_name)
 
-        if not isinstance(condition_value, string_types):
+        if not isinstance(condition_value, str):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index),))
             return None
 
-        if not isinstance(user_value, string_types):
+        if not isinstance(user_value, str):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(self._get_condition_json(index), type(user_value), condition_name)
             )
@@ -435,11 +433,11 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
-        if not isinstance(target_version, string_types):
+        if not isinstance(target_version, str):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
             return None
 
-        if not isinstance(user_version, string_types):
+        if not isinstance(user_version, str):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(
                     self._get_condition_json(index), type(user_version), condition_name
@@ -470,11 +468,11 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
-        if not isinstance(target_version, string_types):
+        if not isinstance(target_version, str):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
             return None
 
-        if not isinstance(user_version, string_types):
+        if not isinstance(user_version, str):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(
                     self._get_condition_json(index), type(user_version), condition_name
@@ -505,11 +503,11 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
-        if not isinstance(target_version, string_types):
+        if not isinstance(target_version, str):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
             return None
 
-        if not isinstance(user_version, string_types):
+        if not isinstance(user_version, str):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(
                     self._get_condition_json(index), type(user_version), condition_name
@@ -540,11 +538,11 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
-        if not isinstance(target_version, string_types):
+        if not isinstance(target_version, str):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
             return None
 
-        if not isinstance(user_version, string_types):
+        if not isinstance(user_version, str):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(
                     self._get_condition_json(index), type(user_version), condition_name
@@ -575,11 +573,11 @@ class CustomAttributeConditionEvaluator(object):
         target_version = self.condition_data[index][1]
         user_version = self.attributes.get(condition_name)
 
-        if not isinstance(target_version, string_types):
+        if not isinstance(target_version, str):
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index), ))
             return None
 
-        if not isinstance(user_version, string_types):
+        if not isinstance(user_version, str):
             self.logger.warning(
                 audience_logs.UNEXPECTED_TYPE.format(
                     self._get_condition_json(index), type(user_version), condition_name
@@ -705,7 +703,7 @@ class CustomAttributeConditionEvaluator(object):
         return self.EVALUATORS_BY_MATCH_TYPE[condition_match](self, index)
 
 
-class ConditionDecoder(object):
+class ConditionDecoder:
     """ Class which provides an object_hook method for decoding dict
   objects into a list when given a condition_decoder. """
 

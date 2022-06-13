@@ -19,7 +19,7 @@ from .notification_center import NotificationCenter
 from .optimizely import Optimizely
 
 
-class OptimizelyFactory(object):
+class OptimizelyFactory:
     """ Optimizely factory to provides basic utility to instantiate the Optimizely
         SDK with a minimal number of configuration options."""
 

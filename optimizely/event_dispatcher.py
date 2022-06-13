@@ -22,7 +22,7 @@ from .helpers import enums
 REQUEST_TIMEOUT = 10
 
 
-class EventDispatcher(object):
+class EventDispatcher:
     @staticmethod
     def dispatch_event(event):
         """ Dispatch the event being represented by the Event object.
@@ -40,4 +40,4 @@ class EventDispatcher(object):
                 ).raise_for_status()
 
         except request_exception.RequestException as error:
-            logging.error('Dispatch event failed. Error: %s' % str(error))
+            logging.error(f'Dispatch event failed. Error: {error}')
