@@ -116,7 +116,7 @@ class BatchEventProcessorTest(base.BaseTest):
     MAX_BATCH_SIZE = 10
     MAX_DURATION_SEC = 0.2
     MAX_TIMEOUT_INTERVAL_SEC = 0.1
-    TEST_TIMEOUT = 10
+    TEST_TIMEOUT = 15
 
     def setUp(self, *args, **kwargs):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
