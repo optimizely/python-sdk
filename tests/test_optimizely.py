@@ -3335,7 +3335,11 @@ class OptimizelyTest(base.BaseTest):
     def test_get_feature_variable_for_feature_in_rollout(self):
         """ Test that get_feature_variable returns value as expected and broadcasts decision with proper parameters. """
 
-        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        opt_obj = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_features),
+            # prevent event processor from injecting notification calls
+            event_processor_options={'start_on_init': False}
+        )
         mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
         mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211129')
         user_attributes = {'test_attribute': 'test_value'}
