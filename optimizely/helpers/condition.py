@@ -12,7 +12,6 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing_extensions import Literal
 import json
 import numbers
 from typing import Any, Callable, Optional
@@ -21,6 +20,13 @@ from . import validator
 from .enums import CommonAudienceEvaluationLogs as audience_logs
 from .enums import Errors
 from .enums import VersionType
+
+try:
+    # python 3.7
+    from typing_extensions import Literal
+except ImportError:
+    # python 3.8 +
+    from typing import Literal  # type: ignore
 
 
 class ConditionOperatorTypes:

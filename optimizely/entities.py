@@ -12,7 +12,13 @@
 # limitations under the License.
 from __future__ import annotations
 from typing import Any, Optional
-from typing_extensions import TypedDict
+
+try:
+    # python 3.7
+    from typing_extensions import TypedDict
+except ImportError:
+    # python 3.8 +
+    from typing import TypedDict  # type: ignore
 
 
 class BaseEntity:

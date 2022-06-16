@@ -18,12 +18,19 @@ import requests
 
 from requests import exceptions as request_exception
 from typing import Optional
-from typing_extensions import Protocol
 
 from .helpers import enums
 from . import event_builder
 
 REQUEST_TIMEOUT = 10
+
+
+try:
+    # python 3.7
+    from typing_extensions import Protocol
+except ImportError:
+    # python 3.8 +
+    from typing import Protocol  # type: ignore
 
 
 class CustomEventDispatcher(Protocol):
