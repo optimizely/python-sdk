@@ -11,11 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
+from . import project_config
 from . import decision_service
 from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
+from .config_manager import BaseConfigManager
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
 from .config_manager import StaticConfigManager
@@ -26,12 +30,13 @@ from .decision_service import Decision
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
 from .event.event_processor import ForwardingEventProcessor
-from .event_dispatcher import EventDispatcher as default_event_dispatcher
+from .event_dispatcher import EventDispatcher as default_event_dispatcher, CustomEventDispatcher
 from .helpers import enums, validator
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
-from .optimizely_config import OptimizelyConfigService
+from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext
+from typing import Any, Optional, Sequence
 
 
 class Optimizely:
@@ -39,19 +44,19 @@ class Optimizely:
 
     def __init__(
             self,
-            datafile=None,
-            event_dispatcher=None,
-            logger=None,
-            error_handler=None,
-            skip_json_validation=False,
-            user_profile_service=None,
-            sdk_key=None,
-            config_manager=None,
-            notification_center=None,
-            event_processor=None,
-            datafile_access_token=None,
-            default_decide_options=None
-    ):
+            datafile: Optional[str] = None,
+            event_dispatcher: Optional[CustomEventDispatcher] = None,
+            logger: Any = None,
+            error_handler: Any = None,
+            skip_json_validation: Optional[bool] = False,
+            user_profile_service: Any = None,
+            sdk_key: Optional[str] = None,
+            config_manager: Optional[BaseConfigManager] = None,
+            notification_center: Optional[NotificationCenter] = None,
+            event_processor: Any = None,
+            datafile_access_token: Optional[str] = None,
+            default_decide_options: Optional[list[str]] = None
+    ) -> None:
         """ Optimizely init method for managing Custom projects.
 
         Args:
@@ -84,11 +89,12 @@ class Optimizely:
         self.event_dispatcher = event_dispatcher or default_event_dispatcher
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.error_handler = error_handler or noop_error_handler
-        self.config_manager = config_manager
+        self.config_manager: BaseConfigManager = config_manager  # type: ignore
         self.notification_center = notification_center or NotificationCenter(self.logger)
         self.event_processor = event_processor or ForwardingEventProcessor(
             self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
         )
+        self.default_decide_options: list[str]
 
         if default_decide_options is None:
             self.default_decide_options = []
@@ -133,7 +139,7 @@ class Optimizely:
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
 
-    def _validate_instantiation_options(self):
+    def _validate_instantiation_options(self) -> None:
         """ Helper method to validate all instantiation parameters.
 
         Raises:
@@ -157,7 +163,9 @@ class Optimizely:
         if not validator.is_event_processor_valid(self.event_processor):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_processor'))
 
-    def _validate_user_inputs(self, attributes=None, event_tags=None):
+    def _validate_user_inputs(
+        self, attributes: Optional[dict[str, Any]] = None, event_tags: Optional[dict[str, Any]] = None
+    ) -> bool:
         """ Helper method to validate user inputs.
 
         Args:
@@ -181,8 +189,11 @@ class Optimizely:
 
         return True
 
-    def _send_impression_event(self, project_config, experiment, variation, flag_key, rule_key, rule_type, enabled,
-                               user_id, attributes):
+    def _send_impression_event(
+        self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
+        variation: Optional[entities.Variation], flag_key: str, rule_key: str, rule_type: str,
+        enabled: bool, user_id: str, attributes: Optional[dict[str, Any]]
+    ) -> None:
         """ Helper method to send impression event.
 
         Args:
@@ -216,8 +227,9 @@ class Optimizely:
             )
 
     def _get_feature_variable_for_type(
-            self, project_config, feature_key, variable_key, variable_type, user_id, attributes
-    ):
+            self, project_config: project_config.ProjectConfig, feature_key: str, variable_key: str,
+            variable_type: Optional[str], user_id: str, attributes: Optional[dict[str, Any]]
+    ) -> Any:
         """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
 
         Args:
@@ -323,8 +335,9 @@ class Optimizely:
         return actual_value
 
     def _get_all_feature_variables_for_type(
-            self, project_config, feature_key, user_id, attributes,
-    ):
+            self, project_config: project_config.ProjectConfig, feature_key: str,
+            user_id: str, attributes: Optional[dict[str, Any]],
+    ) -> Optional[dict[str, Any]]:
         """ Helper method to determine value for all variables attached to a feature flag.
 
         Args:
@@ -415,7 +428,7 @@ class Optimizely:
         )
         return all_variables
 
-    def activate(self, experiment_key, user_id, attributes=None):
+    def activate(self, experiment_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None) -> Optional[str]:
         """ Buckets visitor and sends impression event to Optimizely.
 
         Args:
@@ -461,7 +474,11 @@ class Optimizely:
 
         return variation.key
 
-    def track(self, event_key, user_id, attributes=None, event_tags=None):
+    def track(
+        self, event_key: str, user_id: str,
+        attributes: Optional[dict[str, Any]] = None,
+        event_tags: Optional[dict[str, Any]] = None
+    ) -> None:
         """ Send conversion event to Optimizely.
 
         Args:
@@ -509,7 +526,9 @@ class Optimizely:
                 enums.NotificationTypes.TRACK, event_key, user_id, attributes, event_tags, log_event.__dict__,
             )
 
-    def get_variation(self, experiment_key, user_id, attributes=None):
+    def get_variation(
+        self, experiment_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[str]:
         """ Gets variation where user will be bucketed.
 
         Args:
@@ -570,7 +589,7 @@ class Optimizely:
 
         return variation_key
 
-    def is_feature_enabled(self, feature_key, user_id, attributes=None):
+    def is_feature_enabled(self, feature_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None) -> bool:
         """ Returns true if the feature is enabled for the given user.
 
         Args:
@@ -654,7 +673,7 @@ class Optimizely:
 
         return feature_enabled
 
-    def get_enabled_features(self, user_id, attributes=None):
+    def get_enabled_features(self, user_id: str, attributes: Optional[dict[str, Any]] = None) -> list[str]:
         """ Returns the list of features that are enabled for the user.
 
         Args:
@@ -665,7 +684,7 @@ class Optimizely:
           A list of the keys of the features that are enabled for the user.
         """
 
-        enabled_features = []
+        enabled_features: list[str] = []
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('get_enabled_features'))
             return enabled_features
@@ -688,7 +707,9 @@ class Optimizely:
 
         return enabled_features
 
-    def get_feature_variable(self, feature_key, variable_key, user_id, attributes=None):
+    def get_feature_variable(
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Any:
         """ Returns value for a variable attached to a feature flag.
 
         Args:
@@ -709,7 +730,9 @@ class Optimizely:
 
         return self._get_feature_variable_for_type(project_config, feature_key, variable_key, None, user_id, attributes)
 
-    def get_feature_variable_boolean(self, feature_key, variable_key, user_id, attributes=None):
+    def get_feature_variable_boolean(
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[bool]:
         """ Returns value for a certain boolean variable attached to a feature flag.
 
         Args:
@@ -731,11 +754,13 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_boolean'))
             return None
 
-        return self._get_feature_variable_for_type(
+        return self._get_feature_variable_for_type(  # type: ignore[no-any-return]
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
         )
 
-    def get_feature_variable_double(self, feature_key, variable_key, user_id, attributes=None):
+    def get_feature_variable_double(
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[float]:
         """ Returns value for a certain double variable attached to a feature flag.
 
         Args:
@@ -757,11 +782,13 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_double'))
             return None
 
-        return self._get_feature_variable_for_type(
+        return self._get_feature_variable_for_type(  # type: ignore[no-any-return]
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
         )
 
-    def get_feature_variable_integer(self, feature_key, variable_key, user_id, attributes=None):
+    def get_feature_variable_integer(
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[int]:
         """ Returns value for a certain integer variable attached to a feature flag.
 
         Args:
@@ -783,11 +810,13 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_integer'))
             return None
 
-        return self._get_feature_variable_for_type(
+        return self._get_feature_variable_for_type(  # type: ignore[no-any-return]
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
         )
 
-    def get_feature_variable_string(self, feature_key, variable_key, user_id, attributes=None):
+    def get_feature_variable_string(
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[str]:
         """ Returns value for a certain string variable attached to a feature.
 
         Args:
@@ -809,11 +838,13 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_string'))
             return None
 
-        return self._get_feature_variable_for_type(
+        return self._get_feature_variable_for_type(  # type: ignore[no-any-return]
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
         )
 
-    def get_feature_variable_json(self, feature_key, variable_key, user_id, attributes=None):
+    def get_feature_variable_json(
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[dict[str, Any]]:
         """ Returns value for a certain JSON variable attached to a feature.
 
         Args:
@@ -835,11 +866,13 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('get_feature_variable_json'))
             return None
 
-        return self._get_feature_variable_for_type(
+        return self._get_feature_variable_for_type(  # type: ignore[no-any-return]
             project_config, feature_key, variable_key, variable_type, user_id, attributes,
         )
 
-    def get_all_feature_variables(self, feature_key, user_id, attributes=None):
+    def get_all_feature_variables(
+        self, feature_key: str, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[dict[str, Any]]:
         """ Returns dictionary of all variables and their corresponding values in the context of a feature.
 
         Args:
@@ -861,7 +894,7 @@ class Optimizely:
             project_config, feature_key, user_id, attributes,
         )
 
-    def set_forced_variation(self, experiment_key, user_id, variation_key):
+    def set_forced_variation(self, experiment_key: str, user_id: str, variation_key: Optional[str]) -> bool:
         """ Force a user into a variation for a given experiment.
 
         Args:
@@ -893,7 +926,7 @@ class Optimizely:
 
         return self.decision_service.set_forced_variation(project_config, experiment_key, user_id, variation_key)
 
-    def get_forced_variation(self, experiment_key, user_id):
+    def get_forced_variation(self, experiment_key: str, user_id: str) -> Optional[str]:
         """ Gets the forced variation for a given user and experiment.
 
         Args:
@@ -924,7 +957,7 @@ class Optimizely:
         forced_variation, _ = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
         return forced_variation.key if forced_variation else None
 
-    def get_optimizely_config(self):
+    def get_optimizely_config(self) -> Optional[OptimizelyConfig]:
         """ Gets OptimizelyConfig instance for the current project config.
 
         Returns:
@@ -942,11 +975,13 @@ class Optimizely:
 
         # Customized Config Manager may not have optimizely_config defined.
         if hasattr(self.config_manager, 'optimizely_config'):
-            return self.config_manager.optimizely_config
+            return self.config_manager.optimizely_config  # type: ignore
 
         return OptimizelyConfigService(project_config).get_config()
 
-    def create_user_context(self, user_id, attributes=None):
+    def create_user_context(
+        self, user_id: str, attributes: Optional[dict[str, Any]] = None
+    ) -> Optional[OptimizelyUserContext]:
         """
         We do not check for is_valid here as a user context can be created successfully
         even when the SDK is not fully configured.
@@ -968,7 +1003,10 @@ class Optimizely:
 
         return OptimizelyUserContext(self, self.logger, user_id, attributes)
 
-    def _decide(self, user_context, key, decide_options=None):
+    def _decide(
+        self, user_context: Optional[OptimizelyUserContext], key: str,
+        decide_options: Optional[Sequence[OptimizelyDecideOption | str]] = None
+    ) -> OptimizelyDecision:
         """
         decide calls optimizely decide with feature key provided
         Args:
@@ -1029,7 +1067,7 @@ class Optimizely:
         all_variables = {}
         experiment = None
         decision_source = DecisionSources.ROLLOUT
-        source_info = {}
+        source_info: dict[str, Any] = {}
         decision_event_dispatched = False
 
         # Check forced decisions first
@@ -1117,7 +1155,11 @@ class Optimizely:
                                   user_context=user_context, reasons=reasons if should_include_reasons else []
                                   )
 
-    def _decide_all(self, user_context, decide_options=None):
+    def _decide_all(
+        self,
+        user_context: Optional[OptimizelyUserContext],
+        decide_options: Optional[list[str]] = None
+    ) -> dict[str, OptimizelyDecision]:
         """
         decide_all will return a decision for every feature key in the current config
         Args:
@@ -1146,7 +1188,12 @@ class Optimizely:
             keys.append(f['key'])
         return self._decide_for_keys(user_context, keys, decide_options)
 
-    def _decide_for_keys(self, user_context, keys, decide_options=None):
+    def _decide_for_keys(
+        self,
+        user_context: Optional[OptimizelyUserContext],
+        keys: list[str],
+        decide_options: Optional[list[str]] = None
+    ) -> dict[str, OptimizelyDecision]:
         """
         Args:
             user_context: UserContent
@@ -1166,7 +1213,7 @@ class Optimizely:
             return {}
 
         # merge decide_options and default_decide_options
-        merged_decide_options = []
+        merged_decide_options: list[str] = []
         if isinstance(decide_options, list):
             merged_decide_options = decide_options[:]
             merged_decide_options += self.default_decide_options

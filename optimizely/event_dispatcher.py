@@ -11,20 +11,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import json
 import logging
 import requests
 
 from requests import exceptions as request_exception
+from typing import Optional
 
 from .helpers import enums
+from . import event_builder
+
+try:
+    # python 3.7
+    from typing_extensions import Protocol
+except ImportError:
+    # python 3.8 +
+    from typing import Protocol  # type: ignore
+
 
 REQUEST_TIMEOUT = 10
 
 
+class CustomEventDispatcher(Protocol):
+    """Interface for a custom event dispatcher and required method `dispatch_event`. """
+    def dispatch_event(self, event: Optional[event_builder.Event]) -> None:
+        ...
+
+
 class EventDispatcher:
     @staticmethod
-    def dispatch_event(event):
+    def dispatch_event(event: Optional[event_builder.Event]) -> None:
         """ Dispatch the event being represented by the Event object.
 
     Args:

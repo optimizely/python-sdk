@@ -10,6 +10,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+from typing import Optional
+
+try:
+    # python 3.7
+    from typing_extensions import TypedDict
+except ImportError:
+    # python 3.8 +
+    from typing import TypedDict  # type: ignore
 
 
 class BaseEntity:
@@ -146,3 +155,52 @@ class Variation(BaseEntity):
 
     def __str__(self):
         return self.key
+
+
+class EventDict(TypedDict):
+    id: str
+    key: str
+    experimentIds: list[str]
+
+
+class AttributeDict(TypedDict):
+    id: str
+    key: str
+
+
+class TrafficAllocation(TypedDict):
+    endOfRange: int
+    entityId: str
+
+
+class ExperimentDict(TypedDict):
+    id: str
+    key: str
+    status: str
+    forcedVariations: dict[str, str]
+    variations: list[VariationDict]
+    layerId: str
+    audienceIds: list[str]
+    audienceConditions: list[str | list[str]]
+    trafficAllocation: list[TrafficAllocation]
+
+
+class VariationDict(TypedDict):
+    id: str
+    key: str
+    variables: list[VariableDict]
+    featureEnabled: Optional[bool]
+
+
+class VariableDict(TypedDict):
+    id: str
+    value: str
+    type: str
+    key: str
+    defaultValue: str
+    subType: str
+
+
+class RolloutDict(TypedDict):
+    id: str
+    experiments: list[ExperimentDict]
