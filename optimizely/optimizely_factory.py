@@ -17,8 +17,8 @@ from . import user_profile
 from . import logger as optimizely_logger
 from .config_manager import BaseConfigManager, PollingConfigManager
 from .error_handler import NoOpErrorHandler
-from .event.event_processor import BatchEventProcessor, CustomEventDispatcher
-from .event_dispatcher import EventDispatcher
+from .event.event_processor import BatchEventProcessor
+from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 from .notification_center import NotificationCenter
 from .optimizely import Optimizely
 

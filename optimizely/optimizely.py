@@ -29,8 +29,8 @@ from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .decision_service import Decision
 from .error_handler import NoOpErrorHandler as noop_error_handler
 from .event import event_factory, user_event_factory
-from .event.event_processor import CustomEventDispatcher, ForwardingEventProcessor
-from .event_dispatcher import EventDispatcher
+from .event.event_processor import ForwardingEventProcessor
+from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 from .helpers import enums, validator
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
