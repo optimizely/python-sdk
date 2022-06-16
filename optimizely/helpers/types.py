@@ -12,14 +12,14 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Any
 from sys import version_info
 
 
-if version_info >= (3, 8):
-    from typing import TypedDict  # type: ignore[attr-defined]
-else:
+if version_info < (3, 8):
     from typing_extensions import TypedDict
+else:
+    from typing import TypedDict  # type: ignore
 
 
 # Intermediate types for type checking deserialized datafile json before actual class instantiation.
@@ -76,3 +76,25 @@ class RolloutDict(TypedDict):
     '''Rollout dict from parsed datafile json.'''
     id: str
     experiments: list[ExperimentDict]
+
+
+class FeatureFlagDict(BaseDict):
+    '''Feature flag dict from parsed datafile json.'''
+    rolloutId: str
+    variables: list[VariableDict]
+    experimentIds: list[str]
+
+
+class GroupDict(TypedDict):
+    '''Group dict from parsed datafile json.'''
+    id: str
+    policy: str
+    experiments: list[ExperimentDict]
+    trafficAllocation: list[TrafficAllocation]
+
+
+class AudienceDict(TypedDict):
+    '''Audience dict from parsed datafile json.'''
+    id: str
+    name: str
+    conditions: list[Any] | str

@@ -11,8 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import numbers
+from typing import TYPE_CHECKING, Any, Optional
 import requests
 import threading
 import time
@@ -22,17 +24,27 @@ from requests import exceptions as requests_exceptions
 from . import exceptions as optimizely_exceptions
 from . import logger as optimizely_logger
 from . import project_config
-from .error_handler import NoOpErrorHandler
+from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .notification_center import NotificationCenter
 from .helpers import enums
 from .helpers import validator
-from .optimizely_config import OptimizelyConfigService
+from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
+
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from requests.models import CaseInsensitiveDict
 
 
 class BaseConfigManager(ABC):
     """ Base class for Optimizely's config manager. """
 
-    def __init__(self, logger=None, error_handler=None, notification_center=None):
+    def __init__(
+        self,
+        logger: Optional[optimizely_logger.Logger] = None,
+        error_handler: Optional[BaseErrorHandler] = None,
+        notification_center: Optional[NotificationCenter] = None
+    ):
         """ Initialize config manager.
 
         Args:
@@ -43,9 +55,10 @@ class BaseConfigManager(ABC):
         self.logger = optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
         self.error_handler = error_handler or NoOpErrorHandler()
         self.notification_center = notification_center or NotificationCenter(self.logger)
+        self.optimizely_config: Optional[OptimizelyConfig]
         self._validate_instantiation_options()
 
-    def _validate_instantiation_options(self):
+    def _validate_instantiation_options(self) -> None:
         """ Helper method to validate all parameters.
 
         Raises:
@@ -61,7 +74,7 @@ class BaseConfigManager(ABC):
             raise optimizely_exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('notification_center'))
 
     @abstractmethod
-    def get_config(self):
+    def get_config(self) -> Optional[project_config.ProjectConfig]:
         """ Get config for use by optimizely.Optimizely.
         The config should be an instance of project_config.ProjectConfig."""
         pass
@@ -71,7 +84,12 @@ class StaticConfigManager(BaseConfigManager):
     """ Config manager that returns ProjectConfig based on provided datafile. """
 
     def __init__(
-        self, datafile=None, logger=None, error_handler=None, notification_center=None, skip_json_validation=False,
+        self,
+        datafile: Optional[str] = None,
+        logger: Optional[optimizely_logger.Logger] = None,
+        error_handler: Optional[BaseErrorHandler] = None,
+        notification_center: Optional[NotificationCenter] = None,
+        skip_json_validation: Optional[bool] = False,
     ):
         """ Initialize config manager. Datafile has to be provided to use.
 
@@ -87,12 +105,12 @@ class StaticConfigManager(BaseConfigManager):
         super().__init__(
             logger=logger, error_handler=error_handler, notification_center=notification_center,
         )
-        self._config = None
-        self.optimizely_config = None
+        self._config: project_config.ProjectConfig = None  # type: ignore[assignment]
+        self.optimizely_config: Optional[OptimizelyConfig] = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
 
-    def _set_config(self, datafile):
+    def _set_config(self, datafile: Optional[str | bytes]) -> None:
         """ Looks up and sets datafile and config based on response body.
 
         Args:
@@ -105,7 +123,7 @@ class StaticConfigManager(BaseConfigManager):
                 return
 
         error_msg = None
-        error_to_handle = None
+        error_to_handle: Optional[Exception] = None
         config = None
 
         try:
@@ -135,7 +153,7 @@ class StaticConfigManager(BaseConfigManager):
             f'Old revision number: {previous_revision}. New revision number: {config.get_revision()}.'
         )
 
-    def get_config(self):
+    def get_config(self) -> Optional[project_config.ProjectConfig]:
         """ Returns instance of ProjectConfig.
 
         Returns:
@@ -152,16 +170,16 @@ class PollingConfigManager(StaticConfigManager):
 
     def __init__(
         self,
-        sdk_key=None,
-        datafile=None,
-        update_interval=None,
-        blocking_timeout=None,
-        url=None,
-        url_template=None,
-        logger=None,
-        error_handler=None,
-        notification_center=None,
-        skip_json_validation=False,
+        sdk_key: Optional[str] = None,
+        datafile: Optional[str] = None,
+        update_interval: Optional[float] = None,
+        blocking_timeout: Optional[int] = None,
+        url: Optional[str] = None,
+        url_template: Optional[str] = None,
+        logger: Optional[optimizely_logger.Logger] = None,
+        error_handler: Optional[BaseErrorHandler] = None,
+        notification_center: Optional[NotificationCenter] = None,
+        skip_json_validation: Optional[bool] = False,
     ):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
@@ -196,13 +214,13 @@ class PollingConfigManager(StaticConfigManager):
         )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
-        self.last_modified = None
+        self.last_modified: Optional[str] = None
         self._polling_thread = threading.Thread(target=self._run)
         self._polling_thread.daemon = True
         self._polling_thread.start()
 
     @staticmethod
-    def get_datafile_url(sdk_key, url, url_template):
+    def get_datafile_url(sdk_key: Optional[str], url: Optional[str], url_template: Optional[str]) -> str:
         """ Helper method to determine URL from where to fetch the datafile.
 
         Args:
@@ -234,7 +252,7 @@ class PollingConfigManager(StaticConfigManager):
 
         return url
 
-    def _set_config(self, datafile):
+    def _set_config(self, datafile: Optional[str | bytes]) -> None:
         """ Looks up and sets datafile and config based on response body.
 
         Args:
@@ -244,7 +262,7 @@ class PollingConfigManager(StaticConfigManager):
             super()._set_config(datafile=datafile)
             self._config_ready_event.set()
 
-    def get_config(self):
+    def get_config(self) -> Optional[project_config.ProjectConfig]:
         """ Returns instance of ProjectConfig. Returns immediately if project config is ready otherwise
         blocks maximum for value of blocking_timeout in seconds.
 
@@ -255,7 +273,7 @@ class PollingConfigManager(StaticConfigManager):
         self._config_ready_event.wait(self.blocking_timeout)
         return self._config
 
-    def set_update_interval(self, update_interval):
+    def set_update_interval(self, update_interval: Optional[int | float]) -> None:
         """ Helper method to set frequency at which datafile has to be polled and ProjectConfig updated.
 
         Args:
@@ -280,7 +298,7 @@ class PollingConfigManager(StaticConfigManager):
 
         self.update_interval = update_interval
 
-    def set_blocking_timeout(self, blocking_timeout):
+    def set_blocking_timeout(self, blocking_timeout: Optional[int | float]) -> None:
         """ Helper method to set time in seconds to block the config call until config has been initialized.
 
         Args:
@@ -305,7 +323,7 @@ class PollingConfigManager(StaticConfigManager):
 
         self.blocking_timeout = blocking_timeout
 
-    def set_last_modified(self, response_headers):
+    def set_last_modified(self, response_headers: CaseInsensitiveDict[str]) -> None:
         """ Looks up and sets last modified time based on Last-Modified header in the response.
 
         Args:
@@ -313,7 +331,7 @@ class PollingConfigManager(StaticConfigManager):
         """
         self.last_modified = response_headers.get(enums.HTTPHeaders.LAST_MODIFIED)
 
-    def _handle_response(self, response):
+    def _handle_response(self, response: requests.Response) -> None:
         """ Helper method to handle response containing datafile.
 
         Args:
@@ -333,7 +351,7 @@ class PollingConfigManager(StaticConfigManager):
         self.set_last_modified(response.headers)
         self._set_config(response.content)
 
-    def fetch_datafile(self):
+    def fetch_datafile(self) -> None:
         """ Fetch datafile and set ProjectConfig. """
 
         request_headers = {}
@@ -351,11 +369,11 @@ class PollingConfigManager(StaticConfigManager):
         self._handle_response(response)
 
     @property
-    def is_running(self):
+    def is_running(self) -> bool:
         """ Check if polling thread is alive or not. """
         return self._polling_thread.is_alive()
 
-    def _run(self):
+    def _run(self) -> None:
         """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
         try:
             while self.is_running:
@@ -367,7 +385,7 @@ class PollingConfigManager(StaticConfigManager):
             )
             raise
 
-    def start(self):
+    def start(self) -> None:
         """ Start the config manager and the thread to periodically fetch datafile. """
         if not self.is_running:
             self._polling_thread.start()
@@ -380,9 +398,9 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
     def __init__(
         self,
-        datafile_access_token,
-        *args,
-        **kwargs
+        datafile_access_token: str,
+        *args: Any,
+        **kwargs: Any
     ):
         """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
 
@@ -394,14 +412,14 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         self._set_datafile_access_token(datafile_access_token)
         super().__init__(*args, **kwargs)
 
-    def _set_datafile_access_token(self, datafile_access_token):
+    def _set_datafile_access_token(self, datafile_access_token: str) -> None:
         """ Checks for valid access token input and sets it. """
         if not datafile_access_token:
             raise optimizely_exceptions.InvalidInputException(
                 'datafile_access_token cannot be empty or None.')
         self.datafile_access_token = datafile_access_token
 
-    def fetch_datafile(self):
+    def fetch_datafile(self) -> None:
         """ Fetch authenticated datafile and set ProjectConfig. """
         request_headers = {
             enums.HTTPHeaders.AUTHORIZATION: enums.ConfigManager.AUTHORIZATION_HEADER_DATA_TEMPLATE.format(

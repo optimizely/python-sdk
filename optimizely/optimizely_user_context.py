@@ -15,11 +15,19 @@
 from __future__ import annotations
 import copy
 import threading
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, NewType, Dict
 
 from optimizely.decision import optimizely_decision
-from . import optimizely
-from .logger import Logger
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from . import optimizely
+    from optimizely.helpers.event_tag_utils import EventTags
+    from .logger import Logger
+
+
+# type for tracking user attributes (essentially a sub-type of dict)
+UserAttributes = NewType('UserAttributes', Dict[str, Any])
 
 
 class OptimizelyUserContext:
@@ -29,7 +37,7 @@ class OptimizelyUserContext:
 
     def __init__(
         self, optimizely_client: optimizely.Optimizely, logger: Logger,
-        user_id: str, user_attributes: Optional[dict[str, Any]] = None
+        user_id: str, user_attributes: Optional[UserAttributes] = None
     ):
         """ Create an instance of the Optimizely User Context.
 
@@ -48,9 +56,9 @@ class OptimizelyUserContext:
         self.user_id = user_id
 
         if not isinstance(user_attributes, dict):
-            user_attributes = {}
+            user_attributes = UserAttributes({})
 
-        self._user_attributes = user_attributes.copy() if user_attributes else {}
+        self._user_attributes = UserAttributes(user_attributes.copy() if user_attributes else {})
         self.lock = threading.Lock()
         self.forced_decisions_map: dict[
             OptimizelyUserContext.OptimizelyDecisionContext,
@@ -70,7 +78,7 @@ class OptimizelyUserContext:
         def __hash__(self) -> int:
             return hash((self.flag_key, self.rule_key))
 
-        def __eq__(self, other: OptimizelyUserContext.OptimizelyDecisionContext) -> bool:  # type: ignore
+        def __eq__(self, other: OptimizelyUserContext.OptimizelyDecisionContext) -> bool:  # type: ignore[override]
             return (self.flag_key, self.rule_key) == (other.flag_key, other.rule_key)
 
     # forced decision
@@ -90,9 +98,9 @@ class OptimizelyUserContext:
 
         return user_context
 
-    def get_user_attributes(self) -> dict[str, Any]:
+    def get_user_attributes(self) -> UserAttributes:
         with self.lock:
-            return self._user_attributes.copy()
+            return UserAttributes(self._user_attributes.copy())
 
     def set_attribute(self, attribute_key: str, attribute_value: Any) -> None:
         """
@@ -155,7 +163,7 @@ class OptimizelyUserContext:
 
         return self.client._decide_all(self._clone(), options)
 
-    def track_event(self, event_key: str, event_tags: Optional[dict[str, Any]] = None) -> None:
+    def track_event(self, event_key: str, event_tags: Optional[EventTags] = None) -> None:
         return self.client.track(event_key, self.user_id, self.get_user_attributes(), event_tags)
 
     def as_json(self) -> dict[str, Any]:

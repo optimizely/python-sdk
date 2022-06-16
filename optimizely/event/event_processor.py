@@ -94,17 +94,17 @@ class BatchEventProcessor(BaseEventProcessor):
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.event_queue = event_queue or queue.Queue(maxsize=self._DEFAULT_QUEUE_CAPACITY)
         self.batch_size: int = (
-            batch_size  # type: ignore
+            batch_size  # type: ignore[assignment]
             if self._validate_instantiation_props(batch_size, 'batch_size', self._DEFAULT_BATCH_SIZE)
             else self._DEFAULT_BATCH_SIZE
         )
         self.flush_interval: timedelta = (
-            timedelta(seconds=flush_interval)  # type: ignore
+            timedelta(seconds=flush_interval)  # type: ignore[arg-type]
             if self._validate_instantiation_props(flush_interval, 'flush_interval', self._DEFAULT_FLUSH_INTERVAL)
             else timedelta(seconds=self._DEFAULT_FLUSH_INTERVAL)
         )
         self.timeout_interval: timedelta = (
-            timedelta(seconds=timeout_interval)  # type: ignore
+            timedelta(seconds=timeout_interval)  # type: ignore[arg-type]
             if self._validate_instantiation_props(timeout_interval, 'timeout_interval', self._DEFAULT_TIMEOUT_INTERVAL)
             else timedelta(seconds=self._DEFAULT_TIMEOUT_INTERVAL)
         )

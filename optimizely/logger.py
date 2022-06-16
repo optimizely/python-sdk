@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+from typing import Any, Optional, Union
 import warnings
-from typing import Union
 
 from .helpers import enums
 
@@ -20,7 +20,7 @@ from .helpers import enums
 _DEFAULT_LOG_FORMAT = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s'
 
 
-def reset_logger(name, level=None, handler=None):
+def reset_logger(name: str, level: Optional[int] = None, handler: Optional[logging.Handler] = None) -> logging.Logger:
     """
   Make a standard python logger object with default formatter, handler, etc.
 
@@ -57,7 +57,27 @@ class BaseLogger:
     """ Class encapsulating logging functionality. Override with your own logger providing log method. """
 
     @staticmethod
-    def log(*args):
+    def log(*args: Any) -> None:
+        pass  # pragma: no cover
+
+    @staticmethod
+    def error(*args: Any) -> None:
+        pass  # pragma: no cover
+
+    @staticmethod
+    def warning(*args: Any) -> None:
+        pass  # pragma: no cover
+
+    @staticmethod
+    def info(*args: Any) -> None:
+        pass  # pragma: no cover
+
+    @staticmethod
+    def debug(*args: Any) -> None:
+        pass  # pragma: no cover
+
+    @staticmethod
+    def exception(*args: Any) -> None:
         pass  # pragma: no cover
 
 
@@ -68,7 +88,7 @@ Logger = Union[logging.Logger, BaseLogger]
 class NoOpLogger(BaseLogger):
     """ Class providing log method which logs nothing. """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = reset_logger(
             name='.'.join([__name__, self.__class__.__name__]), level=logging.NOTSET, handler=logging.NullHandler(),
         )
@@ -77,11 +97,11 @@ class NoOpLogger(BaseLogger):
 class SimpleLogger(BaseLogger):
     """ Class providing log method which logs to stdout. """
 
-    def __init__(self, min_level=enums.LogLevels.INFO):
+    def __init__(self, min_level: int = enums.LogLevels.INFO):
         self.level = min_level
         self.logger = reset_logger(name='.'.join([__name__, self.__class__.__name__]), level=min_level)
 
-    def log(self, log_level, message):
+    def log(self, log_level: int, message: object) -> None:  # type: ignore[override]
         # Log a deprecation/runtime warning.
         # Clients should be using standard loggers instead of this wrapper.
         warning = f'{self.__class__} is deprecated. Please use standard python loggers.'
@@ -91,7 +111,7 @@ class SimpleLogger(BaseLogger):
         self.logger.log(log_level, message)
 
 
-def adapt_logger(logger):
+def adapt_logger(logger: Any) -> Any:
     """
   Adapt our custom logger.BaseLogger object into a standard logging.Logger object.
 

@@ -10,26 +10,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional
+
 from . import logger as optimizely_logger
-from .config_manager import PollingConfigManager
-from .error_handler import NoOpErrorHandler
+from .config_manager import BaseConfigManager, PollingConfigManager
+from .error_handler import BaseErrorHandler, NoOpErrorHandler
 from .event.event_processor import BatchEventProcessor
-from .event_dispatcher import EventDispatcher
+from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 from .notification_center import NotificationCenter
 from .optimizely import Optimizely
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from .user_profile import UserProfileService
 
 
 class OptimizelyFactory:
     """ Optimizely factory to provides basic utility to instantiate the Optimizely
         SDK with a minimal number of configuration options."""
 
-    max_event_batch_size = None
-    max_event_flush_interval = None
-    polling_interval = None
-    blocking_timeout = None
+    max_event_batch_size: Optional[int] = None
+    max_event_flush_interval: Optional[int] = None
+    polling_interval: Optional[float] = None
+    blocking_timeout: Optional[int] = None
 
     @staticmethod
-    def set_batch_size(batch_size):
+    def set_batch_size(batch_size: int) -> int:
         """ Convenience method for setting the maximum number of events contained within a batch.
         Args:
           batch_size: Sets size of event_queue.
@@ -39,7 +46,7 @@ class OptimizelyFactory:
         return OptimizelyFactory.max_event_batch_size
 
     @staticmethod
-    def set_flush_interval(flush_interval):
+    def set_flush_interval(flush_interval: int) -> int:
         """ Convenience method for setting the maximum time interval in milliseconds between event dispatches.
         Args:
           flush_interval: Time interval between event dispatches.
@@ -49,7 +56,7 @@ class OptimizelyFactory:
         return OptimizelyFactory.max_event_flush_interval
 
     @staticmethod
-    def set_polling_interval(polling_interval):
+    def set_polling_interval(polling_interval: int) -> int:
         """ Method to set frequency at which datafile has to be polled.
             Args:
               polling_interval: Time in seconds after which to update datafile.
@@ -58,7 +65,7 @@ class OptimizelyFactory:
         return OptimizelyFactory.polling_interval
 
     @staticmethod
-    def set_blocking_timeout(blocking_timeout):
+    def set_blocking_timeout(blocking_timeout: int) -> int:
         """ Method to set time in seconds to block the config call until config has been initialized.
             Args:
               blocking_timeout: Time in seconds to block the config call.
@@ -67,7 +74,7 @@ class OptimizelyFactory:
         return OptimizelyFactory.blocking_timeout
 
     @staticmethod
-    def default_instance(sdk_key, datafile=None):
+    def default_instance(sdk_key: str, datafile: Optional[str] = None) -> Optimizely:
         """ Returns a new optimizely instance..
           Args:
             sdk_key:  Required string uniquely identifying the fallback datafile corresponding to project.
@@ -104,15 +111,23 @@ class OptimizelyFactory:
         return optimizely
 
     @staticmethod
-    def default_instance_with_config_manager(config_manager):
+    def default_instance_with_config_manager(config_manager: BaseConfigManager) -> Optimizely:
         return Optimizely(
             config_manager=config_manager
         )
 
     @staticmethod
-    def custom_instance(sdk_key, datafile=None, event_dispatcher=None, logger=None, error_handler=None,
-                        skip_json_validation=None, user_profile_service=None, config_manager=None,
-                        notification_center=None):
+    def custom_instance(
+        sdk_key: str,
+        datafile: Optional[str] = None,
+        event_dispatcher: Optional[CustomEventDispatcher] = None,
+        logger: Optional[optimizely_logger.Logger] = None,
+        error_handler: Optional[BaseErrorHandler] = None,
+        skip_json_validation: Optional[bool] = None,
+        user_profile_service: Optional[UserProfileService] = None,
+        config_manager: Optional[BaseConfigManager] = None,
+        notification_center: Optional[NotificationCenter] = None
+    ) -> Optimizely:
         """ Returns a new optimizely instance.
              if max_event_batch_size and max_event_flush_interval are None then default batch_size and flush_interval
              will be used to setup BatchEventProcessor.

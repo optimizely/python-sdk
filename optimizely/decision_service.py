@@ -11,24 +11,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import namedtuple
+from __future__ import annotations
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence
 
 from . import bucketer
+from . import entities
 from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .helpers import audience as audience_helper
 from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
-from .optimizely_user_context import OptimizelyUserContext
-from .user_profile import UserProfile
+from .optimizely_user_context import OptimizelyUserContext, UserAttributes
+from .user_profile import UserProfile, UserProfileService
 
-Decision = namedtuple('Decision', 'experiment variation source')
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from .project_config import ProjectConfig
+    from .logger import Logger
+
+
+class Decision(NamedTuple):
+    """Named tuple containing selected experiment, variation and source.
+    None if no experiment/variation was selected."""
+    experiment: Optional[entities.Experiment]
+    variation: Optional[entities.Variation]
+    source: str
 
 
 class DecisionService:
     """ Class encapsulating all decision related capabilities. """
 
-    def __init__(self, logger, user_profile_service):
+    def __init__(self, logger: Logger, user_profile_service: Optional[UserProfileService]):
         self.bucketer = bucketer.Bucketer()
         self.logger = logger
         self.user_profile_service = user_profile_service
@@ -37,9 +50,9 @@ class DecisionService:
         # This contains all the forced variations set by the user
         # by calling set_forced_variation (it is not the same as the
         # whitelisting forcedVariations data structure).
-        self.forced_variation_map = {}
+        self.forced_variation_map: dict[str, dict[str, str]] = {}
 
-    def _get_bucketing_id(self, user_id, attributes):
+    def _get_bucketing_id(self, user_id: str, attributes: Optional[UserAttributes]) -> tuple[str, list[str]]:
         """ Helper method to determine bucketing ID for the user.
 
         Args:
@@ -50,8 +63,8 @@ class DecisionService:
           String representing bucketing ID if it is a String type in attributes else return user ID
           array of log messages representing decision making.
         """
-        decide_reasons = []
-        attributes = attributes or {}
+        decide_reasons: list[str] = []
+        attributes = attributes or UserAttributes({})
         bucketing_id = attributes.get(enums.ControlAttributes.BUCKETING_ID)
 
         if bucketing_id is not None:
@@ -63,7 +76,10 @@ class DecisionService:
 
         return user_id, decide_reasons
 
-    def set_forced_variation(self, project_config, experiment_key, user_id, variation_key):
+    def set_forced_variation(
+        self, project_config: ProjectConfig, experiment_key: str,
+        user_id: str, variation_key: Optional[str]
+    ) -> bool:
         """ Sets users to a map of experiments to forced variations.
 
           Args:
@@ -120,7 +136,9 @@ class DecisionService:
         )
         return True
 
-    def get_forced_variation(self, project_config, experiment_key, user_id):
+    def get_forced_variation(
+        self, project_config: ProjectConfig, experiment_key: str, user_id: str
+    ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Gets the forced variation key for the given user and experiment.
 
           Args:
@@ -132,7 +150,7 @@ class DecisionService:
             The variation which the given user and experiment should be forced into and
              array of log messages representing decision making.
         """
-        decide_reasons = []
+        decide_reasons: list[str] = []
         if user_id not in self.forced_variation_map:
             message = f'User "{user_id}" is not in the forced variation map.'
             self.logger.debug(message)
@@ -163,7 +181,9 @@ class DecisionService:
         decide_reasons.append(message)
         return variation, decide_reasons
 
-    def get_whitelisted_variation(self, project_config, experiment, user_id):
+    def get_whitelisted_variation(
+        self, project_config: ProjectConfig, experiment: entities.Experiment, user_id: str
+    ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Determine if a user is forced into a variation (through whitelisting)
         for the given experiment and return that variation.
 
@@ -192,7 +212,9 @@ class DecisionService:
 
         return None, decide_reasons
 
-    def get_stored_variation(self, project_config, experiment, user_profile):
+    def get_stored_variation(
+        self, project_config: ProjectConfig, experiment: entities.Experiment, user_profile: UserProfile
+    ) -> Optional[entities.Variation]:
         """ Determine if the user has a stored variation available for the given experiment and return that.
 
         Args:
@@ -216,7 +238,13 @@ class DecisionService:
 
         return None
 
-    def get_variation(self, project_config, experiment, user_context, options=None):
+    def get_variation(
+        self,
+        project_config: ProjectConfig,
+        experiment: entities.Experiment,
+        user_context: OptimizelyUserContext,
+        options: Optional[Sequence[str | OptimizelyDecideOption]] = None
+    ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Top-level function to help determine variation user should be put in.
 
         First, check if experiment is running.
@@ -252,6 +280,7 @@ class DecisionService:
             return None, decide_reasons
 
         # Check if the user is forced into a variation
+        variation: Optional[entities.Variation | dict[None, None]]
         variation, reasons_received = self.get_forced_variation(project_config, experiment.key, user_id)
         decide_reasons += reasons_received
         if variation:
@@ -320,7 +349,9 @@ class DecisionService:
         decide_reasons.append(message)
         return None, decide_reasons
 
-    def get_variation_for_rollout(self, project_config, feature, user):
+    def get_variation_for_rollout(
+        self, project_config: ProjectConfig, feature: entities.FeatureFlag, user: OptimizelyUserContext
+    ) -> tuple[Decision, list[str]]:
         """ Determine which experiment/variation the user is in for a given rollout.
             Returns the variation of the first experiment the user qualifies for.
 
@@ -335,7 +366,7 @@ class DecisionService:
           Decision namedtuple consisting of experiment and variation for the user and
           array of log messages representing decision making.
         """
-        decide_reasons = []
+        decide_reasons: list[str] = []
         user_id = user.user_id
         attributes = user.get_user_attributes()
 
@@ -424,7 +455,13 @@ class DecisionService:
 
         return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
 
-    def get_variation_for_feature(self, project_config, feature, user_context, options=None):
+    def get_variation_for_feature(
+        self,
+        project_config: ProjectConfig,
+        feature: entities.FeatureFlag,
+        user_context: OptimizelyUserContext,
+        options: Optional[Sequence[str | OptimizelyDecideOption]] = None
+    ) -> tuple[Decision, list[str]]:
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
         Args:
@@ -476,7 +513,12 @@ class DecisionService:
             decide_reasons += rollout_variation_reasons
         return variation, decide_reasons
 
-    def validated_forced_decision(self, project_config, decision_context, user_context):
+    def validated_forced_decision(
+        self,
+        project_config: ProjectConfig,
+        decision_context: OptimizelyUserContext.OptimizelyDecisionContext,
+        user_context: OptimizelyUserContext
+    ) -> tuple[Optional[entities.Variation], list[str]]:
         """
         Gets forced decisions based on flag key, rule key and variation.
 
@@ -488,7 +530,7 @@ class DecisionService:
         Returns:
             Variation of the forced decision.
         """
-        reasons = []
+        reasons: list[str] = []
 
         forced_decision = user_context.get_forced_decision(decision_context)
 

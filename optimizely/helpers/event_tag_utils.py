@@ -11,15 +11,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Optional, NewType, Dict
 from . import enums
 import math
 import numbers
 
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.logger import Logger
+
+
 REVENUE_METRIC_TYPE = 'revenue'
 NUMERIC_METRIC_TYPE = 'value'
 
+# type for tracking event tags (essentially a sub-type of dict)
+EventTags = NewType('EventTags', Dict[str, Any])
 
-def get_revenue_value(event_tags):
+
+def get_revenue_value(event_tags: Optional[EventTags]) -> Optional[numbers.Integral]:
     if event_tags is None:
         return None
 
@@ -40,7 +50,7 @@ def get_revenue_value(event_tags):
     return raw_value
 
 
-def get_numeric_value(event_tags, logger=None):
+def get_numeric_value(event_tags: Optional[EventTags], logger: Optional[Logger] = None) -> Optional[float]:
     """
   A smart getter of the numeric value from the event tags.
 
@@ -124,4 +134,4 @@ def get_numeric_value(event_tags, logger=None):
                 ' is in an invalid format and will not be sent to results.'
             )
 
-    return numeric_metric_value
+    return numeric_metric_value  # type: ignore[no-any-return]

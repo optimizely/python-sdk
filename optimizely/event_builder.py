@@ -11,19 +11,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import time
+from typing import TYPE_CHECKING, Any, Optional
 import uuid
+from sys import version_info
 
 from . import version
 from .helpers import enums
 from .helpers import event_tag_utils
 from .helpers import validator
 
+if version_info < (3, 8):
+    from typing_extensions import Final, Literal
+else:
+    from typing import Final, Literal  # type: ignore
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from .entities import Experiment
+    from .optimizely_user_context import UserAttributes
+    from .project_config import ProjectConfig
+
 
 class Event:
     """ Representation of an event which can be sent to the Optimizely logging endpoint. """
 
-    def __init__(self, url, params, http_verb=None, headers=None):
+    def __init__(
+        self,
+        url: str,
+        params: dict[str, Any],
+        http_verb: Optional[Literal['POST', 'GET']] = None,
+        headers: Optional[dict[str, str]] = None
+    ):
         self.url = url
         self.params = params
         self.http_verb = http_verb or 'GET'
@@ -35,7 +55,7 @@ class EventBuilder:
   impressions and conversions using the new V3 event API (batch). """
 
     EVENTS_URL = 'https://logx.optimizely.com/v1/events'
-    HTTP_VERB = 'POST'
+    HTTP_VERB: Final = 'POST'
     HTTP_HEADERS = {'Content-Type': 'application/json'}
 
     class EventParams:
@@ -62,7 +82,9 @@ class EventBuilder:
         ANONYMIZE_IP = 'anonymize_ip'
         REVISION = 'revision'
 
-    def _get_attributes_data(self, project_config, attributes):
+    def _get_attributes_data(
+        self, project_config: ProjectConfig, attributes: UserAttributes
+    ) -> list[dict[str, Any]]:
         """ Get attribute(s) information.
 
     Args:
@@ -105,7 +127,7 @@ class EventBuilder:
 
         return params
 
-    def _get_time(self):
+    def _get_time(self) -> int:
         """ Get time in milliseconds to be added.
 
     Returns:
@@ -114,7 +136,9 @@ class EventBuilder:
 
         return int(round(time.time() * 1000))
 
-    def _get_common_params(self, project_config, user_id, attributes):
+    def _get_common_params(
+        self, project_config: ProjectConfig, user_id: str, attributes: UserAttributes
+    ) -> dict[str, Any]:
         """ Get params which are used same in both conversion and impression events.
 
     Args:
@@ -125,7 +149,7 @@ class EventBuilder:
     Returns:
      Dict consisting of parameters common to both impression and conversion events.
     """
-        common_params = {
+        common_params: dict[str, Any] = {
             self.EventParams.PROJECT_ID: project_config.get_project_id(),
             self.EventParams.ACCOUNT_ID: project_config.get_account_id(),
         }
@@ -149,7 +173,9 @@ class EventBuilder:
 
         return common_params
 
-    def _get_required_params_for_impression(self, experiment, variation_id):
+    def _get_required_params_for_impression(
+        self, experiment: Experiment, variation_id: str
+    ) -> dict[str, list[dict[str, str | int]]]:
         """ Get parameters that are required for the impression event to register.
 
     Args:
@@ -159,7 +185,7 @@ class EventBuilder:
     Returns:
       Dict consisting of decisions and events info for impression event.
     """
-        snapshot = {}
+        snapshot: dict[str, list[dict[str, str | int]]] = {}
 
         snapshot[self.EventParams.DECISIONS] = [
             {
@@ -180,7 +206,9 @@ class EventBuilder:
 
         return snapshot
 
-    def _get_required_params_for_conversion(self, project_config, event_key, event_tags):
+    def _get_required_params_for_conversion(
+        self, project_config: ProjectConfig, event_key: str, event_tags: event_tag_utils.EventTags
+    ) -> dict[str, list[dict[str, Any]]]:
         """ Get parameters that are required for the conversion event to register.
 
     Args:
@@ -193,7 +221,7 @@ class EventBuilder:
     """
         snapshot = {}
 
-        event_dict = {
+        event_dict: dict[str, Any] = {
             self.EventParams.EVENT_ID: project_config.get_event(event_key).id,
             self.EventParams.TIME: self._get_time(),
             self.EventParams.KEY: event_key,
@@ -215,7 +243,10 @@ class EventBuilder:
         snapshot[self.EventParams.EVENTS] = [event_dict]
         return snapshot
 
-    def create_impression_event(self, project_config, experiment, variation_id, user_id, attributes):
+    def create_impression_event(
+        self, project_config: ProjectConfig, experiment: Experiment,
+        variation_id: str, user_id: str, attributes: UserAttributes
+    ) -> Event:
         """ Create impression Event to be sent to the logging endpoint.
 
     Args:
@@ -236,7 +267,10 @@ class EventBuilder:
 
         return Event(self.EVENTS_URL, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
 
-    def create_conversion_event(self, project_config, event_key, user_id, attributes, event_tags):
+    def create_conversion_event(
+        self, project_config: ProjectConfig, event_key: str,
+        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags
+    ) -> Event:
         """ Create conversion Event to be sent to the logging endpoint.
 
     Args:

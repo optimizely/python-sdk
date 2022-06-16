@@ -10,20 +10,36 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Optional, Sequence
+
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from .helpers.types import ExperimentDict, TrafficAllocation, VariableDict, VariationDict
+
 
 class BaseEntity:
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.__dict__ == other.__dict__
 
 
 class Attribute(BaseEntity):
-    def __init__(self, id, key, **kwargs):
+    def __init__(self, id: str, key: str, **kwargs: Any):
         self.id = id
         self.key = key
 
 
 class Audience(BaseEntity):
-    def __init__(self, id, name, conditions, conditionStructure=None, conditionList=None, **kwargs):
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        conditions: str,
+        conditionStructure: Optional[list[str | list[str]]] = None,
+        conditionList: Optional[list[str | list[str]]] = None,
+        **kwargs: Any
+    ):
         self.id = id
         self.name = name
         self.conditions = conditions
@@ -32,7 +48,7 @@ class Audience(BaseEntity):
 
 
 class Event(BaseEntity):
-    def __init__(self, id, key, experimentIds, **kwargs):
+    def __init__(self, id: str, key: str, experimentIds: list[str], **kwargs: Any):
         self.id = id
         self.key = key
         self.experimentIds = experimentIds
@@ -41,18 +57,18 @@ class Event(BaseEntity):
 class Experiment(BaseEntity):
     def __init__(
         self,
-        id,
-        key,
-        status,
-        audienceIds,
-        variations,
-        forcedVariations,
-        trafficAllocation,
-        layerId,
-        audienceConditions=None,
-        groupId=None,
-        groupPolicy=None,
-        **kwargs
+        id: str,
+        key: str,
+        status: str,
+        audienceIds: list[str],
+        variations: list[VariationDict],
+        forcedVariations: dict[str, str],
+        trafficAllocation: list[TrafficAllocation],
+        layerId: str,
+        audienceConditions: Optional[Sequence[str | list[str]]] = None,
+        groupId: Optional[str] = None,
+        groupPolicy: Optional[str] = None,
+        **kwargs: Any
     ):
         self.id = id
         self.key = key
@@ -66,15 +82,15 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
 
-    def get_audience_conditions_or_ids(self):
+    def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """ Returns audienceConditions if present, otherwise audienceIds. """
         return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.key
 
     @staticmethod
-    def get_default():
+    def get_default() -> Experiment:
         """ returns an empty experiment object. """
         experiment = Experiment(
             id='',
@@ -92,17 +108,23 @@ class Experiment(BaseEntity):
 
 
 class FeatureFlag(BaseEntity):
-    def __init__(self, id, key, experimentIds, rolloutId, variables, groupId=None, **kwargs):
+    def __init__(
+        self, id: str, key: str, experimentIds: list[str], rolloutId: str,
+        variables: list[VariableDict], groupId: Optional[str] = None, **kwargs: Any
+    ):
         self.id = id
         self.key = key
         self.experimentIds = experimentIds
         self.rolloutId = rolloutId
-        self.variables = variables
+        self.variables: dict[str, Variable] = variables  # type: ignore[assignment]
         self.groupId = groupId
 
 
 class Group(BaseEntity):
-    def __init__(self, id, policy, experiments, trafficAllocation, **kwargs):
+    def __init__(
+        self, id: str, policy: str, experiments: list[Experiment],
+        trafficAllocation: list[TrafficAllocation], **kwargs: Any
+    ):
         self.id = id
         self.policy = policy
         self.experiments = experiments
@@ -111,7 +133,7 @@ class Group(BaseEntity):
 
 class Layer(BaseEntity):
     """Layer acts as rollout."""
-    def __init__(self, id, experiments, **kwargs):
+    def __init__(self, id: str, experiments: list[ExperimentDict], **kwargs: Any):
         self.id = id
         self.experiments = experiments
 
@@ -124,7 +146,7 @@ class Variable(BaseEntity):
         JSON = 'json'
         STRING = 'string'
 
-    def __init__(self, id, key, type, defaultValue, **kwargs):
+    def __init__(self, id: str, key: str, type: str, defaultValue: Any, **kwargs: Any):
         self.id = id
         self.key = key
         self.type = type
@@ -133,15 +155,17 @@ class Variable(BaseEntity):
 
 class Variation(BaseEntity):
     class VariableUsage(BaseEntity):
-        def __init__(self, id, value, **kwargs):
+        def __init__(self, id: str, value: str, **kwargs: Any):
             self.id = id
             self.value = value
 
-    def __init__(self, id, key, featureEnabled=False, variables=None, **kwargs):
+    def __init__(
+        self, id: str, key: str, featureEnabled: bool = False, variables: Optional[list[Variable]] = None, **kwargs: Any
+    ):
         self.id = id
         self.key = key
         self.featureEnabled = featureEnabled
         self.variables = variables or []
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.key

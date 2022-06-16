@@ -11,10 +11,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Optional, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.optimizely_user_context import OptimizelyUserContext
+
 
 class OptimizelyDecision:
-    def __init__(self, variation_key=None, enabled=None,
-                 variables=None, rule_key=None, flag_key=None, user_context=None, reasons=None):
+    def __init__(
+        self,
+        variation_key: Optional[str] = None,
+        enabled: Optional[bool] = None,
+        variables: Optional[dict[str, Any]] = None,
+        rule_key: Optional[str] = None,
+        flag_key: Optional[str] = None,
+        user_context: Optional[OptimizelyUserContext] = None,
+        reasons: Optional[list[str]] = None
+    ):
         self.variation_key = variation_key
         self.enabled = enabled or False
         self.variables = variables or {}
@@ -23,7 +38,7 @@ class OptimizelyDecision:
         self.user_context = user_context
         self.reasons = reasons or []
 
-    def as_json(self):
+    def as_json(self) -> dict[str, Any]:
         return {
             'variation_key': self.variation_key,
             'enabled': self.enabled,

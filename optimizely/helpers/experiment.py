@@ -10,11 +10,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.entities import Experiment
+
 
 ALLOWED_EXPERIMENT_STATUS = ['Running']
 
 
-def is_experiment_running(experiment):
+def is_experiment_running(experiment: Experiment) -> bool:
     """ Determine for given experiment if experiment is running.
 
   Args:

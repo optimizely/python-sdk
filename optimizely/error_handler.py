@@ -17,7 +17,7 @@ class BaseErrorHandler:
   Override with your own exception handler providing handle_error method. """
 
     @staticmethod
-    def handle_error(*args):
+    def handle_error(error: Exception) -> None:
         pass
 
 
@@ -29,5 +29,5 @@ class RaiseExceptionErrorHandler(BaseErrorHandler):
     """ Class providing handle_error method which raises provided exception. """
 
     @staticmethod
-    def handle_error(error):
+    def handle_error(error: Exception) -> None:
         raise error

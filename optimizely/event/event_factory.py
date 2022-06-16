@@ -11,12 +11,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional, Sequence, cast, List
+from sys import version_info
+from optimizely import entities
 from optimizely.helpers import enums
 from optimizely.helpers import event_tag_utils
 from optimizely.helpers import validator
 from . import log_event
 from . import payload
 from . import user_event
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.project_config import ProjectConfig
+    from optimizely.optimizely_user_context import UserAttributes
+    from optimizely.logger import Logger
 
 CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
 
@@ -28,12 +43,16 @@ class EventFactory:
   """
 
     EVENT_ENDPOINT = 'https://logx.optimizely.com/v1/events'
-    HTTP_VERB = 'POST'
+    HTTP_VERB: Final = 'POST'
     HTTP_HEADERS = {'Content-Type': 'application/json'}
     ACTIVATE_EVENT_KEY = 'campaign_activated'
 
     @classmethod
-    def create_log_event(cls, user_events, logger):
+    def create_log_event(
+        cls,
+        user_events: Sequence[Optional[user_event.UserEvent]] | Optional[user_event.UserEvent],
+        logger: Logger
+    ) -> Optional[log_event.LogEvent]:
         """ Create LogEvent instance.
 
     Args:
@@ -45,7 +64,7 @@ class EventFactory:
     """
 
         if not isinstance(user_events, list):
-            user_events = [user_events]
+            user_events = cast(List[Optional[user_event.UserEvent]], [user_events])
 
         visitors = []
 
@@ -76,7 +95,7 @@ class EventFactory:
         return log_event.LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
     @classmethod
-    def _create_visitor(cls, event, logger):
+    def _create_visitor(cls, event: Optional[user_event.UserEvent], logger: Logger) -> Optional[payload.Visitor]:
         """ Helper method to create Visitor instance for event_batch.
 
     Args:
@@ -130,7 +149,9 @@ class EventFactory:
             return None
 
     @staticmethod
-    def build_attribute_list(attributes, project_config):
+    def build_attribute_list(
+        attributes: Optional[UserAttributes], project_config: ProjectConfig
+    ) -> list[payload.VisitorAttribute]:
         """ Create Vistor Attribute List.
 
     Args:
@@ -141,7 +162,7 @@ class EventFactory:
       List consisting of valid attributes for the user. Empty otherwise.
     """
 
-        attributes_list = []
+        attributes_list: list[payload.VisitorAttribute] = []
 
         if project_config is None:
             return attributes_list
