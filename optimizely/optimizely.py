@@ -283,6 +283,9 @@ class Optimizely:
         variable_value = variable.defaultValue
 
         user_context = self.create_user_context(user_id, attributes)
+        # error is logged in create_user_context
+        if user_context is None:
+            return None
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
 
         if decision.variation:
@@ -307,8 +310,8 @@ class Optimizely:
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
             source_info = {
-                'experiment_key': decision.experiment.key,
-                'variation_key': decision.variation.key,
+                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'variation_key': decision.variation.key if decision.variation else None,
             }
 
         try:
@@ -369,6 +372,9 @@ class Optimizely:
         source_info = {}
 
         user_context = self.create_user_context(user_id, attributes)
+        # error is logged in create_user_context
+        if user_context is None:
+            return None
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
 
         if decision.variation:
@@ -389,8 +395,7 @@ class Optimizely:
             )
 
         all_variables = {}
-        for variable_key in feature_flag.variables:
-            variable = project_config.get_variable_for_feature(feature_key, variable_key)
+        for variable_key, variable in feature_flag.variables.items():
             variable_value = variable.defaultValue
             if feature_enabled:
                 variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
@@ -409,8 +414,8 @@ class Optimizely:
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
             source_info = {
-                'experiment_key': decision.experiment.key,
-                'variation_key': decision.variation.key,
+                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'variation_key': decision.variation.key if decision.variation else None,
             }
 
         self.notification_center.send_notifications(
@@ -466,6 +471,9 @@ class Optimizely:
 
         experiment = project_config.get_experiment_from_key(experiment_key)
         variation = project_config.get_variation_from_key(experiment_key, variation_key)
+        if not variation or not experiment:
+            self.logger.info(f'Not activating user "{user_id}".')
+            return None
 
         # Create and dispatch impression event
         self.logger.info(f'Activating user "{user_id}" in experiment "{experiment.key}".')
@@ -569,6 +577,9 @@ class Optimizely:
             return None
 
         user_context = self.create_user_context(user_id, attributes)
+        # error is logged in create_user_context
+        if not user_context:
+            return None
 
         variation, _ = self.decision_service.get_variation(project_config, experiment, user_context)
         if variation:
@@ -628,6 +639,10 @@ class Optimizely:
         feature_enabled = False
         source_info = {}
         user_context = self.create_user_context(user_id, attributes)
+        # error is logged in create_user_context
+        if not user_context:
+            return False
+
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
@@ -643,7 +658,7 @@ class Optimizely:
             )
 
         # Send event if Decision came from an experiment.
-        if is_source_experiment and decision.variation:
+        if is_source_experiment and decision.variation and decision.experiment:
             source_info = {
                 'experiment_key': decision.experiment.key,
                 'variation_key': decision.variation.key,
@@ -1112,8 +1127,7 @@ class Optimizely:
 
         # Generate all variables map if decide options doesn't include excludeVariables
         if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options:
-            for variable_key in feature_flag.variables:
-                variable = config.get_variable_for_feature(flag_key, variable_key)
+            for variable_key, variable in feature_flag.variables.items():
                 variable_value = variable.defaultValue
                 if feature_enabled:
                     variable_value = config.get_variable_value_for_variation(variable, decision.variation)

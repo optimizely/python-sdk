@@ -47,6 +47,8 @@ class EventDispatcher:
     Args:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
+        if not event:
+            raise TypeError("Event 'NoneType' cannot be dispatched.")
 
         try:
             if event.http_verb == enums.HTTPVerbs.GET:
