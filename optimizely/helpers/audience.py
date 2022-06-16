@@ -66,6 +66,8 @@ def does_user_meet_audience_conditions(
 
     def evaluate_custom_attr(audience_id: str, index: int) -> Optional[bool]:
         audience = config.get_audience(audience_id)
+        if not audience or audience.conditionList is None:
+            return None
         custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
             audience.conditionList, attributes, logger
         )

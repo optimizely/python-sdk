@@ -45,6 +45,6 @@ class OptimizelyDecision:
             'variables': self.variables,
             'rule_key': self.rule_key,
             'flag_key': self.flag_key,
-            'user_context': self.user_context.as_json(),
+            'user_context': self.user_context.as_json() if self.user_context else None,
             'reasons': self.reasons
         }

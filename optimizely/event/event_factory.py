@@ -77,7 +77,12 @@ class EventFactory:
         if len(visitors) == 0:
             return None
 
-        user_context = user_events[0].event_context
+        first_event = user_events[0]
+
+        if not first_event:
+            return None
+
+        user_context = first_event.event_context
         event_batch = payload.EventBatch(
             user_context.account_id,
             user_context.project_id,
@@ -110,7 +115,7 @@ class EventFactory:
         if isinstance(event, user_event.ImpressionEvent):
             experiment_layerId, experiment_id, variation_id, variation_key = '', '', '', ''
 
-            if event.variation:
+            if isinstance(event.variation, entities.Variation):
                 variation_id = event.variation.id
                 variation_key = event.variation.key
 
@@ -130,7 +135,7 @@ class EventFactory:
 
             return visitor
 
-        elif isinstance(event, user_event.ConversionEvent):
+        elif isinstance(event, user_event.ConversionEvent) and event.event:
             revenue = event_tag_utils.get_revenue_value(event.event_tags)
             value = event_tag_utils.get_numeric_value(event.event_tags, logger)
 

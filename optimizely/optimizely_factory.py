@@ -84,17 +84,15 @@ class OptimizelyFactory:
         logger = optimizely_logger.NoOpLogger()
         notification_center = NotificationCenter(logger)
 
-        config_manager_options = {
-            'sdk_key': sdk_key,
-            'update_interval': OptimizelyFactory.polling_interval,
-            'blocking_timeout': OptimizelyFactory.blocking_timeout,
-            'datafile': datafile,
-            'logger': logger,
-            'error_handler': error_handler,
-            'notification_center': notification_center,
-        }
-
-        config_manager = PollingConfigManager(**config_manager_options)
+        config_manager = PollingConfigManager(
+            sdk_key=sdk_key,
+            update_interval=OptimizelyFactory.polling_interval,
+            blocking_timeout=OptimizelyFactory.blocking_timeout,
+            datafile=datafile,
+            logger=logger,
+            error_handler=error_handler,
+            notification_center=notification_center
+        )
 
         event_processor = BatchEventProcessor(
             event_dispatcher=EventDispatcher(),
@@ -161,17 +159,16 @@ class OptimizelyFactory:
             notification_center=notification_center,
         )
 
-        config_manager_options = {
-            'sdk_key': sdk_key,
-            'update_interval': OptimizelyFactory.polling_interval,
-            'blocking_timeout': OptimizelyFactory.blocking_timeout,
-            'datafile': datafile,
-            'logger': logger,
-            'error_handler': error_handler,
-            'skip_json_validation': skip_json_validation,
-            'notification_center': notification_center,
-        }
-        config_manager = config_manager or PollingConfigManager(**config_manager_options)
+        config_manager = config_manager or PollingConfigManager(
+            sdk_key=sdk_key,
+            update_interval=OptimizelyFactory.polling_interval,
+            blocking_timeout=OptimizelyFactory.blocking_timeout,
+            datafile=datafile,
+            logger=logger,
+            error_handler=error_handler,
+            skip_json_validation=skip_json_validation,
+            notification_center=notification_center,
+        )
 
         return Optimizely(
             datafile, event_dispatcher, logger, error_handler, skip_json_validation, user_profile_service,

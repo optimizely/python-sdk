@@ -14,6 +14,7 @@
 from __future__ import annotations
 from typing import Optional, Any
 from sys import version_info
+from optimizely import event_builder
 
 
 if version_info < (3, 8):
@@ -22,7 +23,7 @@ else:
     from typing import Literal  # type: ignore
 
 
-class LogEvent:
+class LogEvent(event_builder.Event):
     """ Representation of an event which can be sent to Optimizely events API. """
 
     def __init__(

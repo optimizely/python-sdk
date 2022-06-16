@@ -641,7 +641,7 @@ class CustomAttributeConditionEvaluator:
             - if the given version is invalid in format
         """
         target_prefix = version
-        target_suffix = ""
+        target_suffix = []
         target_parts = []
 
         # check that version shouldn't have white space

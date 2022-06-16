@@ -220,9 +220,10 @@ class EventBuilder:
       Dict consisting of the decisions and events info for conversion event.
     """
         snapshot = {}
+        event = project_config.get_event(event_key)
 
         event_dict: dict[str, Any] = {
-            self.EventParams.EVENT_ID: project_config.get_event(event_key).id,
+            self.EventParams.EVENT_ID: event.id if event else None,
             self.EventParams.TIME: self._get_time(),
             self.EventParams.KEY: event_key,
             self.EventParams.UUID: str(uuid.uuid4()),
