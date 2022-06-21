@@ -97,5 +97,5 @@ jobs:
         pip install -r requirements/typing.txt
     - name: Type check with mypy
       run: |
-        mypy . --exclude "setup.py" --exclude "docs/"
-        mypy . --strict --show-error-codes --disable-error-code type-arg --disable-error-code no-any-return --exclude "tests/" --exclude "docs/" --exclude "setup.py" --warn-incomplete-stub --disallow-untyped-defs --no-warn-unused-ignores
+        mypy .
+        mypy . --exclude "tests/" --strict
