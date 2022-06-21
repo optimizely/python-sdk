@@ -94,7 +94,7 @@ class Bucketer:
     def bucket(
         self, project_config: project_config.ProjectConfig,
         experiment: entities.Experiment, user_id: str, bucketing_id: str
-    ) -> tuple[None | dict | entities.Variation, list[str]]:
+    ) -> tuple[None | dict | entities.Variation, list[str]]:  # type: ignore[type-arg]
         """ For a given experiment and bucketing ID determines variation to be shown to user.
 
         Args:

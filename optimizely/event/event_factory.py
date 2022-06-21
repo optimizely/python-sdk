@@ -143,7 +143,7 @@ class EventFactory:
 
     @staticmethod
     def build_attribute_list(
-        attributes: Optional[dict], project_config: project_config.ProjectConfig
+        attributes: Optional[dict[str, Any]], project_config: project_config.ProjectConfig
     ) -> list[payload.VisitorAttribute]:
         """ Create Vistor Attribute List.
 

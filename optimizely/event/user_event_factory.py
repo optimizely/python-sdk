@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Optional
+from typing import Any, Optional
 from . import event_factory
 from . import user_event
 from optimizely import project_config
@@ -27,7 +27,7 @@ class UserEventFactory:
     def create_impression_event(
         cls, project_config: project_config.ProjectConfig, activated_experiment: entities.Experiment,
         variation_id: Optional[str], flag_key: str, rule_key: str, rule_type: str,
-        enabled: bool, user_id: str, user_attributes: Optional[dict]
+        enabled: bool, user_id: str, user_attributes: Optional[dict[str, Any]]
     ) -> Optional[user_event.ImpressionEvent]:
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -50,7 +50,7 @@ class UserEventFactory:
         if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
             return None
 
-        variation: Optional[dict | entities.Variation] = None
+        variation: Optional[dict | entities.Variation] = None  # type: ignore[type-arg]
         experiment_id = None
         if activated_experiment:
             experiment_id = activated_experiment.id
@@ -81,8 +81,12 @@ class UserEventFactory:
 
     @classmethod
     def create_conversion_event(
-        cls, project_config: project_config.ProjectConfig, event_key: str,
-        user_id: str, user_attributes: Optional[dict], event_tags: Optional[dict]
+        cls,
+        project_config: project_config.ProjectConfig,
+        event_key: str,
+        user_id: str,
+        user_attributes: Optional[dict[str, Any]],
+        event_tags: Optional[dict[str, Any]]
     ) -> Optional[user_event.ConversionEvent]:
         """ Create conversion Event to be sent to the logging endpoint.
 

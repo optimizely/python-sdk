@@ -12,17 +12,19 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Any
 from optimizely import optimizely_user_context
 
 
 class OptimizelyDecision:
     def __init__(
-        self, variation_key: Optional[str] = None, enabled: Optional[bool] = None,
-        variables: Optional[dict] = None, rule_key: Optional[str] = None,
+        self, variation_key: Optional[str] = None,
+        enabled: Optional[bool] = None,
+        variables: Optional[dict[str, Any]] = None,
+        rule_key: Optional[str] = None,
         flag_key: Optional[str] = None,
         user_context: Optional[optimizely_user_context.OptimizelyUserContext] = None,
-        reasons: Optional[list] = None
+        reasons: Optional[list[str]] = None
     ):
         self.variation_key = variation_key
         self.enabled = enabled or False
@@ -32,7 +34,7 @@ class OptimizelyDecision:
         self.user_context = user_context
         self.reasons = reasons or []
 
-    def as_json(self) -> dict:
+    def as_json(self) -> dict[str, Any]:
         return {
             'variation_key': self.variation_key,
             'enabled': self.enabled,

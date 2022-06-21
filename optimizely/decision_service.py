@@ -48,7 +48,7 @@ class DecisionService:
         # whitelisting forcedVariations data structure).
         self.forced_variation_map: dict[str, dict[str, str]] = {}
 
-    def _get_bucketing_id(self, user_id: str, attributes: Optional[dict]) -> tuple[str, list[str]]:
+    def _get_bucketing_id(self, user_id: str, attributes: Optional[dict[str, Any]]) -> tuple[str, list[str]]:
         """ Helper method to determine bucketing ID for the user.
 
         Args:
@@ -280,7 +280,7 @@ class DecisionService:
             return None, decide_reasons
 
         # Check if the user is forced into a variation
-        variation: Optional[entities.Variation | dict]
+        variation: Optional[entities.Variation | dict]  # type: ignore[type-arg]
         variation, reasons_received = self.get_forced_variation(project_config, experiment.key, user_id)
         decide_reasons += reasons_received
         if variation:

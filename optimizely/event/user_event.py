@@ -47,9 +47,17 @@ class ImpressionEvent(UserEvent):
     """ Class representing Impression Event. """
 
     def __init__(
-        self, event_context: EventContext, user_id: str, experiment: entities.Experiment,
-        visitor_attributes: list[payload.VisitorAttribute], variation: Optional[dict | entities.Variation],
-        flag_key: str, rule_key: str, rule_type: str, enabled: bool, bot_filtering: Optional[bool] = None
+        self,
+        event_context: EventContext,
+        user_id: str,
+        experiment: entities.Experiment,
+        visitor_attributes: list[payload.VisitorAttribute],
+        variation: Optional[dict | entities.Variation],  # type: ignore[type-arg]
+        flag_key: str,
+        rule_key: str,
+        rule_type: str,
+        enabled: bool,
+        bot_filtering: Optional[bool] = None
     ):
         super().__init__(event_context, user_id, visitor_attributes, bot_filtering)
         self.experiment = experiment

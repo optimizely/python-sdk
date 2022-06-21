@@ -20,7 +20,7 @@ from .condition import ConditionOperatorTypes
 LeafEvaluator = Callable[[Any], Optional[bool]]
 
 
-def and_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bool]:
+def and_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bool]:  # type: ignore[type-arg]
     """ Evaluates a list of conditions as if the evaluator had been applied
   to each entry and the results AND-ed together.
 
@@ -46,7 +46,7 @@ def and_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[b
     return None if saw_null_result else True
 
 
-def or_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bool]:
+def or_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bool]:  # type: ignore[type-arg]
     """ Evaluates a list of conditions as if the evaluator had been applied
   to each entry and the results OR-ed together.
 
@@ -72,7 +72,7 @@ def or_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bo
     return None if saw_null_result else False
 
 
-def not_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bool]:
+def not_evaluator(conditions: list, leaf_evaluator: LeafEvaluator) -> Optional[bool]:  # type: ignore[type-arg]
     """ Evaluates a list of conditions as if the evaluator had been applied
   to a single entry and NOT was applied to the result.
 
@@ -100,7 +100,7 @@ EVALUATORS_BY_OPERATOR_TYPE = {
 }
 
 
-def evaluate(conditions: Optional[list], leaf_evaluator: LeafEvaluator) -> Optional[bool]:
+def evaluate(conditions: Optional[list], leaf_evaluator: LeafEvaluator) -> Optional[bool]:  # type: ignore[type-arg]
     """ Top level method to evaluate conditions.
 
   Args:

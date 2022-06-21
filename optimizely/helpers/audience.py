@@ -22,10 +22,10 @@ from . import condition_tree_evaluator
 
 def does_user_meet_audience_conditions(
     config: project_config.ProjectConfig,
-    audience_conditions: Optional[list],
+    audience_conditions: Optional[list[str | list[str]]],
     audience_logs: Any,
     logging_key: str,
-    attributes: Optional[dict],
+    attributes: Optional[dict[str, Any]],
     logger: Any
 ) -> tuple[bool, list[str]]:
     """ Determine for given experiment if user satisfies the audiences for the experiment.

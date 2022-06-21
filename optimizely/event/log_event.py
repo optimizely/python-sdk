@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from __future__ import annotations
 from typing import Optional
 from optimizely import event_builder
 
@@ -19,7 +19,13 @@ from optimizely import event_builder
 class LogEvent(event_builder.Event):
     """ Representation of an event which can be sent to Optimizely events API. """
 
-    def __init__(self, url: str, params: dict, http_verb: Optional[str] = None, headers: Optional[dict] = None):
+    def __init__(
+        self,
+        url: str,
+        params: dict[str, str],
+        http_verb: Optional[str] = None,
+        headers: Optional[dict[str, str]] = None
+    ):
         self.url = url
         self.params = params
         self.http_verb = http_verb or 'POST'

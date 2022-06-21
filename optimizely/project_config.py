@@ -12,7 +12,7 @@
 # limitations under the License.
 from __future__ import annotations
 import json
-from typing import Optional, Type, TypeVar, cast, Any, Iterable
+from typing import Optional, Type, TypeVar, cast, Any, Iterable, List
 
 from . import entities
 from . import exceptions
@@ -57,14 +57,14 @@ class ProjectConfig:
         self.revision: str = config.get('revision')
         self.sdk_key: Optional[str] = config.get('sdkKey', None)
         self.environment_key: Optional[str] = config.get('environmentKey', None)
-        self.groups: list = config.get('groups', [])
-        self.experiments: list[dict] = config.get('experiments', [])
-        self.events: list[dict] = config.get('events', [])
-        self.attributes: list[dict] = config.get('attributes', [])
-        self.audiences: list[dict] = config.get('audiences', [])
-        self.typed_audiences: list[dict] = config.get('typedAudiences', [])
-        self.feature_flags: list[dict] = config.get('featureFlags', [])
-        self.rollouts: list[dict] = config.get('rollouts', [])
+        self.groups: list[entities.GroupDict] = config.get('groups', [])
+        self.experiments: list[entities.ExperimentDict] = config.get('experiments', [])
+        self.events: list[entities.EventDict] = config.get('events', [])
+        self.attributes: list[entities.AttributeDict] = config.get('attributes', [])
+        self.audiences: list[entities.AudienceDict] = config.get('audiences', [])
+        self.typed_audiences: list[entities.AudienceDict] = config.get('typedAudiences', [])
+        self.feature_flags: list[entities.FeatureFlagDict] = config.get('featureFlags', [])
+        self.rollouts: list[entities.RolloutDict] = config.get('rollouts', [])
         self.anonymize_ip: bool = config.get('anonymizeIP', False)
         self.send_flag_decisions: bool = config.get('sendFlagDecisions', False)
         self.bot_filtering: Optional[bool] = config.get('botFiltering', None)
@@ -137,8 +137,7 @@ class ProjectConfig:
             # As we cannot create json variables in datafile directly, here we convert
             # the variables of string type and json subType to json type
             # This is needed to fully support json variables
-            variable: dict
-            for variable in cast(list, self.feature_key_map[feature.key].variables):
+            for variable in cast(List[entities.VariableDict], self.feature_key_map[feature.key].variables):
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON
@@ -165,7 +164,9 @@ class ProjectConfig:
             self.flag_variations_map[feature.key] = variations
 
     @staticmethod
-    def _generate_key_map(entity_list: Iterable, key: str, entity_class: Type[EntityClass]) -> dict[str, EntityClass]:
+    def _generate_key_map(
+        entity_list: Iterable[Any], key: str, entity_class: Type[EntityClass]
+    ) -> dict[str, EntityClass]:
         """ Helper method to generate map from key to entity object for given list of dicts.
 
         Args:
@@ -612,7 +613,7 @@ class ProjectConfig:
 
     def get_variation_from_id_by_experiment_id(
         self, experiment_id: str, variation_id: str
-    ) -> dict | entities.Variation:
+    ) -> dict | entities.Variation:  # type: ignore[type-arg]
         """ Gets variation from variation id and specific experiment id
 
             Returns:
@@ -631,7 +632,7 @@ class ProjectConfig:
 
     def get_variation_from_key_by_experiment_id(
         self, experiment_id: str, variation_key: str
-    ) -> dict | entities.Variation:
+    ) -> dict | entities.Variation:  # type: ignore[type-arg]
         """ Gets variation from variation key and specific experiment id
 
             Returns:

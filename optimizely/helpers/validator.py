@@ -11,9 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations
 import json
-from typing import Any, Optional
 import jsonschema
 import math
 import numbers
@@ -23,7 +21,7 @@ from optimizely.user_profile import UserProfile
 from . import constants
 
 
-def is_datafile_valid(datafile: Optional[str | bytes]) -> bool:
+def is_datafile_valid(datafile):
     """ Given a datafile determine if it is valid or not.
 
   Args:
@@ -32,8 +30,6 @@ def is_datafile_valid(datafile: Optional[str | bytes]) -> bool:
   Returns:
     Boolean depending upon whether datafile is valid or not.
   """
-    if datafile is None:
-        return False
 
     try:
         datafile_json = json.loads(datafile)
@@ -48,7 +44,7 @@ def is_datafile_valid(datafile: Optional[str | bytes]) -> bool:
     return True
 
 
-def _has_method(obj: object, method: str) -> bool:
+def _has_method(obj, method):
     """ Given an object determine if it supports the method.
 
   Args:
@@ -62,7 +58,7 @@ def _has_method(obj: object, method: str) -> bool:
     return getattr(obj, method, None) is not None
 
 
-def is_config_manager_valid(config_manager: Any) -> bool:
+def is_config_manager_valid(config_manager):
     """ Given a config_manager determine if it is valid or not i.e. provides a get_config method.
 
   Args:
@@ -75,7 +71,7 @@ def is_config_manager_valid(config_manager: Any) -> bool:
     return _has_method(config_manager, 'get_config')
 
 
-def is_event_processor_valid(event_processor: Any) -> bool:
+def is_event_processor_valid(event_processor):
     """ Given an event_processor, determine if it is valid or not i.e. provides a process method.
 
   Args:
@@ -88,7 +84,7 @@ def is_event_processor_valid(event_processor: Any) -> bool:
     return _has_method(event_processor, 'process')
 
 
-def is_error_handler_valid(error_handler: Any) -> bool:
+def is_error_handler_valid(error_handler):
     """ Given a error_handler determine if it is valid or not i.e. provides a handle_error method.
 
   Args:
@@ -101,7 +97,7 @@ def is_error_handler_valid(error_handler: Any) -> bool:
     return _has_method(error_handler, 'handle_error')
 
 
-def is_event_dispatcher_valid(event_dispatcher: Any) -> bool:
+def is_event_dispatcher_valid(event_dispatcher):
     """ Given a event_dispatcher determine if it is valid or not i.e. provides a dispatch_event method.
 
   Args:
@@ -114,7 +110,7 @@ def is_event_dispatcher_valid(event_dispatcher: Any) -> bool:
     return _has_method(event_dispatcher, 'dispatch_event')
 
 
-def is_logger_valid(logger: Any) -> bool:
+def is_logger_valid(logger):
     """ Given a logger determine if it is valid or not i.e. provides a log method.
 
   Args:
@@ -127,7 +123,7 @@ def is_logger_valid(logger: Any) -> bool:
     return _has_method(logger, 'log')
 
 
-def is_notification_center_valid(notification_center: Any) -> bool:
+def is_notification_center_valid(notification_center):
     """ Given notification_center determine if it is valid or not.
 
   Args:
@@ -140,7 +136,7 @@ def is_notification_center_valid(notification_center: Any) -> bool:
     return isinstance(notification_center, NotificationCenter)
 
 
-def are_attributes_valid(attributes: dict) -> bool:
+def are_attributes_valid(attributes):
     """ Determine if attributes provided are dict or not.
 
   Args:
@@ -153,7 +149,7 @@ def are_attributes_valid(attributes: dict) -> bool:
     return type(attributes) is dict
 
 
-def are_event_tags_valid(event_tags: Any) -> bool:
+def are_event_tags_valid(event_tags):
     """ Determine if event tags provided are dict or not.
 
   Args:
@@ -166,7 +162,7 @@ def are_event_tags_valid(event_tags: Any) -> bool:
     return type(event_tags) is dict
 
 
-def is_user_profile_valid(user_profile: Any) -> bool:
+def is_user_profile_valid(user_profile):
     """ Determine if provided user profile is valid or not.
 
   Args:
@@ -199,7 +195,7 @@ def is_user_profile_valid(user_profile: Any) -> bool:
     return True
 
 
-def is_non_empty_string(input_id_key: str) -> bool:
+def is_non_empty_string(input_id_key):
     """ Determine if provided input_id_key is a non-empty string or not.
 
   Args:
@@ -214,7 +210,7 @@ def is_non_empty_string(input_id_key: str) -> bool:
     return False
 
 
-def is_attribute_valid(attribute_key: Any, attribute_value: Any) -> bool:
+def is_attribute_valid(attribute_key, attribute_value):
     """ Determine if given attribute is valid.
 
   Args:
@@ -239,7 +235,7 @@ def is_attribute_valid(attribute_key: Any, attribute_value: Any) -> bool:
     return False
 
 
-def is_finite_number(value: Any) -> bool:
+def is_finite_number(value):
     """ Validates if the given value is a number, enforces
    absolute limit of 2^53 and restricts NAN, INF, -INF.
 
@@ -268,7 +264,7 @@ def is_finite_number(value: Any) -> bool:
     return True
 
 
-def are_values_same_type(first_val: Any, second_val: Any) -> bool:
+def are_values_same_type(first_val, second_val):
     """ Method to verify that both values belong to same type. Float and integer are
   considered as same type.
 

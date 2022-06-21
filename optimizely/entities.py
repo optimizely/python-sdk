@@ -39,8 +39,13 @@ class Attribute(BaseEntity):
 
 class Audience(BaseEntity):
     def __init__(
-        self, id: str, name: str, conditions: str, conditionStructure: Optional[list] = None,
-        conditionList: Optional[list[str | list]] = None, **kwargs: Any
+        self,
+        id: str,
+        name: str,
+        conditions: str,
+        conditionStructure: Optional[list[str | list]] = None,  # type: ignore[type-arg]
+        conditionList: Optional[list[str | list[str]]] = None,
+        **kwargs: Any
     ):
         self.id = id
         self.name = name
@@ -67,7 +72,7 @@ class Experiment(BaseEntity):
         forcedVariations: dict[str, str],
         trafficAllocation: list[TrafficAllocation],
         layerId: str,
-        audienceConditions: Optional[list[str]] = None,
+        audienceConditions: Optional[list[str | list[str]]] = None,
         groupId: Optional[str] = None,
         groupPolicy: Optional[str] = None,
         **kwargs: Any
@@ -84,9 +89,9 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
 
-    def get_audience_conditions_or_ids(self) -> Optional[list[str]]:
+    def get_audience_conditions_or_ids(self) -> list[str | list[str]]:
         """ Returns audienceConditions if present, otherwise audienceIds. """
-        return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
+        return self.audienceConditions if self.audienceConditions is not None else self.audienceIds  # type: ignore
 
     def __str__(self) -> str:
         return self.key
@@ -112,7 +117,7 @@ class Experiment(BaseEntity):
 class FeatureFlag(BaseEntity):
     def __init__(
         self, id: str, key: str, experimentIds: list[str], rolloutId: str,
-        variables: list[dict], groupId: Optional[str] = None, **kwargs: Any
+        variables: list[dict[str, str]], groupId: Optional[str] = None, **kwargs: Any
     ):
         self.id = id
         self.key = key
@@ -135,7 +140,7 @@ class Group(BaseEntity):
 
 class Layer(BaseEntity):
     """Layer acts as rollout."""
-    def __init__(self, id: str, experiments: list[dict], **kwargs: Any):
+    def __init__(self, id: str, experiments: list[dict[str, Any]], **kwargs: Any):
         self.id = id
         self.experiments = experiments
 
@@ -171,3 +176,68 @@ class Variation(BaseEntity):
 
     def __str__(self) -> str:
         return self.key
+
+
+class EventDict(TypedDict):
+    id: str
+    key: str
+    experimentIds: list[str]
+
+
+class AttributeDict(TypedDict):
+    id: str
+    key: str
+
+
+class ExperimentDict(TypedDict):
+    id: str
+    key: str
+    status: str
+    forcedVariations: dict[str, str]
+    variations: list[VariationDict]
+    layerId: str
+    audienceIds: list[str]
+    audienceConditions: list[str | list[str]]
+    trafficAllocation: list[TrafficAllocation]
+
+
+class VariationDict(TypedDict):
+    id: str
+    key: str
+    variables: list[VariableDict]
+    featureEnabled: Optional[bool]
+
+
+class VariableDict(TypedDict):
+    id: str
+    value: str
+    type: str
+    key: str
+    defaultValue: str
+    subType: str
+
+
+class RolloutDict(TypedDict):
+    id: str
+    experiments: list[ExperimentDict]
+
+
+class FeatureFlagDict(TypedDict):
+    id: str
+    key: str
+    rolloutId: str
+    variables: list[VariableDict]
+    experimentIds: list[str]
+
+
+class GroupDict(TypedDict):
+    id: str
+    policy: str
+    experiments: list[ExperimentDict]
+    trafficAllocation: list[TrafficAllocation]
+
+
+class AudienceDict(TypedDict):
+    id: str
+    name: str
+    conditions: list[Any] | str

@@ -28,12 +28,12 @@ class NotificationCenter:
 
     def __init__(self, logger: Any = None):
         self.listener_id = 1
-        self.notification_listeners: dict[str, list] = {}
+        self.notification_listeners: dict[str, list[tuple[int, Callable[..., None]]]] = {}
         for notification_type in NOTIFICATION_TYPES:
             self.notification_listeners[notification_type] = []
         self.logger = optimizely_logger.adapt_logger(logger or optimizely_logger.NoOpLogger())
 
-    def add_notification_listener(self, notification_type: str, notification_callback: Callable) -> int:
+    def add_notification_listener(self, notification_type: str, notification_callback: Callable[..., None]) -> int:
         """ Add a notification callback to the notification center for a given notification type.
 
     Args:

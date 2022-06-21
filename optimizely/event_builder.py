@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 import time
-from typing import Any, Optional, Dict
+from typing import Any, Optional
 import uuid
 
 from . import version
@@ -27,7 +27,13 @@ from .helpers import validator
 class Event:
     """ Representation of an event which can be sent to the Optimizely logging endpoint. """
 
-    def __init__(self, url: str, params: dict, http_verb: Optional[str] = None, headers: Optional[dict] = None):
+    def __init__(
+        self,
+        url: str,
+        params: dict[str, Any],
+        http_verb: Optional[str] = None,
+        headers: Optional[dict[str, str]] = None
+    ):
         self.url = url
         self.params = params
         self.http_verb = http_verb or 'GET'
@@ -66,7 +72,9 @@ class EventBuilder:
         ANONYMIZE_IP = 'anonymize_ip'
         REVISION = 'revision'
 
-    def _get_attributes_data(self, project_config: project_config.ProjectConfig, attributes: dict) -> list:
+    def _get_attributes_data(
+        self, project_config: project_config.ProjectConfig, attributes: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """ Get attribute(s) information.
 
     Args:
@@ -119,8 +127,8 @@ class EventBuilder:
         return int(round(time.time() * 1000))
 
     def _get_common_params(
-        self, project_config: project_config.ProjectConfig, user_id: str, attributes: dict
-    ) -> Dict[str, Any]:
+        self, project_config: project_config.ProjectConfig, user_id: str, attributes: dict[str, Any]
+    ) -> dict[str, Any]:
         """ Get params which are used same in both conversion and impression events.
 
     Args:
@@ -131,7 +139,7 @@ class EventBuilder:
     Returns:
      Dict consisting of parameters common to both impression and conversion events.
     """
-        common_params: Dict[str, Any] = {
+        common_params: dict[str, Any] = {
             self.EventParams.PROJECT_ID: project_config.get_project_id(),
             self.EventParams.ACCOUNT_ID: project_config.get_account_id(),
         }
@@ -157,7 +165,7 @@ class EventBuilder:
 
     def _get_required_params_for_impression(
         self, experiment: entities.Experiment, variation_id: str
-    ) -> dict[str, list[dict]]:
+    ) -> dict[str, list[dict[str, Any]]]:
         """ Get parameters that are required for the impression event to register.
 
     Args:
@@ -167,7 +175,7 @@ class EventBuilder:
     Returns:
       Dict consisting of decisions and events info for impression event.
     """
-        snapshot: dict[str, list[dict]] = {}
+        snapshot: dict[str, list[dict[str, Any]]] = {}
 
         snapshot[self.EventParams.DECISIONS] = [
             {
@@ -189,8 +197,8 @@ class EventBuilder:
         return snapshot
 
     def _get_required_params_for_conversion(
-        self, project_config: project_config.ProjectConfig, event_key: str, event_tags: dict
-    ) -> dict:
+        self, project_config: project_config.ProjectConfig, event_key: str, event_tags: dict[str, Any]
+    ) -> dict[str, list[dict[str, Any]]]:
         """ Get parameters that are required for the conversion event to register.
 
     Args:
@@ -228,7 +236,7 @@ class EventBuilder:
 
     def create_impression_event(
         self, project_config: project_config.ProjectConfig, experiment: entities.Experiment,
-        variation_id: str, user_id: str, attributes: dict
+        variation_id: str, user_id: str, attributes: dict[str, Any]
     ) -> Event:
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -252,7 +260,7 @@ class EventBuilder:
 
     def create_conversion_event(
         self, project_config: project_config.ProjectConfig, event_key: str,
-        user_id: str, attributes: dict, event_tags: dict
+        user_id: str, attributes: dict[str, Any], event_tags: dict[str, Any]
     ) -> Event:
         """ Create conversion Event to be sent to the logging endpoint.
 

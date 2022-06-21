@@ -18,7 +18,6 @@ import threading
 from typing import Any, Optional, TYPE_CHECKING
 
 from optimizely.decision import optimizely_decision
-from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 
 if TYPE_CHECKING:
     # prevent circular dependency
@@ -32,7 +31,7 @@ class OptimizelyUserContext:
 
     def __init__(
         self, optimizely_client: Optimizely, logger: Any,
-        user_id: str, user_attributes: Optional[dict] = None
+        user_id: str, user_attributes: Optional[dict[str, Any]] = None
     ):
         """ Create an instance of the Optimizely User Context.
 
@@ -93,7 +92,7 @@ class OptimizelyUserContext:
 
         return user_context
 
-    def get_user_attributes(self) -> dict:
+    def get_user_attributes(self) -> dict[str, Any]:
         with self.lock:
             return self._user_attributes.copy()
 
@@ -111,7 +110,7 @@ class OptimizelyUserContext:
             self._user_attributes[attribute_key] = attribute_value
 
     def decide(
-        self, key: str, options: Optional[list[OptimizelyDecideOption]] = None
+        self, key: str, options: Optional[list[str]] = None
     ) -> optimizely_decision.OptimizelyDecision:
         """
         Call decide on contained Optimizely object
@@ -128,7 +127,7 @@ class OptimizelyUserContext:
         return self.client._decide(self._clone(), key, options)
 
     def decide_for_keys(
-        self, keys: list[str], options: Optional[list] = None
+        self, keys: list[str], options: Optional[list[str]] = None
     ) -> dict[str, optimizely_decision.OptimizelyDecision]:
         """
         Call decide_for_keys on contained optimizely object
@@ -144,7 +143,7 @@ class OptimizelyUserContext:
 
         return self.client._decide_for_keys(self._clone(), keys, options)
 
-    def decide_all(self, options: Optional[list] = None) -> dict[str, optimizely_decision.OptimizelyDecision]:
+    def decide_all(self, options: Optional[list[str]] = None) -> dict[str, optimizely_decision.OptimizelyDecision]:
         """
         Call decide_all on contained optimizely instance
         Args:
@@ -158,10 +157,10 @@ class OptimizelyUserContext:
 
         return self.client._decide_all(self._clone(), options)
 
-    def track_event(self, event_key: str, event_tags: Optional[dict] = None) -> None:
+    def track_event(self, event_key: str, event_tags: Optional[dict[str, Any]] = None) -> None:
         return self.client.track(event_key, self.user_id, self.get_user_attributes(), event_tags)
 
-    def as_json(self) -> dict:
+    def as_json(self) -> dict[str, Any]:
         return {
             'user_id': self.user_id,
             'attributes': self.get_user_attributes(),

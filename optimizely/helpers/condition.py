@@ -56,7 +56,7 @@ class CustomAttributeConditionEvaluator:
 
     CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
 
-    def __init__(self, condition_data: list, attributes: Optional[dict[str, str]], logger: Any):
+    def __init__(self, condition_data: list[str | list[str]], attributes: Optional[dict[str, str]], logger: Any):
         self.condition_data = condition_data
         self.attributes = attributes or {}
         self.logger = logger
@@ -294,7 +294,7 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value > condition_value
+        return user_value > condition_value  # type: ignore
 
     def greater_than_or_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given greater than or equal to match condition for the user attributes.
@@ -328,7 +328,7 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value >= condition_value
+        return user_value >= condition_value  # type: ignore
 
     def less_than_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given less than match condition for the user attributes.
@@ -362,7 +362,7 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value < condition_value
+        return user_value < condition_value  # type: ignore
 
     def less_than_or_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given less than or equal to match condition for the user attributes.
@@ -396,7 +396,7 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value <= condition_value
+        return user_value <= condition_value  # type: ignore
 
     def substring_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given substring match condition for the given user attributes.
@@ -718,12 +718,12 @@ class ConditionDecoder:
     """ Class which provides an object_hook method for decoding dict
   objects into a list when given a condition_decoder. """
 
-    def __init__(self, condition_decoder: Callable[[dict], list[Optional[str]]]):
-        self.condition_list: list[Optional[str] | list] = []
+    def __init__(self, condition_decoder: Callable[[dict[str, str]], list[Optional[str]]]):
+        self.condition_list: list[Optional[str] | list[str]] = []
         self.index = -1
         self.decoder = condition_decoder
 
-    def object_hook(self, object_dict: dict) -> int:
+    def object_hook(self, object_dict: dict[str, str]) -> int:
         """ Hook which when passed into a json.JSONDecoder will replace each dict
     in a json string with its index and convert the dict to an object as defined
     by the passed in condition_decoder. The newly created condition object is
@@ -736,12 +736,12 @@ class ConditionDecoder:
       An index which will be used as the placeholder in the condition_structure
     """
         instance = self.decoder(object_dict)
-        self.condition_list.append(instance)
+        self.condition_list.append(instance)  # type: ignore[arg-type]
         self.index += 1
         return self.index
 
 
-def _audience_condition_deserializer(obj_dict: dict) -> list[Optional[str]]:
+def _audience_condition_deserializer(obj_dict: dict[str, str]) -> list[Optional[str]]:
     """ Deserializer defining how dict objects need to be decoded for audience conditions.
 
   Args:
@@ -758,7 +758,7 @@ def _audience_condition_deserializer(obj_dict: dict) -> list[Optional[str]]:
     ]
 
 
-def loads(conditions_string: str) -> tuple[list[str | list], list[Optional[list | str]]]:
+def loads(conditions_string: str) -> tuple[list[str | list[str]], list[Optional[list[str] | str]]]:
     """ Deserializes the conditions property into its corresponding
   components: the condition_structure and the condition_list.
 

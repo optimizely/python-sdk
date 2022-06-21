@@ -27,7 +27,12 @@ class UserProfile:
     EXPERIMENT_BUCKET_MAP_KEY = 'experiment_bucket_map'
     VARIATION_ID_KEY = 'variation_id'
 
-    def __init__(self, user_id: str, experiment_bucket_map: Optional[dict] = None, **kwargs: Any):
+    def __init__(
+        self,
+        user_id: str,
+        experiment_bucket_map: Optional[dict[str, dict[str, Optional[str]]]] = None,
+        **kwargs: Any
+    ):
         self.user_id = user_id
         self.experiment_bucket_map = experiment_bucket_map or {}
 
@@ -44,7 +49,9 @@ class UserProfile:
       Variation ID corresponding to the experiment. None if no decision available.
     """
 
-        return self.experiment_bucket_map.get(experiment_id, {self.VARIATION_ID_KEY: None}).get(self.VARIATION_ID_KEY)
+        return self.experiment_bucket_map.get(
+            experiment_id, {self.VARIATION_ID_KEY: None}
+        ).get(self.VARIATION_ID_KEY)
 
     def save_variation_for_experiment(self, experiment_id: str, variation_id: str) -> None:
         """ Helper method to save new experiment/variation as part of the user's profile.
@@ -72,7 +79,7 @@ class UserProfileService:
     """
         return UserProfile(user_id).__dict__
 
-    def save(self, user_profile: dict) -> None:
+    def save(self, user_profile: dict[str, Any]) -> None:
         """ Save the user profile dict sent to this method.
 
     Args:

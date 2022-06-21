@@ -29,7 +29,7 @@ class EventBatch:
         client_version: str,
         anonymize_ip: bool,
         enrich_decisions: bool = True,
-        visitors: Optional[list] = None,
+        visitors: Optional[list[Visitor]] = None,
     ):
         self.account_id = account_id
         self.project_id = project_id
@@ -44,7 +44,7 @@ class EventBatch:
         batch_obj = self.get_event_params()
         return batch_obj == other
 
-    def _dict_clean(self, obj: list[tuple[Any, Any]]) -> dict:
+    def _dict_clean(self, obj: list[tuple[Any, Any]]) -> dict[str, Any]:
         """ Helper method to remove keys from dictionary with None values. """
 
         result = {}
@@ -55,10 +55,13 @@ class EventBatch:
                 result[k] = v
         return result
 
-    def get_event_params(self) -> dict:
+    def get_event_params(self) -> dict[str, Any]:
         """ Method to return valid params for LogEvent payload. """
 
-        return json.loads(json.dumps(self.__dict__, default=lambda o: o.__dict__), object_pairs_hook=self._dict_clean,)
+        return json.loads(  # type: ignore[no-any-return]
+            json.dumps(self.__dict__, default=lambda o: o.__dict__),
+            object_pairs_hook=self._dict_clean,
+        )
 
 
 class Decision:
