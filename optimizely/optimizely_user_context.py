@@ -15,13 +15,10 @@
 from __future__ import annotations
 import copy
 import threading
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional
 
 from optimizely.decision import optimizely_decision
-
-if TYPE_CHECKING:
-    # prevent circular dependency
-    from optimizely.optimizely import Optimizely
+from . import optimizely
 
 
 class OptimizelyUserContext:
@@ -30,7 +27,7 @@ class OptimizelyUserContext:
     """
 
     def __init__(
-        self, optimizely_client: Optimizely, logger: Any,
+        self, optimizely_client: optimizely.Optimizely, logger: Any,
         user_id: str, user_attributes: Optional[dict[str, Any]] = None
     ):
         """ Create an instance of the Optimizely User Context.
