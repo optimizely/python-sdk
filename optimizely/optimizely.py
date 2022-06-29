@@ -110,6 +110,7 @@ class Optimizely:
             logger=self.logger,
             notification_center=self.notification_center,
             **event_processor_defaults  # type: ignore[arg-type]
+
         )
         self.default_decide_options: list[str]
 

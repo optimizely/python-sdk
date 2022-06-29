@@ -307,7 +307,7 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_decision, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
@@ -446,7 +446,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
                 return_value=variation,
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, mock.patch(
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast:
             self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
@@ -487,7 +487,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
                 return_value=variation,
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, mock.patch(
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast:
             self.assertEqual(
@@ -559,7 +559,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111128'), []),
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, mock.patch(
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_event_tracked:
             self.optimizely.track('test_event', 'test_user')
@@ -581,7 +581,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111128'), []),
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, mock.patch(
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_event_tracked:
             self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
@@ -608,7 +608,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
                 return_value=(self.project_config.get_variation_from_id('test_experiment', '111128'), []),
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process, mock.patch(
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_event_tracked:
             self.optimizely.track(
@@ -680,7 +680,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 
@@ -701,7 +701,7 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_get_variation, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             self.assertEqual(
                 'variation', self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}),
@@ -772,7 +772,7 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_bucket, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             attributes = {
                 'test_attribute': 'test_value_1',
@@ -849,7 +849,7 @@ class OptimizelyTest(base.BaseTest):
     variation when attributes are provided and typed audience conditions are met. """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be included via exact match string audience with id '3468206642'
             self.assertEqual(
                 'A', opt_obj.activate('typed_audience_experiment', 'test_user', {'house': 'Gryffindor'}),
@@ -865,7 +865,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_process.reset()
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be included via exact match number audience with id '3468206646'
             self.assertEqual(
                 'A', opt_obj.activate('typed_audience_experiment', 'test_user', {'lasers': 45.5}),
@@ -884,7 +884,7 @@ class OptimizelyTest(base.BaseTest):
     variation when attributes are provided and typed audience conditions are met. """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be included via exact match string audience with id '18278344267'
             self.assertEqual(
                 'A', opt_obj.activate('typed_audience_experiment', 'test_user', {'android-release': '1.0.1'}),
@@ -900,7 +900,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_process.reset()
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.assertEqual(
                 'A', opt_obj.activate('typed_audience_experiment', 'test_user', {'android-release': "1.2.2"}),
             )
@@ -935,7 +935,7 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be included via substring match string audience with id '3988293898', and
             # exact match number audience with id '3468206646'
             user_attr = {'house': 'Welcome to Slytherin!', 'lasers': 45.5}
@@ -978,7 +978,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'control'))
             self.assertEqual(
                 'control', self.optimizely.activate('test_experiment', 'test_user', {'test_attribute': 'test_value'}),
@@ -1044,7 +1044,7 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_get_variation, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             self.assertEqual(
                 'variation',
@@ -1233,7 +1233,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track('test_event', 'test_user', attributes={'test_attribute': 'test_value'})
 
         expected_params = {
@@ -1283,7 +1283,7 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be included via substring match string audience with id '3988293898'
             opt_obj.track('item_bought', 'test_user', {'house': 'Welcome to Slytherin!'})
 
@@ -1303,7 +1303,7 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             opt_obj.track('item_bought', 'test_user', {'house': 'Welcome to Hufflepuff!'})
 
         self.assertEqual(1, mock_process.call_count)
@@ -1314,7 +1314,7 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be included via exact match string audience with id '3468206642', and
             # exact match boolean audience with id '3468206643'
             user_attr = {'house': 'Gryffindor', 'should_do_it': True}
@@ -1345,7 +1345,7 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences))
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             # Should be excluded - exact match boolean audience with id '3468206643' does not match,
             # so the overall conditions fail
             user_attr = {'house': 'Gryffindor', 'should_do_it': False}
@@ -1359,7 +1359,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track(
                 'test_event',
                 'test_user',
@@ -1417,7 +1417,7 @@ class OptimizelyTest(base.BaseTest):
         """ Test that track calls process even if audience conditions do not match. """
 
         with mock.patch('time.time', return_value=42), mock.patch(
-                'optimizely.event.event_processor.ForwardingEventProcessor.process'
+                'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             self.optimizely.track(
                 'test_event', 'test_user', attributes={'test_attribute': 'wrong_test_value'},
@@ -1441,7 +1441,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track(
                 'test_event',
                 'test_user',
@@ -1498,7 +1498,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track(
                 'test_event',
                 'test_user',
@@ -1553,7 +1553,7 @@ class OptimizelyTest(base.BaseTest):
         """ Test that track calls process with right params when only numeric metric
         event tags are provided. """
 
-        with mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        with mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track(
                 'test_event',
                 'test_user',
@@ -1584,7 +1584,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.assertTrue(self.optimizely.set_forced_variation('test_experiment', 'test_user', 'variation'))
             self.optimizely.track(
                 'test_event',
@@ -1642,7 +1642,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track(
                 'test_event',
                 'test_user',
@@ -1698,7 +1698,7 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
                 'optimizely.helpers.experiment.is_experiment_running', return_value=False
         ) as mock_is_experiment_running, mock.patch('time.time', return_value=42), mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process:
             self.optimizely.track('test_event', 'test_user')
 
@@ -1722,7 +1722,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('time.time', return_value=42), mock.patch(
                 'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-        ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process') as mock_process:
+        ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process:
             self.optimizely.track('test_event', 'user_1')
 
         self.assertEqual(1, mock_process.call_count)
@@ -1984,7 +1984,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.FEATURE_TEST), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -2084,7 +2084,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.FEATURE_TEST), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -2184,7 +2184,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -2234,7 +2234,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -2336,7 +2336,7 @@ class OptimizelyTest(base.BaseTest):
                 return_value=(decision_service.Decision(mock_experiment,
                                                         mock_variation, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -2378,7 +2378,7 @@ class OptimizelyTest(base.BaseTest):
                 'optimizely.decision_service.DecisionService.get_variation_for_feature',
                 return_value=(decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -2422,7 +2422,7 @@ class OptimizelyTest(base.BaseTest):
                 'optimizely.decision_service.DecisionService.get_variation_for_feature',
                 return_value=(decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT), []),
         ) as mock_decision, mock.patch(
-            'optimizely.event.event_processor.ForwardingEventProcessor.process'
+            'optimizely.event.event_processor.BatchEventProcessor.process'
         ) as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -3335,7 +3335,11 @@ class OptimizelyTest(base.BaseTest):
     def test_get_feature_variable_for_feature_in_rollout(self):
         """ Test that get_feature_variable returns value as expected and broadcasts decision with proper parameters. """
 
-        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        opt_obj = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_features),
+            # prevent event processor from injecting notification calls
+            event_processor_options={'start_on_init': False}
+        )
         mock_experiment = opt_obj.config_manager.get_config().get_experiment_from_key('211127')
         mock_variation = opt_obj.config_manager.get_config().get_variation_from_id('211127', '211129')
         user_attributes = {'test_attribute': 'test_value'}
