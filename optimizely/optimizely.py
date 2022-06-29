@@ -19,6 +19,7 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
+from logging import Logger
 from .config_manager import BaseConfigManager
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
@@ -27,15 +28,17 @@ from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .decision.optimizely_decision import OptimizelyDecision
 from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .decision_service import Decision
-from .error_handler import NoOpErrorHandler as noop_error_handler
+from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
-from .event.event_processor import ForwardingEventProcessor
+from .event.event_processor import BatchEventProcessor, BaseEventProcessor
 from .event_dispatcher import EventDispatcher, CustomEventDispatcher
+
 from .helpers import enums, validator
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext
+from .user_profile import UserProfileService
 from typing import Any, Optional, Sequence
 
 
@@ -46,16 +49,17 @@ class Optimizely:
             self,
             datafile: Optional[str] = None,
             event_dispatcher: Optional[CustomEventDispatcher] = None,
-            logger: Any = None,
-            error_handler: Any = None,
+            logger: Optional[Logger | _logging.BaseLogger] = None,
+            error_handler: Optional[BaseErrorHandler] = None,
             skip_json_validation: Optional[bool] = False,
-            user_profile_service: Any = None,
+            user_profile_service: Optional[UserProfileService] = None,
             sdk_key: Optional[str] = None,
             config_manager: Optional[BaseConfigManager] = None,
             notification_center: Optional[NotificationCenter] = None,
-            event_processor: Any = None,
+            event_processor: Optional[BaseEventProcessor] = None,
             datafile_access_token: Optional[str] = None,
-            default_decide_options: Optional[list[str]] = None
+            default_decide_options: Optional[list[str]] = None,
+            event_processor_options: Optional[dict[str, Any]] = None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -83,16 +87,29 @@ class Optimizely:
                            optimizely.event.event_processor.BatchEventProcessor.
           datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
           default_decide_options: Optional list of decide options used with the decide APIs.
+          event_processor_options: Optional dict of options to be passed to the default batch event processor.
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
         self.event_dispatcher = event_dispatcher or EventDispatcher
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
-        self.error_handler = error_handler or noop_error_handler
+        self.error_handler = error_handler or NoOpErrorHandler
         self.config_manager: BaseConfigManager = config_manager  # type: ignore
         self.notification_center = notification_center or NotificationCenter(self.logger)
-        self.event_processor = event_processor or ForwardingEventProcessor(
-            self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
+        event_processor_defaults = {
+            'batch_size': 1,
+            'flush_interval': 30,
+            'timeout_interval': 5,
+            'start_on_init': True
+        }
+        if event_processor_options:
+            event_processor_defaults.update(event_processor_options)
+
+        self.event_processor = event_processor or BatchEventProcessor(
+            self.event_dispatcher,
+            logger=self.logger,
+            notification_center=self.notification_center,
+            **event_processor_defaults  # type: ignore[arg-type]
         )
         self.default_decide_options: list[str]
 
@@ -214,6 +231,10 @@ class Optimizely:
         user_event = user_event_factory.UserEventFactory.create_impression_event(
             project_config, experiment, variation_id, flag_key, rule_key, rule_type, enabled, user_id, attributes
         )
+
+        if user_event is None:
+            self.logger.error('Cannot process None event.')
+            return
 
         self.event_processor.process(user_event)
 
@@ -412,11 +433,10 @@ class Optimizely:
 
             all_variables[variable_key] = actual_value
 
-        if decision.source == enums.DecisionSources.FEATURE_TEST \
-                and decision.experiment and decision.variation:
+        if decision.source == enums.DecisionSources.FEATURE_TEST:
             source_info = {
-                'experiment_key': decision.experiment.key,
-                'variation_key': decision.variation.key,
+                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'variation_key': decision.variation.key if decision.variation else None,
             }
 
         self.notification_center.send_notifications(
@@ -525,6 +545,10 @@ class Optimizely:
         user_event = user_event_factory.UserEventFactory.create_conversion_event(
             project_config, event_key, user_id, attributes, event_tags
         )
+
+        if user_event is None:
+            self.logger.error('Cannot process None event.')
+            return
 
         self.event_processor.process(user_event)
         self.logger.info(f'Tracking event "{event_key}" for user "{user_id}".')

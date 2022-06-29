@@ -61,7 +61,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
     def __init__(
         self,
-        event_dispatcher: Optional[EventDispatcher | CustomEventDispatcher] = None,
+        event_dispatcher: Optional[type[EventDispatcher] | CustomEventDispatcher] = None,
         logger: Any = None,
         start_on_init: bool = False,
         event_queue: Any = None,
@@ -357,7 +357,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
             self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
             self.notification_center = _notification_center.NotificationCenter()
 
-    def process(self, user_event: Optional[UserEvent]) -> None:
+    def process(self, user_event: UserEvent) -> None:
         """ Method to process the user_event by dispatching it.
 
     Args:
