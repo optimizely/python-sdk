@@ -11,13 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations
 import json
 import logging
 import requests
 
 from requests import exceptions as request_exception
-from typing import Optional
 
 from .helpers import enums
 from . import event_builder
@@ -35,21 +33,18 @@ REQUEST_TIMEOUT = 10
 
 class CustomEventDispatcher(Protocol):
     """Interface for a custom event dispatcher and required method `dispatch_event`. """
-    def dispatch_event(self, event: Optional[event_builder.Event]) -> None:
+    def dispatch_event(self, event: event_builder.Event) -> None:
         ...
 
 
 class EventDispatcher:
     @staticmethod
-    def dispatch_event(event: Optional[event_builder.Event]) -> None:
+    def dispatch_event(event: event_builder.Event) -> None:
         """ Dispatch the event being represented by the Event object.
 
     Args:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
-        if not event:
-            raise TypeError("Event 'NoneType' cannot be dispatched.")
-
         try:
             if event.http_verb == enums.HTTPVerbs.GET:
                 requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT).raise_for_status()
