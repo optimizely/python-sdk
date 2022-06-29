@@ -31,7 +31,7 @@ from .decision_service import Decision
 from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
 from .event.event_processor import BatchEventProcessor, BaseEventProcessor
-from .event_dispatcher import EventDispatcher as default_event_dispatcher, CustomEventDispatcher
+from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 
 from .helpers import enums, validator
 from .helpers.enums import DecisionSources
@@ -59,7 +59,7 @@ class Optimizely:
             event_processor: Optional[BaseEventProcessor] = None,
             datafile_access_token: Optional[str] = None,
             default_decide_options: Optional[list[str]] = None,
-            event_processor_options=None
+            event_processor_options: Optional[dict[str, Any]] = None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -91,7 +91,7 @@ class Optimizely:
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
-        self.event_dispatcher = event_dispatcher or default_event_dispatcher
+        self.event_dispatcher = event_dispatcher or EventDispatcher
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.error_handler = error_handler or NoOpErrorHandler
         self.config_manager: BaseConfigManager = config_manager  # type: ignore
@@ -104,11 +104,12 @@ class Optimizely:
         }
         if event_processor_options:
             event_processor_defaults.update(event_processor_options)
+
         self.event_processor = event_processor or BatchEventProcessor(
             self.event_dispatcher,
             logger=self.logger,
             notification_center=self.notification_center,
-            **event_processor_defaults
+            **event_processor_defaults  # type: ignore[arg-type]
         )
         self.default_decide_options: list[str]
 
