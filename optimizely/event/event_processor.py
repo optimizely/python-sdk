@@ -357,7 +357,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
             self.logger.error(enums.Errors.INVALID_INPUT.format('notification_center'))
             self.notification_center = _notification_center.NotificationCenter()
 
-    def process(self, user_event: Optional[UserEvent]) -> None:
+    def process(self, user_event: UserEvent) -> None:
         """ Method to process the user_event by dispatching it.
 
     Args:
