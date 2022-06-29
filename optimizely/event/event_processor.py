@@ -244,6 +244,10 @@ class BatchEventProcessor(BaseEventProcessor):
 
         self.notification_center.send_notifications(enums.NotificationTypes.LOG_EVENT, log_event)
 
+        if log_event is None:
+            self.logger.error('Error dispatching event: Cannot dispatch None event.')
+            return
+
         try:
             self.event_dispatcher.dispatch_event(log_event)
         except Exception as e:
@@ -370,6 +374,10 @@ class ForwardingEventProcessor(BaseEventProcessor):
         log_event = EventFactory.create_log_event(user_event, self.logger)
 
         self.notification_center.send_notifications(enums.NotificationTypes.LOG_EVENT, log_event)
+
+        if log_event is None:
+            self.logger.error('Error dispatching event: Cannot dispatch None event.')
+            return
 
         try:
             self.event_dispatcher.dispatch_event(log_event)

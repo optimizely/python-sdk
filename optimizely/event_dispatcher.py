@@ -17,7 +17,6 @@ import logging
 import requests
 
 from requests import exceptions as request_exception
-from typing import Optional
 
 from .helpers import enums
 from . import event_builder
@@ -35,20 +34,18 @@ except ImportError:
 
 class CustomEventDispatcher(Protocol):
     """Interface to enforce required method"""
-    def dispatch_event(self, event: Optional[event_builder.Event]) -> None:
+    def dispatch_event(self, event: event_builder.Event) -> None:
         ...
 
 
 class EventDispatcher:
     @staticmethod
-    def dispatch_event(event: Optional[event_builder.Event]) -> None:
+    def dispatch_event(event: event_builder.Event) -> None:
         """ Dispatch the event being represented by the Event object.
 
     Args:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
-        if not event:
-            return
 
         try:
             if event.http_verb == enums.HTTPVerbs.GET:
