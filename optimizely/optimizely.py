@@ -58,7 +58,7 @@ class Optimizely:
             notification_center: Optional[NotificationCenter] = None,
             event_processor: Optional[BaseEventProcessor] = None,
             datafile_access_token: Optional[str] = None,
-            default_decide_options: Optional[list[str]] = None
+            default_decide_options: Optional[list[str]] = None,
             event_processor_options=None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
