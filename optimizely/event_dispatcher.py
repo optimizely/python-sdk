@@ -16,20 +16,19 @@ import json
 import logging
 import requests
 
+from sys import version_info
 from requests import exceptions as request_exception
 
 from .helpers import enums
 from . import event_builder
 
+if version_info >= (3, 8):
+    from typing import Protocol
+else:
+    from typing_extensions import Protocol  # type: ignore[misc]
+
+
 REQUEST_TIMEOUT = 10
-
-
-try:
-    # python 3.7
-    from typing_extensions import Protocol
-except ImportError:
-    # python 3.8 +
-    from typing import Protocol  # type: ignore
 
 
 class CustomEventDispatcher(Protocol):
