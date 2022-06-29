@@ -30,8 +30,9 @@ from .decision.optimizely_decision_message import OptimizelyDecisionMessage
 from .decision_service import Decision
 from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
-from .event.event_processor import ForwardingEventProcessor, BaseEventProcessor
+from .event.event_processor import BatchEventProcessor, BaseEventProcessor
 from .event_dispatcher import EventDispatcher as default_event_dispatcher, CustomEventDispatcher
+
 from .helpers import enums, validator
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
@@ -58,6 +59,7 @@ class Optimizely:
             event_processor: Optional[BaseEventProcessor] = None,
             datafile_access_token: Optional[str] = None,
             default_decide_options: Optional[list[str]] = None
+            event_processor_options=None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -85,6 +87,7 @@ class Optimizely:
                            optimizely.event.event_processor.BatchEventProcessor.
           datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
           default_decide_options: Optional list of decide options used with the decide APIs.
+          event_processor_options: Optional dict of options to be passed to the default batch event processor.
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -93,8 +96,19 @@ class Optimizely:
         self.error_handler = error_handler or NoOpErrorHandler
         self.config_manager: BaseConfigManager = config_manager  # type: ignore
         self.notification_center = notification_center or NotificationCenter(self.logger)
-        self.event_processor = event_processor or ForwardingEventProcessor(
-            self.event_dispatcher, logger=self.logger, notification_center=self.notification_center,
+        event_processor_defaults = {
+            'batch_size': 1,
+            'flush_interval': 30,
+            'timeout_interval': 5,
+            'start_on_init': True
+        }
+        if event_processor_options:
+            event_processor_defaults.update(event_processor_options)
+        self.event_processor = event_processor or BatchEventProcessor(
+            self.event_dispatcher,
+            logger=self.logger,
+            notification_center=self.notification_center,
+            **event_processor_defaults
         )
         self.default_decide_options: list[str]
 
