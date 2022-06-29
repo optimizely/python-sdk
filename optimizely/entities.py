@@ -12,23 +12,12 @@
 # limitations under the License.
 from __future__ import annotations
 from typing import Any, Optional
-
-try:
-    # python 3.7
-    from typing_extensions import TypedDict
-except ImportError:
-    # python 3.8 +
-    from typing import TypedDict  # type: ignore
+from .helpers.types import TrafficAllocation
 
 
 class BaseEntity:
     def __eq__(self, other: object) -> bool:
         return self.__dict__ == other.__dict__
-
-
-class TrafficAllocation(TypedDict):
-    endOfRange: int
-    entityId: str
 
 
 class Attribute(BaseEntity):
@@ -176,68 +165,3 @@ class Variation(BaseEntity):
 
     def __str__(self) -> str:
         return self.key
-
-
-class EventDict(TypedDict):
-    id: str
-    key: str
-    experimentIds: list[str]
-
-
-class AttributeDict(TypedDict):
-    id: str
-    key: str
-
-
-class ExperimentDict(TypedDict):
-    id: str
-    key: str
-    status: str
-    forcedVariations: dict[str, str]
-    variations: list[VariationDict]
-    layerId: str
-    audienceIds: list[str]
-    audienceConditions: list[str | list[str]]
-    trafficAllocation: list[TrafficAllocation]
-
-
-class VariationDict(TypedDict):
-    id: str
-    key: str
-    variables: list[VariableDict]
-    featureEnabled: Optional[bool]
-
-
-class VariableDict(TypedDict):
-    id: str
-    value: str
-    type: str
-    key: str
-    defaultValue: str
-    subType: str
-
-
-class RolloutDict(TypedDict):
-    id: str
-    experiments: list[ExperimentDict]
-
-
-class FeatureFlagDict(TypedDict):
-    id: str
-    key: str
-    rolloutId: str
-    variables: list[VariableDict]
-    experimentIds: list[str]
-
-
-class GroupDict(TypedDict):
-    id: str
-    policy: str
-    experiments: list[ExperimentDict]
-    trafficAllocation: list[TrafficAllocation]
-
-
-class AudienceDict(TypedDict):
-    id: str
-    name: str
-    conditions: list[Any] | str

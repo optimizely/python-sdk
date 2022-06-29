@@ -17,6 +17,7 @@ import math
 
 from . import project_config
 from . import entities
+from .helpers import types
 
 from .lib import pymmh3 as mmh3
 
@@ -65,7 +66,7 @@ class Bucketer:
 
     def find_bucket(
         self, project_config: project_config.ProjectConfig, bucketing_id: str,
-        parent_id: Optional[str], traffic_allocations: list[entities.TrafficAllocation]
+        parent_id: Optional[str], traffic_allocations: list[types.TrafficAllocation]
     ) -> Optional[str]:
         """ Determine entity based on bucket value and traffic allocations.
 

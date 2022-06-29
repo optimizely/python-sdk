@@ -18,6 +18,7 @@ from . import entities
 from . import exceptions
 from .helpers import condition as condition_helper
 from .helpers import enums
+from .helpers import types
 
 SUPPORTED_VERSIONS = [
     enums.DatafileVersions.V2,
@@ -57,14 +58,14 @@ class ProjectConfig:
         self.revision: str = config.get('revision')
         self.sdk_key: Optional[str] = config.get('sdkKey', None)
         self.environment_key: Optional[str] = config.get('environmentKey', None)
-        self.groups: list[entities.GroupDict] = config.get('groups', [])
-        self.experiments: list[entities.ExperimentDict] = config.get('experiments', [])
-        self.events: list[entities.EventDict] = config.get('events', [])
-        self.attributes: list[entities.AttributeDict] = config.get('attributes', [])
-        self.audiences: list[entities.AudienceDict] = config.get('audiences', [])
-        self.typed_audiences: list[entities.AudienceDict] = config.get('typedAudiences', [])
-        self.feature_flags: list[entities.FeatureFlagDict] = config.get('featureFlags', [])
-        self.rollouts: list[entities.RolloutDict] = config.get('rollouts', [])
+        self.groups: list[types.GroupDict] = config.get('groups', [])
+        self.experiments: list[types.ExperimentDict] = config.get('experiments', [])
+        self.events: list[types.EventDict] = config.get('events', [])
+        self.attributes: list[types.AttributeDict] = config.get('attributes', [])
+        self.audiences: list[types.AudienceDict] = config.get('audiences', [])
+        self.typed_audiences: list[types.AudienceDict] = config.get('typedAudiences', [])
+        self.feature_flags: list[types.FeatureFlagDict] = config.get('featureFlags', [])
+        self.rollouts: list[types.RolloutDict] = config.get('rollouts', [])
         self.anonymize_ip: bool = config.get('anonymizeIP', False)
         self.send_flag_decisions: bool = config.get('sendFlagDecisions', False)
         self.bot_filtering: Optional[bool] = config.get('botFiltering', None)
@@ -137,7 +138,7 @@ class ProjectConfig:
             # As we cannot create json variables in datafile directly, here we convert
             # the variables of string type and json subType to json type
             # This is needed to fully support json variables
-            for variable in cast(List[entities.VariableDict], self.feature_key_map[feature.key].variables):
+            for variable in cast(List[types.VariableDict], self.feature_key_map[feature.key].variables):
                 sub_type = variable.get('subType', '')
                 if variable['type'] == entities.Variable.Type.STRING and sub_type == entities.Variable.Type.JSON:
                     variable['type'] = entities.Variable.Type.JSON

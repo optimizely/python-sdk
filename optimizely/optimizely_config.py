@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 from .helpers.condition import ConditionOperatorTypes
 from . import project_config as project_config_module
-from . import entities
+from .helpers.types import EventDict, RolloutDict, AttributeDict, ExperimentDict, VariationDict
 
 
 class OptimizelyConfig:
@@ -318,7 +318,7 @@ class OptimizelyConfigService:
             self.feature_key_variable_id_to_variable_map[feature['key']] = variables_id_map
 
     def _get_variables_map(
-        self, experiment: entities.ExperimentDict, variation: entities.VariationDict, feature_id: Optional[str] = None
+        self, experiment: ExperimentDict, variation: VariationDict, feature_id: Optional[str] = None
     ) -> dict[str, Any]:
         """ Gets variables map for given experiment and variation.
 
@@ -350,7 +350,7 @@ class OptimizelyConfigService:
         return variables_map
 
     def _get_variations_map(
-        self, experiment: entities.ExperimentDict, feature_id: Optional[str] = None
+        self, experiment: ExperimentDict, feature_id: Optional[str] = None
     ) -> dict[str, OptimizelyVariation]:
         """ Gets variation map for the given experiment.
 
@@ -374,7 +374,7 @@ class OptimizelyConfigService:
 
         return variations_map
 
-    def _get_all_experiments(self) -> list[entities.ExperimentDict]:
+    def _get_all_experiments(self) -> list[ExperimentDict]:
         """ Gets all experiments in the project config.
 
         Returns:
@@ -458,7 +458,7 @@ class OptimizelyConfigService:
         return features_map
 
     def _get_delivery_rules(
-        self, rollouts: list[entities.RolloutDict], rollout_id: Optional[str], feature_id: str
+        self, rollouts: list[RolloutDict], rollout_id: Optional[str], feature_id: str
     ) -> list[OptimizelyExperiment]:
         """ Gets an array of rollouts for the project config
 
@@ -496,7 +496,7 @@ class OptimizelyConfigService:
 
         return delivery_rules
 
-    def _get_attributes_list(self, attributes: list[entities.AttributeDict]) -> list[OptimizelyAttribute]:
+    def _get_attributes_list(self, attributes: list[AttributeDict]) -> list[OptimizelyAttribute]:
         """ Gets attributes list for the project config
 
         Returns:
@@ -513,7 +513,7 @@ class OptimizelyConfigService:
 
         return attributes_list
 
-    def _get_events_list(self, events: list[entities.EventDict]) -> list[OptimizelyEvent]:
+    def _get_events_list(self, events: list[EventDict]) -> list[OptimizelyEvent]:
         """ Gets events list for the project_config
 
         Returns:
