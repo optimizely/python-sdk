@@ -62,7 +62,7 @@ class BatchEventProcessor(BaseEventProcessor):
     def __init__(
         self,
         event_dispatcher: Optional[type[EventDispatcher] | CustomEventDispatcher] = None,
-        logger: Any = None,
+        logger: Optional[_logging.Logger] = None,
         start_on_init: bool = False,
         event_queue: Any = None,
         batch_size: Optional[int] = None,
@@ -339,8 +339,10 @@ class ForwardingEventProcessor(BaseEventProcessor):
   """
 
     def __init__(
-        self, event_dispatcher: type[EventDispatcher] | CustomEventDispatcher,
-        logger: Any = None, notification_center: Optional[_notification_center.NotificationCenter] = None
+        self,
+        event_dispatcher: type[EventDispatcher] | CustomEventDispatcher,
+        logger: Optional[_logging.Logger] = None,
+        notification_center: Optional[_notification_center.NotificationCenter] = None
     ):
         """ ForwardingEventProcessor init method to configure event dispatching.
 

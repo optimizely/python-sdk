@@ -19,7 +19,6 @@ from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
-from logging import Logger
 from .config_manager import BaseConfigManager
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import PollingConfigManager
@@ -49,7 +48,7 @@ class Optimizely:
             self,
             datafile: Optional[str] = None,
             event_dispatcher: Optional[CustomEventDispatcher] = None,
-            logger: Optional[Logger | _logging.BaseLogger] = None,
+            logger: Optional[_logging.Logger] = None,
             error_handler: Optional[BaseErrorHandler] = None,
             skip_json_validation: Optional[bool] = False,
             user_profile_service: Optional[UserProfileService] = None,

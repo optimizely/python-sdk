@@ -19,6 +19,7 @@ from typing import Any, Optional
 
 from optimizely.decision import optimizely_decision
 from . import optimizely
+from .logger import Logger
 
 
 class OptimizelyUserContext:
@@ -27,7 +28,7 @@ class OptimizelyUserContext:
     """
 
     def __init__(
-        self, optimizely_client: optimizely.Optimizely, logger: Any,
+        self, optimizely_client: optimizely.Optimizely, logger: Logger,
         user_id: str, user_attributes: Optional[dict[str, Any]] = None
     ):
         """ Create an instance of the Optimizely User Context.

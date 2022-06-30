@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from .helpers import enums
 from . import logger as optimizely_logger
 
@@ -26,7 +26,7 @@ class NotificationCenter:
     """ Class encapsulating methods to manage notifications and their listeners.
   The enums.NotificationTypes includes predefined notifications."""
 
-    def __init__(self, logger: Any = None):
+    def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
         self.listener_id = 1
         self.notification_listeners: dict[str, list[tuple[int, Callable[..., None]]]] = {}
         for notification_type in NOTIFICATION_TYPES:
