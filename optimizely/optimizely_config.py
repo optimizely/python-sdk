@@ -319,7 +319,7 @@ class OptimizelyConfigService:
 
     def _get_variables_map(
         self, experiment: ExperimentDict, variation: VariationDict, feature_id: Optional[str] = None
-    ) -> dict[str, Any]:
+    ) -> dict[str, OptimizelyVariable]:
         """ Gets variables map for given experiment and variation.
 
         Args:
@@ -329,7 +329,7 @@ class OptimizelyConfigService:
         Returns:
             dict - Map of variable key to OptimizelyVariable for the given variation.
         """
-        variables_map: dict[str, Any] = {}
+        variables_map: dict[str, OptimizelyVariable] = {}
 
         feature_flag = self.exp_id_to_feature_map.get(experiment['id'], None)
         if feature_flag is None and feature_id is None:
@@ -360,7 +360,7 @@ class OptimizelyConfigService:
         Returns:
             dict -- Map of variation key to OptimizelyVariation.
         """
-        variations_map = {}
+        variations_map: dict[str, OptimizelyVariation] = {}
 
         for variation in experiment.get('variations', []):
             variables_map = self._get_variables_map(experiment, variation, feature_id)
