@@ -3021,7 +3021,8 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "staging" for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        # sometimes event processor flushes before this check, so can't assert called once
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3696,7 +3697,8 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        # sometimes event processor flushes before this check, so can't assert called once
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
