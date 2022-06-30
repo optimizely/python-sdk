@@ -17,7 +17,7 @@ import numbers
 import threading
 import time
 
-from typing import Any, Optional
+from typing import Optional
 from datetime import timedelta
 import queue
 
@@ -51,12 +51,16 @@ class BatchEventProcessor(BaseEventProcessor):
   maximum duration before the resulting LogEvent is sent to the EventDispatcher.
   """
 
+    class Signal:
+        '''Used to create unique objects for sending signals to event queue.'''
+        pass
+
     _DEFAULT_QUEUE_CAPACITY = 1000
     _DEFAULT_BATCH_SIZE = 10
     _DEFAULT_FLUSH_INTERVAL = 30
     _DEFAULT_TIMEOUT_INTERVAL = 5
-    _SHUTDOWN_SIGNAL = object()
-    _FLUSH_SIGNAL = object()
+    _SHUTDOWN_SIGNAL = Signal()
+    _FLUSH_SIGNAL = Signal()
     LOCK = threading.Lock()
 
     def __init__(
@@ -64,7 +68,7 @@ class BatchEventProcessor(BaseEventProcessor):
         event_dispatcher: Optional[type[EventDispatcher] | CustomEventDispatcher] = None,
         logger: Optional[_logging.Logger] = None,
         start_on_init: bool = False,
-        event_queue: Any = None,
+        event_queue: Optional[queue.Queue[UserEvent | Signal]] = None,
         batch_size: Optional[int] = None,
         flush_interval: Optional[float] = None,
         timeout_interval: Optional[float] = None,
