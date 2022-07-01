@@ -1,0 +1,4 @@
+mypy
+types-jsonschema
+types-requests
+types-Flask

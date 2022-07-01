@@ -1,4 +1,4 @@
-# Copyright 2016, 2018-2019, Optimizely
+# Copyright 2016, 2018-2019, 2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,6 +12,7 @@
 # limitations under the License.
 import logging
 import warnings
+from typing import Union
 
 from .helpers import enums
 
@@ -58,6 +59,10 @@ class BaseLogger:
     @staticmethod
     def log(*args):
         pass  # pragma: no cover
+
+
+# type alias for optimizely logger
+Logger = Union[logging.Logger, BaseLogger]
 
 
 class NoOpLogger(BaseLogger):
