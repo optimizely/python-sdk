@@ -98,5 +98,4 @@ jobs:
     - name: Type check with mypy
       run: |
         mypy .
-      # disabled until entire sdk is type hinted
-        # mypy . --exclude "tests/" --strict
+        mypy . --exclude "tests/" --strict
