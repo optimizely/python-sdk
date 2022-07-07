@@ -37,7 +37,7 @@ from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
-from typing import TYPE_CHECKING, Any, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Optional
 
 
 if TYPE_CHECKING:
@@ -1049,7 +1049,7 @@ class Optimizely:
 
     def _decide(
         self, user_context: Optional[OptimizelyUserContext], key: str,
-        decide_options: Optional[Sequence[OptimizelyDecideOption | str]] = None
+        decide_options: Optional[list[str]] = None
     ) -> OptimizelyDecision:
         """
         decide calls optimizely decide with feature key provided

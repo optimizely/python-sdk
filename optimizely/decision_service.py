@@ -247,7 +247,7 @@ class DecisionService:
         project_config: ProjectConfig,
         experiment: entities.Experiment,
         user_context: OptimizelyUserContext,
-        options: Optional[Sequence[str | OptimizelyDecideOption]] = None
+        options: Optional[Sequence[str]] = None
     ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Top-level function to help determine variation user should be put in.
 
@@ -467,7 +467,7 @@ class DecisionService:
         project_config: ProjectConfig,
         feature: entities.FeatureFlag,
         user_context: OptimizelyUserContext,
-        options: Optional[Sequence[str | OptimizelyDecideOption]] = None
+        options: Optional[list[str]] = None
     ) -> tuple[Decision, list[str]]:
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
