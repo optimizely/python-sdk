@@ -25,7 +25,11 @@ else:
 # Intermediate types for type checking deserialized datafile json before actual class instantiation.
 # These aren't used for anything other than type signatures
 
-class BaseDict(TypedDict):
+class BaseEntity(TypedDict):
+    pass
+
+
+class BaseDict(BaseEntity):
     '''Base type for parsed datafile json, before instantiation of class objects.'''
     id: str
     key: str
@@ -41,7 +45,7 @@ class AttributeDict(BaseDict):
     pass
 
 
-class TrafficAllocation(TypedDict):
+class TrafficAllocation(BaseEntity):
     '''Traffic Allocation dict from parsed datafile json.'''
     endOfRange: int
     entityId: str
@@ -72,7 +76,7 @@ class ExperimentDict(BaseDict):
     trafficAllocation: list[TrafficAllocation]
 
 
-class RolloutDict(TypedDict):
+class RolloutDict(BaseEntity):
     '''Rollout dict from parsed datafile json.'''
     id: str
     experiments: list[ExperimentDict]
@@ -85,7 +89,7 @@ class FeatureFlagDict(BaseDict):
     experimentIds: list[str]
 
 
-class GroupDict(TypedDict):
+class GroupDict(BaseEntity):
     '''Group dict from parsed datafile json.'''
     id: str
     policy: str
@@ -93,7 +97,7 @@ class GroupDict(TypedDict):
     trafficAllocation: list[TrafficAllocation]
 
 
-class AudienceDict(TypedDict):
+class AudienceDict(BaseEntity):
     '''Audience dict from parsed datafile json.'''
     id: str
     name: str
