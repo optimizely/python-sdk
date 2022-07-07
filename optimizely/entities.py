@@ -12,6 +12,12 @@
 # limitations under the License.
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Optional, Sequence
+from sys import version_info
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
 
 if TYPE_CHECKING:
@@ -140,11 +146,11 @@ class Layer(BaseEntity):
 
 class Variable(BaseEntity):
     class Type:
-        BOOLEAN = 'boolean'
-        DOUBLE = 'double'
-        INTEGER = 'integer'
-        JSON = 'json'
-        STRING = 'string'
+        BOOLEAN: Final = 'boolean'
+        DOUBLE: Final = 'double'
+        INTEGER: Final = 'integer'
+        JSON: Final = 'json'
+        STRING: Final = 'string'
 
     def __init__(self, id: str, key: str, type: str, defaultValue: Any, **kwargs: Any):
         self.id = id

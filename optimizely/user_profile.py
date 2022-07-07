@@ -13,6 +13,12 @@
 
 from __future__ import annotations
 from typing import Any, Optional
+from sys import version_info
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
 
 class UserProfile:
@@ -23,9 +29,9 @@ class UserProfile:
                           variation ID identifying the variation for the user.
    """
 
-    USER_ID_KEY = 'user_id'
-    EXPERIMENT_BUCKET_MAP_KEY = 'experiment_bucket_map'
-    VARIATION_ID_KEY = 'variation_id'
+    USER_ID_KEY: Final = 'user_id'
+    EXPERIMENT_BUCKET_MAP_KEY: Final = 'experiment_bucket_map'
+    VARIATION_ID_KEY: Final = 'variation_id'
 
     def __init__(
         self,

@@ -54,33 +54,33 @@ class EventBuilder:
     """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (batch). """
 
-    EVENTS_URL = 'https://logx.optimizely.com/v1/events'
+    EVENTS_URL: Final = 'https://logx.optimizely.com/v1/events'
     HTTP_VERB: Final = 'POST'
-    HTTP_HEADERS = {'Content-Type': 'application/json'}
+    HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
 
     class EventParams:
-        ACCOUNT_ID = 'account_id'
-        PROJECT_ID = 'project_id'
-        EXPERIMENT_ID = 'experiment_id'
-        CAMPAIGN_ID = 'campaign_id'
-        VARIATION_ID = 'variation_id'
-        END_USER_ID = 'visitor_id'
-        ENRICH_DECISIONS = 'enrich_decisions'
-        EVENTS = 'events'
-        EVENT_ID = 'entity_id'
-        ATTRIBUTES = 'attributes'
-        DECISIONS = 'decisions'
-        TIME = 'timestamp'
-        KEY = 'key'
-        TAGS = 'tags'
-        UUID = 'uuid'
-        USERS = 'visitors'
-        SNAPSHOTS = 'snapshots'
-        SOURCE_SDK_TYPE = 'client_name'
-        SOURCE_SDK_VERSION = 'client_version'
-        CUSTOM = 'custom'
-        ANONYMIZE_IP = 'anonymize_ip'
-        REVISION = 'revision'
+        ACCOUNT_ID: Final = 'account_id'
+        PROJECT_ID: Final = 'project_id'
+        EXPERIMENT_ID: Final = 'experiment_id'
+        CAMPAIGN_ID: Final = 'campaign_id'
+        VARIATION_ID: Final = 'variation_id'
+        END_USER_ID: Final = 'visitor_id'
+        ENRICH_DECISIONS: Final = 'enrich_decisions'
+        EVENTS: Final = 'events'
+        EVENT_ID: Final = 'entity_id'
+        ATTRIBUTES: Final = 'attributes'
+        DECISIONS: Final = 'decisions'
+        TIME: Final = 'timestamp'
+        KEY: Final = 'key'
+        TAGS: Final = 'tags'
+        UUID: Final = 'uuid'
+        USERS: Final = 'visitors'
+        SNAPSHOTS: Final = 'snapshots'
+        SOURCE_SDK_TYPE: Final = 'client_name'
+        SOURCE_SDK_VERSION: Final = 'client_version'
+        CUSTOM: Final = 'custom'
+        ANONYMIZE_IP: Final = 'anonymize_ip'
+        REVISION: Final = 'revision'
 
     def _get_attributes_data(
         self, project_config: ProjectConfig, attributes: UserAttributes

@@ -16,14 +16,21 @@ from typing import TYPE_CHECKING, Any, Optional, NewType, Dict
 from . import enums
 import math
 import numbers
+from sys import version_info
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
+
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from optimizely.logger import Logger
 
 
-REVENUE_METRIC_TYPE = 'revenue'
-NUMERIC_METRIC_TYPE = 'value'
+REVENUE_METRIC_TYPE: Final = 'revenue'
+NUMERIC_METRIC_TYPE: Final = 'value'
 
 # type for tracking event tags (essentially a sub-type of dict)
 EventTags = NewType('EventTags', Dict[str, Any])

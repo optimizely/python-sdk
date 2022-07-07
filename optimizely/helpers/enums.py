@@ -12,138 +12,149 @@
 # limitations under the License.
 
 import logging
+from sys import version_info
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
 
 class CommonAudienceEvaluationLogs:
-    AUDIENCE_EVALUATION_RESULT = 'Audience "{}" evaluated to {}.'
-    EVALUATING_AUDIENCE = 'Starting to evaluate audience "{}" with conditions: {}.'
-    INFINITE_ATTRIBUTE_VALUE = (
+    AUDIENCE_EVALUATION_RESULT: Final = 'Audience "{}" evaluated to {}.'
+    EVALUATING_AUDIENCE: Final = 'Starting to evaluate audience "{}" with conditions: {}.'
+    INFINITE_ATTRIBUTE_VALUE: Final = (
         'Audience condition "{}" evaluated to UNKNOWN because the number value '
         'for user attribute "{}" is not in the range [-2^53, +2^53].'
     )
-    MISSING_ATTRIBUTE_VALUE = (
+    MISSING_ATTRIBUTE_VALUE: Final = (
         'Audience condition {} evaluated to UNKNOWN because no value was passed for ' 'user attribute "{}".'
     )
-    NULL_ATTRIBUTE_VALUE = (
+    NULL_ATTRIBUTE_VALUE: Final = (
         'Audience condition "{}" evaluated to UNKNOWN because a null value was passed ' 'for user attribute "{}".'
     )
-    UNEXPECTED_TYPE = (
+    UNEXPECTED_TYPE: Final = (
         'Audience condition "{}" evaluated to UNKNOWN because a value of type "{}" was passed '
         'for user attribute "{}".'
     )
 
-    UNKNOWN_CONDITION_TYPE = (
+    UNKNOWN_CONDITION_TYPE: Final = (
         'Audience condition "{}" uses an unknown condition type. You may need to upgrade to a '
         'newer release of the Optimizely SDK.'
     )
-    UNKNOWN_CONDITION_VALUE = (
+    UNKNOWN_CONDITION_VALUE: Final = (
         'Audience condition "{}" has an unsupported condition value. You may need to upgrade to a '
         'newer release of the Optimizely SDK.'
     )
-    UNKNOWN_MATCH_TYPE = (
+    UNKNOWN_MATCH_TYPE: Final = (
         'Audience condition "{}" uses an unknown match type. You may need to upgrade to a '
         'newer release of the Optimizely SDK.'
     )
 
 
 class ExperimentAudienceEvaluationLogs(CommonAudienceEvaluationLogs):
-    AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for experiment "{}" collectively evaluated to {}.'
-    EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for experiment "{}": {}.'
+    AUDIENCE_EVALUATION_RESULT_COMBINED: Final = 'Audiences for experiment "{}" collectively evaluated to {}.'
+    EVALUATING_AUDIENCES_COMBINED: Final = 'Evaluating audiences for experiment "{}": {}.'
 
 
 class RolloutRuleAudienceEvaluationLogs(CommonAudienceEvaluationLogs):
-    AUDIENCE_EVALUATION_RESULT_COMBINED = 'Audiences for rule {} collectively evaluated to {}.'
-    EVALUATING_AUDIENCES_COMBINED = 'Evaluating audiences for rule {}: {}.'
+    AUDIENCE_EVALUATION_RESULT_COMBINED: Final = 'Audiences for rule {} collectively evaluated to {}.'
+    EVALUATING_AUDIENCES_COMBINED: Final = 'Evaluating audiences for rule {}: {}.'
 
 
 class ConfigManager:
-    AUTHENTICATED_DATAFILE_URL_TEMPLATE = 'https://config.optimizely.com/datafiles/auth/{sdk_key}.json'
-    AUTHORIZATION_HEADER_DATA_TEMPLATE = 'Bearer {datafile_access_token}'
-    DATAFILE_URL_TEMPLATE = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
+    AUTHENTICATED_DATAFILE_URL_TEMPLATE: Final = 'https://config.optimizely.com/datafiles/auth/{sdk_key}.json'
+    AUTHORIZATION_HEADER_DATA_TEMPLATE: Final = 'Bearer {datafile_access_token}'
+    DATAFILE_URL_TEMPLATE: Final = 'https://cdn.optimizely.com/datafiles/{sdk_key}.json'
     # Default time in seconds to block the 'get_config' method call until 'config' instance has been initialized.
-    DEFAULT_BLOCKING_TIMEOUT = 10
+    DEFAULT_BLOCKING_TIMEOUT: Final = 10
     # Default config update interval of 5 minutes
-    DEFAULT_UPDATE_INTERVAL = 5 * 60
+    DEFAULT_UPDATE_INTERVAL: Final = 5 * 60
     # Time in seconds before which request for datafile times out
-    REQUEST_TIMEOUT = 10
+    REQUEST_TIMEOUT: Final = 10
 
 
 class ControlAttributes:
-    BOT_FILTERING = '$opt_bot_filtering'
-    BUCKETING_ID = '$opt_bucketing_id'
-    USER_AGENT = '$opt_user_agent'
+    BOT_FILTERING: Final = '$opt_bot_filtering'
+    BUCKETING_ID: Final = '$opt_bucketing_id'
+    USER_AGENT: Final = '$opt_user_agent'
 
 
 class DatafileVersions:
-    V2 = '2'
-    V3 = '3'
-    V4 = '4'
+    V2: Final = '2'
+    V3: Final = '3'
+    V4: Final = '4'
 
 
 class DecisionNotificationTypes:
-    AB_TEST = 'ab-test'
-    ALL_FEATURE_VARIABLES = 'all-feature-variables'
-    FEATURE = 'feature'
-    FEATURE_TEST = 'feature-test'
-    FEATURE_VARIABLE = 'feature-variable'
-    FLAG = 'flag'
+    AB_TEST: Final = 'ab-test'
+    ALL_FEATURE_VARIABLES: Final = 'all-feature-variables'
+    FEATURE: Final = 'feature'
+    FEATURE_TEST: Final = 'feature-test'
+    FEATURE_VARIABLE: Final = 'feature-variable'
+    FLAG: Final = 'flag'
 
 
 class DecisionSources:
-    EXPERIMENT = 'experiment'
-    FEATURE_TEST = 'feature-test'
-    ROLLOUT = 'rollout'
+    EXPERIMENT: Final = 'experiment'
+    FEATURE_TEST: Final = 'feature-test'
+    ROLLOUT: Final = 'rollout'
 
 
 class Errors:
-    INVALID_ATTRIBUTE = 'Provided attribute is not in datafile.'
-    INVALID_ATTRIBUTE_FORMAT = 'Attributes provided are in an invalid format.'
-    INVALID_AUDIENCE = 'Provided audience is not in datafile.'
-    INVALID_EVENT_TAG_FORMAT = 'Event tags provided are in an invalid format.'
-    INVALID_EXPERIMENT_KEY = 'Provided experiment is not in datafile.'
-    INVALID_EVENT_KEY = 'Provided event is not in datafile.'
-    INVALID_FEATURE_KEY = 'Provided feature key is not in the datafile.'
-    INVALID_GROUP_ID = 'Provided group is not in datafile.'
-    INVALID_INPUT = 'Provided "{}" is in an invalid format.'
-    INVALID_OPTIMIZELY = 'Optimizely instance is not valid. Failing "{}".'
-    INVALID_PROJECT_CONFIG = 'Invalid config. Optimizely instance is not valid. Failing "{}".'
-    INVALID_VARIATION = 'Provided variation is not in datafile.'
-    INVALID_VARIABLE_KEY = 'Provided variable key is not in the feature flag.'
-    NONE_FEATURE_KEY_PARAMETER = '"None" is an invalid value for feature key.'
-    NONE_USER_ID_PARAMETER = '"None" is an invalid value for user ID.'
-    NONE_VARIABLE_KEY_PARAMETER = '"None" is an invalid value for variable key.'
-    UNSUPPORTED_DATAFILE_VERSION = 'This version of the Python SDK does not support the given datafile version: "{}".'
+    INVALID_ATTRIBUTE: Final = 'Provided attribute is not in datafile.'
+    INVALID_ATTRIBUTE_FORMAT: Final = 'Attributes provided are in an invalid format.'
+    INVALID_AUDIENCE: Final = 'Provided audience is not in datafile.'
+    INVALID_EVENT_TAG_FORMAT: Final = 'Event tags provided are in an invalid format.'
+    INVALID_EXPERIMENT_KEY: Final = 'Provided experiment is not in datafile.'
+    INVALID_EVENT_KEY: Final = 'Provided event is not in datafile.'
+    INVALID_FEATURE_KEY: Final = 'Provided feature key is not in the datafile.'
+    INVALID_GROUP_ID: Final = 'Provided group is not in datafile.'
+    INVALID_INPUT: Final = 'Provided "{}" is in an invalid format.'
+    INVALID_OPTIMIZELY: Final = 'Optimizely instance is not valid. Failing "{}".'
+    INVALID_PROJECT_CONFIG: Final = 'Invalid config. Optimizely instance is not valid. Failing "{}".'
+    INVALID_VARIATION: Final = 'Provided variation is not in datafile.'
+    INVALID_VARIABLE_KEY: Final = 'Provided variable key is not in the feature flag.'
+    NONE_FEATURE_KEY_PARAMETER: Final = '"None" is an invalid value for feature key.'
+    NONE_USER_ID_PARAMETER: Final = '"None" is an invalid value for user ID.'
+    NONE_VARIABLE_KEY_PARAMETER: Final = '"None" is an invalid value for variable key.'
+    UNSUPPORTED_DATAFILE_VERSION: Final = (
+        'This version of the Python SDK does not support the given datafile version: "{}".')
 
 
 class ForcedDecisionLogs:
-    USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED = 'Variation ({}) is mapped to flag ({}), rule ({}) and user ({}) ' \
-                                                   'in the forced decision map.'
-    USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED = 'Variation ({}) is mapped to flag ({}) and user ({}) ' \
-                                                      'in the forced decision map.'
-    USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID = 'Invalid variation is mapped to flag ({}), rule ({}) ' \
-                                                               'and user ({}) in the forced decision map.'
-    USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID = 'Invalid variation is mapped to flag ({}) ' \
-                                                                  'and user ({}) in the forced decision map.'
+    USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED: Final = (
+        'Variation ({}) is mapped to flag ({}), rule ({}) and user ({}) '
+        'in the forced decision map.')
+    USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED: Final = (
+        'Variation ({}) is mapped to flag ({}) and user ({}) '
+        'in the forced decision map.')
+    USER_HAS_FORCED_DECISION_WITH_RULE_SPECIFIED_BUT_INVALID: Final = (
+        'Invalid variation is mapped to flag ({}), rule ({}) '
+        'and user ({}) in the forced decision map.')
+    USER_HAS_FORCED_DECISION_WITHOUT_RULE_SPECIFIED_BUT_INVALID: Final = (
+        'Invalid variation is mapped to flag ({}) '
+        'and user ({}) in the forced decision map.')
 
 
 class HTTPHeaders:
-    AUTHORIZATION = 'Authorization'
-    IF_MODIFIED_SINCE = 'If-Modified-Since'
-    LAST_MODIFIED = 'Last-Modified'
+    AUTHORIZATION: Final = 'Authorization'
+    IF_MODIFIED_SINCE: Final = 'If-Modified-Since'
+    LAST_MODIFIED: Final = 'Last-Modified'
 
 
 class HTTPVerbs:
-    GET = 'GET'
-    POST = 'POST'
+    GET: Final = 'GET'
+    POST: Final = 'POST'
 
 
 class LogLevels:
-    NOTSET = logging.NOTSET
-    DEBUG = logging.DEBUG
-    INFO = logging.INFO
-    WARNING = logging.WARNING
-    ERROR = logging.ERROR
-    CRITICAL = logging.CRITICAL
+    NOTSET: Final = logging.NOTSET
+    DEBUG: Final = logging.DEBUG
+    INFO: Final = logging.INFO
+    WARNING: Final = logging.WARNING
+    ERROR: Final = logging.ERROR
+    CRITICAL: Final = logging.CRITICAL
 
 
 class NotificationTypes:
@@ -165,13 +176,13 @@ class NotificationTypes:
       LogEvent log_event
   """
 
-    ACTIVATE = 'ACTIVATE:experiment, user_id, attributes, variation, event'
-    DECISION = 'DECISION:type, user_id, attributes, decision_info'
-    OPTIMIZELY_CONFIG_UPDATE = 'OPTIMIZELY_CONFIG_UPDATE'
-    TRACK = 'TRACK:event_key, user_id, attributes, event_tags, event'
-    LOG_EVENT = 'LOG_EVENT:log_event'
+    ACTIVATE: Final = 'ACTIVATE:experiment, user_id, attributes, variation, event'
+    DECISION: Final = 'DECISION:type, user_id, attributes, decision_info'
+    OPTIMIZELY_CONFIG_UPDATE: Final = 'OPTIMIZELY_CONFIG_UPDATE'
+    TRACK: Final = 'TRACK:event_key, user_id, attributes, event_tags, event'
+    LOG_EVENT: Final = 'LOG_EVENT:log_event'
 
 
 class VersionType:
-    IS_PRE_RELEASE = '-'
-    IS_BUILD = '+'
+    IS_PRE_RELEASE: Final = '-'
+    IS_BUILD: Final = '+'

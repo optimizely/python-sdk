@@ -30,37 +30,37 @@ if TYPE_CHECKING:
 
 
 if version_info < (3, 8):
-    from typing_extensions import Literal
+    from typing_extensions import Literal, Final
 else:
-    from typing import Literal  # type: ignore
+    from typing import Literal, Final  # type: ignore
 
 
 class ConditionOperatorTypes:
-    AND = 'and'
-    OR = 'or'
-    NOT = 'not'
+    AND: Final = 'and'
+    OR: Final = 'or'
+    NOT: Final = 'not'
     operators = [AND, OR, NOT]
 
 
 class ConditionMatchTypes:
-    EXACT = 'exact'
-    EXISTS = 'exists'
-    GREATER_THAN = 'gt'
-    GREATER_THAN_OR_EQUAL = 'ge'
-    LESS_THAN = 'lt'
-    LESS_THAN_OR_EQUAL = 'le'
-    SEMVER_EQ = 'semver_eq'
-    SEMVER_GE = 'semver_ge'
-    SEMVER_GT = 'semver_gt'
-    SEMVER_LE = 'semver_le'
-    SEMVER_LT = 'semver_lt'
-    SUBSTRING = 'substring'
+    EXACT: Final = 'exact'
+    EXISTS: Final = 'exists'
+    GREATER_THAN: Final = 'gt'
+    GREATER_THAN_OR_EQUAL: Final = 'ge'
+    LESS_THAN: Final = 'lt'
+    LESS_THAN_OR_EQUAL: Final = 'le'
+    SEMVER_EQ: Final = 'semver_eq'
+    SEMVER_GE: Final = 'semver_ge'
+    SEMVER_GT: Final = 'semver_gt'
+    SEMVER_LE: Final = 'semver_le'
+    SEMVER_LT: Final = 'semver_lt'
+    SUBSTRING: Final = 'substring'
 
 
 class CustomAttributeConditionEvaluator:
     """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
-    CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
+    CUSTOM_ATTRIBUTE_CONDITION_TYPE: Final = 'custom_attribute'
 
     def __init__(
         self,

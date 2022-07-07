@@ -14,8 +14,15 @@ from __future__ import annotations
 import time
 import uuid
 from typing import TYPE_CHECKING, Optional
+from sys import version_info
 
 from optimizely import version
+
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
 
 if TYPE_CHECKING:
@@ -25,7 +32,7 @@ if TYPE_CHECKING:
     from optimizely.helpers.event_tag_utils import EventTags
 
 
-CLIENT_NAME = 'python-sdk'
+CLIENT_NAME: Final = 'python-sdk'
 
 
 class UserEvent:

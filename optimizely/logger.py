@@ -13,11 +13,17 @@
 import logging
 from typing import Any, Optional, Union
 import warnings
+from sys import version_info
 
 from .helpers import enums
 
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
-_DEFAULT_LOG_FORMAT = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s'
+
+_DEFAULT_LOG_FORMAT: Final = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s'
 
 
 def reset_logger(name: str, level: Optional[int] = None, handler: Optional[logging.Handler] = None) -> logging.Logger:

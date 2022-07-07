@@ -14,9 +14,16 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 import math
-
+from sys import version_info
 
 from .lib import pymmh3 as mmh3
+
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
+
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -25,12 +32,12 @@ if TYPE_CHECKING:
     from .helpers.types import TrafficAllocation
 
 
-MAX_TRAFFIC_VALUE = 10000
-UNSIGNED_MAX_32_BIT_VALUE = 0xFFFFFFFF
-MAX_HASH_VALUE = math.pow(2, 32)
-HASH_SEED = 1
-BUCKETING_ID_TEMPLATE = '{bucketing_id}{parent_id}'
-GROUP_POLICIES = ['random']
+MAX_TRAFFIC_VALUE: Final = 10000
+UNSIGNED_MAX_32_BIT_VALUE: Final = 0xFFFFFFFF
+MAX_HASH_VALUE: Final = math.pow(2, 32)
+HASH_SEED: Final = 1
+BUCKETING_ID_TEMPLATE: Final = '{bucketing_id}{parent_id}'
+GROUP_POLICIES: Final = ['random']
 
 
 class Bucketer:

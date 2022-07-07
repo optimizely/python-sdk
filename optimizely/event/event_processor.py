@@ -20,6 +20,7 @@ import time
 from typing import Optional
 from datetime import timedelta
 import queue
+from sys import version_info
 
 from optimizely import logger as _logging
 from optimizely import notification_center as _notification_center
@@ -28,6 +29,12 @@ from optimizely.helpers import enums
 from optimizely.helpers import validator
 from .event_factory import EventFactory
 from .user_event import UserEvent
+
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
 
 class BaseEventProcessor(ABC):
@@ -55,13 +62,13 @@ class BatchEventProcessor(BaseEventProcessor):
         '''Used to create unique objects for sending signals to event queue.'''
         pass
 
-    _DEFAULT_QUEUE_CAPACITY = 1000
-    _DEFAULT_BATCH_SIZE = 10
-    _DEFAULT_FLUSH_INTERVAL = 30
-    _DEFAULT_TIMEOUT_INTERVAL = 5
-    _SHUTDOWN_SIGNAL = Signal()
-    _FLUSH_SIGNAL = Signal()
-    LOCK = threading.Lock()
+    _DEFAULT_QUEUE_CAPACITY: Final = 1000
+    _DEFAULT_BATCH_SIZE: Final = 10
+    _DEFAULT_FLUSH_INTERVAL: Final = 30
+    _DEFAULT_TIMEOUT_INTERVAL: Final = 5
+    _SHUTDOWN_SIGNAL: Final = Signal()
+    _FLUSH_SIGNAL: Final = Signal()
+    LOCK: Final = threading.Lock()
 
     def __init__(
         self,

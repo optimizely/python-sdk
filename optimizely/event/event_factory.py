@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from optimizely.optimizely_user_context import UserAttributes
     from optimizely.logger import Logger
 
-CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
+CUSTOM_ATTRIBUTE_FEATURE_TYPE: Final = 'custom'
 
 
 class EventFactory:
@@ -42,10 +42,10 @@ class EventFactory:
   to record the events via the Optimizely Events API ("https://developers.optimizely.com/x/events/api/index.html")
   """
 
-    EVENT_ENDPOINT = 'https://logx.optimizely.com/v1/events'
+    EVENT_ENDPOINT: Final = 'https://logx.optimizely.com/v1/events'
     HTTP_VERB: Final = 'POST'
-    HTTP_HEADERS = {'Content-Type': 'application/json'}
-    ACTIVATE_EVENT_KEY = 'campaign_activated'
+    HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
+    ACTIVATE_EVENT_KEY: Final = 'campaign_activated'
 
     @classmethod
     def create_log_event(
