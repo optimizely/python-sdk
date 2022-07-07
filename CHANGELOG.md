@@ -4,7 +4,6 @@
 July 7th, 2022
 
 ### Bug Fixes
-* Fix error log formatting for flag key ([#381](https://github.com/optimizely/python-sdk/pull/381))
 * Fix invalid datafile returned from `ProjectConfig.to_datafile` and `OptimizelyConfig.get_datafile` ([#321](https://github.com/optimizely/python-sdk/pull/321), [#384](https://github.com/optimizely/python-sdk/pull/384))
 
 ## 4.0.0
