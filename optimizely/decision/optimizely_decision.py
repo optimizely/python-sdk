@@ -23,7 +23,7 @@ class OptimizelyDecision:
     def __init__(
         self,
         variation_key: Optional[str] = None,
-        enabled: Optional[bool] = None,
+        enabled: bool = False,
         variables: Optional[dict[str, Any]] = None,
         rule_key: Optional[str] = None,
         flag_key: Optional[str] = None,
@@ -31,7 +31,7 @@ class OptimizelyDecision:
         reasons: Optional[list[str]] = None
     ):
         self.variation_key = variation_key
-        self.enabled = enabled or False
+        self.enabled = enabled
         self.variables = variables or {}
         self.rule_key = rule_key
         self.flag_key = flag_key
