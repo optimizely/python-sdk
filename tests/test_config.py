@@ -1239,6 +1239,18 @@ class ConfigExceptionTest(base.BaseTest):
 
         self.assertIsInstance(variation, entities.Variation)
 
+    def test_get_variation_from_id_by_experiment_id_missing(self):
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+        project_config = opt_obj.config_manager.get_config()
+
+        experiment_id = '111127'
+        variation_id = 'missing'
+
+        variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+
+        self.assertIsNone(variation)
+
     def test_get_variation_from_key_by_experiment_id(self):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
@@ -1250,3 +1262,15 @@ class ConfigExceptionTest(base.BaseTest):
         variation = project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)
 
         self.assertIsInstance(variation, entities.Variation)
+
+    def test_get_variation_from_key_by_experiment_id_missing(self):
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict))
+        project_config = opt_obj.config_manager.get_config()
+
+        experiment_id = '111127'
+        variation_key = 'missing'
+
+        variation = project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)
+
+        self.assertIsNone(variation)

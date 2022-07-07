@@ -105,7 +105,7 @@ class Bucketer:
     def bucket(
         self, project_config: ProjectConfig,
         experiment: Experiment, user_id: str, bucketing_id: str
-    ) -> tuple[None | dict[None, None] | Variation, list[str]]:
+    ) -> tuple[Optional[Variation], list[str]]:
         """ For a given experiment and bucketing ID determines variation to be shown to user.
 
         Args:

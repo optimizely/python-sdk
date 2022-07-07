@@ -65,7 +65,7 @@ class ImpressionEvent(UserEvent):
         user_id: str,
         experiment: Experiment,
         visitor_attributes: list[VisitorAttribute],
-        variation: Optional[dict[None, None] | Variation],
+        variation: Optional[Variation],
         flag_key: str,
         rule_key: str,
         rule_type: str,

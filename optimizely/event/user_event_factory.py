@@ -63,7 +63,7 @@ class UserEventFactory:
         if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
             return None
 
-        variation: Optional[dict[None, None] | Variation] = None
+        variation: Optional[Variation] = None
         experiment_id = None
         if activated_experiment:
             experiment_id = activated_experiment.id

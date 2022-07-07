@@ -284,7 +284,7 @@ class DecisionService:
             return None, decide_reasons
 
         # Check if the user is forced into a variation
-        variation: Optional[entities.Variation | dict[None, None]]
+        variation: Optional[entities.Variation]
         variation, reasons_received = self.get_forced_variation(project_config, experiment.key, user_id)
         decide_reasons += reasons_received
         if variation:

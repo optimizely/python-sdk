@@ -625,12 +625,12 @@ class ProjectConfig:
 
     def get_variation_from_id_by_experiment_id(
         self, experiment_id: str, variation_id: str
-    ) -> dict[None, None] | entities.Variation:
+    ) -> Optional[entities.Variation]:
         """ Gets variation from variation id and specific experiment id
 
             Returns:
                 The variation for the experiment id and variation id
-                or empty dict if not found
+                or None if not found
         """
         if (experiment_id in self.variation_id_map_by_experiment_id and
                 variation_id in self.variation_id_map_by_experiment_id[experiment_id]):
@@ -640,16 +640,16 @@ class ProjectConfig:
             f'Variation with id "{variation_id}" not defined in the datafile for experiment "{experiment_id}".'
         )
 
-        return {}
+        return None
 
     def get_variation_from_key_by_experiment_id(
         self, experiment_id: str, variation_key: str
-    ) -> dict[None, None] | entities.Variation:
+    ) -> Optional[entities.Variation]:
         """ Gets variation from variation key and specific experiment id
 
             Returns:
                 The variation for the experiment id and variation key
-                or empty dict if not found
+                or None if not found
         """
         if (experiment_id in self.variation_key_map_by_experiment_id and
                 variation_key in self.variation_key_map_by_experiment_id[experiment_id]):
@@ -659,7 +659,7 @@ class ProjectConfig:
             f'Variation with key "{variation_key}" not defined in the datafile for experiment "{experiment_id}".'
         )
 
-        return {}
+        return None
 
     def get_flag_variation(
         self, flag_key: str, variation_attribute: str, target_value: str
