@@ -435,7 +435,7 @@ class DecisionService:
                                                                           bucketing_id)
                 decide_reasons.extend(bucket_reasons)
 
-                if isinstance(bucketed_variation, entities.Variation):
+                if bucketed_variation:
                     message = f'User "{user_id}" bucketed into a targeting rule {logging_key}.'
                     self.logger.debug(message)
                     decide_reasons.append(message)

@@ -117,7 +117,7 @@ class SimpleLogger(BaseLogger):
         self.logger.log(log_level, message)
 
 
-def adapt_logger(logger: Any) -> Any:
+def adapt_logger(logger: Logger) -> Logger:
     """
   Adapt our custom logger.BaseLogger object into a standard logging.Logger object.
 

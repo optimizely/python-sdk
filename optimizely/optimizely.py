@@ -138,7 +138,7 @@ class Optimizely:
             self.logger.exception(str(error))
             return
 
-        config_manager_options = {
+        config_manager_options: dict[str, Any] = {
             'datafile': datafile,
             'logger': self.logger,
             'error_handler': self.error_handler,

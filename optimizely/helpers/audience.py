@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 import json
-from typing import TYPE_CHECKING, Any, Optional, Sequence
+from typing import TYPE_CHECKING, Optional, Sequence, Type
 
 from . import condition as condition_helper
 from . import condition_tree_evaluator
@@ -23,12 +23,13 @@ if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from optimizely.project_config import ProjectConfig
     from optimizely.logger import Logger
+    from optimizely.helpers.enums import ExperimentAudienceEvaluationLogs, RolloutRuleAudienceEvaluationLogs
 
 
 def does_user_meet_audience_conditions(
     config: ProjectConfig,
     audience_conditions: Optional[Sequence[str | list[str]]],
-    audience_logs: Any,
+    audience_logs: Type[ExperimentAudienceEvaluationLogs | RolloutRuleAudienceEvaluationLogs],
     logging_key: str,
     attributes: Optional[optimizely_user_context.UserAttributes],
     logger: Logger

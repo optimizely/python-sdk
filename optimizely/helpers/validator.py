@@ -13,7 +13,7 @@
 
 from __future__ import annotations
 import json
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Type
 import jsonschema
 import math
 import numbers
@@ -24,6 +24,11 @@ from . import constants
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
+    from optimizely.logger import Logger
+    from optimizely.event_dispatcher import CustomEventDispatcher
+    from optimizely.error_handler import BaseErrorHandler
+    from optimizely.config_manager import BaseConfigManager
+    from optimizely.event.event_processor import BaseEventProcessor
     from optimizely.helpers.event_tag_utils import EventTags
     from optimizely.optimizely_user_context import UserAttributes
 
@@ -67,7 +72,7 @@ def _has_method(obj: object, method: str) -> bool:
     return getattr(obj, method, None) is not None
 
 
-def is_config_manager_valid(config_manager: Any) -> bool:
+def is_config_manager_valid(config_manager: BaseConfigManager) -> bool:
     """ Given a config_manager determine if it is valid or not i.e. provides a get_config method.
 
   Args:
@@ -80,7 +85,7 @@ def is_config_manager_valid(config_manager: Any) -> bool:
     return _has_method(config_manager, 'get_config')
 
 
-def is_event_processor_valid(event_processor: Any) -> bool:
+def is_event_processor_valid(event_processor: BaseEventProcessor) -> bool:
     """ Given an event_processor, determine if it is valid or not i.e. provides a process method.
 
   Args:
@@ -93,7 +98,7 @@ def is_event_processor_valid(event_processor: Any) -> bool:
     return _has_method(event_processor, 'process')
 
 
-def is_error_handler_valid(error_handler: Any) -> bool:
+def is_error_handler_valid(error_handler: Type[BaseErrorHandler] | BaseErrorHandler) -> bool:
     """ Given a error_handler determine if it is valid or not i.e. provides a handle_error method.
 
   Args:
@@ -106,7 +111,7 @@ def is_error_handler_valid(error_handler: Any) -> bool:
     return _has_method(error_handler, 'handle_error')
 
 
-def is_event_dispatcher_valid(event_dispatcher: Any) -> bool:
+def is_event_dispatcher_valid(event_dispatcher: Type[CustomEventDispatcher] | CustomEventDispatcher) -> bool:
     """ Given a event_dispatcher determine if it is valid or not i.e. provides a dispatch_event method.
 
   Args:
@@ -119,7 +124,7 @@ def is_event_dispatcher_valid(event_dispatcher: Any) -> bool:
     return _has_method(event_dispatcher, 'dispatch_event')
 
 
-def is_logger_valid(logger: Any) -> bool:
+def is_logger_valid(logger: Logger) -> bool:
     """ Given a logger determine if it is valid or not i.e. provides a log method.
 
   Args:
@@ -132,7 +137,7 @@ def is_logger_valid(logger: Any) -> bool:
     return _has_method(logger, 'log')
 
 
-def is_notification_center_valid(notification_center: Any) -> bool:
+def is_notification_center_valid(notification_center: NotificationCenter) -> bool:
     """ Given notification_center determine if it is valid or not.
 
   Args:
@@ -171,7 +176,7 @@ def are_event_tags_valid(event_tags: EventTags) -> bool:
     return type(event_tags) is dict
 
 
-def is_user_profile_valid(user_profile: Any) -> bool:
+def is_user_profile_valid(user_profile: dict[str, Any]) -> bool:
     """ Determine if provided user profile is valid or not.
 
   Args:
@@ -219,7 +224,7 @@ def is_non_empty_string(input_id_key: str) -> bool:
     return False
 
 
-def is_attribute_valid(attribute_key: Any, attribute_value: Any) -> bool:
+def is_attribute_valid(attribute_key: str, attribute_value: Any) -> bool:
     """ Determine if given attribute is valid.
 
   Args:
