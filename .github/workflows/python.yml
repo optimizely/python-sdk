@@ -24,11 +24,11 @@ jobs:
         gem install awesome_bot
     - name: Run tests
       run: find . -type f -name '*.md' -exec awesome_bot {} \;
-      
+
   linting:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3 
+    - uses: actions/checkout@v3
     - name: Set up Python 3.9
       uses: actions/setup-python@v3
       with:
@@ -44,13 +44,13 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-        
+
   integration_tests:
     uses: optimizely/python-sdk/.github/workflows/integration_test.yml@uzair/test-with-fsc
     secrets:
       CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
       TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
-      
+
   fullstack_production_suite:
     uses: optimizely/python-sdk/.github/workflows/integration_test.yml@master
     with:
@@ -58,13 +58,13 @@ jobs:
     secrets:
       CI_USER_TOKEN: ${{ secrets.CI_USER_TOKEN }}
       TRAVIS_COM_TOKEN: ${{ secrets.TRAVIS_COM_TOKEN }}
-      
+
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["pypy-3.7-v7.3.5", "3.7", "3.8", "3.9", "3.10.0"]
+        python-version: ["pypy-3.7-v7.3.5", "3.7", "3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -78,3 +78,25 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov=optimizely
+
+  type-check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements/typing.txt
+    - name: Type check with mypy
+      run: |
+        mypy .
+      # disabled until entire sdk is type hinted
+        # mypy . --exclude "tests/" --strict

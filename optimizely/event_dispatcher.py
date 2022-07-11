@@ -1,4 +1,4 @@
-# Copyright 2016, Optimizely
+# Copyright 2016, 2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -16,21 +16,34 @@ import logging
 import requests
 
 from requests import exceptions as request_exception
+from sys import version_info
 
 from .helpers import enums
+from . import event_builder
+
+if version_info >= (3, 8):
+    from typing import Protocol
+else:
+    from typing_extensions import Protocol  # type: ignore[misc]
+
 
 REQUEST_TIMEOUT = 10
 
 
+class CustomEventDispatcher(Protocol):
+    """Interface for a custom event dispatcher and required method `dispatch_event`. """
+    def dispatch_event(self, event: event_builder.Event) -> None:
+        ...
+
+
 class EventDispatcher:
     @staticmethod
-    def dispatch_event(event):
+    def dispatch_event(event: event_builder.Event) -> None:
         """ Dispatch the event being represented by the Event object.
 
     Args:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
-
         try:
             if event.http_verb == enums.HTTPVerbs.GET:
                 requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT).raise_for_status()

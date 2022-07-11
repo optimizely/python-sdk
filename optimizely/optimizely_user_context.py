@@ -12,9 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #
-
+from __future__ import annotations
 import copy
 import threading
+from typing import Any, Optional
+
+from optimizely.decision import optimizely_decision
+from . import optimizely
+from .logger import Logger
 
 
 class OptimizelyUserContext:
@@ -22,7 +27,10 @@ class OptimizelyUserContext:
     Representation of an Optimizely User Context using which APIs are to be called.
     """
 
-    def __init__(self, optimizely_client, logger, user_id, user_attributes=None):
+    def __init__(
+        self, optimizely_client: optimizely.Optimizely, logger: Logger,
+        user_id: str, user_attributes: Optional[dict[str, Any]] = None
+    ):
         """ Create an instance of the Optimizely User Context.
 
         Args:
@@ -44,7 +52,10 @@ class OptimizelyUserContext:
 
         self._user_attributes = user_attributes.copy() if user_attributes else {}
         self.lock = threading.Lock()
-        self.forced_decisions_map = {}
+        self.forced_decisions_map: dict[
+            OptimizelyUserContext.OptimizelyDecisionContext,
+            OptimizelyUserContext.OptimizelyForcedDecision
+        ] = {}
 
     # decision context
     class OptimizelyDecisionContext:
@@ -52,22 +63,22 @@ class OptimizelyUserContext:
             class is extensible, it's easy to add another attribute if we wanted
             to extend decision context.
         """
-        def __init__(self, flag_key, rule_key=None):
+        def __init__(self, flag_key: str, rule_key: Optional[str] = None):
             self.flag_key = flag_key
             self.rule_key = rule_key
 
-        def __hash__(self):
+        def __hash__(self) -> int:
             return hash((self.flag_key, self.rule_key))
 
-        def __eq__(self, other):
+        def __eq__(self, other: OptimizelyUserContext.OptimizelyDecisionContext) -> bool:  # type: ignore
             return (self.flag_key, self.rule_key) == (other.flag_key, other.rule_key)
 
     # forced decision
     class OptimizelyForcedDecision:
-        def __init__(self, variation_key):
+        def __init__(self, variation_key: str):
             self.variation_key = variation_key
 
-    def _clone(self):
+    def _clone(self) -> Optional[OptimizelyUserContext]:
         if not self.client:
             return None
 
@@ -79,11 +90,11 @@ class OptimizelyUserContext:
 
         return user_context
 
-    def get_user_attributes(self):
+    def get_user_attributes(self) -> dict[str, Any]:
         with self.lock:
             return self._user_attributes.copy()
 
-    def set_attribute(self, attribute_key, attribute_value):
+    def set_attribute(self, attribute_key: str, attribute_value: Any) -> None:
         """
         sets a attribute by key for this user context.
         Args:
@@ -96,7 +107,9 @@ class OptimizelyUserContext:
         with self.lock:
             self._user_attributes[attribute_key] = attribute_value
 
-    def decide(self, key, options=None):
+    def decide(
+        self, key: str, options: Optional[list[str]] = None
+    ) -> optimizely_decision.OptimizelyDecision:
         """
         Call decide on contained Optimizely object
         Args:
@@ -111,7 +124,9 @@ class OptimizelyUserContext:
 
         return self.client._decide(self._clone(), key, options)
 
-    def decide_for_keys(self, keys, options=None):
+    def decide_for_keys(
+        self, keys: list[str], options: Optional[list[str]] = None
+    ) -> dict[str, optimizely_decision.OptimizelyDecision]:
         """
         Call decide_for_keys on contained optimizely object
         Args:
@@ -126,7 +141,7 @@ class OptimizelyUserContext:
 
         return self.client._decide_for_keys(self._clone(), keys, options)
 
-    def decide_all(self, options=None):
+    def decide_all(self, options: Optional[list[str]] = None) -> dict[str, optimizely_decision.OptimizelyDecision]:
         """
         Call decide_all on contained optimizely instance
         Args:
@@ -140,16 +155,18 @@ class OptimizelyUserContext:
 
         return self.client._decide_all(self._clone(), options)
 
-    def track_event(self, event_key, event_tags=None):
+    def track_event(self, event_key: str, event_tags: Optional[dict[str, Any]] = None) -> None:
         return self.client.track(event_key, self.user_id, self.get_user_attributes(), event_tags)
 
-    def as_json(self):
+    def as_json(self) -> dict[str, Any]:
         return {
             'user_id': self.user_id,
             'attributes': self.get_user_attributes(),
         }
 
-    def set_forced_decision(self, decision_context, decision):
+    def set_forced_decision(
+        self, decision_context: OptimizelyDecisionContext, decision: OptimizelyForcedDecision
+    ) -> bool:
         """
         Sets the forced decision for a given decision context.
 
@@ -165,7 +182,7 @@ class OptimizelyUserContext:
 
         return True
 
-    def get_forced_decision(self, decision_context):
+    def get_forced_decision(self, decision_context: OptimizelyDecisionContext) -> Optional[OptimizelyForcedDecision]:
         """
         Gets the forced decision (variation key) for a given decision context.
 
@@ -178,7 +195,7 @@ class OptimizelyUserContext:
         forced_decision = self.find_forced_decision(decision_context)
         return forced_decision
 
-    def remove_forced_decision(self, decision_context):
+    def remove_forced_decision(self, decision_context: OptimizelyDecisionContext) -> bool:
         """
         Removes the forced decision for a given decision context.
 
@@ -195,7 +212,7 @@ class OptimizelyUserContext:
 
         return False
 
-    def remove_all_forced_decisions(self):
+    def remove_all_forced_decisions(self) -> bool:
         """
         Removes all forced decisions bound to this user context.
 
@@ -207,7 +224,7 @@ class OptimizelyUserContext:
 
         return True
 
-    def find_forced_decision(self, decision_context):
+    def find_forced_decision(self, decision_context: OptimizelyDecisionContext) -> Optional[OptimizelyForcedDecision]:
         """
         Gets forced decision from forced decision map.
 
