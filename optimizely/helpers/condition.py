@@ -1,4 +1,4 @@
-# Copyright 2016, 2018-2020, Optimizely
+# Copyright 2016, 2018-2020, 2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,48 +11,68 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import json
 import numbers
+from typing import TYPE_CHECKING, Any, Callable, Optional
+from sys import version_info
 
 from . import validator
+from optimizely import optimizely_user_context
 from .enums import CommonAudienceEvaluationLogs as audience_logs
 from .enums import Errors
 from .enums import VersionType
 
 
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.logger import Logger
+
+
+if version_info < (3, 8):
+    from typing_extensions import Literal, Final
+else:
+    from typing import Literal, Final  # type: ignore
+
+
 class ConditionOperatorTypes:
-    AND = 'and'
-    OR = 'or'
-    NOT = 'not'
+    AND: Final = 'and'
+    OR: Final = 'or'
+    NOT: Final = 'not'
     operators = [AND, OR, NOT]
 
 
 class ConditionMatchTypes:
-    EXACT = 'exact'
-    EXISTS = 'exists'
-    GREATER_THAN = 'gt'
-    GREATER_THAN_OR_EQUAL = 'ge'
-    LESS_THAN = 'lt'
-    LESS_THAN_OR_EQUAL = 'le'
-    SEMVER_EQ = 'semver_eq'
-    SEMVER_GE = 'semver_ge'
-    SEMVER_GT = 'semver_gt'
-    SEMVER_LE = 'semver_le'
-    SEMVER_LT = 'semver_lt'
-    SUBSTRING = 'substring'
+    EXACT: Final = 'exact'
+    EXISTS: Final = 'exists'
+    GREATER_THAN: Final = 'gt'
+    GREATER_THAN_OR_EQUAL: Final = 'ge'
+    LESS_THAN: Final = 'lt'
+    LESS_THAN_OR_EQUAL: Final = 'le'
+    SEMVER_EQ: Final = 'semver_eq'
+    SEMVER_GE: Final = 'semver_ge'
+    SEMVER_GT: Final = 'semver_gt'
+    SEMVER_LE: Final = 'semver_le'
+    SEMVER_LT: Final = 'semver_lt'
+    SUBSTRING: Final = 'substring'
 
 
 class CustomAttributeConditionEvaluator:
     """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
-    CUSTOM_ATTRIBUTE_CONDITION_TYPE = 'custom_attribute'
+    CUSTOM_ATTRIBUTE_CONDITION_TYPE: Final = 'custom_attribute'
 
-    def __init__(self, condition_data, attributes, logger):
+    def __init__(
+        self,
+        condition_data: list[str | list[str]],
+        attributes: Optional[optimizely_user_context.UserAttributes],
+        logger: Logger
+    ):
         self.condition_data = condition_data
-        self.attributes = attributes or {}
+        self.attributes = attributes or optimizely_user_context.UserAttributes({})
         self.logger = logger
 
-    def _get_condition_json(self, index):
+    def _get_condition_json(self, index: int) -> str:
         """ Method to generate json for logging audience condition.
 
     Args:
@@ -71,7 +91,7 @@ class CustomAttributeConditionEvaluator:
 
         return json.dumps(condition_log)
 
-    def is_value_type_valid_for_exact_conditions(self, value):
+    def is_value_type_valid_for_exact_conditions(self, value: Any) -> bool:
         """ Method to validate if the value is valid for exact match type evaluation.
 
     Args:
@@ -86,13 +106,13 @@ class CustomAttributeConditionEvaluator:
 
         return False
 
-    def is_value_a_number(self, value):
+    def is_value_a_number(self, value: Any) -> bool:
         if isinstance(value, (numbers.Integral, float)) and not isinstance(value, bool):
             return True
 
         return False
 
-    def is_pre_release_version(self, version):
+    def is_pre_release_version(self, version: str) -> bool:
         """ Method to check if given version is pre-release.
             Criteria for pre-release includes:
                 - Version includes "-"
@@ -112,7 +132,7 @@ class CustomAttributeConditionEvaluator:
                 return True
         return False
 
-    def is_build_version(self, version):
+    def is_build_version(self, version: str) -> bool:
         """ Method to check given version is a build version.
             Criteria for build version includes:
                 - Version includes "+"
@@ -132,7 +152,7 @@ class CustomAttributeConditionEvaluator:
                 return True
         return False
 
-    def has_white_space(self, version):
+    def has_white_space(self, version: str) -> bool:
         """ Method to check if the given version contains " " (white space)
 
         Args:
@@ -145,7 +165,9 @@ class CustomAttributeConditionEvaluator:
         """
         return ' ' in version
 
-    def compare_user_version_with_target_version(self, target_version, user_version):
+    def compare_user_version_with_target_version(
+        self, target_version: str, user_version: str
+    ) -> Optional[Literal[0] | Literal[1] | Literal[-1]]:
         """ Method to compare user version with target version.
 
         Args:
@@ -198,7 +220,7 @@ class CustomAttributeConditionEvaluator:
             return -1
         return 0
 
-    def exact_evaluator(self, index):
+    def exact_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given exact match condition for the user attributes.
 
     Args:
@@ -238,7 +260,7 @@ class CustomAttributeConditionEvaluator:
 
         return condition_value == user_value
 
-    def exists_evaluator(self, index):
+    def exists_evaluator(self, index: int) -> bool:
         """ Evaluate the given exists match condition for the user attributes.
 
       Args:
@@ -251,7 +273,7 @@ class CustomAttributeConditionEvaluator:
         attr_name = self.condition_data[index][0]
         return self.attributes.get(attr_name) is not None
 
-    def greater_than_evaluator(self, index):
+    def greater_than_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given greater than match condition for the user attributes.
 
       Args:
@@ -283,9 +305,9 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value > condition_value
+        return user_value > condition_value  # type: ignore[operator]
 
-    def greater_than_or_equal_evaluator(self, index):
+    def greater_than_or_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given greater than or equal to match condition for the user attributes.
 
         Args:
@@ -317,9 +339,9 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value >= condition_value
+        return user_value >= condition_value  # type: ignore[operator]
 
-    def less_than_evaluator(self, index):
+    def less_than_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given less than match condition for the user attributes.
 
     Args:
@@ -351,9 +373,9 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value < condition_value
+        return user_value < condition_value  # type: ignore[operator]
 
-    def less_than_or_equal_evaluator(self, index):
+    def less_than_or_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given less than or equal to match condition for the user attributes.
 
         Args:
@@ -385,9 +407,9 @@ class CustomAttributeConditionEvaluator:
             )
             return None
 
-        return user_value <= condition_value
+        return user_value <= condition_value  # type: ignore[operator]
 
-    def substring_evaluator(self, index):
+    def substring_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given substring match condition for the given user attributes.
 
     Args:
@@ -415,7 +437,7 @@ class CustomAttributeConditionEvaluator:
 
         return condition_value in user_value
 
-    def semver_equal_evaluator(self, index):
+    def semver_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given semantic version equal match target version for the user version.
 
         Args:
@@ -451,7 +473,7 @@ class CustomAttributeConditionEvaluator:
 
         return result == 0
 
-    def semver_greater_than_evaluator(self, index):
+    def semver_greater_than_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given semantic version greater than match target version for the user version.
 
         Args:
@@ -486,7 +508,7 @@ class CustomAttributeConditionEvaluator:
 
         return result > 0
 
-    def semver_less_than_evaluator(self, index):
+    def semver_less_than_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given semantic version less than match target version for the user version.
 
         Args:
@@ -521,7 +543,7 @@ class CustomAttributeConditionEvaluator:
 
         return result < 0
 
-    def semver_less_than_or_equal_evaluator(self, index):
+    def semver_less_than_or_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given semantic version less than or equal to match target version for the user version.
 
         Args:
@@ -556,7 +578,7 @@ class CustomAttributeConditionEvaluator:
 
         return result <= 0
 
-    def semver_greater_than_or_equal_evaluator(self, index):
+    def semver_greater_than_or_equal_evaluator(self, index: int) -> Optional[bool]:
         """ Evaluate the given semantic version greater than or equal to match target version for the user version.
 
         Args:
@@ -606,7 +628,7 @@ class CustomAttributeConditionEvaluator:
         ConditionMatchTypes.SUBSTRING: substring_evaluator
     }
 
-    def split_version(self, version):
+    def split_version(self, version: str) -> Optional[list[str]]:
         """ Method to split the given version.
 
         Args:
@@ -619,7 +641,7 @@ class CustomAttributeConditionEvaluator:
             - if the given version is invalid in format
         """
         target_prefix = version
-        target_suffix = ""
+        target_suffix = []
         target_parts = []
 
         # check that version shouldn't have white space
@@ -660,7 +682,7 @@ class CustomAttributeConditionEvaluator:
             target_version_parts.extend(target_suffix)
         return target_version_parts
 
-    def evaluate(self, index):
+    def evaluate(self, index: int) -> Optional[bool]:
         """ Given a custom attribute audience condition and user attributes, evaluate the
         condition against the attributes.
 
@@ -707,12 +729,12 @@ class ConditionDecoder:
     """ Class which provides an object_hook method for decoding dict
   objects into a list when given a condition_decoder. """
 
-    def __init__(self, condition_decoder):
-        self.condition_list = []
+    def __init__(self, condition_decoder: Callable[[dict[str, str]], list[Optional[str]]]):
+        self.condition_list: list[Optional[str] | list[str]] = []
         self.index = -1
         self.decoder = condition_decoder
 
-    def object_hook(self, object_dict):
+    def object_hook(self, object_dict: dict[str, str]) -> int:
         """ Hook which when passed into a json.JSONDecoder will replace each dict
     in a json string with its index and convert the dict to an object as defined
     by the passed in condition_decoder. The newly created condition object is
@@ -725,12 +747,12 @@ class ConditionDecoder:
       An index which will be used as the placeholder in the condition_structure
     """
         instance = self.decoder(object_dict)
-        self.condition_list.append(instance)
+        self.condition_list.append(instance)  # type: ignore[arg-type]
         self.index += 1
         return self.index
 
 
-def _audience_condition_deserializer(obj_dict):
+def _audience_condition_deserializer(obj_dict: dict[str, str]) -> list[Optional[str]]:
     """ Deserializer defining how dict objects need to be decoded for audience conditions.
 
   Args:
@@ -747,7 +769,7 @@ def _audience_condition_deserializer(obj_dict):
     ]
 
 
-def loads(conditions_string):
+def loads(conditions_string: str) -> tuple[list[str | list[str]], list[Optional[list[str] | str]]]:
     """ Deserializes the conditions property into its corresponding
   components: the condition_structure and the condition_list.
 

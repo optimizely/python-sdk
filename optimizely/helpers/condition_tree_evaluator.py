@@ -1,4 +1,4 @@
-# Copyright 2018-2019, Optimizely
+# Copyright 2018-2019, 2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,10 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import Any, Callable, Optional, Sequence
+
 from .condition import ConditionOperatorTypes
 
 
-def and_evaluator(conditions, leaf_evaluator):
+LeafEvaluator = Callable[[Any], Optional[bool]]
+
+
+def and_evaluator(conditions: Sequence[str | list[str]], leaf_evaluator: LeafEvaluator) -> Optional[bool]:
     """ Evaluates a list of conditions as if the evaluator had been applied
   to each entry and the results AND-ed together.
 
@@ -40,7 +46,7 @@ def and_evaluator(conditions, leaf_evaluator):
     return None if saw_null_result else True
 
 
-def or_evaluator(conditions, leaf_evaluator):
+def or_evaluator(conditions: Sequence[str | list[str]], leaf_evaluator: LeafEvaluator) -> Optional[bool]:
     """ Evaluates a list of conditions as if the evaluator had been applied
   to each entry and the results OR-ed together.
 
@@ -66,7 +72,7 @@ def or_evaluator(conditions, leaf_evaluator):
     return None if saw_null_result else False
 
 
-def not_evaluator(conditions, leaf_evaluator):
+def not_evaluator(conditions: Sequence[str | list[str]], leaf_evaluator: LeafEvaluator) -> Optional[bool]:
     """ Evaluates a list of conditions as if the evaluator had been applied
   to a single entry and NOT was applied to the result.
 
@@ -94,7 +100,7 @@ EVALUATORS_BY_OPERATOR_TYPE = {
 }
 
 
-def evaluate(conditions, leaf_evaluator):
+def evaluate(conditions: Optional[Sequence[str | list[str]]], leaf_evaluator: LeafEvaluator) -> Optional[bool]:
     """ Top level method to evaluate conditions.
 
   Args:

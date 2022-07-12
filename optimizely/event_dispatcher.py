@@ -21,13 +21,13 @@ from sys import version_info
 from .helpers import enums
 from . import event_builder
 
-if version_info >= (3, 8):
-    from typing import Protocol
+if version_info < (3, 8):
+    from typing_extensions import Protocol, Final
 else:
-    from typing_extensions import Protocol  # type: ignore[misc]
+    from typing import Protocol, Final  # type: ignore
 
 
-REQUEST_TIMEOUT = 10
+REQUEST_TIMEOUT: Final = 10
 
 
 class CustomEventDispatcher(Protocol):

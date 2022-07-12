@@ -1,4 +1,4 @@
-# Copyright 2019 Optimizely
+# Copyright 2019, 2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,6 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Optional, Sequence, cast, List
+from sys import version_info
+from optimizely import entities
 from optimizely.helpers import enums
 from optimizely.helpers import event_tag_utils
 from optimizely.helpers import validator
@@ -18,7 +22,18 @@ from . import log_event
 from . import payload
 from . import user_event
 
-CUSTOM_ATTRIBUTE_FEATURE_TYPE = 'custom'
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.project_config import ProjectConfig
+    from optimizely.optimizely_user_context import UserAttributes
+    from optimizely.logger import Logger
+
+CUSTOM_ATTRIBUTE_FEATURE_TYPE: Final = 'custom'
 
 
 class EventFactory:
@@ -27,13 +42,17 @@ class EventFactory:
   to record the events via the Optimizely Events API ("https://developers.optimizely.com/x/events/api/index.html")
   """
 
-    EVENT_ENDPOINT = 'https://logx.optimizely.com/v1/events'
-    HTTP_VERB = 'POST'
-    HTTP_HEADERS = {'Content-Type': 'application/json'}
-    ACTIVATE_EVENT_KEY = 'campaign_activated'
+    EVENT_ENDPOINT: Final = 'https://logx.optimizely.com/v1/events'
+    HTTP_VERB: Final = 'POST'
+    HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
+    ACTIVATE_EVENT_KEY: Final = 'campaign_activated'
 
     @classmethod
-    def create_log_event(cls, user_events, logger):
+    def create_log_event(
+        cls,
+        user_events: Sequence[Optional[user_event.UserEvent]] | Optional[user_event.UserEvent],
+        logger: Logger
+    ) -> Optional[log_event.LogEvent]:
         """ Create LogEvent instance.
 
     Args:
@@ -45,7 +64,7 @@ class EventFactory:
     """
 
         if not isinstance(user_events, list):
-            user_events = [user_events]
+            user_events = cast(List[Optional[user_event.UserEvent]], [user_events])
 
         visitors = []
 
@@ -58,7 +77,12 @@ class EventFactory:
         if len(visitors) == 0:
             return None
 
-        user_context = user_events[0].event_context
+        first_event = user_events[0]
+
+        if not first_event:
+            return None
+
+        user_context = first_event.event_context
         event_batch = payload.EventBatch(
             user_context.account_id,
             user_context.project_id,
@@ -76,7 +100,7 @@ class EventFactory:
         return log_event.LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
     @classmethod
-    def _create_visitor(cls, event, logger):
+    def _create_visitor(cls, event: Optional[user_event.UserEvent], logger: Logger) -> Optional[payload.Visitor]:
         """ Helper method to create Visitor instance for event_batch.
 
     Args:
@@ -91,7 +115,7 @@ class EventFactory:
         if isinstance(event, user_event.ImpressionEvent):
             experiment_layerId, experiment_id, variation_id, variation_key = '', '', '', ''
 
-            if event.variation:
+            if isinstance(event.variation, entities.Variation):
                 variation_id = event.variation.id
                 variation_key = event.variation.key
 
@@ -111,7 +135,7 @@ class EventFactory:
 
             return visitor
 
-        elif isinstance(event, user_event.ConversionEvent):
+        elif isinstance(event, user_event.ConversionEvent) and event.event:
             revenue = event_tag_utils.get_revenue_value(event.event_tags)
             value = event_tag_utils.get_numeric_value(event.event_tags, logger)
 
@@ -130,7 +154,9 @@ class EventFactory:
             return None
 
     @staticmethod
-    def build_attribute_list(attributes, project_config):
+    def build_attribute_list(
+        attributes: Optional[UserAttributes], project_config: ProjectConfig
+    ) -> list[payload.VisitorAttribute]:
         """ Create Vistor Attribute List.
 
     Args:
@@ -141,7 +167,7 @@ class EventFactory:
       List consisting of valid attributes for the user. Empty otherwise.
     """
 
-        attributes_list = []
+        attributes_list: list[payload.VisitorAttribute] = []
 
         if project_config is None:
             return attributes_list

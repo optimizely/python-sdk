@@ -15,9 +15,15 @@ from __future__ import annotations
 from typing import Any, Callable, Optional
 from .helpers import enums
 from . import logger as optimizely_logger
+from sys import version_info
+
+if version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final  # type: ignore
 
 
-NOTIFICATION_TYPES = tuple(
+NOTIFICATION_TYPES: Final = tuple(
     getattr(enums.NotificationTypes, attr) for attr in dir(enums.NotificationTypes) if not attr.startswith('__')
 )
 

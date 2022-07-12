@@ -1,4 +1,4 @@
-# Copyright 2016, 2018-2021, Optimizely
+# Copyright 2016, 2018-2022, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,18 +11,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 import json
+from typing import TYPE_CHECKING, Optional, Sequence, Type
 
 from . import condition as condition_helper
 from . import condition_tree_evaluator
+from optimizely import optimizely_user_context
+
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from optimizely.project_config import ProjectConfig
+    from optimizely.logger import Logger
+    from optimizely.helpers.enums import ExperimentAudienceEvaluationLogs, RolloutRuleAudienceEvaluationLogs
 
 
-def does_user_meet_audience_conditions(config,
-                                       audience_conditions,
-                                       audience_logs,
-                                       logging_key,
-                                       attributes,
-                                       logger):
+def does_user_meet_audience_conditions(
+    config: ProjectConfig,
+    audience_conditions: Optional[Sequence[str | list[str]]],
+    audience_logs: Type[ExperimentAudienceEvaluationLogs | RolloutRuleAudienceEvaluationLogs],
+    logging_key: str,
+    attributes: Optional[optimizely_user_context.UserAttributes],
+    logger: Logger
+) -> tuple[bool, list[str]]:
     """ Determine for given experiment if user satisfies the audiences for the experiment.
 
     Args:
@@ -52,17 +63,19 @@ def does_user_meet_audience_conditions(config,
         return True, decide_reasons
 
     if attributes is None:
-        attributes = {}
+        attributes = optimizely_user_context.UserAttributes({})
 
-    def evaluate_custom_attr(audience_id, index):
+    def evaluate_custom_attr(audience_id: str, index: int) -> Optional[bool]:
         audience = config.get_audience(audience_id)
+        if not audience or audience.conditionList is None:
+            return None
         custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
             audience.conditionList, attributes, logger
         )
 
         return custom_attr_condition_evaluator.evaluate(index)
 
-    def evaluate_audience(audience_id):
+    def evaluate_audience(audience_id: str) -> Optional[bool]:
         audience = config.get_audience(audience_id)
 
         if audience is None:
