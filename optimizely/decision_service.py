@@ -268,7 +268,6 @@ class DecisionService:
           And an array of log messages representing decision making.
         """
         user_id = user_context.user_id
-        attributes = user_context.get_user_attributes()
 
         if options:
             ignore_user_profile = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
@@ -323,7 +322,7 @@ class DecisionService:
             project_config, audience_conditions,
             enums.ExperimentAudienceEvaluationLogs,
             experiment.key,
-            attributes, self.logger)
+            user_context, self.logger)
         decide_reasons += reasons_received
         if not user_meets_audience_conditions:
             message = f'User "{user_id}" does not meet conditions to be in experiment "{experiment.key}".'
@@ -332,7 +331,7 @@ class DecisionService:
             return None, decide_reasons
 
         # Determine bucketing ID to be used
-        bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, attributes)
+        bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, user_context.get_user_attributes())
         decide_reasons += bucketing_id_reasons
         variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
         decide_reasons += bucket_reasons
@@ -422,7 +421,7 @@ class DecisionService:
 
             audience_decision_response, reasons_received_audience = audience_helper.does_user_meet_audience_conditions(
                 project_config, audience_conditions, enums.RolloutRuleAudienceEvaluationLogs,
-                logging_key, attributes, self.logger)
+                logging_key, user, self.logger)
 
             decide_reasons += reasons_received_audience
 

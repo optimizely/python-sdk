@@ -1130,7 +1130,7 @@ class OptimizelyTest(base.BaseTest):
             expected_experiment.get_audience_conditions_or_ids(),
             enums.ExperimentAudienceEvaluationLogs,
             'test_experiment',
-            {'test_attribute': 'test_value'},
+            mock.ANY,
             self.optimizely.logger,
         )
 

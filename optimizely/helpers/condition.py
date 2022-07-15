@@ -65,11 +65,12 @@ class CustomAttributeConditionEvaluator:
     def __init__(
         self,
         condition_data: list[str | list[str]],
-        attributes: Optional[optimizely_user_context.UserAttributes],
+        user_context: optimizely_user_context.OptimizelyUserContext,
         logger: Logger
     ):
         self.condition_data = condition_data
-        self.attributes = attributes or optimizely_user_context.UserAttributes({})
+        self.user_context = user_context
+        self.attributes = user_context.get_user_attributes()
         self.logger = logger
 
     def _get_condition_json(self, index: int) -> str:
