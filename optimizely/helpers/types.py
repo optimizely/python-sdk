@@ -102,3 +102,10 @@ class AudienceDict(BaseEntity):
     id: str
     name: str
     conditions: list[Any] | str
+
+
+class IntegrationDict(BaseEntity):
+    '''Integration dict from parsed datafile json.'''
+    key: str
+    host: str
+    publicKey: str

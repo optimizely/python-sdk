@@ -175,3 +175,10 @@ class Variation(BaseEntity):
 
     def __str__(self) -> str:
         return self.key
+
+
+class Integration(BaseEntity):
+    def __init__(self, key: str, host: str, publicKey: str):
+        self.key = key
+        self.host = host
+        self.publicKey = publicKey

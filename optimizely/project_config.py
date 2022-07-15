@@ -77,9 +77,12 @@ class ProjectConfig:
         self.typed_audiences: list[types.AudienceDict] = config.get('typedAudiences', [])
         self.feature_flags: list[types.FeatureFlagDict] = config.get('featureFlags', [])
         self.rollouts: list[types.RolloutDict] = config.get('rollouts', [])
+        self.integrations: list[types.IntegrationDict] = config.get('integrations', [])
         self.anonymize_ip: bool = config.get('anonymizeIP', False)
         self.send_flag_decisions: bool = config.get('sendFlagDecisions', False)
         self.bot_filtering: Optional[bool] = config.get('botFiltering', None)
+        self.public_key_for_odp: Optional[str] = None
+        self.host_for_odp: Optional[str] = None
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -106,6 +109,13 @@ class ProjectConfig:
         for layer in self.rollout_id_map.values():
             for experiment_dict in layer.experiments:
                 self.experiment_id_map[experiment_dict['id']] = entities.Experiment(**experiment_dict)
+
+        if self.integrations:
+            self.integration_key_map = self._generate_key_map(self.integrations, 'key', entities.Integration)
+            odp_integration = self.integration_key_map.get('odp')
+            if odp_integration:
+                self.public_key_for_odp = odp_integration.publicKey
+                self.host_for_odp = odp_integration.host
 
         self.audience_id_map = self._deserialize_audience(self.audience_id_map)
         for group in self.group_id_map.values():

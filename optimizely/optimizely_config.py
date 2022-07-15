@@ -16,7 +16,7 @@ import copy
 from typing import Any, Optional
 
 from .helpers.condition import ConditionOperatorTypes
-from .helpers.types import VariationDict, ExperimentDict, RolloutDict, AttributeDict, EventDict
+from .helpers.types import IntegrationDict, VariationDict, ExperimentDict, RolloutDict, AttributeDict, EventDict
 from .project_config import ProjectConfig
 
 
@@ -30,7 +30,8 @@ class OptimizelyConfig:
         environment_key: Optional[str] = None,
         attributes: Optional[list[OptimizelyAttribute]] = None,
         events: Optional[list[OptimizelyEvent]] = None,
-        audiences: Optional[list[OptimizelyAudience]] = None
+        audiences: Optional[list[OptimizelyAudience]] = None,
+        integrations: Optional[list[OptimizelyIntegration]] = None
     ):
         self.revision = revision
 
@@ -47,6 +48,7 @@ class OptimizelyConfig:
         self.attributes = attributes or []
         self.events = events or []
         self.audiences = audiences or []
+        self.integrations = integrations or []
 
     def get_datafile(self) -> Optional[str]:
         """ Get the datafile associated with OptimizelyConfig.
@@ -123,6 +125,13 @@ class OptimizelyAudience:
         self.conditions = conditions
 
 
+class OptimizelyIntegration:
+    def __init__(self, key: str, host: str, public_key: str):
+        self.key = key
+        self.host = host
+        self.public_key = public_key
+
+
 class OptimizelyConfigService:
     """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
@@ -147,6 +156,7 @@ class OptimizelyConfigService:
         self.attributes = project_config.attributes
         self.events = project_config.events
         self.rollouts = project_config.rollouts
+        self.integrations = project_config.integrations
 
         self._create_lookup_maps()
 
@@ -287,7 +297,8 @@ class OptimizelyConfigService:
             self.environment_key,
             self._get_attributes_list(self.attributes),
             self._get_events_list(self.events),
-            self.audiences
+            self.audiences,
+            self._get_integrations_list(self.integrations)
         )
 
     def _create_lookup_maps(self) -> None:
@@ -530,3 +541,21 @@ class OptimizelyConfigService:
             events_list.append(optly_event)
 
         return events_list
+
+    def _get_integrations_list(self, integrations: list[IntegrationDict]) -> list[OptimizelyIntegration]:
+        """ Converts a list of integration dicts from the datafile into a list of OptimizelyIntegrations
+
+        Returns:
+            List - OptimizelyIntegrations
+        """
+        integrations_list = []
+
+        for integration in integrations:
+            optly_integration = OptimizelyIntegration(
+                integration['key'],
+                integration['host'],
+                integration['publicKey']
+            )
+            integrations_list.append(optly_integration)
+
+        return integrations_list

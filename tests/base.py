@@ -1048,6 +1048,196 @@ class BaseTest(unittest.TestCase):
             'revision': '3',
         }
 
+        self.config_dict_with_audience_segments = {
+            'version': '4',
+            'sendFlagDecisions': True,
+            'rollouts': [
+                {
+                    'experiments': [
+                        {
+                            'audienceIds': ['13389130056'],
+                            'forcedVariations': {},
+                            'id': '3332020515',
+                            'key': 'rollout-rule-1',
+                            'layerId': '3319450668',
+                            'status': 'Running',
+                            'trafficAllocation': [
+                                {
+                                    'endOfRange': 10000,
+                                    'entityId': '3324490633'
+                                }
+                            ],
+                            'variations': [
+                                {
+                                    'featureEnabled': True,
+                                    'id': '3324490633',
+                                    'key': 'rollout-variation-on',
+                                    'variables': []
+                                }
+                            ]
+                        },
+                        {
+                            'audienceIds': [],
+                            'forcedVariations': {},
+                            'id': '3332020556',
+                            'key': 'rollout-rule-2',
+                            'layerId': '3319450668',
+                            'status': 'Running',
+                            'trafficAllocation': [
+                                {
+                                    'endOfRange': 10000,
+                                    'entityId': '3324490644'
+                                }
+                            ],
+                            'variations': [
+                                {
+                                    'featureEnabled': False,
+                                    'id': '3324490644',
+                                    'key': 'rollout-variation-off',
+                                    'variables': []
+                                }
+                            ]
+                        }
+                    ],
+                    'id': '3319450668'
+                }
+            ],
+            'anonymizeIP': True,
+            'botFiltering': True,
+            'projectId': '10431130345',
+            'variables': [],
+            'featureFlags': [
+                {
+                    'experimentIds': ['10390977673'],
+                    'id': '4482920077',
+                    'key': 'flag-segment',
+                    'rolloutId': '3319450668',
+                    'variables': [
+                        {
+                            'defaultValue': '42',
+                            'id': '2687470095',
+                            'key': 'i_42',
+                            'type': 'integer'
+                        }
+                    ]
+                }
+            ],
+            'experiments': [
+                {
+                    'status': 'Running',
+                    'key': 'experiment-segment',
+                    'layerId': '10420273888',
+                    'trafficAllocation': [
+                        {
+                            'entityId': '10389729780',
+                            'endOfRange': 10000
+                        }
+                    ],
+                    'audienceIds': ['$opt_dummy_audience'],
+                    'audienceConditions': ['or', '13389142234', '13389141123'],
+                    'variations': [
+                        {
+                            'variables': [],
+                            'featureEnabled': True,
+                            'id': '10389729780',
+                            'key': 'variation-a'
+                        },
+                        {
+                            'variables': [],
+                            'id': '10416523121',
+                            'key': 'variation-b'
+                        }
+                    ],
+                    'forcedVariations': {},
+                    'id': '10390977673'
+                }
+            ],
+            'groups': [],
+            'integrations': [
+                {
+                    'key': 'odp',
+                    'host': 'https://api.zaius.com',
+                    'publicKey': 'W4WzcEs-ABgXorzY7h1LCQ'
+                }
+            ],
+            'typedAudiences': [
+                {
+                    'id': '13389142234',
+                    'conditions': [
+                        'and',
+                        [
+                            'or',
+                            [
+                                'or',
+                                {
+                                    'value': 'odp-segment-1',
+                                    'type': 'third_party_dimension',
+                                    'name': 'odp.audiences',
+                                    'match': 'qualified'
+                                }
+                            ]
+                        ]
+                    ],
+                    'name': 'odp-segment-1'
+                },
+                {
+                    'id': '13389130056',
+                    'conditions': [
+                        'and',
+                        [
+                            'or',
+                            [
+                                'or',
+                                {
+                                    'value': 'odp-segment-2',
+                                    'type': 'third_party_dimension',
+                                    'name': 'odp.audiences',
+                                    'match': 'qualified'
+                                },
+                                {
+                                    'value': 'us',
+                                    'type': 'custom_attribute',
+                                    'name': 'country',
+                                    'match': 'exact'
+                                }
+                            ],
+                            [
+                                'or',
+                                {
+                                    'value': 'odp-segment-3',
+                                    'type': 'third_party_dimension',
+                                    'name': 'odp.audiences',
+                                    'match': 'qualified'
+                                }
+                            ]
+                        ]
+                    ],
+                    'name': 'odp-segment-2'
+                }
+            ],
+            'audiences': [
+                {
+                    'id': '13389141123',
+                    'name': 'adult',
+                    'conditions': '["and", ["or", ["or", '
+                                  '{"match": "gt", "name": "age", "type": "custom_attribute", "value": 20}]]]'
+                }
+            ],
+            'attributes': [
+                {
+                    'id': '10401066117',
+                    'key': 'gender'
+                },
+                {
+                    'id': '10401066170',
+                    'key': 'testvar'
+                }
+            ],
+            'accountId': '10367498574',
+            'events': [],
+            'revision': '101'
+        }
+
         config = getattr(self, config_dict)
         self.optimizely = optimizely.Optimizely(json.dumps(config))
         self.project_config = self.optimizely.config_manager.get_config()

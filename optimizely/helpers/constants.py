@@ -149,6 +149,14 @@ JSON_SCHEMA = {
         },
         "version": {"type": "string"},
         "revision": {"type": "string"},
+        "integrations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"key": {"type": "string"}, "host": {"type": "string"}, "publicKey": {"type": "string"}},
+                "required": ["key"],
+            }
+        }
     },
     "required": [
         "projectId",
