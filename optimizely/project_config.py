@@ -83,6 +83,7 @@ class ProjectConfig:
         self.bot_filtering: Optional[bool] = config.get('botFiltering', None)
         self.public_key_for_odp: Optional[str] = None
         self.host_for_odp: Optional[str] = None
+        self.all_segments: list[str] = []
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -123,6 +124,9 @@ class ProjectConfig:
             for experiment in experiments_in_group_id_map.values():
                 experiment.__dict__.update({'groupId': group.id, 'groupPolicy': group.policy})
             self.experiment_id_map.update(experiments_in_group_id_map)
+
+        for audience in self.audience_id_map.values():
+            self.all_segments += audience.get_segments()
 
         self.experiment_key_map: dict[str, entities.Experiment] = {}
         self.variation_key_map: dict[str, dict[str, entities.Variation]] = {}

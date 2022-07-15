@@ -52,6 +52,16 @@ class Audience(BaseEntity):
         self.conditionStructure = conditionStructure
         self.conditionList = conditionList
 
+    def get_segments(self) -> list[str]:
+        """ Extract all audience segments used in the this audience's conditions.
+
+    Returns:
+        List of segment names.
+    """
+        if not self.conditionList:
+            return []
+        return list({c[1] for c in self.conditionList if c[3] == 'qualified'})
+
 
 class Event(BaseEntity):
     def __init__(self, id: str, key: str, experimentIds: list[str], **kwargs: Any):

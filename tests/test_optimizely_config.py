@@ -1829,6 +1829,8 @@ class OptimizelyConfigTest(base.BaseTest):
         self.assertEqual(proj_conf.host_for_odp, integration['host'])
         self.assertEqual(proj_conf.public_key_for_odp, integration['publicKey'])
 
+        self.assertEqual(sorted(proj_conf.all_segments), ['odp-segment-1', 'odp-segment-2', 'odp-segment-3'])
+
     def test_optimizely_integration_conversion_no_itegrations(self):
         ''' Test to confirm that integration conversion works and has expected output '''
         config_dict_with_audience_segments = copy.deepcopy(self.config_dict_with_audience_segments)

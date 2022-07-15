@@ -54,6 +54,7 @@ class OptimizelyUserContext:
         self.client = optimizely_client
         self.logger = logger
         self.user_id = user_id
+        self.qualified_segments: list[str] = []
 
         if not isinstance(user_attributes, dict):
             user_attributes = UserAttributes({})
@@ -95,6 +96,8 @@ class OptimizelyUserContext:
         with self.lock:
             if self.forced_decisions_map:
                 user_context.forced_decisions_map = copy.deepcopy(self.forced_decisions_map)
+            if self.qualified_segments:
+                user_context.qualified_segments = self.qualified_segments.copy()
 
         return user_context
 
@@ -248,3 +251,16 @@ class OptimizelyUserContext:
 
             # must allow None to be returned for the Flags only case
             return self.forced_decisions_map.get(decision_context)
+
+    def is_qualified_for(self, segment: str) -> bool:
+        """
+        Checks is the provided segment is in the qualified_segments list.
+
+        Args:
+            segment: a segment name.
+
+        Returns:
+            Returns: true if the segment is in the qualified segments list.
+        """
+        with self.lock:
+            return segment in self.qualified_segments

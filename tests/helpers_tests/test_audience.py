@@ -289,6 +289,28 @@ class AudienceTest(base.BaseTest):
             any_order=True,
         )
 
+    def test_get_segments(self):
+        seg1 = ['odp.audiences', 'seg1', 'third_party_dimension', 'qualified']
+        seg2 = ['odp.audiences', 'seg2', 'third_party_dimension', 'qualified']
+        seg3 = ['odp.audiences', 'seg3', 'third_party_dimension', 'qualified']
+        other = ['other', 'a', 'custom_attribute', 'eq']
+
+        def make_audience(conditions):
+            return Audience('12345', 'group-a', '', conditionList=conditions)
+
+        audience = make_audience([seg1])
+        self.assertEqual(['seg1'], audience.get_segments())
+
+        audience = make_audience([seg1, seg2, other])
+        self.assertEqual(['seg1', 'seg2'], sorted(audience.get_segments()))
+
+        audience = make_audience([seg1, other, seg2])
+        self.assertEqual(['seg1', 'seg2'], sorted(audience.get_segments()))
+
+        audience = make_audience([seg1, other, seg2, seg1, seg2, seg3])
+        self.assertEqual(3, len(audience.get_segments()))
+        self.assertEqual(['seg1', 'seg2', 'seg3'], sorted(audience.get_segments()))
+
 
 class ExperimentAudienceLoggingTest(base.BaseTest):
     def setUp(self):

@@ -37,6 +37,7 @@ lt_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'lt']]
 lt_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'lt']]
 le_int_condition_list = [['meters_travelled', 48, 'custom_attribute', 'le']]
 le_float_condition_list = [['meters_travelled', 48.2, 'custom_attribute', 'le']]
+qualified_condition_list = [['odp.audiences', 'odp-segment-2', 'third_party_dimension', 'qualified']]
 
 
 class CustomAttributeConditionEvaluatorTest(base.BaseTest):
@@ -1204,6 +1205,47 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             custom_err_msg = f"Got {result} in result. Failed for user version: {user_version}"
             self.assertIsNone(result, custom_err_msg)
 
+    def test_qualified__returns_true__when_user_is_qualified(self, ):
+        self.user_context.qualified_segments = ['odp-segment-2']
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            qualified_condition_list, self.user_context, self.mock_client_logger,
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
+    def test_qualified__returns_false__when_user_is_not_qualified(self, ):
+        self.user_context.qualified_segments = ['odp-segment-1']
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            qualified_condition_list, self.user_context, self.mock_client_logger,
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_qualified__returns_false__with_no_qualified_segments(self):
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            qualified_condition_list, self.user_context, self.mock_client_logger
+        )
+
+        self.assertStrictFalse(evaluator.evaluate(0))
+
+    def test_qualified__returns_null__when_condition_value_is_not_string(self):
+        qualified_condition_list = [['odp.audiences', 5, 'third_party_dimension', 'qualified']]
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            qualified_condition_list, self.user_context, self.mock_client_logger
+        )
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+    def test_qualified__returns_true__when_name_is_different(self):
+        self.user_context.qualified_segments = ['odp-segment-2']
+        qualified_condition_list = [['other-name', 'odp-segment-2', 'third_party_dimension', 'qualified']]
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            qualified_condition_list, self.user_context, self.mock_client_logger
+        )
+
+        self.assertStrictTrue(evaluator.evaluate(0))
+
 
 class ConditionDecoderTests(base.BaseTest):
     def test_loads(self):
@@ -1799,6 +1841,30 @@ class CustomAttributeConditionEvaluatorLogging(base.BaseTest):
             "value": False,
             "type": 'custom_attribute',
             "match": 'substring',
+        }
+
+        self.assertIsNone(evaluator.evaluate(0))
+
+        mock_log = getattr(self.mock_client_logger, log_level)
+        mock_log.assert_called_once_with(
+            f'Audience condition "{json.dumps(expected_condition_log)}" has an unsupported condition value. '
+            'You may need to upgrade to a newer release of the Optimizely SDK.'
+        )
+
+    def test_qualified__condition_value_invalid(self):
+        log_level = 'warning'
+        qualified_condition_list = [['odp.audiences', False, 'third_party_dimension', 'qualified']]
+        self.user_context.qualified_segments = ['segment1']
+
+        evaluator = condition_helper.CustomAttributeConditionEvaluator(
+            qualified_condition_list, self.user_context, self.mock_client_logger
+        )
+
+        expected_condition_log = {
+            "name": 'odp.audiences',
+            "value": False,
+            "type": 'third_party_dimension',
+            "match": 'qualified',
         }
 
         self.assertIsNone(evaluator.evaluate(0))
