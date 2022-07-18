@@ -1027,7 +1027,7 @@ class ConfigTest(base.BaseTest):
         self.assertEqual(expected_datafile, actual_datafile)
 
     def test_datafile_with_audience_segments(self):
-        ''' Test to confirm that integration conversion works and has expected output '''
+        """ Test to confirm that integration conversion works and has expected output """
         opt_obj = optimizely.Optimizely(
             json.dumps(self.config_dict_with_audience_segments)
         )
@@ -1048,7 +1048,7 @@ class ConfigTest(base.BaseTest):
         self.assertEqual(sorted(project_config.all_segments), ['odp-segment-1', 'odp-segment-2', 'odp-segment-3'])
 
     def test_datafile_with_no_audience_segments(self):
-        ''' Test to confirm that datafile with empty integrations still works '''
+        """ Test to confirm that datafile with empty integrations still works """
         config_dict_with_audience_segments = copy.deepcopy(self.config_dict_with_audience_segments)
         config_dict_with_audience_segments['integrations'] = []
         opt_obj = optimizely.Optimizely(
@@ -1061,7 +1061,7 @@ class ConfigTest(base.BaseTest):
         self.assertEqual(len(project_config.integrations), 0)
 
     def test_datafile_with_audience_segments_missing_key(self):
-        ''' Test to confirm that datafile with empty integrations still works '''
+        """ Test to confirm that datafile with empty integrations still works """
         config_dict_with_audience_segments = copy.deepcopy(self.config_dict_with_audience_segments)
         del config_dict_with_audience_segments['integrations'][0]['host']
         opt_obj = optimizely.Optimizely(
@@ -1073,7 +1073,7 @@ class ConfigTest(base.BaseTest):
         self.assertIsNone(project_config)
 
     def test_datafile_with_invalid_audience_segments(self):
-        ''' Test to confirm that datafile with empty integrations still works '''
+        """ Test to confirm that datafile with empty integrations still works """
         config_dict_with_audience_segments = copy.deepcopy(self.config_dict_with_audience_segments)
         config_dict_with_audience_segments['integrations'][0]['host'] = 5
         opt_obj = optimizely.Optimizely(

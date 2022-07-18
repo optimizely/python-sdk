@@ -30,29 +30,29 @@ class BaseEntity(TypedDict):
 
 
 class BaseDict(BaseEntity):
-    '''Base type for parsed datafile json, before instantiation of class objects.'''
+    """Base type for parsed datafile json, before instantiation of class objects."""
     id: str
     key: str
 
 
 class EventDict(BaseDict):
-    '''Event dict from parsed datafile json.'''
+    """Event dict from parsed datafile json."""
     experimentIds: list[str]
 
 
 class AttributeDict(BaseDict):
-    '''Attribute dict from parsed datafile json.'''
+    """Attribute dict from parsed datafile json."""
     pass
 
 
 class TrafficAllocation(BaseEntity):
-    '''Traffic Allocation dict from parsed datafile json.'''
+    """Traffic Allocation dict from parsed datafile json."""
     endOfRange: int
     entityId: str
 
 
 class VariableDict(BaseDict):
-    '''Variable dict from parsed datafile json.'''
+    """Variable dict from parsed datafile json."""
     value: str
     type: str
     defaultValue: str
@@ -60,13 +60,13 @@ class VariableDict(BaseDict):
 
 
 class VariationDict(BaseDict):
-    '''Variation dict from parsed datafile json.'''
+    """Variation dict from parsed datafile json."""
     variables: list[VariableDict]
     featureEnabled: Optional[bool]
 
 
 class ExperimentDict(BaseDict):
-    '''Experiment dict from parsed datafile json.'''
+    """Experiment dict from parsed datafile json."""
     status: str
     forcedVariations: dict[str, str]
     variations: list[VariationDict]
@@ -77,20 +77,20 @@ class ExperimentDict(BaseDict):
 
 
 class RolloutDict(BaseEntity):
-    '''Rollout dict from parsed datafile json.'''
+    """Rollout dict from parsed datafile json."""
     id: str
     experiments: list[ExperimentDict]
 
 
 class FeatureFlagDict(BaseDict):
-    '''Feature flag dict from parsed datafile json.'''
+    """Feature flag dict from parsed datafile json."""
     rolloutId: str
     variables: list[VariableDict]
     experimentIds: list[str]
 
 
 class GroupDict(BaseEntity):
-    '''Group dict from parsed datafile json.'''
+    """Group dict from parsed datafile json."""
     id: str
     policy: str
     experiments: list[ExperimentDict]
@@ -98,14 +98,14 @@ class GroupDict(BaseEntity):
 
 
 class AudienceDict(BaseEntity):
-    '''Audience dict from parsed datafile json.'''
+    """Audience dict from parsed datafile json."""
     id: str
     name: str
     conditions: list[Any] | str
 
 
 class IntegrationDict(BaseEntity):
-    '''Integration dict from parsed datafile json.'''
+    """Integration dict from parsed datafile json."""
     key: str
     host: str
     publicKey: str

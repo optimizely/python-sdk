@@ -618,15 +618,15 @@ class CustomAttributeConditionEvaluator:
     def qualified_evaluator(self, index: int) -> Optional[bool]:
         """ Check if the user is qualifed for the given segment.
 
-    Args:
-      index: Index of the condition to be evaluated.
+        Args:
+        index: Index of the condition to be evaluated.
 
-    Returns:
-      Boolean:
-        - True if the user is qualified.
-        - False if the user is not qualified.
-      None: if the condition value isn't a string.
-    """
+        Returns:
+        Boolean:
+            - True if the user is qualified.
+            - False if the user is not qualified.
+        None: if the condition value isn't a string.
+        """
         condition_value = self.condition_data[index][1]
 
         if not isinstance(condition_value, str):
