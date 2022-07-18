@@ -55,9 +55,9 @@ class Audience(BaseEntity):
     def get_segments(self) -> list[str]:
         """ Extract all audience segments used in the this audience's conditions.
 
-    Returns:
-        List of segment names.
-    """
+        Returns:
+            List of segment names.
+        """
         if not self.conditionList:
             return []
         return list({c[1] for c in self.conditionList if c[3] == 'qualified'})
