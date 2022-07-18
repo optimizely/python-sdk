@@ -13,10 +13,9 @@
 
 import json
 
-from optimizely import entities, optimizely, project_config
+from optimizely import optimizely, project_config
 from optimizely import optimizely_config
 from . import base
-import copy
 
 
 class OptimizelyConfigTest(base.BaseTest):
@@ -1231,7 +1230,6 @@ class OptimizelyConfigTest(base.BaseTest):
                     'key': 'test_feature_in_multiple_experiments'
                 }
             },
-            'integrations': [],
             'revision': '1',
             '_datafile': json.dumps(self.config_dict_with_features)
         }
@@ -1802,46 +1800,3 @@ class OptimizelyConfigTest(base.BaseTest):
                 self.assertIsInstance(delivery_rule, optimizely_config.OptimizelyExperiment)
 
         self.assertEqual(expected_features_map_dict, actual_features_map_dict)
-
-    def test_optimizely_integration_conversion(self):
-        ''' Test to confirm that integration conversion works and has expected output '''
-        proj_conf = project_config.ProjectConfig(
-            json.dumps(self.config_dict_with_audience_segments),
-            logger=None,
-            error_handler=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
-        optly_config = config_service.get_config()
-
-        for integration in proj_conf.integration_key_map.values():
-            self.assertIsInstance(integration, entities.Integration)
-
-        for integration in optly_config.integrations:
-            self.assertIsInstance(integration, optimizely_config.OptimizelyIntegration)
-
-        integrations = self.config_dict_with_audience_segments['integrations']
-        self.assertGreater(len(integrations), 0)
-        self.assertEqual(len(optly_config.integrations), len(integrations))
-        self.assertEqual(len(proj_conf.integrations), len(integrations))
-
-        integration = integrations[0]
-        self.assertEqual(proj_conf.host_for_odp, integration['host'])
-        self.assertEqual(proj_conf.public_key_for_odp, integration['publicKey'])
-
-        self.assertEqual(sorted(proj_conf.all_segments), ['odp-segment-1', 'odp-segment-2', 'odp-segment-3'])
-
-    def test_optimizely_integration_conversion_no_itegrations(self):
-        ''' Test to confirm that integration conversion works and has expected output '''
-        config_dict_with_audience_segments = copy.deepcopy(self.config_dict_with_audience_segments)
-        config_dict_with_audience_segments['integrations'] = []
-        proj_conf = project_config.ProjectConfig(
-            json.dumps(config_dict_with_audience_segments),
-            logger=None,
-            error_handler=None
-        )
-
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
-        optly_config = config_service.get_config()
-
-        self.assertEqual(len(optly_config.integrations), 0)
