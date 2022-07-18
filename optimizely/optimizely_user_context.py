@@ -54,7 +54,7 @@ class OptimizelyUserContext:
         self.client = optimizely_client
         self.logger = logger
         self.user_id = user_id
-        self.qualified_segments: list[str] = []
+        self._qualified_segments: list[str] = []
 
         if not isinstance(user_attributes, dict):
             user_attributes = UserAttributes({})
@@ -96,8 +96,8 @@ class OptimizelyUserContext:
         with self.lock:
             if self.forced_decisions_map:
                 user_context.forced_decisions_map = copy.deepcopy(self.forced_decisions_map)
-            if self.qualified_segments:
-                user_context.qualified_segments = self.qualified_segments.copy()
+            if self._qualified_segments:
+                user_context._qualified_segments = self._qualified_segments.copy()
 
         return user_context
 
@@ -263,4 +263,4 @@ class OptimizelyUserContext:
             Returns: true if the segment is in the qualified segments list.
         """
         with self.lock:
-            return segment in self.qualified_segments
+            return segment in self._qualified_segments

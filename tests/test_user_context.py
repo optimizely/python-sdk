@@ -1791,7 +1791,7 @@ class UserContextTest(base.BaseTest):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         user_context = opt_obj.create_user_context("test_user", {})
         qualified_segments = ['seg1', 'seg2']
-        user_context.qualified_segments = qualified_segments
+        user_context._qualified_segments = qualified_segments
 
         context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('v1')
@@ -1810,9 +1810,9 @@ class UserContextTest(base.BaseTest):
         self.assertIsNotNone(user_context_2.forced_decisions_map)
         self.assertIsNot(user_context.forced_decisions_map, user_context_2.forced_decisions_map)
 
-        self.assertTrue(user_context_2.qualified_segments)
-        self.assertEqual(user_context_2.qualified_segments, qualified_segments)
-        self.assertIsNot(user_context.qualified_segments, user_context_2.qualified_segments)
+        self.assertTrue(user_context_2._qualified_segments)
+        self.assertEqual(user_context_2._qualified_segments, qualified_segments)
+        self.assertIsNot(user_context._qualified_segments, user_context_2._qualified_segments)
 
         self.assertEqual(user_context_2.get_forced_decision(context_with_flag).variation_key, 'v1')
         self.assertEqual(user_context_2.get_forced_decision(context_with_rule).variation_key, 'v2')
@@ -1926,7 +1926,7 @@ class UserContextTest(base.BaseTest):
     def test_decide_with_qualified_segments_segment_hit_in_ab_test(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
-        user.qualified_segments = ["odp-segment-1", "odp-segment-none"]
+        user._qualified_segments = ["odp-segment-1", "odp-segment-none"]
 
         decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
 
@@ -1935,7 +1935,7 @@ class UserContextTest(base.BaseTest):
     def test_decide_with_qualified_segments_other_audience_hit_in_ab_test(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id', {"age": 30})
-        user.qualified_segments = ["odp-segment-none"]
+        user._qualified_segments = ["odp-segment-none"]
 
         decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
 
@@ -1944,7 +1944,7 @@ class UserContextTest(base.BaseTest):
     def test_decide_with_qualified_segments_segment_hit_in_rollout(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
-        user.qualified_segments = ["odp-segment-2"]
+        user._qualified_segments = ["odp-segment-2"]
 
         decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
 
@@ -1962,7 +1962,7 @@ class UserContextTest(base.BaseTest):
     def test_decide_with_qualified_segments_empty_segments(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
-        user.qualified_segments = []
+        user._qualified_segments = []
 
         decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
 
