@@ -353,7 +353,7 @@ class DecisionService:
         return None, decide_reasons
 
     def get_variation_for_rollout(
-        self, project_config: ProjectConfig, feature: entities.FeatureFlag, user: OptimizelyUserContext
+        self, project_config: ProjectConfig, feature: entities.FeatureFlag, user_context: OptimizelyUserContext
     ) -> tuple[Decision, list[str]]:
         """ Determine which experiment/variation the user is in for a given rollout.
             Returns the variation of the first experiment the user qualifies for.
@@ -370,8 +370,8 @@ class DecisionService:
           array of log messages representing decision making.
         """
         decide_reasons: list[str] = []
-        user_id = user.user_id
-        attributes = user.get_user_attributes()
+        user_id = user_context.user_id
+        attributes = user_context.get_user_attributes()
 
         if not feature or not feature.rolloutId:
             return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
@@ -400,7 +400,7 @@ class DecisionService:
             rule = rollout_rules[index]
             optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
             forced_decision_variation, reasons_received = self.validated_forced_decision(
-                project_config, optimizely_decision_context, user)
+                project_config, optimizely_decision_context, user_context)
             decide_reasons += reasons_received
 
             if forced_decision_variation:
@@ -421,7 +421,7 @@ class DecisionService:
 
             audience_decision_response, reasons_received_audience = audience_helper.does_user_meet_audience_conditions(
                 project_config, audience_conditions, enums.RolloutRuleAudienceEvaluationLogs,
-                logging_key, user, self.logger)
+                logging_key, user_context, self.logger)
 
             decide_reasons += reasons_received_audience
 
