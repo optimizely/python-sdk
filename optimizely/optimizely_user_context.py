@@ -95,8 +95,10 @@ class OptimizelyUserContext:
 
         with self.lock:
             if self.forced_decisions_map:
+                # makes sure forced_decisions_map is duplicated without any references
                 user_context.forced_decisions_map = copy.deepcopy(self.forced_decisions_map)
             if self._qualified_segments:
+                # no need to use deepcopy here as qualified_segments does not contain anything other than strings
                 user_context._qualified_segments = self._qualified_segments.copy()
 
         return user_context
