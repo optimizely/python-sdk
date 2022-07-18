@@ -1784,7 +1784,7 @@ class UserContextTest(base.BaseTest):
         status = user_context.remove_all_forced_decisions()
         self.assertTrue(status)
 
-    def test_user_context_clone_return_valid(self):
+    def test_user_context__clone_return_valid(self):
         """
         Should return valid objects.
         """
@@ -1923,7 +1923,7 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(100, remove_all_forced_decisions_counter.call_count)
         self.assertEqual(100, clone_counter.call_count)
 
-    def test_decide_with_qualified_segments_segment_hit_in_ab_test(self):
+    def test_decide_with_qualified_segments__segment_hit_in_ab_test(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
         user._qualified_segments = ["odp-segment-1", "odp-segment-none"]
@@ -1932,7 +1932,7 @@ class UserContextTest(base.BaseTest):
 
         self.assertEqual(decision.variation_key, "variation-a")
 
-    def test_decide_with_qualified_segments_other_audience_hit_in_ab_test(self):
+    def test_decide_with_qualified_segments__other_audience_hit_in_ab_test(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id', {"age": 30})
         user._qualified_segments = ["odp-segment-none"]
@@ -1941,7 +1941,7 @@ class UserContextTest(base.BaseTest):
 
         self.assertEqual(decision.variation_key, "variation-a")
 
-    def test_decide_with_qualified_segments_segment_hit_in_rollout(self):
+    def test_decide_with_qualified_segments__segment_hit_in_rollout(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
         user._qualified_segments = ["odp-segment-2"]
@@ -1950,7 +1950,7 @@ class UserContextTest(base.BaseTest):
 
         self.assertEqual(decision.variation_key, "rollout-variation-on")
 
-    def test_decide_with_qualified_segments_segment_miss_in_rollout(self):
+    def test_decide_with_qualified_segments__segment_miss_in_rollout(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
         user.qualified_segments = ["odp-segment-none"]
@@ -1959,7 +1959,7 @@ class UserContextTest(base.BaseTest):
 
         self.assertEqual(decision.variation_key, "rollout-variation-off")
 
-    def test_decide_with_qualified_segments_empty_segments(self):
+    def test_decide_with_qualified_segments__empty_segments(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
         user._qualified_segments = []
@@ -1968,7 +1968,7 @@ class UserContextTest(base.BaseTest):
 
         self.assertEqual(decision.variation_key, "rollout-variation-off")
 
-    def test_decide_with_qualified_segments_default(self):
+    def test_decide_with_qualified_segments__default(self):
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
         user = client.create_user_context('user-id')
 
