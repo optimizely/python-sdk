@@ -1206,7 +1206,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
             self.assertIsNone(result, custom_err_msg)
 
     def test_qualified__returns_true__when_user_is_qualified(self, ):
-        self.user_context._qualified_segments = ['odp-segment-2']
+        self.user_context.set_qualified_segments(['odp-segment-2'])
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             qualified_condition_list, self.user_context, self.mock_client_logger,
         )
@@ -1214,7 +1214,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         self.assertStrictTrue(evaluator.evaluate(0))
 
     def test_qualified__returns_false__when_user_is_not_qualified(self, ):
-        self.user_context._qualified_segments = ['odp-segment-1']
+        self.user_context.set_qualified_segments(['odp-segment-1'])
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             qualified_condition_list, self.user_context, self.mock_client_logger,
         )
@@ -1238,7 +1238,7 @@ class CustomAttributeConditionEvaluatorTest(base.BaseTest):
         self.assertIsNone(evaluator.evaluate(0))
 
     def test_qualified__returns_true__when_name_is_different(self):
-        self.user_context._qualified_segments = ['odp-segment-2']
+        self.user_context.set_qualified_segments(['odp-segment-2'])
         qualified_condition_list = [['other-name', 'odp-segment-2', 'third_party_dimension', 'qualified']]
         evaluator = condition_helper.CustomAttributeConditionEvaluator(
             qualified_condition_list, self.user_context, self.mock_client_logger

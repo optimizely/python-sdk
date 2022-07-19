@@ -266,3 +266,26 @@ class OptimizelyUserContext:
         """
         with self.lock:
             return segment in self._qualified_segments
+
+    def get_qualified_segments(self) -> list[str]:
+        """
+        Gets the qualified segments.
+
+        Returns:
+            A list of qualified segment names.
+        """
+        with self.lock:
+            return self._qualified_segments.copy()
+
+    def set_qualified_segments(self, segments: list[str]) -> None:
+        """
+        Replaces any qualified segments with the provided list of segments.
+
+        Args:
+            segments: a list of segment names.
+
+        Returns:
+            None.
+        """
+        with self.lock:
+            self._qualified_segments = segments
