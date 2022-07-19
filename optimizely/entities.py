@@ -188,7 +188,7 @@ class Variation(BaseEntity):
 
 
 class Integration(BaseEntity):
-    def __init__(self, key: str, host: str, publicKey: str):
+    def __init__(self, key: str, host: Optional[str] = None, publicKey: Optional[str] = None):
         self.key = key
         self.host = host
         self.publicKey = publicKey
