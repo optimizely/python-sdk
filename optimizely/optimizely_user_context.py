@@ -288,4 +288,4 @@ class OptimizelyUserContext:
             None.
         """
         with self.lock:
-            self._qualified_segments = segments
+            self._qualified_segments = segments.copy()
