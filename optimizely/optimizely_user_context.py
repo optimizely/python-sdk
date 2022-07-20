@@ -54,6 +54,7 @@ class OptimizelyUserContext:
         self.client = optimizely_client
         self.logger = logger
         self.user_id = user_id
+        self._qualified_segments: list[str] = []
 
         if not isinstance(user_attributes, dict):
             user_attributes = UserAttributes({})
@@ -94,7 +95,11 @@ class OptimizelyUserContext:
 
         with self.lock:
             if self.forced_decisions_map:
+                # makes sure forced_decisions_map is duplicated without any references
                 user_context.forced_decisions_map = copy.deepcopy(self.forced_decisions_map)
+            if self._qualified_segments:
+                # no need to use deepcopy here as qualified_segments does not contain anything other than strings
+                user_context._qualified_segments = self._qualified_segments.copy()
 
         return user_context
 
@@ -248,3 +253,39 @@ class OptimizelyUserContext:
 
             # must allow None to be returned for the Flags only case
             return self.forced_decisions_map.get(decision_context)
+
+    def is_qualified_for(self, segment: str) -> bool:
+        """
+        Checks is the provided segment is in the qualified_segments list.
+
+        Args:
+            segment: a segment name.
+
+        Returns:
+            Returns: true if the segment is in the qualified segments list.
+        """
+        with self.lock:
+            return segment in self._qualified_segments
+
+    def get_qualified_segments(self) -> list[str]:
+        """
+        Gets the qualified segments.
+
+        Returns:
+            A list of qualified segment names.
+        """
+        with self.lock:
+            return self._qualified_segments.copy()
+
+    def set_qualified_segments(self, segments: list[str]) -> None:
+        """
+        Replaces any qualified segments with the provided list of segments.
+
+        Args:
+            segments: a list of segment names.
+
+        Returns:
+            None.
+        """
+        with self.lock:
+            self._qualified_segments = segments.copy()

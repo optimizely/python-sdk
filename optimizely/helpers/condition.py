@@ -55,21 +55,23 @@ class ConditionMatchTypes:
     SEMVER_LE: Final = 'semver_le'
     SEMVER_LT: Final = 'semver_lt'
     SUBSTRING: Final = 'substring'
+    QUALIFIED: Final = 'qualified'
 
 
 class CustomAttributeConditionEvaluator:
     """ Class encapsulating methods to be used in audience leaf condition evaluation. """
 
-    CUSTOM_ATTRIBUTE_CONDITION_TYPE: Final = 'custom_attribute'
+    CONDITION_TYPES: Final = ('custom_attribute', 'third_party_dimension')
 
     def __init__(
         self,
         condition_data: list[str | list[str]],
-        attributes: Optional[optimizely_user_context.UserAttributes],
+        user_context: optimizely_user_context.OptimizelyUserContext,
         logger: Logger
     ):
         self.condition_data = condition_data
-        self.attributes = attributes or optimizely_user_context.UserAttributes({})
+        self.user_context = user_context
+        self.attributes = user_context.get_user_attributes()
         self.logger = logger
 
     def _get_condition_json(self, index: int) -> str:
@@ -613,7 +615,27 @@ class CustomAttributeConditionEvaluator:
 
         return result >= 0
 
-    EVALUATORS_BY_MATCH_TYPE = {
+    def qualified_evaluator(self, index: int) -> Optional[bool]:
+        """ Check if the user is qualifed for the given segment.
+
+        Args:
+        index: Index of the condition to be evaluated.
+
+        Returns:
+        Boolean:
+            - True if the user is qualified.
+            - False if the user is not qualified.
+        None: if the condition value isn't a string.
+        """
+        condition_value = self.condition_data[index][1]
+
+        if not isinstance(condition_value, str):
+            self.logger.warning(audience_logs.UNKNOWN_CONDITION_VALUE.format(self._get_condition_json(index),))
+            return None
+
+        return self.user_context.is_qualified_for(condition_value)
+
+    EVALUATORS_BY_MATCH_TYPE: dict[str, Callable[[CustomAttributeConditionEvaluator, int], Optional[bool]]] = {
         ConditionMatchTypes.EXACT: exact_evaluator,
         ConditionMatchTypes.EXISTS: exists_evaluator,
         ConditionMatchTypes.GREATER_THAN: greater_than_evaluator,
@@ -625,7 +647,8 @@ class CustomAttributeConditionEvaluator:
         ConditionMatchTypes.SEMVER_GT: semver_greater_than_evaluator,
         ConditionMatchTypes.SEMVER_LE: semver_less_than_or_equal_evaluator,
         ConditionMatchTypes.SEMVER_LT: semver_less_than_evaluator,
-        ConditionMatchTypes.SUBSTRING: substring_evaluator
+        ConditionMatchTypes.SUBSTRING: substring_evaluator,
+        ConditionMatchTypes.QUALIFIED: qualified_evaluator
     }
 
     def split_version(self, version: str) -> Optional[list[str]]:
@@ -696,7 +719,7 @@ class CustomAttributeConditionEvaluator:
       None: if the user attributes and condition can't be evaluated.
     """
 
-        if self.condition_data[index][2] != self.CUSTOM_ATTRIBUTE_CONDITION_TYPE:
+        if self.condition_data[index][2] not in self.CONDITION_TYPES:
             self.logger.warning(audience_logs.UNKNOWN_CONDITION_TYPE.format(self._get_condition_json(index)))
             return None
 
@@ -708,7 +731,7 @@ class CustomAttributeConditionEvaluator:
             self.logger.warning(audience_logs.UNKNOWN_MATCH_TYPE.format(self._get_condition_json(index)))
             return None
 
-        if condition_match != ConditionMatchTypes.EXISTS:
+        if condition_match not in (ConditionMatchTypes.EXISTS, ConditionMatchTypes.QUALIFIED):
             attribute_key = self.condition_data[index][0]
             if attribute_key not in self.attributes:
                 self.logger.debug(

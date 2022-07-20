@@ -31,7 +31,7 @@ def does_user_meet_audience_conditions(
     audience_conditions: Optional[Sequence[str | list[str]]],
     audience_logs: Type[ExperimentAudienceEvaluationLogs | RolloutRuleAudienceEvaluationLogs],
     logging_key: str,
-    attributes: Optional[optimizely_user_context.UserAttributes],
+    user_context: optimizely_user_context.OptimizelyUserContext,
     logger: Logger
 ) -> tuple[bool, list[str]]:
     """ Determine for given experiment if user satisfies the audiences for the experiment.
@@ -62,15 +62,12 @@ def does_user_meet_audience_conditions(
 
         return True, decide_reasons
 
-    if attributes is None:
-        attributes = optimizely_user_context.UserAttributes({})
-
     def evaluate_custom_attr(audience_id: str, index: int) -> Optional[bool]:
         audience = config.get_audience(audience_id)
         if not audience or audience.conditionList is None:
             return None
         custom_attr_condition_evaluator = condition_helper.CustomAttributeConditionEvaluator(
-            audience.conditionList, attributes, logger
+            audience.conditionList, user_context, logger
         )
 
         return custom_attr_condition_evaluator.evaluate(index)

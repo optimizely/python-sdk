@@ -59,6 +59,11 @@ class ValidatorTest(base.BaseTest):
 
         self.assertTrue(validator.is_datafile_valid(json.dumps(self.config_dict)))
 
+    def test_is_datafile_valid__returns_true_with_audience_segments(self):
+        """ Test that valid datafile with audience segments returns True. """
+
+        self.assertTrue(validator.is_datafile_valid(json.dumps(self.config_dict_with_audience_segments)))
+
     def test_is_datafile_valid__returns_false(self):
         """ Test that invalid datafile returns False. """
 

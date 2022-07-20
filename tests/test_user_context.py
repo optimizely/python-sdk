@@ -1784,12 +1784,14 @@ class UserContextTest(base.BaseTest):
         status = user_context.remove_all_forced_decisions()
         self.assertTrue(status)
 
-    def test_forced_decision_clone_return_valid_forced_decision(self):
+    def test_user_context__clone_return_valid(self):
         """
-        Should return valid forced decision on cloning.
+        Should return valid objects.
         """
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         user_context = opt_obj.create_user_context("test_user", {})
+        qualified_segments = ['seg1', 'seg2']
+        user_context.set_qualified_segments(qualified_segments)
 
         context_with_flag = OptimizelyUserContext.OptimizelyDecisionContext('f1', None)
         decision_for_flag = OptimizelyUserContext.OptimizelyForcedDecision('v1')
@@ -1806,6 +1808,11 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(user_context_2.user_id, 'test_user')
         self.assertEqual(user_context_2.get_user_attributes(), {})
         self.assertIsNotNone(user_context_2.forced_decisions_map)
+        self.assertIsNot(user_context.forced_decisions_map, user_context_2.forced_decisions_map)
+
+        self.assertTrue(user_context_2.get_qualified_segments())
+        self.assertEqual(user_context_2.get_qualified_segments(), qualified_segments)
+        self.assertIsNot(user_context.get_qualified_segments(), user_context_2.get_qualified_segments())
 
         self.assertEqual(user_context_2.get_forced_decision(context_with_flag).variation_key, 'v1')
         self.assertEqual(user_context_2.get_forced_decision(context_with_rule).variation_key, 'v2')
@@ -1915,3 +1922,56 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(200, remove_forced_decision_counter.call_count)
         self.assertEqual(100, remove_all_forced_decisions_counter.call_count)
         self.assertEqual(100, clone_counter.call_count)
+
+    def test_decide_with_qualified_segments__segment_hit_in_ab_test(self):
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
+        user = client.create_user_context('user-id')
+        user.set_qualified_segments(["odp-segment-1", "odp-segment-none"])
+
+        decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
+
+        self.assertEqual(decision.variation_key, "variation-a")
+
+    def test_decide_with_qualified_segments__other_audience_hit_in_ab_test(self):
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
+        user = client.create_user_context('user-id', {"age": 30})
+        user.set_qualified_segments(["odp-segment-none"])
+
+        decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
+
+        self.assertEqual(decision.variation_key, "variation-a")
+
+    def test_decide_with_qualified_segments__segment_hit_in_rollout(self):
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
+        user = client.create_user_context('user-id')
+        user.set_qualified_segments(["odp-segment-2"])
+
+        decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
+
+        self.assertEqual(decision.variation_key, "rollout-variation-on")
+
+    def test_decide_with_qualified_segments__segment_miss_in_rollout(self):
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
+        user = client.create_user_context('user-id')
+        user.qualified_segments = ["odp-segment-none"]
+
+        decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
+
+        self.assertEqual(decision.variation_key, "rollout-variation-off")
+
+    def test_decide_with_qualified_segments__empty_segments(self):
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
+        user = client.create_user_context('user-id')
+        user.set_qualified_segments([])
+
+        decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
+
+        self.assertEqual(decision.variation_key, "rollout-variation-off")
+
+    def test_decide_with_qualified_segments__default(self):
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments))
+        user = client.create_user_context('user-id')
+
+        decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
+
+        self.assertEqual(decision.variation_key, "rollout-variation-off")
