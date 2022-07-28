@@ -10,11 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from __future__ import annotations
 import time
 from unittest import TestCase
-from optimizely.odp.lru_cache import LRUCache, CacheProtocol
-from typing import Optional
+from optimizely.odp.lru_cache import LRUCache, OptimizelySegmentsCache
 
 
 class LRUCacheTest(TestCase):
@@ -114,19 +114,6 @@ class LRUCacheTest(TestCase):
         self.assertEqual(100, cache.lookup(1), "should not expire when timeout is less than 0")
         self.assertEqual(200, cache.lookup(2))
 
-    def test_all_stale(self):
-        max_timeout = 1
-        cache = LRUCache(1000, max_timeout)
-
-        cache.save(1, 100)                       # [1]
-        cache.save(2, 200)                       # [1, 2]
-        cache.save(3, 300)                       # [1, 2, 3]
-        time.sleep(1.1)  # wait to expire
-        self.assertEqual(len(cache.map), 3)
-
-        self.assertIsNone(cache.lookup(1))       # []
-        self.assertEqual(len(cache.map), 0, "cache should be reset when detected that all items are stale")
-
     def test_reset(self):
         cache = LRUCache(1000, 600)
         cache.save('wow', 'great')
@@ -143,37 +130,6 @@ class LRUCacheTest(TestCase):
         cache.save('cow', 'crate')
         self.assertEqual(cache.lookup('cow'), 'crate')
 
-    # type checker tests
-    # confirm that a custom cache and the LRUCache align with CacheProtocol
-    class CustomCache:
-        """Custom cache implementation for type checker"""
-        def reset(self) -> None:
-            ...
-
-        def lookup(self, key: str) -> Optional[list[str]]:
-            ...
-
-        def save(self, key: str, value: list[str]) -> None:
-            ...
-
-        def peek(self, key: str) -> Optional[list[str]]:
-            ...
-
-        def extra(self) -> None:
-            ...
-
-    class TestCacheManager:
-        """Test cache manager for type checker"""
-        def __init__(self, cache: CacheProtocol[str, list[str]]) -> None:
-            self.cache = cache
-
-        def process(self) -> Optional[list[str]]:
-            self.cache.reset()
-            self.cache.save('key', ['value'])
-            self.cache.peek('key')
-            return self.cache.lookup('key')
-
-    # confirm that LRUCache matches CacheProtocol
-    TestCacheManager(LRUCache(0, 0))
-    # confirm that custom cache implementation matches CacheProtocol
-    TestCacheManager(CustomCache())
+    # type checker test
+    # confirm that LRUCache matches OptimizelySegmentsCache protocol
+    _: OptimizelySegmentsCache[str, list[str]] = LRUCache(0, 0)

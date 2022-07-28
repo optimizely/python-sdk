@@ -11,7 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from __future__ import annotations
 from dataclasses import dataclass, field
 import threading
@@ -25,7 +24,6 @@ if version_info < (3, 8):
 else:
     from typing import Protocol  # type: ignore
 
-
 # generic type definitions for LRUCache parameters
 K = TypeVar('K', bound=Hashable, contravariant=True)
 V = TypeVar('V')
@@ -34,7 +32,7 @@ V = TypeVar('V')
 class LRUCache(Generic[K, V]):
     """Least Recently Used cache that invalidates entries older than the timeout."""
 
-    def __init__(self, capacity: int, timeout_in_secs: float):
+    def __init__(self, capacity: int, timeout_in_secs: int):
         self.lock = threading.Lock()
         self.map: OrderedDict[K, CacheElement[V]] = OrderedDict()
         self.capacity = capacity
@@ -57,8 +55,6 @@ class LRUCache(Generic[K, V]):
 
             if element._is_stale(self.timeout):
                 del self.map[key]
-                if self._all_stale():
-                    self.map.clear()
                 return None
 
         return element.value
@@ -80,11 +76,6 @@ class LRUCache(Generic[K, V]):
             if len(self.map) > self.capacity:
                 self.map.popitem(last=False)
 
-    def _all_stale(self) -> bool:
-        """Returns True if the timeout has passed since the most recent element's timestamp."""
-        newest_element = next(reversed(self.map.values()))
-        return newest_element._is_stale(self.timeout)
-
     def reset(self) -> None:
         """ Clear the cache."""
         if self.capacity <= 0:
@@ -98,7 +89,7 @@ class LRUCache(Generic[K, V]):
             return None
         with self.lock:
             element = self.map.get(key)
-        return element.value if element is not None else element
+        return element.value if element is not None else None
 
 
 @dataclass
@@ -114,7 +105,7 @@ class CacheElement(Generic[V]):
         return time() - self.timestamp >= timeout
 
 
-class CacheProtocol(Protocol[K, V]):
+class OptimizelySegmentsCache(Protocol[K, V]):
     """Protocol for implementing custom cache."""
     def reset(self) -> None:
         """ Clear the cache."""
@@ -126,8 +117,4 @@ class CacheProtocol(Protocol[K, V]):
 
     def save(self, key: K, value: V) -> None:
         """Save the key/value pair in the cache."""
-        ...
-
-    def peek(self, key: K) -> Optional[V]:
-        """Return the value associated with the provided key without updating the cache."""
         ...
