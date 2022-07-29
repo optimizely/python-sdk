@@ -132,4 +132,4 @@ class LRUCacheTest(TestCase):
 
     # type checker test
     # confirm that LRUCache matches OptimizelySegmentsCache protocol
-    _: OptimizelySegmentsCache[str, list[str]] = LRUCache(0, 0)
+    _: OptimizelySegmentsCache = LRUCache(0, 0)

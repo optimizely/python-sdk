@@ -105,16 +105,16 @@ class CacheElement(Generic[V]):
         return time() - self.timestamp >= timeout
 
 
-class OptimizelySegmentsCache(Protocol[K, V]):
+class OptimizelySegmentsCache(Protocol):
     """Protocol for implementing custom cache."""
     def reset(self) -> None:
         """ Clear the cache."""
         ...
 
-    def lookup(self, key: K) -> Optional[V]:
+    def lookup(self, key: str) -> Optional[list[str]]:
         """Return the value associated with the provided key."""
         ...
 
-    def save(self, key: K, value: V) -> None:
+    def save(self, key: str, value: list[str]) -> None:
         """Save the key/value pair in the cache."""
         ...
