@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from sys import version_info
-from typing import Optional, List
+from typing import Optional
 
 import requests
 
@@ -163,26 +163,28 @@ class ZaiusGraphQLApiManager:
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(err.response.status_code))
                 return None
 
-        else:
-            if response_dict and 'errors' in response_dict:
-                odp_errors_list = self.extract_components(response_dict, 'errors')
-                error_class = self.extract_components(odp_errors_list[0], 'extensions.classification')
+        if response_dict and 'errors' in response_dict:
+            try:
+                error_class = response_dict['errors'][0]['extensions']['classification']
+            except (KeyError, IndexError):
+                self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
+                return None
 
-                if error_class == 'InvalidIdentifierException':
-                    self.logger.error(Errors.INVALID_SEGMENT_IDENTIFIER)
-                    return None
-                else:
-                    self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(error_class))
-                    return None
+            if error_class == 'InvalidIdentifierException':
+                self.logger.error(Errors.INVALID_SEGMENT_IDENTIFIER)
+                return None
             else:
-                audiences = self.extract_components(response_dict, 'data.customer.audiences.edges')
+                self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(error_class))
+                return None
+        else:
+            try:
+                audiences = response_dict['data']['customer']['audiences']['edges']
+            except KeyError:
+                self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
+                return None
 
-                if audiences is None:
-                    self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
-                    return None
-
-                segments = [edge['node']['name'] for edge in audiences if edge['node']['state'] == 'qualified']
-                return segments
+            segments = [edge['node']['name'] for edge in audiences if edge['node']['state'] == 'qualified']
+            return segments
 
     @staticmethod
     def make_subset_filter(segments: list[str]) -> str:
@@ -199,20 +201,3 @@ class ZaiusGraphQLApiManager:
         if segments == []:
             return '(subset:[])'
         return '(subset:["' + '", "'.join(segments) + '"]' + ')'
-
-    @staticmethod
-    def extract_components(dictionary: dict, key_path: str) -> List[Optional[str]]:
-        """ Takes path to the key in dotted ke_path across nested dicts,
-        slices the path and returns the value of that key.
-        Works on consecutive nested dictionaries. Doesn't work if other
-        data structures are mixed in (i.e. lists). List can be the final
-        value.
-        """
-        current = dictionary
-
-        for component in key_path.split('.'):
-            if component not in current:
-                return None
-            current = current[component]
-        extracted_list = current
-        return extracted_list

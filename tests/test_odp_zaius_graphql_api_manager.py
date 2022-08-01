@@ -105,6 +105,36 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
 
+    def test_fetch_qualified_segments__invalid_key(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value.json.return_value = json.loads(self.invalid_key_response_data)
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=[])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
+
+    def test_fetch_qualified_segments__invalid_key_in_error_body(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value.json.return_value = json.loads(self.invalid_key_for_error_response_data)
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=[])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
+
     def test_fetch_qualified_segments__network_error(self):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
@@ -177,16 +207,6 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(['a', 'b', 'c']))
         self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(["a", "b", "c"]))
         self.assertEqual("(subset:[\"a\", \"b\", \"don't\"])", api.make_subset_filter(["a", "b", "don't"]))
-
-    def test_extract_component(self):
-        api = ZaiusGraphQLApiManager()
-        dictionary = {'a': {'b': {'c': 'v'}}}
-
-        self.assertEqual({'b': {'c': 'v'}}, api.extract_components(dictionary, 'a'))
-        self.assertEqual({'c': 'v'}, api.extract_components(dictionary, 'a.b'))
-        self.assertEqual('v', api.extract_components(dictionary, 'a.b.c'))
-        self.assertIsNone(api.extract_components(dictionary, 'a.b.c.d'))
-        self.assertIsNone(api.extract_components(dictionary, 'd'))
 
     good_response_data = """
         {
@@ -282,3 +302,63 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             "data": {}
         }
         """
+    # TODO - for testing key error and log message when getting audiences (dict traversal)
+    invalid_key_response_data = """
+        {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "invalid_test_key": [
+                            {
+                                "node": {
+                                    "name": "a",
+                                    "state": "qualified",
+                                    "description": "qualifed sample 1"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "b",
+                                    "state": "qualified",
+                                    "description": "qualifed sample 2"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "c",
+                                    "state": "not_qualified",
+                                    "description": "not-qualified sample"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        """
+
+    invalid_key_for_error_response_data = """
+        {
+          "errors": [
+            {
+              "message": "Exception while fetching data (/customer) :\
+               java.lang.RuntimeException: could not resolve _fs_user_id = asdsdaddddd",
+              "locations": [
+                {
+                  "line": 2,
+                  "column": 3
+                }
+              ],
+              "path": [
+                "customer"
+              ],
+              "invalid_test_key": {
+                "classification": "InvalidIdentifierException"
+              }
+            }
+          ],
+          "data": {
+            "customer": null
+          }
+    }
+    """
