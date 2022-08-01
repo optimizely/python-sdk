@@ -255,7 +255,8 @@ class Optimizely:
             self, project_config: project_config.ProjectConfig, feature_key: str, variable_key: str,
             variable_type: Optional[str], user_id: str, attributes: Optional[UserAttributes]
     ) -> Any:
-        """ Helper method to determine value for a certain variable attached to a feature flag based on type of variable.
+        """ Helper method to determine value for a certain variable attached to a feature flag based on
+        type of variable.
 
         Args:
           project_config: Instance of ProjectConfig.
