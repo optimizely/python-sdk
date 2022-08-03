@@ -13,31 +13,29 @@
 
 import json
 import logging
-import requests
-
-from requests import exceptions as request_exception
 from sys import version_info
 
-from .helpers import enums
-from .helpers.enums import EventDispatchTimeout
+import requests
+from requests import exceptions as request_exception
+
 from . import event_builder
+from .helpers.enums import HTTPVerbs, EventDispatchConfig
 
 if version_info < (3, 8):
-    from typing_extensions import Protocol, Final
+    from typing_extensions import Protocol
 else:
-    from typing import Protocol, Final  # type: ignore
-
-
-REQUEST_TIMEOUT: Final = EventDispatchTimeout.REQUEST_TIMEOUT
+    from typing import Protocol  # type: ignore
 
 
 class CustomEventDispatcher(Protocol):
     """Interface for a custom event dispatcher and required method `dispatch_event`. """
+
     def dispatch_event(self, event: event_builder.Event) -> None:
         ...
 
 
 class EventDispatcher:
+
     @staticmethod
     def dispatch_event(event: event_builder.Event) -> None:
         """ Dispatch the event being represented by the Event object.
@@ -46,11 +44,13 @@ class EventDispatcher:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
         try:
-            if event.http_verb == enums.HTTPVerbs.GET:
-                requests.get(event.url, params=event.params, timeout=REQUEST_TIMEOUT).raise_for_status()
-            elif event.http_verb == enums.HTTPVerbs.POST:
+            if event.http_verb == HTTPVerbs.GET:
+                requests.get(event.url, params=event.params,
+                             timeout=EventDispatchConfig.REQUEST_TIMEOUT).raise_for_status()
+            elif event.http_verb == HTTPVerbs.POST:
                 requests.post(
-                    event.url, data=json.dumps(event.params), headers=event.headers, timeout=REQUEST_TIMEOUT,
+                    event.url, data=json.dumps(event.params), headers=event.headers,
+                    timeout=EventDispatchConfig.REQUEST_TIMEOUT,
                 ).raise_for_status()
 
         except request_exception.RequestException as error:

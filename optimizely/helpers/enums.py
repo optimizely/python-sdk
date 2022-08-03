@@ -192,7 +192,16 @@ class VersionType:
     IS_BUILD: Final = '+'
 
 
-class EventDispatchTimeout:
-    """Time before request to send events times out.
-       Applies to anywhere we send events, i.e.: event_dispatcher, fetch_segments (odp)"""
+class EventDispatchConfig:
+    """Event dispatching configs."""
+    REQUEST_TIMEOUT: Final = 10
+
+
+class OdpRestApiConfig:
+    """ODP Rest API configs."""
+    REQUEST_TIMEOUT: Final = 10
+
+
+class OdpGraphQlApiConfig:
+    """ODP GraphQL API configs."""
     REQUEST_TIMEOUT: Final = 10

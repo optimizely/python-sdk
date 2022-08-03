@@ -14,19 +14,13 @@
 from __future__ import annotations
 
 import json
-from sys import version_info
 from typing import Optional
 
 import requests
-from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError, InvalidJSONError
+from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError
 
 from optimizely import logger as optimizely_logger
-from optimizely.helpers.enums import Errors, EventDispatchTimeout
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final  # type: ignore
+from optimizely.helpers.enums import Errors, OdpGraphQlApiConfig
 
 """
  ODP GraphQL API
@@ -110,8 +104,6 @@ else:
     }
 """
 
-REQUEST_TIMEOUT: Final = EventDispatchTimeout.REQUEST_TIMEOUT
-
 
 class ZaiusGraphQLApiManager:
     """Interface for manging the fetching of audience segments."""
@@ -148,7 +140,7 @@ class ZaiusGraphQLApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=json.dumps(payload_dict),
-                                     timeout=REQUEST_TIMEOUT)
+                                     timeout=OdpGraphQlApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()
@@ -159,8 +151,8 @@ class ZaiusGraphQLApiManager:
             self.logger.debug(f'GraphQL download failed: {err}')
             self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('network error'))
             return None
-        except (JSONDecodeError, InvalidJSONError, json.JSONDecodeError) as err:
-            self.logger.error(f'JSON decoding error: {err}')
+        except JSONDecodeError:
+            self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('JSON decode error'))
             return None
         except RequestException as err:
             self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(err))
