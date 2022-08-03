@@ -3,7 +3,7 @@ from unittest import mock
 
 from requests import Response
 from requests import exceptions as request_exception
-from optimizely.helpers.enums import OdpGraphQlApiConfig
+from optimizely.helpers.enums import OdpGraphQLApiConfig
 
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 from . import base
@@ -32,12 +32,12 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/graphql",
                                                   headers=request_headers,
                                                   data=json.dumps(test_payload),
-                                                  timeout=OdpGraphQlApiConfig.REQUEST_TIMEOUT)
+                                                  timeout=OdpGraphQLApiConfig.REQUEST_TIMEOUT)
 
     def test_fetch_qualified_segments__success(self):
         with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = \
-                self.fake_server_response(status_code=200, _content=self.good_response_data.encode('utf-8'))
+                self.fake_server_response(status_code=200, content=self.good_response_data)
 
             api = ZaiusGraphQLApiManager()
             response = api.fetch_segments(api_key=self.api_key,
@@ -52,7 +52,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = \
-                self.fake_server_response(status_code=200, _content=self.node_missing_response_data.encode('utf-8'))
+                self.fake_server_response(status_code=200, content=self.node_missing_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -69,7 +69,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200,
-                                          _content=self.mixed_missing_keys_response_data.encode('utf-8'))
+                                          content=self.mixed_missing_keys_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -84,7 +84,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__success_with_empty_segments(self):
         with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = \
-                self.fake_server_response(status_code=200, _content=self.good_empty_response_data.encode('utf-8'))
+                self.fake_server_response(status_code=200, content=self.good_empty_response_data)
 
             api = ZaiusGraphQLApiManager()
             response = api.fetch_segments(api_key=self.api_key,
@@ -100,7 +100,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200,
-                                          _content=self.invalid_identifier_response_data.encode('utf-8'))
+                                          content=self.invalid_identifier_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -116,7 +116,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = \
-                self.fake_server_response(status_code=200, _content=self.other_exception_response_data.encode('utf-8'))
+                self.fake_server_response(status_code=200, content=self.other_exception_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -132,7 +132,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = \
-                self.fake_server_response(status_code=200, _content=self.bad_response_data.encode('utf-8'))
+                self.fake_server_response(status_code=200, content=self.bad_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -148,7 +148,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = \
-                self.fake_server_response(status_code=200, _content=self.name_invalid_response_data.encode('utf-8'))
+                self.fake_server_response(status_code=200, content=self.name_invalid_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -258,12 +258,13 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     # fake server response function and test json responses
 
     @staticmethod
-    def fake_server_response(**attributes):
+    def fake_server_response(status_code=None, content=None, url=None):
         """Mock the server response."""
         response = Response()
-        response.status_code = attributes.get('status_code')
-        response._content = attributes.get('_content')
-        response.url = attributes.get('url')
+        response.status_code = status_code
+        if content:
+            response._content = content.encode('utf-8')
+        response.url = url
         return response
 
     good_response_data = """

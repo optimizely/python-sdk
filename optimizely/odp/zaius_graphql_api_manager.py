@@ -20,7 +20,7 @@ import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError
 
 from optimizely import logger as optimizely_logger
-from optimizely.helpers.enums import Errors, OdpGraphQlApiConfig
+from optimizely.helpers.enums import Errors, OdpGraphQLApiConfig
 
 """
  ODP GraphQL API
@@ -140,7 +140,7 @@ class ZaiusGraphQLApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=json.dumps(payload_dict),
-                                     timeout=OdpGraphQlApiConfig.REQUEST_TIMEOUT)
+                                     timeout=OdpGraphQLApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()
