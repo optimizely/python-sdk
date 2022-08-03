@@ -36,7 +36,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
 
     def test_fetch_qualified_segments__success(self):
         with mock.patch('requests.post') as mock_request_post:
-            mock_request_post.return_value.json.return_value = json.loads(self.good_response_data)
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.good_response_data.encode('utf-8'))
 
             api = ZaiusGraphQLApiManager()
             response = api.fetch_segments(api_key=self.api_key,
@@ -47,9 +48,75 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
 
         self.assertEqual(response, ['a', 'b'])
 
+    def test_fetch_qualified_segments__node_missing(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.node_missing_response_data.encode('utf-8'))
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
+
+    def test_fetch_qualified_segments__name_missing(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.name_missing_response_data.encode('utf-8'))
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
+
+    def test_fetch_qualified_segments__state_missing(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.state_missing_response_data.encode('utf-8'))
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
+
+    def test_fetch_qualified_segments__mixed_missing_keys(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200,
+                                          _content=self.mixed_missing_keys_response_data.encode('utf-8'))
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
+
     def test_fetch_qualified_segments__success_with_empty_segments(self):
         with mock.patch('requests.post') as mock_request_post:
-            mock_request_post.return_value.json.return_value = json.loads(self.good_empty_response_data)
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.good_empty_response_data.encode('utf-8'))
 
             api = ZaiusGraphQLApiManager()
             response = api.fetch_segments(api_key=self.api_key,
@@ -63,7 +130,9 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__invalid_identifier(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value.json.return_value = json.loads(self.invalid_identifier_response_data)
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200,
+                                          _content=self.invalid_identifier_response_data.encode('utf-8'))
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -78,7 +147,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__other_exception(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value.json.return_value = json.loads(self.other_exception_response_data)
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.other_exception_response_data.encode('utf-8'))
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -93,7 +163,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__bad_response(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value.json.return_value = json.loads(self.bad_response_data)
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.bad_response_data.encode('utf-8'))
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -105,10 +176,27 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
 
+    def test_fetch_qualified_segments__invalid_json(self):
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            mock_request_post.return_value = \
+                self.fake_server_response(status_code=200, _content=self.name_invalid_response_data.encode('utf-8'))
+
+            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api.fetch_segments(api_key=self.api_key,
+                               api_host=self.api_host,
+                               user_key=self.user_key,
+                               user_value=self.user_value,
+                               segments_to_check=[])
+
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with("JSON decoding error: Expecting ',' "
+                                                  "delimiter: line 9 column 48 (char 252)")
+
     def test_fetch_qualified_segments__invalid_key(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value.json.return_value = json.loads(self.invalid_key_response_data)
+            mock_request_post.return_value.json.return_value = json.loads(self.invalid_edges_key_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -139,7 +227,6 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
@@ -154,13 +241,10 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__400(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-
-            def mock_exception(**kwargs):
-                myresponse = Response()
-                myresponse.status_code = 403
-                raise request_exception.HTTPError(response=myresponse)
-
-            mock_request_post.side_effect = mock_exception
+            myresponse = Response()
+            myresponse.status_code = 403
+            myresponse.url = self.api_host
+            mock_request_post.return_value = myresponse
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -174,18 +258,13 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         # we already it assert_called_once_with() in test_fetch_qualified_segments__valid_request()
         mock_request_post.assert_called_once()
         # assert 403 error log
-        mock_logger.error.assert_called_once_with('Audience segments fetch failed (403).')
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed '
+                                                  f'(403 Client Error: None for url: {self.api_host}).')
 
     def test_fetch_qualified_segments__500(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-
-            def mock_exception(**kwargs):
-                myresponse = Response()
-                myresponse.status_code = 500
-                raise request_exception.HTTPError(response=myresponse)
-
-            mock_request_post.side_effect = mock_exception
+            mock_request_post.return_value = self.fake_server_response(status_code=500, url=self.api_host)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -197,7 +276,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         # make sure that fetch_segments() is called (once).
         mock_request_post.assert_called_once()
         # assert 500 error log
-        mock_logger.error.assert_called_once_with('Audience segments fetch failed (500).')
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed '
+                                                  f'(500 Server Error: None for url: {self.api_host}).')
 
     def test_make_subset_filter(self):
         api = ZaiusGraphQLApiManager()
@@ -207,6 +287,20 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(['a', 'b', 'c']))
         self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(["a", "b", "c"]))
         self.assertEqual("(subset:[\"a\", \"b\", \"don't\"])", api.make_subset_filter(["a", "b", "don't"]))
+
+    # fake server response function and test json responses
+
+    @staticmethod
+    def fake_server_response(**attributes):
+        """Mock the server response.
+           If you wish to include any other response attributes then just add them below.
+           Thera re all attributes of Response object, you can find them in dir(response)"""
+        response = Response()
+        response.status_code = attributes.get('status_code')
+        response._content = attributes.get('_content')
+        response.url = attributes.get('url')
+
+        return response
 
     good_response_data = """
         {
@@ -302,8 +396,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             "data": {}
         }
         """
-    # TODO - for testing key error and log message when getting audiences (dict traversal)
-    invalid_key_response_data = """
+
+    invalid_edges_key_response_data = """
         {
             "data": {
                 "customer": {
@@ -362,3 +456,117 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
           }
     }
     """
+    name_invalid_response_data = """
+        {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "name": "a":::invalid-part-here:::,
+                                    "state": "qualified",
+                                    "description": "qualifed sample 1"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "b",
+                                    "state": "qualified",
+                                    "description": "qualifed sample 2"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "c",
+                                    "state": "not_qualified",
+                                    "description": "not-qualified sample"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        """
+
+    node_missing_response_data = """
+        {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "edges": [
+                            {}
+                        ]
+                    }
+                }
+            }
+        }
+        """
+
+    name_missing_response_data = """
+        {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "state": "qualified",
+                                    "description": "qualified sample 1"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        """
+
+    state_missing_response_data = """
+        {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "name": "a",
+                                    "description": "qualifed sample 1"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        """
+
+    mixed_missing_keys_response_data = """
+        {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "state": "qualified"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "a"
+                                }
+                            },
+                            {
+                                "other-name": {
+                                    "name": "a",
+                                    "state": "qualified"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        """

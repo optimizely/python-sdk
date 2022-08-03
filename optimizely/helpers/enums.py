@@ -190,3 +190,9 @@ class NotificationTypes:
 class VersionType:
     IS_PRE_RELEASE: Final = '-'
     IS_BUILD: Final = '+'
+
+
+class EventDispatchTimeout:
+    """Time before request to send events times out.
+       Applies to anywhere we send events, i.e.: event_dispatcher, fetch_segments (odp)"""
+    REQUEST_TIMEOUT: Final = 10

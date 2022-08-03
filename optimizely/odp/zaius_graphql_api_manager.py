@@ -18,9 +18,10 @@ from sys import version_info
 from typing import Optional
 
 import requests
+from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError, InvalidJSONError
 
 from optimizely import logger as optimizely_logger
-from optimizely.helpers.enums import Errors
+from optimizely.helpers.enums import Errors, EventDispatchTimeout
 
 if version_info < (3, 8):
     from typing_extensions import Final
@@ -109,12 +110,12 @@ else:
     }
 """
 
-
-REQUEST_TIMEOUT: Final = 10
+REQUEST_TIMEOUT: Final = EventDispatchTimeout.REQUEST_TIMEOUT
 
 
 class ZaiusGraphQLApiManager:
     """Interface for manging the fetching of audience segments."""
+
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
 
@@ -140,7 +141,7 @@ class ZaiusGraphQLApiManager:
         segments_filter = self.make_subset_filter(segments_to_check)
         payload_dict = {
             'query': 'query {customer(' + str(user_key) + ': "' + str(user_value) + '") '
-                     '{audiences' + segments_filter + ' {edges {node {name state}}}}}'
+            '{audiences' + segments_filter + ' {edges {node {name state}}}}}'
         }
 
         try:
@@ -152,16 +153,18 @@ class ZaiusGraphQLApiManager:
             response.raise_for_status()
             response_dict = response.json()
 
-        except requests.exceptions.RequestException as err:
-            # There is no status code with network issues such as ConnectionError or Timeouts
-            # (i.e. no internet, server can't be reached).
-            if isinstance(err, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
-                self.logger.debug(f'GraphQL download failed: {err}')
-                self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('network error'))
-                return None
-            elif err.response.status_code >= 400:
-                self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(err.response.status_code))
-                return None
+        # There is no status code with network issues such as ConnectionError or Timeouts
+        # (i.e. no internet, server can't be reached).
+        except (ConnectionError, Timeout) as err:
+            self.logger.debug(f'GraphQL download failed: {err}')
+            self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('network error'))
+            return None
+        except (JSONDecodeError, InvalidJSONError, json.JSONDecodeError) as err:
+            self.logger.error(f'JSON decoding error: {err}')
+            return None
+        except RequestException as err:
+            self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(err))
+            return None
 
         if response_dict and 'errors' in response_dict:
             try:
@@ -179,12 +182,11 @@ class ZaiusGraphQLApiManager:
         else:
             try:
                 audiences = response_dict['data']['customer']['audiences']['edges']
+                segments = [edge['node']['name'] for edge in audiences if edge['node']['state'] == 'qualified']
+                return segments
             except KeyError:
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
                 return None
-
-            segments = [edge['node']['name'] for edge in audiences if edge['node']['state'] == 'qualified']
-            return segments
 
     @staticmethod
     def make_subset_filter(segments: list[str]) -> str:
@@ -195,7 +197,7 @@ class ZaiusGraphQLApiManager:
          --> subsetFilter = '(subset:["a"])'
 
          Purposely using .join() method to deal with special cases of
-         any words with apostrophes (i.e. don't). .join() menhod enquotes
+         any words with apostrophes (i.e. don't). .join() method enquotes
          correctly without conflicting with the apostrophe.
         """
         if segments == []:

@@ -19,6 +19,7 @@ from requests import exceptions as request_exception
 from sys import version_info
 
 from .helpers import enums
+from .helpers.enums import EventDispatchTimeout
 from . import event_builder
 
 if version_info < (3, 8):
@@ -27,7 +28,7 @@ else:
     from typing import Protocol, Final  # type: ignore
 
 
-REQUEST_TIMEOUT: Final = 10
+REQUEST_TIMEOUT: Final = EventDispatchTimeout.REQUEST_TIMEOUT
 
 
 class CustomEventDispatcher(Protocol):
