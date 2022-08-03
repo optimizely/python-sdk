@@ -18,6 +18,7 @@ from requests import exceptions as request_exception
 
 from optimizely import event_builder
 from optimizely import event_dispatcher
+from optimizely.helpers.enums import EventDispatchConfig
 
 
 class EventDispatcherTest(unittest.TestCase):
@@ -31,7 +32,7 @@ class EventDispatcherTest(unittest.TestCase):
         with mock.patch('requests.get') as mock_request_get:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 
-        mock_request_get.assert_called_once_with(url, params=params, timeout=event_dispatcher.REQUEST_TIMEOUT)
+        mock_request_get.assert_called_once_with(url, params=params, timeout=EventDispatchConfig.REQUEST_TIMEOUT)
 
     def test_dispatch_event__post_request(self):
         """ Test that dispatch event fires off requests call with provided URL, params, HTTP verb and headers. """
@@ -52,7 +53,7 @@ class EventDispatcherTest(unittest.TestCase):
             url,
             data=json.dumps(params),
             headers={'Content-Type': 'application/json'},
-            timeout=event_dispatcher.REQUEST_TIMEOUT,
+            timeout=EventDispatchConfig.REQUEST_TIMEOUT,
         )
 
     def test_dispatch_event__handle_request_exception(self):
@@ -76,6 +77,6 @@ class EventDispatcherTest(unittest.TestCase):
             url,
             data=json.dumps(params),
             headers={'Content-Type': 'application/json'},
-            timeout=event_dispatcher.REQUEST_TIMEOUT,
+            timeout=EventDispatchConfig.REQUEST_TIMEOUT,
         )
         mock_log_error.assert_called_once_with('Dispatch event failed. Error: Failed Request')
