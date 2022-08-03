@@ -208,10 +208,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__400(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            myresponse = Response()
-            myresponse.status_code = 403
-            myresponse.url = self.api_host
-            mock_request_post.return_value = myresponse
+            mock_request_post.return_value = self.fake_server_response(status_code=403, url=self.api_host)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
