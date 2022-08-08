@@ -29,7 +29,7 @@ from optimizely.odp.odp_event import OdpEvent
  - test ODP public API key = "W4WzcEs-ABgXorzY7h1LCQ"
 
  [Event Request]
- curl -i -H 'Content-Type: application/json' -H 'x-api-key: W4WzcEs-ABgXorzY7h1LCQ' -X POST -d 
+ curl -i -H 'Content-Type: application/json' -H 'x-api-key: W4WzcEs-ABgXorzY7h1LCQ' -X POST -d
  '{"type":"fullstack","action":"identified","identifiers":{"vuid": "123","fs_user_id": "abc"},
  "data":{"idempotence_id":"xyz","source":"swift-sdk"}}' https://api.zaius.com/v3/events
  [Event Response]
