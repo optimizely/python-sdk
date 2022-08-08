@@ -15,7 +15,8 @@ from requests import Response
 from typing import Optional
 
 
-def fake_server_response(status_code: int = None, content: bytes = None, url: str = None) -> Optional[Response]:
+def fake_server_response(status_code: Optional[int] = None, content: Optional[str] = None,
+                         url: Optional[str] = None) -> Optional[Response]:
     """Mock the server response."""
     response = Response()
     response.status_code = status_code
