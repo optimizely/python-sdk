@@ -17,7 +17,7 @@ import json
 from typing import Optional, List
 
 import requests
-from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError, InvalidURL
+from requests.exceptions import RequestException, ConnectionError, Timeout, InvalidURL, InvalidSchema
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpRestApiConfig
@@ -43,7 +43,7 @@ class ZaiusRestApiManager:
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
 
-    def sendOdpEvents(self, api_key: str, api_host: str, events: List[OdpEvent]) -> Optional[bool]:
+    def send_odp_events(self, api_key: str, api_host: str, events: List[OdpEvent]) -> bool:
         """
         Dispatch the event being represented by the OdpEvent object.
 
@@ -55,34 +55,45 @@ class ZaiusRestApiManager:
         Returns:
             retry is True - if network or server error (5xx), otherwise False
         """
-        can_retry: bool = True
+        should_retry: bool = False
         url = f'{api_host}/v3/events'
         request_headers = {'content-type': 'application/json', 'x-api-key': api_key}
 
         try:
+            payload_dict = json.dumps(events)
+        except TypeError as err:
+            self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
+            return should_retry
+
+        try:
             response = requests.post(url=url,
                                      headers=request_headers,
-                                     data=json.dumps(events),
+                                     data=payload_dict,
                                      timeout=OdpRestApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
-            can_retry = False
 
         except (ConnectionError, Timeout):
             self.logger.error(Errors.ODP_EVENT_FAILED.format('network error'))
-            # we do retry, can_retry = True
-        except JSONDecodeError:
-            self.logger.error(Errors.ODP_EVENT_FAILED.format('JSON decode error'))
-            can_retry = False
-        except InvalidURL:
+            # we do retry on network errors
+            should_retry = True
+        except (InvalidURL, InvalidSchema, UnicodeError):
+            # The three exceptions combined catch different cases of invalid URL format.
+            # For example:
+            # UnicodeError catches double dot in URL: https://api.zaius..com
+            # InvalidURL catches extra characters such as forward slash: https:///api.zaius.com
+            # InvalidSchema catches extra prepended characters: XXhttps://api.zaius.com
             self.logger.error(Errors.ODP_EVENT_FAILED.format('invalid URL'))
-            can_retry = False
         except RequestException as err:
             if 400 <= err.response.status_code < 500:
-                self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
-                can_retry = False
+                if err.response.text:
+                    # log response text if it exists
+                    self.logger.error(Errors.ODP_EVENT_FAILED.format(err.response.text))
+                else:
+                    # otherwise log error message
+                    self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
             else:
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
-                # we do retry, can_retry = True
-        finally:
-            return can_retry
+                # retry on 500 errors
+                should_retry = True
+        return should_retry

@@ -36,9 +36,9 @@ class ZaiusRestApiManagerTest(base.BaseTest):
     def test_send_odp_events__valid_request(self):
         with mock.patch('requests.post') as mock_request_post:
             api = ZaiusRestApiManager()
-            api.sendOdpEvents(api_key=self.api_key,
-                              api_host=self.api_host,
-                              events=self.events)
+            api.send_odp_events(api_key=self.api_key,
+                                api_host=self.api_host,
+                                events=self.events)
 
         request_headers = {'content-type': 'application/json', 'x-api-key': self.api_key}
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/events",
@@ -46,55 +46,95 @@ class ZaiusRestApiManagerTest(base.BaseTest):
                                                   data=json.dumps(self.events),
                                                   timeout=OdpRestApiConfig.REQUEST_TIMEOUT)
 
-    def testSendOdpEvents_success(self):
+    def test_send_odp_ovents_success(self):
         with mock.patch('requests.post') as mock_request_post:
-            mock_request_post.return_value = \
-                fake_server_response(status_code=200)
+            # no need to moch urla nd content because we're not returning the response
+            mock_request_post.return_value = fake_server_response(status_code=200)
 
             api = ZaiusRestApiManager()
-            response = api.sendOdpEvents(api_key=self.api_key,
-                                         api_host=self.api_host,
-                                         events=self.events)  # content of events doesn't matter for the test
+            should_retry = api.send_odp_events(api_key=self.api_key,
+                                               api_host=self.api_host,
+                                               events=self.events)  # content of events doesn't matter for the test
 
-            self.assertFalse(response)
+            self.assertFalse(should_retry)
 
-    def testSendOdpEvents_network_error_retry(self):
+    def test_send_odp_events_invalid_json_no_retry(self):
+        events = {1, 2, 3}  # using a set to trigger JSON-not-serializable error
+
+        with mock.patch('requests.post') as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            api = ZaiusRestApiManager(logger=mock_logger)
+            should_retry = api.send_odp_events(api_key=self.api_key,
+                                               api_host=self.api_host,
+                                               events=events)
+
+        self.assertFalse(should_retry)
+        mock_request_post.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            'ODP event send failed (Object of type set is not JSON serializable).')
+
+    def test_send_odp_events_invalid_url_no_retry(self):
+        invalid_url = 'https://*api.zaius.com'
+
+        with mock.patch('requests.post',
+                        side_effect=request_exception.InvalidURL('Invalid URL error')) as mock_request_post, \
+                mock.patch('optimizely.logger') as mock_logger:
+            api = ZaiusRestApiManager(logger=mock_logger)
+            should_retry = api.send_odp_events(api_key=self.api_key,
+                                               api_host=invalid_url,
+                                               events=self.events)
+
+        self.assertFalse(should_retry)
+        mock_request_post.assert_called_once()
+        mock_logger.error.assert_called_once_with('ODP event send failed (invalid URL).')
+
+    def test_send_odp_events_network_error_retry(self):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             api = ZaiusRestApiManager(logger=mock_logger)
-            response = api.sendOdpEvents(api_key=self.api_key,
-                                         api_host=self.api_host,
-                                         events=self.events)
+            should_retry = api.send_odp_events(api_key=self.api_key,
+                                               api_host=self.api_host,
+                                               events=self.events)
 
-        self.assertTrue(response)
+        self.assertTrue(should_retry)
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('ODP event send failed (network error).')
 
-    def testSendOdpEvents_400_no_retry(self):
+    def test_send_odp_events_400_no_retry(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value = fake_server_response(status_code=403, url=self.api_host)
+            mock_request_post.return_value = fake_server_response(status_code=400,
+                                                                  url=self.api_host,
+                                                                  content=self.failure_response_data)
 
             api = ZaiusRestApiManager(logger=mock_logger)
-            response = api.sendOdpEvents(api_key=self.api_key,
-                                         api_host=self.api_host,
-                                         events=self.events)
+            should_retry = api.send_odp_events(api_key=self.api_key,
+                                               api_host=self.api_host,
+                                               events=self.events)
 
-        self.assertFalse(response)
+        self.assertFalse(should_retry)
         mock_request_post.assert_called_once()
-        mock_logger.error.assert_called_once_with('ODP event send failed (403 Client Error: None for url: test-host).')
+        mock_logger.error.assert_called_once_with('ODP event send failed ({"title":"Bad Request","status":400,'
+                                                  '"timestamp":"2022-07-01T20:44:00.945Z","detail":{"invalids":'
+                                                  '[{"event":0,"message":"missing \'type\' field"}]}}).')
 
-    def testSendOdpEvents_500_retry(self):
+    def test_send_odp_events_500_retry(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = fake_server_response(status_code=500, url=self.api_host)
 
             api = ZaiusRestApiManager(logger=mock_logger)
-            response = api.sendOdpEvents(api_key=self.api_key,
-                                         api_host=self.api_host,
-                                         events=self.events)
+            should_retry = api.send_odp_events(api_key=self.api_key,
+                                               api_host=self.api_host,
+                                               events=self.events)
 
-        self.assertTrue(response)
+        self.assertTrue(should_retry)
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('ODP event send failed (500 Server Error: None for url: test-host).')
+
+    # test json responses
+    success_response_data = '{"title":"Accepted","status":202,"timestamp":"2022-07-01T16:04:06.786Z"}'
+
+    failure_response_data = '{"title":"Bad Request","status":400,"timestamp":"2022-07-01T20:44:00.945Z",' \
+                            '"detail":{"invalids":[{"event":0,"message":"missing \'type\' field"}]}}'

@@ -15,12 +15,16 @@ from requests import Response
 from typing import Optional
 
 
-def fake_server_response(status_code: Optional[int] = None, content: Optional[str] = None,
-                         url: Optional[str] = None) -> Optional[Response]:
+def fake_server_response(status_code: int = None, content: Optional[str] = None,
+                         url: str = None) -> Optional[Response]:
     """Mock the server response."""
     response = Response()
-    response.status_code = status_code
+
+    if status_code:
+        response.status_code = status_code
     if content:
         response._content = content.encode('utf-8')
-    response.url = url
+    if url:
+        response.url = url
+
     return response
