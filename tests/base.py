@@ -13,6 +13,9 @@
 
 import json
 import unittest
+from typing import Optional
+
+from requests import Response
 
 from optimizely import optimizely
 
@@ -27,6 +30,20 @@ class BaseTest(unittest.TestCase):
 
     def assertStrictFalse(self, to_assert):
         self.assertIs(to_assert, False)
+
+    def fake_server_response(self, status_code: int = None, content: Optional[str] = None,
+                             url: str = None) -> Optional[Response]:
+        """Mock the server response."""
+        response = Response()
+
+        if status_code:
+            response.status_code = status_code
+        if content:
+            response._content = content.encode('utf-8')
+        if url:
+            response.url = url
+
+        return response
 
     def setUp(self, config_dict='config_dict'):
         self.config_dict = {

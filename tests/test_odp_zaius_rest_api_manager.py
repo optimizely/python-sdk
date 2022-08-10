@@ -16,7 +16,6 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from tests.helpers_for_tests import fake_server_response
 from optimizely.helpers.enums import OdpRestApiConfig
 from optimizely.odp.zaius_rest_api_manager import ZaiusRestApiManager
 from . import base
@@ -48,8 +47,8 @@ class ZaiusRestApiManagerTest(base.BaseTest):
 
     def test_send_odp_ovents_success(self):
         with mock.patch('requests.post') as mock_request_post:
-            # no need to moch urla nd content because we're not returning the response
-            mock_request_post.return_value = fake_server_response(status_code=200)
+            # no need to mock url and content because we're not returning the response
+            mock_request_post.return_value = self.fake_server_response(status_code=200)
 
             api = ZaiusRestApiManager()
             should_retry = api.send_odp_events(api_key=self.api_key,
@@ -104,9 +103,9 @@ class ZaiusRestApiManagerTest(base.BaseTest):
     def test_send_odp_events_400_no_retry(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value = fake_server_response(status_code=400,
-                                                                  url=self.api_host,
-                                                                  content=self.failure_response_data)
+            mock_request_post.return_value = self.fake_server_response(status_code=400,
+                                                                       url=self.api_host,
+                                                                       content=self.failure_response_data)
 
             api = ZaiusRestApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
@@ -122,7 +121,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
     def test_send_odp_events_500_retry(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value = fake_server_response(status_code=500, url=self.api_host)
+            mock_request_post.return_value = self.fake_server_response(status_code=500, url=self.api_host)
 
             api = ZaiusRestApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
