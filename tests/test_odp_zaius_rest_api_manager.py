@@ -76,7 +76,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
         invalid_url = 'https://*api.zaius.com'
 
         with mock.patch('requests.post',
-                        side_effect=request_exception.InvalidURL('Invalid URL error')) as mock_request_post, \
+                        side_effect=request_exception.InvalidURL('Invalid URL')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
             api = ZaiusRestApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
@@ -85,7 +85,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
 
         self.assertFalse(should_retry)
         mock_request_post.assert_called_once()
-        mock_logger.error.assert_called_once_with('ODP event send failed (invalid URL).')
+        mock_logger.error.assert_called_once_with('ODP event send failed (Invalid URL).')
 
     def test_send_odp_events_network_error_retry(self):
         with mock.patch('requests.post',

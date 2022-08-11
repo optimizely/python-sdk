@@ -17,7 +17,7 @@ import json
 from typing import Optional, List
 
 import requests
-from requests.exceptions import RequestException, ConnectionError, Timeout, InvalidURL, InvalidSchema
+from requests.exceptions import RequestException, ConnectionError, Timeout
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpRestApiConfig
@@ -63,6 +63,7 @@ class ZaiusRestApiManager:
             payload_dict = json.dumps(events)
         except TypeError as err:
             self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
+            print(' - in JSON Encoding err  - ')
             return should_retry
 
         try:
@@ -75,25 +76,20 @@ class ZaiusRestApiManager:
 
         except (ConnectionError, Timeout):
             self.logger.error(Errors.ODP_EVENT_FAILED.format('network error'))
-            # we do retry on network errors
+            # retry on network errors
             should_retry = True
-        except (InvalidURL, InvalidSchema, UnicodeError):
-            # The three exceptions combined catch different cases of invalid URL format.
-            # For example:
-            # UnicodeError catches double dot in URL: https://api.zaius..com
-            # InvalidURL catches extra characters such as forward slash: https:///api.zaius.com
-            # InvalidSchema catches extra prepended characters: XXhttps://api.zaius.com
-            self.logger.error(Errors.ODP_EVENT_FAILED.format('invalid URL'))
         except RequestException as err:
-            if 400 <= err.response.status_code < 500:
-                if err.response.text:
-                    # log response text if it exists
+            if err.response is not None:
+                if 400 <= err.response.status_code < 500:
+                    # log 4xx
                     self.logger.error(Errors.ODP_EVENT_FAILED.format(err.response.text))
                 else:
-                    # otherwise log error message
+                    # log 5xx
                     self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
+                    # retry on 500 exceptions
+                    should_retry = True
             else:
+                # log exceptions without response body (i.e. invalid url)
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
-                # retry on 500 errors
-                should_retry = True
+
         return should_retry
