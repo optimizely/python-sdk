@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import json
-from typing import Optional, List
+from typing import Optional
 
 import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout
@@ -43,7 +43,7 @@ class ZaiusRestApiManager:
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
 
-    def send_odp_events(self, api_key: str, api_host: str, events: List[OdpEvent]) -> bool:
+    def send_odp_events(self, api_key: str, api_host: str, events: list[OdpEvent]) -> bool:
         """
         Dispatch the event being represented by the OdpEvent object.
 
@@ -55,7 +55,7 @@ class ZaiusRestApiManager:
         Returns:
             retry is True - if network or server error (5xx), otherwise False
         """
-        should_retry: bool = False
+        should_retry = False
         url = f'{api_host}/v3/events'
         request_headers = {'content-type': 'application/json', 'x-api-key': api_key}
 

@@ -31,8 +31,9 @@ class BaseTest(unittest.TestCase):
     def assertStrictFalse(self, to_assert):
         self.assertIs(to_assert, False)
 
-    def fake_server_response(self, status_code: int = None, content: Optional[str] = None,
-                             url: str = None) -> Optional[Response]:
+    def fake_server_response(self, status_code: Optional[int] = None,
+                             content: Optional[str] = None,
+                             url: Optional[str] = None) -> Response:
         """Mock the server response."""
         response = Response()
 
