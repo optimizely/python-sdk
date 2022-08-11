@@ -63,7 +63,6 @@ class ZaiusRestApiManager:
             payload_dict = json.dumps(events)
         except TypeError as err:
             self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
-            print(' - in JSON Encoding err  - ')
             return should_retry
 
         try:
