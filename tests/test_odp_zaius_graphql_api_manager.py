@@ -14,10 +14,9 @@
 import json
 from unittest import mock
 
-from requests import Response
 from requests import exceptions as request_exception
-from optimizely.helpers.enums import OdpGraphQLApiConfig
 
+from optimizely.helpers.enums import OdpGraphQLApiConfig
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 from . import base
 
@@ -176,7 +175,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__invalid_key(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value.json.return_value = json.loads(self.invalid_edges_key_response_data)
+            mock_request_post.return_value = self.fake_server_response(status_code=200,
+                                                                       content=self.invalid_edges_key_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -191,7 +191,8 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
     def test_fetch_qualified_segments__invalid_key_in_error_body(self):
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            mock_request_post.return_value.json.return_value = json.loads(self.invalid_key_for_error_response_data)
+            mock_request_post.return_value = self.fake_server_response(status_code=200,
+                                                                       content=self.invalid_key_for_error_response_data)
 
             api = ZaiusGraphQLApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
@@ -265,17 +266,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(["a", "b", "c"]))
         self.assertEqual("(subset:[\"a\", \"b\", \"don't\"])", api.make_subset_filter(["a", "b", "don't"]))
 
-    # fake server response function and test json responses
-
-    @staticmethod
-    def fake_server_response(status_code=None, content=None, url=None):
-        """Mock the server response."""
-        response = Response()
-        response.status_code = status_code
-        if content:
-            response._content = content.encode('utf-8')
-        response.url = url
-        return response
+    # test json responses
 
     good_response_data = """
         {
