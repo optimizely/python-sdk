@@ -122,7 +122,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                                segments_to_check=[])
 
         mock_request_post.assert_called_once()
-        mock_logger.error.assert_called_once_with('Audience segments fetch failed (invalid identifier).')
+        mock_logger.warning.assert_called_once_with('Audience segments fetch failed (invalid identifier).')
 
     def test_fetch_qualified_segments__other_exception(self):
         with mock.patch('requests.post') as mock_request_post, \
