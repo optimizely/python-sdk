@@ -131,15 +131,21 @@ class ZaiusGraphQLApiManager:
                            'x-api-key': str(api_key)}
 
         segments_filter = self.make_subset_filter(segments_to_check)
-        payload_dict = {
+        query = {
             'query': 'query {customer(' + str(user_key) + ': "' + str(user_value) + '") '
             '{audiences' + segments_filter + ' {edges {node {name state}}}}}'
         }
 
         try:
+            payload_dict = json.dumps(query)
+        except TypeError as err:
+            self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(err))
+            return None
+
+        try:
             response = requests.post(url=url,
                                      headers=request_headers,
-                                     data=json.dumps(payload_dict),
+                                     data=payload_dict,
                                      timeout=OdpGraphQLApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
@@ -166,7 +172,7 @@ class ZaiusGraphQLApiManager:
                 return None
 
             if error_class == 'InvalidIdentifierException':
-                self.logger.error(Errors.INVALID_SEGMENT_IDENTIFIER)
+                self.logger.warning(Errors.INVALID_SEGMENT_IDENTIFIER)
                 return None
             else:
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(error_class))
