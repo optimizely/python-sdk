@@ -13,15 +13,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 
 class OdpEvent:
     """ Representation of an odp event which can be sent to the Optimizely odp platform. """
 
     def __init__(self, type: str, action: str,
-                 identifiers: Dict[str, str], data: Dict[str, Any]) -> None:
-        self.type = type,
-        self.action = action,
-        self.identifiers = identifiers,
+                 identifiers: dict[str, str], data: dict[str, Any]) -> None:
+        self.type = type
+        self.action = action
+        self.identifiers = identifiers
         self.data = data
