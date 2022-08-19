@@ -73,7 +73,7 @@ class OdpConfig:
         with self.lock:
             return self.api_key
 
-    def set_api_key(self, api_key: Optional[str]):
+    def set_api_key(self, api_key: Optional[str]) -> None:
         with self.lock:
             self.api_key = api_key
 
@@ -81,7 +81,7 @@ class OdpConfig:
         with self.lock:
             return self.segments_to_check.copy()
 
-    def set_segments_to_check(self, segments_to_check: list[str]):
+    def set_segments_to_check(self, segments_to_check: list[str]) -> None:
         """
         Replace qualified segments with provided list of segments
         Args:
