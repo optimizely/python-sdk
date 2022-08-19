@@ -24,7 +24,7 @@ class OdpConfig:
     Args:
         api_host: The host URL for the ODP audience segments API (optional).
         api_key: The public API key for the ODP account from which the audience segments will be fetched (optional).
-        segments_to_check: An array of all ODP segments used in the current datafile
+        segments_to_check: A list of all ODP segments used in the current datafile
                             (associated with api_host/api_key).
     """
     def __init__(
@@ -45,7 +45,7 @@ class OdpConfig:
         Args:
             api_host: The host URL for the ODP audience segments API (optional).
             api_key: The public API key for the ODP account from which the audience segments will be fetched (optional).
-            segments_to_check: An array of all ODP segments used in the current datafile
+            segments_to_check: A list of all ODP segments used in the current datafile
                                (associated with api_host/api_key).
 
         Returns:
@@ -83,14 +83,14 @@ class OdpConfig:
 
     def set_segments_to_check(self, segments_to_check: list[str]) -> None:
         """
-        Replace qualified segments with provided list of segments
+        Replace qualified segments with provided list of segments.
         Args:
-          segments_to_check: A list of segment names
+          segments_to_check: A list of segment names.
         """
         with self.lock:
             self.segments_to_check = segments_to_check.copy()
 
     def odp_integrated(self) -> bool:
-        """Returns True if ODP is integrated"""
+        """Returns True if ODP is integrated."""
         with self.lock:
             return self.api_key is not None and self.api_host is not None
