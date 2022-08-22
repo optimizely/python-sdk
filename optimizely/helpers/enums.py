@@ -120,10 +120,10 @@ class Errors:
     NONE_VARIABLE_KEY_PARAMETER: Final = '"None" is an invalid value for variable key.'
     UNSUPPORTED_DATAFILE_VERSION: Final = (
         'This version of the Python SDK does not support the given datafile version: "{}".')
-    INVALID_SEGMENT_IDENTIFIER = 'Audience segments fetch failed (invalid identifier).'
-    FETCH_SEGMENTS_FAILED = 'Audience segments fetch failed ({}).'
-    ODP_EVENT_FAILED = 'ODP event send failed ({}).'
-    ODP_NOT_ENABLED = 'ODP is not enabled. '
+    INVALID_SEGMENT_IDENTIFIER: Final = 'Audience segments fetch failed (invalid identifier).'
+    FETCH_SEGMENTS_FAILED: Final = 'Audience segments fetch failed ({}).'
+    ODP_EVENT_FAILED: Final = 'ODP event send failed ({}).'
+    ODP_NOT_ENABLED: Final = 'ODP is not enabled. '
 
 
 class ForcedDecisionLogs:
@@ -205,3 +205,9 @@ class OdpRestApiConfig:
 class OdpGraphQLApiConfig:
     """ODP GraphQL API configs."""
     REQUEST_TIMEOUT: Final = 10
+
+
+class OdpEventManagerConfig:
+    """ODP Event Manager configs."""
+    DEFAULT_QUEUE_CAPACITY: Final = 1000
+    DEFAULT_BATCH_SIZE: Final = 10
