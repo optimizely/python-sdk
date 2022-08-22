@@ -39,14 +39,3 @@ class OdpConfigTest(base.BaseTest):
 
         updated = config.update(self.api_key, self.api_host, self.segments_to_check)
         self.assertStrictFalse(updated)
-
-    def test_config_setters(self):
-        config = OdpConfig()
-
-        config.set_api_host(self.api_host)
-        config.set_api_key(self.api_key)
-        config.set_segments_to_check(self.segments_to_check)
-
-        self.assertEqual(config.get_api_key(), self.api_key)
-        self.assertEqual(config.get_api_host(), self.api_host)
-        self.assertEqual(config.get_segments_to_check(), self.segments_to_check)

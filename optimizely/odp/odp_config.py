@@ -65,30 +65,13 @@ class OdpConfig:
         with self.lock:
             return self.api_host
 
-    def set_api_host(self, api_host: Optional[str]) -> None:
-        with self.lock:
-            self.api_host = api_host
-
     def get_api_key(self) -> Optional[str]:
         with self.lock:
             return self.api_key
 
-    def set_api_key(self, api_key: Optional[str]) -> None:
-        with self.lock:
-            self.api_key = api_key
-
     def get_segments_to_check(self) -> Optional[list[str]]:
         with self.lock:
             return self.segments_to_check.copy()
-
-    def set_segments_to_check(self, segments_to_check: list[str]) -> None:
-        """
-        Replace qualified segments with provided list of segments.
-        Args:
-          segments_to_check: A list of segment names.
-        """
-        with self.lock:
-            self.segments_to_check = segments_to_check.copy()
 
     def odp_integrated(self) -> bool:
         """Returns True if ODP is integrated."""
