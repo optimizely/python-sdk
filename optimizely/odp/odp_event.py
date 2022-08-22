@@ -14,6 +14,9 @@
 from __future__ import annotations
 
 from typing import Any
+import uuid
+import json
+from optimizely import version
 
 
 class OdpEvent:
@@ -24,4 +27,32 @@ class OdpEvent:
         self.type = type
         self.action = action
         self.identifiers = identifiers
-        self.data = data
+        self.data = self._add_common_event_data(data)
+
+    def __repr__(self) -> str:
+        return str(self.__dict__)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, OdpEvent):
+            return self.__dict__ == other.__dict__
+        elif isinstance(other, dict):
+            return self.__dict__ == other
+        else:
+            return False
+
+    def _add_common_event_data(self, custom_data: dict[str, Any]) -> dict[str, Any]:
+        data = {
+            'idempotence_id': str(uuid.uuid4()),
+            'data_source_type': 'sdk',
+            'data_source': 'python-sdk',
+            'data_source_version': version.__version__
+        }
+        data.update(custom_data)
+        return data
+
+
+class OdpEventEncoder(json.JSONEncoder):
+    def default(self, obj: object) -> Any:
+        if isinstance(obj, OdpEvent):
+            return obj.__dict__
+        return json.JSONEncoder.default(self, obj)
