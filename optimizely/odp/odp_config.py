@@ -33,9 +33,9 @@ class OdpConfig:
         api_host: Optional[str] = None,
         segments_to_check: Optional[list[str]] = None
     ) -> None:
-        self.api_key = api_key
-        self.api_host = api_host
-        self.segments_to_check = segments_to_check or []
+        self._api_key = api_key
+        self._api_host = api_host
+        self._segments_to_check = segments_to_check or []
         self.lock = Lock()
 
     def update(self, api_key: Optional[str], api_host: Optional[str], segments_to_check: list[str]) -> bool:
@@ -53,44 +53,27 @@ class OdpConfig:
         """
         updated = False
         with self.lock:
-            if self.api_key != api_key or self.api_host != api_host or self.segments_to_check != segments_to_check:
-                self.api_key = api_key
-                self.api_host = api_host
-                self.segments_to_check = segments_to_check
+            if self._api_key != api_key or self._api_host != api_host or self._segments_to_check != segments_to_check:
+                self._api_key = api_key
+                self._api_host = api_host
+                self._segments_to_check = segments_to_check
                 updated = True
 
         return updated
 
     def get_api_host(self) -> Optional[str]:
         with self.lock:
-            return self.api_host
-
-    def set_api_host(self, api_host: Optional[str]) -> None:
-        with self.lock:
-            self.api_host = api_host
+            return self._api_host
 
     def get_api_key(self) -> Optional[str]:
         with self.lock:
-            return self.api_key
+            return self._api_key
 
-    def set_api_key(self, api_key: Optional[str]) -> None:
+    def get_segments_to_check(self) -> list[str]:
         with self.lock:
-            self.api_key = api_key
-
-    def get_segments_to_check(self) -> Optional[list[str]]:
-        with self.lock:
-            return self.segments_to_check.copy()
-
-    def set_segments_to_check(self, segments_to_check: list[str]) -> None:
-        """
-        Replace qualified segments with provided list of segments.
-        Args:
-          segments_to_check: A list of segment names.
-        """
-        with self.lock:
-            self.segments_to_check = segments_to_check.copy()
+            return self._segments_to_check.copy()
 
     def odp_integrated(self) -> bool:
         """Returns True if ODP is integrated."""
         with self.lock:
-            return self.api_key is not None and self.api_host is not None
+            return self._api_key is not None and self._api_host is not None

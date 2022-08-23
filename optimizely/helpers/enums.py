@@ -209,5 +209,5 @@ class OdpGraphQLApiConfig:
 
 class OptimizelySegmentOption:
     """Options for the OdpSegmentManager."""
-    IGNORE_CACHE = None
-    RESET_CACHE = None
+    IGNORE_CACHE = 'IGNORE_CACHE'
+    RESET_CACHE = 'RESET_CACHE'
