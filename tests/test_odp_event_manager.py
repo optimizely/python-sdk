@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import queue
 from unittest import mock
 import uuid
 
@@ -81,15 +82,14 @@ class OdpEventManagerTest(base.BaseTest):
         event_manager = OdpEventManager(self.odp_config, mock_logger)
         event_manager.start()
 
-        with mock.patch(
-            'requests.post', return_value=self.fake_server_response(status_code=200)
-        ), mock.patch('uuid.uuid4', return_value=self.test_uuid):
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
             event_manager.stop()
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_any_call('Flushing batch size 2.')
         mock_logger.debug.assert_any_call('Received ODP event shutdown signal.')
         self.assertStrictFalse(event_manager.is_running)
 
@@ -202,10 +202,9 @@ class OdpEventManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger)
         event_manager.start()
 
-        with mock.patch('uuid.uuid4', return_value=self.test_uuid):
-            event_manager.send_event(**self.events[0])
-            event_manager.send_event(**self.events[1])
-            event_manager.event_queue.join()
+        event_manager.send_event(**self.events[0])
+        event_manager.send_event(**self.events[1])
+        event_manager.event_queue.join()
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
@@ -216,13 +215,10 @@ class OdpEventManagerTest(base.BaseTest):
     def test_odp_event_manager_queue_full(self):
         mock_logger = mock.Mock()
         event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.event_queue.maxsize = 1
         event_manager.start()
 
-        with mock.patch('uuid.uuid4', return_value=self.test_uuid):
+        with mock.patch.object(event_manager.event_queue, 'put_nowait', side_effect=queue.Full):
             event_manager.send_event(**self.events[0])
-            event_manager.send_event(**self.events[1])
-            event_manager.event_queue.join()
 
         mock_logger.error.assert_any_call('ODP event send failed (Queue is full).')
         self.assertStrictTrue(event_manager.is_running)
