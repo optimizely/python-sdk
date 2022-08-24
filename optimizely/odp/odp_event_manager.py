@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from threading import Lock, Thread
+from threading import Thread
 from typing import Any, Optional
 import queue
 from queue import Queue
@@ -66,10 +66,7 @@ class OdpEventManager:
         self.odp_config = odp_config
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
-        self.lock = Lock()
-
         self._current_batch: list[OdpEvent] = []
-
         self.executor = Thread(target=self._run, daemon=True)
 
     @property
@@ -136,24 +133,22 @@ class OdpEventManager:
 
         self.logger.debug(f'Flushing batch size {batch_len}.')
         should_retry = False
-        with self.lock:
-            event_batch = list(self._current_batch)
-            try:
-                should_retry = self.zaius_manager.send_odp_events(api_key, api_host, event_batch)
-            except Exception as e:
-                self.logger.error(Errors.ODP_EVENT_FAILED.format(f'{event_batch} {e}'))
+        event_batch = list(self._current_batch)
+        try:
+            should_retry = self.zaius_manager.send_odp_events(api_key, api_host, event_batch)
+        except Exception as e:
+            self.logger.error(Errors.ODP_EVENT_FAILED.format(f'{event_batch} {e}'))
 
-            if should_retry:
-                self.logger.debug('Error dispatching ODP events, scheduled to retry.')
-                return
+        if should_retry:
+            self.logger.debug('Error dispatching ODP events, scheduled to retry.')
+            return
 
-            self._current_batch = []
+        self._current_batch = []
 
     def _add_to_batch(self, odp_event: OdpEvent) -> None:
         """ Method to append received odp event to current batch."""
 
-        with self.lock:
-            self._current_batch.append(odp_event)
+        self._current_batch.append(odp_event)
         if len(self._current_batch) >= self.batch_size:
             self.logger.debug('Flushing ODP events on batch size.')
             self._flush_batch()
