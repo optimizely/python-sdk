@@ -205,4 +205,3 @@ class OdpRestApiConfig:
 class OdpGraphQLApiConfig:
     """ODP GraphQL API configs."""
     REQUEST_TIMEOUT: Final = 10
-

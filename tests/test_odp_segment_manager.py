@@ -17,9 +17,9 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from optimizely.odp.odp_options import OptimizelySegmentOption
 from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
+from optimizely.odp.odp_options import OptimizelySegmentOption
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 from tests import base
@@ -31,9 +31,10 @@ class OdpSegmentManagerTest(base.BaseTest):
     user_key = 'fs_user_id'
     user_value = 'test-user-value'
 
-    def test_empty_array_with_no_segments_to_check(self):
+    def test_empty_list_with_no_segments_to_check(self):
         with mock.patch('requests.post') as mock_request_post, \
-                mock.patch('optimizely.logger') as mock_logger:
+                mock.patch('optimizely.logger') as mock_logger, mock.patch(
+                'optimizely.odp.odp_segment_manager.ZaiusGraphQLApiManager.fetch_segments') as mock_fetch_segments:
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.good_response_data)
 
@@ -47,6 +48,7 @@ class OdpSegmentManagerTest(base.BaseTest):
             self.assertEqual(segments, [])
             mock_logger.debug.assert_called_once_with('No segments are used in the project. Returning empty list.')
             mock_logger.error.assert_not_called()
+            mock_fetch_segments.assert_not_called()
 
     def test_fetch_segments_success_cache_miss(self):
         """
@@ -77,10 +79,12 @@ class OdpSegmentManagerTest(base.BaseTest):
         mock_logger.error.assert_not_called()
 
     def test_fetch_segments_success_cache_hit(self):
-        with mock.patch('optimizely.logger') as mock_logger:
+        with mock.patch('optimizely.logger') as mock_logger, mock.patch(
+                'optimizely.odp.odp_segment_manager.ZaiusGraphQLApiManager.fetch_segments') as mock_fetch_segments:
             odp_config = OdpConfig()
             odp_config.update(self.api_key, self.api_host, ['c'])
             segments_cache = LRUCache(1000, 1000)
+
             segment_manager = OdpSegmentManager(odp_config, segments_cache, None, mock_logger)
 
             cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
@@ -91,6 +95,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         self.assertEqual(segments, ['c'])
         mock_logger.debug.assert_called_once_with('ODP cache hit. Returning segments from cache.')
         mock_logger.error.assert_not_called()
+        mock_fetch_segments.assert_not_called()
 
     def test_fetch_segments_missing_api_host_api_key(self):
         with mock.patch('optimizely.logger') as mock_logger:
