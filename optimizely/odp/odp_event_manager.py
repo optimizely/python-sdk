@@ -176,6 +176,10 @@ class OdpEventManager:
             self.logger.debug('ODP event processing has been disabled.')
             return
 
+        if not self.is_running:
+            self.logger.warning('ODP event processor is shutdown, not accepting events.')
+            return
+
         try:
             self.event_queue.put_nowait(event)
         except queue.Full:
