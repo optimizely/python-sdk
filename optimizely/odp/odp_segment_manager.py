@@ -13,12 +13,12 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors
-from optimizely.helpers.enums import OptimizelySegmentOption
-from optimizely.odp.lru_cache import LRUCache
+from optimizely.odp.odp_options import OptimizelySegmentOption
+from optimizely.odp.lru_cache import OptimizelySegmentsCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 
@@ -26,11 +26,8 @@ from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 class OdpSegmentManager:
     """Schedules connections to ODP for audience segmentation and caches the results."""
 
-    IGNORE_CACHE = OptimizelySegmentOption.IGNORE_CACHE
-    RESET_CACHE = OptimizelySegmentOption.RESET_CACHE
-
-    def __init__(self, odp_config: Optional[OdpConfig], segments_cache: Optional[LRUCache[str, List[str]](1000, 1000)],
-                 zaius_manager: Optional[ZaiusGraphQLApiManager],
+    def __init__(self, odp_config: OdpConfig, segments_cache: OptimizelySegmentsCache,
+                 zaius_manager: ZaiusGraphQLApiManager,
                  logger: Optional[optimizely_logger.Logger] = None) -> None:
 
         self.odp_config = odp_config
@@ -38,23 +35,33 @@ class OdpSegmentManager:
         self.zaius_manager = zaius_manager
         self.logger = logger or optimizely_logger.NoOpLogger()
 
-    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[OptimizelySegmentOption]):
-        if not self.odp_config.odp_integrated():
+    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]) -> \
+            Optional[list[str]]:
+        """
+        Args:
+            user_key: The key for identifying the id type.
+            user_value: The id itself.
+            options: An array of OptimizelySegmentOptions used to ignore and/or reset the cache.
+
+        Returns:
+            Qualified segments for the user from the cache or the ODP server if not in the cache.
+        """
+        odp_api_key = self.odp_config.get_api_key()
+        odp_api_host = self.odp_config.get_api_host()
+        odp_segments_to_check = self.odp_config.get_segments_to_check()
+
+        if not (odp_api_key and odp_api_host):
             self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('apiKey/apiHost not defined'))
             return None
 
-        odp_api_key: Optional[str] = self.odp_config.get_api_key()
-        odp_api_host: Optional[str] = self.odp_config.get_api_host()
-        odp_segments_to_check: Optional[list[str]] = self.odp_config.get_segments_to_check()
-
-        if not odp_segments_to_check and not len(odp_segments_to_check):
+        if not odp_segments_to_check:
             self.logger.debug('No segments are used in the project. Returning empty list.')
             return []
 
         cache_key = self.make_cache_key(user_key, user_value)
 
-        ignore_cache = self.IGNORE_CACHE if self.IGNORE_CACHE in options else None
-        reset_cache = self.RESET_CACHE if self.RESET_CACHE in options else None
+        ignore_cache = OptimizelySegmentOption.IGNORE_CACHE in options
+        reset_cache = OptimizelySegmentOption.RESET_CACHE in options
 
         if reset_cache:
             self._reset()
@@ -75,7 +82,7 @@ class OdpSegmentManager:
 
         return segments
 
-    def _reset(self):
+    def _reset(self) -> None:
         self.segments_cache.reset()
 
     def make_cache_key(self, user_key: str, user_value: str) -> str:

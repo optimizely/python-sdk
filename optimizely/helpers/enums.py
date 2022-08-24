@@ -206,8 +206,3 @@ class OdpGraphQLApiConfig:
     """ODP GraphQL API configs."""
     REQUEST_TIMEOUT: Final = 10
 
-
-class OptimizelySegmentOption:
-    """Options for the OdpSegmentManager."""
-    IGNORE_CACHE = 'IGNORE_CACHE'
-    RESET_CACHE = 'RESET_CACHE'

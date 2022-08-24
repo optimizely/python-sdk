@@ -17,7 +17,7 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from optimizely.helpers.enums import OptimizelySegmentOption
+from optimizely.odp.odp_options import OptimizelySegmentOption
 from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
