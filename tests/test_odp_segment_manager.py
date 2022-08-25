@@ -32,17 +32,13 @@ class OdpSegmentManagerTest(base.BaseTest):
     user_value = 'test-user-value'
 
     def test_empty_list_with_no_segments_to_check(self):
-        with mock.patch('requests.post') as mock_request_post, \
-                mock.patch('optimizely.logger') as mock_logger, mock.patch(
-                'optimizely.odp.odp_segment_manager.ZaiusGraphQLApiManager.fetch_segments') as mock_fetch_segments:
-            mock_request_post.return_value = self.fake_server_response(status_code=200,
-                                                                       content=self.good_response_data)
+        odp_config = OdpConfig(self.api_key, self.api_host, [])
+        mock_logger = mock.MagicMock()
+        segments_cache = LRUCache(1000, 1000)
+        api = ZaiusGraphQLApiManager()
+        segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
 
-            odp_config = OdpConfig(self.api_key, self.api_host, [])
-            segments_cache = LRUCache(1000, 1000)
-            api = ZaiusGraphQLApiManager()
-
-            segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
+        with mock.patch.object(api, 'fetch_segments') as mock_fetch_segments:
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
             self.assertEqual(segments, [])
@@ -56,19 +52,18 @@ class OdpSegmentManagerTest(base.BaseTest):
         which is different from what we have passed to cache (fs_user_id-$-123/['d'])
         ---> hence we trigger a cache miss
         """
-        with mock.patch('requests.post') as mock_request_post, \
-                mock.patch('optimizely.logger') as mock_logger:
+        odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
+        mock_logger = mock.MagicMock()
+        segments_cache = LRUCache(1000, 1000)
+        api = ZaiusGraphQLApiManager()
+
+        segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
+        cache_key = segment_manager.make_cache_key(self.user_key, '123')
+        segment_manager.segments_cache.save(cache_key, ["d"])
+
+        with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.good_response_data)
-
-            odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
-            segments_cache = LRUCache(1000, 1000)
-            api = ZaiusGraphQLApiManager()
-
-            segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
-
-            cache_key = segment_manager.make_cache_key(self.user_key, '123')
-            segment_manager.segments_cache.save(cache_key, ["d"])
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
@@ -79,17 +74,17 @@ class OdpSegmentManagerTest(base.BaseTest):
         mock_logger.error.assert_not_called()
 
     def test_fetch_segments_success_cache_hit(self):
-        with mock.patch('optimizely.logger') as mock_logger, mock.patch(
-                'optimizely.odp.odp_segment_manager.ZaiusGraphQLApiManager.fetch_segments') as mock_fetch_segments:
-            odp_config = OdpConfig()
-            odp_config.update(self.api_key, self.api_host, ['c'])
-            segments_cache = LRUCache(1000, 1000)
+        odp_config = OdpConfig()
+        odp_config.update(self.api_key, self.api_host, ['c'])
+        mock_logger = mock.MagicMock()
+        api = ZaiusGraphQLApiManager()
+        segments_cache = LRUCache(1000, 1000)
 
-            segment_manager = OdpSegmentManager(odp_config, segments_cache, None, mock_logger)
+        segment_manager = OdpSegmentManager(odp_config, segments_cache, None, mock_logger)
+        cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
+        segment_manager.segments_cache.save(cache_key, ['c'])
 
-            cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
-            segment_manager.segments_cache.save(cache_key, ['c'])
-
+        with mock.patch.object(api, 'fetch_segments') as mock_fetch_segments:
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, ['c'])
@@ -113,33 +108,32 @@ class OdpSegmentManagerTest(base.BaseTest):
         The error log should come form the GraphQL API manager, not from ODP Segment Manager.
         The active mock logger should be placed as parameter in ZaiusGraphQLApiManager object.
         """
-        with mock.patch('requests.post',
-                        side_effect=request_exception.ConnectionError('Connection error')), \
-                mock.patch('optimizely.logger') as mock_logger:
-            odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
-            segments_cache = LRUCache(1000, 1000)
-            api = ZaiusGraphQLApiManager(mock_logger)
+        odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
+        mock_logger = mock.MagicMock()
+        segments_cache = LRUCache(1000, 1000)
+        api = ZaiusGraphQLApiManager(mock_logger)
+        segment_manager = OdpSegmentManager(odp_config, segments_cache, api, None)
 
-            segment_manager = OdpSegmentManager(odp_config, segments_cache, api, None)
+        with mock.patch('requests.post',
+                        side_effect=request_exception.ConnectionError('Connection error')):
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
             self.assertEqual(segments, None)
             mock_logger.error.assert_called_once_with('Audience segments fetch failed (network error).')
 
     def test_options_ignore_cache(self):
-        with mock.patch('requests.post') as mock_request_post, \
-                mock.patch('optimizely.logger') as mock_logger:
+        odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
+        mock_logger = mock.MagicMock()
+        segments_cache = LRUCache(1000, 1000)
+        api = ZaiusGraphQLApiManager()
+
+        segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
+        cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
+        segment_manager.segments_cache.save(cache_key, ['d'])
+
+        with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.good_response_data)
-
-            odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
-            segments_cache = LRUCache(1000, 1000)
-            api = ZaiusGraphQLApiManager()
-
-            segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
-
-            cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
-            segment_manager.segments_cache.save(cache_key, ['d'])
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value,
                                                                 [OptimizelySegmentOption.IGNORE_CACHE])
@@ -150,20 +144,19 @@ class OdpSegmentManagerTest(base.BaseTest):
         mock_logger.error.assert_not_called()
 
     def test_options_reset_cache(self):
-        with mock.patch('requests.post') as mock_request_post, \
-                mock.patch('optimizely.logger') as mock_logger:
+        odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
+        mock_logger = mock.MagicMock()
+        segments_cache = LRUCache(1000, 1000)
+        api = ZaiusGraphQLApiManager()
+
+        segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
+        cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
+        segment_manager.segments_cache.save(cache_key, ['d'])
+        segment_manager.segments_cache.save('123', ['c', 'd'])
+
+        with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.good_response_data)
-
-            odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
-            segments_cache = LRUCache(1000, 1000)
-            api = ZaiusGraphQLApiManager()
-
-            segment_manager = OdpSegmentManager(odp_config, segments_cache, api, mock_logger)
-
-            cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
-            segment_manager.segments_cache.save(cache_key, ['d'])
-            segment_manager.segments_cache.save('123', ['c', 'd'])
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value,
                                                                 [OptimizelySegmentOption.RESET_CACHE])

@@ -86,4 +86,4 @@ class OdpSegmentManager:
         self.segments_cache.reset()
 
     def make_cache_key(self, user_key: str, user_value: str) -> str:
-        return user_key + '-$-' + user_value
+        return f'{user_key}-$-{user_value}'
