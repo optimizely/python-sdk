@@ -133,17 +133,16 @@ class OdpEventManager:
 
         self.logger.debug(f'Flushing batch size {batch_len}.')
         should_retry = False
-        event_batch = list(self._current_batch)
         try:
-            should_retry = self.zaius_manager.send_odp_events(api_key, api_host, event_batch)
+            should_retry = self.zaius_manager.send_odp_events(api_key, api_host, self._current_batch)
         except Exception as e:
-            self.logger.error(Errors.ODP_EVENT_FAILED.format(f'{event_batch} {e}'))
+            self.logger.error(Errors.ODP_EVENT_FAILED.format(f'{self._current_batch} {e}'))
 
         if should_retry:
             self.logger.debug('Error dispatching ODP events, scheduled to retry.')
             return
 
-        self._current_batch = []
+        self._current_batch.clear()
 
     def _add_to_batch(self, odp_event: OdpEvent) -> None:
         """ Method to append received odp event to current batch."""

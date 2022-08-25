@@ -18,11 +18,11 @@ import uuid
 from optimizely.odp.odp_event import OdpEvent
 from optimizely.odp.odp_event_manager import OdpEventManager
 from optimizely.odp.odp_config import OdpConfig
-from . import base
+from .base import BaseTest, CopyingMock
 from optimizely.version import __version__
 
 
-class OdpEventManagerTest(base.BaseTest):
+class OdpEventManagerTest(BaseTest):
     user_key = "vuid"
     user_value = "test-user-value"
     api_key = "test-api-key"
@@ -100,7 +100,7 @@ class OdpEventManagerTest(base.BaseTest):
 
         event_manager.batch_size = 2
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', return_value=False
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -119,7 +119,7 @@ class OdpEventManagerTest(base.BaseTest):
 
         event_manager.batch_size = 2
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', return_value=False
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -142,7 +142,7 @@ class OdpEventManagerTest(base.BaseTest):
         event_manager.start()
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', return_value=False
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -161,7 +161,7 @@ class OdpEventManagerTest(base.BaseTest):
         event_manager.start()
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', return_value=False
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -204,7 +204,7 @@ class OdpEventManagerTest(base.BaseTest):
         event_manager.start()
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', return_value=True
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=True
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -218,7 +218,7 @@ class OdpEventManagerTest(base.BaseTest):
         mock_logger.reset_mock()
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', return_value=False
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.stop()
 
@@ -232,7 +232,10 @@ class OdpEventManagerTest(base.BaseTest):
         event_manager.start()
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', side_effect=Exception('Unexpected error')
+            event_manager.zaius_manager,
+            'send_odp_events',
+            new_callable=CopyingMock,
+            side_effect=Exception('Unexpected error')
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
