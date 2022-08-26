@@ -19,7 +19,7 @@ from requests import exceptions as request_exception
 
 from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
-from optimizely.odp.odp_options import OptimizelySegmentOption
+from optimizely.odp.optimizely_odp_option import OptimizelySegmentOption
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 from tests import base
@@ -41,10 +41,10 @@ class OdpSegmentManagerTest(base.BaseTest):
         with mock.patch.object(api, 'fetch_segments') as mock_fetch_segments:
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
-            self.assertEqual(segments, [])
-            mock_logger.debug.assert_called_once_with('No segments are used in the project. Returning empty list.')
-            mock_logger.error.assert_not_called()
-            mock_fetch_segments.assert_not_called()
+        self.assertEqual(segments, [])
+        mock_logger.debug.assert_called_once_with('No segments are used in the project. Returning empty list.')
+        mock_logger.error.assert_not_called()
+        mock_fetch_segments.assert_not_called()
 
     def test_fetch_segments_success_cache_miss(self):
         """
@@ -98,7 +98,7 @@ class OdpSegmentManagerTest(base.BaseTest):
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, None)
-        mock_logger.error.assert_called_once_with('Audience segments fetch failed (apiKey/apiHost not defined).')
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (api_key/api_host not defined).')
 
     def test_fetch_segments_network_error(self):
         """
@@ -118,8 +118,8 @@ class OdpSegmentManagerTest(base.BaseTest):
                         side_effect=request_exception.ConnectionError('Connection error')):
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
-            self.assertEqual(segments, None)
-            mock_logger.error.assert_called_once_with('Audience segments fetch failed (network error).')
+        self.assertEqual(segments, None)
+        mock_logger.error.assert_called_once_with('Audience segments fetch failed (network error).')
 
     def test_options_ignore_cache(self):
         odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])

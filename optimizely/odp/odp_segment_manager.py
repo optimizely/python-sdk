@@ -17,7 +17,7 @@ from typing import Optional
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors
-from optimizely.odp.odp_options import OptimizelySegmentOption
+from optimizely.odp.optimizely_odp_option import OptimizelySegmentOption
 from optimizely.odp.lru_cache import OptimizelySegmentsCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
@@ -51,7 +51,7 @@ class OdpSegmentManager:
         odp_segments_to_check = self.odp_config.get_segments_to_check()
 
         if not (odp_api_key and odp_api_host):
-            self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('apiKey/apiHost not defined'))
+            self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('api_key/api_host not defined'))
             return None
 
         if not odp_segments_to_check:
