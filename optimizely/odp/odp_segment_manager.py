@@ -71,8 +71,9 @@ class OdpSegmentManager:
             if segments:
                 self.logger.debug('ODP cache hit. Returning segments from cache.')
                 return segments
+            self.logger.debug('ODP cache miss.')
 
-        self.logger.debug('ODP cache miss. Making a call to ODP server.')
+        self.logger.debug('Making a call to ODP server.')
 
         segments = self.zaius_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value,
                                                      odp_segments_to_check)

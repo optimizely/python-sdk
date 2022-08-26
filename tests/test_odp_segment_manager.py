@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from unittest import mock
+from unittest.mock import call
 
 from requests import exceptions as request_exception
 
@@ -70,7 +71,9 @@ class OdpSegmentManagerTest(base.BaseTest):
         self.assertEqual(segments, ["a", "b"])
         actual_cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
         self.assertEqual(segment_manager.segments_cache.lookup(actual_cache_key), ["a", "b"])
-        mock_logger.debug.assert_called_once_with('ODP cache miss. Making a call to ODP server.')
+
+        self.assertEqual(mock_logger.debug.call_count, 2)
+        mock_logger.debug.assert_has_calls([call('ODP cache miss.'), call('Making a call to ODP server.')])
         mock_logger.error.assert_not_called()
 
     def test_fetch_segments_success_cache_hit(self):
@@ -140,7 +143,7 @@ class OdpSegmentManagerTest(base.BaseTest):
 
         self.assertEqual(segments, ["a", "b"])
         self.assertEqual(segment_manager.segments_cache.lookup(cache_key), ['d'])
-        mock_logger.debug.assert_called_once_with('ODP cache miss. Making a call to ODP server.')
+        mock_logger.debug.assert_called_once_with('Making a call to ODP server.')
         mock_logger.error.assert_not_called()
 
     def test_options_reset_cache(self):
@@ -164,7 +167,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         self.assertEqual(segments, ["a", "b"])
         self.assertEqual(segment_manager.segments_cache.lookup(cache_key), ['a', 'b'])
         self.assertTrue(len(segment_manager.segments_cache.map) == 1)
-        mock_logger.debug.assert_called_once_with('ODP cache miss. Making a call to ODP server.')
+        mock_logger.debug.assert_called_once_with('Making a call to ODP server.')
         mock_logger.error.assert_not_called()
 
     def test_make_correct_cache_key(self):
