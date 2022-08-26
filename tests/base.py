@@ -20,10 +20,6 @@ from requests import Response
 from optimizely import optimizely
 
 
-def long(a):
-    raise NotImplementedError('Tests should only call `long` if running in PY2')
-
-
 class BaseTest(unittest.TestCase):
     def assertStrictTrue(self, to_assert):
         self.assertIs(to_assert, True)
