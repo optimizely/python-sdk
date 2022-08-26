@@ -20,7 +20,7 @@ from requests import exceptions as request_exception
 
 from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
-from optimizely.odp.optimizely_odp_option import OptimizelySegmentOption
+from optimizely.odp.optimizely_odp_option import OptimizelyOdpOption
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 from tests import base
@@ -139,7 +139,7 @@ class OdpSegmentManagerTest(base.BaseTest):
                                                                        content=self.good_response_data)
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value,
-                                                                [OptimizelySegmentOption.IGNORE_CACHE])
+                                                                [OptimizelyOdpOption.IGNORE_CACHE])
 
         self.assertEqual(segments, ["a", "b"])
         self.assertEqual(segment_manager.segments_cache.lookup(cache_key), ['d'])
@@ -162,7 +162,7 @@ class OdpSegmentManagerTest(base.BaseTest):
                                                                        content=self.good_response_data)
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value,
-                                                                [OptimizelySegmentOption.RESET_CACHE])
+                                                                [OptimizelyOdpOption.RESET_CACHE])
 
         self.assertEqual(segments, ["a", "b"])
         self.assertEqual(segment_manager.segments_cache.lookup(cache_key), ['a', 'b'])

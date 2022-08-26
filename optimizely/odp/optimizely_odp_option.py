@@ -19,7 +19,7 @@ else:
     from typing import Final  # type: ignore
 
 
-class OptimizelySegmentOption:
+class OptimizelyOdpOption:
     """Options for the OdpSegmentManager."""
     IGNORE_CACHE: Final = 'IGNORE_CACHE'
     RESET_CACHE: Final = 'RESET_CACHE'

@@ -17,7 +17,7 @@ from typing import Optional
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors
-from optimizely.odp.optimizely_odp_option import OptimizelySegmentOption
+from optimizely.odp.optimizely_odp_option import OptimizelyOdpOption
 from optimizely.odp.lru_cache import OptimizelySegmentsCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
@@ -60,8 +60,8 @@ class OdpSegmentManager:
 
         cache_key = self.make_cache_key(user_key, user_value)
 
-        ignore_cache = OptimizelySegmentOption.IGNORE_CACHE in options
-        reset_cache = OptimizelySegmentOption.RESET_CACHE in options
+        ignore_cache = OptimizelyOdpOption.IGNORE_CACHE in options
+        reset_cache = OptimizelyOdpOption.RESET_CACHE in options
 
         if reset_cache:
             self._reset()
