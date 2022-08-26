@@ -29,10 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.10.6
+    - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
-        python-version: 3.10.6
+        python-version: '3.10'
       # flake8 version should be same as the version in requirements/test.txt
       # to avoid lint errors on CI
     - name: pip install flak8
