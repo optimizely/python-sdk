@@ -410,3 +410,38 @@ class OdpEventManagerTest(BaseTest):
         ])
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events * 2)
         event_manager.stop()
+
+    def test_odp_event_manager_events_before_odp_disabled(self):
+        mock_logger = mock.Mock()
+        odp_config = OdpConfig()
+        event_manager = OdpEventManager(odp_config, mock_logger)
+        event_manager.start()
+
+        with mock.patch.object(
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+
+            odp_config.update(None, None, [])
+            event_manager.event_queue.join()
+
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+            event_manager.flush()
+
+            event_manager.event_queue.join()
+
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_has_calls([
+            mock.call('Adding ODP event to queue.'),
+            mock.call('Adding ODP event to queue.'),
+            mock.call('ODP ready. Starting event processing.'),
+            mock.call('ODP event queue has been disabled.'),
+            mock.call('ODP event queue has been disabled.'),
+            mock.call('Received ODP event flush signal.'),
+            mock.call('ODP event queue has been disabled.')
+        ])
+        self.assertEqual(len(event_manager._current_batch), 0)
+        mock_send.assert_not_called()
+        event_manager.stop()
