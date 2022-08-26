@@ -11,8 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import queue
+import time
 from unittest import mock
+from copy import deepcopy
 import uuid
 
 from optimizely.odp.odp_event import OdpEvent
@@ -20,6 +21,11 @@ from optimizely.odp.odp_event_manager import OdpEventManager
 from optimizely.odp.odp_config import OdpConfig
 from .base import BaseTest, CopyingMock
 from optimizely.version import __version__
+
+
+class MockOdpEventManager(OdpEventManager):
+    def _add_to_batch(self, *args):
+        raise Exception("Unexpected error")
 
 
 class OdpEventManagerTest(BaseTest):
@@ -35,7 +41,7 @@ class OdpEventManagerTest(BaseTest):
             "type": "t1",
             "action": "a1",
             "identifiers": {"id-key-1": "id-value-1"},
-            "data": {"key-1": "value1"}
+            "data": {"key-1": "value1", "key-2": 2, "key-3": 3.0, "key-4": None}
         },
         {
             "type": "t2",
@@ -55,7 +61,10 @@ class OdpEventManagerTest(BaseTest):
                 "data_source_type": "sdk",
                 "data_source": "python-sdk",
                 "data_source_version": __version__,
-                "key-1": "value1"
+                "key-1": "value1",
+                "key-2": 2,
+                "key-3": 3.0,
+                "key-4": None
             }
         },
         {
@@ -76,6 +85,12 @@ class OdpEventManagerTest(BaseTest):
         with mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event = OdpEvent(**self.events[0])
         self.assertEqual(event, self.processed_events[0])
+
+    def test_invalid_odp_event(self):
+        event = deepcopy(self.events[0])
+        event['data']['invalid-item'] = {}
+        with self.assertRaises(TypeError):
+            OdpEvent(**event)
 
     def test_odp_event_manager_success(self):
         mock_logger = mock.Mock()
@@ -118,22 +133,33 @@ class OdpEventManagerTest(BaseTest):
         event_manager.start()
 
         event_manager.batch_size = 2
+        batch_count = 4
+
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
-        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
-            event_manager.send_event(**self.events[0])
-            event_manager.send_event(**self.events[1])
-            event_manager.send_event(**self.events[0])
-            event_manager.send_event(**self.events[1])
+            event_manager.zaius_manager,
+            'send_odp_events',
+            new_callable=CopyingMock,
+            return_value=False
+        ) as mock_send, mock.patch(
+            'uuid.uuid4',
+            return_value=self.test_uuid
+        ):
+            for _ in range(batch_count):
+                event_manager.send_event(**self.events[0])
+                event_manager.send_event(**self.events[1])
             event_manager.event_queue.join()
 
-        self.assertEqual(mock_send.call_count, 2)
-        for call in mock_send.call_args_list:
-            self.assertEqual(call[0], (self.api_key, self.api_host, self.processed_events))
+        self.assertEqual(mock_send.call_count, batch_count)
+        mock_send.assert_has_calls(
+            [mock.call(self.api_key, self.api_host, self.processed_events)] * batch_count
+        )
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('Flushing ODP events on batch size.')
+        mock_logger.debug.assert_has_calls([
+            mock.call('Flushing ODP events on batch size.'),
+            mock.call('Flushing batch size 2.')
+        ] * batch_count, any_order=True)
         event_manager.stop()
 
     def test_odp_event_manager_flush(self):
@@ -159,24 +185,27 @@ class OdpEventManagerTest(BaseTest):
         mock_logger = mock.Mock()
         event_manager = OdpEventManager(self.odp_config, mock_logger)
         event_manager.start()
+        flush_count = 4
 
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
-            event_manager.send_event(**self.events[0])
-            event_manager.send_event(**self.events[1])
-            event_manager.flush()
-            event_manager.send_event(**self.events[0])
-            event_manager.send_event(**self.events[1])
-            event_manager.flush()
+            for _ in range(flush_count):
+                event_manager.send_event(**self.events[0])
+                event_manager.send_event(**self.events[1])
+                event_manager.flush()
             event_manager.event_queue.join()
 
-        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(mock_send.call_count, flush_count)
         for call in mock_send.call_args_list:
-            self.assertEqual(call[0], (self.api_key, self.api_host, self.processed_events))
+            self.assertEqual(call, mock.call(self.api_key, self.api_host, self.processed_events))
         mock_logger.error.assert_not_called()
+
         self.assertEqual(len(event_manager._current_batch), 0)
-        mock_logger.debug.assert_any_call('Received ODP event flush signal.')
+        mock_logger.debug.assert_has_calls([
+            mock.call('Received ODP event flush signal.'),
+            mock.call('Flushing batch size 2.')
+        ] * flush_count, any_order=True)
         event_manager.stop()
 
     def test_odp_event_manager_network_failure(self):
@@ -250,7 +279,9 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_disabled(self):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger)
+        odp_config = OdpConfig()
+        odp_config.update(None, None, None)
+        event_manager = OdpEventManager(odp_config, mock_logger)
         event_manager.start()
 
         event_manager.send_event(**self.events[0])
@@ -259,18 +290,123 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('ODP event processing has been disabled.')
+        mock_logger.debug.assert_any_call('ODP event queue has been disabled.')
         self.assertStrictTrue(event_manager.is_running)
         event_manager.stop()
 
     def test_odp_event_manager_queue_full(self):
         mock_logger = mock.Mock()
+
+        with mock.patch('optimizely.helpers.enums.OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY', 1):
+            event_manager = OdpEventManager(self.odp_config, mock_logger)
+
+        with mock.patch('optimizely.odp.odp_event_manager.OdpEventManager.is_running', True):
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+
+        mock_logger.warning.assert_called_once_with('ODP event send failed (Queue is full).')
+        mock_logger.error.assert_not_called()
+
+    def test_odp_event_manager_thread_exception(self):
+        mock_logger = mock.Mock()
+        event_manager = MockOdpEventManager(self.odp_config, mock_logger)
+        event_manager.start()
+
+        event_manager.send_event(**self.events[0])
+        time.sleep(.1)
+        event_manager.send_event(**self.events[0])
+
+        event_manager.thread.join()
+        mock_logger.error.assert_has_calls([
+            mock.call('Uncaught exception processing ODP events. Error: Unexpected error'),
+            mock.call('ODP event send failed (Queue is down).')
+        ])
+
+    def test_odp_event_manager_invalid_data_type(self):
+        mock_logger = mock.Mock()
         event_manager = OdpEventManager(self.odp_config, mock_logger)
         event_manager.start()
 
-        with mock.patch.object(event_manager.event_queue, 'put_nowait', side_effect=queue.Full):
-            event_manager.send_event(**self.events[0])
+        event = deepcopy(self.events[0])
+        event['data']['invalid-item'] = {}
 
-        mock_logger.error.assert_any_call('ODP event send failed (Queue is full).')
-        self.assertStrictTrue(event_manager.is_running)
+        event_manager.send_event(**event)
+        event_manager.stop()
+
+        mock_logger.error.assert_called_once_with(
+            'ODP event send failed (ODP event data values can only be str, int, float and None).'
+        )
+
+    def test_odp_event_manager_override_default_data(self):
+        mock_logger = mock.Mock()
+        event_manager = OdpEventManager(self.odp_config, mock_logger)
+        event_manager.start()
+
+        event = deepcopy(self.events[0])
+        event['data']['data_source'] = 'my-app'
+
+        processed_event = deepcopy(self.processed_events[0])
+        processed_event['data']['data_source'] = 'my-app'
+
+        with mock.patch.object(
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
+            event_manager.send_event(**event)
+            event_manager.flush()
+            event_manager.event_queue.join()
+
+        mock_send.assert_called_once_with(self.api_key, self.api_host, [processed_event])
+
+    def test_odp_event_manager_flush_timeout(self):
+        mock_logger = mock.Mock()
+        event_manager = OdpEventManager(self.odp_config, mock_logger)
+        event_manager.flush_interval = .5
+        event_manager._set_flush_deadline()
+        event_manager.start()
+
+        with mock.patch.object(
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+            time.sleep(1)
+            event_manager.stop()
+
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_any_call('Flushing on interval.')
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        event_manager.stop()
+
+    def test_odp_event_manager_events_before_odp_ready(self):
+        mock_logger = mock.Mock()
+        odp_config = OdpConfig()
+        event_manager = OdpEventManager(odp_config, mock_logger)
+        event_manager.start()
+
+        with mock.patch.object(
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+
+            odp_config.update(self.api_key, self.api_host, [])
+            event_manager.event_queue.join()
+
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+            event_manager.flush()
+
+            event_manager.event_queue.join()
+
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_has_calls([
+            mock.call('Adding ODP event to queue.'),
+            mock.call('Adding ODP event to queue.'),
+            mock.call('ODP ready. Starting event processing.'),
+            mock.call('Adding ODP event to queue.'),
+            mock.call('Adding ODP event to queue.'),
+            mock.call('Received ODP event flush signal.'),
+            mock.call('Flushing batch size 4.')
+        ])
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events * 2)
         event_manager.stop()

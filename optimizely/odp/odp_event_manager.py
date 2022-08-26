@@ -12,11 +12,11 @@
 # limitations under the License.
 
 from __future__ import annotations
+from enum import Enum
 from threading import Thread
 from typing import Any, Optional
-import queue
-from queue import Queue
-from sys import version_info
+import time
+from queue import Empty, Queue, Full
 
 from optimizely import logger as _logging
 from .odp_event import OdpEvent
@@ -25,15 +25,10 @@ from .zaius_rest_api_manager import ZaiusRestApiManager
 from optimizely.helpers.enums import OdpEventManagerConfig, Errors
 
 
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final  # type: ignore
-
-
-class Signal:
-    '''Used to create unique objects for sending signals to event queue.'''
-    pass
+class Signal(Enum):
+    '''Enum for sending signals for the event queue.'''
+    SHUTDOWN = 1
+    FLUSH = 2
 
 
 class OdpEventManager:
@@ -44,15 +39,11 @@ class OdpEventManager:
     the queue and buffers them before the events are sent to ODP.
     """
 
-    _SHUTDOWN_SIGNAL: Final = Signal()
-    _FLUSH_SIGNAL: Final = Signal()
-
     def __init__(
         self,
         odp_config: OdpConfig,
         logger: Optional[_logging.Logger] = None,
         api_manager: Optional[ZaiusRestApiManager] = None
-
     ):
         """ OdpEventManager init method to configure event batching.
 
@@ -66,59 +57,87 @@ class OdpEventManager:
         self.odp_config = odp_config
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
+        self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
+        self._set_flush_deadline()
         self._current_batch: list[OdpEvent] = []
-        self.executor = Thread(target=self._run, daemon=True)
+        """_current_batch should only be modified by the processing thread, as it is not thread safe"""
+        self.thread = Thread(target=self._run, daemon=True)
+        self.thread_exception = False
+        """thread_exception will be True if the processing thread did not exit cleanly"""
 
     @property
     def is_running(self) -> bool:
         """ Property to check if consumer thread is alive or not. """
-        return self.executor.is_alive()
+        return self.thread.is_alive()
 
     def start(self) -> None:
         """ Starts the batch processing thread to batch events. """
         if self.is_running:
-            self.logger.warning('ODP event processor already started.')
+            self.logger.warning('ODP event queue already started.')
             return
 
-        self.executor.start()
+        self.thread.start()
 
     def _run(self) -> None:
         """ Triggered as part of the thread which batches odp events or flushes event_queue and blocks on get
         for flush interval if queue is empty.
         """
         try:
-            while True:
-                item = self.event_queue.get()
+            item = None
+            self.odp_config.odp_ready.wait()
+            self.logger.debug('ODP ready. Starting event processing.')
 
-                if item == self._SHUTDOWN_SIGNAL:
+            while True:
+                timeout = self._get_time_till_flush()
+
+                try:
+                    item = self.event_queue.get(True, timeout)
+                except Empty:
+                    item = None
+
+                if item == Signal.SHUTDOWN:
                     self.logger.debug('Received ODP event shutdown signal.')
-                    self.event_queue.task_done()
                     break
 
-                if item is self._FLUSH_SIGNAL:
+                elif item == Signal.FLUSH:
                     self.logger.debug('Received ODP event flush signal.')
                     self._flush_batch()
                     self.event_queue.task_done()
                     continue
 
-                if isinstance(item, OdpEvent):
+                elif isinstance(item, OdpEvent):
                     self._add_to_batch(item)
                     self.event_queue.task_done()
 
+                elif len(self._current_batch) > 0:
+                    self.logger.debug('Flushing on interval.')
+                    self._flush_batch()
+
+                else:
+                    self._set_flush_deadline()
+
         except Exception as exception:
+            self.thread_exception = True
             self.logger.error(f'Uncaught exception processing ODP events. Error: {exception}')
 
         finally:
             self.logger.info('Exiting ODP event processing loop. Attempting to flush pending events.')
             self._flush_batch()
+            if item == Signal.SHUTDOWN:
+                self.event_queue.task_done()
 
     def flush(self) -> None:
         """ Adds flush signal to event_queue. """
-
-        self.event_queue.put(self._FLUSH_SIGNAL)
+        try:
+            self.event_queue.put_nowait(Signal.FLUSH)
+        except Full:
+            self.logger.error("Error flushing ODP event queue")
 
     def _flush_batch(self) -> None:
-        """ Flushes current batch by dispatching event. """
+        """ Flushes current batch by dispatching event.
+        Should only be called by the executor thread."""
+        self._set_flush_deadline()
+
         batch_len = len(self._current_batch)
         if batch_len == 0:
             self.logger.debug('Nothing to flush.')
@@ -128,7 +147,8 @@ class OdpEventManager:
         api_host = self.odp_config.get_api_host()
 
         if not api_key or not api_host:
-            self.logger.debug('ODP event processing has been disabled.')
+            self.logger.debug('ODP event queue has been disabled.')
+            self._current_batch.clear()
             return
 
         self.logger.debug(f'Flushing batch size {batch_len}.')
@@ -145,20 +165,32 @@ class OdpEventManager:
         self._current_batch.clear()
 
     def _add_to_batch(self, odp_event: OdpEvent) -> None:
-        """ Method to append received odp event to current batch."""
+        """ Method to append received odp event to current batch.
+        Should only be called by the executor thread."""
 
         self._current_batch.append(odp_event)
         if len(self._current_batch) >= self.batch_size:
             self.logger.debug('Flushing ODP events on batch size.')
             self._flush_batch()
 
+    def _set_flush_deadline(self) -> None:
+        self._flush_deadline = time.time() + self.flush_interval
+
+    def _get_time_till_flush(self) -> float:
+        return max(0, self._flush_deadline - time.time())
+
     def stop(self) -> None:
-        """ Stops and disposes batch odp event queue."""
-        self.event_queue.put(self._SHUTDOWN_SIGNAL)
-        self.logger.warning('Stopping ODP Event Queue.')
+        """ Stops and disposes batch ODP event queue."""
+        try:
+            self.event_queue.put_nowait(Signal.SHUTDOWN)
+        except Full:
+            self.logger.error('Error stopping ODP event queue.')
+            return
+
+        self.logger.warning('Stopping ODP event queue.')
 
         if self.is_running:
-            self.executor.join()
+            self.thread.join()
 
         if len(self._current_batch) > 0:
             self.logger.error(Errors.ODP_EVENT_FAILED.format(self._current_batch))
@@ -167,19 +199,30 @@ class OdpEventManager:
             self.logger.error('Error stopping ODP event queue.')
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
-        event = OdpEvent(type, action, identifiers, data)
+        try:
+            event = OdpEvent(type, action, identifiers, data)
+        except TypeError as error:
+            self.logger.error(Errors.ODP_EVENT_FAILED.format(error))
+            return
+
+        if not self.odp_config.odp_integrated():
+            self.logger.debug('ODP event queue has been disabled.')
+            return
+
         self.dispatch(event)
 
     def dispatch(self, event: OdpEvent) -> None:
-        if not self.odp_config.odp_integrated():
-            self.logger.debug('ODP event processing has been disabled.')
+
+        if self.thread_exception:
+            self.logger.error(Errors.ODP_EVENT_FAILED.format('Queue is down'))
             return
 
         if not self.is_running:
-            self.logger.warning('ODP event processor is shutdown, not accepting events.')
+            self.logger.warning('ODP event queue is shutdown, not accepting events.')
             return
 
         try:
+            self.logger.debug('Adding ODP event to queue.')
             self.event_queue.put_nowait(event)
-        except queue.Full:
-            self.logger.error(Errors.ODP_EVENT_FAILED.format("Queue is full"))
+        except Full:
+            self.logger.warning(Errors.ODP_EVENT_FAILED.format("Queue is full"))

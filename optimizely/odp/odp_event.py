@@ -27,6 +27,7 @@ class OdpEvent:
         self.type = type
         self.action = action
         self.identifiers = identifiers
+        self._validate_data_types(data)
         self.data = self._add_common_event_data(data)
 
     def __repr__(self) -> str:
@@ -39,6 +40,11 @@ class OdpEvent:
             return self.__dict__ == other
         else:
             return False
+
+    def _validate_data_types(self, data: dict[str, Any]) -> None:
+        valid_types = (str, int, float, type(None))
+        if any(not isinstance(v, valid_types) for v in data.values()):
+            raise TypeError('ODP event data values can only be str, int, float and None')
 
     def _add_common_event_data(self, custom_data: dict[str, Any]) -> dict[str, Any]:
         data = {
