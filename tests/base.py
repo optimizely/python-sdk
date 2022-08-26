@@ -22,10 +22,6 @@ from requests import Response
 from optimizely import optimizely
 
 
-def long(a):
-    raise NotImplementedError('Tests should only call `long` if running in PY2')
-
-
 class CopyingMock(mock.MagicMock):
     """
     Forces mock to make a copy of the args instead of keeping a reference.
