@@ -136,14 +136,8 @@ class OdpEventManagerTest(BaseTest):
         batch_count = 4
 
         with mock.patch.object(
-            event_manager.zaius_manager,
-            'send_odp_events',
-            new_callable=CopyingMock,
-            return_value=False
-        ) as mock_send, mock.patch(
-            'uuid.uuid4',
-            return_value=self.test_uuid
-        ):
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             for _ in range(batch_count):
                 event_manager.send_event(**self.events[0])
                 event_manager.send_event(**self.events[1])
@@ -356,6 +350,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.event_queue.join()
 
         mock_send.assert_called_once_with(self.api_key, self.api_host, [processed_event])
+        event_manager.stop()
 
     def test_odp_event_manager_flush_timeout(self):
         mock_logger = mock.Mock()
@@ -375,7 +370,6 @@ class OdpEventManagerTest(BaseTest):
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_any_call('Flushing on interval.')
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
-        event_manager.stop()
 
     def test_odp_event_manager_events_before_odp_ready(self):
         mock_logger = mock.Mock()
@@ -417,9 +411,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager = OdpEventManager(odp_config, mock_logger)
         event_manager.start()
 
-        with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
-        ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
+        with mock.patch.object(event_manager.zaius_manager, 'send_odp_events') as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
 

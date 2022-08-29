@@ -26,7 +26,7 @@ from optimizely.helpers.enums import OdpEventManagerConfig, Errors
 
 
 class Signal(Enum):
-    '''Enum for sending signals for the event queue.'''
+    """Enum for sending signals to the event queue."""
     SHUTDOWN = 1
     FLUSH = 2
 
@@ -36,7 +36,8 @@ class OdpEventManager:
     Class that sends batches of ODP events.
 
     The OdpEventManager maintains a single consumer thread that pulls events off of
-    the queue and buffers them before the events are sent to ODP.
+    the queue and buffers them before the events are sent to ODP. Sends events when
+    the batch size is met or when the flush timeout has elapsed.
     """
 
     def __init__(
@@ -45,7 +46,7 @@ class OdpEventManager:
         logger: Optional[_logging.Logger] = None,
         api_manager: Optional[ZaiusRestApiManager] = None
     ):
-        """ OdpEventManager init method to configure event batching.
+        """OdpEventManager init method to configure event batching.
 
         Args:
             odp_config: ODP integration config.
@@ -67,11 +68,11 @@ class OdpEventManager:
 
     @property
     def is_running(self) -> bool:
-        """ Property to check if consumer thread is alive or not. """
+        """Property to check if consumer thread is alive or not."""
         return self.thread.is_alive()
 
     def start(self) -> None:
-        """ Starts the batch processing thread to batch events. """
+        """Starts the batch processing thread to batch events."""
         if self.is_running:
             self.logger.warning('ODP event queue already started.')
             return
@@ -79,11 +80,10 @@ class OdpEventManager:
         self.thread.start()
 
     def _run(self) -> None:
-        """ Triggered as part of the thread which batches odp events or flushes event_queue and blocks on get
-        for flush interval if queue is empty.
+        """Processes the event queue from a child thread. Events are batched until
+        the batch size is met or until the flush timeout has elapsed.
         """
         try:
-            item = None
             self.odp_config.odp_ready.wait()
             self.logger.debug('ODP ready. Starting event processing.')
 
@@ -127,15 +127,15 @@ class OdpEventManager:
                 self.event_queue.task_done()
 
     def flush(self) -> None:
-        """ Adds flush signal to event_queue. """
+        """Adds flush signal to event_queue."""
         try:
             self.event_queue.put_nowait(Signal.FLUSH)
         except Full:
             self.logger.error("Error flushing ODP event queue")
 
     def _flush_batch(self) -> None:
-        """ Flushes current batch by dispatching event.
-        Should only be called by the executor thread."""
+        """Flushes current batch by dispatching event.
+        Should only be called by the processing thread."""
         self._set_flush_deadline()
 
         batch_len = len(self._current_batch)
@@ -165,8 +165,8 @@ class OdpEventManager:
         self._current_batch.clear()
 
     def _add_to_batch(self, odp_event: OdpEvent) -> None:
-        """ Method to append received odp event to current batch.
-        Should only be called by the executor thread."""
+        """Appends received ODP event to current batch, flushing if batch is greater than batch size.
+        Should only be called by the processing thread."""
 
         self._current_batch.append(odp_event)
         if len(self._current_batch) >= self.batch_size:
@@ -174,13 +174,15 @@ class OdpEventManager:
             self._flush_batch()
 
     def _set_flush_deadline(self) -> None:
+        """Sets time that next flush will occur."""
         self._flush_deadline = time.time() + self.flush_interval
 
     def _get_time_till_flush(self) -> float:
+        """Returns seconds until next flush."""
         return max(0, self._flush_deadline - time.time())
 
     def stop(self) -> None:
-        """ Stops and disposes batch ODP event queue."""
+        """Flushes and then stops ODP event queue."""
         try:
             self.event_queue.put_nowait(Signal.SHUTDOWN)
         except Full:
@@ -199,20 +201,21 @@ class OdpEventManager:
             self.logger.error('Error stopping ODP event queue.')
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
+        """Create OdpEvent and add it to the event queue."""
+        if not self.odp_config.odp_integrated():
+            self.logger.debug('ODP event queue has been disabled.')
+            return
+
         try:
             event = OdpEvent(type, action, identifiers, data)
         except TypeError as error:
             self.logger.error(Errors.ODP_EVENT_FAILED.format(error))
             return
 
-        if not self.odp_config.odp_integrated():
-            self.logger.debug('ODP event queue has been disabled.')
-            return
-
         self.dispatch(event)
 
     def dispatch(self, event: OdpEvent) -> None:
-
+        """Add OdpEvent to the event queue."""
         if self.thread_exception:
             self.logger.error(Errors.ODP_EVENT_FAILED.format('Queue is down'))
             return
