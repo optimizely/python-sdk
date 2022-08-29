@@ -36,8 +36,9 @@ class OdpEventManager:
     Class that sends batches of ODP events.
 
     The OdpEventManager maintains a single consumer thread that pulls events off of
-    the queue and buffers them before the events are sent to ODP. Sends events when
-    the batch size is met or when the flush timeout has elapsed.
+    the queue and buffers them before events are sent to ODP.
+    Waits for odp_config.odp_ready to be set before processing.
+    Sends events when the batch size is met or when the flush timeout has elapsed.
     """
 
     def __init__(
