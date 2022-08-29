@@ -394,15 +394,14 @@ class OdpEventManagerTest(BaseTest):
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_has_calls([
-            mock.call('Adding ODP event to queue.'),
-            mock.call('Adding ODP event to queue.'),
-            mock.call('ODP ready. Starting event processing.'),
+            mock.call('ODP events cannot be sent before the datafile has loaded.'),
+            mock.call('ODP events cannot be sent before the datafile has loaded.'),
             mock.call('Adding ODP event to queue.'),
             mock.call('Adding ODP event to queue.'),
             mock.call('Received ODP event flush signal.'),
-            mock.call('Flushing batch size 4.')
+            mock.call('Flushing batch size 2.')
         ])
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events * 2)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         event_manager.stop()
 
     def test_odp_event_manager_events_before_odp_disabled(self):
@@ -420,18 +419,14 @@ class OdpEventManagerTest(BaseTest):
 
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
-            event_manager.flush()
 
             event_manager.event_queue.join()
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_has_calls([
-            mock.call('Adding ODP event to queue.'),
-            mock.call('Adding ODP event to queue.'),
-            mock.call('ODP ready. Starting event processing.'),
+            mock.call('ODP events cannot be sent before the datafile has loaded.'),
+            mock.call('ODP events cannot be sent before the datafile has loaded.'),
             mock.call('ODP event queue has been disabled.'),
-            mock.call('ODP event queue has been disabled.'),
-            mock.call('Received ODP event flush signal.'),
             mock.call('ODP event queue has been disabled.')
         ])
         self.assertEqual(len(event_manager._current_batch), 0)

@@ -20,7 +20,7 @@ from queue import Empty, Queue, Full
 
 from optimizely import logger as _logging
 from .odp_event import OdpEvent
-from .odp_config import OdpConfig
+from .odp_config import OdpConfig, OdpConfigState
 from .zaius_rest_api_manager import ZaiusRestApiManager
 from optimizely.helpers.enums import OdpEventManagerConfig, Errors
 
@@ -37,7 +37,6 @@ class OdpEventManager:
 
     The OdpEventManager maintains a single consumer thread that pulls events off of
     the queue and buffers them before events are sent to ODP.
-    Waits for odp_config.odp_ready to be set before processing.
     Sends events when the batch size is met or when the flush timeout has elapsed.
     """
 
@@ -85,9 +84,6 @@ class OdpEventManager:
         the batch size is met or until the flush timeout has elapsed.
         """
         try:
-            self.odp_config.odp_ready.wait()
-            self.logger.debug('ODP ready. Starting event processing.')
-
             while True:
                 timeout = self._get_time_till_flush()
 
@@ -203,7 +199,12 @@ class OdpEventManager:
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
         """Create OdpEvent and add it to the event queue."""
-        if not self.odp_config.odp_integrated():
+        odp_state = self.odp_config.odp_state()
+        if odp_state == OdpConfigState.UNDETERMINED:
+            self.logger.debug('ODP events cannot be sent before the datafile has loaded.')
+            return
+
+        if odp_state == OdpConfigState.NOT_INTEGRATED:
             self.logger.debug('ODP event queue has been disabled.')
             return
 

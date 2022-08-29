@@ -12,9 +12,17 @@
 # limitations under the License.
 
 from __future__ import annotations
+from enum import Enum
 
 from typing import Optional
-from threading import Lock, Event
+from threading import Lock
+
+
+class OdpConfigState(Enum):
+    """State of the ODP integration."""
+    UNDETERMINED = 1
+    INTEGRATED = 2
+    NOT_INTEGRATED = 3
 
 
 class OdpConfig:
@@ -37,14 +45,13 @@ class OdpConfig:
         self._api_host = api_host
         self._segments_to_check = segments_to_check or []
         self.lock = Lock()
-        self.odp_ready = Event()
+        self._odp_state = OdpConfigState.UNDETERMINED
         if self._api_host and self._api_key:
-            self.odp_ready.set()
+            self._odp_state = OdpConfigState.INTEGRATED
 
     def update(self, api_key: Optional[str], api_host: Optional[str], segments_to_check: list[str]) -> bool:
         """
         Override the ODP configuration.
-        The first time this is called, any threads waiting on odp_ready, will be unblocked.
 
         Args:
             api_host: The host URL for the ODP audience segments API (optional).
@@ -55,10 +62,14 @@ class OdpConfig:
         Returns:
             True if the provided values were different than the existing values.
         """
-        self.odp_ready.set()
 
         updated = False
         with self.lock:
+            if api_key and api_host:
+                self._odp_state = OdpConfigState.INTEGRATED
+            else:
+                self._odp_state = OdpConfigState.NOT_INTEGRATED
+
             if self._api_key != api_key or self._api_host != api_host or self._segments_to_check != segments_to_check:
                 self._api_key = api_key
                 self._api_host = api_host
@@ -79,10 +90,7 @@ class OdpConfig:
         with self.lock:
             return self._segments_to_check.copy()
 
-    def odp_integrated(self) -> bool:
-        """Returns True if ODP is integrated or if datafile has not loaded yet."""
-        if not self.odp_ready.is_set():
-            return True
-
+    def odp_state(self) -> OdpConfigState:
+        """Returns the state of ODP integration (UNDETERMINED, INTEGRATED, or NOT_INTEGRATED)."""
         with self.lock:
-            return self._api_key is not None and self._api_host is not None
+            return self._odp_state
