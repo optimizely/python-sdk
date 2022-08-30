@@ -14,12 +14,12 @@
 from __future__ import annotations
 from enum import Enum
 from threading import Thread
-from typing import Any, Optional
+from typing import Optional
 import time
 from queue import Empty, Queue, Full
 
 from optimizely import logger as _logging
-from .odp_event import OdpEvent
+from .odp_event import OdpEvent, OdpDataType
 from .odp_config import OdpConfig, OdpConfigState
 from .zaius_rest_api_manager import ZaiusRestApiManager
 from optimizely.helpers.enums import OdpEventManagerConfig, Errors
@@ -59,7 +59,7 @@ class OdpEventManager:
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
         self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
-        self._set_flush_deadline()
+        self._flush_deadline: Optional[float] = None
         self._current_batch: list[OdpEvent] = []
         """_current_batch should only be modified by the processing thread, as it is not thread safe"""
         self.thread = Thread(target=self._run, daemon=True)
@@ -88,16 +88,18 @@ class OdpEventManager:
                 timeout = self._get_time_till_flush()
 
                 try:
+                    # if current_batch > 0, wait until timeout
+                    # else wait indefinitely (timeout = None)
                     item = self.event_queue.get(True, timeout)
                 except Empty:
                     item = None
 
                 if item == Signal.SHUTDOWN:
-                    self.logger.debug('Received ODP event shutdown signal.')
+                    self.logger.debug('ODP event queue: received shutdown signal.')
                     break
 
                 elif item == Signal.FLUSH:
-                    self.logger.debug('Received ODP event flush signal.')
+                    self.logger.debug('ODP event queue: received flush signal.')
                     self._flush_batch()
                     self.event_queue.task_done()
                     continue
@@ -106,12 +108,9 @@ class OdpEventManager:
                     self._add_to_batch(item)
                     self.event_queue.task_done()
 
-                elif len(self._current_batch) > 0:
-                    self.logger.debug('Flushing on interval.')
+                elif len(self._current_batch) > 0 and self._get_time_till_flush() == 0:
+                    self.logger.debug('ODP event queue: flushing on interval.')
                     self._flush_batch()
-
-                else:
-                    self._set_flush_deadline()
 
         except Exception as exception:
             self.thread_exception = True
@@ -133,22 +132,20 @@ class OdpEventManager:
     def _flush_batch(self) -> None:
         """Flushes current batch by dispatching event.
         Should only be called by the processing thread."""
-        self._set_flush_deadline()
-
         batch_len = len(self._current_batch)
         if batch_len == 0:
-            self.logger.debug('Nothing to flush.')
+            self.logger.debug('ODP event queue: nothing to flush.')
             return
 
         api_key = self.odp_config.get_api_key()
         api_host = self.odp_config.get_api_host()
 
         if not api_key or not api_host:
-            self.logger.debug('ODP event queue has been disabled.')
-            self._current_batch.clear()
+            self.logger.debug(Errors.ODP_NOT_INTEGRATED)
+            self._clear_batch()
             return
 
-        self.logger.debug(f'Flushing batch size {batch_len}.')
+        self.logger.debug(f'ODP event queue: flushing batch size {batch_len}.')
         should_retry = False
         try:
             should_retry = self.zaius_manager.send_odp_events(api_key, api_host, self._current_batch)
@@ -156,27 +153,35 @@ class OdpEventManager:
             self.logger.error(Errors.ODP_EVENT_FAILED.format(f'{self._current_batch} {e}'))
 
         if should_retry:
+            self._set_flush_deadline()
             self.logger.debug('Error dispatching ODP events, scheduled to retry.')
             return
 
-        self._current_batch.clear()
+        self._clear_batch()
 
     def _add_to_batch(self, odp_event: OdpEvent) -> None:
         """Appends received ODP event to current batch, flushing if batch is greater than batch size.
         Should only be called by the processing thread."""
+        if not self._flush_deadline:
+            self._set_flush_deadline()
 
         self._current_batch.append(odp_event)
         if len(self._current_batch) >= self.batch_size:
-            self.logger.debug('Flushing ODP events on batch size.')
+            self.logger.debug('ODP event queue: flushing on batch size.')
             self._flush_batch()
+
+    def _clear_batch(self) -> None:
+        """Clears current batch and disables interval flushing."""
+        self._flush_deadline = None
+        self._current_batch.clear()
 
     def _set_flush_deadline(self) -> None:
         """Sets time that next flush will occur."""
         self._flush_deadline = time.time() + self.flush_interval
 
-    def _get_time_till_flush(self) -> float:
-        """Returns seconds until next flush."""
-        return max(0, self._flush_deadline - time.time())
+    def _get_time_till_flush(self) -> Optional[float]:
+        """Returns seconds until next flush or None if no deadline set."""
+        return max(0, self._flush_deadline - time.time()) if self._flush_deadline else None
 
     def stop(self) -> None:
         """Flushes and then stops ODP event queue."""
@@ -197,24 +202,18 @@ class OdpEventManager:
         if self.is_running:
             self.logger.error('Error stopping ODP event queue.')
 
-    def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
+    def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, OdpDataType]) -> None:
         """Create OdpEvent and add it to the event queue."""
         odp_state = self.odp_config.odp_state()
         if odp_state == OdpConfigState.UNDETERMINED:
-            self.logger.debug('ODP events cannot be sent before the datafile has loaded.')
+            self.logger.debug('ODP event queue: cannot send before the datafile has loaded.')
             return
 
         if odp_state == OdpConfigState.NOT_INTEGRATED:
-            self.logger.debug('ODP event queue has been disabled.')
+            self.logger.debug(Errors.ODP_NOT_INTEGRATED)
             return
 
-        try:
-            event = OdpEvent(type, action, identifiers, data)
-        except TypeError as error:
-            self.logger.error(Errors.ODP_EVENT_FAILED.format(error))
-            return
-
-        self.dispatch(event)
+        self.dispatch(OdpEvent(type, action, identifiers, data))
 
     def dispatch(self, event: OdpEvent) -> None:
         """Add OdpEvent to the event queue."""
@@ -227,7 +226,7 @@ class OdpEventManager:
             return
 
         try:
-            self.logger.debug('Adding ODP event to queue.')
+            self.logger.debug('ODP event queue: adding event.')
             self.event_queue.put_nowait(event)
         except Full:
             self.logger.warning(Errors.ODP_EVENT_FAILED.format("Queue is full"))

@@ -306,3 +306,8 @@ def are_values_same_type(first_val: Any, second_val: Any) -> bool:
         return True
 
     return False
+
+
+def are_odp_data_types_valid(data: dict[str, Any]) -> bool:
+    valid_types = (str, int, float, bool, type(None))
+    return all(isinstance(v, valid_types) for v in data.values())

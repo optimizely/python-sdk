@@ -21,6 +21,8 @@ from optimizely.odp.odp_event_manager import OdpEventManager
 from optimizely.odp.odp_config import OdpConfig
 from .base import BaseTest, CopyingMock
 from optimizely.version import __version__
+from optimizely.helpers import validator
+from optimizely.helpers.enums import Errors
 
 
 class MockOdpEventManager(OdpEventManager):
@@ -41,7 +43,7 @@ class OdpEventManagerTest(BaseTest):
             "type": "t1",
             "action": "a1",
             "identifiers": {"id-key-1": "id-value-1"},
-            "data": {"key-1": "value1", "key-2": 2, "key-3": 3.0, "key-4": None}
+            "data": {"key-1": "value1", "key-2": 2, "key-3": 3.0, "key-4": None, 'key-5': True}
         },
         {
             "type": "t2",
@@ -64,7 +66,8 @@ class OdpEventManagerTest(BaseTest):
                 "key-1": "value1",
                 "key-2": 2,
                 "key-3": 3.0,
-                "key-4": None
+                "key-4": None,
+                "key-5": True
             }
         },
         {
@@ -82,15 +85,16 @@ class OdpEventManagerTest(BaseTest):
     ]
 
     def test_odp_event_init(self):
+        event = self.events[0]
+        self.assertStrictTrue(validator.are_odp_data_types_valid(event['data']))
         with mock.patch('uuid.uuid4', return_value=self.test_uuid):
-            event = OdpEvent(**self.events[0])
-        self.assertEqual(event, self.processed_events[0])
+            odp_event = OdpEvent(**event)
+        self.assertEqual(odp_event, self.processed_events[0])
 
     def test_invalid_odp_event(self):
         event = deepcopy(self.events[0])
         event['data']['invalid-item'] = {}
-        with self.assertRaises(TypeError):
-            OdpEvent(**event)
+        self.assertStrictFalse(validator.are_odp_data_types_valid(event['data']))
 
     def test_odp_event_manager_success(self):
         mock_logger = mock.Mock()
@@ -104,8 +108,8 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('Flushing batch size 2.')
-        mock_logger.debug.assert_any_call('Received ODP event shutdown signal.')
+        mock_logger.debug.assert_any_call('ODP event queue: flushing batch size 2.')
+        mock_logger.debug.assert_any_call('ODP event queue: received shutdown signal.')
         self.assertStrictFalse(event_manager.is_running)
 
     def test_odp_event_manager_batch(self):
@@ -124,7 +128,7 @@ class OdpEventManagerTest(BaseTest):
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('Flushing ODP events on batch size.')
+        mock_logger.debug.assert_any_call('ODP event queue: flushing on batch size.')
         event_manager.stop()
 
     def test_odp_event_manager_multiple_batches(self):
@@ -151,8 +155,8 @@ class OdpEventManagerTest(BaseTest):
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_has_calls([
-            mock.call('Flushing ODP events on batch size.'),
-            mock.call('Flushing batch size 2.')
+            mock.call('ODP event queue: flushing on batch size.'),
+            mock.call('ODP event queue: flushing batch size 2.')
         ] * batch_count, any_order=True)
         event_manager.stop()
 
@@ -172,7 +176,7 @@ class OdpEventManagerTest(BaseTest):
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         mock_logger.error.assert_not_called()
         self.assertEqual(len(event_manager._current_batch), 0)
-        mock_logger.debug.assert_any_call('Received ODP event flush signal.')
+        mock_logger.debug.assert_any_call('ODP event queue: received flush signal.')
         event_manager.stop()
 
     def test_odp_event_manager_multiple_flushes(self):
@@ -197,8 +201,8 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.debug.assert_has_calls([
-            mock.call('Received ODP event flush signal.'),
-            mock.call('Flushing batch size 2.')
+            mock.call('ODP event queue: received flush signal.'),
+            mock.call('ODP event queue: flushing batch size 2.')
         ] * flush_count, any_order=True)
         event_manager.stop()
 
@@ -284,7 +288,7 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('ODP event queue has been disabled.')
+        mock_logger.debug.assert_any_call(Errors.ODP_NOT_INTEGRATED)
         self.assertStrictTrue(event_manager.is_running)
         event_manager.stop()
 
@@ -316,21 +320,6 @@ class OdpEventManagerTest(BaseTest):
             mock.call('ODP event send failed (Queue is down).')
         ])
 
-    def test_odp_event_manager_invalid_data_type(self):
-        mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
-
-        event = deepcopy(self.events[0])
-        event['data']['invalid-item'] = {}
-
-        event_manager.send_event(**event)
-        event_manager.stop()
-
-        mock_logger.error.assert_called_once_with(
-            'ODP event send failed (ODP event data values can only be str, int, float and None).'
-        )
-
     def test_odp_event_manager_override_default_data(self):
         mock_logger = mock.Mock()
         event_manager = OdpEventManager(self.odp_config, mock_logger)
@@ -356,7 +345,6 @@ class OdpEventManagerTest(BaseTest):
         mock_logger = mock.Mock()
         event_manager = OdpEventManager(self.odp_config, mock_logger)
         event_manager.flush_interval = .5
-        event_manager._set_flush_deadline()
         event_manager.start()
 
         with mock.patch.object(
@@ -364,11 +352,12 @@ class OdpEventManagerTest(BaseTest):
         ) as mock_send, mock.patch('uuid.uuid4', return_value=self.test_uuid):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
+            event_manager.event_queue.join()
             time.sleep(1)
             event_manager.stop()
 
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('Flushing on interval.')
+        mock_logger.debug.assert_any_call('ODP event queue: flushing on interval.')
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
 
     def test_odp_event_manager_events_before_odp_ready(self):
@@ -394,12 +383,12 @@ class OdpEventManagerTest(BaseTest):
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_has_calls([
-            mock.call('ODP events cannot be sent before the datafile has loaded.'),
-            mock.call('ODP events cannot be sent before the datafile has loaded.'),
-            mock.call('Adding ODP event to queue.'),
-            mock.call('Adding ODP event to queue.'),
-            mock.call('Received ODP event flush signal.'),
-            mock.call('Flushing batch size 2.')
+            mock.call('ODP event queue: cannot send before the datafile has loaded.'),
+            mock.call('ODP event queue: cannot send before the datafile has loaded.'),
+            mock.call('ODP event queue: adding event.'),
+            mock.call('ODP event queue: adding event.'),
+            mock.call('ODP event queue: received flush signal.'),
+            mock.call('ODP event queue: flushing batch size 2.')
         ])
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         event_manager.stop()
@@ -424,10 +413,10 @@ class OdpEventManagerTest(BaseTest):
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_has_calls([
-            mock.call('ODP events cannot be sent before the datafile has loaded.'),
-            mock.call('ODP events cannot be sent before the datafile has loaded.'),
-            mock.call('ODP event queue has been disabled.'),
-            mock.call('ODP event queue has been disabled.')
+            mock.call('ODP event queue: cannot send before the datafile has loaded.'),
+            mock.call('ODP event queue: cannot send before the datafile has loaded.'),
+            mock.call(Errors.ODP_NOT_INTEGRATED),
+            mock.call(Errors.ODP_NOT_INTEGRATED)
         ])
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_send.assert_not_called()
