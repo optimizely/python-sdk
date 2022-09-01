@@ -123,6 +123,7 @@ class Errors:
     INVALID_SEGMENT_IDENTIFIER: Final = 'Audience segments fetch failed (invalid identifier).'
     FETCH_SEGMENTS_FAILED: Final = 'Audience segments fetch failed ({}).'
     ODP_EVENT_FAILED: Final = 'ODP event send failed ({}).'
+    ODP_NOT_ENABLED: Final = 'ODP is not enabled.'
     ODP_NOT_INTEGRATED: Final = 'ODP is not integrated.'
 
 
@@ -212,3 +213,4 @@ class OdpEventManagerConfig:
     DEFAULT_QUEUE_CAPACITY: Final = 1000
     DEFAULT_BATCH_SIZE: Final = 10
     DEFAULT_FLUSH_INTERVAL: Final = 10
+    DEFAULT_RETRY_COUNT: Final = 3

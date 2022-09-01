@@ -59,7 +59,8 @@ class OdpEventManager:
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
         self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
-        self._flush_deadline: Optional[float] = None
+        self._flush_deadline: float = 0
+        self.retry_count = OdpEventManagerConfig.DEFAULT_RETRY_COUNT
         self._current_batch: list[OdpEvent] = []
         """_current_batch should only be modified by the processing thread, as it is not thread safe"""
         self.thread = Thread(target=self._run, daemon=True)
@@ -85,11 +86,9 @@ class OdpEventManager:
         """
         try:
             while True:
-                timeout = self._get_time_till_flush()
+                timeout = self._get_queue_timeout()
 
                 try:
-                    # if current_batch > 0, wait until timeout
-                    # else wait indefinitely (timeout = None)
                     item = self.event_queue.get(True, timeout)
                 except Empty:
                     item = None
@@ -108,7 +107,7 @@ class OdpEventManager:
                     self._add_to_batch(item)
                     self.event_queue.task_done()
 
-                elif len(self._current_batch) > 0 and self._get_time_till_flush() == 0:
+                elif len(self._current_batch) > 0:
                     self.logger.debug('ODP event queue: flushing on interval.')
                     self._flush_batch()
 
@@ -142,27 +141,33 @@ class OdpEventManager:
 
         if not api_key or not api_host:
             self.logger.debug(Errors.ODP_NOT_INTEGRATED)
-            self._clear_batch()
+            self._current_batch.clear()
             return
 
         self.logger.debug(f'ODP event queue: flushing batch size {batch_len}.')
         should_retry = False
-        try:
-            should_retry = self.zaius_manager.send_odp_events(api_key, api_host, self._current_batch)
-        except Exception as e:
-            self.logger.error(Errors.ODP_EVENT_FAILED.format(f'{self._current_batch} {e}'))
+
+        for i in range(1 + self.retry_count):
+            try:
+                should_retry = self.zaius_manager.send_odp_events(api_key, api_host, self._current_batch)
+            except Exception as error:
+                should_retry = False
+                self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Error: {error} {self._current_batch}'))
+
+            if not should_retry:
+                break
+            if i < self.retry_count:
+                self.logger.debug('Error dispatching ODP events, scheduled to retry.')
 
         if should_retry:
-            self._set_flush_deadline()
-            self.logger.debug('Error dispatching ODP events, scheduled to retry.')
-            return
+            self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Failed after {i} retries: {self._current_batch}'))
 
-        self._clear_batch()
+        self._current_batch.clear()
 
     def _add_to_batch(self, odp_event: OdpEvent) -> None:
         """Appends received ODP event to current batch, flushing if batch is greater than batch size.
         Should only be called by the processing thread."""
-        if not self._flush_deadline:
+        if not self._current_batch:
             self._set_flush_deadline()
 
         self._current_batch.append(odp_event)
@@ -170,18 +175,19 @@ class OdpEventManager:
             self.logger.debug('ODP event queue: flushing on batch size.')
             self._flush_batch()
 
-    def _clear_batch(self) -> None:
-        """Clears current batch and disables interval flushing."""
-        self._flush_deadline = None
-        self._current_batch.clear()
-
     def _set_flush_deadline(self) -> None:
         """Sets time that next flush will occur."""
         self._flush_deadline = time.time() + self.flush_interval
 
-    def _get_time_till_flush(self) -> Optional[float]:
-        """Returns seconds until next flush or None if no deadline set."""
-        return max(0, self._flush_deadline - time.time()) if self._flush_deadline else None
+    def _get_time_till_flush(self) -> float:
+        """Returns seconds until next flush; no less than 0."""
+        return max(0, self._flush_deadline - time.time())
+
+    def _get_queue_timeout(self) -> Optional[float]:
+        """Returns seconds until next flush or None if current batch is empty."""
+        if len(self._current_batch) == 0:
+            return None
+        return self._get_time_till_flush()
 
     def stop(self) -> None:
         """Flushes and then stops ODP event queue."""
