@@ -14,10 +14,23 @@
 import json
 import unittest
 from typing import Optional
+from copy import deepcopy
+from unittest import mock
 
 from requests import Response
 
 from optimizely import optimizely
+
+
+class CopyingMock(mock.MagicMock):
+    """
+    Forces mock to make a copy of the args instead of keeping a reference.
+    Otherwise mutable args (lists, dicts) can change after they're captured.
+    """
+    def __call__(self, *args, **kwargs):
+        args = deepcopy(args)
+        kwargs = deepcopy(kwargs)
+        return super().__call__(*args, **kwargs)
 
 
 class BaseTest(unittest.TestCase):

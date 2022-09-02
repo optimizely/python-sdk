@@ -21,7 +21,7 @@ from requests.exceptions import RequestException, ConnectionError, Timeout
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpRestApiConfig
-from optimizely.odp.odp_event import OdpEvent
+from optimizely.odp.odp_event import OdpEvent, OdpEventEncoder
 
 """
  ODP REST Events API
@@ -60,7 +60,7 @@ class ZaiusRestApiManager:
         request_headers = {'content-type': 'application/json', 'x-api-key': api_key}
 
         try:
-            payload_dict = json.dumps(events)
+            payload_dict = json.dumps(events, cls=OdpEventEncoder)
         except TypeError as err:
             self.logger.error(Errors.ODP_EVENT_FAILED.format(err))
             return should_retry
