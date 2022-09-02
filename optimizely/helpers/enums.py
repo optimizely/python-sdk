@@ -212,5 +212,5 @@ class OdpEventManagerConfig:
     """ODP Event Manager configs."""
     DEFAULT_QUEUE_CAPACITY: Final = 1000
     DEFAULT_BATCH_SIZE: Final = 10
-    DEFAULT_FLUSH_INTERVAL: Final = 10
+    DEFAULT_FLUSH_INTERVAL: Final = 1
     DEFAULT_RETRY_COUNT: Final = 3
