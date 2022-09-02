@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from optimizely.event.event_processor import BaseEventProcessor
     from optimizely.helpers.event_tag_utils import EventTags
     from optimizely.optimizely_user_context import UserAttributes
+    from optimizely.odp.odp_event import OdpDataDict
 
 
 def is_datafile_valid(datafile: Optional[str | bytes]) -> bool:
@@ -308,6 +309,6 @@ def are_values_same_type(first_val: Any, second_val: Any) -> bool:
     return False
 
 
-def are_odp_data_types_valid(data: dict[str, Any]) -> bool:
+def are_odp_data_types_valid(data: OdpDataDict) -> bool:
     valid_types = (str, int, float, bool, type(None))
     return all(isinstance(v, valid_types) for v in data.values())

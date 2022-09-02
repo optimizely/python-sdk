@@ -19,7 +19,7 @@ import time
 from queue import Empty, Queue, Full
 
 from optimizely import logger as _logging
-from .odp_event import OdpEvent, OdpDataType
+from .odp_event import OdpEvent, OdpDataDict
 from .odp_config import OdpConfig, OdpConfigState
 from .zaius_rest_api_manager import ZaiusRestApiManager
 from optimizely.helpers.enums import OdpEventManagerConfig, Errors
@@ -208,7 +208,7 @@ class OdpEventManager:
         if self.is_running:
             self.logger.error('Error stopping ODP event queue.')
 
-    def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, OdpDataType]) -> None:
+    def send_event(self, type: str, action: str, identifiers: dict[str, str], data: OdpDataDict) -> None:
         """Create OdpEvent and add it to the event queue."""
         odp_state = self.odp_config.odp_state()
         if odp_state == OdpConfigState.UNDETERMINED:

@@ -13,18 +13,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any, Union, Dict
 import uuid
 import json
 from optimizely import version
 
-OdpDataType = Union[str, int, float, bool, None]
+OdpDataDict = Dict[str, Union[str, int, float, bool, None]]
 
 
 class OdpEvent:
     """ Representation of an odp event which can be sent to the Optimizely odp platform. """
 
-    def __init__(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, OdpDataType]) -> None:
+    def __init__(self, type: str, action: str, identifiers: dict[str, str], data: OdpDataDict) -> None:
         self.type = type
         self.action = action
         self.identifiers = identifiers
@@ -41,8 +41,8 @@ class OdpEvent:
         else:
             return False
 
-    def _add_common_event_data(self, custom_data: dict[str, OdpDataType]) -> dict[str, OdpDataType]:
-        data: dict[str, OdpDataType] = {
+    def _add_common_event_data(self, custom_data: OdpDataDict) -> OdpDataDict:
+        data: OdpDataDict = {
             'idempotence_id': str(uuid.uuid4()),
             'data_source_type': 'sdk',
             'data_source': 'python-sdk',
