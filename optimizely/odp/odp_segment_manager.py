@@ -64,7 +64,7 @@ class OdpSegmentManager:
         reset_cache = OptimizelyOdpOption.RESET_CACHE in options
 
         if reset_cache:
-            self._reset()
+            self.reset()
 
         if not ignore_cache and not reset_cache:
             segments = self.segments_cache.lookup(cache_key)
@@ -83,7 +83,7 @@ class OdpSegmentManager:
 
         return segments
 
-    def _reset(self) -> None:
+    def reset(self) -> None:
         self.segments_cache.reset()
 
     def make_cache_key(self, user_key: str, user_value: str) -> str:

@@ -120,11 +120,12 @@ class Errors:
     NONE_VARIABLE_KEY_PARAMETER: Final = '"None" is an invalid value for variable key.'
     UNSUPPORTED_DATAFILE_VERSION: Final = (
         'This version of the Python SDK does not support the given datafile version: "{}".')
-    INVALID_SEGMENT_IDENTIFIER: Final = 'Audience segments fetch failed (invalid identifier).'
-    FETCH_SEGMENTS_FAILED: Final = 'Audience segments fetch failed ({}).'
-    ODP_EVENT_FAILED: Final = 'ODP event send failed ({}).'
-    ODP_NOT_ENABLED: Final = 'ODP is not enabled.'
-    ODP_NOT_INTEGRATED: Final = 'ODP is not integrated.'
+    INVALID_SEGMENT_IDENTIFIER = 'Audience segments fetch failed (invalid identifier).'
+    FETCH_SEGMENTS_FAILED = 'Audience segments fetch failed ({}).'
+    ODP_EVENT_FAILED = 'ODP event send failed ({}).'
+    ODP_NOT_INTEGRATED = 'ODP is not integrated.'
+    ODP_NOT_ENABLED = 'ODP is not enabled.'
+    ODP_INVALID_DATA = 'ODP data is not valid.'
 
 
 class ForcedDecisionLogs:
@@ -214,3 +215,9 @@ class OdpEventManagerConfig:
     DEFAULT_BATCH_SIZE: Final = 10
     DEFAULT_FLUSH_INTERVAL: Final = 1
     DEFAULT_RETRY_COUNT: Final = 3
+
+
+class OdpManagerConfig:
+    """ODP Manager configs."""
+    KEY_FOR_USER_ID = 'fs_user_id'
+    EVENT_TYPE = 'fullstack'

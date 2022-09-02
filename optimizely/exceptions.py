@@ -64,3 +64,21 @@ class UnsupportedDatafileVersionException(Exception):
     """ Raised when provided version in datafile is not supported. """
 
     pass
+
+
+class OdpNotEnabled(Exception):
+    """ Raised when Optimizely Data Platform (ODP) is not enabled. """
+
+    pass
+
+
+class OdpNotIntegrated(Exception):
+    """ Raised when Optimizely Data Platform (ODP) is not integrated. """
+
+    pass
+
+
+class OdpInvalidData(Exception):
+    """ Raised when passing invalid ODP data. """
+
+    pass
