@@ -27,9 +27,6 @@ from optimizely.odp.zaius_rest_api_manager import ZaiusRestApiManager
 from tests import base
 
 
-# import pytest
-
-
 class OdpManagerTest(base.BaseTest):
     cache_size = 10
     cache_timeout = 20
