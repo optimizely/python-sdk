@@ -15,72 +15,67 @@ from __future__ import annotations
 
 from typing import Optional, Any
 
+from optimizely import exceptions as optimizely_exception
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpManagerConfig
 from optimizely.helpers.validator import are_odp_data_types_valid
 from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
-from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.odp_event_manager import OdpEventManager
+from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
-from optimizely import exceptions as optimizely_exception
 
 
 class OdpManager:
-    """TODO - ADD COMMENT"""
+    """Orchestrates segment manager, event manager and odp config."""
 
-    def __init__(self, sdk_key: str,
-                 disable: bool,
+    def __init__(self, disable: bool,
                  cache_size: int,
                  cache_timeout_in_sec: int,
-                 segment_manager: OdpSegmentManager,
-                 event_manager: OdpEventManager,
-                 odp_config: OdpConfig,
+                 segment_manager: Optional[OdpSegmentManager] = None,
+                 event_manager: Optional[OdpEventManager] = None,
                  logger: Optional[optimizely_logger.Logger] = None) -> None:
 
         self.enabled = not disable
         self.cache_size = cache_size
         self.cache_timeout_in_sec = cache_timeout_in_sec
-        self.odp_config = odp_config
+        self.odp_config = OdpConfig()
         self.logger = logger or optimizely_logger.NoOpLogger()
+
+        self.segment_manager = None
+        self.event_manager = None
 
         if self.enabled:
             if segment_manager:
-                segment_manager.odp_config = odp_config
+                segment_manager.odp_config = self.odp_config
                 self.segment_manager = segment_manager
             else:
-                # TODO - careful - DO I USE self in front or not in these variables????? (ex self.opd_config or odp_config)
-                #  - check if third param should have braces at the end
-                self.segment_manager = OdpSegmentManager(odp_config,
-                                                         LRUCache(self.cache_size, self.cache_timeout_in_sec),
+                self.segment_manager = OdpSegmentManager(self.odp_config,
+                                                         LRUCache(cache_size, cache_timeout_in_sec),
                                                          ZaiusGraphQLApiManager(), logger)
             if event_manager:
-                event_manager.odp_config = odp_config
+                event_manager.odp_config = self.odp_config
                 self.event_manager = event_manager
             else:
-                self.event_manager = OdpEventManager(sdk_key, odp_config)       # TODO NEXT - FIGURE OUT WHAT TO DO WITH THIS SDK KEY - it's not a parameter in OdpEventManager class + + + + + + + + +
+                self.event_manager = OdpEventManager(self.odp_config)
 
-    def fetch_qualified_segments(self, user_id: str, options: list[str]):
+    def fetch_qualified_segments(self, user_id: str, options: list[str]) -> None:
         if not self.enabled:
-            self.logger.error(Errors.ODP_NOT_ENABLED)  # TODO - check if this error is needed, should it be debug?
+            self.logger.debug(Errors.ODP_NOT_ENABLED)
+            return None
 
         user_key = OdpManagerConfig.KEY_FOR_USER_ID
         user_value = user_id
 
-        self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
+        if self.segment_manager:
+            self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
 
-    def identify_user(self, user_id: str):
+    def identify_user(self, user_id: str) -> None:
         if not self.enabled:
             self.logger.debug('ODP identify event is not dispatched (ODP disabled).')
 
-        if not self.odp_config.odp_state().INTEGRATED:
-            self.logger.debug('ODP identify event is not dispatched (ODP not integrated).')
-
-        # TODO - consider putting send_event into a separate function into OdpEventManager to have all
-        #  event logic in there. Jae did it. But it's also fine if leave it as is. Think about it, check w Andy?
         if self.event_manager:
-            self.event_manager.send_event(OdpManagerConfig.EVENT_TYPE, 'identified',
-                                          {OdpManagerConfig.KEY_FOR_USER_ID: user_id}, {})
+            self.event_manager.identify_user(user_id)
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
         """
@@ -90,7 +85,8 @@ class OdpManager:
             type: The event type.
             action: The event action name.
             identifiers: A dictionary for identifiers.
-            data: A dictionary for associated data. The default event data will be added to this data before sending to the ODP server.
+            data: A dictionary for associated data. The default event data will be added to this data
+            before sending to the ODP server.
 
         Raises custom exception if error is detected.
         """
@@ -100,10 +96,11 @@ class OdpManager:
         if not are_odp_data_types_valid(data):
             raise optimizely_exception.OdpInvalidData(Errors.ODP_INVALID_DATA)
 
-        self.event_manager.send_event(type, action, identifiers, data)
+        if self.event_manager:
+            self.event_manager.send_event(type, action, identifiers, data)
 
-    def update_odp_config(self, api_key: str, api_host: str, segments_to_check: list[str]) -> None:
-
+    def update_odp_config(self, api_key: Optional[str], api_host: Optional[str],
+                          segments_to_check: list[str]) -> None:
         if not self.enabled:
             return None
 
@@ -125,5 +122,3 @@ class OdpManager:
         # (when we get the first datafile ready)
         if self.event_manager:
             self.event_manager.flush()
-
-        # TODO - need return None at the end?

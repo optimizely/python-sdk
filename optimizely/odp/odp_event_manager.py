@@ -12,17 +12,18 @@
 # limitations under the License.
 
 from __future__ import annotations
+
+import time
 from enum import Enum
+from queue import Empty, Queue, Full
 from threading import Thread
 from typing import Optional
-import time
-from queue import Empty, Queue, Full
 
 from optimizely import logger as _logging
-from .odp_event import OdpEvent, OdpDataDict
+from optimizely.helpers.enums import OdpEventManagerConfig, Errors, OdpManagerConfig
 from .odp_config import OdpConfig, OdpConfigState
+from .odp_event import OdpEvent, OdpDataDict
 from .zaius_rest_api_manager import ZaiusRestApiManager
-from optimizely.helpers.enums import OdpEventManagerConfig, Errors
 
 
 class Signal(Enum):
@@ -41,10 +42,10 @@ class OdpEventManager:
     """
 
     def __init__(
-        self,
-        odp_config: OdpConfig,
-        logger: Optional[_logging.Logger] = None,
-        api_manager: Optional[ZaiusRestApiManager] = None
+            self,
+            odp_config: OdpConfig,
+            logger: Optional[_logging.Logger] = None,
+            api_manager: Optional[ZaiusRestApiManager] = None
     ):
         """OdpEventManager init method to configure event batching.
 
@@ -236,3 +237,7 @@ class OdpEventManager:
             self.event_queue.put_nowait(event)
         except Full:
             self.logger.warning(Errors.ODP_EVENT_FAILED.format("Queue is full"))
+
+    def identify_user(self, user_id: str) -> None:
+        self.send_event(OdpManagerConfig.EVENT_TYPE, 'identified',
+                        {OdpManagerConfig.KEY_FOR_USER_ID: user_id}, {})
