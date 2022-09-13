@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from unittest import mock
 
-import pytest
-
 from optimizely import exceptions as optimizely_exception
 from optimizely.helpers.enums import Errors
 from optimizely.odp.lru_cache import LRUCache
@@ -27,6 +25,9 @@ from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 from optimizely.odp.zaius_rest_api_manager import ZaiusRestApiManager
 from tests import base
+
+
+# import pytest
 
 
 class OdpManagerTest(base.BaseTest):
@@ -49,8 +50,9 @@ class OdpManagerTest(base.BaseTest):
 
         # these call should be dropped gracefully with None
         manager.identify_user('user1')
-        with pytest.raises(optimizely_exception.OdpNotEnabled):
-            manager.send_event(type='t1', action='a1', identifiers={}, data={})
+
+        self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
+                               manager.send_event, type='t1', action='a1', identifiers={}, data={})
 
         self.assertIsNone(manager.event_manager)
         self.assertIsNone(manager.segment_manager)
@@ -228,8 +230,8 @@ class OdpManagerTest(base.BaseTest):
         manager.enabled = False
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            with pytest.raises(optimizely_exception.OdpNotEnabled):
-                manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
+            self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
+                                   manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
         mock_logger.debug.assert_not_called()
