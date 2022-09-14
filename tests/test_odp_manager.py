@@ -34,14 +34,11 @@ class OdpManagerTest(base.BaseTest):
     def test_configurations_disable_odp(self):
         mock_logger = mock.MagicMock()
 
-        manager = OdpManager(disable=True,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             logger=mock_logger)
+        manager = OdpManager(True, 10, 20, None, None, mock_logger)
         manager.fetch_qualified_segments('user1', [])
         mock_logger.debug.assert_called_once_with(Errors.ODP_NOT_ENABLED)
 
-        manager.update_odp_config(api_key='valid', api_host='host', segments_to_check=[])
+        manager.update_odp_config('valid', 'host', [])
         self.assertIsNone(manager.odp_config.get_api_key())
         self.assertIsNone(manager.odp_config.get_api_host())
 
@@ -49,7 +46,7 @@ class OdpManagerTest(base.BaseTest):
         manager.identify_user('user1')
 
         self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                               manager.send_event, type='t1', action='a1', identifiers={}, data={})
+                               manager.send_event, 't1', 'a1', {}, {})
 
         self.assertIsNone(manager.event_manager)
         self.assertIsNone(manager.segment_manager)
@@ -59,11 +56,7 @@ class OdpManagerTest(base.BaseTest):
         segment_manager = OdpSegmentManager(OdpConfig(), LRUCache(1000, 1000),
                                             ZaiusGraphQLApiManager(), mock_logger)
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             segment_manager=segment_manager,
-                             logger=mock_logger)
+        manager = OdpManager(False, 10, 20, segment_manager, None, mock_logger)
 
         with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
             manager.fetch_qualified_segments('user1', [])
@@ -76,11 +69,7 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger)
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
 
         with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
             manager.identify_user('user1')
@@ -92,13 +81,8 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
-
-        manager.update_odp_config(api_key='key1', api_host='host1', segments_to_check=[])
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.identify_user('user1')
@@ -117,13 +101,8 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
-
-        manager.update_odp_config(api_key=None, api_host=None, segments_to_check=[])
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
+        manager.update_odp_config(None, None, [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.identify_user('user1')
@@ -136,12 +115,7 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
-
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
         manager.enabled = False
 
         with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
@@ -155,11 +129,7 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
@@ -172,13 +142,8 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
-
-        manager.update_odp_config(api_key='key1', api_host='host1', segments_to_check=[])
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
@@ -199,13 +164,9 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
 
-        manager.update_odp_config(api_key=None, api_host=None, segments_to_check=[])
+        manager.update_odp_config(None, None, [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
@@ -218,12 +179,7 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
-
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
         manager.enabled = False
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -242,12 +198,7 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             segment_manager=segment_manager,
-                             logger=mock_logger)
+        manager = OdpManager(False, 10, 20, segment_manager, event_manager, mock_logger)
 
         with mock.patch.object(segment_manager, 'reset') as mock_reset:
             manager.update_odp_config('key1', 'host1', [])
@@ -288,15 +239,11 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
 
         with mock.patch.object(event_manager, 'flush') as mock_flush:
             first_api_key = manager.odp_config.get_api_key()
-            manager.update_odp_config(api_key='key1', api_host='host1', segments_to_check=[])
+            manager.update_odp_config('key1', 'host1', [])
             second_api_key = manager.odp_config.get_api_key()
 
         self.assertEqual(mock_flush.call_count, 2)
@@ -305,7 +252,7 @@ class OdpManagerTest(base.BaseTest):
 
         with mock.patch.object(event_manager, 'flush') as mock_flush:
             first_api_key = manager.odp_config.get_api_key()
-            manager.update_odp_config(api_key='key2', api_host='host1', segments_to_check=[])
+            manager.update_odp_config('key2', 'host1', [])
             second_api_key = manager.odp_config.get_api_key()
 
         self.assertEqual(mock_flush.call_count, 2)
@@ -314,7 +261,7 @@ class OdpManagerTest(base.BaseTest):
 
         with mock.patch.object(event_manager, 'flush') as mock_flush:
             first_api_key = manager.odp_config.get_api_key()
-            manager.update_odp_config(api_key='key2', api_host='host1', segments_to_check=[])
+            manager.update_odp_config('key2', 'host1', [])
             second_api_key = manager.odp_config.get_api_key()
 
         self.assertEqual(mock_flush.call_count, 1)
@@ -323,7 +270,7 @@ class OdpManagerTest(base.BaseTest):
 
         with mock.patch.object(event_manager, 'flush') as mock_flush:
             first_api_key = manager.odp_config.get_api_key()
-            manager.update_odp_config(api_key=None, api_host=None, segments_to_check=[])
+            manager.update_odp_config(None, None, [])
             second_api_key = manager.odp_config.get_api_key()
 
         self.assertEqual(mock_flush.call_count, 2)
@@ -335,13 +282,8 @@ class OdpManagerTest(base.BaseTest):
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
 
-        manager = OdpManager(disable=False,
-                             cache_size=10,
-                             cache_timeout_in_sec=20,
-                             event_manager=event_manager,
-                             logger=mock_logger)
-
-        manager.update_odp_config(api_key='key1', api_host='host1', segments_to_check=[])
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
 
         self.assertEqual(manager.segment_manager.odp_config.get_api_key(), 'key1')
         self.assertEqual(manager.segment_manager.odp_config.get_api_host(), 'host1')
