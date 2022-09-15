@@ -16,6 +16,7 @@ from __future__ import annotations
 from unittest import mock
 
 from optimizely import exceptions as optimizely_exception
+from optimizely import version
 from optimizely.helpers.enums import Errors
 from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
@@ -35,8 +36,9 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
 
         manager = OdpManager(True, 10, 20, None, None, mock_logger)
-        manager.fetch_qualified_segments('user1', [])
-        mock_logger.debug.assert_called_once_with(Errors.ODP_NOT_ENABLED)
+
+        self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
+                               manager.fetch_qualified_segments, 'user1', [])
 
         manager.update_odp_config('valid', 'host', [])
         self.assertIsNone(manager.odp_config.get_api_key())
@@ -54,7 +56,7 @@ class OdpManagerTest(base.BaseTest):
     def test_fetch_qualified_segments(self):
         mock_logger = mock.MagicMock()
         segment_manager = OdpSegmentManager(OdpConfig(), LRUCache(1000, 1000),
-                                            ZaiusGraphQLApiManager(), mock_logger)
+                                            ZaiusGraphQLApiManager(mock_logger), mock_logger)
 
         manager = OdpManager(False, 10, 20, segment_manager, None, mock_logger)
 
@@ -62,6 +64,7 @@ class OdpManagerTest(base.BaseTest):
             manager.fetch_qualified_segments('user1', [])
 
         mock_logger.debug.assert_not_called()
+        mock_logger.error.assert_not_called()
         mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
     def test_identify_user_datafile_not_ready(self):
@@ -87,14 +90,16 @@ class OdpManagerTest(base.BaseTest):
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.identify_user('user1')
 
-        mock_dispatch_event.assert_called_once()
-        self.assertEqual(mock_dispatch_event.call_args[0][0].type, 'fullstack')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].action, 'identified')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].identifiers, {'fs_user_id': 'user1'})
-        self.assertGreater(len(mock_dispatch_event.call_args[0][0].data['idempotence_id']), 0)
-        self.assertEqual(mock_dispatch_event.call_args[0][0].data['data_source_type'], 'sdk')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].data['data_source'], 'python-sdk')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].data['data_source_version'], '4.1.0')
+        mock_dispatch_event.assert_called_once_with({
+            'type': 'fullstack',
+            'action': 'identified',
+            'identifiers': {'fs_user_id': 'user1'},
+            'data': {
+                'idempotence_id': mock.ANY,
+                'data_source_type': 'sdk',
+                'data_source': 'python-sdk',
+                'data_source_version': version.__version__
+            }})
 
     def test_identify_user_odp_not_integrated(self):
         mock_logger = mock.MagicMock()
@@ -148,16 +153,17 @@ class OdpManagerTest(base.BaseTest):
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
-        mock_dispatch_event.assert_called_once()
-        # asserting each arg individually because one of them is dynamic (idempotence_id/uuid)
-        # otherwise could use assert_called_once_with_args()
-        self.assertEqual(mock_dispatch_event.call_args[0][0].type, 't1')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].action, 'a1')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].identifiers, {'id-key1': 'id-val-1'})
-        self.assertGreater(len(mock_dispatch_event.call_args[0][0].data['idempotence_id']), 0)
-        self.assertEqual(mock_dispatch_event.call_args[0][0].data['data_source_type'], 'sdk')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].data['data_source'], 'python-sdk')
-        self.assertEqual(mock_dispatch_event.call_args[0][0].data['data_source_version'], '4.1.0')
+        mock_dispatch_event.assert_called_once_with({
+            'type': 't1',
+            'action': 'a1',
+            'identifiers': {'id-key1': 'id-val-1'},
+            'data': {
+                'idempotence_id': mock.ANY,
+                'data_source_type': 'sdk',
+                'data_source': 'python-sdk',
+                'data_source_version': version.__version__,
+                'key1': 'val1'
+            }})
 
     def test_send_event_odp_not_integrated(self):
         mock_logger = mock.MagicMock()
@@ -189,11 +195,34 @@ class OdpManagerTest(base.BaseTest):
         mock_dispatch_event.assert_not_called()
         mock_logger.debug.assert_not_called()
 
+    def test_send_event_invalid_data(self):
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager.start()
+
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
+
+        with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
+            self.assertRaisesRegex(optimizely_exception.OdpInvalidData, Errors.ODP_INVALID_DATA,
+                                   manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'invalid-item': {}})
+
+        mock_dispatch_event.assert_not_called()
+
+    def test_config_not_changed(self):
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager.start()
+
+        manager = OdpManager(False, 10, 20, None, event_manager, mock_logger)
+        manager.update_odp_config(None, None, [])
+        mock_logger.debug.assert_called_with('Odp config was not changed.')
+
     def test_update_odp_config__reset_called(self):
         # build segment manager
         mock_logger = mock.MagicMock()
         segment_manager = OdpSegmentManager(OdpConfig(), LRUCache(1000, 1000),
-                                            ZaiusGraphQLApiManager(), mock_logger)
+                                            ZaiusGraphQLApiManager(mock_logger), mock_logger)
         # build event manager
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
         event_manager.start()
