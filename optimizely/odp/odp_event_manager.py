@@ -30,6 +30,7 @@ class Signal(Enum):
     """Enum for sending signals to the event queue."""
     SHUTDOWN = 1
     FLUSH = 2
+    UPDATE_CONFIG = 3
 
 
 class OdpEventManager:
@@ -56,7 +57,11 @@ class OdpEventManager:
         """
         self.logger = logger or _logging.NoOpLogger()
         self.zaius_manager = api_manager or ZaiusRestApiManager(self.logger)
+
         self.odp_config = odp_config
+        self.api_key = odp_config.get_api_key()
+        self.api_host = odp_config.get_api_host()
+
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
         self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
@@ -102,7 +107,11 @@ class OdpEventManager:
                     self.logger.debug('ODP event queue: received flush signal.')
                     self._flush_batch()
                     self.event_queue.task_done()
-                    continue
+
+                elif item == Signal.UPDATE_CONFIG:
+                    self.logger.debug('ODP event queue: received update config signal.')
+                    self._update_config()
+                    self.event_queue.task_done()
 
                 elif isinstance(item, OdpEvent):
                     self._add_to_batch(item)
@@ -137,10 +146,7 @@ class OdpEventManager:
             self.logger.debug('ODP event queue: nothing to flush.')
             return
 
-        api_key = self.odp_config.get_api_key()
-        api_host = self.odp_config.get_api_host()
-
-        if not api_key or not api_host:
+        if not self.api_key or not self.api_host:
             self.logger.debug(Errors.ODP_NOT_INTEGRATED)
             self._current_batch.clear()
             return
@@ -150,7 +156,7 @@ class OdpEventManager:
 
         for i in range(1 + self.retry_count):
             try:
-                should_retry = self.zaius_manager.send_odp_events(api_key, api_host, self._current_batch)
+                should_retry = self.zaius_manager.send_odp_events(self.api_key, self.api_host, self._current_batch)
             except Exception as error:
                 should_retry = False
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Error: {error} {self._current_batch}'))
@@ -241,3 +247,18 @@ class OdpEventManager:
     def identify_user(self, user_id: str) -> None:
         self.send_event(OdpManagerConfig.EVENT_TYPE, 'identified',
                         {OdpManagerConfig.KEY_FOR_USER_ID: user_id}, {})
+
+    def update_config(self) -> None:
+        """Adds update config signal to event_queue."""
+        try:
+            self.event_queue.put_nowait(Signal.UPDATE_CONFIG)
+        except Full:
+            self.logger.error("Error updating ODP config for the event queue")
+
+    def _update_config(self) -> None:
+        """Updates the configuration used to send events."""
+        if len(self._current_batch) > 0:
+            self._flush_batch()
+
+        self.api_host = self.odp_config.get_api_host()
+        self.api_key = self.odp_config.get_api_key()

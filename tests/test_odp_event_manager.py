@@ -411,6 +411,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.send_event(**self.events[1])
 
             odp_config.update(self.api_key, self.api_host, [])
+            event_manager.update_config()
             event_manager.event_queue.join()
 
             event_manager.send_event(**self.events[0])
@@ -423,6 +424,7 @@ class OdpEventManagerTest(BaseTest):
         mock_logger.debug.assert_has_calls([
             mock.call('ODP event queue: cannot send before the datafile has loaded.'),
             mock.call('ODP event queue: cannot send before the datafile has loaded.'),
+            mock.call('ODP event queue: received update config signal.'),
             mock.call('ODP event queue: adding event.'),
             mock.call('ODP event queue: adding event.'),
             mock.call('ODP event queue: received flush signal.'),
@@ -442,6 +444,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.send_event(**self.events[1])
 
             odp_config.update(None, None, [])
+            event_manager.update_config()
             event_manager.event_queue.join()
 
             event_manager.send_event(**self.events[0])
@@ -453,6 +456,7 @@ class OdpEventManagerTest(BaseTest):
         mock_logger.debug.assert_has_calls([
             mock.call('ODP event queue: cannot send before the datafile has loaded.'),
             mock.call('ODP event queue: cannot send before the datafile has loaded.'),
+            mock.call('ODP event queue: received update config signal.'),
             mock.call(Errors.ODP_NOT_INTEGRATED),
             mock.call(Errors.ODP_NOT_INTEGRATED)
         ])
@@ -496,20 +500,25 @@ class OdpEventManagerTest(BaseTest):
         odp_config = OdpConfig(self.api_key, self.api_host)
 
         event_manager = OdpEventManager(odp_config, mock_logger)
-        event_manager.batch_size = 2
+        event_manager.batch_size = 3
 
         with mock.patch('optimizely.odp.odp_event_manager.OdpEventManager.is_running', True):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
-
-        with mock.patch.object(event_manager.zaius_manager, 'send_odp_events') as mock_send:
             odp_config.update(None, None, [])
+            event_manager.update_config()
+
+        with mock.patch.object(
+            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send:
             event_manager.start()
+            event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
+            event_manager.send_event(**self.events[0])
             event_manager.event_queue.join()
 
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.debug.assert_any_call(Errors.ODP_NOT_INTEGRATED)
         mock_logger.error.assert_not_called()
-        mock_send.assert_not_called()
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         event_manager.stop()
