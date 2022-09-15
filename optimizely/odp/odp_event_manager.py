@@ -42,10 +42,10 @@ class OdpEventManager:
     """
 
     def __init__(
-            self,
-            odp_config: OdpConfig,
-            logger: Optional[_logging.Logger] = None,
-            api_manager: Optional[ZaiusRestApiManager] = None
+        self,
+        odp_config: OdpConfig,
+        logger: Optional[_logging.Logger] = None,
+        api_manager: Optional[ZaiusRestApiManager] = None
     ):
         """OdpEventManager init method to configure event batching.
 
