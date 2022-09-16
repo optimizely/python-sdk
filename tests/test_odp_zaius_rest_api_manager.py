@@ -27,6 +27,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
     api_key = "test-api-key"
     api_host = "test-host"
 
+    # TODO - UPDATE THESE EVENTS TO BE OdpEvent class not dict (see Andy's comment and change)
     events = [
         {"type": "t1", "action": "a1", "identifiers": {"id-key-1": "id-value-1"}, "data": {"key-1": "value1"}},
         {"type": "t2", "action": "a2", "identifiers": {"id-key-2": "id-value-2"}, "data": {"key-2": "value2"}},
