@@ -32,12 +32,12 @@ class OdpManagerTest(base.BaseTest):
 
     def test_configurations_disable_odp(self):
         mock_logger = mock.MagicMock()
-
         manager = OdpManager(True, OptimizelySegmentsCache, None, None, mock_logger)
 
         self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
                                manager.fetch_qualified_segments, 'user1', [])
 
+        mock_logger.info.assert_called_once_with('ODP is disabled.')
         manager.update_odp_config('valid', 'host', [])
         self.assertIsNone(manager.odp_config.get_api_key())
         self.assertIsNone(manager.odp_config.get_api_host())

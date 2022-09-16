@@ -19,8 +19,8 @@ from optimizely import exceptions as optimizely_exception
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpManagerConfig
 from optimizely.helpers.validator import are_odp_data_types_valid
-from optimizely.odp.lru_cache import LRUCache
-from optimizely.odp.odp_config import OdpConfig
+from optimizely.odp.lru_cache import OptimizelySegmentsCache
+from optimizely.odp.odp_config import OdpConfig, OdpConfigState
 from optimizely.odp.odp_event_manager import OdpEventManager
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
@@ -29,17 +29,16 @@ from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 class OdpManager:
     """Orchestrates segment manager, event manager and odp config."""
 
-    def __init__(self,
+    def __init__(
+        self,
         disable: bool,
-        cache_size: int,
-        cache_timeout_in_sec: int,
+        segments_cache: OptimizelySegmentsCache,
         segment_manager: Optional[OdpSegmentManager] = None,
         event_manager: Optional[OdpEventManager] = None,
-        logger: Optional[optimizely_logger.Logger] = None) -> None:
+        logger: Optional[optimizely_logger.Logger] = None
+    ) -> None:
 
         self.enabled = not disable
-        self.cache_size = cache_size
-        self.cache_timeout_in_sec = cache_timeout_in_sec
         self.odp_config = OdpConfig()
         self.logger = logger or optimizely_logger.NoOpLogger()
 
@@ -47,6 +46,7 @@ class OdpManager:
         self.event_manager = None
 
         if not self.enabled:
+            self.logger.info('ODP is disabled.')
             return
 
         if segment_manager:
@@ -54,7 +54,7 @@ class OdpManager:
             self.segment_manager = segment_manager
         else:
             self.segment_manager = OdpSegmentManager(self.odp_config,
-                                                     LRUCache(cache_size, cache_timeout_in_sec),
+                                                     segments_cache,
                                                      ZaiusGraphQLApiManager(logger), logger)
         if event_manager:
             event_manager.odp_config = self.odp_config
@@ -62,22 +62,26 @@ class OdpManager:
         else:
             self.event_manager = OdpEventManager(self.odp_config, logger)
 
-    def fetch_qualified_segments(self, user_id: str, options: list[str]) -> None:
-        if not self.enabled:
+        self.event_manager.start()
+
+    def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
+        if not self.enabled or not self.segment_manager:
             raise optimizely_exception.OdpNotEnabled(Errors.ODP_NOT_ENABLED)
 
         user_key = OdpManagerConfig.KEY_FOR_USER_ID
         user_value = user_id
 
-        if self.segment_manager:
-            self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
+        return self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
 
     def identify_user(self, user_id: str) -> None:
-        if not self.enabled:
+        if not self.enabled or not self.event_manager:
             self.logger.debug('ODP identify event is not dispatched (ODP disabled).')
+            return
+        if self.odp_config.odp_state() == OdpConfigState.NOT_INTEGRATED:
+            self.logger.debug('ODP Identify event is not dispatched (ODP not integrated).')
+            return
 
-        if self.event_manager:
-            self.event_manager.identify_user(user_id)
+        self.event_manager.identify_user(user_id)
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
         """
@@ -92,36 +96,30 @@ class OdpManager:
 
         Raises custom exception if error is detected.
         """
-        if not self.enabled:
+        if not self.enabled or not self.event_manager:
             raise optimizely_exception.OdpNotEnabled(Errors.ODP_NOT_ENABLED)
+
+        if self.odp_config.odp_state() == OdpConfigState.NOT_INTEGRATED:
+            raise optimizely_exception.OdpNotIntegrated(Errors.ODP_NOT_INTEGRATED)
 
         if not are_odp_data_types_valid(data):
             raise optimizely_exception.OdpInvalidData(Errors.ODP_INVALID_DATA)
 
-        if self.event_manager:
-            self.event_manager.send_event(type, action, identifiers, data)
+        self.event_manager.send_event(type, action, identifiers, data)
 
     def update_odp_config(self, api_key: Optional[str], api_host: Optional[str],
                           segments_to_check: list[str]) -> None:
         if not self.enabled:
             return
 
-        # flush old events using old odp publicKey (if exists) before updating odp key.
-        if self.event_manager:
-            self.event_manager.flush()
-            # wait until done flushing to avoid flushing in the middle of the batch
-            self.event_manager.event_queue.join()
-
         config_changed = self.odp_config.update(api_key, api_host, segments_to_check)
         if not config_changed:
             self.logger.debug('Odp config was not changed.')
             return
 
-        # reset segments cache when odp integration or segmentsToCheck are changed
+        # reset segments cache when odp integration or segments to check are changed
         if self.segment_manager:
             self.segment_manager.reset()
 
-        # flush events with the new integration key if events still remain in the queue
-        # (when we get the first datafile ready)
         if self.event_manager:
-            self.event_manager.flush()
+            self.event_manager.update_config()
