@@ -60,8 +60,8 @@ class OdpManager:
                 segments_cache,
                 ZaiusGraphQLApiManager(logger), logger
             )
-
-        self.segment_manager.odp_config = self.odp_config
+        else:
+            self.segment_manager.odp_config = self.odp_config
 
         if event_manager:
             event_manager.odp_config = self.odp_config

@@ -32,7 +32,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_configurations_disable_odp(self):
         mock_logger = mock.MagicMock()
-        manager = OdpManager(True, OptimizelySegmentsCache, None, None, mock_logger)
+        manager = OdpManager(True, OptimizelySegmentsCache, logger=mock_logger)
 
         mock_logger.info.assert_called_once_with('ODP is disabled.')
         manager.update_odp_config('valid', 'host', [])
@@ -56,7 +56,7 @@ class OdpManagerTest(base.BaseTest):
         segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
                                             ZaiusGraphQLApiManager(mock_logger), mock_logger)
 
-        manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, logger=mock_logger)
 
         with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
             manager.fetch_qualified_segments('user1', [])
@@ -72,57 +72,55 @@ class OdpManagerTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', ['IGNORE_CACHE'])
 
-    def test_fetch_qualified_segments__seg_mgr_and_seg_cache_are_none(self):
+    def test_fetch_qualified_segments__disabled(self):
         mock_logger = mock.MagicMock()
         segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
                                             ZaiusGraphQLApiManager(mock_logger), mock_logger)
 
-        manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
-        manager.OptimizelySegmentsCache = None
-        manager.segment_manager = None
+        manager = OdpManager(True, OptimizelySegmentsCache, segment_manager, logger=mock_logger)
 
         with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
             manager.fetch_qualified_segments('user1', [])
+            mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
+            mock_fetch_qualif_segments.assert_not_called()
+
+    def test_fetch_qualified_segments__segment_mgr_is_none(self):
+        """
+        When segment manager is None, then fetching segment
+        should take place using the default segment manager.
+        """
+        mock_logger = mock.MagicMock()
+        manager = OdpManager(False, LRUCache(10, 20), logger=mock_logger)
+        manager.update_odp_config('api_key', 'api_host', [])
+
+        with mock.patch.object(manager.segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
+            manager.fetch_qualified_segments('user1', [])
 
         mock_logger.debug.assert_not_called()
-        mock_logger.error.assert_called_once_with('ODP is not enabled.')
-        mock_fetch_qualif_segments.assert_not_called()
+        mock_logger.error.assert_not_called()
+        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
-    def test_fetch_qualified_segments__not_enabled(self):
+    def test_fetch_qualified_segments__seg_cache_and_seg_mgr_are_none(self):
+        """
+        When segment cache and segment manager are None, then fetching segment
+        should take place using the default managers.
+        """
         mock_logger = mock.MagicMock()
-        segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
-                                            ZaiusGraphQLApiManager(mock_logger), mock_logger)
+        manager = OdpManager(False, mock_logger)
+        manager.update_odp_config('api_key', 'api_host', [])
 
-        manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
-        manager.enabled = False
+        with mock.patch.object(manager.segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
+            manager.fetch_qualified_segments('user1', [])
 
-        manager.fetch_qualified_segments('user1', [])
-        mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
-
-        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
-            # verify segment manager did not try to fetch segments
-            mock_fetch_qualif_segments.assert_not_called()
-
-    def test_fetch_qualified_segments__segment_mgr_not_available(self):
-        mock_logger = mock.MagicMock()
-        segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
-                                            ZaiusGraphQLApiManager(mock_logger), mock_logger)
-
-        manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
-        manager.segment_manager = False
-
-        manager.fetch_qualified_segments('user1', [])
-        mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
-
-        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
-            # verify segment manager did not try to fetch segments
-            mock_fetch_qualif_segments.assert_not_called()
+        mock_logger.debug.assert_not_called()
+        mock_logger.error.assert_not_called()
+        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
     def test_identify_user_datafile_not_ready(self):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger)
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
 
         with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
             manager.identify_user('user1')
@@ -133,7 +131,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, LRUCache(10, 20), None, event_manager, mock_logger)
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -154,7 +152,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -168,7 +166,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.enabled = False
 
         with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
@@ -181,7 +179,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
@@ -193,7 +191,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, LRUCache(10, 20), None, event_manager, mock_logger)
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -215,7 +213,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -229,7 +227,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.enabled = False
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -243,7 +241,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.event_manager = False
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -257,7 +255,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, LRUCache(10, 20), None, event_manager, mock_logger)
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -270,7 +268,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, None, event_manager, mock_logger)
+        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
         mock_logger.debug.assert_called_with('Odp config was not changed.')
 
@@ -325,7 +323,7 @@ class OdpManagerTest(base.BaseTest):
         """
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
-        manager = OdpManager(False, LRUCache(10, 20), None, event_manager, mock_logger)
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
 
         with mock.patch.object(event_manager, 'update_config') as mock_update:
             first_api_key = manager.odp_config.get_api_key()
@@ -361,7 +359,7 @@ class OdpManagerTest(base.BaseTest):
     def test_update_odp_config__odp_config_propagated_properly(self):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
-        manager = OdpManager(False, LRUCache(10, 20), None, event_manager, mock_logger)
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', ['a', 'b'])
 
         self.assertEqual(manager.segment_manager.odp_config.get_api_key(), 'key1')
