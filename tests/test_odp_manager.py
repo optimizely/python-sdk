@@ -17,7 +17,7 @@ from unittest import mock
 
 from optimizely import exceptions as optimizely_exception
 from optimizely import version
-from optimizely.helpers.enums import Errors
+from optimizely.helpers.enums import Errors, OdpSegmentsCacheConfig
 from optimizely.odp.lru_cache import OptimizelySegmentsCache, LRUCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.odp_event_manager import OdpEventManager
@@ -382,3 +382,8 @@ class OdpManagerTest(base.BaseTest):
         manager.update_odp_config(None, None, ['a', 'b'])
         self.assertEqual(manager.segment_manager.odp_config.get_segments_to_check(), ['a', 'b'])
         self.assertEqual(manager.event_manager.odp_config.get_segments_to_check(), ['a', 'b'])
+
+    def test_segments_cache_default_settings(self):
+        manager = OdpManager(False)
+        self.assertEqual(manager.segment_manager.segments_cache.capacity, OdpSegmentsCacheConfig.DEFAULT_CAPACITY)
+        self.assertEqual(manager.segment_manager.segments_cache.timeout, OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS)

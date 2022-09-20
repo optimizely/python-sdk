@@ -226,4 +226,4 @@ class OdpManagerConfig:
 class OdpSegmentsCacheConfig:
     """ODP Segment Cache configs."""
     DEFAULT_CAPACITY: Final = 10_000
-    DEFAULT_TIMEOUT_SECS: Final = 10
+    DEFAULT_TIMEOUT_SECS: Final = 600
