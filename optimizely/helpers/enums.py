@@ -221,3 +221,9 @@ class OdpManagerConfig:
     """ODP Manager configs."""
     KEY_FOR_USER_ID: Final = 'fs_user_id'
     EVENT_TYPE: Final = 'fullstack'
+
+
+class OdpSegmentsCacheConfig:
+    """ODP Segment Cache configs."""
+    DEFAULT_CAPACITY: Final = 10_000
+    DEFAULT_TIMEOUT_SECS: Final = 10

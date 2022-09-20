@@ -34,13 +34,13 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         manager = OdpManager(True, OptimizelySegmentsCache, None, None, mock_logger)
 
-        self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                               manager.fetch_qualified_segments, 'user1', [])
-
         mock_logger.info.assert_called_once_with('ODP is disabled.')
         manager.update_odp_config('valid', 'host', [])
         self.assertIsNone(manager.odp_config.get_api_key())
         self.assertIsNone(manager.odp_config.get_api_host())
+
+        manager.fetch_qualified_segments('user1', [])
+        mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
 
         # these call should be dropped gracefully with None
         manager.identify_user('user1')
@@ -72,6 +72,22 @@ class OdpManagerTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', ['IGNORE_CACHE'])
 
+    def test_fetch_qualified_segments__seg_mgr_and_seg_cache_are_none(self):
+        mock_logger = mock.MagicMock()
+        segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
+                                            ZaiusGraphQLApiManager(mock_logger), mock_logger)
+
+        manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
+        manager.OptimizelySegmentsCache = None
+        manager.segment_manager = None
+
+        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
+            manager.fetch_qualified_segments('user1', [])
+
+        mock_logger.debug.assert_not_called()
+        mock_logger.error.assert_called_once_with('ODP is not enabled.')
+        mock_fetch_qualif_segments.assert_not_called()
+
     def test_fetch_qualified_segments__not_enabled(self):
         mock_logger = mock.MagicMock()
         segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
@@ -80,12 +96,12 @@ class OdpManagerTest(base.BaseTest):
         manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
         manager.enabled = False
 
-        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
-            self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                                   manager.fetch_qualified_segments, 'user1', [])
+        manager.fetch_qualified_segments('user1', [])
+        mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
 
-        # verify segment manager did not try to fetch segments
-        mock_fetch_qualif_segments.assert_not_called()
+        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
+            # verify segment manager did not try to fetch segments
+            mock_fetch_qualif_segments.assert_not_called()
 
     def test_fetch_qualified_segments__segment_mgr_not_available(self):
         mock_logger = mock.MagicMock()
@@ -95,12 +111,12 @@ class OdpManagerTest(base.BaseTest):
         manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, None, mock_logger)
         manager.segment_manager = False
 
-        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
-            self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                                   manager.fetch_qualified_segments, 'user1', [])
+        manager.fetch_qualified_segments('user1', [])
+        mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
 
-        # verify segment manager did not try to fetch segments
-        mock_fetch_qualif_segments.assert_not_called()
+        with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
+            # verify segment manager did not try to fetch segments
+            mock_fetch_qualif_segments.assert_not_called()
 
     def test_identify_user_datafile_not_ready(self):
         mock_logger = mock.MagicMock()
@@ -146,7 +162,7 @@ class OdpManagerTest(base.BaseTest):
 
         mock_dispatch_event.assert_not_called()
         mock_logger.debug.assert_any_call('Odp config was not changed.')
-        mock_logger.debug.assert_any_call('ODP Identify event is not dispatched (ODP not integrated).')
+        mock_logger.debug.assert_any_call('ODP identify event is not dispatched (ODP not integrated).')
 
     def test_identify_user_odp_disabled(self):
         mock_logger = mock.MagicMock()
