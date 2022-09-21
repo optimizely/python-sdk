@@ -125,6 +125,7 @@ class OdpManagerTest(base.BaseTest):
             manager.identify_user('user1')
 
         mock_identify_user.assert_called_once_with('user1')
+        mock_logger.error.assert_not_called()
 
     def test_identify_user_odp_integrated(self):
         mock_logger = mock.MagicMock()
@@ -146,6 +147,7 @@ class OdpManagerTest(base.BaseTest):
                 'data_source': 'python-sdk',
                 'data_source_version': version.__version__
             }})
+        mock_logger.error.assert_not_called()
 
     def test_identify_user_odp_not_integrated(self):
         mock_logger = mock.MagicMock()
@@ -158,6 +160,7 @@ class OdpManagerTest(base.BaseTest):
             manager.identify_user('user1')
 
         mock_dispatch_event.assert_not_called()
+        mock_logger.error.assert_not_called()
         mock_logger.debug.assert_any_call('Odp config was not changed.')
         mock_logger.debug.assert_any_call('ODP identify event is not dispatched (ODP not integrated).')
 
@@ -172,6 +175,7 @@ class OdpManagerTest(base.BaseTest):
             manager.identify_user('user1')
 
         mock_identify_user.assert_not_called()
+        mock_logger.error.assert_not_called()
         mock_logger.debug.assert_called_with('ODP identify event is not dispatched (ODP disabled).')
 
     def test_send_event_datafile_not_ready(self):
@@ -184,6 +188,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
+        mock_logger.error.assert_not_called()
         mock_logger.debug.assert_called_with('ODP event queue: cannot send before the datafile has loaded.')
 
     def test_send_event_odp_integrated(self):
@@ -221,6 +226,7 @@ class OdpManagerTest(base.BaseTest):
 
         mock_dispatch_event.assert_not_called()
         mock_logger.debug.assert_any_call('Odp config was not changed.')
+        mock_logger.error.assert_not_called()
 
     def test_send_event_odp_disabled(self):
         mock_logger = mock.MagicMock()
@@ -235,6 +241,7 @@ class OdpManagerTest(base.BaseTest):
 
         mock_dispatch_event.assert_not_called()
         mock_logger.debug.assert_not_called()
+        mock_logger.error.assert_not_called()
 
     def test_send_event_odp_disabled__event_manager_not_available(self):
         mock_logger = mock.MagicMock()
@@ -249,6 +256,7 @@ class OdpManagerTest(base.BaseTest):
 
         mock_dispatch_event.assert_not_called()
         mock_logger.debug.assert_not_called()
+        mock_logger.error.assert_not_called()
 
     def test_send_event_invalid_data(self):
         mock_logger = mock.MagicMock()
@@ -262,6 +270,7 @@ class OdpManagerTest(base.BaseTest):
                                    manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'invalid-item': {}})
 
         mock_dispatch_event.assert_not_called()
+        mock_logger.error.assert_not_called()
 
     def test_config_not_changed(self):
         mock_logger = mock.MagicMock()
@@ -270,6 +279,7 @@ class OdpManagerTest(base.BaseTest):
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
         mock_logger.debug.assert_called_with('Odp config was not changed.')
+        mock_logger.error.assert_not_called()
 
     def test_update_odp_config__reset_called(self):
         # build segment manager
@@ -314,6 +324,7 @@ class OdpManagerTest(base.BaseTest):
 
             manager.update_odp_config(None, None, [])
             mock_reset.assert_called_once()
+        mock_logger.error.assert_not_called()
 
     def test_update_odp_config__update_config_called(self):
         """
@@ -351,7 +362,8 @@ class OdpManagerTest(base.BaseTest):
 
         # event_manager.update_config not called when no change to odp_config
         mock_update.assert_not_called()
-        mock_logger.debug('Odp config was not changed.')
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_called_with('Odp config was not changed.')
         self.assertEqual(first_api_key, 'key2')
         self.assertEqual(second_api_key, 'key2')
 
@@ -381,6 +393,7 @@ class OdpManagerTest(base.BaseTest):
         manager.update_odp_config(None, None, ['a', 'b'])
         self.assertEqual(manager.segment_manager.odp_config.get_segments_to_check(), ['a', 'b'])
         self.assertEqual(manager.event_manager.odp_config.get_segments_to_check(), ['a', 'b'])
+        mock_logger.error.assert_not_called()
 
     def test_segments_cache_default_settings(self):
         manager = OdpManager(False)
