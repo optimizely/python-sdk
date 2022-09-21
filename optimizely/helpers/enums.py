@@ -123,8 +123,9 @@ class Errors:
     INVALID_SEGMENT_IDENTIFIER: Final = 'Audience segments fetch failed (invalid identifier).'
     FETCH_SEGMENTS_FAILED: Final = 'Audience segments fetch failed ({}).'
     ODP_EVENT_FAILED: Final = 'ODP event send failed ({}).'
-    ODP_NOT_ENABLED: Final = 'ODP is not enabled.'
     ODP_NOT_INTEGRATED: Final = 'ODP is not integrated.'
+    ODP_NOT_ENABLED: Final = 'ODP is not enabled.'
+    ODP_INVALID_DATA: Final = 'ODP data is not valid.'
 
 
 class ForcedDecisionLogs:
@@ -214,3 +215,15 @@ class OdpEventManagerConfig:
     DEFAULT_BATCH_SIZE: Final = 10
     DEFAULT_FLUSH_INTERVAL: Final = 1
     DEFAULT_RETRY_COUNT: Final = 3
+
+
+class OdpManagerConfig:
+    """ODP Manager configs."""
+    KEY_FOR_USER_ID: Final = 'fs_user_id'
+    EVENT_TYPE: Final = 'fullstack'
+
+
+class OdpSegmentsCacheConfig:
+    """ODP Segment Cache configs."""
+    DEFAULT_CAPACITY: Final = 10_000
+    DEFAULT_TIMEOUT_SECS: Final = 600

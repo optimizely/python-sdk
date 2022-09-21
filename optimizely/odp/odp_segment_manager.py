@@ -26,17 +26,21 @@ from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 class OdpSegmentManager:
     """Schedules connections to ODP for audience segmentation and caches the results."""
 
-    def __init__(self, odp_config: OdpConfig, segments_cache: OptimizelySegmentsCache,
-                 zaius_manager: ZaiusGraphQLApiManager,
-                 logger: Optional[optimizely_logger.Logger] = None) -> None:
+    def __init__(
+        self,
+        odp_config: OdpConfig,
+        segments_cache: OptimizelySegmentsCache,
+        zaius_manager: ZaiusGraphQLApiManager,
+        logger: Optional[optimizely_logger.Logger] = None
+    ) -> None:
 
         self.odp_config = odp_config
         self.segments_cache = segments_cache
         self.zaius_manager = zaius_manager
         self.logger = logger or optimizely_logger.NoOpLogger()
 
-    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]) -> \
-            Optional[list[str]]:
+    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]
+                                 ) -> Optional[list[str]]:
         """
         Args:
             user_key: The key for identifying the id type.
@@ -64,7 +68,7 @@ class OdpSegmentManager:
         reset_cache = OptimizelyOdpOption.RESET_CACHE in options
 
         if reset_cache:
-            self._reset()
+            self.reset()
 
         if not ignore_cache and not reset_cache:
             segments = self.segments_cache.lookup(cache_key)
@@ -83,7 +87,7 @@ class OdpSegmentManager:
 
         return segments
 
-    def _reset(self) -> None:
+    def reset(self) -> None:
         self.segments_cache.reset()
 
     def make_cache_key(self, user_key: str, user_value: str) -> str:
