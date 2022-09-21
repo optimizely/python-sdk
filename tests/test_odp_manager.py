@@ -96,7 +96,6 @@ class OdpManagerTest(base.BaseTest):
         with mock.patch.object(manager.segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
             manager.fetch_qualified_segments('user1', [])
 
-        mock_logger.debug.assert_not_called()
         mock_logger.error.assert_not_called()
         mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
