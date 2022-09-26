@@ -526,3 +526,10 @@ class OdpEventManagerTest(BaseTest):
         mock_logger.error.assert_not_called()
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         event_manager.stop()
+
+    def test_send_event_before_config_set(self, *args):
+        mock_logger = mock.Mock()
+
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.send_event(**self.events[0])
+        mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
