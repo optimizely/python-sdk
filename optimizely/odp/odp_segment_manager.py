@@ -17,9 +17,9 @@ from typing import Optional
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors
+from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.optimizely_odp_option import OptimizelyOdpOption
 from optimizely.odp.lru_cache import OptimizelySegmentsCache
-from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 
 
@@ -28,16 +28,15 @@ class OdpSegmentManager:
 
     def __init__(
         self,
-        odp_config: OdpConfig,
         segments_cache: OptimizelySegmentsCache,
-        zaius_manager: ZaiusGraphQLApiManager,
+        zaius_manager: Optional[ZaiusGraphQLApiManager] = None,
         logger: Optional[optimizely_logger.Logger] = None
     ) -> None:
 
-        self.odp_config = odp_config
+        self.odp_config: Optional[OdpConfig] = None
         self.segments_cache = segments_cache
-        self.zaius_manager = zaius_manager
         self.logger = logger or optimizely_logger.NoOpLogger()
+        self.zaius_manager = zaius_manager or ZaiusGraphQLApiManager(self.logger)
 
     def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]
                                  ) -> Optional[list[str]]:
@@ -50,11 +49,12 @@ class OdpSegmentManager:
         Returns:
             Qualified segments for the user from the cache or the ODP server if not in the cache.
         """
-        odp_api_key = self.odp_config.get_api_key()
-        odp_api_host = self.odp_config.get_api_host()
-        odp_segments_to_check = self.odp_config.get_segments_to_check()
+        if self.odp_config:
+            odp_api_key = self.odp_config.get_api_key()
+            odp_api_host = self.odp_config.get_api_host()
+            odp_segments_to_check = self.odp_config.get_segments_to_check()
 
-        if not (odp_api_key and odp_api_host):
+        if not self.odp_config or not (odp_api_key and odp_api_host):
             self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('api_key/api_host not defined'))
             return None
 

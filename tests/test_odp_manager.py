@@ -53,7 +53,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_fetch_qualified_segments(self):
         mock_logger = mock.MagicMock()
-        segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
+        segment_manager = OdpSegmentManager(OptimizelySegmentsCache,
                                             ZaiusGraphQLApiManager(mock_logger), mock_logger)
 
         manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, logger=mock_logger)
@@ -74,7 +74,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_fetch_qualified_segments__disabled(self):
         mock_logger = mock.MagicMock()
-        segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
+        segment_manager = OdpSegmentManager(OptimizelySegmentsCache,
                                             ZaiusGraphQLApiManager(mock_logger), mock_logger)
 
         manager = OdpManager(True, OptimizelySegmentsCache, segment_manager, logger=mock_logger)
@@ -284,7 +284,7 @@ class OdpManagerTest(base.BaseTest):
     def test_update_odp_config__reset_called(self):
         # build segment manager
         mock_logger = mock.MagicMock()
-        segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
+        segment_manager = OdpSegmentManager(OptimizelySegmentsCache,
                                             ZaiusGraphQLApiManager(mock_logger), mock_logger)
         # build event manager
         event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
