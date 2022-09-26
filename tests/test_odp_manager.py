@@ -129,7 +129,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_identify_user_odp_integrated(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
@@ -151,7 +151,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_identify_user_odp_not_integrated(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
@@ -166,7 +166,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_identify_user_odp_disabled(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.enabled = False
@@ -180,7 +180,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_send_event_datafile_not_ready(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
 
@@ -193,7 +193,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_send_event_odp_integrated(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
@@ -215,7 +215,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_send_event_odp_not_integrated(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
@@ -230,7 +230,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_send_event_odp_disabled(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.enabled = False
@@ -245,7 +245,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_send_event_odp_disabled__event_manager_not_available(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.event_manager = False
@@ -260,7 +260,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_send_event_invalid_data(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
@@ -274,7 +274,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_config_not_changed(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
@@ -287,7 +287,7 @@ class OdpManagerTest(base.BaseTest):
         segment_manager = OdpSegmentManager(OdpConfig(), OptimizelySegmentsCache,
                                             ZaiusGraphQLApiManager(mock_logger), mock_logger)
         # build event manager
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
 
         manager = OdpManager(False, OptimizelySegmentsCache, segment_manager, event_manager, mock_logger)
 
@@ -332,7 +332,7 @@ class OdpManagerTest(base.BaseTest):
         to odp_config is made or not in OdpManager.
         """
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
         manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
 
         with mock.patch.object(event_manager, 'update_config') as mock_update:
@@ -369,7 +369,7 @@ class OdpManagerTest(base.BaseTest):
 
     def test_update_odp_config__odp_config_propagated_properly(self):
         mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(OdpConfig(), mock_logger, ZaiusRestApiManager())
+        event_manager = OdpEventManager(mock_logger, ZaiusRestApiManager())
         manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', ['a', 'b'])
 

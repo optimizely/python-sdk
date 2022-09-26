@@ -64,12 +64,11 @@ class OdpManager:
             self.segment_manager.odp_config = self.odp_config
 
         if event_manager:
-            event_manager.odp_config = self.odp_config
             self.event_manager = event_manager
         else:
-            self.event_manager = OdpEventManager(self.odp_config, logger)
+            self.event_manager = OdpEventManager(self.logger)
 
-        self.event_manager.start()
+        self.event_manager.start(self.odp_config)
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
         if not self.enabled or not self.segment_manager:
