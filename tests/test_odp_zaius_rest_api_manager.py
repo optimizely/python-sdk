@@ -17,6 +17,7 @@ from unittest import mock
 from requests import exceptions as request_exception
 
 from optimizely.helpers.enums import OdpRestApiConfig
+from optimizely.odp.odp_event import OdpEvent, OdpEventEncoder
 from optimizely.odp.zaius_rest_api_manager import ZaiusRestApiManager
 from . import base
 
@@ -26,10 +27,9 @@ class ZaiusRestApiManagerTest(base.BaseTest):
     user_value = "test-user-value"
     api_key = "test-api-key"
     api_host = "test-host"
-
     events = [
-        {"type": "t1", "action": "a1", "identifiers": {"id-key-1": "id-value-1"}, "data": {"key-1": "value1"}},
-        {"type": "t2", "action": "a2", "identifiers": {"id-key-2": "id-value-2"}, "data": {"key-2": "value2"}},
+        OdpEvent('t1', 'a1', {"id-key-1": "id-value-1"}, {"key-1": "value1"}),
+        OdpEvent('t2', 'a2', {"id-key-2": "id-value-2"}, {"key-2": "value2"})
     ]
 
     def test_send_odp_events__valid_request(self):
@@ -42,7 +42,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
         request_headers = {'content-type': 'application/json', 'x-api-key': self.api_key}
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/events",
                                                   headers=request_headers,
-                                                  data=json.dumps(self.events),
+                                                  data=json.dumps(self.events, cls=OdpEventEncoder),
                                                   timeout=OdpRestApiConfig.REQUEST_TIMEOUT)
 
     def test_send_odp_ovents_success(self):
@@ -58,7 +58,8 @@ class ZaiusRestApiManagerTest(base.BaseTest):
             self.assertFalse(should_retry)
 
     def test_send_odp_events_invalid_json_no_retry(self):
-        events = {1, 2, 3}  # using a set to trigger JSON-not-serializable error
+        """Using a set to trigger JSON-not-serializable error."""
+        events = {1, 2, 3}
 
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
