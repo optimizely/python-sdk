@@ -23,7 +23,6 @@ from optimizely.odp.lru_cache import OptimizelySegmentsCache, LRUCache
 from optimizely.odp.odp_config import OdpConfig, OdpConfigState
 from optimizely.odp.odp_event_manager import OdpEventManager
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
-from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
 
 
 class OdpManager:
@@ -55,21 +54,15 @@ class OdpManager:
                     OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
                     OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
                 )
-            self.segment_manager = OdpSegmentManager(
-                self.odp_config,
-                segments_cache,
-                ZaiusGraphQLApiManager(logger), logger
-            )
-        else:
-            self.segment_manager.odp_config = self.odp_config
+            self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger)
 
         if event_manager:
-            event_manager.odp_config = self.odp_config
             self.event_manager = event_manager
         else:
-            self.event_manager = OdpEventManager(self.odp_config, logger)
+            self.event_manager = OdpEventManager(self.logger)
 
-        self.event_manager.start()
+        self.segment_manager.odp_config = self.odp_config
+        self.event_manager.start(self.odp_config)
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
         if not self.enabled or not self.segment_manager:

@@ -44,23 +44,21 @@ class OdpEventManager:
 
     def __init__(
         self,
-        odp_config: OdpConfig,
         logger: Optional[_logging.Logger] = None,
         api_manager: Optional[ZaiusRestApiManager] = None
     ):
         """OdpEventManager init method to configure event batching.
 
         Args:
-            odp_config: ODP integration config.
             logger: Optional component which provides a log method to log messages. By default nothing would be logged.
             api_manager: Optional component which sends events to ODP.
         """
         self.logger = logger or _logging.NoOpLogger()
         self.zaius_manager = api_manager or ZaiusRestApiManager(self.logger)
 
-        self.odp_config = odp_config
-        self.api_key = odp_config.get_api_key()
-        self.api_host = odp_config.get_api_host()
+        self.odp_config: Optional[OdpConfig] = None
+        self.api_key: Optional[str] = None
+        self.api_host: Optional[str] = None
 
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
@@ -78,11 +76,15 @@ class OdpEventManager:
         """Property to check if consumer thread is alive or not."""
         return self.thread.is_alive()
 
-    def start(self) -> None:
+    def start(self, odp_config: OdpConfig) -> None:
         """Starts the batch processing thread to batch events."""
         if self.is_running:
             self.logger.warning('ODP event queue already started.')
             return
+
+        self.odp_config = odp_config
+        self.api_host = self.odp_config.get_api_host()
+        self.api_key = self.odp_config.get_api_key()
 
         self.thread.start()
 
@@ -217,6 +219,10 @@ class OdpEventManager:
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: OdpDataDict) -> None:
         """Create OdpEvent and add it to the event queue."""
+        if not self.odp_config:
+            self.logger.debug('ODP event queue: cannot send before config has been set.')
+            return
+
         odp_state = self.odp_config.odp_state()
         if odp_state == OdpConfigState.UNDETERMINED:
             self.logger.debug('ODP event queue: cannot send before the datafile has loaded.')
@@ -260,5 +266,6 @@ class OdpEventManager:
         if len(self._current_batch) > 0:
             self._flush_batch()
 
-        self.api_host = self.odp_config.get_api_host()
-        self.api_key = self.odp_config.get_api_key()
+        if self.odp_config:
+            self.api_host = self.odp_config.get_api_host()
+            self.api_key = self.odp_config.get_api_key()

@@ -100,8 +100,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_success(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
             event_manager.send_event(**self.events[0])
@@ -116,8 +116,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_batch(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         event_manager.batch_size = 2
         with mock.patch.object(
@@ -135,8 +135,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_multiple_batches(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         event_manager.batch_size = 2
         batch_count = 4
@@ -164,7 +164,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_backlog(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.odp_config = self.odp_config
 
         event_manager.batch_size = 2
         batch_count = 4
@@ -178,7 +179,7 @@ class OdpEventManagerTest(BaseTest):
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
-            event_manager.start()
+            event_manager.start(self.odp_config)
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
             event_manager.stop()
@@ -198,8 +199,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_flush(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
@@ -217,8 +218,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_multiple_flushes(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
         flush_count = 4
 
         with mock.patch.object(
@@ -244,8 +245,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_retry_failure(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         number_of_tries = event_manager.retry_count + 1
 
@@ -269,8 +270,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_retry_success(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, side_effect=[True, True, False]
@@ -289,8 +290,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_send_failure(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         with mock.patch.object(
             event_manager.zaius_manager,
@@ -313,8 +314,8 @@ class OdpEventManagerTest(BaseTest):
         mock_logger = mock.Mock()
         odp_config = OdpConfig()
         odp_config.update(None, None, None)
-        event_manager = OdpEventManager(odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(odp_config)
 
         event_manager.send_event(**self.events[0])
         event_manager.send_event(**self.events[1])
@@ -330,7 +331,9 @@ class OdpEventManagerTest(BaseTest):
         mock_logger = mock.Mock()
 
         with mock.patch('optimizely.helpers.enums.OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY', 1):
-            event_manager = OdpEventManager(self.odp_config, mock_logger)
+            event_manager = OdpEventManager(mock_logger)
+
+        event_manager.odp_config = self.odp_config
 
         with mock.patch('optimizely.odp.odp_event_manager.OdpEventManager.is_running', True):
             event_manager.send_event(**self.events[0])
@@ -344,8 +347,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_thread_exception(self, *args):
         mock_logger = mock.Mock()
-        event_manager = MockOdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = MockOdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         event_manager.send_event(**self.events[0])
         time.sleep(.1)
@@ -360,8 +363,8 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_override_default_data(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
 
         event = deepcopy(self.events[0])
         event['data']['data_source'] = 'my-app'
@@ -381,9 +384,9 @@ class OdpEventManagerTest(BaseTest):
 
     def test_odp_event_manager_flush_timeout(self, *args):
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(self.odp_config, mock_logger)
+        event_manager = OdpEventManager(mock_logger)
         event_manager.flush_interval = .5
-        event_manager.start()
+        event_manager.start(self.odp_config)
 
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
@@ -401,8 +404,8 @@ class OdpEventManagerTest(BaseTest):
     def test_odp_event_manager_events_before_odp_ready(self, *args):
         mock_logger = mock.Mock()
         odp_config = OdpConfig()
-        event_manager = OdpEventManager(odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(odp_config)
 
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
@@ -436,8 +439,8 @@ class OdpEventManagerTest(BaseTest):
     def test_odp_event_manager_events_before_odp_disabled(self, *args):
         mock_logger = mock.Mock()
         odp_config = OdpConfig()
-        event_manager = OdpEventManager(odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(odp_config)
 
         with mock.patch.object(event_manager.zaius_manager, 'send_odp_events') as mock_send:
             event_manager.send_event(**self.events[0])
@@ -467,8 +470,8 @@ class OdpEventManagerTest(BaseTest):
     def test_odp_event_manager_disabled_after_init(self, *args):
         mock_logger = mock.Mock()
         odp_config = OdpConfig(self.api_key, self.api_host)
-        event_manager = OdpEventManager(odp_config, mock_logger)
-        event_manager.start()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(odp_config)
         event_manager.batch_size = 2
 
         with mock.patch.object(
@@ -499,19 +502,20 @@ class OdpEventManagerTest(BaseTest):
         mock_logger = mock.Mock()
         odp_config = OdpConfig(self.api_key, self.api_host)
 
-        event_manager = OdpEventManager(odp_config, mock_logger)
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.odp_config = odp_config
         event_manager.batch_size = 3
 
         with mock.patch('optimizely.odp.odp_event_manager.OdpEventManager.is_running', True):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
-            odp_config.update(None, None, [])
-            event_manager.update_config()
 
         with mock.patch.object(
             event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
-            event_manager.start()
+            event_manager.start(odp_config)
+            odp_config.update(None, None, [])
+            event_manager.update_config()
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
             event_manager.send_event(**self.events[0])
@@ -522,3 +526,10 @@ class OdpEventManagerTest(BaseTest):
         mock_logger.error.assert_not_called()
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
         event_manager.stop()
+
+    def test_send_event_before_config_set(self, *args):
+        mock_logger = mock.Mock()
+
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.send_event(**self.events[0])
+        mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
