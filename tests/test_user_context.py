@@ -1979,7 +1979,7 @@ class UserContextTest(base.BaseTest):
     # TODO - write tests in user context
     # init
     def test_none_client_should_not_fail(self):
-        uc = OptimizelyUserContext(None, None, 'test-user',None,)
+        uc = OptimizelyUserContext(None, None, 'test-user', None)
         self.assertTrue(isinstance(uc, OptimizelyUserContext))
 
     # set attribute
