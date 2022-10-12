@@ -160,3 +160,7 @@ class OptimizelyFactoryTest(base.BaseTest):
         optimizely_instance = OptimizelyFactory.custom_instance('sdk_key')
         self.assertEqual(optimizely_instance.event_processor.flush_interval.seconds, 30)
         self.assertEqual(optimizely_instance.event_processor.batch_size, 10)
+
+    # TODO - write test
+    def test_update_odp_config_correctly(self, _):
+        pass

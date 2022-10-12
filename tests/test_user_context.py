@@ -1975,3 +1975,82 @@ class UserContextTest(base.BaseTest):
         decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
 
         self.assertEqual(decision.variation_key, "rollout-variation-off")
+
+    # TODO - write tests in user context
+    # init
+    def test_none_client_should_not_fail(self):
+        uc = OptimizelyUserContext(None, None, 'test-user',None,)
+        self.assertTrue(isinstance(uc, OptimizelyUserContext))
+
+    # set attribute
+    def test_send_identify_event_when_user_context_created(self):
+        pass
+
+    # fetch qualified segments
+    def test_fetch_segments(self):
+        pass
+
+    def test_return_empty_array_when_not_qualified_for_any_segments(self):
+        pass
+
+    def test_fetch_segments_and_reset_cache(self):
+        pass
+
+    def test_fetch_segments_from_cache(self):
+        pass
+
+    def test_fetch_segments_and_ignore_cache(self):
+        pass
+
+    def test_return_none_on_error(self):
+        pass
+
+    def test_no_error_when_client_is_none(self):
+        pass
+
+    def test_fetch_segments_when_non_blocking(self):
+        pass
+
+    def test_pass_false_to_callback_when_failed_and_non_blocking(self):
+        pass
+
+    def test_fetch_segments_from_cache_with_non_blocking(self):
+        pass
+
+    def test_decide_correctly_with_non_blocking(self):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

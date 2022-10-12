@@ -5060,9 +5060,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
     def test_user_context_invalid_user_id(self):
-        """
-        Tests user context.
-        """
+        """Tests user context."""
         user_ids = [5, 5.5, None, True, [], {}]
 
         for u in user_ids:
@@ -5070,8 +5068,55 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.assertIsNone(uc, "invalid user id should return none")
 
     def test_invalid_flag_key(self):
-        """
-        Tests invalid flag key in function get_flag_variation_by_key().
-        """
-        # TODO mock function get_flag_variation_by_key
+        """Tests invalid flag key in function get_flag_variation_by_key()."""
+        pass
+
+    def test_send_identify_event_when_called_with_odp_enabled(self):
+        pass
+
+    # sdk settings
+    def test_log_info_when_disabled(self):
+        pass
+
+    def test_accept_cache_size(self):
+        pass
+
+    def test_accept_cache_timeout(self):
+        pass
+
+    def test_accept_cache_size_and_cache_timeout(self):
+        pass
+
+    def test_accept_valid_custom_cache(self):
+        pass
+
+    def test_revert_to_default_cache_when_custom_cache_is_invalid(self):
+        pass
+
+    def test_accept_custom_segment_manager(self):
+        pass
+
+    def test_revert_to_default_segment_manager_when_custom_manager_is_invalid(self):
+        pass
+
+    def test_accept_valid_custom_event_manager(self):
+        pass
+
+    def test_revert_to_default_event_manager_when_custom_manager_is_invalid(self):
+        pass
+
+    # send odp event
+    def test_send_event_with_static_config_manager(self):
+        pass
+
+    def test_send_event_with_polling_config_manager(self):
+        pass
+
+    def test_log_error_when_odp_disabled(self):
+        pass
+
+    def test_log_debug_if_datafile_not_ready(self):
+        pass
+
+    def test_log_error_if_odp_not_enabled_with_polling_config_manager(self):
         pass

@@ -15,10 +15,8 @@ from __future__ import annotations
 
 from typing import Optional, Any
 
-from optimizely import exceptions as optimizely_exception
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpManagerConfig, OdpSegmentsCacheConfig
-from optimizely.helpers.validator import are_odp_data_types_valid
 from optimizely.odp.lru_cache import OptimizelySegmentsCache, LRUCache
 from optimizely.odp.odp_config import OdpConfig, OdpConfigState
 from optimizely.odp.odp_event_manager import OdpEventManager
@@ -97,16 +95,8 @@ class OdpManager:
 
         Raises custom exception if error is detected.
         """
-        if not self.enabled or not self.event_manager:
-            raise optimizely_exception.OdpNotEnabled(Errors.ODP_NOT_ENABLED)
-
-        if self.odp_config.odp_state() == OdpConfigState.NOT_INTEGRATED:
-            raise optimizely_exception.OdpNotIntegrated(Errors.ODP_NOT_INTEGRATED)
-
-        if not are_odp_data_types_valid(data):
-            raise optimizely_exception.OdpInvalidData(Errors.ODP_INVALID_DATA)
-
-        self.event_manager.send_event(type, action, identifiers, data)
+        if self.event_manager:
+            self.event_manager.send_event(type, action, identifiers, data)
 
     def update_odp_config(self, api_key: Optional[str], api_host: Optional[str],
                           segments_to_check: list[str]) -> None:
@@ -124,3 +114,7 @@ class OdpManager:
 
         if self.event_manager:
             self.event_manager.update_config()
+
+    def close(self) -> None:
+        if self.enabled and self.event_manager:
+            self.event_manager.stop()
