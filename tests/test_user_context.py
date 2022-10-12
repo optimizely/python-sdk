@@ -2019,4 +2019,3 @@ class UserContextTest(base.BaseTest):
 
     def test_decide_correctly_with_non_blocking(self):
         pass
-    
