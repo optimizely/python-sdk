@@ -244,9 +244,9 @@ class Optimizely:
         return True
 
     def _send_impression_event(
-            self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
-            variation: Optional[entities.Variation], flag_key: str, rule_key: str, rule_type: str,
-            enabled: bool, user_id: str, attributes: Optional[UserAttributes]
+        self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
+        variation: Optional[entities.Variation], flag_key: str, rule_key: str, rule_type: str,
+        enabled: bool, user_id: str, attributes: Optional[UserAttributes]
     ) -> None:
         """ Helper method to send impression event.
 
@@ -285,8 +285,8 @@ class Optimizely:
             )
 
     def _get_feature_variable_for_type(
-            self, project_config: project_config.ProjectConfig, feature_key: str, variable_key: str,
-            variable_type: Optional[str], user_id: str, attributes: Optional[UserAttributes]
+        self, project_config: project_config.ProjectConfig, feature_key: str, variable_key: str,
+        variable_type: Optional[str], user_id: str, attributes: Optional[UserAttributes]
     ) -> Any:
         """ Helper method to determine value for a certain variable attached to a feature flag based on
         type of variable.
@@ -397,8 +397,8 @@ class Optimizely:
         return actual_value
 
     def _get_all_feature_variables_for_type(
-            self, project_config: project_config.ProjectConfig, feature_key: str,
-            user_id: str, attributes: Optional[UserAttributes],
+        self, project_config: project_config.ProjectConfig, feature_key: str,
+        user_id: str, attributes: Optional[UserAttributes],
     ) -> Optional[dict[str, Any]]:
         """ Helper method to determine value for all variables attached to a feature flag.
 
@@ -542,9 +542,9 @@ class Optimizely:
         return variation.key
 
     def track(
-            self, event_key: str, user_id: str,
-            attributes: Optional[UserAttributes] = None,
-            event_tags: Optional[EventTags] = None
+        self, event_key: str, user_id: str,
+        attributes: Optional[UserAttributes] = None,
+        event_tags: Optional[EventTags] = None
     ) -> None:
         """ Send conversion event to Optimizely.
 
@@ -598,7 +598,7 @@ class Optimizely:
             )
 
     def get_variation(
-            self, experiment_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, experiment_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[str]:
         """ Gets variation where user will be bucketed.
 
@@ -786,7 +786,7 @@ class Optimizely:
         return enabled_features
 
     def get_feature_variable(
-            self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Any:
         """ Returns value for a variable attached to a feature flag.
 
@@ -809,7 +809,7 @@ class Optimizely:
         return self._get_feature_variable_for_type(project_config, feature_key, variable_key, None, user_id, attributes)
 
     def get_feature_variable_boolean(
-            self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[bool]:
         """ Returns value for a certain boolean variable attached to a feature flag.
 
@@ -837,7 +837,7 @@ class Optimizely:
         )
 
     def get_feature_variable_double(
-            self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[float]:
         """ Returns value for a certain double variable attached to a feature flag.
 
@@ -865,7 +865,7 @@ class Optimizely:
         )
 
     def get_feature_variable_integer(
-            self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[int]:
         """ Returns value for a certain integer variable attached to a feature flag.
 
@@ -893,7 +893,7 @@ class Optimizely:
         )
 
     def get_feature_variable_string(
-            self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[str]:
         """ Returns value for a certain string variable attached to a feature.
 
@@ -921,7 +921,7 @@ class Optimizely:
         )
 
     def get_feature_variable_json(
-            self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, variable_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[dict[str, Any]]:
         """ Returns value for a certain JSON variable attached to a feature.
 
@@ -949,7 +949,7 @@ class Optimizely:
         )
 
     def get_all_feature_variables(
-            self, feature_key: str, user_id: str, attributes: Optional[UserAttributes] = None
+        self, feature_key: str, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[dict[str, Any]]:
         """ Returns dictionary of all variables and their corresponding values in the context of a feature.
 
@@ -1058,7 +1058,7 @@ class Optimizely:
         return OptimizelyConfigService(project_config).get_config()
 
     def create_user_context(
-            self, user_id: str, attributes: Optional[UserAttributes] = None
+        self, user_id: str, attributes: Optional[UserAttributes] = None
     ) -> Optional[OptimizelyUserContext]:
         """
         We do not check for is_valid here as a user context can be created successfully
@@ -1082,8 +1082,8 @@ class Optimizely:
         return OptimizelyUserContext(self, self.logger, user_id, attributes)
 
     def _decide(
-            self, user_context: Optional[OptimizelyUserContext], key: str,
-            decide_options: Optional[list[str]] = None
+        self, user_context: Optional[OptimizelyUserContext], key: str,
+        decide_options: Optional[list[str]] = None
     ) -> OptimizelyDecision:
         """
         decide calls optimizely decide with feature key provided
@@ -1233,9 +1233,9 @@ class Optimizely:
                                   )
 
     def _decide_all(
-            self,
-            user_context: Optional[OptimizelyUserContext],
-            decide_options: Optional[list[str]] = None
+        self,
+        user_context: Optional[OptimizelyUserContext],
+        decide_options: Optional[list[str]] = None
     ) -> dict[str, OptimizelyDecision]:
         """
         decide_all will return a decision for every feature key in the current config
@@ -1266,10 +1266,10 @@ class Optimizely:
         return self._decide_for_keys(user_context, keys, decide_options)
 
     def _decide_for_keys(
-            self,
-            user_context: Optional[OptimizelyUserContext],
-            keys: list[str],
-            decide_options: Optional[list[str]] = None
+        self,
+        user_context: Optional[OptimizelyUserContext],
+        keys: list[str],
+        decide_options: Optional[list[str]] = None
     ) -> dict[str, OptimizelyDecision]:
         """
         Args:
