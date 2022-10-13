@@ -107,7 +107,7 @@ class OdpManager:
 
         if self.event_manager.is_running:
             self.event_manager.update_config()
-        elif self.odp_config.odp_state == OdpConfigState.INTEGRATED:
+        elif self.odp_config.odp_state() == OdpConfigState.INTEGRATED:
             self.event_manager.start(self.odp_config)
 
     def close(self) -> None:

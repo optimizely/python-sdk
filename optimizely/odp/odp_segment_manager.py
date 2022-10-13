@@ -20,7 +20,7 @@ from optimizely.helpers.enums import Errors
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.optimizely_odp_option import OptimizelyOdpOption
 from optimizely.odp.lru_cache import OptimizelySegmentsCache
-from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
+from optimizely.odp.odp_segments_api_manager import OdpSegmentsApiManager
 
 
 class OdpSegmentManager:
@@ -29,14 +29,14 @@ class OdpSegmentManager:
     def __init__(
         self,
         segments_cache: OptimizelySegmentsCache,
-        zaius_manager: Optional[ZaiusGraphQLApiManager] = None,
+        api_manager: Optional[OdpSegmentsApiManager] = None,
         logger: Optional[optimizely_logger.Logger] = None
     ) -> None:
 
         self.odp_config: Optional[OdpConfig] = None
         self.segments_cache = segments_cache
         self.logger = logger or optimizely_logger.NoOpLogger()
-        self.zaius_manager = zaius_manager or ZaiusGraphQLApiManager(self.logger)
+        self.api_manager = api_manager or OdpSegmentsApiManager(self.logger)
 
     def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]
                                  ) -> Optional[list[str]]:
@@ -79,8 +79,8 @@ class OdpSegmentManager:
 
         self.logger.debug('Making a call to ODP server.')
 
-        segments = self.zaius_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value,
-                                                     odp_segments_to_check)
+        segments = self.api_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value,
+                                                   odp_segments_to_check)
 
         if segments and not ignore_cache:
             self.segments_cache.save(cache_key, segments)
