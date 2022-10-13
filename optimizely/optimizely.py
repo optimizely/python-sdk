@@ -33,7 +33,8 @@ from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
 from .event.event_processor import BatchEventProcessor, BaseEventProcessor
 from .event_dispatcher import EventDispatcher, CustomEventDispatcher
-from .helpers import enums, validator, sdk_settings
+from .helpers import enums, validator
+from .helpers.sdk_settings import OptimizelySdkSettings
 from .helpers.enums import DecisionSources
 from .helpers.validator import are_odp_data_types_valid
 from .notification_center import NotificationCenter
@@ -67,7 +68,7 @@ class Optimizely:
             datafile_access_token: Optional[str] = None,
             default_decide_options: Optional[list[str]] = None,
             event_processor_options: Optional[dict[str, Any]] = None,
-            settings: Optional[sdk_settings.OptimizelySdkSettings] = None
+            settings: Optional[OptimizelySdkSettings] = None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -132,7 +133,7 @@ class Optimizely:
             self.logger.debug('Provided default decide options is not a list.')
             self.default_decide_options = []
 
-        self.sdk_settings: sdk_settings.OptimizelySdkSettings = settings  # type: ignore[assignment]
+        self.sdk_settings: OptimizelySdkSettings = settings  # type: ignore[assignment]
 
         try:
             self._validate_instantiation_options()
@@ -146,7 +147,7 @@ class Optimizely:
 
         self.setup_odp()
 
-        self.odp_manager: OdpManager = OdpManager(
+        self.odp_manager = OdpManager(
             self.sdk_settings.odp_disabled,
             self.sdk_settings.segments_cache,
             self.sdk_settings.odp_segment_manager,
@@ -172,6 +173,9 @@ class Optimizely:
                     self.config_manager = PollingConfigManager(**config_manager_options)
             else:
                 self.config_manager = StaticConfigManager(**config_manager_options)
+
+        if not self.sdk_settings.odp_disabled:
+            self._update_odp_config_on_datafile_update()
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
@@ -200,10 +204,10 @@ class Optimizely:
         if not validator.is_event_processor_valid(self.event_processor):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_processor'))
 
-        if not isinstance(self.sdk_settings, sdk_settings.OptimizelySdkSettings):
+        if not isinstance(self.sdk_settings, OptimizelySdkSettings):
             if self.sdk_settings is not None:
                 self.logger.debug('Provided sdk_settings is not an OptimizelySdkSettings instance.')
-            self.sdk_settings = sdk_settings.OptimizelySdkSettings()
+            self.sdk_settings = OptimizelySdkSettings()
 
         if self.sdk_settings.segments_cache:
             if not validator.is_segments_cache_valid(self.sdk_settings.segments_cache):
@@ -218,7 +222,7 @@ class Optimizely:
                 raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_manager'))
 
     def _validate_user_inputs(
-            self, attributes: Optional[UserAttributes] = None, event_tags: Optional[EventTags] = None
+        self, attributes: Optional[UserAttributes] = None, event_tags: Optional[EventTags] = None
     ) -> bool:
         """ Helper method to validate user inputs.
 
@@ -1322,10 +1326,10 @@ class Optimizely:
         odp_disabled = self.sdk_settings.odp_disabled
         if not odp_disabled:
             if type(self.config_manager) is not StaticConfigManager:
-                self.notification_center.add_notification_listener(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-                                                                   self._update_odp_config_on_datafile_update)
-
-            self._update_odp_config_on_datafile_update()
+                self.notification_center.add_notification_listener(
+                    enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+                    self._update_odp_config_on_datafile_update
+                )
 
     def _update_odp_config_on_datafile_update(self) -> None:
         config = None

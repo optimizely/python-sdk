@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import copy
 import threading
-from typing import TYPE_CHECKING, Any, Optional, NewType, Dict
+from typing import TYPE_CHECKING, Any, Callable, Optional, NewType, Dict
 
 from optimizely.decision import optimizely_decision
 
@@ -290,7 +290,7 @@ class OptimizelyUserContext:
                 return self._qualified_segments.copy()
             return None
 
-    def set_qualified_segments(self, segments: list[str]) -> None:
+    def set_qualified_segments(self, segments: Optional[list[str]]) -> None:
         """
         Replaces any qualified segments with the provided list of segments.
 
@@ -301,32 +301,38 @@ class OptimizelyUserContext:
             None.
         """
         with self.lock:
-            self._qualified_segments = segments.copy()
+            self._qualified_segments = None if segments is None else segments.copy()
 
-    # TODO - apply callback instead of non-blocking parameter
-    def fetch_qualified_segments(self, non_blocking: bool = False, options: Optional[list[str]] = None) -> None:
+    def fetch_qualified_segments(
+        self,
+        callback: Optional[Callable[[bool], None]] = None,
+        options: Optional[list[str]] = None
+    ) -> bool | threading.Thread:
         """
         Fetch all qualified segments for the user context.
-        The fetched segments will be saved in _qualified_segments and can be accessed any time.
+        The fetched segments will be saved and can be accessed using get/set_qualified_segment methods.
 
         Args:
-            callback: run the fetch in as a callback
+            callback: An optional function to run after the fetch has completed. The function will be provided
+                a boolean value indicating if the fetch was successful. If a callback is provided, the fetch
+                will be run in a seperate thread, otherwise it will be run syncronously.
             options: An array of OptimizelySegmentOptions used to ignore and/or reset the cache (optional).
 
         Returns:
-            A list of qualified segments.
+            A boolean value indicating if the fetch was successful.
         """
-        def _fetch_qualified_segments() -> None:
-            if options is None:
-                segments = self.client.fetch_qualified_segments(self.user_id, [])
-            else:
-                segments = self.client.fetch_qualified_segments(self.user_id, options)
+        def _fetch_qualified_segments() -> bool:
+            segments = self.client.fetch_qualified_segments(self.user_id, options or [])
+            self.set_qualified_segments(segments)
+            success = segments is not None
 
-            if segments:
-                self.set_qualified_segments(segments)
+            if callable(callback):
+                callback(success)
+            return success
 
-        if non_blocking:
-            self.fetch_thread = threading.Thread(target=_fetch_qualified_segments)
-            self.fetch_thread.start()
+        if callback:
+            fetch_thread = threading.Thread(target=_fetch_qualified_segments)
+            fetch_thread.start()
+            return fetch_thread
         else:
-            _fetch_qualified_segments()
+            return _fetch_qualified_segments()
