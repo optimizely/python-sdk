@@ -38,15 +38,15 @@ class OdpManager:
         self.enabled = not disable
         self.odp_config = OdpConfig()
         self.logger = logger or optimizely_logger.NoOpLogger()
-
-        self.segment_manager = segment_manager
-        self.event_manager = event_manager
+        self.event_manager = event_manager or OdpEventManager(self.logger)
 
         if not self.enabled:
             self.logger.info('ODP is disabled.')
             return
 
-        if not self.segment_manager:
+        if segment_manager:
+            self.segment_manager = segment_manager
+        else:
             if not segments_cache:
                 segments_cache = LRUCache(
                     OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
@@ -54,13 +54,7 @@ class OdpManager:
                 )
             self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger)
 
-        if event_manager:
-            self.event_manager = event_manager
-        else:
-            self.event_manager = OdpEventManager(self.logger)
-
         self.segment_manager.odp_config = self.odp_config
-        self.event_manager.start(self.odp_config)
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
         if not self.enabled or not self.segment_manager:
@@ -109,12 +103,13 @@ class OdpManager:
             return
 
         # reset segments cache when odp integration or segments to check are changed
-        if self.segment_manager:
-            self.segment_manager.reset()
+        self.segment_manager.reset()
 
-        if self.event_manager:
+        if self.event_manager.is_running:
             self.event_manager.update_config()
+        elif self.odp_config.odp_state == OdpConfigState.INTEGRATED:
+            self.event_manager.start(self.odp_config)
 
     def close(self) -> None:
-        if self.enabled and self.event_manager:
+        if self.enabled:
             self.event_manager.stop()
