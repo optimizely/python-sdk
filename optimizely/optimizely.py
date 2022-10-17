@@ -97,6 +97,7 @@ class Optimizely:
           datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
           default_decide_options: Optional list of decide options used with the decide APIs.
           event_processor_options: Optional dict of options to be passed to the default batch event processor.
+          settings: Optional instance of OptimizelySdkSettings for sdk configuration.
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -1314,22 +1315,25 @@ class Optimizely:
 
     def setup_odp(self) -> None:
         """
-        - Make sure custom cache is instantiated.
-        - Provide mechanism to fall back on the default datafile.
+        - Make sure cache is instantiated with provided parameters or defaults.
+        - Set up listener to update odp_config when datafile is updated.
         """
+        if self.sdk_settings.odp_disabled:
+            return
+
+        self.notification_center.add_notification_listener(
+            enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+            self._update_odp_config_on_datafile_update
+        )
+
+        if self.sdk_settings.odp_segment_manager:
+            return
+
         if not self.sdk_settings.segments_cache:
             self.sdk_settings.segments_cache = LRUCache(
                 self.sdk_settings.segments_cache_size or enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
                 self.sdk_settings.segments_cache_timeout_in_secs or enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
             )
-
-        odp_disabled = self.sdk_settings.odp_disabled
-        if not odp_disabled:
-            if type(self.config_manager) is not StaticConfigManager:
-                self.notification_center.add_notification_listener(
-                    enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-                    self._update_odp_config_on_datafile_update
-                )
 
     def _update_odp_config_on_datafile_update(self) -> None:
         config = None
@@ -1353,11 +1357,9 @@ class Optimizely:
     def identify_user(self, user_id: str) -> None:
         self.odp_manager.identify_user(user_id)
 
-    def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
-        return self.odp_manager.fetch_qualified_segments(user_id, options)
+    def fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
+        return self.odp_manager.fetch_qualified_segments(user_id, options or [])
 
-    # TODO - to write tests for these 4 cases: 3 errors + send event successfully
-    #  (exceptions transferred to the top level per Jae)
     def send_odp_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
         """
         Send an event to the ODP server.
@@ -1369,7 +1371,7 @@ class Optimizely:
             data: A dictionary for associated data. The default event data will be added to this data
             before sending to the ODP server.
         """
-        if not self.odp_manager.enabled or not self.odp_manager.event_manager:
+        if not self.odp_manager.enabled:
             self.logger.error(enums.Errors.ODP_NOT_ENABLED)
             return
 
@@ -1384,6 +1386,6 @@ class Optimizely:
         self.odp_manager.send_event(type, action, identifiers, data)
 
     def close(self) -> None:
-        if isinstance(self.event_processor, BatchEventProcessor):
-            self.event_processor.stop()
+        if callable(getattr(self.event_processor, 'stop', None)):
+            self.event_processor.stop()  # type: ignore[attr-defined]
         self.odp_manager.close()
