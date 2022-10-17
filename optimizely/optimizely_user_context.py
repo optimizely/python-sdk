@@ -70,8 +70,6 @@ class OptimizelyUserContext:
         if self.client:
             self.client.identify_user(user_id)
 
-        self.fetch_thread: Optional[threading.Thread] = None
-
     class OptimizelyDecisionContext:
         """ Using class with attributes here instead of namedtuple because
             class is extensible, it's easy to add another attribute if we wanted
@@ -139,10 +137,6 @@ class OptimizelyUserContext:
         """
         if isinstance(options, list):
             options = options[:]
-
-        if self.fetch_thread:
-            self.fetch_thread.join()
-            self.fetch_thread = None
 
         return self.client._decide(self._clone(), key, options)
 
