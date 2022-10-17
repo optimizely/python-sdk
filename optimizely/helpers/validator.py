@@ -365,4 +365,16 @@ def is_event_manager_valid(event_manager: Optional[OdpEventManager]) -> bool:
     Returns:
       Boolean depending upon whether event_manager is valid or not.
     """
-    return False if not _has_method(event_manager, 'send_event') else True
+    if not hasattr(event_manager, 'is_running'):
+        return False
+
+    if not _has_method(event_manager, 'send_event'):
+        return False
+
+    if not _has_method(event_manager, 'stop'):
+        return False
+
+    if not _has_method(event_manager, 'update_config'):
+        return False
+
+    return True
