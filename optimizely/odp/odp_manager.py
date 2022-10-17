@@ -38,15 +38,15 @@ class OdpManager:
         self.enabled = not disable
         self.odp_config = OdpConfig()
         self.logger = logger or optimizely_logger.NoOpLogger()
-        self.event_manager = event_manager or OdpEventManager(self.logger)
+
+        self.segment_manager = segment_manager
+        self.event_manager = event_manager
 
         if not self.enabled:
             self.logger.info('ODP is disabled.')
             return
 
-        if segment_manager:
-            self.segment_manager = segment_manager
-        else:
+        if not self.segment_manager:
             if not segments_cache:
                 segments_cache = LRUCache(
                     OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
@@ -54,6 +54,7 @@ class OdpManager:
                 )
             self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger)
 
+        self.event_manager = self.event_manager or OdpEventManager(self.logger)
         self.segment_manager.odp_config = self.odp_config
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
@@ -86,11 +87,12 @@ class OdpManager:
             identifiers: A dictionary for identifiers.
             data: A dictionary for associated data. The default event data will be added to this data
             before sending to the ODP server.
-
-        Raises custom exception if error is detected.
         """
-        if self.event_manager:
-            self.event_manager.send_event(type, action, identifiers, data)
+        if not self.enabled or not self.event_manager:
+            self.logger.debug(Errors.ODP_NOT_ENABLED)
+            return
+
+        self.event_manager.send_event(type, action, identifiers, data)
 
     def update_odp_config(self, api_key: Optional[str], api_host: Optional[str],
                           segments_to_check: list[str]) -> None:
@@ -103,7 +105,11 @@ class OdpManager:
             return
 
         # reset segments cache when odp integration or segments to check are changed
-        self.segment_manager.reset()
+        if self.segment_manager:
+            self.segment_manager.reset()
+
+        if not self.event_manager:
+            return
 
         if self.event_manager.is_running:
             self.event_manager.update_config()
@@ -111,5 +117,5 @@ class OdpManager:
             self.event_manager.start(self.odp_config)
 
     def close(self) -> None:
-        if self.enabled:
+        if self.enabled and self.event_manager:
             self.event_manager.stop()
