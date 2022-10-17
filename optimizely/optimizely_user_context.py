@@ -316,7 +316,7 @@ class OptimizelyUserContext:
             A boolean value indicating if the fetch was successful.
         """
         def _fetch_qualified_segments() -> bool:
-            segments = self.client.fetch_qualified_segments(self.user_id, options or [])
+            segments = self.client.fetch_qualified_segments(self.user_id, options or []) if self.client else None
             self.set_qualified_segments(segments)
             success = segments is not None
 
