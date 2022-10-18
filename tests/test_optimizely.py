@@ -541,7 +541,7 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_broadcast_decision:
             self.assertEqual(None, self.optimizely.activate('test_experiment', 'test_user'))
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'ab-test',
             'test_user',
@@ -1788,7 +1788,7 @@ class OptimizelyTest(base.BaseTest):
 
         self.assertEqual(mock_broadcast.call_count, 1)
 
-        mock_broadcast.assert_called_once_with(
+        mock_broadcast.assert_any_call(
             enums.NotificationTypes.DECISION,
             'ab-test',
             'test_user',
@@ -2674,7 +2674,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2712,7 +2712,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2750,7 +2750,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "4243" for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2789,7 +2789,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "staging" for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2828,7 +2828,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2892,7 +2892,7 @@ class OptimizelyTest(base.BaseTest):
             ], any_order=True
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'all-feature-variables',
             'test_user',
@@ -2929,7 +2929,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2960,7 +2960,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2991,7 +2991,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "4243" for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3054,7 +3054,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3096,7 +3096,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_running" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3138,7 +3138,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "39.99" for variable "price" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3180,7 +3180,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "399" for variable "count" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3222,7 +3222,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "Hello audience" for variable "message" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3264,7 +3264,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"field": 12}" for variable "object" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3319,7 +3319,7 @@ class OptimizelyTest(base.BaseTest):
             ], any_order=True
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'all-feature-variables',
             'test_user',
@@ -3364,7 +3364,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_running" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3397,7 +3397,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "39.99" for variable "price" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3430,7 +3430,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "399" for variable "count" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3463,7 +3463,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "Hello audience" for variable "message" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3497,7 +3497,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"field": 12}" for variable "object" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3630,7 +3630,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3664,7 +3664,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3733,7 +3733,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3767,7 +3767,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3799,7 +3799,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3832,7 +3832,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3865,7 +3865,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3898,7 +3898,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',

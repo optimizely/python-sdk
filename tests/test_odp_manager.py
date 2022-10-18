@@ -228,7 +228,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_called_once_with('ODP is not integrated.')
+        mock_logger.debug.assert_any_call('ODP is not integrated.')
         mock_logger.error.assert_not_called()
 
     def test_send_event_odp_disabled(self):
@@ -241,7 +241,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_called_once_with('ODP is not enabled.')
+        mock_logger.debug.assert_any_call('ODP is not enabled.')
         mock_logger.error.assert_not_called()
 
     def test_send_event_odp_disabled__event_manager_not_available(self):
@@ -255,7 +255,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_called_once_with('ODP is not enabled.')
+        mock_logger.debug.assert_any_call('ODP is not enabled.')
         mock_logger.error.assert_not_called()
 
     def test_config_not_changed(self):
@@ -267,7 +267,7 @@ class OdpManagerTest(base.BaseTest):
         manager.update_odp_config(None, None, [])
         # update without change
         manager.update_odp_config(None, None, [])
-        mock_logger.debug.assert_called_with('Odp config was not changed.')
+        mock_logger.debug.assert_any_call('Odp config was not changed.')
         mock_logger.error.assert_not_called()
 
     def test_update_odp_config__reset_called(self):
