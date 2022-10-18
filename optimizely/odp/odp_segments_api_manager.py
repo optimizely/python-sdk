@@ -130,10 +130,15 @@ class OdpSegmentsApiManager:
         request_headers = {'content-type': 'application/json',
                            'x-api-key': str(api_key)}
 
-        segments_filter = self.make_subset_filter(segments_to_check)
         query = {
-            'query': 'query {customer(' + str(user_key) + ': "' + str(user_value) + '") '
-            '{audiences' + segments_filter + ' {edges {node {name state}}}}}'
+            'query':
+                'query($userId: String, $audiences: [String]) {'
+                f'customer({user_key}: $userId) '
+                '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+            'variables': {
+                'userId': str(user_value),
+                'audiences': segments_to_check
+            }
         }
 
         try:
@@ -185,19 +190,3 @@ class OdpSegmentsApiManager:
             except KeyError:
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
                 return None
-
-    @staticmethod
-    def make_subset_filter(segments: list[str]) -> str:
-        """
-        segments = []: (fetch none)
-         --> subsetFilter = "(subset:[])"
-        segments = ["a"]: (fetch one segment)
-         --> subsetFilter = '(subset:["a"])'
-
-         Purposely using .join() method to deal with special cases of
-         any words with apostrophes (i.e. don't). .join() method enquotes
-         correctly without conflicting with the apostrophe.
-        """
-        if segments == []:
-            return '(subset:[])'
-        return '(subset:["' + '", "'.join(segments) + '"]' + ')'

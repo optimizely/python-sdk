@@ -37,8 +37,9 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
                                segments_to_check=["a", "b", "c"])
 
         test_payload = {
-            'query': 'query {customer(' + self.user_key + ': "' + self.user_value + '") '
-            '{audiences(subset:["a", "b", "c"]) {edges {node {name state}}}}}'
+            'query': 'query($userId: String, $audiences: [String]) {customer(' + self.user_key + ': $userId) '
+            '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+            'variables': {'userId': self.user_value, 'audiences': ["a", "b", "c"]}
         }
         request_headers = {'content-type': 'application/json', 'x-api-key': self.api_key}
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/graphql",
@@ -256,15 +257,6 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
         # assert 500 error log
         mock_logger.error.assert_called_once_with('Audience segments fetch failed '
                                                   f'(500 Server Error: None for url: {self.api_host}).')
-
-    def test_make_subset_filter(self):
-        api = OdpSegmentsApiManager()
-
-        self.assertEqual("(subset:[])", api.make_subset_filter([]))
-        self.assertEqual("(subset:[\"a\"])", api.make_subset_filter(["a"]))
-        self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(['a', 'b', 'c']))
-        self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(["a", "b", "c"]))
-        self.assertEqual("(subset:[\"a\", \"b\", \"don't\"])", api.make_subset_filter(["a", "b", "don't"]))
 
     # test json responses
 
