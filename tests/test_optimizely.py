@@ -29,6 +29,7 @@ from optimizely import project_config
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
+from optimizely.helpers.sdk_settings import OptimizelySdkSettings
 from . import base
 
 
@@ -5072,51 +5073,273 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         pass
 
     def test_send_identify_event_when_called_with_odp_enabled(self):
-        pass
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        with mock.patch.object(client, 'identify_user') as identify:
+            client.create_user_context('user-id')
 
-    # sdk settings
-    def test_log_info_when_disabled(self):
-        pass
+        identify.assert_called_once_with('user-id')
+        mock_logger.error.assert_not_called()
+        client.close()
 
-    def test_accept_cache_size(self):
-        pass
+    def test_sdk_settings__log_info_when_disabled(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_disabled=True)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        self.assertIsNone(client.odp_manager.event_manager)
+        self.assertIsNone(client.odp_manager.segment_manager)
+        mock_logger.info.assert_called_once_with('ODP is disabled.')
+        mock_logger.error.assert_not_called()
+        client.close()
 
-    def test_accept_cache_timeout(self):
-        pass
+    def test_sdk_settings__accept_cache_size(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_size=5)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.capacity, 5)
 
-    def test_accept_cache_size_and_cache_timeout(self):
-        pass
+        mock_logger.error.assert_not_called()
+        client.close()
 
-    def test_accept_valid_custom_cache(self):
-        pass
+    def test_sdk_settings__accept_cache_timeout(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_timeout_in_secs=5)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.timeout, 5)
 
-    def test_revert_to_default_cache_when_custom_cache_is_invalid(self):
-        pass
+        mock_logger.error.assert_not_called()
+        client.close()
 
-    def test_accept_custom_segment_manager(self):
-        pass
+    def test_sdk_settings__accept_cache_size_and_cache_timeout(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_size=10, segments_cache_timeout_in_secs=5)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.capacity, 10)
+        self.assertEqual(segments_cache.timeout, 5)
 
-    def test_revert_to_default_segment_manager_when_custom_manager_is_invalid(self):
-        pass
+        mock_logger.error.assert_not_called()
+        client.close()
 
-    def test_accept_valid_custom_event_manager(self):
-        pass
+    def test_sdk_settings__accept_valid_custom_cache(self):
+        class CustomCache:
+            def reset(self):
+                pass
 
-    def test_revert_to_default_event_manager_when_custom_manager_is_invalid(self):
-        pass
+            def lookup(self):
+                pass
 
-    # send odp event
-    def test_send_event_with_static_config_manager(self):
-        pass
+            def save(self):
+                pass
 
-    def test_send_event_with_polling_config_manager(self):
-        pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segments_cache=CustomCache())
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertIsInstance(segments_cache, CustomCache)
+        mock_logger.error.assert_not_called()
+        client.close()
 
-    def test_log_error_when_odp_disabled(self):
-        pass
+    def test_sdk_settings__log_error_when_custom_cache_is_invalid(self):
+        class InvalidCache:
+            pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segments_cache=InvalidCache())
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_logger):
+            optimizely.Optimizely(
+                json.dumps(self.config_dict_with_audience_segments),
+                settings=sdk_settings
+            )
+        mock_logger.exception.assert_called_once_with('Provided "segments_cache" is in an invalid format.')
 
-    def test_log_debug_if_datafile_not_ready(self):
-        pass
+    def test_sdk_settings__accept_custom_segment_manager(self):
+        class CustomSegmentManager:
+            def reset(self):
+                pass
 
-    def test_log_error_if_odp_not_enabled_with_polling_config_manager(self):
-        pass
+            def fetch_qualified_segments(self):
+                pass
+
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segment_manager=CustomSegmentManager())
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segment_manager = client.odp_manager.segment_manager
+        self.assertIsInstance(segment_manager, CustomSegmentManager)
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__log_error_when_custom_segment_manager_is_invalid(self):
+        class InvalidSegmentManager:
+            pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segment_manager=InvalidSegmentManager())
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_logger):
+            optimizely.Optimizely(
+                json.dumps(self.config_dict_with_audience_segments),
+                settings=sdk_settings
+            )
+        mock_logger.exception.assert_called_once_with('Provided "segment_manager" is in an invalid format.')
+
+    def test_sdk_settings__accept_valid_custom_event_manager(self):
+        class CustomEventManager:
+            is_running = True
+
+            def send_event(self):
+                pass
+
+            def update_config(self):
+                pass
+
+            def stop(self):
+                pass
+
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_event_manager=CustomEventManager())
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        event_manager = client.odp_manager.event_manager
+        self.assertIsInstance(event_manager, CustomEventManager)
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__log_error_when_custom_event_manager_is_invalid(self):
+        class InvalidEventManager:
+            pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_event_manager=InvalidEventManager())
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_logger):
+            optimizely.Optimizely(
+                json.dumps(self.config_dict_with_audience_segments),
+                settings=sdk_settings
+            )
+        mock_logger.exception.assert_called_once_with('Provided "event_manager" is in an invalid format.')
+
+    def test_sdk_settings__log_error_when_sdk_settings_isnt_correct(self):
+        mock_logger = mock.Mock()
+        optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings={}
+        )
+        mock_logger.debug.assert_any_call('Provided sdk_settings is not an OptimizelySdkSettings instance.')
+
+    def test_send_odp_event__send_event_with_static_config_manager(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+        )
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_called_with('ODP event queue: flushing batch size 1.')
+
+    def test_send_odp_event__send_event_with_polling_config_manager(self):
+        mock_logger = mock.Mock()
+        with mock.patch(
+            'requests.get',
+            return_value=self.fake_server_response(
+                status_code=200,
+                content=json.dumps(self.config_dict_with_audience_segments)
+            )
+        ):
+            client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
+            # wait for config
+            client.config_manager.get_config()
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_called_with('ODP event queue: flushing batch size 1.')
+
+    def test_send_odp_event__log_error_when_odp_disabled(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=OptimizelySdkSettings(odp_disabled=True)
+        )
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+        mock_logger.error.assert_called_with('ODP is not enabled.')
+
+    def test_send_odp_event__log_debug_if_datafile_not_ready(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+
+        mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
+        client.close()
+
+    def test_send_odp_event__log_error_if_odp_not_enabled_with_polling_config_manager(self):
+        mock_logger = mock.Mock()
+        with mock.patch(
+            'requests.get',
+            return_value=self.fake_server_response(
+                status_code=200,
+                content=json.dumps(self.config_dict_with_audience_segments)
+            )
+        ):
+            client = optimizely.Optimizely(
+                sdk_key='test',
+                logger=mock_logger,
+                settings=OptimizelySdkSettings(odp_disabled=True)
+            )
+            # wait for config
+            client.config_manager.get_config()
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+
+        mock_logger.error.assert_called_with('ODP is not enabled.')
+
+    def test_send_odp_event__log_error_with_invalid_data(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={'test': {}})
+        client.close()
+
+        mock_logger.error.assert_called_with('ODP data is not valid.')
+
+    def test_send_odp_event__log_error_with_missing_integrations_data(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences), logger=mock_logger)
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+
+        mock_logger.error.assert_called_with('ODP is not integrated.')
+        client.close()

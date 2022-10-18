@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from unittest import mock
 
-from optimizely import exceptions as optimizely_exception
 from optimizely import version
 from optimizely.helpers.enums import Errors
 from optimizely.odp.lru_cache import OptimizelySegmentsCache, LRUCache
@@ -26,6 +25,11 @@ from optimizely.odp.odp_segment_manager import OdpSegmentManager
 from optimizely.odp.odp_segments_api_manager import OdpSegmentsApiManager
 from optimizely.odp.odp_events_api_manager import OdpEventsApiManager
 from tests import base
+
+
+class CustomCache:
+    def reset(self) -> None:
+        pass
 
 
 class OdpManagerTest(base.BaseTest):
@@ -45,8 +49,8 @@ class OdpManagerTest(base.BaseTest):
         # these call should be dropped gracefully with None
         manager.identify_user('user1')
 
-        self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                               manager.send_event, 't1', 'a1', {}, {})
+        manager.send_event('t1', 'a1', {}, {})
+        mock_logger.debug.assert_any_call('ODP is not enabled.')
 
         self.assertIsNone(manager.event_manager)
         self.assertIsNone(manager.segment_manager)
@@ -153,7 +157,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(mock_logger, OdpEventsApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
+        manager = OdpManager(False, CustomCache(), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
@@ -161,7 +165,6 @@ class OdpManagerTest(base.BaseTest):
 
         mock_dispatch_event.assert_not_called()
         mock_logger.error.assert_not_called()
-        mock_logger.debug.assert_any_call('Odp config was not changed.')
         mock_logger.debug.assert_any_call('ODP identify event is not dispatched (ODP not integrated).')
 
     def test_identify_user_odp_disabled(self):
@@ -217,30 +220,28 @@ class OdpManagerTest(base.BaseTest):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(mock_logger, OdpEventsApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
+        manager = OdpManager(False, CustomCache(), event_manager=event_manager, logger=mock_logger)
+        manager.update_odp_config('api_key', 'api_host', [])
         manager.update_odp_config(None, None, [])
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            self.assertRaisesRegex(optimizely_exception.OdpNotIntegrated, Errors.ODP_NOT_INTEGRATED,
-                                   manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
+            manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_any_call('Odp config was not changed.')
+        mock_logger.debug.assert_called_once_with('ODP is not integrated.')
         mock_logger.error.assert_not_called()
 
     def test_send_event_odp_disabled(self):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(mock_logger, OdpEventsApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
-        manager.enabled = False
+        manager = OdpManager(True, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                                   manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
+            manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_not_called()
+        mock_logger.debug.assert_called_once_with('ODP is not enabled.')
         mock_logger.error.assert_not_called()
 
     def test_send_event_odp_disabled__event_manager_not_available(self):
@@ -251,32 +252,20 @@ class OdpManagerTest(base.BaseTest):
         manager.event_manager = False
 
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            self.assertRaisesRegex(optimizely_exception.OdpNotEnabled, Errors.ODP_NOT_ENABLED,
-                                   manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
+            manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_not_called()
-        mock_logger.error.assert_not_called()
-
-    def test_send_event_invalid_data(self):
-        mock_logger = mock.MagicMock()
-        event_manager = OdpEventManager(mock_logger, OdpEventsApiManager())
-
-        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
-        manager.update_odp_config('key1', 'host1', [])
-
-        with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            self.assertRaisesRegex(optimizely_exception.OdpInvalidData, Errors.ODP_INVALID_DATA,
-                                   manager.send_event, 't1', 'a1', {'id-key1': 'id-val-1'}, {'invalid-item': {}})
-
-        mock_dispatch_event.assert_not_called()
+        mock_logger.debug.assert_called_once_with('ODP is not enabled.')
         mock_logger.error.assert_not_called()
 
     def test_config_not_changed(self):
         mock_logger = mock.MagicMock()
         event_manager = OdpEventManager(mock_logger, OdpEventsApiManager())
 
-        manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
+        manager = OdpManager(False, CustomCache(), event_manager=event_manager, logger=mock_logger)
+        # finish initialization
+        manager.update_odp_config(None, None, [])
+        # update without change
         manager.update_odp_config(None, None, [])
         mock_logger.debug.assert_called_with('Odp config was not changed.')
         mock_logger.error.assert_not_called()
@@ -395,6 +384,18 @@ class OdpManagerTest(base.BaseTest):
         self.assertEqual(manager.segment_manager.odp_config.get_segments_to_check(), ['a', 'b'])
         self.assertEqual(manager.event_manager.odp_config.get_segments_to_check(), ['a', 'b'])
         mock_logger.error.assert_not_called()
+
+    def test_update_odp_config__odp_config_starts_event_manager(self):
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(mock_logger)
+        manager = OdpManager(False, event_manager=event_manager, logger=mock_logger)
+        self.assertFalse(event_manager.is_running)
+
+        manager.update_odp_config('key1', 'host1', ['a', 'b'])
+        self.assertTrue(event_manager.is_running)
+
+        mock_logger.error.assert_not_called()
+        manager.close()
 
     def test_segments_cache_default_settings(self):
         manager = OdpManager(False)

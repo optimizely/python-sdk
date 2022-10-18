@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from unittest import mock
 
 from optimizely.config_manager import PollingConfigManager
@@ -19,12 +20,14 @@ from optimizely.event_dispatcher import EventDispatcher
 from optimizely.notification_center import NotificationCenter
 from optimizely.optimizely_factory import OptimizelyFactory
 from optimizely.user_profile import UserProfileService
+
 from . import base
 
 
 @mock.patch('requests.get')
 class OptimizelyFactoryTest(base.BaseTest):
     def setUp(self):
+        super().setUp()
         self.datafile = '{ revision: "42" }'
         self.error_handler = NoOpErrorHandler()
         self.mock_client_logger = mock.MagicMock()
@@ -161,6 +164,20 @@ class OptimizelyFactoryTest(base.BaseTest):
         self.assertEqual(optimizely_instance.event_processor.flush_interval.seconds, 30)
         self.assertEqual(optimizely_instance.event_processor.batch_size, 10)
 
-    # TODO - write test
     def test_update_odp_config_correctly(self, _):
-        pass
+        with mock.patch('requests.get') as mock_request_post:
+            mock_request_post.return_value = self.fake_server_response(
+                status_code=200,
+                content=json.dumps(self.config_dict_with_audience_segments)
+            )
+            client = OptimizelyFactory.custom_instance('instance-test')
+
+            # wait for config to be ready
+            client.config_manager.get_config()
+
+        odp_config = client.odp_manager.odp_config
+        odp_settings = self.config_dict_with_audience_segments['integrations'][0]
+        self.assertEqual(odp_config.get_api_key(), odp_settings['publicKey'])
+        self.assertEqual(odp_config.get_api_host(), odp_settings['host'])
+
+        client.close()
