@@ -132,11 +132,11 @@ class OdpSegmentsApiManager:
 
         query = {
             'query':
-                'query($vuid: String, $fs_user_id: String, $audiences: [String]) {'
-                'customer(vuid: $vuid, fs_user_id: $fs_user_id) '
+                'query($userId: String, $audiences: [String]) {'
+                f'customer({user_key}: $userId) '
                 '{audiences(subset: $audiences) {edges {node {name state}}}}}',
             'variables': {
-                user_key: str(user_value),
+                'userId': str(user_value),
                 'audiences': segments_to_check
             }
         }

@@ -65,13 +65,10 @@ class OdpConfig:
 
         updated = False
         with self.lock:
-            initial_state = self._odp_state
             if api_key and api_host:
                 self._odp_state = OdpConfigState.INTEGRATED
             else:
                 self._odp_state = OdpConfigState.NOT_INTEGRATED
-            if initial_state != self._odp_state:
-                updated = True
 
             if self._api_key != api_key or self._api_host != api_host or self._segments_to_check != segments_to_check:
                 self._api_key = api_key

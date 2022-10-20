@@ -37,10 +37,10 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
                                segments_to_check=["a", "b", "c"])
 
         test_payload = {
-            'query': 'query($vuid: String, $fs_user_id: String, $audiences: [String]) {'
-            'customer(vuid: $vuid, fs_user_id: $fs_user_id) '
+            'query': 'query($userId: String, $audiences: [String]) {'
+            'customer(vuid: $userId) '
             '{audiences(subset: $audiences) {edges {node {name state}}}}}',
-            'variables': {self.user_key: self.user_value, 'audiences': ["a", "b", "c"]}
+            'variables': {'userId': self.user_value, 'audiences': ["a", "b", "c"]}
         }
         request_headers = {'content-type': 'application/json', 'x-api-key': self.api_key}
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/graphql",
