@@ -20,7 +20,7 @@ import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError
 
 from optimizely import logger as optimizely_logger
-from optimizely.helpers.enums import Errors, OdpSegmentsApiConfig
+from optimizely.helpers.enums import Errors, OdpSegmentApiConfig
 
 """
  ODP GraphQL API
@@ -105,7 +105,7 @@ from optimizely.helpers.enums import Errors, OdpSegmentsApiConfig
 """
 
 
-class OdpSegmentsApiManager:
+class OdpSegmentApiManager:
     """Interface for manging the fetching of audience segments."""
 
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
@@ -151,7 +151,7 @@ class OdpSegmentsApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout=OdpSegmentsApiConfig.REQUEST_TIMEOUT)
+                                     timeout=OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()

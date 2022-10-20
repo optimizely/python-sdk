@@ -20,7 +20,7 @@ import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout
 
 from optimizely import logger as optimizely_logger
-from optimizely.helpers.enums import Errors, OdpEventsApiConfig
+from optimizely.helpers.enums import Errors, OdpEventApiConfig
 from optimizely.odp.odp_event import OdpEvent, OdpEventEncoder
 
 """
@@ -37,7 +37,7 @@ from optimizely.odp.odp_event import OdpEvent, OdpEventEncoder
 """
 
 
-class OdpEventsApiManager:
+class OdpEventApiManager:
     """Provides an internal service for ODP event REST api access."""
 
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
@@ -69,7 +69,7 @@ class OdpEventsApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout=OdpEventsApiConfig.REQUEST_TIMEOUT)
+                                     timeout=OdpEventApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
 

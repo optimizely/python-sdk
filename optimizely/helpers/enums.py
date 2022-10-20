@@ -199,12 +199,12 @@ class EventDispatchConfig:
     REQUEST_TIMEOUT: Final = 10
 
 
-class OdpEventsApiConfig:
+class OdpEventApiConfig:
     """ODP Events API configs."""
     REQUEST_TIMEOUT: Final = 10
 
 
-class OdpSegmentsApiConfig:
+class OdpSegmentApiConfig:
     """ODP Segments API configs."""
     REQUEST_TIMEOUT: Final = 10
 

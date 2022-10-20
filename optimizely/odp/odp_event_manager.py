@@ -23,7 +23,7 @@ from optimizely import logger as _logging
 from optimizely.helpers.enums import OdpEventManagerConfig, Errors, OdpManagerConfig
 from .odp_config import OdpConfig, OdpConfigState
 from .odp_event import OdpEvent, OdpDataDict
-from .odp_events_api_manager import OdpEventsApiManager
+from .odp_event_api_manager import OdpEventApiManager
 
 
 class Signal(Enum):
@@ -45,7 +45,7 @@ class OdpEventManager:
     def __init__(
         self,
         logger: Optional[_logging.Logger] = None,
-        api_manager: Optional[OdpEventsApiManager] = None
+        api_manager: Optional[OdpEventApiManager] = None
     ):
         """OdpEventManager init method to configure event batching.
 
@@ -54,7 +54,7 @@ class OdpEventManager:
             api_manager: Optional component which sends events to ODP.
         """
         self.logger = logger or _logging.NoOpLogger()
-        self.api_manager = api_manager or OdpEventsApiManager(self.logger)
+        self.api_manager = api_manager or OdpEventApiManager(self.logger)
 
         self.odp_config: Optional[OdpConfig] = None
         self.api_key: Optional[str] = None

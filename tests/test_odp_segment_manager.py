@@ -22,7 +22,7 @@ from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.optimizely_odp_option import OptimizelyOdpOption
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
-from optimizely.odp.odp_segments_api_manager import OdpSegmentsApiManager
+from optimizely.odp.odp_segment_api_manager import OdpSegmentApiManager
 from tests import base
 
 
@@ -36,7 +36,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         odp_config = OdpConfig(self.api_key, self.api_host, [])
         mock_logger = mock.MagicMock()
         segments_cache = LRUCache(1000, 1000)
-        api = OdpSegmentsApiManager(mock_logger)
+        api = OdpSegmentApiManager(mock_logger)
         segment_manager = OdpSegmentManager(segments_cache, api, mock_logger)
         segment_manager.odp_config = odp_config
 
@@ -111,7 +111,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         have a status code for connection error, that's why we need to trigger the exception
         instead of returning a fake server response with status code 500.
         The error log should come form the GraphQL API manager, not from ODP Segment Manager.
-        The active mock logger should be placed as parameter in OdpSegmentsApiManager object.
+        The active mock logger should be placed as parameter in OdpSegmentApiManager object.
         """
         odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
         mock_logger = mock.MagicMock()

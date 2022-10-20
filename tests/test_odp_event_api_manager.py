@@ -16,13 +16,13 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from optimizely.helpers.enums import OdpEventsApiConfig
+from optimizely.helpers.enums import OdpEventApiConfig
 from optimizely.odp.odp_event import OdpEvent, OdpEventEncoder
-from optimizely.odp.odp_events_api_manager import OdpEventsApiManager
+from optimizely.odp.odp_event_api_manager import OdpEventApiManager
 from . import base
 
 
-class OdpEventsApiManagerTest(base.BaseTest):
+class OdpEventApiManagerTest(base.BaseTest):
     user_key = "vuid"
     user_value = "test-user-value"
     api_key = "test-api-key"
@@ -34,7 +34,7 @@ class OdpEventsApiManagerTest(base.BaseTest):
 
     def test_send_odp_events__valid_request(self):
         with mock.patch('requests.post') as mock_request_post:
-            api = OdpEventsApiManager()
+            api = OdpEventApiManager()
             api.send_odp_events(api_key=self.api_key,
                                 api_host=self.api_host,
                                 events=self.events)
@@ -43,14 +43,14 @@ class OdpEventsApiManagerTest(base.BaseTest):
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/events",
                                                   headers=request_headers,
                                                   data=json.dumps(self.events, cls=OdpEventEncoder),
-                                                  timeout=OdpEventsApiConfig.REQUEST_TIMEOUT)
+                                                  timeout=OdpEventApiConfig.REQUEST_TIMEOUT)
 
     def test_send_odp_ovents_success(self):
         with mock.patch('requests.post') as mock_request_post:
             # no need to mock url and content because we're not returning the response
             mock_request_post.return_value = self.fake_server_response(status_code=200)
 
-            api = OdpEventsApiManager()
+            api = OdpEventApiManager()
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)  # content of events doesn't matter for the test
@@ -63,7 +63,7 @@ class OdpEventsApiManagerTest(base.BaseTest):
 
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = OdpEventsApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=events)
@@ -79,7 +79,7 @@ class OdpEventsApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.InvalidURL('Invalid URL')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = OdpEventsApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=invalid_url,
                                                events=self.events)
@@ -92,7 +92,7 @@ class OdpEventsApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = OdpEventsApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)
@@ -108,7 +108,7 @@ class OdpEventsApiManagerTest(base.BaseTest):
                                                                        url=self.api_host,
                                                                        content=self.failure_response_data)
 
-            api = OdpEventsApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)
@@ -124,7 +124,7 @@ class OdpEventsApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = self.fake_server_response(status_code=500, url=self.api_host)
 
-            api = OdpEventsApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)

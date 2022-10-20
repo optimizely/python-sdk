@@ -16,12 +16,12 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from optimizely.helpers.enums import OdpSegmentsApiConfig
-from optimizely.odp.odp_segments_api_manager import OdpSegmentsApiManager
+from optimizely.helpers.enums import OdpSegmentApiConfig
+from optimizely.odp.odp_segment_api_manager import OdpSegmentApiManager
 from . import base
 
 
-class OdpSegmentsApiManagerTest(base.BaseTest):
+class OdpSegmentApiManagerTest(base.BaseTest):
     user_key = "vuid"
     user_value = "test-user-value"
     api_key = "test-api-key"
@@ -29,7 +29,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
 
     def test_fetch_qualified_segments__valid_request(self):
         with mock.patch('requests.post') as mock_request_post:
-            api = OdpSegmentsApiManager()
+            api = OdpSegmentApiManager()
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -46,14 +46,14 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/graphql",
                                                   headers=request_headers,
                                                   data=json.dumps(test_payload),
-                                                  timeout=OdpSegmentsApiConfig.REQUEST_TIMEOUT)
+                                                  timeout=OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
     def test_fetch_qualified_segments__success(self):
         with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.good_response_data)
 
-            api = OdpSegmentsApiManager()
+            api = OdpSegmentApiManager()
             response = api.fetch_segments(api_key=self.api_key,
                                           api_host=self.api_host,
                                           user_key=self.user_key,
@@ -68,7 +68,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.node_missing_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -85,7 +85,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
                 self.fake_server_response(status_code=200,
                                           content=self.mixed_missing_keys_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -100,7 +100,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.good_empty_response_data)
 
-            api = OdpSegmentsApiManager()
+            api = OdpSegmentApiManager()
             response = api.fetch_segments(api_key=self.api_key,
                                           api_host=self.api_host,
                                           user_key=self.user_key,
@@ -116,7 +116,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
                 self.fake_server_response(status_code=200,
                                           content=self.invalid_identifier_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -132,7 +132,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.other_exception_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -148,7 +148,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.bad_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -164,7 +164,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.name_invalid_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -180,7 +180,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.invalid_edges_key_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -196,7 +196,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.invalid_key_for_error_response_data)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -210,7 +210,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -226,7 +226,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = self.fake_server_response(status_code=403, url=self.api_host)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -246,7 +246,7 @@ class OdpSegmentsApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = self.fake_server_response(status_code=500, url=self.api_host)
 
-            api = OdpSegmentsApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
