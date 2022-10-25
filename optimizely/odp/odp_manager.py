@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ from typing import Optional, Any
 
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpManagerConfig, OdpSegmentsCacheConfig
+from optimizely.helpers.validator import are_odp_data_types_valid
 from optimizely.odp.lru_cache import OptimizelySegmentsCache, LRUCache
 from optimizely.odp.odp_config import OdpConfig, OdpConfigState
 from optimizely.odp.odp_event_manager import OdpEventManager
@@ -89,7 +90,15 @@ class OdpManager:
             before sending to the ODP server.
         """
         if not self.enabled or not self.event_manager:
-            self.logger.debug(Errors.ODP_NOT_ENABLED)
+            self.logger.error(Errors.ODP_NOT_ENABLED)
+            return
+
+        if self.odp_config.odp_state() == OdpConfigState.NOT_INTEGRATED:
+            self.logger.error(Errors.ODP_NOT_INTEGRATED)
+            return
+
+        if not are_odp_data_types_valid(data):
+            self.logger.error(Errors.ODP_INVALID_DATA)
             return
 
         self.event_manager.send_event(type, action, identifiers, data)

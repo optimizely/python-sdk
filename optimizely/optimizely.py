@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,10 +36,8 @@ from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 from .helpers import enums, validator
 from .helpers.sdk_settings import OptimizelySdkSettings
 from .helpers.enums import DecisionSources
-from .helpers.validator import are_odp_data_types_valid
 from .notification_center import NotificationCenter
 from .odp.lru_cache import LRUCache
-from .odp.odp_config import OdpConfigState
 from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
@@ -1360,30 +1358,24 @@ class Optimizely:
     def fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
         return self.odp_manager.fetch_qualified_segments(user_id, options or [])
 
-    def send_odp_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
+    def send_odp_event(
+        self,
+        action: str,
+        type: str = enums.OdpManagerConfig.EVENT_TYPE,
+        identifiers: Optional[dict[str, str]] = None,
+        data: Optional[dict[str, str | int | float | bool | None]] = None
+    ) -> None:
         """
         Send an event to the ODP server.
 
         Args:
-            type: The event type.
             action: The event action name.
-            identifiers: A dictionary for identifiers.
-            data: A dictionary for associated data. The default event data will be added to this data
+            type: The event type. Default 'fullstack'.
+            identifiers: An optional dictionary for identifiers.
+            data: An optional dictionary for associated data. The default event data will be added to this data
             before sending to the ODP server.
         """
-        if not self.odp_manager.enabled:
-            self.logger.error(enums.Errors.ODP_NOT_ENABLED)
-            return
-
-        if self.odp_manager.odp_config.odp_state() == OdpConfigState.NOT_INTEGRATED:
-            self.logger.error(enums.Errors.ODP_NOT_INTEGRATED)
-            return
-
-        if not are_odp_data_types_valid(data):
-            self.logger.error(enums.Errors.ODP_INVALID_DATA)
-            return
-
-        self.odp_manager.send_event(type, action, identifiers, data)
+        self.odp_manager.send_event(type, action, identifiers or {}, data or {})
 
     def close(self) -> None:
         if callable(getattr(self.event_processor, 'stop', None)):

@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,12 +45,13 @@ class OdpManagerTest(base.BaseTest):
 
         manager.fetch_qualified_segments('user1', [])
         mock_logger.error.assert_called_once_with(Errors.ODP_NOT_ENABLED)
+        mock_logger.reset_mock()
 
         # these call should be dropped gracefully with None
         manager.identify_user('user1')
 
         manager.send_event('t1', 'a1', {}, {})
-        mock_logger.debug.assert_any_call('ODP is not enabled.')
+        mock_logger.error.assert_called_once_with('ODP is not enabled.')
 
         self.assertIsNone(manager.event_manager)
         self.assertIsNone(manager.segment_manager)
@@ -228,8 +229,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_any_call('ODP is not integrated.')
-        mock_logger.error.assert_not_called()
+        mock_logger.error.assert_called_once_with('ODP is not integrated.')
 
     def test_send_event_odp_disabled(self):
         mock_logger = mock.MagicMock()
@@ -241,8 +241,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_any_call('ODP is not enabled.')
-        mock_logger.error.assert_not_called()
+        mock_logger.error.assert_called_once_with('ODP is not enabled.')
 
     def test_send_event_odp_disabled__event_manager_not_available(self):
         mock_logger = mock.MagicMock()
@@ -255,8 +254,7 @@ class OdpManagerTest(base.BaseTest):
             manager.send_event('t1', 'a1', {'id-key1': 'id-val-1'}, {'key1': 'val1'})
 
         mock_dispatch_event.assert_not_called()
-        mock_logger.debug.assert_any_call('ODP is not enabled.')
-        mock_logger.error.assert_not_called()
+        mock_logger.error.assert_called_once_with('ODP is not enabled.')
 
     def test_config_not_changed(self):
         mock_logger = mock.MagicMock()
