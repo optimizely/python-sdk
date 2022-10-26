@@ -21,6 +21,9 @@ import numbers
 from optimizely.notification_center import NotificationCenter
 from optimizely.user_profile import UserProfile
 from . import constants
+from ..odp.lru_cache import OptimizelySegmentsCache
+from ..odp.odp_event_manager import OdpEventManager
+from ..odp.odp_segment_manager import OdpSegmentManager
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -67,10 +70,10 @@ def _has_method(obj: object, method: str) -> bool:
     method: Method whose presence needs to be determined.
 
   Returns:
-    Boolean depending upon whether the method is available or not.
+    Boolean depending upon whether the method is available and callable or not.
   """
 
-    return getattr(obj, method, None) is not None
+    return callable(getattr(obj, method, None))
 
 
 def is_config_manager_valid(config_manager: BaseConfigManager) -> bool:
@@ -312,3 +315,66 @@ def are_values_same_type(first_val: Any, second_val: Any) -> bool:
 def are_odp_data_types_valid(data: OdpDataDict) -> bool:
     valid_types = (str, int, float, bool, type(None))
     return all(isinstance(v, valid_types) for v in data.values())
+
+
+def is_segments_cache_valid(segments_cache: Optional[OptimizelySegmentsCache]) -> bool:
+    """ Given a segments_cache determine if it is valid or not i.e. provides a reset, lookup and save methods.
+
+    Args:
+      segments_cache: Provides cache methods: reset, lookup, save.
+
+    Returns:
+      Boolean depending upon whether segments_cache is valid or not.
+    """
+    if not _has_method(segments_cache, 'reset'):
+        return False
+
+    if not _has_method(segments_cache, 'lookup'):
+        return False
+
+    if not _has_method(segments_cache, 'save'):
+        return False
+
+    return True
+
+
+def is_segment_manager_valid(segment_manager: Optional[OdpSegmentManager]) -> bool:
+    """ Given a segments_manager determine if it is valid or not.
+
+    Args:
+      segment_manager: Provides methods fetch_qualified_segments and reset
+
+    Returns:
+      Boolean depending upon whether segments_manager is valid or not.
+    """
+    if not _has_method(segment_manager, 'fetch_qualified_segments'):
+        return False
+
+    if not _has_method(segment_manager, 'reset'):
+        return False
+
+    return True
+
+
+def is_event_manager_valid(event_manager: Optional[OdpEventManager]) -> bool:
+    """ Given an event_manager determine if it is valid or not.
+
+    Args:
+      event_manager: Provides send_event method
+
+    Returns:
+      Boolean depending upon whether event_manager is valid or not.
+    """
+    if not hasattr(event_manager, 'is_running'):
+        return False
+
+    if not _has_method(event_manager, 'send_event'):
+        return False
+
+    if not _has_method(event_manager, 'stop'):
+        return False
+
+    if not _has_method(event_manager, 'update_config'):
+        return False
+
+    return True

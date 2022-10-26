@@ -27,6 +27,37 @@ from . import base
 class UserContextTest(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
+        self.good_response_data = {
+            "data": {
+                "customer": {
+                    "audiences": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "name": "a",
+                                    "state": "qualified",
+                                    "description": "qualifed sample 1"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "b",
+                                    "state": "qualified",
+                                    "description": "qualifed sample 2"
+                                }
+                            },
+                            {
+                                "node": {
+                                    "name": "c",
+                                    "state": "not_qualified",
+                                    "description": "not-qualified sample"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
 
     def compare_opt_decisions(self, expected, actual):
         self.assertEqual(expected.variation_key, actual.variation_key)
@@ -1975,3 +2006,243 @@ class UserContextTest(base.BaseTest):
         decision = user.decide('flag-segment', ['IGNORE_USER_PROFILE_SERVICE'])
 
         self.assertEqual(decision.variation_key, "rollout-variation-off")
+
+    def test_none_client_should_not_fail(self):
+        uc = OptimizelyUserContext(None, None, 'test-user', None)
+        self.assertIsInstance(uc, OptimizelyUserContext)
+
+    def test_send_identify_event_when_user_context_created(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        with mock.patch.object(client, 'identify_user') as identify:
+            OptimizelyUserContext(client, mock_logger, 'user-id')
+
+        identify.assert_called_once_with('user-id')
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    # fetch qualified segments
+    def test_fetch_segments(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            success = user.fetch_qualified_segments()
+
+        self.assertTrue(success)
+        self.assertEqual(user.get_qualified_segments(), ['a', 'b'])
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_return_empty_array_when_not_qualified_for_any_segments(self):
+        for edge in self.good_response_data['data']['customer']['audiences']['edges']:
+            edge['node']['state'] = 'unqualified'
+
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            success = user.fetch_qualified_segments()
+
+        self.assertTrue(success)
+        self.assertEqual(user.get_qualified_segments(), [])
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_fetch_segments_and_reset_cache(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        segments_cache.save('wow', 'great')
+        self.assertEqual(segments_cache.lookup('wow'), 'great')
+
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            success = user.fetch_qualified_segments(options=['RESET_CACHE'])
+
+        self.assertTrue(success)
+        self.assertEqual(user.get_qualified_segments(), ['a', 'b'])
+        self.assertIsNone(segments_cache.lookup('wow'))
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_fetch_segments_from_cache(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        segment_manager = client.odp_manager.segment_manager
+        cache_key = segment_manager.make_cache_key(enums.OdpManagerConfig.KEY_FOR_USER_ID, 'user-id')
+        segments_cache = segment_manager.segments_cache
+        segments_cache.save(cache_key, ['great'])
+        self.assertEqual(segments_cache.lookup(cache_key), ['great'])
+
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            success = user.fetch_qualified_segments()
+
+        self.assertTrue(success)
+        self.assertEqual(user.get_qualified_segments(), ['great'])
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_fetch_segments_and_ignore_cache(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        segment_manager = client.odp_manager.segment_manager
+        cache_key = segment_manager.make_cache_key(enums.OdpManagerConfig.KEY_FOR_USER_ID, 'user-id')
+        segments_cache = segment_manager.segments_cache
+        segments_cache.save(cache_key, ['great'])
+        self.assertEqual(segments_cache.lookup(cache_key), ['great'])
+
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            success = user.fetch_qualified_segments(options=['IGNORE_CACHE'])
+
+        self.assertTrue(success)
+        self.assertEqual(segments_cache.lookup(cache_key), ['great'])
+        self.assertEqual(user.get_qualified_segments(), ['a', 'b'])
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_return_false_on_error(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=500)):
+            success = user.fetch_qualified_segments()
+
+        self.assertFalse(success)
+        self.assertIsNone(user.get_qualified_segments())
+        mock_logger.error.assert_called_once_with(
+            'Audience segments fetch failed (500 Server Error: None for url: None).'
+        )
+        client.close()
+
+    def test_no_error_when_client_is_none(self):
+        mock_logger = mock.Mock()
+        user = OptimizelyUserContext(None, mock_logger, 'user-id')
+        success = user.fetch_qualified_segments()
+
+        self.assertFalse(success)
+        self.assertIsNone(user.get_qualified_segments())
+        mock_logger.error.assert_not_called()
+
+    def test_fetch_segments_when_non_blocking(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            thread = user.fetch_qualified_segments(callback=True)
+            thread.join()
+
+        self.assertEqual(user.get_qualified_segments(), ['a', 'b'])
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_fetch_segments_with_callback(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        result = []
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            thread = user.fetch_qualified_segments(callback=lambda x: result.append(x))
+            thread.join()
+
+        self.assertEqual(user.get_qualified_segments(), ['a', 'b'])
+        self.assertTrue(result.pop())
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_pass_false_to_callback_when_failed_and_non_blocking(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        result = []
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=500)):
+            thread = user.fetch_qualified_segments(callback=lambda x: result.append(x))
+            thread.join()
+
+        self.assertIsNone(user.get_qualified_segments())
+        self.assertFalse(result.pop())
+        mock_logger.error.assert_called_once_with(
+            'Audience segments fetch failed (500 Server Error: None for url: None).'
+        )
+        client.close()
+
+    def test_fetch_segments_from_cache_with_non_blocking(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        segment_manager = client.odp_manager.segment_manager
+        cache_key = segment_manager.make_cache_key(enums.OdpManagerConfig.KEY_FOR_USER_ID, 'user-id')
+        segments_cache = segment_manager.segments_cache
+        segments_cache.save(cache_key, ['great'])
+        self.assertEqual(segments_cache.lookup(cache_key), ['great'])
+
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            thread = user.fetch_qualified_segments(callback=True)
+            thread.join()
+
+        self.assertEqual(user.get_qualified_segments(), ['great'])
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_decide_correctly_with_non_blocking(self):
+        self.good_response_data['data']['customer']['audiences']['edges'][0]['node']['name'] = 'odp-segment-2'
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user-id')
+        results = []
+
+        def callback(success):
+            results.append(success)
+            decision = user.decide('flag-segment')
+            results.append(decision.variation_key)
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            thread = user.fetch_qualified_segments(callback=callback)
+            thread.join()
+
+        self.assertEqual(user.get_qualified_segments(), ['odp-segment-2', 'b'])
+        self.assertEqual(results.pop(), 'rollout-variation-on')
+        self.assertStrictTrue(results.pop())
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_fetch_segments_error(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        user = OptimizelyUserContext(client, mock_logger, 'user"id')
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(
+            status_code=200, content=json.dumps(self.good_response_data)
+        )):
+            success = user.fetch_qualified_segments()
+
+        self.assertTrue(success)
+        self.assertEqual(user.get_qualified_segments(), ['a', 'b'])
+        mock_logger.error.assert_not_called()
+        client.close()

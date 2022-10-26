@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http:#www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,13 +16,13 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from optimizely.helpers.enums import OdpRestApiConfig
+from optimizely.helpers.enums import OdpEventApiConfig
 from optimizely.odp.odp_event import OdpEvent, OdpEventEncoder
-from optimizely.odp.zaius_rest_api_manager import ZaiusRestApiManager
+from optimizely.odp.odp_event_api_manager import OdpEventApiManager
 from . import base
 
 
-class ZaiusRestApiManagerTest(base.BaseTest):
+class OdpEventApiManagerTest(base.BaseTest):
     user_key = "vuid"
     user_value = "test-user-value"
     api_key = "test-api-key"
@@ -34,7 +34,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
 
     def test_send_odp_events__valid_request(self):
         with mock.patch('requests.post') as mock_request_post:
-            api = ZaiusRestApiManager()
+            api = OdpEventApiManager()
             api.send_odp_events(api_key=self.api_key,
                                 api_host=self.api_host,
                                 events=self.events)
@@ -43,14 +43,14 @@ class ZaiusRestApiManagerTest(base.BaseTest):
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/events",
                                                   headers=request_headers,
                                                   data=json.dumps(self.events, cls=OdpEventEncoder),
-                                                  timeout=OdpRestApiConfig.REQUEST_TIMEOUT)
+                                                  timeout=OdpEventApiConfig.REQUEST_TIMEOUT)
 
     def test_send_odp_ovents_success(self):
         with mock.patch('requests.post') as mock_request_post:
             # no need to mock url and content because we're not returning the response
             mock_request_post.return_value = self.fake_server_response(status_code=200)
 
-            api = ZaiusRestApiManager()
+            api = OdpEventApiManager()
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)  # content of events doesn't matter for the test
@@ -63,7 +63,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
 
         with mock.patch('requests.post') as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = ZaiusRestApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=events)
@@ -79,7 +79,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.InvalidURL('Invalid URL')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = ZaiusRestApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=invalid_url,
                                                events=self.events)
@@ -92,7 +92,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = ZaiusRestApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)
@@ -108,7 +108,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
                                                                        url=self.api_host,
                                                                        content=self.failure_response_data)
 
-            api = ZaiusRestApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)
@@ -124,7 +124,7 @@ class ZaiusRestApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = self.fake_server_response(status_code=500, url=self.api_host)
 
-            api = ZaiusRestApiManager(logger=mock_logger)
+            api = OdpEventApiManager(logger=mock_logger)
             should_retry = api.send_odp_events(api_key=self.api_key,
                                                api_host=self.api_host,
                                                events=self.events)

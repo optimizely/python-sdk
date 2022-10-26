@@ -29,6 +29,7 @@ from optimizely import project_config
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
 from optimizely.helpers import enums
+from optimizely.helpers.sdk_settings import OptimizelySdkSettings
 from . import base
 
 
@@ -540,7 +541,7 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_broadcast_decision:
             self.assertEqual(None, self.optimizely.activate('test_experiment', 'test_user'))
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'ab-test',
             'test_user',
@@ -1787,7 +1788,7 @@ class OptimizelyTest(base.BaseTest):
 
         self.assertEqual(mock_broadcast.call_count, 1)
 
-        mock_broadcast.assert_called_once_with(
+        mock_broadcast.assert_any_call(
             enums.NotificationTypes.DECISION,
             'ab-test',
             'test_user',
@@ -2673,7 +2674,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2711,7 +2712,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2749,7 +2750,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "4243" for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2788,7 +2789,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "staging" for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2827,7 +2828,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2891,7 +2892,7 @@ class OptimizelyTest(base.BaseTest):
             ], any_order=True
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'all-feature-variables',
             'test_user',
@@ -2928,7 +2929,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2959,7 +2960,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "10.02" for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -2990,7 +2991,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "4243" for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3053,7 +3054,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"test": 123}" for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3095,7 +3096,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_running" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3137,7 +3138,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "39.99" for variable "price" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3179,7 +3180,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "399" for variable "count" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3221,7 +3222,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "Hello audience" for variable "message" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3263,7 +3264,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"field": 12}" for variable "object" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3318,7 +3319,7 @@ class OptimizelyTest(base.BaseTest):
             ], any_order=True
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'all-feature-variables',
             'test_user',
@@ -3363,7 +3364,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "true" for variable "is_running" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3396,7 +3397,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "39.99" for variable "price" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3429,7 +3430,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "399" for variable "count" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3462,7 +3463,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "Hello audience" for variable "message" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3496,7 +3497,7 @@ class OptimizelyTest(base.BaseTest):
             'Got variable value "{"field": 12}" for variable "object" of feature flag "test_feature_in_rollout".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3629,7 +3630,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3663,7 +3664,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3732,7 +3733,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3766,7 +3767,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "object" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3798,7 +3799,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "is_working" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3831,7 +3832,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "cost" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3864,7 +3865,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "count" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -3897,7 +3898,7 @@ class OptimizelyTest(base.BaseTest):
             'Returning default value for variable "environment" of feature flag "test_feature_in_experiment".'
         )
 
-        mock_broadcast_decision.assert_called_once_with(
+        mock_broadcast_decision.assert_any_call(
             enums.NotificationTypes.DECISION,
             'feature-variable',
             'test_user',
@@ -5060,9 +5061,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_client_logging.error.assert_called_once_with('Provided "user_id" is in an invalid format.')
 
     def test_user_context_invalid_user_id(self):
-        """
-        Tests user context.
-        """
+        """Tests user context."""
         user_ids = [5, 5.5, None, True, [], {}]
 
         for u in user_ids:
@@ -5070,8 +5069,277 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.assertIsNone(uc, "invalid user id should return none")
 
     def test_invalid_flag_key(self):
-        """
-        Tests invalid flag key in function get_flag_variation_by_key().
-        """
-        # TODO mock function get_flag_variation_by_key
+        """Tests invalid flag key in function get_flag_variation_by_key()."""
         pass
+
+    def test_send_identify_event_when_called_with_odp_enabled(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        with mock.patch.object(client, 'identify_user') as identify:
+            client.create_user_context('user-id')
+
+        identify.assert_called_once_with('user-id')
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__log_info_when_disabled(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_disabled=True)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        self.assertIsNone(client.odp_manager.event_manager)
+        self.assertIsNone(client.odp_manager.segment_manager)
+        mock_logger.info.assert_called_once_with('ODP is disabled.')
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__accept_cache_size(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_size=5)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.capacity, 5)
+
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__accept_cache_timeout(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_timeout_in_secs=5)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.timeout, 5)
+
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__accept_cache_size_and_cache_timeout(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_size=10, segments_cache_timeout_in_secs=5)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.capacity, 10)
+        self.assertEqual(segments_cache.timeout, 5)
+
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__accept_valid_custom_cache(self):
+        class CustomCache:
+            def reset(self):
+                pass
+
+            def lookup(self):
+                pass
+
+            def save(self):
+                pass
+
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segments_cache=CustomCache())
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertIsInstance(segments_cache, CustomCache)
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__log_error_when_custom_cache_is_invalid(self):
+        class InvalidCache:
+            pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segments_cache=InvalidCache())
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_logger):
+            optimizely.Optimizely(
+                json.dumps(self.config_dict_with_audience_segments),
+                settings=sdk_settings
+            )
+        mock_logger.exception.assert_called_once_with('Provided "segments_cache" is in an invalid format.')
+
+    def test_sdk_settings__accept_custom_segment_manager(self):
+        class CustomSegmentManager:
+            def reset(self):
+                pass
+
+            def fetch_qualified_segments(self):
+                pass
+
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segment_manager=CustomSegmentManager())
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segment_manager = client.odp_manager.segment_manager
+        self.assertIsInstance(segment_manager, CustomSegmentManager)
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__log_error_when_custom_segment_manager_is_invalid(self):
+        class InvalidSegmentManager:
+            pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_segment_manager=InvalidSegmentManager())
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_logger):
+            optimizely.Optimizely(
+                json.dumps(self.config_dict_with_audience_segments),
+                settings=sdk_settings
+            )
+        mock_logger.exception.assert_called_once_with('Provided "segment_manager" is in an invalid format.')
+
+    def test_sdk_settings__accept_valid_custom_event_manager(self):
+        class CustomEventManager:
+            is_running = True
+
+            def send_event(self):
+                pass
+
+            def update_config(self):
+                pass
+
+            def stop(self):
+                pass
+
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_event_manager=CustomEventManager())
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        event_manager = client.odp_manager.event_manager
+        self.assertIsInstance(event_manager, CustomEventManager)
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__log_error_when_custom_event_manager_is_invalid(self):
+        class InvalidEventManager:
+            pass
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_event_manager=InvalidEventManager())
+        with mock.patch('optimizely.logger.reset_logger', return_value=mock_logger):
+            optimizely.Optimizely(
+                json.dumps(self.config_dict_with_audience_segments),
+                settings=sdk_settings
+            )
+        mock_logger.exception.assert_called_once_with('Provided "event_manager" is in an invalid format.')
+
+    def test_sdk_settings__log_error_when_sdk_settings_isnt_correct(self):
+        mock_logger = mock.Mock()
+        optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings={}
+        )
+        mock_logger.debug.assert_any_call('Provided sdk_settings is not an OptimizelySdkSettings instance.')
+
+    def test_send_odp_event__send_event_with_static_config_manager(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+        )
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_called_with('ODP event queue: flushing batch size 1.')
+
+    def test_send_odp_event__send_event_with_polling_config_manager(self):
+        mock_logger = mock.Mock()
+        with mock.patch(
+            'requests.get',
+            return_value=self.fake_server_response(
+                status_code=200,
+                content=json.dumps(self.config_dict_with_audience_segments)
+            )
+        ):
+            client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
+            # wait for config
+            client.config_manager.get_config()
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_called_with('ODP event queue: flushing batch size 1.')
+
+    def test_send_odp_event__log_error_when_odp_disabled(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=OptimizelySdkSettings(odp_disabled=True)
+        )
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+        mock_logger.error.assert_called_with('ODP is not enabled.')
+
+    def test_send_odp_event__log_debug_if_datafile_not_ready(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+
+        mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
+        client.close()
+
+    def test_send_odp_event__log_error_if_odp_not_enabled_with_polling_config_manager(self):
+        mock_logger = mock.Mock()
+        with mock.patch(
+            'requests.get',
+            return_value=self.fake_server_response(
+                status_code=200,
+                content=json.dumps(self.config_dict_with_audience_segments)
+            )
+        ):
+            client = optimizely.Optimizely(
+                sdk_key='test',
+                logger=mock_logger,
+                settings=OptimizelySdkSettings(odp_disabled=True)
+            )
+            # wait for config
+            client.config_manager.get_config()
+
+        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
+            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.close()
+
+        mock_logger.error.assert_called_with('ODP is not enabled.')
+
+    def test_send_odp_event__log_error_with_invalid_data(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={'test': {}})
+        client.close()
+
+        mock_logger.error.assert_called_with('ODP data is not valid.')
+
+    def test_send_odp_event__log_error_with_missing_integrations_data(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences), logger=mock_logger)
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+
+        mock_logger.error.assert_called_with('ODP is not integrated.')
+        client.close()

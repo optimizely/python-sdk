@@ -13,6 +13,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
+from optimizely.helpers.sdk_settings import OptimizelySdkSettings
+
 from . import logger as optimizely_logger
 from .config_manager import BaseConfigManager, PollingConfigManager
 from .error_handler import BaseErrorHandler, NoOpErrorHandler
@@ -124,7 +126,8 @@ class OptimizelyFactory:
         skip_json_validation: Optional[bool] = None,
         user_profile_service: Optional[UserProfileService] = None,
         config_manager: Optional[BaseConfigManager] = None,
-        notification_center: Optional[NotificationCenter] = None
+        notification_center: Optional[NotificationCenter] = None,
+        settings: Optional[OptimizelySdkSettings] = None
     ) -> Optimizely:
         """ Returns a new optimizely instance.
              if max_event_batch_size and max_event_flush_interval are None then default batch_size and flush_interval
@@ -144,6 +147,7 @@ class OptimizelyFactory:
                                      user profiles.
                config_manager: Optional ConfigManager interface responds to 'config' method.
                notification_center: Optional Instance of NotificationCenter.
+               settings: Optional Instance of OptimizelySdkSettings.
         """
 
         error_handler = error_handler or NoOpErrorHandler()
@@ -172,5 +176,5 @@ class OptimizelyFactory:
 
         return Optimizely(
             datafile, event_dispatcher, logger, error_handler, skip_json_validation, user_profile_service,
-            sdk_key, config_manager, notification_center, event_processor
+            sdk_key, config_manager, notification_center, event_processor, settings=settings
         )

@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http:#www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -121,7 +121,7 @@ class OdpEventManagerTest(BaseTest):
 
         event_manager.batch_size = 2
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -142,7 +142,7 @@ class OdpEventManagerTest(BaseTest):
         batch_count = 4
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             for _ in range(batch_count):
                 event_manager.send_event(**self.events[0])
@@ -177,7 +177,7 @@ class OdpEventManagerTest(BaseTest):
                 event_manager.send_event(**self.events[1])
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.start(self.odp_config)
             event_manager.send_event(**self.events[0])
@@ -203,7 +203,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager.start(self.odp_config)
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -223,7 +223,7 @@ class OdpEventManagerTest(BaseTest):
         flush_count = 4
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             for _ in range(flush_count):
                 event_manager.send_event(**self.events[0])
@@ -251,7 +251,7 @@ class OdpEventManagerTest(BaseTest):
         number_of_tries = event_manager.retry_count + 1
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=True
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=True
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -274,7 +274,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager.start(self.odp_config)
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, side_effect=[True, True, False]
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, side_effect=[True, True, False]
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -294,7 +294,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager.start(self.odp_config)
 
         with mock.patch.object(
-            event_manager.zaius_manager,
+            event_manager.api_manager,
             'send_odp_events',
             new_callable=CopyingMock,
             side_effect=Exception('Unexpected error')
@@ -373,7 +373,7 @@ class OdpEventManagerTest(BaseTest):
         processed_event['data']['data_source'] = 'my-app'
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**event)
             event_manager.flush()
@@ -389,7 +389,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager.start(self.odp_config)
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -408,7 +408,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager.start(odp_config)
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -442,7 +442,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager = OdpEventManager(mock_logger)
         event_manager.start(odp_config)
 
-        with mock.patch.object(event_manager.zaius_manager, 'send_odp_events') as mock_send:
+        with mock.patch.object(event_manager.api_manager, 'send_odp_events') as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
 
@@ -475,7 +475,7 @@ class OdpEventManagerTest(BaseTest):
         event_manager.batch_size = 2
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
@@ -511,7 +511,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.send_event(**self.events[1])
 
         with mock.patch.object(
-            event_manager.zaius_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.start(odp_config)
             odp_config.update(None, None, [])

@@ -20,7 +20,7 @@ import requests
 from requests.exceptions import RequestException, ConnectionError, Timeout, JSONDecodeError
 
 from optimizely import logger as optimizely_logger
-from optimizely.helpers.enums import Errors, OdpGraphQLApiConfig
+from optimizely.helpers.enums import Errors, OdpSegmentApiConfig
 
 """
  ODP GraphQL API
@@ -105,7 +105,7 @@ from optimizely.helpers.enums import Errors, OdpGraphQLApiConfig
 """
 
 
-class ZaiusGraphQLApiManager:
+class OdpSegmentApiManager:
     """Interface for manging the fetching of audience segments."""
 
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
@@ -130,10 +130,15 @@ class ZaiusGraphQLApiManager:
         request_headers = {'content-type': 'application/json',
                            'x-api-key': str(api_key)}
 
-        segments_filter = self.make_subset_filter(segments_to_check)
         query = {
-            'query': 'query {customer(' + str(user_key) + ': "' + str(user_value) + '") '
-            '{audiences' + segments_filter + ' {edges {node {name state}}}}}'
+            'query':
+                'query($userId: String, $audiences: [String]) {'
+                f'customer({user_key}: $userId) '
+                '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+            'variables': {
+                'userId': str(user_value),
+                'audiences': segments_to_check
+            }
         }
 
         try:
@@ -146,7 +151,7 @@ class ZaiusGraphQLApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout=OdpGraphQLApiConfig.REQUEST_TIMEOUT)
+                                     timeout=OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()
@@ -185,19 +190,3 @@ class ZaiusGraphQLApiManager:
             except KeyError:
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
                 return None
-
-    @staticmethod
-    def make_subset_filter(segments: list[str]) -> str:
-        """
-        segments = []: (fetch none)
-         --> subsetFilter = "(subset:[])"
-        segments = ["a"]: (fetch one segment)
-         --> subsetFilter = '(subset:["a"])'
-
-         Purposely using .join() method to deal with special cases of
-         any words with apostrophes (i.e. don't). .join() method enquotes
-         correctly without conflicting with the apostrophe.
-        """
-        if segments == []:
-            return '(subset:[])'
-        return '(subset:["' + '", "'.join(segments) + '"]' + ')'

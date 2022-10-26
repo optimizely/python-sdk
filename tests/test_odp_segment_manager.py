@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http:#www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,7 @@ from optimizely.odp.lru_cache import LRUCache
 from optimizely.odp.odp_config import OdpConfig
 from optimizely.odp.optimizely_odp_option import OptimizelyOdpOption
 from optimizely.odp.odp_segment_manager import OdpSegmentManager
-from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
+from optimizely.odp.odp_segment_api_manager import OdpSegmentApiManager
 from tests import base
 
 
@@ -36,7 +36,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         odp_config = OdpConfig(self.api_key, self.api_host, [])
         mock_logger = mock.MagicMock()
         segments_cache = LRUCache(1000, 1000)
-        api = ZaiusGraphQLApiManager(mock_logger)
+        api = OdpSegmentApiManager(mock_logger)
         segment_manager = OdpSegmentManager(segments_cache, api, mock_logger)
         segment_manager.odp_config = odp_config
 
@@ -88,7 +88,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
         segment_manager.segments_cache.save(cache_key, ['c'])
 
-        with mock.patch.object(segment_manager.zaius_manager, 'fetch_segments') as mock_fetch_segments:
+        with mock.patch.object(segment_manager.api_manager, 'fetch_segments') as mock_fetch_segments:
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, ['c'])
@@ -111,7 +111,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         have a status code for connection error, that's why we need to trigger the exception
         instead of returning a fake server response with status code 500.
         The error log should come form the GraphQL API manager, not from ODP Segment Manager.
-        The active mock logger should be placed as parameter in ZaiusGraphQLApiManager object.
+        The active mock logger should be placed as parameter in OdpSegmentApiManager object.
         """
         odp_config = OdpConfig(self.api_key, self.api_host, ["a", "b", "c"])
         mock_logger = mock.MagicMock()

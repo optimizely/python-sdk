@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http:#www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,12 @@ from unittest import mock
 
 from requests import exceptions as request_exception
 
-from optimizely.helpers.enums import OdpGraphQLApiConfig
-from optimizely.odp.zaius_graphql_api_manager import ZaiusGraphQLApiManager
+from optimizely.helpers.enums import OdpSegmentApiConfig
+from optimizely.odp.odp_segment_api_manager import OdpSegmentApiManager
 from . import base
 
 
-class ZaiusGraphQLApiManagerTest(base.BaseTest):
+class OdpSegmentApiManagerTest(base.BaseTest):
     user_key = "vuid"
     user_value = "test-user-value"
     api_key = "test-api-key"
@@ -29,7 +29,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
 
     def test_fetch_qualified_segments__valid_request(self):
         with mock.patch('requests.post') as mock_request_post:
-            api = ZaiusGraphQLApiManager()
+            api = OdpSegmentApiManager()
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -37,21 +37,23 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                                segments_to_check=["a", "b", "c"])
 
         test_payload = {
-            'query': 'query {customer(' + self.user_key + ': "' + self.user_value + '") '
-            '{audiences(subset:["a", "b", "c"]) {edges {node {name state}}}}}'
+            'query': 'query($userId: String, $audiences: [String]) {'
+            'customer(vuid: $userId) '
+            '{audiences(subset: $audiences) {edges {node {name state}}}}}',
+            'variables': {'userId': self.user_value, 'audiences': ["a", "b", "c"]}
         }
         request_headers = {'content-type': 'application/json', 'x-api-key': self.api_key}
         mock_request_post.assert_called_once_with(url=self.api_host + "/v3/graphql",
                                                   headers=request_headers,
                                                   data=json.dumps(test_payload),
-                                                  timeout=OdpGraphQLApiConfig.REQUEST_TIMEOUT)
+                                                  timeout=OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
     def test_fetch_qualified_segments__success(self):
         with mock.patch('requests.post') as mock_request_post:
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.good_response_data)
 
-            api = ZaiusGraphQLApiManager()
+            api = OdpSegmentApiManager()
             response = api.fetch_segments(api_key=self.api_key,
                                           api_host=self.api_host,
                                           user_key=self.user_key,
@@ -66,7 +68,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.node_missing_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -83,7 +85,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                 self.fake_server_response(status_code=200,
                                           content=self.mixed_missing_keys_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -98,7 +100,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.good_empty_response_data)
 
-            api = ZaiusGraphQLApiManager()
+            api = OdpSegmentApiManager()
             response = api.fetch_segments(api_key=self.api_key,
                                           api_host=self.api_host,
                                           user_key=self.user_key,
@@ -114,7 +116,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                 self.fake_server_response(status_code=200,
                                           content=self.invalid_identifier_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -130,7 +132,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.other_exception_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -146,7 +148,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.bad_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -162,7 +164,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = \
                 self.fake_server_response(status_code=200, content=self.name_invalid_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -178,7 +180,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.invalid_edges_key_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -194,7 +196,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.invalid_key_for_error_response_data)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -208,7 +210,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')) as mock_request_post, \
                 mock.patch('optimizely.logger') as mock_logger:
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -224,7 +226,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = self.fake_server_response(status_code=403, url=self.api_host)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -244,7 +246,7 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
                 mock.patch('optimizely.logger') as mock_logger:
             mock_request_post.return_value = self.fake_server_response(status_code=500, url=self.api_host)
 
-            api = ZaiusGraphQLApiManager(logger=mock_logger)
+            api = OdpSegmentApiManager(logger=mock_logger)
             api.fetch_segments(api_key=self.api_key,
                                api_host=self.api_host,
                                user_key=self.user_key,
@@ -256,15 +258,6 @@ class ZaiusGraphQLApiManagerTest(base.BaseTest):
         # assert 500 error log
         mock_logger.error.assert_called_once_with('Audience segments fetch failed '
                                                   f'(500 Server Error: None for url: {self.api_host}).')
-
-    def test_make_subset_filter(self):
-        api = ZaiusGraphQLApiManager()
-
-        self.assertEqual("(subset:[])", api.make_subset_filter([]))
-        self.assertEqual("(subset:[\"a\"])", api.make_subset_filter(["a"]))
-        self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(['a', 'b', 'c']))
-        self.assertEqual("(subset:[\"a\", \"b\", \"c\"])", api.make_subset_filter(["a", "b", "c"]))
-        self.assertEqual("(subset:[\"a\", \"b\", \"don't\"])", api.make_subset_filter(["a", "b", "don't"]))
 
     # test json responses
 

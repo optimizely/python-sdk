@@ -13,14 +13,15 @@
 #    limitations under the License.
 #
 from __future__ import annotations
+
 import copy
 import threading
-from typing import TYPE_CHECKING, Any, Optional, NewType, Dict
+from typing import TYPE_CHECKING, Any, Callable, Optional, NewType, Dict
 
 from optimizely.decision import optimizely_decision
 
 if TYPE_CHECKING:
-    # prevent circular dependenacy by skipping import at runtime
+    # prevent circular dependency by skipping import at runtime
     from . import optimizely
     from optimizely.helpers.event_tag_utils import EventTags
     from .logger import Logger
@@ -54,7 +55,7 @@ class OptimizelyUserContext:
         self.client = optimizely_client
         self.logger = logger
         self.user_id = user_id
-        self._qualified_segments: list[str] = []
+        self._qualified_segments: Optional[list[str]] = None
 
         if not isinstance(user_attributes, dict):
             user_attributes = UserAttributes({})
@@ -66,7 +67,9 @@ class OptimizelyUserContext:
             OptimizelyUserContext.OptimizelyForcedDecision
         ] = {}
 
-    # decision context
+        if self.client:
+            self.client.identify_user(user_id)
+
     class OptimizelyDecisionContext:
         """ Using class with attributes here instead of namedtuple because
             class is extensible, it's easy to add another attribute if we wanted
@@ -216,7 +219,7 @@ class OptimizelyUserContext:
             decision_context: a decision context.
 
         Returns:
-            Returns: true if the forced decision has been removed successfully.
+            True if the forced decision has been removed successfully.
         """
         with self.lock:
             if decision_context in self.forced_decisions_map:
@@ -265,9 +268,11 @@ class OptimizelyUserContext:
             Returns: true if the segment is in the qualified segments list.
         """
         with self.lock:
-            return segment in self._qualified_segments
+            if self._qualified_segments is not None:
+                return segment in self._qualified_segments
+            return False
 
-    def get_qualified_segments(self) -> list[str]:
+    def get_qualified_segments(self) -> Optional[list[str]]:
         """
         Gets the qualified segments.
 
@@ -275,9 +280,11 @@ class OptimizelyUserContext:
             A list of qualified segment names.
         """
         with self.lock:
-            return self._qualified_segments.copy()
+            if self._qualified_segments is not None:
+                return self._qualified_segments.copy()
+            return None
 
-    def set_qualified_segments(self, segments: list[str]) -> None:
+    def set_qualified_segments(self, segments: Optional[list[str]]) -> None:
         """
         Replaces any qualified segments with the provided list of segments.
 
@@ -288,4 +295,38 @@ class OptimizelyUserContext:
             None.
         """
         with self.lock:
-            self._qualified_segments = segments.copy()
+            self._qualified_segments = None if segments is None else segments.copy()
+
+    def fetch_qualified_segments(
+        self,
+        callback: Optional[Callable[[bool], None]] = None,
+        options: Optional[list[str]] = None
+    ) -> bool | threading.Thread:
+        """
+        Fetch all qualified segments for the user context.
+        The fetched segments will be saved and can be accessed using get/set_qualified_segment methods.
+
+        Args:
+            callback: An optional function to run after the fetch has completed. The function will be provided
+                a boolean value indicating if the fetch was successful. If a callback is provided, the fetch
+                will be run in a seperate thread, otherwise it will be run syncronously.
+            options: An array of OptimizelySegmentOptions used to ignore and/or reset the cache (optional).
+
+        Returns:
+            A boolean value indicating if the fetch was successful.
+        """
+        def _fetch_qualified_segments() -> bool:
+            segments = self.client.fetch_qualified_segments(self.user_id, options or []) if self.client else None
+            self.set_qualified_segments(segments)
+            success = segments is not None
+
+            if callable(callback):
+                callback(success)
+            return success
+
+        if callback:
+            fetch_thread = threading.Thread(target=_fetch_qualified_segments)
+            fetch_thread.start()
+            return fetch_thread
+        else:
+            return _fetch_qualified_segments()

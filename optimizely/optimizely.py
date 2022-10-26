@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,14 +13,16 @@
 
 from __future__ import annotations
 
-from . import project_config
+from typing import TYPE_CHECKING, Any, Optional
+
 from . import decision_service
 from . import entities
 from . import event_builder
 from . import exceptions
 from . import logger as _logging
-from .config_manager import BaseConfigManager
+from . import project_config
 from .config_manager import AuthDatafilePollingConfigManager
+from .config_manager import BaseConfigManager
 from .config_manager import PollingConfigManager
 from .config_manager import StaticConfigManager
 from .decision.optimizely_decide_option import OptimizelyDecideOption
@@ -31,17 +33,17 @@ from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
 from .event.event_processor import BatchEventProcessor, BaseEventProcessor
 from .event_dispatcher import EventDispatcher, CustomEventDispatcher
-
 from .helpers import enums, validator
+from .helpers.sdk_settings import OptimizelySdkSettings
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
+from .odp.lru_cache import LRUCache
+from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
-from typing import TYPE_CHECKING, Any, Optional
-
 
 if TYPE_CHECKING:
-    # prevent circular dependenacy by skipping import at runtime
+    # prevent circular dependency by skipping import at runtime
     from .user_profile import UserProfileService
     from .helpers.event_tag_utils import EventTags
 
@@ -63,7 +65,8 @@ class Optimizely:
             event_processor: Optional[BaseEventProcessor] = None,
             datafile_access_token: Optional[str] = None,
             default_decide_options: Optional[list[str]] = None,
-            event_processor_options: Optional[dict[str, Any]] = None
+            event_processor_options: Optional[dict[str, Any]] = None,
+            settings: Optional[OptimizelySdkSettings] = None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -92,6 +95,7 @@ class Optimizely:
           datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
           default_decide_options: Optional list of decide options used with the decide APIs.
           event_processor_options: Optional dict of options to be passed to the default batch event processor.
+          settings: Optional instance of OptimizelySdkSettings for sdk configuration.
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -128,6 +132,8 @@ class Optimizely:
             self.logger.debug('Provided default decide options is not a list.')
             self.default_decide_options = []
 
+        self.sdk_settings: OptimizelySdkSettings = settings  # type: ignore[assignment]
+
         try:
             self._validate_instantiation_options()
         except exceptions.InvalidInputException as error:
@@ -137,6 +143,16 @@ class Optimizely:
             self.logger = _logging.reset_logger(self.logger_name)
             self.logger.exception(str(error))
             return
+
+        self.setup_odp()
+
+        self.odp_manager = OdpManager(
+            self.sdk_settings.odp_disabled,
+            self.sdk_settings.segments_cache,
+            self.sdk_settings.odp_segment_manager,
+            self.sdk_settings.odp_event_manager,
+            self.logger
+        )
 
         config_manager_options: dict[str, Any] = {
             'datafile': datafile,
@@ -156,6 +172,9 @@ class Optimizely:
                     self.config_manager = PollingConfigManager(**config_manager_options)
             else:
                 self.config_manager = StaticConfigManager(**config_manager_options)
+
+        if not self.sdk_settings.odp_disabled:
+            self._update_odp_config_on_datafile_update()
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
@@ -183,6 +202,23 @@ class Optimizely:
 
         if not validator.is_event_processor_valid(self.event_processor):
             raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_processor'))
+
+        if not isinstance(self.sdk_settings, OptimizelySdkSettings):
+            if self.sdk_settings is not None:
+                self.logger.debug('Provided sdk_settings is not an OptimizelySdkSettings instance.')
+            self.sdk_settings = OptimizelySdkSettings()
+
+        if self.sdk_settings.segments_cache:
+            if not validator.is_segments_cache_valid(self.sdk_settings.segments_cache):
+                raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('segments_cache'))
+
+        if self.sdk_settings.odp_segment_manager:
+            if not validator.is_segment_manager_valid(self.sdk_settings.odp_segment_manager):
+                raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('segment_manager'))
+
+        if self.sdk_settings.odp_event_manager:
+            if not validator.is_event_manager_valid(self.sdk_settings.odp_event_manager):
+                raise exceptions.InvalidInputException(enums.Errors.INVALID_INPUT.format('event_manager'))
 
     def _validate_user_inputs(
         self, attributes: Optional[UserAttributes] = None, event_tags: Optional[EventTags] = None
@@ -252,8 +288,8 @@ class Optimizely:
             )
 
     def _get_feature_variable_for_type(
-            self, project_config: project_config.ProjectConfig, feature_key: str, variable_key: str,
-            variable_type: Optional[str], user_id: str, attributes: Optional[UserAttributes]
+        self, project_config: project_config.ProjectConfig, feature_key: str, variable_key: str,
+        variable_type: Optional[str], user_id: str, attributes: Optional[UserAttributes]
     ) -> Any:
         """ Helper method to determine value for a certain variable attached to a feature flag based on
         type of variable.
@@ -364,8 +400,8 @@ class Optimizely:
         return actual_value
 
     def _get_all_feature_variables_for_type(
-            self, project_config: project_config.ProjectConfig, feature_key: str,
-            user_id: str, attributes: Optional[UserAttributes],
+        self, project_config: project_config.ProjectConfig, feature_key: str,
+        user_id: str, attributes: Optional[UserAttributes],
     ) -> Optional[dict[str, Any]]:
         """ Helper method to determine value for all variables attached to a feature flag.
 
@@ -1274,3 +1310,74 @@ class Optimizely:
                 continue
             decisions[key] = decision
         return decisions
+
+    def setup_odp(self) -> None:
+        """
+        - Make sure cache is instantiated with provided parameters or defaults.
+        - Set up listener to update odp_config when datafile is updated.
+        """
+        if self.sdk_settings.odp_disabled:
+            return
+
+        self.notification_center.add_notification_listener(
+            enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+            self._update_odp_config_on_datafile_update
+        )
+
+        if self.sdk_settings.odp_segment_manager:
+            return
+
+        if not self.sdk_settings.segments_cache:
+            self.sdk_settings.segments_cache = LRUCache(
+                self.sdk_settings.segments_cache_size or enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
+                self.sdk_settings.segments_cache_timeout_in_secs or enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
+            )
+
+    def _update_odp_config_on_datafile_update(self) -> None:
+        config = None
+
+        if isinstance(self.config_manager, PollingConfigManager):
+            # can not use get_config here because callback is fired before _config_ready event is set
+            # and that would be a deadlock
+            config = self.config_manager._config
+        elif self.config_manager:
+            config = self.config_manager.get_config()
+
+        if not config:
+            return
+
+        self.odp_manager.update_odp_config(
+            config.public_key_for_odp,
+            config.host_for_odp,
+            config.all_segments
+        )
+
+    def identify_user(self, user_id: str) -> None:
+        self.odp_manager.identify_user(user_id)
+
+    def fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
+        return self.odp_manager.fetch_qualified_segments(user_id, options or [])
+
+    def send_odp_event(
+        self,
+        action: str,
+        type: str = enums.OdpManagerConfig.EVENT_TYPE,
+        identifiers: Optional[dict[str, str]] = None,
+        data: Optional[dict[str, str | int | float | bool | None]] = None
+    ) -> None:
+        """
+        Send an event to the ODP server.
+
+        Args:
+            action: The event action name.
+            type: The event type. Default 'fullstack'.
+            identifiers: An optional dictionary for identifiers.
+            data: An optional dictionary for associated data. The default event data will be added to this data
+            before sending to the ODP server.
+        """
+        self.odp_manager.send_event(type, action, identifiers or {}, data or {})
+
+    def close(self) -> None:
+        if callable(getattr(self.event_processor, 'stop', None)):
+            self.event_processor.stop()  # type: ignore[attr-defined]
+        self.odp_manager.close()

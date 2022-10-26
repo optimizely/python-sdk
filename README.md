@@ -24,6 +24,12 @@ documentation](https://docs.developers.optimizely.com/rollouts/docs).
 
 ## Getting Started
 
+### Requirements
+
+Version `4.0+`: Python 3.7+, PyPy 3.7+
+
+Version `3.0+`: Python 2.7+, PyPy 3.4+
+
 ### Installing the SDK
 
 The SDK is available through [PyPi](https://pypi.python.org/pypi?name=optimizely-sdk&:action=display).

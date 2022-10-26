@@ -23,7 +23,7 @@ from optimizely import logger as _logging
 from optimizely.helpers.enums import OdpEventManagerConfig, Errors, OdpManagerConfig
 from .odp_config import OdpConfig, OdpConfigState
 from .odp_event import OdpEvent, OdpDataDict
-from .zaius_rest_api_manager import ZaiusRestApiManager
+from .odp_event_api_manager import OdpEventApiManager
 
 
 class Signal(Enum):
@@ -45,7 +45,7 @@ class OdpEventManager:
     def __init__(
         self,
         logger: Optional[_logging.Logger] = None,
-        api_manager: Optional[ZaiusRestApiManager] = None
+        api_manager: Optional[OdpEventApiManager] = None
     ):
         """OdpEventManager init method to configure event batching.
 
@@ -54,7 +54,7 @@ class OdpEventManager:
             api_manager: Optional component which sends events to ODP.
         """
         self.logger = logger or _logging.NoOpLogger()
-        self.zaius_manager = api_manager or ZaiusRestApiManager(self.logger)
+        self.api_manager = api_manager or OdpEventApiManager(self.logger)
 
         self.odp_config: Optional[OdpConfig] = None
         self.api_key: Optional[str] = None
@@ -158,7 +158,7 @@ class OdpEventManager:
 
         for i in range(1 + self.retry_count):
             try:
-                should_retry = self.zaius_manager.send_odp_events(self.api_key, self.api_host, self._current_batch)
+                should_retry = self.api_manager.send_odp_events(self.api_key, self.api_host, self._current_batch)
             except Exception as error:
                 should_retry = False
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Error: {error} {self._current_batch}'))

@@ -3,7 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import Optional, Any
 
-from optimizely import exceptions as optimizely_exception
 from optimizely import logger as optimizely_logger
 from optimizely.helpers.enums import Errors, OdpManagerConfig, OdpSegmentsCacheConfig
 from optimizely.helpers.validator import are_odp_data_types_valid
@@ -56,13 +55,8 @@ class OdpManager:
                 )
             self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger)
 
-        if event_manager:
-            self.event_manager = event_manager
-        else:
-            self.event_manager = OdpEventManager(self.logger)
-
+        self.event_manager = self.event_manager or OdpEventManager(self.logger)
         self.segment_manager.odp_config = self.odp_config
-        self.event_manager.start(self.odp_config)
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
         if not self.enabled or not self.segment_manager:
@@ -94,17 +88,18 @@ class OdpManager:
             identifiers: A dictionary for identifiers.
             data: A dictionary for associated data. The default event data will be added to this data
             before sending to the ODP server.
-
-        Raises custom exception if error is detected.
         """
         if not self.enabled or not self.event_manager:
-            raise optimizely_exception.OdpNotEnabled(Errors.ODP_NOT_ENABLED)
+            self.logger.error(Errors.ODP_NOT_ENABLED)
+            return
 
         if self.odp_config.odp_state() == OdpConfigState.NOT_INTEGRATED:
-            raise optimizely_exception.OdpNotIntegrated(Errors.ODP_NOT_INTEGRATED)
+            self.logger.error(Errors.ODP_NOT_INTEGRATED)
+            return
 
         if not are_odp_data_types_valid(data):
-            raise optimizely_exception.OdpInvalidData(Errors.ODP_INVALID_DATA)
+            self.logger.error(Errors.ODP_INVALID_DATA)
+            return
 
         self.event_manager.send_event(type, action, identifiers, data)
 
@@ -122,5 +117,14 @@ class OdpManager:
         if self.segment_manager:
             self.segment_manager.reset()
 
-        if self.event_manager:
+        if not self.event_manager:
+            return
+
+        if self.event_manager.is_running:
             self.event_manager.update_config()
+        elif self.odp_config.odp_state() == OdpConfigState.INTEGRATED:
+            self.event_manager.start(self.odp_config)
+
+    def close(self) -> None:
+        if self.enabled and self.event_manager:
+            self.event_manager.stop()
