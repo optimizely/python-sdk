@@ -2021,6 +2021,24 @@ class UserContextTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         client.close()
 
+    def test_identify_is_skipped_with_decisions(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_features), logger=mock_logger)
+        with mock.patch.object(client, 'identify_user') as identify:
+            user_context = OptimizelyUserContext(client, mock_logger, 'user-id')
+
+        identify.assert_called_once_with('user-id')
+        mock_logger.error.assert_not_called()
+
+        with mock.patch.object(client, 'identify_user') as identify:
+            user_context.decide('test_feature_in_rollout')
+            user_context.decide_all()
+            user_context.decide_for_keys(['test_feature_in_rollout'])
+
+        identify.assert_not_called()
+        mock_logger.error.assert_not_called()
+        client.close()
+
     # fetch qualified segments
     def test_fetch_segments(self):
         mock_logger = mock.Mock()

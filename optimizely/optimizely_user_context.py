@@ -37,8 +37,12 @@ class OptimizelyUserContext:
     """
 
     def __init__(
-        self, optimizely_client: optimizely.Optimizely, logger: Logger,
-        user_id: str, user_attributes: Optional[UserAttributes] = None
+        self,
+        optimizely_client: optimizely.Optimizely,
+        logger: Logger,
+        user_id: str,
+        user_attributes: Optional[UserAttributes] = None,
+        identify: bool = True
     ):
         """ Create an instance of the Optimizely User Context.
 
@@ -47,6 +51,7 @@ class OptimizelyUserContext:
           logger: logger for logging
           user_id: user id of this user context
           user_attributes: user attributes to use for this user context
+          identify: True to send identify event to ODP.
 
         Returns:
           UserContext instance
@@ -67,7 +72,7 @@ class OptimizelyUserContext:
             OptimizelyUserContext.OptimizelyForcedDecision
         ] = {}
 
-        if self.client:
+        if self.client and identify:
             self.client.identify_user(user_id)
 
     class OptimizelyDecisionContext:
@@ -94,7 +99,13 @@ class OptimizelyUserContext:
         if not self.client:
             return None
 
-        user_context = OptimizelyUserContext(self.client, self.logger, self.user_id, self.get_user_attributes())
+        user_context = OptimizelyUserContext(
+            self.client,
+            self.logger,
+            self.user_id,
+            self.get_user_attributes(),
+            identify=False
+        )
 
         with self.lock:
             if self.forced_decisions_map:
