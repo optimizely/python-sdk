@@ -17,7 +17,6 @@ import numbers
 from typing import TYPE_CHECKING, Any, Optional
 import requests
 import threading
-import time
 from requests import codes as http_status_codes
 from requests import exceptions as requests_exceptions
 
@@ -216,8 +215,8 @@ class PollingConfigManager(StaticConfigManager):
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
         self.last_modified: Optional[str] = None
-        self._polling_thread = threading.Thread(target=self._run)
-        self._polling_thread.daemon = True
+        self.stopped = threading.Event()
+        self._initialize_thread()
         self._polling_thread.start()
 
     @staticmethod
@@ -375,15 +374,23 @@ class PollingConfigManager(StaticConfigManager):
         """ Check if polling thread is alive or not. """
         return self._polling_thread.is_alive()
 
+    def stop(self) -> None:
+        """ Stop the polling thread and wait for it to exit. """
+        if self.is_running:
+            self.stopped.set()
+            self._polling_thread.join()
+
     def _run(self) -> None:
         """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """
         try:
-            while self.is_running:
+            while True:
                 self.fetch_datafile()
-                time.sleep(self.update_interval)
+                if self.stopped.wait(self.update_interval):
+                    self.stopped.clear()
+                    break
         except (OSError, OverflowError) as err:
             self.logger.error(
-                f'Error in time.sleep. Provided update_interval value may be too big. Error: {err}'
+                f'Provided update_interval value may be too big. Error: {err}'
             )
             raise
 
@@ -391,6 +398,9 @@ class PollingConfigManager(StaticConfigManager):
         """ Start the config manager and the thread to periodically fetch datafile. """
         if not self.is_running:
             self._polling_thread.start()
+
+    def _initialize_thread(self) -> None:
+        self._polling_thread = threading.Thread(target=self._run, daemon=True)
 
 
 class AuthDatafilePollingConfigManager(PollingConfigManager):

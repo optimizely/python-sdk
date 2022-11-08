@@ -88,10 +88,9 @@ class Optimizely:
                                config_manager.BaseConfigManager implementation which can be using the
                                same NotificationCenter instance.
           event_processor: Optional component which processes the given event(s).
-                           By default optimizely.event.event_processor.ForwardingEventProcessor is used
-                           which simply forwards events to the event dispatcher.
-                           To enable event batching configure and use
-                           optimizely.event.event_processor.BatchEventProcessor.
+                           By default optimizely.event.event_processor.BatchEventProcessor is used
+                           which batches events. To simply forward events to the event dispatcher
+                           configure and use optimizely.event.event_processor.ForwardingEventProcessor.
           datafile_access_token: Optional string used to fetch authenticated datafile for a secure project environment.
           default_decide_options: Optional list of decide options used with the decide APIs.
           event_processor_options: Optional dict of options to be passed to the default batch event processor.
@@ -1381,3 +1380,5 @@ class Optimizely:
         if callable(getattr(self.event_processor, 'stop', None)):
             self.event_processor.stop()  # type: ignore[attr-defined]
         self.odp_manager.close()
+        if callable(getattr(self.config_manager, 'stop', None)):
+            self.config_manager.stop()  # type: ignore[attr-defined]
