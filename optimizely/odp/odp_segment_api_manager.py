@@ -112,7 +112,8 @@ class OdpSegmentApiManager:
         self.logger = logger or optimizely_logger.NoOpLogger()
 
     def fetch_segments(self, api_key: str, api_host: str, user_key: str,
-                       user_value: str, segments_to_check: list[str], fetch_segment_timeout: int) -> Optional[list[str]]:
+                       user_value: str, segments_to_check: list[str],
+                       fetch_segments_timeout: int) -> Optional[list[str]]:
         """
         Fetch segments from ODP GraphQL API.
 
@@ -151,7 +152,7 @@ class OdpSegmentApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout= fetch_segment_timeout or OdpSegmentApiConfig.REQUEST_TIMEOUT)
+                                     timeout= fetch_segments_timeout or OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()
