@@ -30,7 +30,8 @@ class OptimizelySdkSettings:
             segments_cache_timeout_in_secs: int = enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS,
             odp_segments_cache: Optional[OptimizelySegmentsCache] = None,
             odp_segment_manager: Optional[OdpSegmentManager] = None,
-            odp_event_manager: Optional[OdpEventManager] = None
+            odp_event_manager: Optional[OdpEventManager] = None,
+            fetch_segments_timeout: int = None
     ) -> None:
         """
         Args:
@@ -45,6 +46,7 @@ class OptimizelySdkSettings:
             `fetch_qualified_segments(user_key, user_value, options)`.
           odp_event_manager: A custom odp event manager. Required method is:
             `send_event(type:, action:, identifiers:, data:)`
+          fetch_segments_timeout: A fetch segment timeout in seconds (optional) .
         """
 
         self.odp_disabled = odp_disabled
@@ -53,3 +55,4 @@ class OptimizelySdkSettings:
         self.segments_cache = odp_segments_cache
         self.odp_segment_manager = odp_segment_manager
         self.odp_event_manager = odp_event_manager
+        self.fetch_segments_timeout = fetch_segments_timeout
