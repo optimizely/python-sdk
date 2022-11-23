@@ -33,6 +33,7 @@ class OdpManager:
         segments_cache: Optional[OptimizelySegmentsCache] = None,
         segment_manager: Optional[OdpSegmentManager] = None,
         event_manager: Optional[OdpEventManager] = None,
+        fetch_segment_timeout: Optional[int] = None,
         logger: Optional[optimizely_logger.Logger] = None
     ) -> None:
 
@@ -66,7 +67,7 @@ class OdpManager:
         user_key = OdpManagerConfig.KEY_FOR_USER_ID
         user_value = user_id
 
-        return self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
+        return self.segment_manager.fetch_qualified_segments(user_key, user_value, options, fetch_segment_timeout)
 
     def identify_user(self, user_id: str) -> None:
         if not self.enabled or not self.event_manager:

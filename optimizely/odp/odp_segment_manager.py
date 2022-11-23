@@ -38,7 +38,7 @@ class OdpSegmentManager:
         self.logger = logger or optimizely_logger.NoOpLogger()
         self.api_manager = api_manager or OdpSegmentApiManager(self.logger)
 
-    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]
+    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str], fetch_segment_timeout
                                  ) -> Optional[list[str]]:
         """
         Args:
@@ -80,7 +80,7 @@ class OdpSegmentManager:
         self.logger.debug('Making a call to ODP server.')
 
         segments = self.api_manager.fetch_segments(odp_api_key, odp_api_host, user_key, user_value,
-                                                   odp_segments_to_check)
+                                                   odp_segments_to_check, fetch_segment_timeout)
 
         if segments and not ignore_cache:
             self.segments_cache.save(cache_key, segments)

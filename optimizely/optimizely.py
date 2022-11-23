@@ -150,6 +150,7 @@ class Optimizely:
             self.sdk_settings.segments_cache,
             self.sdk_settings.odp_segment_manager,
             self.sdk_settings.odp_event_manager,
+            self.sdk_settings.fetch_segment_timeout,
             self.logger
         )
 
