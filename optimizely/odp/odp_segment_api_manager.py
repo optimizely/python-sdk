@@ -152,7 +152,8 @@ class OdpSegmentApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout= fetch_segments_timeout or OdpSegmentApiConfig.REQUEST_TIMEOUT)
+                                     timeout= fetch_segments_timeout or
+                                     OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()
