@@ -39,7 +39,7 @@ class OdpSegmentManager:
         self.api_manager = api_manager or OdpSegmentApiManager(self.logger)
 
     def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str],
-                                 fetch_segments_timeout : Optional[int]) -> Optional[list[str]]:
+                                 fetch_segments_timeout: Optional[int]) -> Optional[list[str]]:
         """
         Args:
             user_key: The key for identifying the id type.
