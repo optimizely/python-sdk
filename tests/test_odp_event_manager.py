@@ -71,7 +71,7 @@ class OdpEventManagerTest(BaseTest):
                 "key-3": 3.0,
                 "key-4": None,
                 "key-5": True
-            }
+            },
         },
         {
             "type": "t2",
@@ -127,7 +127,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.send_event(**self.events[1])
             event_manager.event_queue.join()
 
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_any_call('ODP event queue: flushing on batch size.')
@@ -151,7 +151,7 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(mock_send.call_count, batch_count)
         mock_send.assert_has_calls(
-            [mock.call(self.api_key, self.api_host, self.processed_events)] * batch_count
+            [mock.call(self.api_key, self.api_host, self.processed_events, None)] * batch_count
         )
 
         self.assertEqual(len(event_manager._current_batch), 0)
@@ -187,7 +187,7 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(mock_send.call_count, batch_count)
         mock_send.assert_has_calls(
-            [mock.call(self.api_key, self.api_host, self.processed_events)] * batch_count
+            [mock.call(self.api_key, self.api_host, self.processed_events, None)] * batch_count
         )
 
         self.assertEqual(len(event_manager._current_batch), 0)
@@ -210,7 +210,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.flush()
             event_manager.event_queue.join()
 
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         mock_logger.error.assert_not_called()
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.debug.assert_any_call('ODP event queue: received flush signal.')
@@ -233,7 +233,7 @@ class OdpEventManagerTest(BaseTest):
 
         self.assertEqual(mock_send.call_count, flush_count)
         for call in mock_send.call_args_list:
-            self.assertEqual(call, mock.call(self.api_key, self.api_host, self.processed_events))
+            self.assertEqual(call, mock.call(self.api_key, self.api_host, self.processed_events, None))
         mock_logger.error.assert_not_called()
 
         self.assertEqual(len(event_manager._current_batch), 0)
@@ -259,7 +259,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.event_queue.join()
 
         mock_send.assert_has_calls(
-            [mock.call(self.api_key, self.api_host, self.processed_events)] * number_of_tries
+            [mock.call(self.api_key, self.api_host, self.processed_events, None)] * number_of_tries
         )
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.debug.assert_any_call('Error dispatching ODP events, scheduled to retry.')
@@ -281,7 +281,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.flush()
             event_manager.event_queue.join()
 
-        mock_send.assert_has_calls([mock.call(self.api_key, self.api_host, self.processed_events)] * 3)
+        mock_send.assert_has_calls([mock.call(self.api_key, self.api_host, self.processed_events, None)] * 3)
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.debug.assert_any_call('Error dispatching ODP events, scheduled to retry.')
         mock_logger.error.assert_not_called()
@@ -304,7 +304,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.flush()
             event_manager.event_queue.join()
 
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.error.assert_any_call(f"ODP event send failed (Error: Unexpected error {self.processed_events}).")
         self.assertStrictTrue(event_manager.is_running)
@@ -398,7 +398,7 @@ class OdpEventManagerTest(BaseTest):
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_any_call('ODP event queue: flushing on interval.')
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         event_manager.stop()
 
     def test_odp_event_manager_events_before_odp_ready(self, *args):
@@ -433,7 +433,7 @@ class OdpEventManagerTest(BaseTest):
             mock.call('ODP event queue: received flush signal.'),
             mock.call('ODP event queue: flushing batch size 2.')
         ])
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         event_manager.stop()
 
     def test_odp_event_manager_events_before_odp_disabled(self, *args):
@@ -495,7 +495,7 @@ class OdpEventManagerTest(BaseTest):
             mock.call(Errors.ODP_NOT_INTEGRATED)
         ])
         self.assertEqual(len(event_manager._current_batch), 0)
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         event_manager.stop()
 
     def test_odp_event_manager_disabled_after_events_in_queue(self, *args):
@@ -524,7 +524,7 @@ class OdpEventManagerTest(BaseTest):
         self.assertEqual(len(event_manager._current_batch), 0)
         mock_logger.debug.assert_any_call(Errors.ODP_NOT_INTEGRATED)
         mock_logger.error.assert_not_called()
-        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events, None)
         event_manager.stop()
 
     def test_send_event_before_config_set(self, *args):

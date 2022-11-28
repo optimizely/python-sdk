@@ -34,7 +34,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=["a", "b", "c"])
+                               segments_to_check=["a", "b", "c"],
+                               fetch_segments_timeout=None)
 
         test_payload = {
             'query': 'query($userId: String, $audiences: [String]) {'
@@ -58,7 +59,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                           api_host=self.api_host,
                                           user_key=self.user_key,
                                           user_value=self.user_value,
-                                          segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+                                          segments_to_check=['dummy1', 'dummy2', 'dummy3'],
+                                          fetch_segments_timeout=None)
 
         self.assertEqual(response, ['a', 'b'])
 
@@ -73,7 +75,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+                               segments_to_check=['dummy1', 'dummy2', 'dummy3'],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
@@ -90,7 +93,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=['dummy1', 'dummy2', 'dummy3'])
+                               segments_to_check=['dummy1', 'dummy2', 'dummy3'],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
@@ -105,7 +109,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                           api_host=self.api_host,
                                           user_key=self.user_key,
                                           user_value=self.user_value,
-                                          segments_to_check=['dummy'])
+                                          segments_to_check=['dummy'],
+                                          fetch_segments_timeout=None)
 
         self.assertEqual(response, [])
 
@@ -121,7 +126,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.warning.assert_called_once_with('Audience segments fetch failed (invalid identifier).')
@@ -137,7 +143,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (TestExceptionClass).')
@@ -153,7 +160,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
@@ -169,7 +177,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (JSON decode error).')
@@ -185,7 +194,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
@@ -201,7 +211,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (decode error).')
@@ -231,7 +242,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=["a", "b", "c"])
+                               segments_to_check=["a", "b", "c"],
+                               fetch_segments_timeout=None)
 
         # make sure that fetch_segments() is called (once).
         # could use assert_called_once_with() but it's not needed,
@@ -251,7 +263,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=["a", "b", "c"])
+                               segments_to_check=["a", "b", "c"],
+                               fetch_segments_timeout=None)
 
         # make sure that fetch_segments() is called (once).
         mock_request_post.assert_called_once()
