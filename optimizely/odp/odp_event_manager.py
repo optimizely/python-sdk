@@ -66,7 +66,7 @@ class OdpEventManager:
         self._flush_deadline: float = 0
         self.retry_count = OdpEventManagerConfig.DEFAULT_RETRY_COUNT
         self._current_batch: list[OdpEvent] = []
-        self.odp_event_timeout = Optional[int] = None
+        self.odp_event_timeout: Optional[int] = None
         """_current_batch should only be modified by the processing thread, as it is not thread safe"""
         self.thread = Thread(target=self._run, daemon=True)
         self.thread_exception = False
