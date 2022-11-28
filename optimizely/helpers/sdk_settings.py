@@ -31,8 +31,8 @@ class OptimizelySdkSettings:
             odp_segments_cache: Optional[OptimizelySegmentsCache] = None,
             odp_segment_manager: Optional[OdpSegmentManager] = None,
             odp_event_manager: Optional[OdpEventManager] = None,
-            fetch_segments_timeout: int = None,
-            odp_event_timeout: int = None
+            fetch_segments_timeout: Optional[int] = None,
+            odp_event_timeout: Optional[int] = None
     ) -> None:
         """
         Args:
