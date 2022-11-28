@@ -113,7 +113,7 @@ class OdpSegmentApiManager:
 
     def fetch_segments(self, api_key: str, api_host: str, user_key: str,
                        user_value: str, segments_to_check: list[str],
-                       fetch_segments_timeout: int) -> Optional[list[str]]:
+                       fetch_segments_timeout: Optional[int] = None) -> Optional[list[str]]:
         """
         Fetch segments from ODP GraphQL API.
 

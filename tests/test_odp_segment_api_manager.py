@@ -226,7 +226,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                                api_host=self.api_host,
                                user_key=self.user_key,
                                user_value=self.user_value,
-                               segments_to_check=[])
+                               segments_to_check=[],
+                               fetch_segments_timeout=None)
 
         mock_request_post.assert_called_once()
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (network error).')
