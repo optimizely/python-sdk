@@ -43,7 +43,11 @@ class OdpEventApiManager:
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
 
-    def send_odp_events(self, api_key: str, api_host: str, events: list[OdpEvent], odp_event_timeout: Optional[int] = None) -> bool:
+    def send_odp_events(self,
+                        api_key: str,
+                        api_host: str,
+                        events: list[OdpEvent],
+                        odp_event_timeout: Optional[int] = None) -> bool:
         """
         Dispatch the event being represented by the OdpEvent object.
 

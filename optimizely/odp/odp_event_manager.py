@@ -159,7 +159,10 @@ class OdpEventManager:
 
         for i in range(1 + self.retry_count):
             try:
-                should_retry = self.api_manager.send_odp_events(self.api_key, self.api_host, self._current_batch, self.odp_event_timeout)
+                should_retry = self.api_manager.send_odp_events(self.api_key,
+                                                                self.api_host,
+                                                                self._current_batch,
+                                                                self.odp_event_timeout)
             except Exception as error:
                 should_retry = False
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Error: {error} {self._current_batch}'))
