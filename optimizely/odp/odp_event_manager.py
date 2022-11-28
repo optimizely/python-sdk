@@ -66,6 +66,7 @@ class OdpEventManager:
         self._flush_deadline: float = 0
         self.retry_count = OdpEventManagerConfig.DEFAULT_RETRY_COUNT
         self._current_batch: list[OdpEvent] = []
+        self.odp_event_timeout = Optional[int] = None
         """_current_batch should only be modified by the processing thread, as it is not thread safe"""
         self.thread = Thread(target=self._run, daemon=True)
         self.thread_exception = False
@@ -158,7 +159,7 @@ class OdpEventManager:
 
         for i in range(1 + self.retry_count):
             try:
-                should_retry = self.api_manager.send_odp_events(self.api_key, self.api_host, self._current_batch)
+                should_retry = self.api_manager.send_odp_events(self.api_key, self.api_host, self._current_batch, self.odp_event_timeout)
             except Exception as error:
                 should_retry = False
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Error: {error} {self._current_batch}'))

@@ -43,7 +43,7 @@ class OdpEventApiManager:
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
 
-    def send_odp_events(self, api_key: str, api_host: str, events: list[OdpEvent]) -> bool:
+    def send_odp_events(self, api_key: str, api_host: str, events: list[OdpEvent], odp_event_timeout: Optional[int] = None) -> bool:
         """
         Dispatch the event being represented by the OdpEvent object.
 
@@ -51,6 +51,7 @@ class OdpEventApiManager:
           api_key: public api key
           api_host: domain url of the host
           events: list of odp events to be sent to optimizely's odp platform.
+          odp_event_timeout: event request timeout in seconds (Optional).
 
         Returns:
             retry is True - if network or server error (5xx), otherwise False
@@ -69,7 +70,7 @@ class OdpEventApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout=OdpEventApiConfig.REQUEST_TIMEOUT)
+                                     timeout=odp_event_timeout or OdpEventApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
 
