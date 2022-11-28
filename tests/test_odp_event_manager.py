@@ -379,7 +379,7 @@ class OdpEventManagerTest(BaseTest):
             event_manager.flush()
             event_manager.event_queue.join()
 
-        mock_send.assert_called_once_with(self.api_key, self.api_host, [processed_event])
+        mock_send.assert_called_once_with(self.api_key, self.api_host, [processed_event], None)
         event_manager.stop()
 
     def test_odp_event_manager_flush_timeout(self, *args):
