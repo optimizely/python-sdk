@@ -108,12 +108,12 @@ from optimizely.helpers.enums import Errors, OdpSegmentApiConfig
 class OdpSegmentApiManager:
     """Interface for manging the fetching of audience segments."""
 
-    def __init__(self, logger: Optional[optimizely_logger.Logger] = None):
+    def __init__(self, logger: Optional[optimizely_logger.Logger] = None, timeout: Optional[int] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
+        self.timeout = timeout
 
     def fetch_segments(self, api_key: str, api_host: str, user_key: str,
-                       user_value: str, segments_to_check: list[str],
-                       fetch_segments_timeout: Optional[int] = None) -> Optional[list[str]]:
+                       user_value: str, segments_to_check: list[str]) -> Optional[list[str]]:
         """
         Fetch segments from ODP GraphQL API.
 
@@ -152,7 +152,7 @@ class OdpSegmentApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout=fetch_segments_timeout or OdpSegmentApiConfig.REQUEST_TIMEOUT)
+                                     timeout=self.timeout or OdpSegmentApiConfig.REQUEST_TIMEOUT)
 
             response.raise_for_status()
             response_dict = response.json()

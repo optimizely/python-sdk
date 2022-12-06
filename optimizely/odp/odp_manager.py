@@ -56,10 +56,9 @@ class OdpManager:
                     OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
                     OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
                 )
-            self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger)
+            self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger, timeout=fetch_segments_timeout)
 
-        self.event_manager = self.event_manager or OdpEventManager(self.logger)
-        self.event_manager.odp_event_timeout = odp_event_timeout
+        self.event_manager = self.event_manager or OdpEventManager(self.logger, odp_event_timeout)
         self.segment_manager.odp_config = self.odp_config
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
@@ -70,7 +69,7 @@ class OdpManager:
         user_key = OdpManagerConfig.KEY_FOR_USER_ID
         user_value = user_id
 
-        return self.segment_manager.fetch_qualified_segments(user_key, user_value, options, self.fetch_segments_timeout)
+        return self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
 
     def identify_user(self, user_id: str) -> None:
         if not self.enabled or not self.event_manager:

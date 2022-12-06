@@ -68,14 +68,14 @@ class OdpManagerTest(base.BaseTest):
 
         mock_logger.debug.assert_not_called()
         mock_logger.error.assert_not_called()
-        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [], None)
+        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
         with mock.patch.object(segment_manager, 'fetch_qualified_segments') as mock_fetch_qualif_segments:
             manager.fetch_qualified_segments('user1', ['IGNORE_CACHE'])
 
         mock_logger.debug.assert_not_called()
         mock_logger.error.assert_not_called()
-        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', ['IGNORE_CACHE'], None)
+        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', ['IGNORE_CACHE'])
 
     def test_fetch_qualified_segments__disabled(self):
         mock_logger = mock.MagicMock()
@@ -102,7 +102,7 @@ class OdpManagerTest(base.BaseTest):
             manager.fetch_qualified_segments('user1', [])
 
         mock_logger.error.assert_not_called()
-        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [], None)
+        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
     def test_fetch_qualified_segments__seg_cache_and_seg_mgr_are_none(self):
         """
@@ -118,7 +118,7 @@ class OdpManagerTest(base.BaseTest):
 
         mock_logger.debug.assert_not_called()
         mock_logger.error.assert_not_called()
-        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [], None)
+        mock_fetch_qualif_segments.assert_called_once_with('fs_user_id', 'user1', [])
 
     def test_identify_user_datafile_not_ready(self):
         mock_logger = mock.MagicMock()

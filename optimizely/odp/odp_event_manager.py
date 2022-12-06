@@ -45,21 +45,22 @@ class OdpEventManager:
     def __init__(
         self,
         logger: Optional[_logging.Logger] = None,
-        api_manager: Optional[OdpEventApiManager] = None
+        api_manager: Optional[OdpEventApiManager] = None,
+        timeout: Optional[int] = None
     ):
         """OdpEventManager init method to configure event batching.
 
         Args:
             logger: Optional component which provides a log method to log messages. By default nothing would be logged.
             api_manager: Optional component which sends events to ODP.
+            timeout: Optional event timeout in seconds.
         """
         self.logger = logger or _logging.NoOpLogger()
-        self.api_manager = api_manager or OdpEventApiManager(self.logger)
+        self.api_manager = api_manager or OdpEventApiManager(self.logger, timeout)
 
         self.odp_config: Optional[OdpConfig] = None
         self.api_key: Optional[str] = None
         self.api_host: Optional[str] = None
-        self.odp_event_timeout: Optional[int] = None
 
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
@@ -161,8 +162,7 @@ class OdpEventManager:
             try:
                 should_retry = self.api_manager.send_odp_events(self.api_key,
                                                                 self.api_host,
-                                                                self._current_batch,
-                                                                self.odp_event_timeout)
+                                                                self._current_batch)
             except Exception as error:
                 should_retry = False
                 self.logger.error(Errors.ODP_EVENT_FAILED.format(f'Error: {error} {self._current_batch}'))

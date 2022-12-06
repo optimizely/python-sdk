@@ -41,7 +41,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         segment_manager.odp_config = odp_config
 
         with mock.patch.object(api, 'fetch_segments') as mock_fetch_segments:
-            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [], None)
+            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, [])
         mock_logger.debug.assert_called_once_with('No segments are used in the project. Returning empty list.')
@@ -67,7 +67,7 @@ class OdpSegmentManagerTest(base.BaseTest):
             mock_request_post.return_value = self.fake_server_response(status_code=200,
                                                                        content=self.good_response_data)
 
-            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [], None)
+            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, ["a", "b"])
         actual_cache_key = segment_manager.make_cache_key(self.user_key, self.user_value)
@@ -89,7 +89,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         segment_manager.segments_cache.save(cache_key, ['c'])
 
         with mock.patch.object(segment_manager.api_manager, 'fetch_segments') as mock_fetch_segments:
-            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [], None)
+            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, ['c'])
         mock_logger.debug.assert_called_once_with('ODP cache hit. Returning segments from cache.')
@@ -100,7 +100,7 @@ class OdpSegmentManagerTest(base.BaseTest):
         with mock.patch('optimizely.logger') as mock_logger:
             segment_manager = OdpSegmentManager(LRUCache(1000, 1000), logger=mock_logger)
             segment_manager.odp_config = OdpConfig()
-            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [], None)
+            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, None)
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (api_key/api_host not defined).')
@@ -121,7 +121,7 @@ class OdpSegmentManagerTest(base.BaseTest):
 
         with mock.patch('requests.post',
                         side_effect=request_exception.ConnectionError('Connection error')):
-            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [], None)
+            segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value, [])
 
         self.assertEqual(segments, None)
         mock_logger.error.assert_called_once_with('Audience segments fetch failed (network error).')
@@ -141,7 +141,7 @@ class OdpSegmentManagerTest(base.BaseTest):
                                                                        content=self.good_response_data)
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value,
-                                                                [OptimizelyOdpOption.IGNORE_CACHE], None)
+                                                                [OptimizelyOdpOption.IGNORE_CACHE])
 
         self.assertEqual(segments, ["a", "b"])
         self.assertEqual(segment_manager.segments_cache.lookup(cache_key), ['d'])
@@ -164,7 +164,7 @@ class OdpSegmentManagerTest(base.BaseTest):
                                                                        content=self.good_response_data)
 
             segments = segment_manager.fetch_qualified_segments(self.user_key, self.user_value,
-                                                                [OptimizelyOdpOption.RESET_CACHE], None)
+                                                                [OptimizelyOdpOption.RESET_CACHE])
 
         self.assertEqual(segments, ["a", "b"])
         self.assertEqual(segment_manager.segments_cache.lookup(cache_key), ['a', 'b'])
