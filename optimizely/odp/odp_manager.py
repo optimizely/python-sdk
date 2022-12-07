@@ -58,7 +58,7 @@ class OdpManager:
                 )
             self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger, timeout=fetch_segments_timeout)
 
-        self.event_manager = self.event_manager or OdpEventManager(self.logger, odp_event_timeout)
+        self.event_manager = self.event_manager or OdpEventManager(self.logger, timeout=odp_event_timeout)
         self.segment_manager.odp_config = self.odp_config
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
