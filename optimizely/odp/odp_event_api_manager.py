@@ -42,7 +42,7 @@ class OdpEventApiManager:
 
     def __init__(self, logger: Optional[optimizely_logger.Logger] = None, timeout: Optional[int] = None):
         self.logger = logger or optimizely_logger.NoOpLogger()
-        self.timeout = timeout
+        self.timeout = timeout or OdpEventApiConfig.REQUEST_TIMEOUT
 
     def send_odp_events(self,
                         api_key: str,
@@ -73,7 +73,7 @@ class OdpEventApiManager:
             response = requests.post(url=url,
                                      headers=request_headers,
                                      data=payload_dict,
-                                     timeout=self.timeout or OdpEventApiConfig.REQUEST_TIMEOUT)
+                                     timeout=self.timeout)
 
             response.raise_for_status()
 
