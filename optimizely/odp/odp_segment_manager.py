@@ -30,16 +30,16 @@ class OdpSegmentManager:
         self,
         segments_cache: OptimizelySegmentsCache,
         api_manager: Optional[OdpSegmentApiManager] = None,
-        logger: Optional[optimizely_logger.Logger] = None
+        logger: Optional[optimizely_logger.Logger] = None,
+        timeout: Optional[int] = None
     ) -> None:
 
         self.odp_config: Optional[OdpConfig] = None
         self.segments_cache = segments_cache
         self.logger = logger or optimizely_logger.NoOpLogger()
-        self.api_manager = api_manager or OdpSegmentApiManager(self.logger)
+        self.api_manager = api_manager or OdpSegmentApiManager(self.logger, timeout)
 
-    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]
-                                 ) -> Optional[list[str]]:
+    def fetch_qualified_segments(self, user_key: str, user_value: str, options: list[str]) -> Optional[list[str]]:
         """
         Args:
             user_key: The key for identifying the id type.

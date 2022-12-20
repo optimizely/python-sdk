@@ -33,6 +33,8 @@ class OdpManager:
         segments_cache: Optional[OptimizelySegmentsCache] = None,
         segment_manager: Optional[OdpSegmentManager] = None,
         event_manager: Optional[OdpEventManager] = None,
+        fetch_segments_timeout: Optional[int] = None,
+        odp_event_timeout: Optional[int] = None,
         logger: Optional[optimizely_logger.Logger] = None
     ) -> None:
 
@@ -42,6 +44,7 @@ class OdpManager:
 
         self.segment_manager = segment_manager
         self.event_manager = event_manager
+        self.fetch_segments_timeout = fetch_segments_timeout
 
         if not self.enabled:
             self.logger.info('ODP is disabled.')
@@ -53,9 +56,9 @@ class OdpManager:
                     OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
                     OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
                 )
-            self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger)
+            self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger, timeout=fetch_segments_timeout)
 
-        self.event_manager = self.event_manager or OdpEventManager(self.logger)
+        self.event_manager = self.event_manager or OdpEventManager(self.logger, timeout=odp_event_timeout)
         self.segment_manager.odp_config = self.odp_config
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
