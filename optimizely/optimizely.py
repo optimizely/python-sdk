@@ -1352,9 +1352,17 @@ class Optimizely:
         )
 
     def identify_user(self, user_id: str) -> None:
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('identify_user'))
+            return
+
         self.odp_manager.identify_user(user_id)
 
     def fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('fetch_qualified_segments'))
+            return None
+
         return self.odp_manager.fetch_qualified_segments(user_id, options or [])
 
     def send_odp_event(
@@ -1374,11 +1382,16 @@ class Optimizely:
             data: An optional dictionary for associated data. The default event data will be added to this data
             before sending to the ODP server.
         """
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('send_odp_event'))
+            return
+
         self.odp_manager.send_event(type, action, identifiers or {}, data or {})
 
     def close(self) -> None:
         if callable(getattr(self.event_processor, 'stop', None)):
             self.event_processor.stop()  # type: ignore[attr-defined]
-        self.odp_manager.close()
+        if self.is_valid:
+            self.odp_manager.close()
         if callable(getattr(self.config_manager, 'stop', None)):
             self.config_manager.stop()  # type: ignore[attr-defined]
