@@ -71,7 +71,7 @@ class OdpEventManagerTest(BaseTest):
                 "key-3": 3.0,
                 "key-4": None,
                 "key-5": True
-            }
+            },
         },
         {
             "type": "t2",
