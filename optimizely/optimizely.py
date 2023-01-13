@@ -343,7 +343,7 @@ class Optimizely:
         source_info = {}
         variable_value = variable.defaultValue
 
-        user_context = self.create_user_context(user_id, attributes)
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         # error is logged in create_user_context
         if user_context is None:
             return None
@@ -432,7 +432,7 @@ class Optimizely:
         feature_enabled = False
         source_info = {}
 
-        user_context = self.create_user_context(user_id, attributes)
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         # error is logged in create_user_context
         if user_context is None:
             return None
@@ -641,7 +641,7 @@ class Optimizely:
         if not self._validate_user_inputs(attributes):
             return None
 
-        user_context = self.create_user_context(user_id, attributes)
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         # error is logged in create_user_context
         if not user_context:
             return None
@@ -703,7 +703,7 @@ class Optimizely:
 
         feature_enabled = False
         source_info = {}
-        user_context = self.create_user_context(user_id, attributes)
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         # error is logged in create_user_context
         if not user_context:
             return False
