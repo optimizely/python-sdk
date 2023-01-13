@@ -1328,8 +1328,8 @@ class Optimizely:
 
         if not self.sdk_settings.segments_cache:
             self.sdk_settings.segments_cache = LRUCache(
-                self.sdk_settings.segments_cache_size or enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
-                self.sdk_settings.segments_cache_timeout_in_secs or enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
+                self.sdk_settings.segments_cache_size,
+                self.sdk_settings.segments_cache_timeout_in_secs
             )
 
     def _update_odp_config_on_datafile_update(self) -> None:
