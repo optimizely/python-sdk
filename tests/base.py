@@ -1,4 +1,4 @@
-# Copyright 2016-2021, Optimizely
+# Copyright 2016-2023 Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -1262,7 +1262,8 @@ class BaseTest(unittest.TestCase):
             ],
             'accountId': '10367498574',
             'events': [],
-            'revision': '101'
+            'revision': '101',
+            'sdkKey': 'segments-test'
         }
 
         config = getattr(self, config_dict)

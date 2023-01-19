@@ -1,4 +1,4 @@
-# Copyright 2019-2020, 2022, Optimizely
+# Copyright 2019-2020, 2022-2023, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -25,6 +25,7 @@ from . import logger as optimizely_logger
 from . import project_config
 from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .notification_center import NotificationCenter
+from .notification_center_registry import _NotificationCenterRegistry
 from .helpers import enums
 from .helpers import validator
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
@@ -106,6 +107,7 @@ class StaticConfigManager(BaseConfigManager):
         )
         self._config: project_config.ProjectConfig = None  # type: ignore[assignment]
         self.optimizely_config: Optional[OptimizelyConfig] = None
+        self.sdk_key: Optional[str] = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
 
@@ -146,8 +148,16 @@ class StaticConfigManager(BaseConfigManager):
             return
 
         self._config = config
+        self.sdk_key = self.sdk_key or config.sdk_key
         self.optimizely_config = OptimizelyConfigService(config).get_config()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
+
+        internal_notification_center = _NotificationCenterRegistry.get_notification_center(
+            self.sdk_key, self.logger
+        )
+        if internal_notification_center:
+            internal_notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
+
         self.logger.debug(
             'Received new datafile and updated config. '
             f'Old revision number: {previous_revision}. New revision number: {config.get_revision()}.'
@@ -209,6 +219,7 @@ class PollingConfigManager(StaticConfigManager):
             notification_center=notification_center,
             skip_json_validation=skip_json_validation,
         )
+        self.sdk_key = sdk_key or self.sdk_key
         self.datafile_url = self.get_datafile_url(
             sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )

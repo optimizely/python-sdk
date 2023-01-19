@@ -1,4 +1,4 @@
-# Copyright 2016-2022, Optimizely
+# Copyright 2016-2023, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -37,6 +37,7 @@ from .helpers import enums, validator
 from .helpers.sdk_settings import OptimizelySdkSettings
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
+from .notification_center_registry import _NotificationCenterRegistry
 from .odp.lru_cache import LRUCache
 from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
@@ -143,7 +144,7 @@ class Optimizely:
             self.logger.exception(str(error))
             return
 
-        self.setup_odp()
+        self.setup_odp(sdk_key)
 
         self.odp_manager = OdpManager(
             self.sdk_settings.odp_disabled,
@@ -1310,7 +1311,7 @@ class Optimizely:
             decisions[key] = decision
         return decisions
 
-    def setup_odp(self) -> None:
+    def setup_odp(self, sdk_key: Optional[str]) -> None:
         """
         - Make sure cache is instantiated with provided parameters or defaults.
         - Set up listener to update odp_config when datafile is updated.
@@ -1318,10 +1319,12 @@ class Optimizely:
         if self.sdk_settings.odp_disabled:
             return
 
-        self.notification_center.add_notification_listener(
-            enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-            self._update_odp_config_on_datafile_update
-        )
+        internal_notification_center = _NotificationCenterRegistry.get_notification_center(sdk_key, self.logger)
+        if internal_notification_center:
+            internal_notification_center.add_notification_listener(
+                enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+                self._update_odp_config_on_datafile_update
+            )
 
         if self.sdk_settings.odp_segment_manager:
             return
