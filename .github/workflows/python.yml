@@ -5,9 +5,9 @@ name: build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ aleap/odp_fixes  ]
   pull_request:
-    branches: [ master ]
+    branches: [ aleap/odp_fixes ]
 
 jobs:
   lint_markdown_files:
