@@ -1083,7 +1083,7 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
             return None
 
-        return OptimizelyUserContext(self, self.logger, user_id, attributes)
+        return OptimizelyUserContext(self, self.logger, user_id, attributes, True)
 
     def _decide(
         self, user_context: Optional[OptimizelyUserContext], key: str,
