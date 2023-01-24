@@ -346,9 +346,7 @@ class Optimizely:
         variable_value = variable.defaultValue
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
-        # error is logged in create_user_context
-        if user_context is None:
-            return None
+
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
 
         if decision.variation:
@@ -435,9 +433,7 @@ class Optimizely:
         source_info = {}
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
-        # error is logged in create_user_context
-        if user_context is None:
-            return None
+
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
 
         if decision.variation:
@@ -644,9 +640,6 @@ class Optimizely:
             return None
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
-        # error is logged in create_user_context
-        if not user_context:
-            return None
 
         variation, _ = self.decision_service.get_variation(project_config, experiment, user_context)
         if variation:
@@ -705,10 +698,8 @@ class Optimizely:
 
         feature_enabled = False
         source_info = {}
+
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
-        # error is logged in create_user_context
-        if not user_context:
-            return False
 
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
