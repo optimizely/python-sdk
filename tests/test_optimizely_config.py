@@ -26,7 +26,7 @@ class OptimizelyConfigTest(base.BaseTest):
         self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
 
         self.expected_config = {
-            'sdk_key': '',
+            'sdk_key': 'features-test',
             'environment_key': '',
             'attributes': [{'key': 'test_attribute', 'id': '111094'}],
             'events': [{'key': 'test_event', 'experiment_ids': ['111127'], 'id': '111095'}],

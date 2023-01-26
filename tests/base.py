@@ -150,6 +150,7 @@ class BaseTest(unittest.TestCase):
         # datafile version 4
         self.config_dict_with_features = {
             'revision': '1',
+            'sdkKey': 'features-test',
             'accountId': '12001',
             'projectId': '111111',
             'version': '4',
@@ -1261,7 +1262,13 @@ class BaseTest(unittest.TestCase):
                 }
             ],
             'accountId': '10367498574',
-            'events': [],
+            'events': [
+                {
+                    "experimentIds": ["10420810910"],
+                    "id": "10404198134",
+                    "key": "event1"
+                }
+            ],
             'revision': '101',
             'sdkKey': 'segments-test'
         }

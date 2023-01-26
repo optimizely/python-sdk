@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import json
+import time
 from operator import itemgetter
 
 from unittest import mock
@@ -25,6 +26,7 @@ from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
 from optimizely import optimizely_config
+from optimizely.odp.odp_config import OdpConfigState
 from optimizely import project_config
 from optimizely import version
 from optimizely.event.event_factory import EventFactory
@@ -92,7 +94,10 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
             opt_obj = optimizely.Optimizely('invalid_datafile')
 
-        mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+        mock_client_logger.error.assert_has_calls([
+            mock.call('Provided "datafile" is in an invalid format.'),
+            mock.call('No SDK key provided to get_notification_center')
+        ], any_order=True)
         self.assertIsNone(opt_obj.config_manager.get_config())
 
     def test_init__null_datafile__logs_error(self):
@@ -102,7 +107,10 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
             opt_obj = optimizely.Optimizely(None)
 
-        mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+        mock_client_logger.error.assert_has_calls([
+            mock.call('Provided "datafile" is in an invalid format.'),
+            mock.call('No SDK key provided to get_notification_center')
+        ], any_order=True)
         self.assertIsNone(opt_obj.config_manager.get_config())
 
     def test_init__empty_datafile__logs_error(self):
@@ -112,7 +120,10 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch('optimizely.logger.reset_logger', return_value=mock_client_logger):
             opt_obj = optimizely.Optimizely("")
 
-        mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+        mock_client_logger.error.assert_has_calls([
+            mock.call('Provided "datafile" is in an invalid format.'),
+            mock.call('No SDK key provided to get_notification_center')
+        ], any_order=True)
         self.assertIsNone(opt_obj.config_manager.get_config())
 
     def test_init__invalid_config_manager__logs_error(self):
@@ -204,9 +215,10 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_error_handler:
             opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_unsupported_version))
 
-        mock_client_logger.error.assert_called_once_with(
-            'This version of the Python SDK does not support the given datafile version: "5".'
-        )
+        mock_client_logger.error.assert_has_calls([
+            mock.call('No SDK key provided to get_notification_center'),
+            mock.call('This version of the Python SDK does not support the given datafile version: "5".')
+        ], any_order=True)
 
         args, kwargs = mock_error_handler.call_args
         self.assertIsInstance(args[0], exceptions.UnsupportedDatafileVersionException)
@@ -276,7 +288,10 @@ class OptimizelyTest(base.BaseTest):
         ) as mock_error_handler:
             opt_obj = optimizely.Optimizely('invalid_json', skip_json_validation=True)
 
-        mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+        mock_client_logger.error.assert_has_calls([
+            mock.call('Provided "datafile" is in an invalid format.'),
+            mock.call('No SDK key provided to get_notification_center')
+        ], any_order=True)
         args, kwargs = mock_error_handler.call_args
         self.assertIsInstance(args[0], exceptions.InvalidInputException)
         self.assertEqual(args[0].args[0], 'Provided "datafile" is in an invalid format.')
@@ -293,7 +308,10 @@ class OptimizelyTest(base.BaseTest):
                 {'version': '2', 'events': 'invalid_value', 'experiments': 'invalid_value'}, skip_json_validation=True,
             )
 
-        mock_client_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
+        mock_client_logger.error.assert_has_calls([
+            mock.call('Provided "datafile" is in an invalid format.'),
+            mock.call('No SDK key provided to get_notification_center')
+        ], any_order=True)
         args, kwargs = mock_error_handler.call_args
         self.assertIsInstance(args[0], exceptions.InvalidInputException)
         self.assertEqual(args[0].args[0], 'Provided "datafile" is in an invalid format.')
@@ -4616,6 +4634,9 @@ class OptimizelyTest(base.BaseTest):
         return_config = some_obj.config_manager.get_config()
 
         class SomeConfigManager:
+            def get_sdk_key(self):
+                return return_config.sdk_key
+
             def get_config(self):
                 return return_config
 
@@ -4630,6 +4651,57 @@ class OptimizelyTest(base.BaseTest):
             opt_obj.get_optimizely_config()
 
         self.assertEqual(1, mock_opt_service.call_count)
+
+    def test_odp_updated_with_custom_polling_config(self):
+        logger = mock.MagicMock()
+
+        test_datafile = json.dumps(self.config_dict_with_audience_segments)
+        test_response = self.fake_server_response(status_code=200, content=test_datafile)
+
+        def delay(*args, **kwargs):
+            time.sleep(.5)
+            return mock.DEFAULT
+
+        with mock.patch('requests.get', return_value=test_response, side_effect=delay):
+            # initialize config_manager with delay, so it will receive the datafile after client initialization
+            custom_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key', logger=logger)
+            client = optimizely.Optimizely(config_manager=custom_config_manager)
+            odp_manager = client.odp_manager
+
+            # confirm odp config has not yet been updated
+            self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.UNDETERMINED)
+
+            # wait for datafile
+            custom_config_manager.get_config()
+
+        # wait for odp config to be updated
+        odp_manager.event_manager.event_queue.join()
+
+        self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.INTEGRATED)
+
+        logger.error.assert_not_called()
+
+        client.close()
+
+    def test_odp_events_not_sent_with_legacy_apis(self):
+        logger = mock.MagicMock()
+        experiment_key = 'experiment-segment'
+        feature_key = 'flag-segment'
+        user_id = 'test_user'
+
+        test_datafile = json.dumps(self.config_dict_with_audience_segments)
+        client = optimizely.Optimizely(test_datafile, logger=logger)
+
+        with mock.patch.object(client.odp_manager.event_manager, 'send_event') as send_event_mock:
+            client.activate(experiment_key, user_id)
+            client.track('event1', user_id)
+            client.get_variation(experiment_key, user_id)
+            client.get_all_feature_variables(feature_key, user_id)
+            client.is_feature_enabled(feature_key, user_id)
+
+        send_event_mock.assert_not_called()
+
+        client.close()
 
 
 class OptimizelyWithExceptionTest(base.BaseTest):
