@@ -40,13 +40,15 @@ class OdpEventManager:
     The OdpEventManager maintains a single consumer thread that pulls events off of
     the queue and buffers them before events are sent to ODP.
     Sends events when the batch size is met or when the flush timeout has elapsed.
+    Flushes the event queue after specified time (seconds).
     """
 
     def __init__(
         self,
         logger: Optional[_logging.Logger] = None,
         api_manager: Optional[OdpEventApiManager] = None,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
+        flush_interval: Optional[int] = None
     ):
         """OdpEventManager init method to configure event batching.
 
@@ -54,6 +56,7 @@ class OdpEventManager:
             logger: Optional component which provides a log method to log messages. By default nothing would be logged.
             api_manager: Optional component which sends events to ODP.
             timeout: Optional event timeout in seconds.
+            flush_interval: flushes the event queue after specified time (seconds)
         """
         self.logger = logger or _logging.NoOpLogger()
         self.api_manager = api_manager or OdpEventApiManager(self.logger, timeout)
@@ -64,7 +67,14 @@ class OdpEventManager:
 
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
         self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
-        self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
+
+        if flush_interval is None:
+            self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
+        elif flush_interval == 0:
+            self.flush_interval = 0
+        else:
+            self.flush_interval = flush_interval
+
         self._flush_deadline: float = 0
         self.retry_count = OdpEventManagerConfig.DEFAULT_RETRY_COUNT
         self._current_batch: list[OdpEvent] = []

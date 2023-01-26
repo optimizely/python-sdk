@@ -32,7 +32,8 @@ class OptimizelySdkSettings:
             odp_segment_manager: Optional[OdpSegmentManager] = None,
             odp_event_manager: Optional[OdpEventManager] = None,
             fetch_segments_timeout: Optional[int] = None,
-            odp_event_timeout: Optional[int] = None
+            odp_event_timeout: Optional[int] = None,
+            odp_flush_interval: Optional[int] = None
     ) -> None:
         """
         Args:
@@ -59,3 +60,4 @@ class OptimizelySdkSettings:
         self.odp_event_manager = odp_event_manager
         self.fetch_segments_timeout = fetch_segments_timeout
         self.odp_event_timeout = odp_event_timeout
+        self.odp_flush_interval = odp_flush_interval

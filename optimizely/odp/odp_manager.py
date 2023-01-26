@@ -35,6 +35,7 @@ class OdpManager:
         event_manager: Optional[OdpEventManager] = None,
         fetch_segments_timeout: Optional[int] = None,
         odp_event_timeout: Optional[int] = None,
+        odp_flush_interval: Optional[int] = None,
         logger: Optional[optimizely_logger.Logger] = None
     ) -> None:
 
@@ -58,7 +59,8 @@ class OdpManager:
                 )
             self.segment_manager = OdpSegmentManager(segments_cache, logger=self.logger, timeout=fetch_segments_timeout)
 
-        self.event_manager = self.event_manager or OdpEventManager(self.logger, timeout=odp_event_timeout)
+        self.event_manager = self.event_manager or OdpEventManager(self.logger, timeout=odp_event_timeout,
+                                                                   flush_interval=odp_flush_interval)
         self.segment_manager.odp_config = self.odp_config
 
     def fetch_qualified_segments(self, user_id: str, options: list[str]) -> Optional[list[str]]:
