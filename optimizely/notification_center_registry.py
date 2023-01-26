@@ -24,14 +24,12 @@ class _NotificationCenterRegistry:
     _lock = Lock()
 
     @classmethod
-    def get_notification_center(
-        cls, sdk_key: Optional[str], logger: Optional[OptimizelyLogger] = None
-    ) -> Optional[NotificationCenter]:
+    def get_notification_center(cls, sdk_key: Optional[str], logger: OptimizelyLogger) -> Optional[NotificationCenter]:
         """Returns an internal notification center for the given sdk_key, creating one
         if none exists yet.
 
         Args:
-        sdk_key: An optional string sdk key. If None, nothing is returned.
+        sdk_key: A string sdk key to uniquely identify the notification center.
         logger: Optional logger.
 
         Returns:
@@ -39,8 +37,7 @@ class _NotificationCenterRegistry:
         """
 
         if not sdk_key:
-            if logger:
-                logger.info("No SDK key provided to get_notification_center")
+            logger.error("No SDK key provided to get_notification_center")
             return None
 
         with cls._lock:

@@ -82,8 +82,8 @@ class BaseConfigManager(ABC):
     @abstractmethod
     def get_sdk_key(self) -> Optional[str]:
         """ Get sdk_key for use by optimizely.Optimizely.
-        The sdk_key should uniquely identify the datafile for a project and environment
-          combination."""
+        The sdk_key should uniquely identify the datafile for a project and environment combination.
+        """
         pass
 
 

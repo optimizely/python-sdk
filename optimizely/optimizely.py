@@ -144,18 +144,6 @@ class Optimizely:
             self.logger.exception(str(error))
             return
 
-        self.setup_odp(sdk_key if sdk_key or not config_manager else config_manager.get_sdk_key())
-
-        self.odp_manager = OdpManager(
-            self.sdk_settings.odp_disabled,
-            self.sdk_settings.segments_cache,
-            self.sdk_settings.odp_segment_manager,
-            self.sdk_settings.odp_event_manager,
-            self.sdk_settings.fetch_segments_timeout,
-            self.sdk_settings.odp_event_timeout,
-            self.logger
-        )
-
         config_manager_options: dict[str, Any] = {
             'datafile': datafile,
             'logger': self.logger,
@@ -175,8 +163,8 @@ class Optimizely:
             else:
                 self.config_manager = StaticConfigManager(**config_manager_options)
 
-        if not self.sdk_settings.odp_disabled:
-            self._update_odp_config_on_datafile_update()
+        self.odp_manager: OdpManager
+        self.setup_odp(sdk_key or self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
@@ -1306,9 +1294,32 @@ class Optimizely:
 
     def setup_odp(self, sdk_key: Optional[str]) -> None:
         """
-        - Make sure cache is instantiated with provided parameters or defaults.
+        - Make sure odp manager is instantiated with provided parameters or defaults.
         - Set up listener to update odp_config when datafile is updated.
+        - Manually call callback in case datafile was received before the listener was registered.
         """
+
+        # no need to instantiate a cache if a custom cache or segment manager is provided.
+        if (
+            not self.sdk_settings.odp_disabled and
+            not self.sdk_settings.odp_segment_manager and
+            not self.sdk_settings.segments_cache
+        ):
+            self.sdk_settings.segments_cache = LRUCache(
+                self.sdk_settings.segments_cache_size,
+                self.sdk_settings.segments_cache_timeout_in_secs
+            )
+
+        self.odp_manager = OdpManager(
+            self.sdk_settings.odp_disabled,
+            self.sdk_settings.segments_cache,
+            self.sdk_settings.odp_segment_manager,
+            self.sdk_settings.odp_event_manager,
+            self.sdk_settings.fetch_segments_timeout,
+            self.sdk_settings.odp_event_timeout,
+            self.logger
+        )
+
         if self.sdk_settings.odp_disabled:
             return
 
@@ -1319,14 +1330,7 @@ class Optimizely:
                 self._update_odp_config_on_datafile_update
             )
 
-        if self.sdk_settings.odp_segment_manager:
-            return
-
-        if not self.sdk_settings.segments_cache:
-            self.sdk_settings.segments_cache = LRUCache(
-                self.sdk_settings.segments_cache_size,
-                self.sdk_settings.segments_cache_timeout_in_secs
-            )
+        self._update_odp_config_on_datafile_update()
 
     def _update_odp_config_on_datafile_update(self) -> None:
         config = None
