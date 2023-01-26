@@ -79,6 +79,13 @@ class BaseConfigManager(ABC):
         The config should be an instance of project_config.ProjectConfig."""
         pass
 
+    @abstractmethod
+    def get_sdk_key(self) -> Optional[str]:
+        """ Get sdk_key for use by optimizely.Optimizely.
+        The sdk_key should uniquely identify the datafile for a project and environment
+          combination."""
+        pass
+
 
 class StaticConfigManager(BaseConfigManager):
     """ Config manager that returns ProjectConfig based on provided datafile. """
@@ -107,9 +114,12 @@ class StaticConfigManager(BaseConfigManager):
         )
         self._config: project_config.ProjectConfig = None  # type: ignore[assignment]
         self.optimizely_config: Optional[OptimizelyConfig] = None
-        self.sdk_key: Optional[str] = None
+        self._sdk_key: Optional[str] = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
+
+    def get_sdk_key(self) -> Optional[str]:
+        return self._sdk_key
 
     def _set_config(self, datafile: Optional[str | bytes]) -> None:
         """ Looks up and sets datafile and config based on response body.
@@ -148,12 +158,12 @@ class StaticConfigManager(BaseConfigManager):
             return
 
         self._config = config
-        self.sdk_key = self.sdk_key or config.sdk_key
+        self._sdk_key = self._sdk_key or config.sdk_key
         self.optimizely_config = OptimizelyConfigService(config).get_config()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
 
         internal_notification_center = _NotificationCenterRegistry.get_notification_center(
-            self.sdk_key, self.logger
+            self._sdk_key, self.logger
         )
         if internal_notification_center:
             internal_notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
@@ -219,7 +229,7 @@ class PollingConfigManager(StaticConfigManager):
             notification_center=notification_center,
             skip_json_validation=skip_json_validation,
         )
-        self.sdk_key = sdk_key or self.sdk_key
+        self._sdk_key = sdk_key or self._sdk_key
         self.datafile_url = self.get_datafile_url(
             sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )

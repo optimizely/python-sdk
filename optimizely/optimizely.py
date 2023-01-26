@@ -144,7 +144,7 @@ class Optimizely:
             self.logger.exception(str(error))
             return
 
-        self.setup_odp(sdk_key)
+        self.setup_odp(sdk_key if sdk_key or not config_manager else config_manager.get_sdk_key())
 
         self.odp_manager = OdpManager(
             self.sdk_settings.odp_disabled,
