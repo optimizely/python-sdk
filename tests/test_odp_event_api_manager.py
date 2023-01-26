@@ -45,6 +45,19 @@ class OdpEventApiManagerTest(base.BaseTest):
                                                   data=json.dumps(self.events, cls=OdpEventEncoder),
                                                   timeout=OdpEventApiConfig.REQUEST_TIMEOUT)
 
+    def test_send_odp_events__custom_timeout(self):
+        with mock.patch('requests.post') as mock_request_post:
+            api = OdpEventApiManager(timeout=14)
+            api.send_odp_events(api_key=self.api_key,
+                                api_host=self.api_host,
+                                events=self.events)
+
+        request_headers = {'content-type': 'application/json', 'x-api-key': self.api_key}
+        mock_request_post.assert_called_once_with(url=self.api_host + "/v3/events",
+                                                  headers=request_headers,
+                                                  data=json.dumps(self.events, cls=OdpEventEncoder),
+                                                  timeout=14)
+
     def test_send_odp_ovents_success(self):
         with mock.patch('requests.post') as mock_request_post:
             # no need to mock url and content because we're not returning the response
