@@ -50,6 +50,8 @@ class OptimizelySdkSettings:
             `send_event(type:, action:, identifiers:, data:)`
           fetch_segments_timeout: A fetch segment timeout in seconds (optional).
           odp_event_timeout: A send odp event timeout in seconds (optional).
+            Network timeout - how long to wait for odp platform to respond before failing.
+          odp_flush_interval: Time to wait for events to accumulate before sending a batch in seconds (optional).
         """
 
         self.odp_disabled = odp_disabled

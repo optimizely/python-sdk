@@ -55,8 +55,8 @@ class OdpEventManager:
         Args:
             logger: Optional component which provides a log method to log messages. By default nothing would be logged.
             api_manager: Optional component which sends events to ODP.
-            timeout: Optional event timeout in seconds.
-            flush_interval: flushes the event queue after specified time (seconds)
+            timeout: Optional event timeout in seconds. How long to wait for odp platform to respond before failing.
+            flush_interval: Optional time to wait for events to accumulate before sending the batch in seconds.
         """
         self.logger = logger or _logging.NoOpLogger()
         self.api_manager = api_manager or OdpEventApiManager(self.logger, timeout)

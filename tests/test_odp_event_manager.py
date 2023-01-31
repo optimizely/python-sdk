@@ -382,7 +382,8 @@ class OdpEventManagerTest(BaseTest):
         mock_send.assert_called_once_with(self.api_key, self.api_host, [processed_event])
         event_manager.stop()
 
-    def test_odp_event_manager_flush_timeout(self, *args):
+    def test_odp_event_manager_flush_interval(self, *args):
+        """Verify that both events have been sent together after they have been batched."""
         mock_logger = mock.Mock()
         event_manager = OdpEventManager(mock_logger)
         event_manager.flush_interval = .5
@@ -392,13 +393,46 @@ class OdpEventManagerTest(BaseTest):
             event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
         ) as mock_send:
             event_manager.send_event(**self.events[0])
+            mock_send.assert_not_called()
             event_manager.send_event(**self.events[1])
             event_manager.event_queue.join()
-            time.sleep(1)
+            time.sleep(1)   # ensures that the flush interval time has passed
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_any_call('ODP event queue: flushing on interval.')
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        event_manager.stop()
+
+    # TODO - new test
+    def test_odp_event_manager_flush_interval_is_zero(self, *args):
+        """Verify that flush interval sends event immediately when flush interval is zero."""
+        mock_logger = mock.Mock()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.flush_interval = 0
+        event_manager.start(self.odp_config)
+
+        with mock.patch.object(
+                event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send:
+            # individually sent event is considered a batch and is flushed immediately
+            # (added slight time diff to sending events, otherwise they'll be grouped together which we don't want)
+            event_manager.send_event(**self.events[0])
+            time.sleep(0.01)
+            mock_send.assert_called_once_with(self.api_key, self.api_host, [self.processed_events[0]])
+            mock_send.reset_mock()
+            event_manager.send_event(**self.events[1])
+            time.sleep(0.01)
+            mock_send.assert_called_once_with(self.api_key, self.api_host, [self.processed_events[1]])
+            mock_send.reset_mock()
+
+            # multiple sent events are treated as one batch that is flushed immediately
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+            event_manager.event_queue.join()
+            mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_any_call('ODP event queue: flushing on interval.')
         event_manager.stop()
 
     def test_odp_event_manager_events_before_odp_ready(self, *args):
