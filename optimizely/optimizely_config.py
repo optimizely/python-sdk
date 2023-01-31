@@ -343,9 +343,11 @@ class OptimizelyConfigService:
 
             # set variation specific variable value if any
             if variation.get('featureEnabled'):
+                feature_variables_map = self.feature_key_variable_id_to_variable_map[feature_flag['key']]
                 for variable in variation.get('variables', []):
-                    feature_variable = self.feature_key_variable_id_to_variable_map[feature_flag['key']][variable['id']]
-                    variables_map[feature_variable.key].value = variable['value']
+                    feature_variable = feature_variables_map.get(variable['id'])
+                    if feature_variable:
+                        variables_map[feature_variable.key].value = variable['value']
 
         return variables_map
 
