@@ -164,7 +164,7 @@ class Optimizely:
                 self.config_manager = StaticConfigManager(**config_manager_options)
 
         self.odp_manager: OdpManager
-        self.setup_odp(sdk_key or self.config_manager.get_sdk_key())
+        self.setup_odp(self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)

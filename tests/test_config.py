@@ -160,6 +160,7 @@ class ConfigTest(base.BaseTest):
         # Adding some additional fields like live variables and IP anonymization
         config_dict = {
             'revision': '42',
+            'sdkKey': 'test',
             'version': '4',
             'anonymizeIP': False,
             'botFiltering': True,

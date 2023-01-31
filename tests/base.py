@@ -58,6 +58,7 @@ class BaseTest(unittest.TestCase):
     def setUp(self, config_dict='config_dict'):
         self.config_dict = {
             'revision': '42',
+            'sdkKey': 'basic-test',
             'version': '2',
             'events': [
                 {'key': 'test_event', 'experimentIds': ['111127'], 'id': '111095'},
@@ -553,6 +554,7 @@ class BaseTest(unittest.TestCase):
 
         self.config_dict_with_multiple_experiments = {
             'revision': '42',
+            'sdkKey': 'multiple-experiments',
             'version': '2',
             'events': [
                 {'key': 'test_event', 'experimentIds': ['111127', '111130'], 'id': '111095'},
@@ -658,6 +660,7 @@ class BaseTest(unittest.TestCase):
 
         self.config_dict_with_unsupported_version = {
             'version': '5',
+            'sdkKey': 'unsupported-version',
             'rollouts': [],
             'projectId': '10431130345',
             'variables': [],
@@ -1074,6 +1077,7 @@ class BaseTest(unittest.TestCase):
                 {'key': 'user_signed_up', 'id': '594090', 'experimentIds': ['1323241598', '1323241599']},
             ],
             'revision': '3',
+            'sdkKey': 'typed-audiences',
         }
 
         self.config_dict_with_audience_segments = {

@@ -55,7 +55,7 @@ class NotificationCenterRegistryTest(BaseTest):
 
     def test_remove_notification_center(self):
         logger = mock.MagicMock()
-        sdk_key = 'test'
+        sdk_key = 'segments-test'
         test_datafile = json.dumps(self.config_dict_with_audience_segments)
         test_response = self.fake_server_response(status_code=200, content=test_datafile)
         notification_center = _NotificationCenterRegistry.get_notification_center(sdk_key, logger)

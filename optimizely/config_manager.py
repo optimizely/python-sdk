@@ -201,11 +201,11 @@ class PollingConfigManager(StaticConfigManager):
         notification_center: Optional[NotificationCenter] = None,
         skip_json_validation: Optional[bool] = False,
     ):
-        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
+        """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
         Args:
-            sdk_key: Optional string uniquely identifying the datafile.
-            datafile: Optional JSON string representing the project.
+            sdk_key: Optional string uniquely identifying the datafile. If not provided, datafile is required.
+            datafile: Optional JSON string representing the project. If not provided, sdk_key is required.
             update_interval: Optional floating point number representing time interval in seconds
                              at which to request datafile and set ProjectConfig.
             blocking_timeout: Optional Time in seconds to block the get_config call until config object
@@ -230,6 +230,10 @@ class PollingConfigManager(StaticConfigManager):
             skip_json_validation=skip_json_validation,
         )
         self._sdk_key = sdk_key or self._sdk_key
+
+        if sdk_key is None:
+            raise optimizely_exceptions.InvalidInputException('Must provide at least one of sdk_key or datafile.')
+
         self.datafile_url = self.get_datafile_url(
             sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
@@ -436,7 +440,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         *args: Any,
         **kwargs: Any
     ):
-        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
+        """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
         Args:
             datafile_access_token: String to be attached to the request header to fetch the authenticated datafile.

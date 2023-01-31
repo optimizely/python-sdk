@@ -4664,7 +4664,7 @@ class OptimizelyTest(base.BaseTest):
 
         with mock.patch('requests.get', return_value=test_response, side_effect=delay):
             # initialize config_manager with delay, so it will receive the datafile after client initialization
-            custom_config_manager = config_manager.PollingConfigManager(sdk_key='sdk_key', logger=logger)
+            custom_config_manager = config_manager.PollingConfigManager(sdk_key='segments-test', logger=logger)
             client = optimizely.Optimizely(config_manager=custom_config_manager)
             odp_manager = client.odp_manager
 
