@@ -5177,7 +5177,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             settings=sdk_settings
         )
         segments_cache = client.odp_manager.segment_manager.segments_cache
-        self.assertEqual(segments_cache.timeout, enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS)
+        self.assertEqual(segments_cache.timeout, 0)
 
         mock_logger.error.assert_not_called()
         client.close()
@@ -5191,7 +5191,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             settings=sdk_settings
         )
         segments_cache = client.odp_manager.segment_manager.segments_cache
-        self.assertEqual(segments_cache.capacity, enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY)
+        self.assertEqual(segments_cache.capacity, 0)
 
         mock_logger.error.assert_not_called()
         client.close()
@@ -5205,8 +5205,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             settings=sdk_settings
         )
         segments_cache = client.odp_manager.segment_manager.segments_cache
-        self.assertEqual(segments_cache.capacity, enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY)
-        self.assertEqual(segments_cache.timeout, enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS)
+        self.assertEqual(segments_cache.capacity, 0)
+        self.assertEqual(segments_cache.timeout, 0)
 
         mock_logger.error.assert_not_called()
         client.close()
