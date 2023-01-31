@@ -375,10 +375,11 @@ class PollingConfigManager(StaticConfigManager):
         return self._polling_thread.is_alive()
 
     def stop(self) -> None:
-        """ Stop the polling thread and wait for it to exit. """
+        """ Stop the polling thread and briefly wait for it to exit. """
         if self.is_running:
             self.stopped.set()
-            self._polling_thread.join()
+            # no need to wait too long as this exists to avoid interfering with tests
+            self._polling_thread.join(timeout=0.2)
 
     def _run(self) -> None:
         """ Triggered as part of the thread which fetches the datafile and sleeps until next update interval. """

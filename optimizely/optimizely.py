@@ -346,10 +346,8 @@ class Optimizely:
         source_info = {}
         variable_value = variable.defaultValue
 
-        user_context = self.create_user_context(user_id, attributes)
-        # error is logged in create_user_context
-        if user_context is None:
-            return None
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
+
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
 
         if decision.variation:
@@ -435,10 +433,8 @@ class Optimizely:
         feature_enabled = False
         source_info = {}
 
-        user_context = self.create_user_context(user_id, attributes)
-        # error is logged in create_user_context
-        if user_context is None:
-            return None
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
+
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
 
         if decision.variation:
@@ -644,10 +640,7 @@ class Optimizely:
         if not self._validate_user_inputs(attributes):
             return None
 
-        user_context = self.create_user_context(user_id, attributes)
-        # error is logged in create_user_context
-        if not user_context:
-            return None
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
         variation, _ = self.decision_service.get_variation(project_config, experiment, user_context)
         if variation:
@@ -706,10 +699,8 @@ class Optimizely:
 
         feature_enabled = False
         source_info = {}
-        user_context = self.create_user_context(user_id, attributes)
-        # error is logged in create_user_context
-        if not user_context:
-            return False
+
+        user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
@@ -1084,7 +1075,7 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_INPUT.format('attributes'))
             return None
 
-        return OptimizelyUserContext(self, self.logger, user_id, attributes)
+        return OptimizelyUserContext(self, self.logger, user_id, attributes, True)
 
     def _decide(
         self, user_context: Optional[OptimizelyUserContext], key: str,
@@ -1331,8 +1322,8 @@ class Optimizely:
 
         if not self.sdk_settings.segments_cache:
             self.sdk_settings.segments_cache = LRUCache(
-                self.sdk_settings.segments_cache_size or enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY,
-                self.sdk_settings.segments_cache_timeout_in_secs or enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS
+                self.sdk_settings.segments_cache_size,
+                self.sdk_settings.segments_cache_timeout_in_secs
             )
 
     def _update_odp_config_on_datafile_update(self) -> None:
@@ -1355,9 +1346,17 @@ class Optimizely:
         )
 
     def identify_user(self, user_id: str) -> None:
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('identify_user'))
+            return
+
         self.odp_manager.identify_user(user_id)
 
     def fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('fetch_qualified_segments'))
+            return None
+
         return self.odp_manager.fetch_qualified_segments(user_id, options or [])
 
     def send_odp_event(
@@ -1377,11 +1376,16 @@ class Optimizely:
             data: An optional dictionary for associated data. The default event data will be added to this data
             before sending to the ODP server.
         """
+        if not self.is_valid:
+            self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('send_odp_event'))
+            return
+
         self.odp_manager.send_event(type, action, identifiers or {}, data or {})
 
     def close(self) -> None:
         if callable(getattr(self.event_processor, 'stop', None)):
             self.event_processor.stop()  # type: ignore[attr-defined]
-        self.odp_manager.close()
+        if self.is_valid:
+            self.odp_manager.close()
         if callable(getattr(self.config_manager, 'stop', None)):
             self.config_manager.stop()  # type: ignore[attr-defined]

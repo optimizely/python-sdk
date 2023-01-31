@@ -112,7 +112,9 @@ class ProjectConfig:
                 self.experiment_id_map[experiment_dict['id']] = entities.Experiment(**experiment_dict)
 
         if self.integrations:
-            self.integration_key_map = self._generate_key_map(self.integrations, 'key', entities.Integration)
+            self.integration_key_map = self._generate_key_map(
+                self.integrations, 'key', entities.Integration, first_value=True
+            )
             odp_integration = self.integration_key_map.get('odp')
             if odp_integration:
                 self.public_key_for_odp = odp_integration.publicKey
@@ -191,7 +193,7 @@ class ProjectConfig:
 
     @staticmethod
     def _generate_key_map(
-        entity_list: Iterable[Any], key: str, entity_class: Type[EntityClass]
+        entity_list: Iterable[Any], key: str, entity_class: Type[EntityClass], first_value: bool = False
     ) -> dict[str, EntityClass]:
         """ Helper method to generate map from key to entity object for given list of dicts.
 
@@ -199,13 +201,16 @@ class ProjectConfig:
             entity_list: List consisting of dict.
             key: Key in each dict which will be key in the map.
             entity_class: Class representing the entity.
+            first_value: If True, only save the first value found for each key.
 
         Returns:
             Map mapping key to entity object.
         """
 
-        key_map = {}
+        key_map: dict[str, EntityClass] = {}
         for obj in entity_list:
+            if first_value and key_map.get(obj[key]):
+                continue
             key_map[obj[key]] = entity_class(**obj)
 
         return key_map
