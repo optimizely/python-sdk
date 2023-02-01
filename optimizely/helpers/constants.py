@@ -149,7 +149,6 @@ JSON_SCHEMA = {
         },
         "version": {"type": "string"},
         "revision": {"type": "string"},
-        "sdkKey": {"type": "string"},
         "integrations": {
             "type": "array",
             "items": {
@@ -169,6 +168,5 @@ JSON_SCHEMA = {
         "attributes",
         "version",
         "revision",
-        "sdkKey",
     ],
 }
