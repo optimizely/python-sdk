@@ -18,7 +18,7 @@ import copy
 from optimizely.notification_center_registry import _NotificationCenterRegistry
 from optimizely.notification_center import NotificationCenter
 from optimizely.optimizely import Optimizely
-from optimizely.helpers.enums import NotificationTypes
+from optimizely.helpers.enums import NotificationTypes, Errors
 from .base import BaseTest
 
 
@@ -37,7 +37,7 @@ class NotificationCenterRegistryTest(BaseTest):
 
         _NotificationCenterRegistry.get_notification_center(None, logger)
 
-        logger.error.assert_called_once_with('No SDK key provided to get_notification_center')
+        logger.error.assert_called_once_with(f'{Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
 
         client.close()
 

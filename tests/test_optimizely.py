@@ -96,7 +96,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_client_logger.error.assert_has_calls([
             mock.call('Provided "datafile" is in an invalid format.'),
-            mock.call('No SDK key provided to get_notification_center')
+            mock.call(f'{enums.Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
         ], any_order=True)
         self.assertIsNone(opt_obj.config_manager.get_config())
 
@@ -109,7 +109,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_client_logger.error.assert_has_calls([
             mock.call('Provided "datafile" is in an invalid format.'),
-            mock.call('No SDK key provided to get_notification_center')
+            mock.call(f'{enums.Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
         ], any_order=True)
         self.assertIsNone(opt_obj.config_manager.get_config())
 
@@ -122,7 +122,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_client_logger.error.assert_has_calls([
             mock.call('Provided "datafile" is in an invalid format.'),
-            mock.call('No SDK key provided to get_notification_center')
+            mock.call(f'{enums.Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
         ], any_order=True)
         self.assertIsNone(opt_obj.config_manager.get_config())
 
@@ -216,7 +216,7 @@ class OptimizelyTest(base.BaseTest):
             opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_unsupported_version))
 
         mock_client_logger.error.assert_has_calls([
-            mock.call('No SDK key provided to get_notification_center'),
+            mock.call(f'{enums.Errors.MISSING_SDK_KEY} ODP may not work properly without it.'),
             mock.call('This version of the Python SDK does not support the given datafile version: "5".')
         ], any_order=True)
 
@@ -290,7 +290,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_client_logger.error.assert_has_calls([
             mock.call('Provided "datafile" is in an invalid format.'),
-            mock.call('No SDK key provided to get_notification_center')
+            mock.call(f'{enums.Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
         ], any_order=True)
         args, kwargs = mock_error_handler.call_args
         self.assertIsInstance(args[0], exceptions.InvalidInputException)
@@ -310,7 +310,7 @@ class OptimizelyTest(base.BaseTest):
 
         mock_client_logger.error.assert_has_calls([
             mock.call('Provided "datafile" is in an invalid format.'),
-            mock.call('No SDK key provided to get_notification_center')
+            mock.call(f'{enums.Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
         ], any_order=True)
         args, kwargs = mock_error_handler.call_args
         self.assertIsInstance(args[0], exceptions.InvalidInputException)

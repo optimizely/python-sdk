@@ -224,7 +224,7 @@ class PollingConfigManagerTest(base.BaseTest):
         """ Test that initialization fails if there is no sdk_key or datafile provided. """
         self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
-            'Must provide at least one of sdk_key or datafile.',
+            enums.Errors.MISSING_SDK_KEY,
             config_manager.PollingConfigManager,
             sdk_key=None,
             datafile=None,

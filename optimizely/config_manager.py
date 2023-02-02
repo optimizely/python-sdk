@@ -204,7 +204,8 @@ class PollingConfigManager(StaticConfigManager):
         """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
         Args:
-            sdk_key: Optional string uniquely identifying the datafile. If not provided, datafile is required.
+            sdk_key: Optional string uniquely identifying the datafile. If not provided, datafile must
+                     contain a sdk_key.
             datafile: Optional JSON string representing the project. If not provided, sdk_key is required.
             update_interval: Optional floating point number representing time interval in seconds
                              at which to request datafile and set ProjectConfig.
@@ -231,11 +232,11 @@ class PollingConfigManager(StaticConfigManager):
         )
         self._sdk_key = sdk_key or self._sdk_key
 
-        if sdk_key is None:
-            raise optimizely_exceptions.InvalidInputException('Must provide at least one of sdk_key or datafile.')
+        if self._sdk_key is None:
+            raise optimizely_exceptions.InvalidInputException(enums.Errors.MISSING_SDK_KEY)
 
         self.datafile_url = self.get_datafile_url(
-            sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
+            self._sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)

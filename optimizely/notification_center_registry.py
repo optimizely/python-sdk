@@ -16,6 +16,7 @@ from threading import Lock
 from typing import Optional
 from .logger import Logger as OptimizelyLogger
 from .notification_center import NotificationCenter
+from .helpers.enums import Errors
 
 
 class _NotificationCenterRegistry:
@@ -37,7 +38,7 @@ class _NotificationCenterRegistry:
         """
 
         if not sdk_key:
-            logger.error("No SDK key provided to get_notification_center")
+            logger.error(f'{Errors.MISSING_SDK_KEY} ODP may not work properly without it.')
             return None
 
         with cls._lock:
