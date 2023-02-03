@@ -1,4 +1,4 @@
-# Copyright 2016-2021, Optimizely
+# Copyright 2016-2023 Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -58,6 +58,7 @@ class BaseTest(unittest.TestCase):
     def setUp(self, config_dict='config_dict'):
         self.config_dict = {
             'revision': '42',
+            'sdkKey': 'basic-test',
             'version': '2',
             'events': [
                 {'key': 'test_event', 'experimentIds': ['111127'], 'id': '111095'},
@@ -150,6 +151,7 @@ class BaseTest(unittest.TestCase):
         # datafile version 4
         self.config_dict_with_features = {
             'revision': '1',
+            'sdkKey': 'features-test',
             'accountId': '12001',
             'projectId': '111111',
             'version': '4',
@@ -552,6 +554,7 @@ class BaseTest(unittest.TestCase):
 
         self.config_dict_with_multiple_experiments = {
             'revision': '42',
+            'sdkKey': 'multiple-experiments',
             'version': '2',
             'events': [
                 {'key': 'test_event', 'experimentIds': ['111127', '111130'], 'id': '111095'},
@@ -657,6 +660,7 @@ class BaseTest(unittest.TestCase):
 
         self.config_dict_with_unsupported_version = {
             'version': '5',
+            'sdkKey': 'unsupported-version',
             'rollouts': [],
             'projectId': '10431130345',
             'variables': [],
@@ -1073,6 +1077,7 @@ class BaseTest(unittest.TestCase):
                 {'key': 'user_signed_up', 'id': '594090', 'experimentIds': ['1323241598', '1323241599']},
             ],
             'revision': '3',
+            'sdkKey': 'typed-audiences',
         }
 
         self.config_dict_with_audience_segments = {
@@ -1261,8 +1266,15 @@ class BaseTest(unittest.TestCase):
                 }
             ],
             'accountId': '10367498574',
-            'events': [],
-            'revision': '101'
+            'events': [
+                {
+                    "experimentIds": ["10420810910"],
+                    "id": "10404198134",
+                    "key": "event1"
+                }
+            ],
+            'revision': '101',
+            'sdkKey': 'segments-test'
         }
 
         config = getattr(self, config_dict)

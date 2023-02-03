@@ -1,4 +1,4 @@
-# Copyright 2016-2022, Optimizely
+# Copyright 2016-2023, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -37,6 +37,7 @@ from .helpers import enums, validator
 from .helpers.sdk_settings import OptimizelySdkSettings
 from .helpers.enums import DecisionSources
 from .notification_center import NotificationCenter
+from .notification_center_registry import _NotificationCenterRegistry
 from .odp.lru_cache import LRUCache
 from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
@@ -143,18 +144,6 @@ class Optimizely:
             self.logger.exception(str(error))
             return
 
-        self.setup_odp()
-
-        self.odp_manager = OdpManager(
-            self.sdk_settings.odp_disabled,
-            self.sdk_settings.segments_cache,
-            self.sdk_settings.odp_segment_manager,
-            self.sdk_settings.odp_event_manager,
-            self.sdk_settings.fetch_segments_timeout,
-            self.sdk_settings.odp_event_timeout,
-            self.logger
-        )
-
         config_manager_options: dict[str, Any] = {
             'datafile': datafile,
             'logger': self.logger,
@@ -174,8 +163,8 @@ class Optimizely:
             else:
                 self.config_manager = StaticConfigManager(**config_manager_options)
 
-        if not self.sdk_settings.odp_disabled:
-            self._update_odp_config_on_datafile_update()
+        self.odp_manager: OdpManager
+        self.setup_odp(self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
@@ -1303,27 +1292,45 @@ class Optimizely:
             decisions[key] = decision
         return decisions
 
-    def setup_odp(self) -> None:
+    def setup_odp(self, sdk_key: Optional[str]) -> None:
         """
-        - Make sure cache is instantiated with provided parameters or defaults.
+        - Make sure odp manager is instantiated with provided parameters or defaults.
         - Set up listener to update odp_config when datafile is updated.
+        - Manually call callback in case datafile was received before the listener was registered.
         """
-        if self.sdk_settings.odp_disabled:
-            return
 
-        self.notification_center.add_notification_listener(
-            enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
-            self._update_odp_config_on_datafile_update
-        )
-
-        if self.sdk_settings.odp_segment_manager:
-            return
-
-        if not self.sdk_settings.segments_cache:
+        # no need to instantiate a cache if a custom cache or segment manager is provided.
+        if (
+            not self.sdk_settings.odp_disabled and
+            not self.sdk_settings.odp_segment_manager and
+            not self.sdk_settings.segments_cache
+        ):
             self.sdk_settings.segments_cache = LRUCache(
                 self.sdk_settings.segments_cache_size,
                 self.sdk_settings.segments_cache_timeout_in_secs
             )
+
+        self.odp_manager = OdpManager(
+            self.sdk_settings.odp_disabled,
+            self.sdk_settings.segments_cache,
+            self.sdk_settings.odp_segment_manager,
+            self.sdk_settings.odp_event_manager,
+            self.sdk_settings.fetch_segments_timeout,
+            self.sdk_settings.odp_event_timeout,
+            self.logger
+        )
+
+        if self.sdk_settings.odp_disabled:
+            return
+
+        internal_notification_center = _NotificationCenterRegistry.get_notification_center(sdk_key, self.logger)
+        if internal_notification_center:
+            internal_notification_center.add_notification_listener(
+                enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE,
+                self._update_odp_config_on_datafile_update
+            )
+
+        self._update_odp_config_on_datafile_update()
 
     def _update_odp_config_on_datafile_update(self) -> None:
         config = None
