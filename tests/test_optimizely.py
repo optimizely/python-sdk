@@ -5168,30 +5168,17 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         client.close()
 
-    def test_sdk_settings__accept_zero_cache_timeout(self):
+    def test_sdk_settings__use_default_cache_size_and_timeout_when_odp_flush_interval_none(self):
         mock_logger = mock.Mock()
-        sdk_settings = OptimizelySdkSettings(segments_cache_timeout_in_secs=0)
+        sdk_settings = OptimizelySdkSettings()
         client = optimizely.Optimizely(
             json.dumps(self.config_dict_with_audience_segments),
             logger=mock_logger,
             settings=sdk_settings
         )
         segments_cache = client.odp_manager.segment_manager.segments_cache
-        self.assertEqual(segments_cache.timeout, 0)
-
-        mock_logger.error.assert_not_called()
-        client.close()
-
-    def test_sdk_settings__accept_zero_cache_size(self):
-        mock_logger = mock.Mock()
-        sdk_settings = OptimizelySdkSettings(segments_cache_size=0)
-        client = optimizely.Optimizely(
-            json.dumps(self.config_dict_with_audience_segments),
-            logger=mock_logger,
-            settings=sdk_settings
-        )
-        segments_cache = client.odp_manager.segment_manager.segments_cache
-        self.assertEqual(segments_cache.capacity, 0)
+        self.assertEqual(segments_cache.timeout, enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS)
+        self.assertEqual(segments_cache.capacity, enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY)
 
         mock_logger.error.assert_not_called()
         client.close()
