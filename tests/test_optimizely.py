@@ -5084,7 +5084,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
     def test_sdk_settings__accept_zero_for_flush_interval(self):
         mock_logger = mock.Mock()
-        sdk_settings = OptimizelySdkSettings(odp_flush_interval=0)
+        sdk_settings = OptimizelySdkSettings(odp_event_flush_interval=0)
         client = optimizely.Optimizely(
             json.dumps(self.config_dict_with_audience_segments),
             logger=mock_logger,
@@ -5098,7 +5098,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
     def test_sdk_settings__should_use_default_when_odp_flush_interval_none(self):
         mock_logger = mock.Mock()
-        sdk_settings = OptimizelySdkSettings(odp_flush_interval=None)
+        sdk_settings = OptimizelySdkSettings(odp_event_flush_interval=None)
         client = optimizely.Optimizely(
             json.dumps(self.config_dict_with_audience_segments),
             logger=mock_logger,
@@ -5168,7 +5168,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         client.close()
 
-    def test_sdk_settings__accept_default_when_cache_timeout_zero(self):
+    def test_sdk_settings__accept_zero_cache_timeout(self):
         mock_logger = mock.Mock()
         sdk_settings = OptimizelySdkSettings(segments_cache_timeout_in_secs=0)
         client = optimizely.Optimizely(
@@ -5182,7 +5182,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         client.close()
 
-    def test_sdk_settings__accept_default_when_cache_size_zero(self):
+    def test_sdk_settings__accept_zero_cache_size(self):
         mock_logger = mock.Mock()
         sdk_settings = OptimizelySdkSettings(segments_cache_size=0)
         client = optimizely.Optimizely(
@@ -5196,7 +5196,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_logger.error.assert_not_called()
         client.close()
 
-    def test_sdk_settings__accept_default_when_cache_size_and_cache_timeout_zero(self):
+    def test_sdk_settings__accept_zero_cache_size_timeout_and_cache_size(self):
         mock_logger = mock.Mock()
         sdk_settings = OptimizelySdkSettings(segments_cache_size=0, segments_cache_timeout_in_secs=0)
         client = optimizely.Optimizely(

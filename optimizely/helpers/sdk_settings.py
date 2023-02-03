@@ -31,9 +31,9 @@ class OptimizelySdkSettings:
             odp_segments_cache: Optional[OptimizelySegmentsCache] = None,
             odp_segment_manager: Optional[OdpSegmentManager] = None,
             odp_event_manager: Optional[OdpEventManager] = None,
-            fetch_segments_timeout: Optional[int] = None,
-            odp_event_timeout: Optional[int] = None,
-            odp_flush_interval: Optional[int] = None
+            odp_segment_request_timeout: Optional[int] = None,
+            odp_event_request_timeout: Optional[int] = None,
+            odp_event_flush_interval: Optional[int] = None
     ) -> None:
         """
         Args:
@@ -48,10 +48,11 @@ class OptimizelySdkSettings:
             `fetch_qualified_segments(user_key, user_value, options)`.
           odp_event_manager: A custom odp event manager. Required method is:
             `send_event(type:, action:, identifiers:, data:)`
-          fetch_segments_timeout: A fetch segment timeout in seconds (optional).
-          odp_event_timeout: A send odp event timeout in seconds (optional).
-            Network timeout - how long to wait for odp platform to respond before failing.
-          odp_flush_interval: Time to wait for events to accumulate before sending a batch in seconds (optional).
+          odp_segment_request_timeout: A fetch segment timeout in seconds (optional) - how long to wait for
+            odp platform to respond before failing.
+          odp_event_request_timeout: A send odp event timeout in seconds (optional) - how long to wait for
+            odp platform to respond before failing.
+          odp_event_flush_interval: Time to wait for events to accumulate before sending a batch in seconds (optional).
         """
 
         self.odp_disabled = odp_disabled
@@ -60,6 +61,6 @@ class OptimizelySdkSettings:
         self.segments_cache = odp_segments_cache
         self.odp_segment_manager = odp_segment_manager
         self.odp_event_manager = odp_event_manager
-        self.fetch_segments_timeout = fetch_segments_timeout
-        self.odp_event_timeout = odp_event_timeout
-        self.odp_flush_interval = odp_flush_interval
+        self.fetch_segments_timeout = odp_segment_request_timeout
+        self.odp_event_timeout = odp_event_request_timeout
+        self.odp_flush_interval = odp_event_flush_interval

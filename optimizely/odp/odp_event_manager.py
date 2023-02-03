@@ -47,7 +47,7 @@ class OdpEventManager:
         self,
         logger: Optional[_logging.Logger] = None,
         api_manager: Optional[OdpEventApiManager] = None,
-        timeout: Optional[int] = None,
+        request_timeout: Optional[int] = None,
         flush_interval: Optional[int] = None
     ):
         """OdpEventManager init method to configure event batching.
@@ -55,25 +55,21 @@ class OdpEventManager:
         Args:
             logger: Optional component which provides a log method to log messages. By default nothing would be logged.
             api_manager: Optional component which sends events to ODP.
-            timeout: Optional event timeout in seconds. How long to wait for odp platform to respond before failing.
+            request_timeout: Optional event timeout in seconds - wait time for odp platform to respond before failing.
             flush_interval: Optional time to wait for events to accumulate before sending the batch in seconds.
         """
         self.logger = logger or _logging.NoOpLogger()
-        self.api_manager = api_manager or OdpEventApiManager(self.logger, timeout)
+        self.api_manager = api_manager or OdpEventApiManager(self.logger, request_timeout)
 
         self.odp_config: Optional[OdpConfig] = None
         self.api_key: Optional[str] = None
         self.api_host: Optional[str] = None
 
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
-        self.batch_size = OdpEventManagerConfig.DEFAULT_BATCH_SIZE
+        self.batch_size = 0 if flush_interval == 0 else OdpEventManagerConfig.DEFAULT_BATCH_SIZE
 
-        if flush_interval is None:
-            self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL
-        elif flush_interval == 0:
-            self.flush_interval = 0
-        else:
-            self.flush_interval = flush_interval
+        self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL if flush_interval is None \
+            else flush_interval
 
         self._flush_deadline: float = 0
         self.retry_count = OdpEventManagerConfig.DEFAULT_RETRY_COUNT
