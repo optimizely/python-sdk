@@ -1,5 +1,10 @@
 # Optimizely Python SDK Changelog
 
+## Unreleased
+
+### Breaking Changes:
+* `PollingConfigManager` now requires `sdk_key` even when providing a url. ([#413](https://github.com/optimizely/python-sdk/pull/413))
+
 ## 4.1.0
 July 7th, 2022
 
