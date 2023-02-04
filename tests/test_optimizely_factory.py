@@ -12,9 +12,11 @@
 # limitations under the License.
 
 import json
+import time
 from unittest import mock
 
 from optimizely.config_manager import PollingConfigManager
+from optimizely.odp.odp_config import OdpConfigState
 from optimizely.error_handler import NoOpErrorHandler
 from optimizely.event_dispatcher import EventDispatcher
 from optimizely.notification_center import NotificationCenter
@@ -26,6 +28,10 @@ from . import base
 
 @mock.patch('requests.get')
 class OptimizelyFactoryTest(base.BaseTest):
+    def delay(*args, **kwargs):
+        time.sleep(.5)
+        return mock.DEFAULT
+
     def setUp(self):
         super().setUp()
         self.datafile = '{ revision: "42" }'
@@ -179,5 +185,84 @@ class OptimizelyFactoryTest(base.BaseTest):
         odp_settings = self.config_dict_with_audience_segments['integrations'][0]
         self.assertEqual(odp_config.get_api_key(), odp_settings['publicKey'])
         self.assertEqual(odp_config.get_api_host(), odp_settings['host'])
+
+        client.close()
+
+    def test_update_odp_config_correctly_with_custom_config_manager_and_delay(self, _):
+        logger = mock.MagicMock()
+
+        test_datafile = json.dumps(self.config_dict_with_audience_segments)
+        test_response = self.fake_server_response(status_code=200, content=test_datafile)
+
+        with mock.patch('requests.get', return_value=test_response, side_effect=self.delay):
+            # initialize config_manager with delay, so it will receive the datafile after client initialization
+            config_manager = PollingConfigManager(sdk_key='test', logger=logger)
+            client = OptimizelyFactory.default_instance_with_config_manager(config_manager=config_manager)
+            odp_manager = client.odp_manager
+
+            # confirm odp config has not yet been updated
+            self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.UNDETERMINED)
+
+            # wait for datafile
+            client.config_manager.get_config()
+
+        # wait for odp config to be updated
+        odp_manager.event_manager.event_queue.join()
+
+        self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.INTEGRATED)
+
+        logger.error.assert_not_called()
+
+        client.close()
+
+    def test_update_odp_config_correctly_with_delay(self, _):
+        logger = mock.MagicMock()
+
+        test_datafile = json.dumps(self.config_dict_with_audience_segments)
+        test_response = self.fake_server_response(status_code=200, content=test_datafile)
+
+        with mock.patch('requests.get', return_value=test_response, side_effect=self.delay):
+            # initialize config_manager with delay, so it will receive the datafile after client initialization
+            client = OptimizelyFactory.default_instance(sdk_key='test')
+            odp_manager = client.odp_manager
+
+            # confirm odp config has not yet been updated
+            self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.UNDETERMINED)
+
+            # wait for datafile
+            client.config_manager.get_config()
+
+        # wait for odp config to be updated
+        odp_manager.event_manager.event_queue.join()
+
+        self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.INTEGRATED)
+
+        logger.error.assert_not_called()
+
+        client.close()
+
+    def test_odp_updated_with_custom_instance(self, _):
+        logger = mock.MagicMock()
+
+        test_datafile = json.dumps(self.config_dict_with_audience_segments)
+        test_response = self.fake_server_response(status_code=200, content=test_datafile)
+
+        with mock.patch('requests.get', return_value=test_response, side_effect=self.delay):
+            # initialize config_manager with delay, so it will receive the datafile after client initialization
+            client = OptimizelyFactory.custom_instance(sdk_key='test')
+            odp_manager = client.odp_manager
+
+            # confirm odp config has not yet been updated
+            self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.UNDETERMINED)
+
+            # wait for datafile
+            client.config_manager.get_config()
+
+        # wait for odp config to be updated
+        odp_manager.event_manager.event_queue.join()
+
+        self.assertEqual(odp_manager.odp_config.odp_state(), OdpConfigState.INTEGRATED)
+
+        logger.error.assert_not_called()
 
         client.close()
