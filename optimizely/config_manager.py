@@ -1,4 +1,4 @@
-# Copyright 2019-2020, 2022, Optimizely
+# Copyright 2019-2020, 2022-2023, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -25,6 +25,7 @@ from . import logger as optimizely_logger
 from . import project_config
 from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .notification_center import NotificationCenter
+from .notification_center_registry import _NotificationCenterRegistry
 from .helpers import enums
 from .helpers import validator
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
@@ -78,6 +79,13 @@ class BaseConfigManager(ABC):
         The config should be an instance of project_config.ProjectConfig."""
         pass
 
+    @abstractmethod
+    def get_sdk_key(self) -> Optional[str]:
+        """ Get sdk_key for use by optimizely.Optimizely.
+        The sdk_key should uniquely identify the datafile for a project and environment combination.
+        """
+        pass
+
 
 class StaticConfigManager(BaseConfigManager):
     """ Config manager that returns ProjectConfig based on provided datafile. """
@@ -106,8 +114,12 @@ class StaticConfigManager(BaseConfigManager):
         )
         self._config: project_config.ProjectConfig = None  # type: ignore[assignment]
         self.optimizely_config: Optional[OptimizelyConfig] = None
+        self._sdk_key: Optional[str] = None
         self.validate_schema = not skip_json_validation
         self._set_config(datafile)
+
+    def get_sdk_key(self) -> Optional[str]:
+        return self._sdk_key
 
     def _set_config(self, datafile: Optional[str | bytes]) -> None:
         """ Looks up and sets datafile and config based on response body.
@@ -146,8 +158,16 @@ class StaticConfigManager(BaseConfigManager):
             return
 
         self._config = config
+        self._sdk_key = self._sdk_key or config.sdk_key
         self.optimizely_config = OptimizelyConfigService(config).get_config()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
+
+        internal_notification_center = _NotificationCenterRegistry.get_notification_center(
+            self._sdk_key, self.logger
+        )
+        if internal_notification_center:
+            internal_notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
+
         self.logger.debug(
             'Received new datafile and updated config. '
             f'Old revision number: {previous_revision}. New revision number: {config.get_revision()}.'
@@ -181,11 +201,12 @@ class PollingConfigManager(StaticConfigManager):
         notification_center: Optional[NotificationCenter] = None,
         skip_json_validation: Optional[bool] = False,
     ):
-        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
+        """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
         Args:
-            sdk_key: Optional string uniquely identifying the datafile.
-            datafile: Optional JSON string representing the project.
+            sdk_key: Optional string uniquely identifying the datafile. If not provided, datafile must
+                     contain a sdk_key.
+            datafile: Optional JSON string representing the project. If not provided, sdk_key is required.
             update_interval: Optional floating point number representing time interval in seconds
                              at which to request datafile and set ProjectConfig.
             blocking_timeout: Optional Time in seconds to block the get_config call until config object
@@ -209,8 +230,13 @@ class PollingConfigManager(StaticConfigManager):
             notification_center=notification_center,
             skip_json_validation=skip_json_validation,
         )
+        self._sdk_key = sdk_key or self._sdk_key
+
+        if self._sdk_key is None:
+            raise optimizely_exceptions.InvalidInputException(enums.Errors.MISSING_SDK_KEY)
+
         self.datafile_url = self.get_datafile_url(
-            sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
+            self._sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
         self.set_update_interval(update_interval)
         self.set_blocking_timeout(blocking_timeout)
@@ -415,7 +441,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
         *args: Any,
         **kwargs: Any
     ):
-        """ Initialize config manager. One of sdk_key or url has to be set to be able to use.
+        """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
         Args:
             datafile_access_token: String to be attached to the request header to fetch the authenticated datafile.

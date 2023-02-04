@@ -220,14 +220,14 @@ class StaticConfigManagerTest(base.BaseTest):
 
 @mock.patch('requests.get')
 class PollingConfigManagerTest(base.BaseTest):
-    def test_init__no_sdk_key_no_url__fails(self, _):
-        """ Test that initialization fails if there is no sdk_key or url provided. """
+    def test_init__no_sdk_key_no_datafile__fails(self, _):
+        """ Test that initialization fails if there is no sdk_key or datafile provided. """
         self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
-            'Must provide at least one of sdk_key or url.',
+            enums.Errors.MISSING_SDK_KEY,
             config_manager.PollingConfigManager,
             sdk_key=None,
-            url=None,
+            datafile=None,
         )
 
     def test_get_datafile_url__no_sdk_key_no_url_raises(self, _):
