@@ -1317,7 +1317,8 @@ class Optimizely:
             self.sdk_settings.odp_event_manager,
             self.sdk_settings.fetch_segments_timeout,
             self.sdk_settings.odp_event_timeout,
-            self.logger
+            self.sdk_settings.odp_flush_interval,
+            self.logger,
         )
 
         if self.sdk_settings.odp_disabled:

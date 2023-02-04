@@ -5140,10 +5140,6 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             uc = self.optimizely.create_user_context(u)
             self.assertIsNone(uc, "invalid user id should return none")
 
-    def test_invalid_flag_key(self):
-        """Tests invalid flag key in function get_flag_variation_by_key()."""
-        pass
-
     def test_send_identify_event__when_called_with_odp_enabled(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
@@ -5163,8 +5159,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             settings=sdk_settings
         )
         flush_interval = client.odp_manager.event_manager.flush_interval
-        self.assertEqual(flush_interval, 0)
 
+        self.assertEqual(flush_interval, 0)
         mock_logger.error.assert_not_called()
         client.close()
 
