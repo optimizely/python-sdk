@@ -5140,17 +5140,41 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             uc = self.optimizely.create_user_context(u)
             self.assertIsNone(uc, "invalid user id should return none")
 
-    def test_invalid_flag_key(self):
-        """Tests invalid flag key in function get_flag_variation_by_key()."""
-        pass
-
-    def test_send_identify_event_when_called_with_odp_enabled(self):
+    def test_send_identify_event__when_called_with_odp_enabled(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
         with mock.patch.object(client, 'identify_user') as identify:
             client.create_user_context('user-id')
 
         identify.assert_called_once_with('user-id')
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__accept_zero_for_flush_interval(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_event_flush_interval=0)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        flush_interval = client.odp_manager.event_manager.flush_interval
+
+        self.assertEqual(flush_interval, 0)
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__should_use_default_when_odp_flush_interval_none(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(odp_event_flush_interval=None)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        flush_interval = client.odp_manager.event_manager.flush_interval
+        self.assertEqual(flush_interval, enums.OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL)
+
         mock_logger.error.assert_not_called()
         client.close()
 
@@ -5162,6 +5186,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             logger=mock_logger,
             settings=sdk_settings
         )
+
         self.assertIsNone(client.odp_manager.event_manager)
         self.assertIsNone(client.odp_manager.segment_manager)
         mock_logger.info.assert_called_once_with('ODP is disabled.')
@@ -5207,6 +5232,36 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         segments_cache = client.odp_manager.segment_manager.segments_cache
         self.assertEqual(segments_cache.capacity, 10)
         self.assertEqual(segments_cache.timeout, 5)
+
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__use_default_cache_size_and_timeout_when_odp_flush_interval_none(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings()
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.timeout, enums.OdpSegmentsCacheConfig.DEFAULT_TIMEOUT_SECS)
+        self.assertEqual(segments_cache.capacity, enums.OdpSegmentsCacheConfig.DEFAULT_CAPACITY)
+
+        mock_logger.error.assert_not_called()
+        client.close()
+
+    def test_sdk_settings__accept_zero_cache_size_timeout_and_cache_size(self):
+        mock_logger = mock.Mock()
+        sdk_settings = OptimizelySdkSettings(segments_cache_size=0, segments_cache_timeout_in_secs=0)
+        client = optimizely.Optimizely(
+            json.dumps(self.config_dict_with_audience_segments),
+            logger=mock_logger,
+            settings=sdk_settings
+        )
+        segments_cache = client.odp_manager.segment_manager.segments_cache
+        self.assertEqual(segments_cache.capacity, 0)
+        self.assertEqual(segments_cache.timeout, 0)
 
         mock_logger.error.assert_not_called()
         client.close()

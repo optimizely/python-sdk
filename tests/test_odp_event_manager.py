@@ -382,10 +382,10 @@ class OdpEventManagerTest(BaseTest):
         mock_send.assert_called_once_with(self.api_key, self.api_host, [processed_event])
         event_manager.stop()
 
-    def test_odp_event_manager_flush_timeout(self, *args):
+    def test_odp_event_manager_flush_interval(self, *args):
+        """Verify that both events have been sent together after they have been batched."""
         mock_logger = mock.Mock()
-        event_manager = OdpEventManager(mock_logger)
-        event_manager.flush_interval = .5
+        event_manager = OdpEventManager(mock_logger, flush_interval=.5)
         event_manager.start(self.odp_config)
 
         with mock.patch.object(
@@ -394,11 +394,32 @@ class OdpEventManagerTest(BaseTest):
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
             event_manager.event_queue.join()
-            time.sleep(1)
+            time.sleep(1)   # ensures that the flush interval time has passed
 
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_any_call('ODP event queue: flushing on interval.')
         mock_send.assert_called_once_with(self.api_key, self.api_host, self.processed_events)
+        event_manager.stop()
+
+    def test_odp_event_manager_flush_interval_is_zero(self, *args):
+        """Verify that event is immediately if flush interval is zero."""
+        mock_logger = mock.Mock()
+        event_manager = OdpEventManager(mock_logger, flush_interval=0)
+        event_manager.start(self.odp_config)
+
+        with mock.patch.object(
+                event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=False
+        ) as mock_send:
+            event_manager.send_event(**self.events[0])
+            event_manager.send_event(**self.events[1])
+            event_manager.event_queue.join()
+
+        mock_send.assert_has_calls(
+            [mock.call(self.api_key, self.api_host, [self.processed_events[0]]),
+             mock.call(self.api_key, self.api_host, [self.processed_events[1]])]
+        )
+        mock_logger.error.assert_not_called()
+        mock_logger.debug.assert_any_call('ODP event queue: flushing batch size 1.')
         event_manager.stop()
 
     def test_odp_event_manager_events_before_odp_ready(self, *args):
