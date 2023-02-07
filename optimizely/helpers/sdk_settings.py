@@ -48,10 +48,9 @@ class OptimizelySdkSettings:
             `fetch_qualified_segments(user_key, user_value, options)`.
           odp_event_manager: A custom odp event manager. Required method is:
             `send_event(type:, action:, identifiers:, data:)`
-          odp_segment_request_timeout: A fetch segment timeout in seconds (optional) - how long to wait for
-            odp platform to respond before failing.
-          odp_event_request_timeout: A send odp event timeout in seconds (optional) - how long to wait for
-            odp platform to respond before failing.
+          odp_segment_request_timeout: Time to wait in seconds for fetch_qualified_segments request to
+            send successfully (optional).
+          odp_event_request_timeout: Time to wait in seconds for send_odp_events request to send successfully.
           odp_event_flush_interval: Time to wait for events to accumulate before sending a batch in seconds (optional).
         """
 
