@@ -73,7 +73,7 @@ class OptimizelyUserContext:
         ] = {}
 
         if self.client and identify:
-            self.client.identify_user(user_id)
+            self.client._identify_user(user_id)
 
     class OptimizelyDecisionContext:
         """ Using class with attributes here instead of namedtuple because
@@ -327,7 +327,7 @@ class OptimizelyUserContext:
             A boolean value indicating if the fetch was successful.
         """
         def _fetch_qualified_segments() -> bool:
-            segments = self.client.fetch_qualified_segments(self.user_id, options or []) if self.client else None
+            segments = self.client._fetch_qualified_segments(self.user_id, options or []) if self.client else None
             self.set_qualified_segments(segments)
             success = segments is not None
 

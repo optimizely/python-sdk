@@ -5143,7 +5143,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     def test_send_identify_event__when_called_with_odp_enabled(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
-        with mock.patch.object(client, 'identify_user') as identify:
+        with mock.patch.object(client, '_identify_user') as identify:
             client.create_user_context('user-id')
 
         identify.assert_called_once_with('user-id')
