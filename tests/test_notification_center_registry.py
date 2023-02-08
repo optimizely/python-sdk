@@ -69,8 +69,9 @@ class NotificationCenterRegistryTest(BaseTest):
             mock_send.assert_called_once()
             mock_send.reset_mock()
 
+            self.assertIn(notification_center, _NotificationCenterRegistry._notification_centers.values())
             _NotificationCenterRegistry.remove_notification_center(sdk_key)
-            self.assertNotIn(notification_center, _NotificationCenterRegistry._notification_centers)
+            self.assertNotIn(notification_center, _NotificationCenterRegistry._notification_centers.values())
 
             revised_datafile = copy.deepcopy(self.config_dict_with_audience_segments)
             revised_datafile['revision'] = str(int(revised_datafile['revision']) + 1)
