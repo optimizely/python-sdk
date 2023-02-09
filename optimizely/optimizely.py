@@ -164,7 +164,7 @@ class Optimizely:
                 self.config_manager = StaticConfigManager(**config_manager_options)
 
         self.odp_manager: OdpManager
-        self.setup_odp(self.config_manager.get_sdk_key())
+        self._setup_odp(self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
@@ -1292,7 +1292,7 @@ class Optimizely:
             decisions[key] = decision
         return decisions
 
-    def setup_odp(self, sdk_key: Optional[str]) -> None:
+    def _setup_odp(self, sdk_key: Optional[str]) -> None:
         """
         - Make sure odp manager is instantiated with provided parameters or defaults.
         - Set up listener to update odp_config when datafile is updated.
@@ -1352,14 +1352,14 @@ class Optimizely:
             config.all_segments
         )
 
-    def identify_user(self, user_id: str) -> None:
+    def _identify_user(self, user_id: str) -> None:
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('identify_user'))
             return
 
         self.odp_manager.identify_user(user_id)
 
-    def fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
+    def _fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('fetch_qualified_segments'))
             return None

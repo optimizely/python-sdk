@@ -2014,7 +2014,7 @@ class UserContextTest(base.BaseTest):
     def test_send_identify_event_when_user_context_created(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
-        with mock.patch.object(client, 'identify_user') as identify:
+        with mock.patch.object(client, '_identify_user') as identify:
             OptimizelyUserContext(client, mock_logger, 'user-id')
 
         identify.assert_called_once_with('user-id')
@@ -2024,13 +2024,13 @@ class UserContextTest(base.BaseTest):
     def test_identify_is_skipped_with_decisions(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_features), logger=mock_logger)
-        with mock.patch.object(client, 'identify_user') as identify:
+        with mock.patch.object(client, '_identify_user') as identify:
             user_context = OptimizelyUserContext(client, mock_logger, 'user-id')
 
         identify.assert_called_once_with('user-id')
         mock_logger.error.assert_not_called()
 
-        with mock.patch.object(client, 'identify_user') as identify:
+        with mock.patch.object(client, '_identify_user') as identify:
             user_context.decide('test_feature_in_rollout')
             user_context.decide_all()
             user_context.decide_for_keys(['test_feature_in_rollout'])
