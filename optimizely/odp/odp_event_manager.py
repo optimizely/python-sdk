@@ -66,7 +66,7 @@ class OdpEventManager:
         self.api_host: Optional[str] = None
 
         self.event_queue: Queue[OdpEvent | Signal] = Queue(OdpEventManagerConfig.DEFAULT_QUEUE_CAPACITY)
-        self.batch_size = 0 if flush_interval == 0 else OdpEventManagerConfig.DEFAULT_BATCH_SIZE
+        self.batch_size = 1 if flush_interval == 0 else OdpEventManagerConfig.DEFAULT_BATCH_SIZE
 
         self.flush_interval = OdpEventManagerConfig.DEFAULT_FLUSH_INTERVAL if flush_interval is None \
             else flush_interval
