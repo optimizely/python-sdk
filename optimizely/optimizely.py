@@ -1387,7 +1387,7 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('send_odp_event'))
             return
 
-        if not identifiers:
+        if not identifiers or not isinstance(identifiers, dict):
             self.logger.error('ODP events must have at least one key-value pair in identifiers.')
             return
 
