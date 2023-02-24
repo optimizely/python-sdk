@@ -5386,7 +5386,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             logger=mock_logger,
         )
         with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
-            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
             client.close()
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_called_with('ODP event queue: flushing batch size 1.')
@@ -5405,7 +5405,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             client.config_manager.get_config()
 
         with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
-            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
             client.close()
 
         mock_logger.error.assert_not_called()
@@ -5419,14 +5419,14 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             settings=OptimizelySdkSettings(odp_disabled=True)
         )
         with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
-            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
             client.close()
         mock_logger.error.assert_called_with('ODP is not enabled.')
 
     def test_send_odp_event__log_debug_if_datafile_not_ready(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
-        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+        client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
 
         mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
         client.close()
@@ -5449,7 +5449,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             client.config_manager.get_config()
 
         with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
-            client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+            client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
             client.close()
 
         mock_logger.error.assert_called_with('ODP is not enabled.')
@@ -5458,15 +5458,33 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
 
-        client.send_odp_event(type='wow', action='great', identifiers={}, data={'test': {}})
+        client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={'test': {}})
         client.close()
 
         mock_logger.error.assert_called_with('ODP data is not valid.')
 
+    def test_send_odp_event__log_error_with_empty_identifiers(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+
+        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+        client.close()
+
+        mock_logger.error.assert_called_with('ODP events must have at least one key-value pair in identifiers.')
+
+    def test_send_odp_event__log_error_with_no_identifiers(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+
+        client.send_odp_event(type='wow', action='great', identifiers=None, data={})
+        client.close()
+
+        mock_logger.error.assert_called_with('ODP events must have at least one key-value pair in identifiers.')
+
     def test_send_odp_event__log_error_with_missing_integrations_data(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(json.dumps(self.config_dict_with_typed_audiences), logger=mock_logger)
-        client.send_odp_event(type='wow', action='great', identifiers={}, data={})
+        client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
 
         mock_logger.error.assert_called_with('ODP is not integrated.')
         client.close()
