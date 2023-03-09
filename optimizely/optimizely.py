@@ -1357,11 +1357,25 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('identify_user'))
             return
 
+        if not self.odp_manager.enabled:
+            self.logger.debug('ODP identify event is not dispatched (ODP disabled).')
+            return
+
+        config = self.config_manager.get_config()
+        if not config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('identify_user'))
+            return
+
         self.odp_manager.identify_user(user_id)
 
     def _fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('fetch_qualified_segments'))
+            return None
+
+        config = self.config_manager.get_config()
+        if not config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('fetch_qualified_segments'))
             return None
 
         return self.odp_manager.fetch_qualified_segments(user_id, options or [])
@@ -1389,6 +1403,11 @@ class Optimizely:
 
         if not identifiers or not isinstance(identifiers, dict):
             self.logger.error('ODP events must have at least one key-value pair in identifiers.')
+            return
+
+        config = self.config_manager.get_config()
+        if not config:
+            self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('send_odp_event'))
             return
 
         self.odp_manager.send_event(type, action, identifiers, data or {})
