@@ -1,5 +1,10 @@
 # Optimizely Python SDK Changelog
 
+## 4.1.1
+March 10th, 2023
+
+We updated our README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack. ([#420](https://github.com/optimizely/python-sdk/pull/420))
+
 ## 4.1.0
 July 7th, 2022
 
@@ -30,10 +35,10 @@ January 12th, 2022
 September 16th, 2021
 
 ### New Features
-* Added new public properties to OptimizelyConfig. 
+* Added new public properties to OptimizelyConfig.
   - sdk_key and environment_key [#338] (https://github.com/optimizely/python-sdk/pull/338)
   - attributes and events [#339] (https://github.com/optimizely/python-sdk/pull/339)
-  - experiment_rules, delivery_rules, audiences and audiences in OptimizelyExperiment 
+  - experiment_rules, delivery_rules, audiences and audiences in OptimizelyExperiment
     - [#342] (https://github.com/optimizely/python-sdk/pull/342)
     - [#351] (https://github.com/optimizely/python-sdk/pull/351/files)
 * For details please refer to our documentation page:
@@ -158,7 +163,7 @@ October 28th, 2019
   * To configure event batching, set the `batch_size` and `flush_interval` properties when initializing instance of [BatchEventProcessor](https://github.com/optimizely/python-sdk/blob/3.3.x/optimizely/event/event_processor.py#L45).
   * Event batching is disabled by default. You can pass in instance of `BatchEventProcessor` when creating `Optimizely` instance to enable event batching.
   * Users can subscribe to `LogEvent` notification to be notified of whenever a payload consisting of a batch of user events is handed off to the event dispatcher to send to Optimizely's backend.
-* Introduced blocking timeout in `PollingConfigManager`. By default, calls to `get_config` will block for maximum of 10 seconds until config is available. 
+* Introduced blocking timeout in `PollingConfigManager`. By default, calls to `get_config` will block for maximum of 10 seconds until config is available.
 
 ### Bug Fixes:
 * Fixed incorrect log message when numeric metric is not used. ([#217](https://github.com/optimizely/python-sdk/pull/217))
