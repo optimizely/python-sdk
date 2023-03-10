@@ -13,7 +13,7 @@ Optimizely Rollouts is [free feature flags](https://www.optimizely.com/free-feat
 
 ## Get Started
 
-Refer to the [Python SDK's developer documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/python) for detailed instructions on getting started with using the SDK.
+Refer to the [Python SDK's developer documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/python-sdk) for detailed instructions on getting started with using the SDK.
 
 ### Requirements
 
@@ -222,9 +222,13 @@ Please see [CONTRIBUTING](https://github.com/optimizely/python-sdk/blob/master/C
 ### Credits
 
 This software incorporates code from the following open source projects:
+
 requests (Apache-2.0 License: https://github.com/psf/requests/blob/master/LICENSE)
+
 pyOpenSSL (Apache-2.0 License https://github.com/pyca/pyopenssl/blob/main/LICENSE)
+
 cryptography (Apache-2.0 https://github.com/pyca/cryptography/blob/main/LICENSE.APACHE)
+
 idna (BSD 3-Clause License https://github.com/kjd/idna/blob/master/LICENSE.md)
 
 ### Other Optimizely SDKs
