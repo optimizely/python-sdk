@@ -3,28 +3,25 @@
 [![PyPI version](https://badge.fury.io/py/optimizely-sdk.svg)](https://pypi.org/project/optimizely-sdk)
 [![Build Status](https://travis-ci.org/optimizely/python-sdk.svg?branch=master)](https://travis-ci.org/optimizely/python-sdk)
 [![Coverage Status](https://coveralls.io/repos/github/optimizely/python-sdk/badge.svg)](https://coveralls.io/github/optimizely/python-sdk)
-[![Documentation Status](https://readthedocs.org/projects/optimizely-python-sdk/badge/?version=latest)](https://optimizely-python-sdk.readthedocs.io/en/latest/?badge=latest)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
-This repository houses the official Python SDK for use with Optimizely
-Full Stack and Optimizely Rollouts.
+This repository houses the Python SDK for use with Optimizely Feature Experimentation and Optimizely Full Stack (legacy).
 
-Optimizely Full Stack is A/B testing and feature flag management for
-product development teams. Experiment in any application. Make every
-feature on your roadmap an opportunity to learn. Learn more at
-<https://www.optimizely.com/platform/full-stack/>, or see the [Full
-Stack
-documentation](https://docs.developers.optimizely.com/full-stack/docs).
+Optimizely Feature Experimentation is an A/B testing and feature management tool for product development teams that enables you to experiment at every step. Using Optimizely Feature Experimentation allows for every feature on your roadmap to be an opportunity to discover hidden insights. Learn more at [Optimizely.com](https://www.optimizely.com/products/experiment/feature-experimentation/), or see the [developer documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/welcome).
 
-Optimizely Rollouts is free feature flags for development teams. Easily
-roll out and roll back features in any application without code deploys.
-Mitigate risk for every feature on your roadmap. Learn more at
-<https://www.optimizely.com/rollouts/>, or see the [Rollouts
-documentation](https://docs.developers.optimizely.com/rollouts/docs).
+Optimizely Rollouts is [free feature flags](https://www.optimizely.com/free-feature-flagging/) for development teams. You can easily roll out and roll back features in any application without code deploys, mitigating risk for every feature on your roadmap.
 
-## Getting Started
+## Get Started
 
-### Installing the SDK
+Refer to the [Python SDK's developer documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/python-sdk) for detailed instructions on getting started with using the SDK.
+
+### Requirements
+
+Version `4.0+`: Python 3.7+, PyPy 3.7+
+
+Version `3.0+`: Python 2.7+, PyPy 3.4+
+
+### Install the SDK
 
 The SDK is available through [PyPi](https://pypi.python.org/pypi?name=optimizely-sdk&:action=display).
 
@@ -35,9 +32,11 @@ To install:
 ### Feature Management Access
 
 To access the Feature Management configuration in the Optimizely
-dashboard, please contact your Optimizely account executive.
+dashboard, please contact your Optimizely customer success manager.
 
-### Using the SDK
+## Use the Python SDK
+
+### Initialization
 
 You can initialize the Optimizely instance in three ways: with a datafile, by providing an sdk_key, or by providing an implementation of
 [BaseConfigManager](https://github.com/optimizely/python-sdk/tree/master/optimizely/config_manager.py#L32).
@@ -79,7 +78,7 @@ Each method is described below.
           config_manager=custom_config_manager
         )
 
-#### PollingConfigManager
+### PollingConfigManager
 
 The [PollingConfigManager](https://github.com/optimizely/python-sdk/blob/master/optimizely/config_manager.py#L150) asynchronously polls for
 datafiles from a specified URL at regular intervals by making HTTP requests.
@@ -120,7 +119,7 @@ used to form the target URL.
 You may also provide your own logger, error_handler, or
 notification_center.
 
-#### AuthDatafilePollingConfigManager
+### AuthDatafilePollingConfigManager
 
 The [AuthDatafilePollingConfigManager](https://github.com/optimizely/python-sdk/blob/master/optimizely/config_manager.py#L375)
 implements `PollingConfigManager` and asynchronously polls for authenticated datafiles from a specified URL at regular intervals
@@ -137,7 +136,7 @@ your project and generate an access token for your datafile.
 
 **datafile_access_token** The datafile_access_token is attached to the outbound HTTP request header to authorize the request and fetch the datafile.
 
-#### Advanced configuration
+### Advanced configuration
 
 The following properties can be set to override the default
 configurations for [PollingConfigManager](#pollingconfigmanager) and [AuthDatafilePollingConfigManager](#authdatafilepollingconfigmanager).
@@ -158,10 +157,10 @@ notifications, use:
 notification_center.add_notification_listener(NotificationTypes.OPTIMIZELY_CONFIG_UPDATE, update_callback)
 ```
 
-For Further details see the Optimizely [Full Stack documentation](https://docs.developers.optimizely.com/full-stack/docs)
+For Further details see the Optimizely [Feature Experimentation documentation](https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/welcome)
 to learn how to set up your first Python project and use the SDK.
 
-## Development
+## SDK Development
 
 ### Building the SDK
 
@@ -169,7 +168,7 @@ Build and install the SDK with pip, using the following command:
 
     pip install -e .
 
-### Unit tests
+### Unit Tests
 
 #### Running all tests
 
@@ -220,9 +219,40 @@ would be:
 
 Please see [CONTRIBUTING](https://github.com/optimizely/python-sdk/blob/master/CONTRIBUTING.md).
 
-### Additional Code
-This software incorporates code from the following open source repos:  
-requests (Apache-2.0 License: https://github.com/psf/requests/blob/master/LICENSE)  
-pyOpenSSL (Apache-2.0 License https://github.com/pyca/pyopenssl/blob/main/LICENSE)  
-cryptography (Apache-2.0 https://github.com/pyca/cryptography/blob/main/LICENSE.APACHE)  
-idna (BSD 3-Clause License https://github.com/kjd/idna/blob/master/LICENSE.md) 
+### Credits
+
+This software incorporates code from the following open source projects:
+
+requests (Apache-2.0 License: https://github.com/psf/requests/blob/master/LICENSE)
+
+pyOpenSSL (Apache-2.0 License https://github.com/pyca/pyopenssl/blob/main/LICENSE)
+
+cryptography (Apache-2.0 https://github.com/pyca/cryptography/blob/main/LICENSE.APACHE)
+
+idna (BSD 3-Clause License https://github.com/kjd/idna/blob/master/LICENSE.md)
+
+### Other Optimizely SDKs
+
+- Agent - https://github.com/optimizely/agent
+
+- Android - https://github.com/optimizely/android-sdk
+
+- C# - https://github.com/optimizely/csharp-sdk
+
+- Flutter - https://github.com/optimizely/optimizely-flutter-sdk
+
+- Go - https://github.com/optimizely/go-sdk
+
+- Java - https://github.com/optimizely/java-sdk
+
+- JavaScript - https://github.com/optimizely/javascript-sdk
+
+- PHP - https://github.com/optimizely/php-sdk
+
+- Python - https://github.com/optimizely/python-sdk
+
+- React - https://github.com/optimizely/react-sdk
+
+- Ruby - https://github.com/optimizely/ruby-sdk
+
+- Swift - https://github.com/optimizely/swift-sdk
