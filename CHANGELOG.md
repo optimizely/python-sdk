@@ -8,7 +8,7 @@
 ## 4.1.1
 March 10th, 2023
 
-We updated our README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack.
+We updated our README.md and other non-functional code to reflect that this SDK supports both Optimizely Feature Experimentation and Optimizely Full Stack. ([#420](https://github.com/optimizely/python-sdk/pull/420))
 
 ## 4.1.0
 July 7th, 2022
