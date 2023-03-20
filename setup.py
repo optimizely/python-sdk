@@ -24,16 +24,17 @@ with open(os.path.join(here, 'CHANGELOG.md')) as _file:
     CHANGELOG = _file.read()
 
 about_text = (
-    'Optimizely X Full Stack is A/B testing and feature management for product development teams. '
+    'Optimizely Feature Experimentation is A/B testing and feature management for product development teams. '
     'Experiment in any application. Make every feature on your roadmap an opportunity to learn. '
-    'Learn more at https://www.optimizely.com/products/full-stack/ or see our documentation at '
-    'https://docs.developers.optimizely.com/full-stack/docs. '
+    'Learn more at https://www.optimizely.com/products/experiment/feature-experimentation/ or see our documentation at '
+    'https://docs.developers.optimizely.com/experimentation/v4.0.0-full-stack/docs/welcome. '
 )
 
 setup(
     name='optimizely-sdk',
     version=__version__,
-    description='Python SDK for Optimizely X Full Stack.',
+    description='Python SDK for Optimizely Feature Experimentation, Optimizely Full Stack (legacy), '
+    'and Optimizely Rollouts.',
     long_description=about_text + README + CHANGELOG,
     long_description_content_type='text/markdown',
     author='Optimizely',
