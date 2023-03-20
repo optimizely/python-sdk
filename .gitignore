@@ -2,6 +2,7 @@
 MANIFEST
 .idea/*
 .*virtualenv/*
+.mypy_cache
 
 # Output of building package
 *.egg-info
