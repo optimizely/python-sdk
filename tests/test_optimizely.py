@@ -5399,12 +5399,8 @@ class OptimizelyWithLoggingTest(base.BaseTest):
                 status_code=200,
                 content=json.dumps(self.config_dict_with_audience_segments)
             )
-        ):
+        ), mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
             client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
-            # wait for config
-            client.config_manager.get_config()
-
-        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
             client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
             client.close()
 
@@ -5426,9 +5422,12 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     def test_send_odp_event__log_debug_if_datafile_not_ready(self):
         mock_logger = mock.Mock()
         client = optimizely.Optimizely(sdk_key='test', logger=mock_logger)
+        client.config_manager.set_blocking_timeout(0)
         client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
 
-        mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
+        mock_logger.error.assert_called_with(
+            'Invalid config. Optimizely instance is not valid. Failing "send_odp_event".'
+        )
         client.close()
 
     def test_send_odp_event__log_error_if_odp_not_enabled_with_polling_config_manager(self):
@@ -5439,16 +5438,12 @@ class OptimizelyWithLoggingTest(base.BaseTest):
                 status_code=200,
                 content=json.dumps(self.config_dict_with_audience_segments)
             )
-        ):
+        ), mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
             client = optimizely.Optimizely(
                 sdk_key='test',
                 logger=mock_logger,
                 settings=OptimizelySdkSettings(odp_disabled=True)
             )
-            # wait for config
-            client.config_manager.get_config()
-
-        with mock.patch('requests.post', return_value=self.fake_server_response(status_code=200)):
             client.send_odp_event(type='wow', action='great', identifiers={'amazing': 'fantastic'}, data={})
             client.close()
 
