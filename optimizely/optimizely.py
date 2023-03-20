@@ -1357,10 +1357,6 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('identify_user'))
             return
 
-        if not self.odp_manager.enabled:
-            self.logger.debug('ODP identify event is not dispatched (ODP disabled).')
-            return
-
         config = self.config_manager.get_config()
         if not config:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('identify_user'))
