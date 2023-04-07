@@ -5483,3 +5483,43 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
         mock_logger.error.assert_called_with('ODP is not integrated.')
         client.close()
+
+    def test_send_odp_event__log_error_with_action_none(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+
+        client.send_odp_event(type='wow', action=None, identifiers={'amazing': 'fantastic'}, data={})
+        client.close()
+
+        mock_logger.error.assert_called_once_with('Provided "action" is in an invalid format.')
+
+    def test_send_odp_event__log_error_with_action_empty_string(self):
+        mock_logger = mock.Mock()
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+
+        client.send_odp_event(type='wow', action="", identifiers={'amazing': 'fantastic'}, data={})
+        client.close()
+
+        mock_logger.error.assert_called_once_with('Provided "action" is in an invalid format.')
+
+    def test_send_odp_event__default_type_when_none(self):
+        mock_logger = mock.Mock()
+
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        with mock.patch.object(client.odp_manager, 'send_event') as mock_send_event:
+            client.send_odp_event(type=None, action="great", identifiers={'amazing': 'fantastic'}, data={})
+            client.close()
+
+        mock_send_event.assert_called_with('fullstack', 'great', {'amazing': 'fantastic'}, {})
+        mock_logger.error.assert_not_called()
+
+    def test_send_odp_event__default_type_when_empty_string(self):
+        mock_logger = mock.Mock()
+
+        client = optimizely.Optimizely(json.dumps(self.config_dict_with_audience_segments), logger=mock_logger)
+        with mock.patch.object(client.odp_manager, 'send_event') as mock_send_event:
+            client.send_odp_event(type="", action="great", identifiers={'amazing': 'fantastic'}, data={})
+            client.close()
+
+        mock_send_event.assert_called_with('fullstack', 'great', {'amazing': 'fantastic'}, {})
+        mock_logger.error.assert_not_called()
