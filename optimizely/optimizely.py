@@ -1387,7 +1387,7 @@ class Optimizely:
         Send an event to the ODP server.
 
         Args:
-            action: The event action name.
+            action: The event action name. Cannot be None or empty string.
             identifiers: A dictionary for identifiers. The caller must provide at least one key-value pair.
             type: The event type. Default 'fullstack'.
             data: An optional dictionary for associated data. The default event data will be added to this data
@@ -1397,9 +1397,16 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('send_odp_event'))
             return
 
+        if action is None or action == "":
+            self.logger.error(enums.Errors.ODP_INVALID_ACTION)
+            return
+
         if not identifiers or not isinstance(identifiers, dict):
             self.logger.error('ODP events must have at least one key-value pair in identifiers.')
             return
+
+        if type is None or type == "":
+            type = enums.OdpManagerConfig.EVENT_TYPE
 
         config = self.config_manager.get_config()
         if not config:

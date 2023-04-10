@@ -17,6 +17,7 @@ from typing import Any, Union, Dict
 import uuid
 import json
 from optimizely import version
+from optimizely.helpers.enums import OdpManagerConfig
 
 OdpDataDict = Dict[str, Union[str, int, float, bool, None]]
 
@@ -27,7 +28,7 @@ class OdpEvent:
     def __init__(self, type: str, action: str, identifiers: dict[str, str], data: OdpDataDict) -> None:
         self.type = type
         self.action = action
-        self.identifiers = identifiers
+        self.identifiers = self._convert_identifers(identifiers)
         self.data = self._add_common_event_data(data)
 
     def __repr__(self) -> str:
@@ -50,6 +51,20 @@ class OdpEvent:
         }
         data.update(custom_data)
         return data
+
+    def _convert_identifers(self, identifiers: dict[str, str]) -> dict[str, str]:
+        """
+        Convert incorrect case/separator of identifier key `fs_user_id`
+        (ie. `fs-user-id`, `FS_USER_ID`).
+        """
+        for key in list(identifiers):
+            if key == OdpManagerConfig.KEY_FOR_USER_ID:
+                break
+            elif key.lower() in ("fs-user-id", OdpManagerConfig.KEY_FOR_USER_ID):
+                identifiers[OdpManagerConfig.KEY_FOR_USER_ID] = identifiers.pop(key)
+                break
+
+        return identifiers
 
 
 class OdpEventEncoder(json.JSONEncoder):

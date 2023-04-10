@@ -126,6 +126,7 @@ class Errors:
     ODP_NOT_INTEGRATED: Final = 'ODP is not integrated.'
     ODP_NOT_ENABLED: Final = 'ODP is not enabled.'
     ODP_INVALID_DATA: Final = 'ODP data is not valid.'
+    ODP_INVALID_ACTION: Final = 'ODP action is not valid (cannot be empty).'
     MISSING_SDK_KEY: Final = 'SDK key not provided/cannot be found in the datafile.'
 
 

@@ -98,6 +98,19 @@ class OdpEventManagerTest(BaseTest):
         event['data']['invalid-item'] = {}
         self.assertStrictFalse(validator.are_odp_data_types_valid(event['data']))
 
+    def test_odp_event_identifier_conversion(self, *args):
+        event = OdpEvent('type', 'action', {'fs-user-id': 'great'}, {})
+        self.assertDictEqual(event.identifiers, {'fs_user_id': 'great'})
+
+        event = OdpEvent('type', 'action', {'FS-user-ID': 'great'}, {})
+        self.assertDictEqual(event.identifiers, {'fs_user_id': 'great'})
+
+        event = OdpEvent('type', 'action', {'FS_USER_ID': 'great', 'fs.user.id': 'wow'}, {})
+        self.assertDictEqual(event.identifiers, {'fs_user_id': 'great', 'fs.user.id': 'wow'})
+
+        event = OdpEvent('type', 'action', {'fs_user_id': 'great', 'fsuserid': 'wow'}, {})
+        self.assertDictEqual(event.identifiers, {'fs_user_id': 'great', 'fsuserid': 'wow'})
+
     def test_odp_event_manager_success(self, *args):
         mock_logger = mock.Mock()
         event_manager = OdpEventManager(mock_logger)
