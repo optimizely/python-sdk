@@ -1398,7 +1398,7 @@ class Optimizely:
             return
 
         if action is None or action == "":
-            self.logger.error(enums.Errors.INVALID_INPUT.format('action'))
+            self.logger.error(enums.Errors.ODP_INVALID_ACTION)
             return
 
         if not identifiers or not isinstance(identifiers, dict):

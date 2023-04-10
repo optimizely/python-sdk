@@ -5491,7 +5491,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         client.send_odp_event(type='wow', action=None, identifiers={'amazing': 'fantastic'}, data={})
         client.close()
 
-        mock_logger.error.assert_called_once_with('Provided "action" is in an invalid format.')
+        mock_logger.error.assert_called_once_with('ODP action is not valid (cannot be empty).')
 
     def test_send_odp_event__log_error_with_action_empty_string(self):
         mock_logger = mock.Mock()
@@ -5500,7 +5500,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         client.send_odp_event(type='wow', action="", identifiers={'amazing': 'fantastic'}, data={})
         client.close()
 
-        mock_logger.error.assert_called_once_with('Provided "action" is in an invalid format.')
+        mock_logger.error.assert_called_once_with('ODP action is not valid (cannot be empty).')
 
     def test_send_odp_event__default_type_when_none(self):
         mock_logger = mock.Mock()
