@@ -172,13 +172,15 @@ class OdpSegmentApiManager:
 
         if response_dict and 'errors' in response_dict:
             try:
-                error_class = response_dict['errors'][0]['extensions']['classification']
-            except (KeyError, IndexError):
+                extensions = response_dict['errors'][0]['extensions']
+                error_class = extensions['classification']
+                error_code = extensions.get('code')
+            except (KeyError, IndexError, TypeError):
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
                 return None
 
-            if error_class == 'InvalidIdentifierException':
-                self.logger.warning(Errors.INVALID_SEGMENT_IDENTIFIER)
+            if error_code == 'INVALID_IDENTIFIER_EXCEPTION':
+                self.logger.warning(Errors.FETCH_SEGMENTS_FAILED.format('invalid identifier'))
                 return None
             else:
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format(error_class))
@@ -188,6 +190,6 @@ class OdpSegmentApiManager:
                 audiences = response_dict['data']['customer']['audiences']['edges']
                 segments = [edge['node']['name'] for edge in audiences if edge['node']['state'] == 'qualified']
                 return segments
-            except KeyError:
+            except (KeyError, TypeError):
                 self.logger.error(Errors.FETCH_SEGMENTS_FAILED.format('decode error'))
                 return None

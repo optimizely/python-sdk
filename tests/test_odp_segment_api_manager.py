@@ -344,7 +344,8 @@ class OdpSegmentApiManagerTest(base.BaseTest):
                 "customer"
               ],
               "extensions": {
-                "classification": "InvalidIdentifierException"
+                "classification": "DataFetchingException",
+                "code": "INVALID_IDENTIFIER_EXCEPTION"
               }
             }
           ],
