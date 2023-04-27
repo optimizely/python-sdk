@@ -11,5 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version_info = (4, 1, 1)
-__version__ = '.'.join(str(v) for v in version_info)
+version_info = (5, 0, 0)
+__version__ = '.'.join(str(v) for v in version_info) + '-beta'
