@@ -1,4 +1,4 @@
-mypy==0.982
+mypy==1.4.1
 types-jsonschema
 types-requests
 types-Flask
