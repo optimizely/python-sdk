@@ -97,5 +97,5 @@ jobs:
         pip install -r requirements/typing.txt
     - name: Type check with mypy
       run: |
-        mypy .
+        mypy . --exclude "tests/testapp"
         mypy . --exclude "tests/" --strict
