@@ -325,7 +325,7 @@ class PollingConfigManager(StaticConfigManager):
 
         if update_interval < 30:
             self.logger.warning(
-                f'Polling intervals below 30 seconds are not recommended.'
+                'Polling intervals below 30 seconds are not recommended.'
             )
 
         self.update_interval = update_interval
