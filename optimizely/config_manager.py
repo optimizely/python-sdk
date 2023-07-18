@@ -323,6 +323,11 @@ class PollingConfigManager(StaticConfigManager):
             )
             update_interval = enums.ConfigManager.DEFAULT_UPDATE_INTERVAL
 
+        if update_interval < 30:
+            self.logger.warning(
+                'Polling intervals below 30 seconds are not recommended.'
+            )
+
         self.update_interval = update_interval
 
     def set_blocking_timeout(self, blocking_timeout: Optional[int | float]) -> None:
