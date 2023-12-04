@@ -243,7 +243,7 @@ class OptimizelyConfigService:
                     operand = conditions[i].upper()
                 else:
                     # Check if element is a list or not
-                    if type(conditions[i]) == list:
+                    if isinstance(conditions[i], list):
                         # Check if at the end or not to determine where to add the operand
                         # Recursive call to call stringify on embedded list
                         if i + 1 < length:
