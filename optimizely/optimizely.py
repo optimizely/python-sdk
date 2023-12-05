@@ -1039,7 +1039,7 @@ class Optimizely:
         if hasattr(self.config_manager, 'optimizely_config'):
             return self.config_manager.optimizely_config
 
-        return OptimizelyConfigService(project_config).get_config()
+        return OptimizelyConfigService(project_config, self.logger).get_config()
 
     def create_user_context(
         self, user_id: str, attributes: Optional[UserAttributes] = None

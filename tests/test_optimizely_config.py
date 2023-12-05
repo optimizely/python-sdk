@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 #
 # http://www.apache.org/licenses/LICENSE-2.0
-
+import copy
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@ import json
 
 from optimizely import optimizely, project_config
 from optimizely import optimizely_config
+from optimizely import logger
 from . import base
 
 
@@ -23,7 +24,7 @@ class OptimizelyConfigTest(base.BaseTest):
         base.BaseTest.setUp(self)
         opt_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         self.project_config = opt_instance.config_manager.get_config()
-        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config)
+        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config, logger.SimpleLogger())     # todo - added logger
 
         self.expected_config = {
             'sdk_key': 'features-test',
@@ -1235,7 +1236,7 @@ class OptimizelyConfigTest(base.BaseTest):
         }
 
         self.actual_config = self.opt_config_service.get_config()
-        self.actual_config_dict = self.to_dict(self.actual_config)
+        self.actual_config_dict = self.to_dict(self.actual_config)      # TODO - fails here after I add logger, actual_config not a dict?
 
         self.typed_audiences_config = {
             'version': '2',
@@ -1472,6 +1473,78 @@ class OptimizelyConfigTest(base.BaseTest):
             expected_id_map[exp['id']] = exp
 
         self.assertEqual(expected_id_map, self.to_dict(actual_id_map))
+
+    # TODO - I ADDED
+    def test__duplicate_experiment_keys(self):
+        """ Test that multiple features don't have the same experiment key. """
+
+        # update the test datafile with an additional feature flag with the same experiment rule key
+        new_experiment = {
+                    'key': 'test_experiment',    # added duplicate "test_experiment"
+                    'status': 'Running',
+                    'layerId': '8',
+                    "audienceConditions": [
+                        "or",
+                        "11160"
+                    ],
+                    'audienceIds': ['11160'],
+                    'id': '111137',
+                    'forcedVariations': {},
+                    'trafficAllocation': [
+                        {'entityId': '222242', 'endOfRange': 8000},
+                        {'entityId': '', 'endOfRange': 10000}
+                    ],
+                    'variations': [
+                        {
+                            'id': '222242',
+                            'key': 'control',
+                            'variables': [],
+                        }
+                    ],
+                }
+
+        new_feature = {
+                    'id': '91117',
+                    'key': 'new_feature',
+                    'experimentIds': ['111137'],
+                    'rolloutId': '',
+                    'variables': [
+                        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean'},
+                        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
+                        {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double'},
+                        {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
+                        {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
+                        {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string',
+                         'subType': 'json'},
+                        {'id': '133', 'key': 'true_object', 'defaultValue': '{"true_test": 23.54}', 'type': 'json'},
+                    ],
+                }
+
+        # add new feature with the same rule key
+        self.config_dict_with_features['experiments'].append(new_experiment)
+        self.config_dict_with_features['featureFlags'].append(new_feature)
+
+        config_with_duplicate_key = self.config_dict_with_features
+        opt_instance = optimizely.Optimizely(json.dumps(config_with_duplicate_key))
+        self.project_config = opt_instance.config_manager.get_config()
+        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config, logger=logger.SimpleLogger())
+
+        actual_key_map, actual_id_map = self.opt_config_service._get_experiments_maps()
+
+        self.assertIsInstance(actual_key_map, dict)
+        for exp in actual_key_map.values():
+            self.assertIsInstance(exp, optimizely_config.OptimizelyExperiment)
+
+        # assert on the log message
+        # TODO
+
+        # assert we get ID of the duplicated experiment
+        assert actual_key_map.get('test_experiment').id == "111137"
+
+        # assert we get one duplicated experiment
+        keys_list = list(actual_key_map.keys())
+        assert "test_experiment" in keys_list, "Key 'test_experiment' not found in actual key map"
+        assert keys_list.count("test_experiment") == 1, "Key 'test_experiment' found more than once in actual key map"
 
     def test__get_features_map(self):
         """ Test that get_features_map returns expected features map. """
