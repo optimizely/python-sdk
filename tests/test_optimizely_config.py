@@ -11,6 +11,7 @@
 # limitations under the License.
 
 import json
+from unittest.mock import patch
 
 from optimizely import optimizely, project_config
 from optimizely import optimizely_config
@@ -23,7 +24,7 @@ class OptimizelyConfigTest(base.BaseTest):
         base.BaseTest.setUp(self)
         opt_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         self.project_config = opt_instance.config_manager.get_config()
-        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config, logger.SimpleLogger())     # todo - added logger
+        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config, logger.SimpleLogger())
 
         self.expected_config = {
             'sdk_key': 'features-test',
@@ -1452,7 +1453,7 @@ class OptimizelyConfigTest(base.BaseTest):
     def test__get_config__invalid_project_config(self):
         """ Test that get_config returns None when invalid project config supplied. """
 
-        opt_service = optimizely_config.OptimizelyConfigService({"key": "invalid"})
+        opt_service = optimizely_config.OptimizelyConfigService({"key": "invalid"}, None)
         self.assertIsNone(opt_service.get_config())
 
     def test__get_experiments_maps(self):
@@ -1526,16 +1527,20 @@ class OptimizelyConfigTest(base.BaseTest):
         config_with_duplicate_key = self.config_dict_with_features
         opt_instance = optimizely.Optimizely(json.dumps(config_with_duplicate_key))
         self.project_config = opt_instance.config_manager.get_config()
-        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config, logger=logger.SimpleLogger())
 
-        actual_key_map, actual_id_map = self.opt_config_service._get_experiments_maps()
+        with patch('optimizely.logger.SimpleLogger.warning') as mock_logger:
+            self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config,
+                                                                                logger=logger.SimpleLogger())
 
-        self.assertIsInstance(actual_key_map, dict)
-        for exp in actual_key_map.values():
-            self.assertIsInstance(exp, optimizely_config.OptimizelyExperiment)
+            actual_key_map, actual_id_map = self.opt_config_service._get_experiments_maps()
 
-        # assert on the log message
-        # TODO
+            self.assertIsInstance(actual_key_map, dict)
+            for exp in actual_key_map.values():
+                self.assertIsInstance(exp, optimizely_config.OptimizelyExperiment)
+
+            # Assert that the warning method of the mock logger was called with the expected message
+            expected_warning_message = f"Duplicate experiment keys found in datafile: {new_experiment['key']}"
+            mock_logger.assert_called_with(expected_warning_message)
 
         # assert we get ID of the duplicated experiment
         assert actual_key_map.get('test_experiment').id == "111137"
@@ -1746,7 +1751,7 @@ class OptimizelyConfigTest(base.BaseTest):
             error_handler=None
         )
 
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
+        config_service = optimizely_config.OptimizelyConfigService(proj_conf, logger)
 
         for audience in config_service.audiences:
             self.assertIsInstance(audience, optimizely_config.OptimizelyAudience)
@@ -1814,7 +1819,7 @@ class OptimizelyConfigTest(base.BaseTest):
             '("us" OR ("female" AND "adult")) AND ("fr" AND ("male" OR "adult"))'
         ]
 
-        config_service = optimizely_config.OptimizelyConfigService(config)
+        config_service = optimizely_config.OptimizelyConfigService(config, None)
 
         for i in range(len(audiences_input)):
             result = config_service.stringify_conditions(audiences_input[i], audiences_map)
@@ -1832,7 +1837,7 @@ class OptimizelyConfigTest(base.BaseTest):
             error_handler=None
         )
 
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
+        config_service = optimizely_config.OptimizelyConfigService(proj_conf, None)
 
         for audience in config_service.audiences:
             self.assertIsInstance(audience, optimizely_config.OptimizelyAudience)
@@ -1848,7 +1853,7 @@ class OptimizelyConfigTest(base.BaseTest):
             error_handler=None
         )
 
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf)
+        config_service = optimizely_config.OptimizelyConfigService(proj_conf, None)
 
         experiments_key_map, experiments_id_map = config_service._get_experiments_maps()
 

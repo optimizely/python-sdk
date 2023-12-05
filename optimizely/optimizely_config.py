@@ -15,7 +15,6 @@ from __future__ import annotations
 import copy
 from typing import Any, Optional
 
-from . import logger
 from .helpers.condition import ConditionOperatorTypes
 from .helpers.types import VariationDict, ExperimentDict, RolloutDict, AttributeDict, EventDict
 from .project_config import ProjectConfig
@@ -50,7 +49,6 @@ class OptimizelyConfig:
         self.attributes = attributes or []
         self.events = events or []
         self.audiences = audiences or []
-        self.logger = logger
 
     def get_datafile(self) -> Optional[str]:
         """ Get the datafile associated with OptimizelyConfig.
