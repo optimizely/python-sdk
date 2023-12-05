@@ -33,7 +33,7 @@ class OptimizelyConfig:
         environment_key: Optional[str] = None,
         attributes: Optional[list[OptimizelyAttribute]] = None,
         events: Optional[list[OptimizelyEvent]] = None,
-        audiences: Optional[list[OptimizelyAudience]] = None,
+        audiences: Optional[list[OptimizelyAudience]] = None
     ):
         self.revision = revision
 
