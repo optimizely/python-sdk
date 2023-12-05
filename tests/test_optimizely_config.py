@@ -1236,7 +1236,7 @@ class OptimizelyConfigTest(base.BaseTest):
         }
 
         self.actual_config = self.opt_config_service.get_config()
-        self.actual_config_dict = self.to_dict(self.actual_config)      # TODO - fails here after I add logger, actual_config not a dict?
+        self.actual_config_dict = self.to_dict(self.actual_config)
 
         self.typed_audiences_config = {
             'version': '2',
@@ -1474,7 +1474,6 @@ class OptimizelyConfigTest(base.BaseTest):
 
         self.assertEqual(expected_id_map, self.to_dict(actual_id_map))
 
-    # TODO - I ADDED
     def test__duplicate_experiment_keys(self):
         """ Test that multiple features don't have the same experiment key. """
 
@@ -1520,7 +1519,7 @@ class OptimizelyConfigTest(base.BaseTest):
                     ],
                 }
 
-        # add new feature with the same rule key
+        # add new experiment rule with the same key and a new feature with the same rule key
         self.config_dict_with_features['experiments'].append(new_experiment)
         self.config_dict_with_features['featureFlags'].append(new_feature)
 
