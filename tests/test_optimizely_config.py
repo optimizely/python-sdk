@@ -1479,45 +1479,45 @@ class OptimizelyConfigTest(base.BaseTest):
 
         # update the test datafile with an additional feature flag with the same experiment rule key
         new_experiment = {
-                    'key': 'test_experiment',    # added duplicate "test_experiment"
-                    'status': 'Running',
-                    'layerId': '8',
-                    "audienceConditions": [
-                        "or",
-                        "11160"
-                    ],
-                    'audienceIds': ['11160'],
-                    'id': '111137',
-                    'forcedVariations': {},
-                    'trafficAllocation': [
-                        {'entityId': '222242', 'endOfRange': 8000},
-                        {'entityId': '', 'endOfRange': 10000}
-                    ],
-                    'variations': [
-                        {
-                            'id': '222242',
-                            'key': 'control',
-                            'variables': [],
-                        }
-                    ],
+            'key': 'test_experiment',    # added duplicate "test_experiment"
+            'status': 'Running',
+            'layerId': '8',
+            "audienceConditions": [
+                "or",
+                "11160"
+            ],
+            'audienceIds': ['11160'],
+            'id': '111137',
+            'forcedVariations': {},
+            'trafficAllocation': [
+                {'entityId': '222242', 'endOfRange': 8000},
+                {'entityId': '', 'endOfRange': 10000}
+            ],
+            'variations': [
+                {
+                    'id': '222242',
+                    'key': 'control',
+                    'variables': [],
                 }
+            ],
+        }
 
         new_feature = {
-                    'id': '91117',
-                    'key': 'new_feature',
-                    'experimentIds': ['111137'],
-                    'rolloutId': '',
-                    'variables': [
-                        {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean'},
-                        {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
-                        {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double'},
-                        {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
-                        {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
-                        {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string',
-                         'subType': 'json'},
-                        {'id': '133', 'key': 'true_object', 'defaultValue': '{"true_test": 23.54}', 'type': 'json'},
-                    ],
-                }
+            'id': '91117',
+            'key': 'new_feature',
+            'experimentIds': ['111137'],
+            'rolloutId': '',
+            'variables': [
+                {'id': '127', 'key': 'is_working', 'defaultValue': 'true', 'type': 'boolean'},
+                {'id': '128', 'key': 'environment', 'defaultValue': 'devel', 'type': 'string'},
+                {'id': '129', 'key': 'cost', 'defaultValue': '10.99', 'type': 'double'},
+                {'id': '130', 'key': 'count', 'defaultValue': '999', 'type': 'integer'},
+                {'id': '131', 'key': 'variable_without_usage', 'defaultValue': '45', 'type': 'integer'},
+                {'id': '132', 'key': 'object', 'defaultValue': '{"test": 12}', 'type': 'string',
+                 'subType': 'json'},
+                {'id': '133', 'key': 'true_object', 'defaultValue': '{"true_test": 23.54}', 'type': 'json'},
+            ],
+        }
 
         # add new experiment rule with the same key and a new feature with the same rule key
         self.config_dict_with_features['experiments'].append(new_experiment)
