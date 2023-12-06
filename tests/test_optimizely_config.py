@@ -24,7 +24,8 @@ class OptimizelyConfigTest(base.BaseTest):
         base.BaseTest.setUp(self)
         opt_instance = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         self.project_config = opt_instance.config_manager.get_config()
-        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config, logger.SimpleLogger())
+        self.opt_config_service = optimizely_config.OptimizelyConfigService(self.project_config,
+                                                                            logger=logger.SimpleLogger())
 
         self.expected_config = {
             'sdk_key': 'features-test',
@@ -1750,7 +1751,7 @@ class OptimizelyConfigTest(base.BaseTest):
             error_handler=None
         )
 
-        config_service = optimizely_config.OptimizelyConfigService(proj_conf, logger)
+        config_service = optimizely_config.OptimizelyConfigService(proj_conf, logger=logger.SimpleLogger())
 
         for audience in config_service.audiences:
             self.assertIsInstance(audience, optimizely_config.OptimizelyAudience)
