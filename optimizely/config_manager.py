@@ -159,7 +159,7 @@ class StaticConfigManager(BaseConfigManager):
 
         self._config = config
         self._sdk_key = self._sdk_key or config.sdk_key
-        self.optimizely_config = OptimizelyConfigService(config).get_config()
+        self.optimizely_config = OptimizelyConfigService(config, self.logger).get_config()
         self.notification_center.send_notifications(enums.NotificationTypes.OPTIMIZELY_CONFIG_UPDATE)
 
         internal_notification_center = _NotificationCenterRegistry.get_notification_center(

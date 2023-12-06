@@ -19,6 +19,8 @@ from .helpers.condition import ConditionOperatorTypes
 from .helpers.types import VariationDict, ExperimentDict, RolloutDict, AttributeDict, EventDict
 from .project_config import ProjectConfig
 
+from .logger import Logger
+
 
 class OptimizelyConfig:
     def __init__(
@@ -126,11 +128,12 @@ class OptimizelyAudience:
 class OptimizelyConfigService:
     """ Class encapsulating methods to be used in creating instance of OptimizelyConfig. """
 
-    def __init__(self, project_config: ProjectConfig):
+    def __init__(self, project_config: ProjectConfig, logger: Logger):
         """
         Args:
             project_config ProjectConfig
         """
+        self.logger = logger
         self.is_valid = True
 
         if not isinstance(project_config, ProjectConfig):
@@ -411,7 +414,12 @@ class OptimizelyConfigService:
                 audiences_map[audience_id] = audience_name if audience_name is not None else ''
 
         all_experiments = self._get_all_experiments()
+
         for exp in all_experiments:
+            # check if experiment key already exists
+            if exp["key"] in experiments_key_map:
+                self.logger.warning(f"Duplicate experiment keys found in datafile: {exp['key']}")
+
             optly_exp = OptimizelyExperiment(
                 exp['id'], exp['key'], self._get_variations_map(exp)
             )
