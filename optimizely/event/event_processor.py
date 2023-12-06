@@ -351,7 +351,7 @@ class ForwardingEventProcessor(BaseEventProcessor):
 
     def __init__(
         self,
-        event_dispatcher: type[EventDispatcher] | CustomEventDispatcher,
+        event_dispatcher: Optional[type[EventDispatcher] | CustomEventDispatcher],
         logger: Optional[_logging.Logger] = None,
         notification_center: Optional[_notification_center.NotificationCenter] = None
     ):
