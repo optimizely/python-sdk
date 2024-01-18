@@ -138,8 +138,7 @@ class OdpSegmentApiManager:
                 '{audiences(subset: $audiences) {edges {node {name state}}}}}',
             'variables': {
                 'userId': str(user_value),
-                'audiences': segments_to_check
-            }
+                'audiences': segments_to_check}
         }
 
         try:
