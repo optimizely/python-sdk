@@ -422,7 +422,7 @@ class PollingConfigManager(StaticConfigManager):
                     break
         except (OSError, OverflowError) as err:
             self.logger.error(
-                f'Provided update_interval value may be too big. Error: {err}'
+                f'Thread for background datafile polling failed. Error: {err}'
             )
             raise
 
