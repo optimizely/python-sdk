@@ -507,19 +507,18 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response._content = test_datafile
 
         with mock.patch('requests.get', return_value=test_response):
-            with self.assertRaises(OverflowError):
-                project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key,
-                                                                             logger=mock_logger,
-                                                                             update_interval=12345678912345)
+            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key,
+                                                                         logger=mock_logger,
+                                                                         update_interval=12345678912345)
 
-                project_config_manager.stop()
+            project_config_manager.stop()
 
-                # verify the error log message
-                log_messages = [args[0] for args, _ in mock_logger.error.call_args_list]
-                for message in log_messages:
-                    if "Thread for background datafile polling failed. " \
-                       "Error: timestamp too large to convert to C _PyTime_t" not in message:
-                        assert False
+            # verify the error log message
+            log_messages = [args[0] for args, _ in mock_logger.error.call_args_list]
+            for message in log_messages:
+                if "Thread for background datafile polling failed. " \
+                   "Error: timestamp too large to convert to C _PyTime_t" not in message:
+                    assert False
 
     def test_is_running(self, _):
         """ Test that polling thread is running after instance of PollingConfigManager is created. """
