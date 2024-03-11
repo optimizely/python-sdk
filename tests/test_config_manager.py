@@ -494,6 +494,33 @@ class PollingConfigManagerTest(base.BaseTest):
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
+    def test_fetch_datafile__exception_polling_thread_failed(self, _):
+        """ Test that exception is raised when polling thread stops. """
+        sdk_key = 'some_key'
+        mock_logger = mock.Mock()
+
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        with mock.patch('requests.get', return_value=test_response):
+            with self.assertRaises(OverflowError):
+                project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key,
+                                                                             logger=mock_logger,
+                                                                             update_interval=12345678912345)
+
+                project_config_manager.stop()
+
+                # verify the error log message
+                log_messages = [args[0] for args, _ in mock_logger.error.call_args_list]
+                for message in log_messages:
+                    if "Thread for background datafile polling failed. " \
+                       "Error: timestamp too large to convert to C _PyTime_t" not in message:
+                        assert False
+
     def test_is_running(self, _):
         """ Test that polling thread is running after instance of PollingConfigManager is created. """
         with mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile'):
