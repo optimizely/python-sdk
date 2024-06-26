@@ -1,5 +1,10 @@
 # Optimizely Python SDK Changelog
 
+## 5.0.1
+June 26th, 2024
+
+We removed redundant dependencies pyOpenSSL and cryptography ([#435](https://github.com/optimizely/python-sdk/pull/435), [#436](https://github.com/optimizely/python-sdk/pull/436)).
+
 ## 5.0.0
 January 18th, 2024
 
