@@ -42,6 +42,7 @@ from .odp.lru_cache import LRUCache
 from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
+from .project_config import ProjectConfig
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
@@ -1215,6 +1216,27 @@ class Optimizely:
                                   rule_key=rule_key, flag_key=flag_key,
                                   user_context=user_context, reasons=reasons if should_include_reasons else []
                                   )
+        
+    def _create_optimizely_decision(
+            self,
+            user_context: Optional[OptimizelyUserContext],
+            flag_key: str,
+            flag_decision: Optional[Decision],
+            decision_reasons: Optional[list[str]],
+            decide_options: Optional[list[OptimizelyDecideOption]],
+            project_config: ProjectConfig
+    ) -> OptimizelyDecision:
+        user_id = user_context.user_id
+        flag_enabled = False
+        if flag_decision.variation is not None:
+            if flag_decision.variation.featureEnabled:
+                flag_enabled = True
+    
+        self.logger.info(f'Feature {flag_key} is enabled for user {user_id} {flag_enabled}"')
+        variable_dict = {}
+        # if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options:
+        #     decision_variables = self.
+        return
 
     def _decide_all(
         self,
@@ -1253,7 +1275,8 @@ class Optimizely:
         self,
         user_context: Optional[OptimizelyUserContext],
         keys: list[str],
-        decide_options: Optional[list[str]] = None
+        decide_options: Optional[list[str]] = None,
+        ignore_default_options: bool = False
     ) -> dict[str, OptimizelyDecision]:
         """
         Args:
@@ -1277,7 +1300,8 @@ class Optimizely:
         merged_decide_options: list[str] = []
         if isinstance(decide_options, list):
             merged_decide_options = decide_options[:]
-            merged_decide_options += self.default_decide_options
+            if not ignore_default_options:
+                merged_decide_options += self.default_decide_options
         else:
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
             merged_decide_options = self.default_decide_options
@@ -1285,11 +1309,50 @@ class Optimizely:
         enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in merged_decide_options
 
         decisions = {}
+        valid_keys = []
+        reasons = []
+        decision_reasons_dict = {}
         for key in keys:
             decision = self._decide(user_context, key, decide_options)
             if enabled_flags_only and not decision.enabled:
                 continue
             decisions[key] = decision
+            
+        project_config = self.config_manager.get_config()
+        for key in keys:
+            feature_flag = project_config.feature_key_map.get(key)
+            if feature_flag is None:
+                decisions[key] = OptimizelyDecision(None, False, None, None, key, user_context, [])
+                continue
+            valid_keys.append(key)
+            # decision_reasons = []
+            # decision_reasons_dict[key] = decision_reasons
+            
+            optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=None)
+            forced_decision_response = self.decision_service.validated_forced_decision(project_config,
+                                                                                       optimizely_decision_context,
+                                                                                       user_context)
+            variation, decision_reasons = forced_decision_response
+            reasons += decision_reasons
+
+            flags_without_forced_decision = []
+            flag_decisions = {}
+            
+            if variation:
+                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
+                flag_decisions[key] = decision
+            else:
+                # Regular decision
+                # decision, decision_reasons = self.decision_service.get_variation_for_feature(project_config,
+                #                                                                             feature_flag,
+                #                                                                             user_context, decide_options)
+                flags_without_forced_decision.append(feature_flag)
+
+        #needs to be implemented
+        decisionList = self.decision_service.get_variation_for_feature_list(flags_without_forced_decision, user_context, project_config, merged_decide_options)
+            
+            
+            
         return decisions
 
     def _setup_odp(self, sdk_key: Optional[str]) -> None:

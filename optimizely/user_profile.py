@@ -14,6 +14,10 @@
 from __future__ import annotations
 from typing import Any, Optional
 from sys import version_info
+from .helpers.validator import is_user_profile_valid
+from .entities import Experiment, Variation
+from .decision_service import Decision
+from optimizely.error_handler import BaseErrorHandler
 
 if version_info < (3, 8):
     from typing_extensions import Final
@@ -90,3 +94,58 @@ class UserProfileService:
       user_profile: Dict representing the user's profile.
     """
         pass
+
+class UserProfileTracker:
+    def __init__(self, user_id: str, user_profile_service: UserProfileService, logger=None):
+        self.user_id = user_id
+        self.user_profile_service = user_profile_service
+        # self.logger = logger or logging.getLogger(__name__)
+        self.profile_updated = False
+        self.user_profile = None
+    
+    def get_user_profile(self):
+        return self.user_profile
+
+    def load_user_profile(self, reasons: Optional[list[str]], error_handler: Optional[BaseErrorHandler]):
+        try:
+            user_profile = self.user_profile_service.lookup(self.user_id)
+            if user_profile is None:
+                message = reasons.append("Unable to get a user profile from the UserProfileService.")
+                self.logger.info(message)
+            elif is_user_profile_valid(user_profile):
+                self.user_profile = user_profile
+            else:
+                message = reasons.append("The UserProfileService returned an invalid user_profile.")
+                self.logger.warning(message)
+        except Exception as exception:
+            message = reasons.append(str(exception))
+            self.logger.error(message)
+            # Todo: add error handler
+            # error_handler.handle_error()
+        
+        if self.user_profile is None:
+            self.user_profile = UserProfile(self.user_id, {})
+            
+    def update_user_profile(self, experiment: Experiment, variation: Variation):
+        decision:Decision = None
+        if experiment.id in self.user_profile.experiment_bucket_map:
+            decision = self.user_profile.experiment_bucket_map[experiment.id]
+            decision.variation = variation
+        else:
+            decision = Decision(experiment=None, variation=variation, source=None)
+         
+        self.user_profile.experiment_bucket_map[experiment.id] = decision
+        self.profile_updated = True
+        # self.logger.info(f'Updated variation "{variation.id}" of experiment "{experiment.id}" for user "{self.user_profile.user_id}".')
+        
+        
+    def save_user_profile(self, error_handler: Optional[BaseErrorHandler]):
+        if not self.profile_updated:
+            return
+
+        try:
+            self.user_profile_service.save(self.user_profile)
+            self.logger.info(f'Saved user profile of user "{self.user_profile.user_id}".')
+        except Exception as exception:
+            self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}".')
+            # error_handler.handle_error(exception)

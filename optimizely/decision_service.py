@@ -22,7 +22,7 @@ from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
-from .user_profile import UserProfile, UserProfileService
+from .user_profile import UserProfile, UserProfileService, UserProfileTracker
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -247,6 +247,8 @@ class DecisionService:
         project_config: ProjectConfig,
         experiment: entities.Experiment,
         user_context: OptimizelyUserContext,
+        user_profile_tracker: UserProfileTracker,
+        reasons: list[str],
         options: Optional[Sequence[str]] = None
     ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Top-level function to help determine variation user should be put in.
@@ -260,7 +262,9 @@ class DecisionService:
         Args:
           project_config: Instance of ProjectConfig.
           experiment: Experiment for which user variation needs to be determined.
-          user_context: contains user id and attributes
+          user_context: contains user id and attributes.
+          user_profile_tracker: tracker for reading and updating user profile of the user.
+          reasons: Decision reasons.
           options: Decide options.
 
         Returns:
