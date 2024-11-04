@@ -279,6 +279,8 @@ class DecisionService:
             ignore_user_profile = False
 
         decide_reasons = []
+        if reasons is not None:
+            decide_reasons += reasons
         # Check if experiment is running
         if not experiment_helper.is_experiment_running(experiment):
             message = f'Experiment "{experiment.key}" is not running.'
@@ -300,23 +302,14 @@ class DecisionService:
             return variation, decide_reasons
 
         # Check to see if user has a decision available for the given experiment
-        user_profile = UserProfile(user_id)
-        if not ignore_user_profile and self.user_profile_service:
-            try:
-                retrieved_profile = self.user_profile_service.lookup(user_id)
-            except:
-                self.logger.exception(f'Unable to retrieve user profile for user "{user_id}" as lookup failed.')
-                retrieved_profile = None
-
-            if retrieved_profile and validator.is_user_profile_valid(retrieved_profile):
-                user_profile = UserProfile(**retrieved_profile)
-                variation = self.get_stored_variation(project_config, experiment, user_profile)
-                if variation:
-                    message = f'Returning previously activated variation ID "{variation}" of experiment ' \
-                              f'"{experiment}" for user "{user_id}" from user profile.'
-                    self.logger.info(message)
-                    decide_reasons.append(message)
-                    return variation, decide_reasons
+        if user_profile_tracker is not None:
+            variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
+            if variation:
+                message = f'Returning previously activated variation ID "{variation}" of experiment ' \
+                            f'"{experiment}" for user "{user_id}" from user profile.'
+                self.logger.info(message)
+                decide_reasons.append(message)
+                return variation, decide_reasons
             else:
                 self.logger.warning('User profile has invalid format.')
 
@@ -344,10 +337,10 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
-            if not ignore_user_profile and self.user_profile_service:
+            if user_profile_tracker is not None:
                 try:
-                    user_profile.save_variation_for_experiment(experiment.id, variation.id)
-                    self.user_profile_service.save(user_profile.__dict__)
+                    user_profile_tracker.update_user_profile(experiment, variation)
+                    self.user_profile_service.save(user_profile_tracker.get_user_profile().__dict__)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
             return variation, decide_reasons

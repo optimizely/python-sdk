@@ -99,7 +99,7 @@ class UserProfileTracker:
     def __init__(self, user_id: str, user_profile_service: UserProfileService, logger=None):
         self.user_id = user_id
         self.user_profile_service = user_profile_service
-        # self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger
         self.profile_updated = False
         self.user_profile = None
     
