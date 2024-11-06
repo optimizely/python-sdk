@@ -14,7 +14,6 @@
 from __future__ import annotations
 from typing import Any, Optional
 from sys import version_info
-from .helpers.validator import is_user_profile_valid
 from .entities import Experiment, Variation
 from .decision_service import Decision
 from optimizely.error_handler import BaseErrorHandler
@@ -117,8 +116,6 @@ class UserProfileTracker:
             if user_profile is None:
                 message = reasons.append("Unable to get a user profile from the UserProfileService.")
                 self.logger.info(message)
-            elif is_user_profile_valid(user_profile):
-                self.user_profile = user_profile
             else:
                 message = reasons.append("The UserProfileService returned an invalid user_profile.")
                 self.logger.warning(message)

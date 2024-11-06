@@ -248,7 +248,7 @@ class DecisionService:
         experiment: entities.Experiment,
         user_context: OptimizelyUserContext,
         user_profile_tracker: UserProfileTracker,
-        reasons: list[str],
+        reasons: list[str] = [],
         options: Optional[Sequence[str]] = None
     ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Top-level function to help determine variation user should be put in.
