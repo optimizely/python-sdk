@@ -1348,8 +1348,13 @@ class Optimizely:
                 #                                                                             user_context, decide_options)
                 flags_without_forced_decision.append(feature_flag)
 
-        #needs to be implemented
-        decisionList = self.decision_service.get_variation_for_feature_list(flags_without_forced_decision, user_context, project_config, merged_decide_options)
+        
+        decisionList = self.decision_service.get_variations_for_feature_list(
+            project_config,
+            flags_without_forced_decision,
+            user_context,
+            merged_decide_options
+        )
             
             
             

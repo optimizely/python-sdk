@@ -476,44 +476,8 @@ class DecisionService:
         Returns:
           Decision namedtuple consisting of experiment and variation for the user.
     """
-        decide_reasons = []
-
-        # Check if the feature flag is under an experiment and the the user is bucketed into one of these experiments
-        if feature.experimentIds:
-            # Evaluate each experiment ID and return the first bucketed experiment variation
-            for experiment_id in feature.experimentIds:
-                experiment = project_config.get_experiment_from_id(experiment_id)
-                decision_variation = None
-
-                if experiment:
-                    optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
-                                                                                                  experiment.key)
-
-                    forced_decision_variation, reasons_received = self.validated_forced_decision(
-                        project_config, optimizely_decision_context, user_context)
-                    decide_reasons += reasons_received
-
-                    if forced_decision_variation:
-                        decision_variation = forced_decision_variation
-                    else:
-                        decision_variation, variation_reasons = self.get_variation(project_config,
-                                                                                   experiment, user_context, options)
-                        decide_reasons += variation_reasons
-
-                    if decision_variation:
-                        message = f'User "{user_context.user_id}" bucketed into a ' \
-                                  f'experiment "{experiment.key}" of feature "{feature.key}".'
-                        self.logger.debug(message)
-                        return Decision(experiment, decision_variation,
-                                        enums.DecisionSources.FEATURE_TEST), decide_reasons
-
-        message = f'User "{user_context.user_id}" is not bucketed into any of the ' \
-                  f'experiments on the feature "{feature.key}".'
-        self.logger.debug(message)
-        variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
-        if rollout_variation_reasons:
-            decide_reasons += rollout_variation_reasons
-        return variation, decide_reasons
+        return self.get_variations_for_feature_list(project_config, [feature], user_context, options)[0]
+        
 
     def validated_forced_decision(
         self,
@@ -577,3 +541,86 @@ class DecisionService:
                 user_context.logger.info(user_has_forced_decision_but_invalid)
 
         return None, reasons
+    
+    def get_variations_for_feature_list(
+        self,
+        project_config: ProjectConfig,
+        features: list[entities.FeatureFlag],
+        user_context: OptimizelyUserContext,
+        options: Optional[list[str]] = None
+    )->list[tuple[Decision, list[str]]]:
+        """ 
+        Returns the list of experiment/variation the user is bucketed in for the given list of features.
+        Args:
+                project_config: Instance of ProjectConfig.
+                features: List of features for which we are determining if it is enabled or not for the given user.
+                user_context: user context for user.
+                options: Decide options.
+
+        Returns:
+            List of Decision namedtuple consisting of experiment and variation for the user.
+        """
+        decide_reasons = []
+        
+        ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
+        
+        if self.user_profile_service is not None and not ignore_ups:
+            user_profile_tracker = UserProfileTracker(user_context.user_id, self.user_profile_service, self.logger)
+            user_profile_tracker.load_user_profile(decide_reasons, None)
+            
+        decisions = []
+        
+        for feature in features:
+            decide_reasons = []
+            
+            # Check if the feature flag is under an experiment and the the user is bucketed into one of these experiments
+            if feature.experimentIds:
+                # Evaluate each experiment ID and return the first bucketed experiment variation
+                for experiment_id in feature.experimentIds:
+                    experiment = project_config.get_experiment_from_id(experiment_id)
+                    decision_variation = None
+
+                    if experiment:
+                        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
+                                                                                                    experiment.key)
+
+                        forced_decision_variation, reasons_received = self.validated_forced_decision(
+                            project_config, optimizely_decision_context, user_context)
+                        decide_reasons += reasons_received
+
+                        if forced_decision_variation:
+                            decision_variation = forced_decision_variation
+                        else:
+                            decision_variation, variation_reasons = self.get_variation(
+                                project_config,
+                                experiment,
+                                user_context,
+                                user_profile_tracker,
+                                decide_reasons,
+                                options
+                            )
+                            decide_reasons += variation_reasons
+
+                        if decision_variation:
+                            message = f'User "{user_context.user_id}" bucketed into a ' \
+                                    f'experiment "{experiment.key}" of feature "{feature.key}".'
+                            self.logger.debug(message)
+                            return Decision(experiment, decision_variation,
+                                            enums.DecisionSources.FEATURE_TEST), decide_reasons
+
+            message = f'User "{user_context.user_id}" is not bucketed into any of the ' \
+                    f'experiments on the feature "{feature.key}".'
+            self.logger.debug(message)
+            variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
+            if rollout_variation_reasons:
+                decide_reasons += rollout_variation_reasons
+            decision = (variation, decide_reasons)
+            decisions.append(decision)
+            
+        if self.user_profile_service is not None and ignore_ups is False:
+            user_profile_tracker.save_user_profile()
+        
+        return decisions
+
+                
+                

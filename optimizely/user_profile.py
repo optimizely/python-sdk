@@ -22,7 +22,12 @@ from optimizely.error_handler import BaseErrorHandler
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final  # type: ignore
+    from typing import Final, TYPE_CHECKING  # type: ignore
+    
+    if TYPE_CHECKING:
+        # prevent circular dependenacy by skipping import at runtime
+        from .project_config import ProjectConfig
+        from .logger import Logger
 
 
 class UserProfile:
@@ -96,7 +101,7 @@ class UserProfileService:
         pass
 
 class UserProfileTracker:
-    def __init__(self, user_id: str, user_profile_service: UserProfileService, logger=None):
+    def __init__(self, user_id: str, user_profile_service: UserProfileService, logger=Logger):
         self.user_id = user_id
         self.user_profile_service = user_profile_service
         self.logger = logger
