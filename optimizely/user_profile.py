@@ -14,9 +14,7 @@
 from __future__ import annotations
 from typing import Any, Optional
 from sys import version_info
-from .entities import Experiment, Variation
-from .decision_service import Decision
-from optimizely.error_handler import BaseErrorHandler
+
 
 if version_info < (3, 8):
     from typing_extensions import Final
@@ -27,6 +25,9 @@ else:
         # prevent circular dependenacy by skipping import at runtime
         from .project_config import ProjectConfig
         from .logger import Logger
+        from .entities import Experiment, Variation
+        from .decision_service import Decision
+        from optimizely.error_handler import BaseErrorHandler
 
 
 class UserProfile:
@@ -100,7 +101,7 @@ class UserProfileService:
         pass
 
 class UserProfileTracker:
-    def __init__(self, user_id: str, user_profile_service: UserProfileService, logger=Logger):
+    def __init__(self, user_id: str, user_profile_service: UserProfileService, logger:Logger):
         self.user_id = user_id
         self.user_profile_service = user_profile_service
         self.logger = logger

@@ -1315,8 +1315,8 @@ class Optimizely:
                 decisions[key] = OptimizelyDecision(None, False, None, None, key, user_context, [])
                 continue
             valid_keys.append(key)
-            # decision_reasons = []
-            # decision_reasons_dict[key] = decision_reasons
+            decision_reasons = []
+            decision_reasons_dict[key] = decision_reasons
             
             optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=None)
             forced_decision_response = self.decision_service.validated_forced_decision(project_config,
