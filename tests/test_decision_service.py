@@ -485,6 +485,8 @@ class DecisionServiceTest(base.BaseTest):
                                                                  "random_key": "random_value",
                                                                  "$opt_bucketing_id": "user_bucket_value",
                                                              })
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_forced_variation",
@@ -501,7 +503,8 @@ class DecisionServiceTest(base.BaseTest):
             variation, _ = self.decision_service.get_variation(
                 self.project_config,
                 experiment,
-                user
+                user,
+                user_profile_tracker
             )
 
         # Assert that bucket is called with appropriate bucketing ID
@@ -515,6 +518,8 @@ class DecisionServiceTest(base.BaseTest):
         user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, logger=None,
                                                              user_id="test_user",
                                                              user_attributes={})
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_whitelisted_variation",
@@ -531,7 +536,7 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
             variation, _ = self.decision_service.get_variation(
-                self.project_config, experiment, user
+                self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
                 entities.Variation("111128", "control"),
@@ -554,6 +559,8 @@ class DecisionServiceTest(base.BaseTest):
         user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None, logger=None,
                                                              user_id="test_user",
                                                              user_attributes={})
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_whitelisted_variation",
@@ -575,13 +582,14 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
             variation, _ = self.decision_service.get_variation(
-                self.project_config, experiment, user, None
+                self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
                 entities.Variation("111128", "control"),
                 variation,
             )
-
+            print("Actual UserProfile argument:", mock_get_stored_variation.call_args[0][2].__dict__)
+            print("Expected UserProfile argument:", user_profile.UserProfile("test_user", {"111127": {"variation_id": "111128"}}).__dict__)
         # Assert that stored variation is returned and bucketing service is not involved
         mock_get_whitelisted_variation.assert_called_once_with(
             self.project_config, experiment, "test_user"
@@ -901,6 +909,8 @@ class DecisionServiceTest(base.BaseTest):
                                                              logger=None,
                                                              user_id="test_user",
                                                              user_attributes={})
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
                 self.decision_service, "logger"
@@ -921,7 +931,7 @@ class DecisionServiceTest(base.BaseTest):
             side_effect=Exception("major problem"),
         ) as mock_save:
             variation, _ = self.decision_service.get_variation(
-                self.project_config, experiment, user, None
+                self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
@@ -963,6 +973,8 @@ class DecisionServiceTest(base.BaseTest):
                                                              logger=None,
                                                              user_id="test_user",
                                                              user_attributes={})
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
                 self.decision_service, "logger"
@@ -983,6 +995,8 @@ class DecisionServiceTest(base.BaseTest):
                 self.project_config,
                 experiment,
                 user,
+                user_profile_tracker,
+                [],
                 options=['IGNORE_USER_PROFILE_SERVICE'],
             )
             self.assertEqual(
@@ -1290,6 +1304,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_key("test_experiment"),
             user,
+            None,
+            [],
             None
         )
 
@@ -1417,6 +1433,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_key("group_exp_1"),
             user,
+            None,
+            [],
             None
         )
 
@@ -1445,6 +1463,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config,
             self.project_config.get_experiment_from_key("test_experiment"),
             user,
+            None,
+            [],
             None
         )
 
@@ -1472,7 +1492,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_experiment_from_id("32222"), user, False
+            self.project_config, self.project_config.get_experiment_from_id("32222"), user, None, [], False
         )
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_mutex_group_bucket_less_than_2500(
@@ -1560,6 +1580,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=6500) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
+            
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
             )
@@ -1777,6 +1798,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
                                                              user_id="test_user",
                                                              user_attributes={
                                                                  "experiment_attr": "group_experiment_invalid"})
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
         expected_experiment = self.project_config.get_experiment_from_id("211147")
         expected_variation = self.project_config.get_variation_from_id(
@@ -1789,6 +1812,13 @@ class FeatureFlagDecisionTests(base.BaseTest):
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
             )
+            print(f"variation received is: {variation_received}")
+            x = decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.ROLLOUT,
+                )
+            print(f"need to be:{x}")
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1797,6 +1827,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 variation_received,
             )
+           
         mock_config_logging.debug.assert_called_with(
             'Assigned bucket 4000 to user with bucketing ID "test_user".')
         mock_generate_bucket_value.assert_called_with("test_user211147")

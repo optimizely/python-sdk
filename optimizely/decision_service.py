@@ -303,6 +303,7 @@ class DecisionService:
 
         # Check to see if user has a decision available for the given experiment
         if user_profile_tracker is not None:
+            user_profile_tracker.load_user_profile()
             variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
             if variation:
                 message = f'Returning previously activated variation ID "{variation}" of experiment ' \
@@ -547,7 +548,7 @@ class DecisionService:
         project_config: ProjectConfig,
         features: list[entities.FeatureFlag],
         user_context: OptimizelyUserContext,
-        options: Optional[list[str]] = None
+        options: Optional[Sequence[str]] = None
     )->list[tuple[Decision, list[str]]]:
         """ 
         Returns the list of experiment/variation the user is bucketed in for the given list of features.
@@ -562,8 +563,13 @@ class DecisionService:
         """
         decide_reasons = []
         
-        ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
+        if options:
+            ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
+        else:
+            ignore_ups = False
         
+        
+        user_profile_tracker: UserProfileTracker = None
         if self.user_profile_service is not None and not ignore_ups:
             user_profile_tracker = UserProfileTracker(user_context.user_id, self.user_profile_service, self.logger)
             user_profile_tracker.load_user_profile(decide_reasons, None)
@@ -605,8 +611,9 @@ class DecisionService:
                             message = f'User "{user_context.user_id}" bucketed into a ' \
                                     f'experiment "{experiment.key}" of feature "{feature.key}".'
                             self.logger.debug(message)
-                            return Decision(experiment, decision_variation,
-                                            enums.DecisionSources.FEATURE_TEST), decide_reasons
+                            decision = [Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST), decide_reasons]
+                            decisions.append(decision)
+                            continue
 
             message = f'User "{user_context.user_id}" is not bucketed into any of the ' \
                     f'experiments on the feature "{feature.key}".'

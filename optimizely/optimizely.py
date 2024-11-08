@@ -21,6 +21,7 @@ from . import event_builder
 from . import exceptions
 from . import logger as _logging
 from . import project_config
+from . import user_profile
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import BaseConfigManager
 from .config_manager import PollingConfigManager
@@ -46,7 +47,7 @@ from .project_config import ProjectConfig
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
-    from .user_profile import UserProfileService, UserProfileTracker
+    from .user_profile import UserProfileService
     from .helpers.event_tag_utils import EventTags
 
 
@@ -631,7 +632,7 @@ class Optimizely:
             return None
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
-        user_profile_tracker = UserProfileTracker(user_context.user_id, self.user_profile_service, self.logger)
+        user_profile_tracker = user_profile.UserProfileTracker(user_id, self.user_profile_service, self.logger)
         variation, _ = self.decision_service.get_variation(project_config, experiment, user_context, user_profile_tracker)
         if variation:
             variation_key = variation.key
@@ -1152,7 +1153,7 @@ class Optimizely:
         
         # Create Optimizely Decision Result.
         attributes = user_context.get_user_attributes()
-        rule_key = None
+        rule_key = flag_decision.experiment.key if flag_decision.experiment else None
         all_variables = {}
         decision_source = DecisionSources.ROLLOUT
         decision_event_dispatched = False
@@ -1160,12 +1161,12 @@ class Optimizely:
         feature_flag = project_config.feature_key_map.get(flag_key)
 
         # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
-        # if decision.experiment is not None:
-        #     experiment = decision.experiment
+        # if flag_decision.experiment is not None:
+        #     experiment = flag_decision.experiment
         #     source_info["experiment"] = experiment
         #     rule_key = experiment.key if experiment else None
-        # if decision.variation is not None:
-        #     variation = decision.variation
+        # if flag_decision.variation is not None:
+        #     variation = flag_decision.variation
         #     variation_key = variation.key
         #     feature_enabled = variation.featureEnabled
         #     decision_source = decision.source
@@ -1201,7 +1202,7 @@ class Optimizely:
                 all_variables[variable_key] = actual_value
 
         should_include_reasons = OptimizelyDecideOption.INCLUDE_REASONS in decide_options
-
+        variation_key = flag_decision.variation.key if flag_decision is not None and flag_decision.variation is not None else None
         # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
@@ -1212,7 +1213,7 @@ class Optimizely:
                 'flag_key': flag_key,
                 'enabled': feature_enabled,
                 'variables': all_variables,
-                'variation_key': flag_decision.variation.key,
+                'variation_key': variation_key,
                 'rule_key': rule_key,
                 'reasons': decision_reasons if should_include_reasons else [],
                 'decision_event_dispatched': decision_event_dispatched
@@ -1220,7 +1221,7 @@ class Optimizely:
             },
         )
 
-        return OptimizelyDecision(variation_key=flag_decision.variation.key, enabled=feature_enabled, variables=all_variables,
+        return OptimizelyDecision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                                   rule_key=rule_key, flag_key=flag_key,
                                   user_context=user_context, reasons=decision_reasons if should_include_reasons else []
                                   )
@@ -1308,6 +1309,7 @@ class Optimizely:
         project_config = self.config_manager.get_config()
         flags_without_forced_decision: list[entities.FeatureFlag] = []
         flag_decisions: dict[str, Decision] = {}
+        
             
         for key in keys:
             feature_flag = project_config.feature_key_map.get(key)

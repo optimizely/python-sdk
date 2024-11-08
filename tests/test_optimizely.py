@@ -369,9 +369,10 @@ class OptimizelyTest(base.BaseTest):
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
         user_context = mock_decision.call_args[0][2]
+        user_profile_tracker = mock_decision.call_args[0][3]
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_experiment_from_key('test_experiment'), user_context
+            self.project_config, self.project_config.get_experiment_from_key('test_experiment'), user_context, user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
 
@@ -766,11 +767,13 @@ class OptimizelyTest(base.BaseTest):
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
         user_context = mock_get_variation.call_args[0][2]
+        user_profile_tracker = mock_get_variation.call_args[0][3]
 
         mock_get_variation.assert_called_once_with(
             self.project_config,
             self.project_config.get_experiment_from_key('test_experiment'),
-            user_context
+            user_context,
+            user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
         self._validate_event_object(
@@ -1120,11 +1123,12 @@ class OptimizelyTest(base.BaseTest):
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
         user_context = mock_get_variation.call_args[0][2]
-
+        user_profile_tracker = mock_get_variation.call_args[0][3]
         mock_get_variation.assert_called_once_with(
             self.project_config,
             self.project_config.get_experiment_from_key('test_experiment'),
-            user_context
+            user_context,
+            user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
         self._validate_event_object(
