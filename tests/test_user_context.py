@@ -1053,21 +1053,25 @@ class UserContextTest(base.BaseTest):
         user_context = opt_obj.create_user_context('test_user')
 
         with mock.patch(
-            'optimizely.optimizely.Optimizely._decide'
-        ) as mock_decide, mock.patch(
+            'optimizely.decision_service.DecisionService.get_variations_for_feature_list'
+        ) as mock_get_variations, mock.patch(
             'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
             return_value=user_context
         ):
 
             flags = ['test_feature_in_experiment']
             options = ['EXCLUDE_VARIABLES']
+            
+            mock_decision = mock.MagicMock()
+            mock_decision.experiment = mock.MagicMock(key = 'test_experiment')
+            mock_decision.variation = mock.MagicMock(key = 'variation')
+            mock_decision.source = enums.DecisionSources.FEATURE_TEST
+            
+            mock_get_variations.return_value = [(mock_decision,[])]
+            
             user_context.decide_for_keys(flags, options)
 
-        mock_decide.assert_called_with(
-            user_context,
-            'test_feature_in_experiment',
-            ['EXCLUDE_VARIABLES']
-        )
+        mock_get_variations.assert_called_once()
 
     def test_decide_for_all(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
@@ -1323,9 +1327,9 @@ class UserContextTest(base.BaseTest):
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
         with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation_for_feature',
-            return_value=(decision_service.Decision(mock_experiment,
-                                                    mock_variation, enums.DecisionSources.FEATURE_TEST), []),
+            'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
+            return_value=[(decision_service.Decision(mock_experiment,
+                                                    mock_variation, enums.DecisionSources.FEATURE_TEST), []),]
         ):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
