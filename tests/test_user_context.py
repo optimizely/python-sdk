@@ -678,9 +678,9 @@ class UserContextTest(base.BaseTest):
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
 
         with mock.patch(
-                'optimizely.decision_service.DecisionService.get_variation_for_feature',
-                return_value=(decision_service.Decision(mock_experiment, mock_variation,
-                                                        enums.DecisionSources.FEATURE_TEST), []),
+                'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
+                return_value=([decision_service.Decision(mock_experiment, mock_variation,
+                                                        enums.DecisionSources.FEATURE_TEST), []]),
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -968,14 +968,17 @@ class UserContextTest(base.BaseTest):
         mocked_decision_2 = OptimizelyDecision(flag_key='test_feature_in_rollout', enabled=False)
 
         def side_effect(*args, **kwargs):
-            flag = args[1]
-            if flag == 'test_feature_in_experiment':
-                return mocked_decision_1
-            else:
-                return mocked_decision_2
+            flags = args[1]
+            res = {}
+            for flag in flags:
+                if flag == 'test_feature_in_experiment':
+                    res[flag] =  mocked_decision_1
+                else:
+                    res[flag] = mocked_decision_2
+            return res
 
         with mock.patch(
-            'optimizely.optimizely.Optimizely._decide', side_effect=side_effect
+            'optimizely.optimizely.Optimizely._decide_for_keys', side_effect=side_effect
         ) as mock_decide, mock.patch(
             'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
             return_value=user_context
@@ -984,18 +987,10 @@ class UserContextTest(base.BaseTest):
             flags = ['test_feature_in_rollout', 'test_feature_in_experiment']
             options = []
             decisions = user_context.decide_for_keys(flags, options)
-
         self.assertEqual(2, len(decisions))
-
         mock_decide.assert_any_call(
             user_context,
-            'test_feature_in_experiment',
-            options
-        )
-
-        mock_decide.assert_any_call(
-            user_context,
-            'test_feature_in_rollout',
+            ['test_feature_in_rollout', 'test_feature_in_experiment'],
             options
         )
 
@@ -1011,14 +1006,17 @@ class UserContextTest(base.BaseTest):
         mocked_decision_2 = OptimizelyDecision(flag_key='test_feature_in_rollout', enabled=False)
 
         def side_effect(*args, **kwargs):
-            flag = args[1]
-            if flag == 'test_feature_in_experiment':
-                return mocked_decision_1
-            else:
-                return mocked_decision_2
+            flags = args[1]
+            res = {}
+            for flag in flags:
+                if flag == 'test_feature_in_experiment':
+                    res[flag] =  mocked_decision_1
+                else:
+                    res[flag] = mocked_decision_2
+            return res
 
         with mock.patch(
-            'optimizely.optimizely.Optimizely._decide', side_effect=side_effect
+            'optimizely.optimizely.Optimizely._decide_for_keys', side_effect=side_effect
         ) as mock_decide, mock.patch(
             'optimizely.optimizely_user_context.OptimizelyUserContext._clone',
             return_value=user_context
@@ -1071,7 +1069,12 @@ class UserContextTest(base.BaseTest):
             
             user_context.decide_for_keys(flags, options)
 
-        mock_get_variations.assert_called_once()
+        mock_get_variations.assert_called_with(
+            mock.ANY,  # ProjectConfig 
+            mock.ANY,  # FeatureFlag list
+            user_context,  # UserContext object
+            ['EXCLUDE_VARIABLES', 'ENABLED_FLAGS_ONLY']
+        )
 
     def test_decide_for_all(self):
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
