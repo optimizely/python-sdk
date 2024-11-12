@@ -577,53 +577,49 @@ class DecisionService:
         decisions = []
         
         for feature in features:
-            decide_reasons = []
+            feature_reasons = decide_reasons.copy()
+            experiment_decision_found = False  # Track if an experiment decision was made for the feature
             
-            # Check if the feature flag is under an experiment and the the user is bucketed into one of these experiments
+            # Check if the feature flag is under an experiment
             if feature.experimentIds:
-                # Evaluate each experiment ID and return the first bucketed experiment variation
                 for experiment_id in feature.experimentIds:
                     experiment = project_config.get_experiment_from_id(experiment_id)
                     decision_variation = None
 
                     if experiment:
-                        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
-                                                                                                    experiment.key)
-
+                        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
+                            feature.key, experiment.key)
                         forced_decision_variation, reasons_received = self.validated_forced_decision(
                             project_config, optimizely_decision_context, user_context)
-                        decide_reasons += reasons_received
+                        feature_reasons.extend(reasons_received)
 
                         if forced_decision_variation:
                             decision_variation = forced_decision_variation
                         else:
                             decision_variation, variation_reasons = self.get_variation(
-                                project_config,
-                                experiment,
-                                user_context,
-                                user_profile_tracker,
-                                decide_reasons,
-                                options
+                                project_config, experiment, user_context, user_profile_tracker, feature_reasons, options
                             )
-                            decide_reasons += variation_reasons
+                            feature_reasons.extend(variation_reasons)
 
                         if decision_variation:
-                            message = f'User "{user_context.user_id}" bucketed into a ' \
-                                    f'experiment "{experiment.key}" of feature "{feature.key}".'
-                            self.logger.debug(message)
-                            decision = [Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST), decide_reasons]
-                            decisions.append(decision)
-                            continue
-
-            message = f'User "{user_context.user_id}" is not bucketed into any of the ' \
-                    f'experiments on the feature "{feature.key}".'
-            self.logger.debug(message)
-            variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
-            if rollout_variation_reasons:
-                decide_reasons += rollout_variation_reasons
-            decision = (variation, decide_reasons)
-            decisions.append(decision)
+                            self.logger.debug(f'User "{user_context.user_id}" bucketed into experiment "{experiment.key}" of feature "{feature.key}".')
+                            decision = Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST)
+                            decisions.append((decision, feature_reasons))
+                            experiment_decision_found = True  # Mark that a decision was found
+                            break  # Stop after the first successful experiment decision
             
+            # Only process rollout if no experiment decision was found
+            if not experiment_decision_found:
+                rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
+                feature_reasons.extend(rollout_reasons)
+                
+                if rollout_decision:
+                    self.logger.debug(f'User "{user_context.user_id}" bucketed into rollout for feature "{feature.key}".')
+                else:
+                    self.logger.debug(f'User "{user_context.user_id}" not bucketed into any rollout for feature "{feature.key}".')
+
+                decisions.append((rollout_decision, feature_reasons))
+                    
         if self.user_profile_service is not None and ignore_ups is False:
             user_profile_tracker.save_user_profile()
         
