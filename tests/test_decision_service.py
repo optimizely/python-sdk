@@ -616,6 +616,8 @@ class DecisionServiceTest(base.BaseTest):
                                                              logger=None,
                                                              user_id="test_user",
                                                              user_attributes={})
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
                 self.decision_service, "logger"
@@ -637,7 +639,7 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
             variation, _ = self.decision_service.get_variation(
-                self.project_config, experiment, user, None
+                self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
                 entities.Variation("111129", "variation"),

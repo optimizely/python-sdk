@@ -119,8 +119,16 @@ class UserProfileTracker:
                 message = reasons.append("Unable to get a user profile from the UserProfileService.")
                 self.logger.info(message)
             else:
-                message = reasons.append("The UserProfileService returned an invalid user_profile.")
-                self.logger.warning(message)
+                if 'user_id' in user_profile and 'experiment_bucket_map' in user_profile:
+                    self.user_profile = UserProfile(
+                        user_profile['user_id'], 
+                        user_profile['experiment_bucket_map']
+                    )
+                    self.logger.info("User profile loaded successfully.")
+                else:
+                    missing_keys = [key for key in ['user_id', 'experiment_bucket_map'] if key not in user_profile]
+                    message = f"User profile is missing keys: {', '.join(missing_keys)}"
+                    reasons.append(message)
         except Exception as exception:
             message = reasons.append(str(exception))
             self.logger.error(message)
