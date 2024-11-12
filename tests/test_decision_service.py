@@ -856,6 +856,7 @@ class DecisionServiceTest(base.BaseTest):
                                                              logger=None,
                                                              user_id="test_user",
                                                              user_attributes={})
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, self.decision_service.user_profile_service)
         experiment = self.project_config.get_experiment_from_key("test_experiment")
         with mock.patch.object(
                 self.decision_service, "logger"
@@ -876,7 +877,7 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
             variation, _ = self.decision_service.get_variation(
-                self.project_config, experiment, user, None
+                self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
                 entities.Variation("111129", "variation"),
@@ -1473,7 +1474,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("test_experiment"),
             user,
             None,
-            [],
+            [[]],
             None
         )
 
@@ -1501,7 +1502,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_experiment_from_id("32222"), user, None, [], False
+            self.project_config, self.project_config.get_experiment_from_id("32222"), user, None, [[]], False
         )
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_mutex_group_bucket_less_than_2500(

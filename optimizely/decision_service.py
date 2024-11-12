@@ -611,7 +611,7 @@ class DecisionService:
             # Only process rollout if no experiment decision was found
             if not experiment_decision_found:
                 rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
-                feature_reasons.extend(rollout_reasons)
+                feature_reasons.append(rollout_reasons)
                 
                 if rollout_decision:
                     self.logger.debug(f'User "{user_context.user_id}" bucketed into rollout for feature "{feature.key}".')
