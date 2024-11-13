@@ -46,7 +46,7 @@ class UserProfile:
     def __init__(
         self,
         user_id: str,
-        experiment_bucket_map: Optional[dict[str, dict[str, Optional[str]]]] = None,
+        experiment_bucket_map: Optional[dict[str, Decision]] = None,
         **kwargs: Any
     ):
         self.user_id = user_id
@@ -131,7 +131,7 @@ class UserProfileTracker:
                     reasons.append(message)
         except Exception as exception:
             message = reasons.append(str(exception))
-            self.logger.error(message)
+            self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}"as lookup failed.')
             # Todo: add error handler
             # error_handler.handle_error()
         
