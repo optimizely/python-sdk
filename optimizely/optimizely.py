@@ -1133,6 +1133,10 @@ class Optimizely:
         
         return decision
         
+    def _fix_nested_decision_reasons_list(self, decision_reasons)->list:
+        if len(decision_reasons)==1 and type(decision_reasons[0])==type(list()):
+            decision_reasons = decision_reasons[0]
+        return decision_reasons
         
     def _create_optimizely_decision(
             self,
@@ -1155,7 +1159,7 @@ class Optimizely:
         attributes = user_context.get_user_attributes()
         rule_key = flag_decision.experiment.key if flag_decision.experiment else None
         all_variables = {}
-        decision_source = DecisionSources.ROLLOUT
+        decision_source = flag_decision.source
         decision_event_dispatched = False
     
         feature_flag = project_config.feature_key_map.get(flag_key)
@@ -1352,10 +1356,11 @@ class Optimizely:
             flag_decisions[flag_key] = decision
             decision_reasons_dict[flag_key] += reasons
             
-            
+        print(decision_reasons_dict)
         for key in valid_keys:
             flag_decision = flag_decisions[key]
             decision_reasons = decision_reasons_dict[key]
+            decision_reasons = self._fix_nested_decision_reasons_list(decision_reasons)
             optimizely_decision = self._create_optimizely_decision(
                 user_context,
                 key,
@@ -1367,7 +1372,7 @@ class Optimizely:
             
             if (OptimizelyDecideOption.ENABLED_FLAGS_ONLY not in merged_decide_options) or (optimizely_decision.enabled):
                 decisions[key] = optimizely_decision
-            
+        
         return decisions
 
     def _setup_odp(self, sdk_key: Optional[str]) -> None:
