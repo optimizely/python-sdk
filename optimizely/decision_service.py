@@ -307,7 +307,7 @@ class DecisionService:
             variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
             if variation:
                 message = f'Returning previously activated variation ID "{variation}" of experiment ' \
-                            f'"{experiment}" for user "{user_id}" from user profile.'
+                          f'"{experiment}" for user "{user_id}" from user profile.'
                 self.logger.info(message)
                 decide_reasons.append(message)
                 return variation, decide_reasons
