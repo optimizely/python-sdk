@@ -704,7 +704,7 @@ class Optimizely:
         if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
-                decision.experiment else '', decision.source, feature_enabled, user_id, attributes
+                decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes
             )
 
         # Send event if Decision came from an experiment.
@@ -715,7 +715,7 @@ class Optimizely:
             }
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
-                decision.source, feature_enabled, user_id, attributes
+                str(decision.source), feature_enabled, user_id, attributes
             )
 
         if feature_enabled:
@@ -1133,18 +1133,13 @@ class Optimizely:
         
         return decision
         
-    def _fix_nested_decision_reasons_list(self, decision_reasons)->list:
-        if len(decision_reasons)==1 and type(decision_reasons[0])==type(list()):
-            decision_reasons = decision_reasons[0]
-        return decision_reasons
-        
     def _create_optimizely_decision(
             self,
-            user_context: Optional[OptimizelyUserContext],
+            user_context: OptimizelyUserContext,
             flag_key: str,
-            flag_decision: Optional[Decision],
+            flag_decision: Decision,
             decision_reasons: Optional[list[str]],
-            decide_options: Optional[list[OptimizelyDecideOption]],
+            decide_options: list[str],
             project_config: ProjectConfig
     ) -> OptimizelyDecision:
         user_id = user_context.user_id
@@ -1164,30 +1159,18 @@ class Optimizely:
     
         feature_flag = project_config.feature_key_map.get(flag_key)
 
-        # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
-        # if flag_decision.experiment is not None:
-        #     experiment = flag_decision.experiment
-        #     source_info["experiment"] = experiment
-        #     rule_key = experiment.key if experiment else None
-        # if flag_decision.variation is not None:
-        #     variation = flag_decision.variation
-        #     variation_key = variation.key
-        #     feature_enabled = variation.featureEnabled
-        #     decision_source = decision.source
-        #     source_info["variation"] = variation
-
         # Send impression event if Decision came from a feature
         # test and decide options doesn't include disableDecisionEvent
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
             if decision_source == DecisionSources.FEATURE_TEST or project_config.send_flag_decisions:
                 self._send_impression_event(project_config, flag_decision.experiment, flag_decision.variation, flag_key, rule_key or '',
-                                            decision_source, feature_enabled,
+                                            str(decision_source), feature_enabled,
                                             user_id, attributes)
 
                 decision_event_dispatched = True
 
         # Generate all variables map if decide options doesn't include excludeVariables
-        if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options:
+        if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options and feature_flag:
             for variable_key, variable in feature_flag.variables.items():
                 variable_value = variable.defaultValue
                 if feature_enabled:
@@ -1301,7 +1284,7 @@ class Optimizely:
 
         enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in merged_decide_options
 
-        decisions = {}
+        decisions: dict[str, OptimizelyDecision] = {}
         valid_keys = []
         decision_reasons_dict = {}
         # for key in keys:
@@ -1314,14 +1297,15 @@ class Optimizely:
         flags_without_forced_decision: list[entities.FeatureFlag] = []
         flag_decisions: dict[str, Decision] = {}
         
-            
+        if project_config is None:
+            return decisions
         for key in keys:
             feature_flag = project_config.feature_key_map.get(key)
             if feature_flag is None:
                 decisions[key] = OptimizelyDecision(None, False, None, None, key, user_context, [])
                 continue
             valid_keys.append(key)
-            decision_reasons = []
+            decision_reasons: list[str] = []
             decision_reasons_dict[key] = decision_reasons
             
             optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=None)
@@ -1360,7 +1344,6 @@ class Optimizely:
         for key in valid_keys:
             flag_decision = flag_decisions[key]
             decision_reasons = decision_reasons_dict[key]
-            decision_reasons = self._fix_nested_decision_reasons_list(decision_reasons)
             optimizely_decision = self._create_optimizely_decision(
                 user_context,
                 key,
