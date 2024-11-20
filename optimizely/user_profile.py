@@ -126,7 +126,6 @@ class UserProfileTracker:
             if user_profile is None:
                 message = "Unable to get a user profile from the UserProfileService."
                 reasons.append(message)
-                # self.logger.info(message)
             else:
                 if 'user_id' in user_profile and 'experiment_bucket_map' in user_profile:
                     self.user_profile = UserProfile(
@@ -142,8 +141,6 @@ class UserProfileTracker:
             message = str(exception)
             reasons.append(message)
             self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}"as lookup failed.')
-            # Todo: add error handler
-            # error_handler.handle_error()
 
         if self.user_profile is None:
             self.user_profile = UserProfile(self.user_id, {})
@@ -173,4 +170,3 @@ class UserProfileTracker:
         except Exception as exception:
             self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}" '
                                 f'for exception:{exception}".')
-            # error_handler.handle_error(exception)

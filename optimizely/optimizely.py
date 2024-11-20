@@ -1291,16 +1291,9 @@ class Optimizely:
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
             merged_decide_options = self.default_decide_options
 
-        # enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in merged_decide_options
-
         decisions: dict[str, OptimizelyDecision] = {}
         valid_keys = []
         decision_reasons_dict = {}
-        # for key in keys:
-        #     decision = self._decide(user_context, key, decide_options)
-        #     if enabled_flags_only and not decision.enabled:
-        #         continue
-        #     decisions[key] = decision
 
         project_config = self.config_manager.get_config()
         flags_without_forced_decision: list[entities.FeatureFlag] = []
@@ -1344,7 +1337,6 @@ class Optimizely:
             flag_decisions[flag_key] = decision
             decision_reasons_dict[flag_key] += reasons
 
-        print(decision_reasons_dict)
         for key in valid_keys:
             flag_decision = flag_decisions[key]
             decision_reasons = decision_reasons_dict[key]

@@ -602,8 +602,8 @@ class DecisionService:
 
                         if decision_variation:
                             self.logger.debug(
-                                'User "{}" bucketed into experiment "{}" of feature "{}".'.format(
-                                    user_context.user_id, experiment.key, feature.key)
+                                f'User "{user_context.user_id}" '
+                                f'bucketed into experiment "{experiment.key}" of feature "{feature.key}".'
                             )
                             decision = Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST)
                             decisions.append((decision, feature_reasons))
