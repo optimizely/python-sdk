@@ -114,7 +114,7 @@ class UserProfileTracker:
         self.profile_updated = False
         self.user_profile = UserProfile(user_id, {})
     
-    def get_user_profile(self) -> None:
+    def get_user_profile(self) -> UserProfile:
         return self.user_profile
 
     def load_user_profile(self, reasons: Optional[list[str]]=[], error_handler: Optional[BaseErrorHandler]=None) -> None:
