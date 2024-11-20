@@ -1105,18 +1105,6 @@ class UserContextTest(base.BaseTest):
             ['test_feature_in_rollout', 'test_feature_in_experiment'],
             options
         )
-        # mock_decide.assert_any_call(
-        #     user_context,
-        #     'test_feature_in_experiment',
-        #     options
-        # )
-
-        # mock_decide.assert_any_call(
-        #     user_context,
-        #     'test_feature_in_rollout',
-        #     options
-        # )
-
         self.assertEqual(mocked_decision_1, decisions['test_feature_in_experiment'])
 
     def test_decide_for_keys__default_options__with__options(self):
