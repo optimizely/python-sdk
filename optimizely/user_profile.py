@@ -114,10 +114,10 @@ class UserProfileTracker:
         self.profile_updated = False
         self.user_profile = UserProfile(user_id, {})
     
-    def get_user_profile(self):
+    def get_user_profile(self) -> None:
         return self.user_profile
 
-    def load_user_profile(self, reasons: Optional[list[str]]=[], error_handler: Optional[BaseErrorHandler]=None):
+    def load_user_profile(self, reasons: Optional[list[str]]=[], error_handler: Optional[BaseErrorHandler]=None) -> None:
         reasons = reasons if reasons else []
         try:
             user_profile = self.user_profile_service.lookup(self.user_id) if self.user_profile_service else None
@@ -146,7 +146,7 @@ class UserProfileTracker:
         if self.user_profile is None:
             self.user_profile = UserProfile(self.user_id, {})
             
-    def update_user_profile(self, experiment: Experiment, variation: Variation):
+    def update_user_profile(self, experiment: Experiment, variation: Variation) -> None:
         if experiment.id in self.user_profile.experiment_bucket_map:
             decision = self.user_profile.experiment_bucket_map[experiment.id]
             if isinstance(decision, decision_service.Decision):
@@ -163,7 +163,7 @@ class UserProfileTracker:
         # self.logger.info(f'Updated variation "{variation.id}" of experiment "{experiment.id}" for user "{self.user_profile.user_id}".')
         
         
-    def save_user_profile(self, error_handler: Optional[BaseErrorHandler] = None):
+    def save_user_profile(self, error_handler: Optional[BaseErrorHandler] = None) -> None:
         if not self.profile_updated:
             return
         try:
