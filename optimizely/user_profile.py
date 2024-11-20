@@ -16,16 +16,13 @@ from typing import Any, Optional, Union
 from sys import version_info
 from . import logger as _logging
 from . import decision_service
-from .helpers import enums
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
     from typing import Final, TYPE_CHECKING  # type: ignore
-    
+
     if TYPE_CHECKING:
         # prevent circular dependenacy by skipping import at runtime
-        from .project_config import ProjectConfig
-        from .logger import Logger
         from .entities import Experiment, Variation
         from .decision_service import Decision
         from optimizely.error_handler import BaseErrorHandler
@@ -106,18 +103,23 @@ class UserProfileService:
     """
         pass
 
+
 class UserProfileTracker:
-    def __init__(self, user_id: str, user_profile_service: Optional[UserProfileService], logger:Optional[_logging.Logger] = None):
+    def __init__(self,
+                 user_id: str,
+                 user_profile_service: Optional[UserProfileService],
+                 logger: Optional[_logging.Logger] = None):
         self.user_id = user_id
         self.user_profile_service = user_profile_service
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.profile_updated = False
         self.user_profile = UserProfile(user_id, {})
-    
+
     def get_user_profile(self) -> UserProfile:
         return self.user_profile
 
-    def load_user_profile(self, reasons: Optional[list[str]]=[], error_handler: Optional[BaseErrorHandler]=None) -> None:
+    def load_user_profile(self, reasons: Optional[list[str]] = [],
+                          error_handler: Optional[BaseErrorHandler] = None) -> None:
         reasons = reasons if reasons else []
         try:
             user_profile = self.user_profile_service.lookup(self.user_id) if self.user_profile_service else None
@@ -128,7 +130,7 @@ class UserProfileTracker:
             else:
                 if 'user_id' in user_profile and 'experiment_bucket_map' in user_profile:
                     self.user_profile = UserProfile(
-                        user_profile['user_id'], 
+                        user_profile['user_id'],
                         user_profile['experiment_bucket_map']
                     )
                     self.logger.info("User profile loaded successfully.")
@@ -142,10 +144,10 @@ class UserProfileTracker:
             self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}"as lookup failed.')
             # Todo: add error handler
             # error_handler.handle_error()
-        
+
         if self.user_profile is None:
             self.user_profile = UserProfile(self.user_id, {})
-            
+
     def update_user_profile(self, experiment: Experiment, variation: Variation) -> None:
         if experiment.id in self.user_profile.experiment_bucket_map:
             decision = self.user_profile.experiment_bucket_map[experiment.id]
@@ -157,12 +159,10 @@ class UserProfileTracker:
                 )
         else:
             decision = decision_service.Decision(experiment=None, variation=variation, source=None)
-         
+
         self.user_profile.experiment_bucket_map[experiment.id] = decision
         self.profile_updated = True
-        # self.logger.info(f'Updated variation "{variation.id}" of experiment "{experiment.id}" for user "{self.user_profile.user_id}".')
-        
-        
+
     def save_user_profile(self, error_handler: Optional[BaseErrorHandler] = None) -> None:
         if not self.profile_updated:
             return
@@ -171,5 +171,6 @@ class UserProfileTracker:
                 self.user_profile_service.save(self.user_profile.__dict__)
                 self.logger.info(f'Saved user profile of user "{self.user_profile.user_id}".')
         except Exception as exception:
-            self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}".')
+            self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}" '
+                                f'for exception:{exception}".')
             # error_handler.handle_error(exception)

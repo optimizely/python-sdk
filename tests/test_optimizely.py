@@ -372,7 +372,8 @@ class OptimizelyTest(base.BaseTest):
         user_profile_tracker = mock_decision.call_args[0][3]
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_experiment_from_key('test_experiment'), user_context, user_profile_tracker
+            self.project_config, self.project_config.get_experiment_from_key('test_experiment'),
+            user_context, user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
 

@@ -588,8 +588,6 @@ class DecisionServiceTest(base.BaseTest):
                 entities.Variation("111128", "control"),
                 variation,
             )
-            print("Actual UserProfile argument:", mock_get_stored_variation.call_args[0][2].__dict__)
-            print("Expected UserProfile argument:", user_profile.UserProfile("test_user", {"111127": {"variation_id": "111128"}}).__dict__)
         # Assert that stored variation is returned and bucketing service is not involved
         mock_get_whitelisted_variation.assert_called_once_with(
             self.project_config, experiment, "test_user"
@@ -651,8 +649,8 @@ class DecisionServiceTest(base.BaseTest):
             self.project_config, experiment, user.user_id
         )
         expected_decision = decision_service.Decision(
-            experiment=None, 
-            variation=entities.Variation("111129", "variation"), 
+            experiment=None,
+            variation=entities.Variation("111129", "variation"),
             source=None
         )
         mock_lookup.assert_called_once_with("test_user")
@@ -788,7 +786,7 @@ class DecisionServiceTest(base.BaseTest):
 
     def test_get_variation__user_profile_in_invalid_format(self):
         """ Test that get_variation handles invalid user profile gracefully. """
- 
+
         user = optimizely_user_context.OptimizelyUserContext(optimizely_client=None,
                                                              logger=None,
                                                              user_id="test_user",
@@ -825,22 +823,22 @@ class DecisionServiceTest(base.BaseTest):
                 entities.Variation("111129", "variation"),
                 variation,
             )
- 
+
         # Assert that user is bucketed and new decision is stored
         mock_get_whitelisted_variation.assert_called_once_with(
             self.project_config, experiment, "test_user"
         )
         mock_lookup.assert_called_once_with("test_user")
- 
+
         # Stored decision is not consulted as user profile is invalid
         mock_get_stored_variation.assert_called_once_with(
             self.project_config,
             experiment,
             user_profile_tracker.get_user_profile()  # Get the actual UserProfile object
         )
- 
+
         # self.assertEqual(0, mock_get_stored_variation.call_count)
- 
+
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
@@ -858,10 +856,9 @@ class DecisionServiceTest(base.BaseTest):
         mock_save.assert_called_once_with({
             "user_id": "test_user",
             "experiment_bucket_map": {
-                "111127": mock.ANY 
+                "111127": mock.ANY
             }
         })
- 
 
     def test_get_variation__user_profile_lookup_fails(self):
         """ Test that get_variation acts gracefully when lookup fails. """
@@ -880,7 +877,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
             return_value=None
-        ) as mock_get_stored_variation, mock.patch(
+        ), mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
@@ -904,7 +901,7 @@ class DecisionServiceTest(base.BaseTest):
             self.project_config, experiment, "test_user"
         )
         mock_lookup.assert_called_once_with("test_user")
-        
+
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
@@ -913,7 +910,7 @@ class DecisionServiceTest(base.BaseTest):
             user,
             mock_decision_service_logging
         )
-        
+
         mock_bucket.assert_called_once_with(
             self.project_config, experiment, "test_user", "test_user"
         )
@@ -946,7 +943,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_get_whitelisted_variation, mock.patch(
             "optimizely.decision_service.DecisionService.get_stored_variation",
             return_value=None
-        ) as mock_get_stored_variation, mock.patch(
+        ), mock.patch(
             "optimizely.helpers.audience.does_user_meet_audience_conditions", return_value=[True, []]
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket",
@@ -970,7 +967,7 @@ class DecisionServiceTest(base.BaseTest):
             self.project_config, experiment, "test_user"
         )
         mock_lookup.assert_called_once_with("test_user")
-        
+
         mock_audience_check.assert_called_once_with(
             self.project_config,
             experiment.get_audience_conditions_or_ids(),
@@ -991,7 +988,7 @@ class DecisionServiceTest(base.BaseTest):
             "experiment_bucket_map": {
                 "111127": decision_service.Decision(
                     experiment=None,
-                    variation=mock.ANY, 
+                    variation=mock.ANY,
                     source=None
                 )
             }
@@ -1611,7 +1608,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=6500) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            
+
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
             )
@@ -1829,8 +1826,6 @@ class FeatureFlagDecisionTests(base.BaseTest):
                                                              user_id="test_user",
                                                              user_attributes={
                                                                  "experiment_attr": "group_experiment_invalid"})
-        user_profile_service = user_profile.UserProfileService()
-        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
         feature = self.project_config.get_feature_from_key("test_feature_in_multiple_experiments")
         expected_experiment = self.project_config.get_experiment_from_id("211147")
         expected_variation = self.project_config.get_variation_from_id(
@@ -1845,10 +1840,10 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
             print(f"variation received is: {variation_received}")
             x = decision_service.Decision(
-                    expected_experiment,
-                    expected_variation,
-                    enums.DecisionSources.ROLLOUT,
-                )
+                expected_experiment,
+                expected_variation,
+                enums.DecisionSources.ROLLOUT,
+            )
             print(f"need to be:{x}")
             self.assertEqual(
                 decision_service.Decision(
@@ -1858,7 +1853,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 ),
                 variation_received,
             )
-           
+
         mock_config_logging.debug.assert_called_with(
             'Assigned bucket 4000 to user with bucketing ID "test_user".')
         mock_generate_bucket_value.assert_called_with("test_user211147")
