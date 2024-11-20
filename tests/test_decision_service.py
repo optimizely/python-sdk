@@ -1495,7 +1495,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config.get_experiment_from_key("test_experiment"),
             user,
             None,
-            [[]],
+            [],
             None
         )
 
@@ -1523,7 +1523,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_experiment_from_id("32222"), user, None, [[]], False
+            self.project_config, self.project_config.get_experiment_from_id("32222"), user, None, [], False
         )
 
     def test_get_variation_for_feature__returns_variation_for_feature_in_mutex_group_bucket_less_than_2500(

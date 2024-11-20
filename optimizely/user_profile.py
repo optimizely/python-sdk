@@ -12,11 +12,11 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from sys import version_info
 from . import logger as _logging
 from . import decision_service
-
+from .helpers import enums
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
@@ -46,7 +46,7 @@ class UserProfile:
     def __init__(
         self,
         user_id: str,
-        experiment_bucket_map: Optional[dict[str, Decision]] = None,
+        experiment_bucket_map: Optional[dict[str, Union[Decision, dict[str, str]]]] = None,
         **kwargs: Any
     ):
         self.user_id = user_id
@@ -64,8 +64,14 @@ class UserProfile:
     Returns:
       Variation ID corresponding to the experiment. None if no decision available.
     """
+        experiment_data = self.experiment_bucket_map.get(experiment_id)
 
-        return self.experiment_bucket_map.get(experiment_id, {self.VARIATION_ID_KEY: None}).get(self.VARIATION_ID_KEY)
+        if isinstance(experiment_data, decision_service.Decision):
+            return experiment_data.variation.id if experiment_data.variation is not None else None
+        elif isinstance(experiment_data, dict):
+            return experiment_data.get(self.VARIATION_ID_KEY)
+
+        return None
 
     def save_variation_for_experiment(self, experiment_id: str, variation_id: str) -> None:
         """ Helper method to save new experiment/variation as part of the user's profile.
@@ -74,7 +80,6 @@ class UserProfile:
       experiment_id: ID for experiment for which the decision is to be stored.
       variation_id: ID for variation that the user saw.
     """
-
         self.experiment_bucket_map.update({experiment_id: {self.VARIATION_ID_KEY: variation_id}})
 
 
@@ -107,16 +112,18 @@ class UserProfileTracker:
         self.user_profile_service = user_profile_service
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
         self.profile_updated = False
-        self.user_profile = None
+        self.user_profile = UserProfile(user_id, {})
     
     def get_user_profile(self):
         return self.user_profile
 
     def load_user_profile(self, reasons: Optional[list[str]]=[], error_handler: Optional[BaseErrorHandler]=None):
+        reasons = reasons if reasons else []
         try:
             user_profile = self.user_profile_service.lookup(self.user_id)
             if user_profile is None:
-                message = reasons.append("Unable to get a user profile from the UserProfileService.")
+                message = "Unable to get a user profile from the UserProfileService."
+                reasons.append(message)
                 self.logger.info(message)
             else:
                 if 'user_id' in user_profile and 'experiment_bucket_map' in user_profile:
@@ -130,7 +137,8 @@ class UserProfileTracker:
                     message = f"User profile is missing keys: {', '.join(missing_keys)}"
                     reasons.append(message)
         except Exception as exception:
-            message = reasons.append(str(exception))
+            message = str(exception)
+            reasons.append(message)
             self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}"as lookup failed.')
             # Todo: add error handler
             # error_handler.handle_error()
@@ -139,10 +147,14 @@ class UserProfileTracker:
             self.user_profile = UserProfile(self.user_id, {})
             
     def update_user_profile(self, experiment: Experiment, variation: Variation):
-        decision:Decision = None
         if experiment.id in self.user_profile.experiment_bucket_map:
             decision = self.user_profile.experiment_bucket_map[experiment.id]
-            decision.variation = variation
+            if isinstance(decision, decision_service.Decision):
+                decision = decision_service.Decision(
+                    experiment=decision.experiment,
+                    variation=variation,
+                    source=decision.source
+                )
         else:
             decision = decision_service.Decision(experiment=None, variation=variation, source=None)
          
@@ -154,9 +166,8 @@ class UserProfileTracker:
     def save_user_profile(self, error_handler: Optional[BaseErrorHandler] = None):
         if not self.profile_updated:
             return
-
         try:
-            self.user_profile_service.save(self.user_profile)
+            self.user_profile_service.save(self.user_profile.__dict__)
             self.logger.info(f'Saved user profile of user "{self.user_profile.user_id}".')
         except Exception as exception:
             self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}".')

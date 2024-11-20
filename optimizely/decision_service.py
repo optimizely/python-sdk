@@ -35,7 +35,7 @@ class Decision(NamedTuple):
     None if no experiment/variation was selected."""
     experiment: Optional[entities.Experiment]
     variation: Optional[entities.Variation]
-    source: str
+    source: Optional[str]
 
 
 class DecisionService:
@@ -247,7 +247,7 @@ class DecisionService:
         project_config: ProjectConfig,
         experiment: entities.Experiment,
         user_context: OptimizelyUserContext,
-        user_profile_tracker: UserProfileTracker,
+        user_profile_tracker: Optional[UserProfileTracker],
         reasons: list[str] = [],
         options: Optional[Sequence[str]] = None
     ) -> tuple[Optional[entities.Variation], list[str]]:
@@ -341,7 +341,8 @@ class DecisionService:
             if user_profile_tracker is not None and not ignore_user_profile:
                 try:
                     user_profile_tracker.update_user_profile(experiment, variation)
-                    self.user_profile_service.save(user_profile_tracker.get_user_profile().__dict__)
+                    if self.user_profile_service is not None:
+                        self.user_profile_service.save(user_profile_tracker.get_user_profile().__dict__)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
             return variation, decide_reasons
@@ -561,7 +562,7 @@ class DecisionService:
         Returns:
             List of Decision namedtuple consisting of experiment and variation for the user.
         """
-        decide_reasons = []
+        decide_reasons: list[str] = []
         
         if options:
             ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
@@ -569,7 +570,7 @@ class DecisionService:
             ignore_ups = False
         
         
-        user_profile_tracker: UserProfileTracker = None
+        user_profile_tracker: Optional[UserProfileTracker] = None
         if self.user_profile_service is not None and not ignore_ups:
             user_profile_tracker = UserProfileTracker(user_context.user_id, self.user_profile_service, self.logger)
             user_profile_tracker.load_user_profile(decide_reasons, None)
@@ -611,8 +612,8 @@ class DecisionService:
             # Only process rollout if no experiment decision was found
             if not experiment_decision_found:
                 rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
-                feature_reasons.append(rollout_reasons)
-                
+                if rollout_reasons:
+                    feature_reasons.extend(rollout_reasons)
                 if rollout_decision:
                     self.logger.debug(f'User "{user_context.user_id}" bucketed into rollout for feature "{feature.key}".')
                 else:
@@ -620,7 +621,7 @@ class DecisionService:
 
                 decisions.append((rollout_decision, feature_reasons))
                     
-        if self.user_profile_service is not None and ignore_ups is False:
+        if self.user_profile_service is not None and user_profile_tracker is not None and ignore_ups is False:
             user_profile_tracker.save_user_profile()
         
         return decisions
