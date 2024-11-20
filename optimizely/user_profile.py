@@ -107,7 +107,7 @@ class UserProfileService:
         pass
 
 class UserProfileTracker:
-    def __init__(self, user_id: str, user_profile_service: UserProfileService, logger:Optional[_logging.Logger] = None):
+    def __init__(self, user_id: str, user_profile_service: Optional[UserProfileService], logger:Optional[_logging.Logger] = None):
         self.user_id = user_id
         self.user_profile_service = user_profile_service
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
@@ -120,11 +120,11 @@ class UserProfileTracker:
     def load_user_profile(self, reasons: Optional[list[str]]=[], error_handler: Optional[BaseErrorHandler]=None):
         reasons = reasons if reasons else []
         try:
-            user_profile = self.user_profile_service.lookup(self.user_id)
+            user_profile = self.user_profile_service.lookup(self.user_id) if self.user_profile_service else None
             if user_profile is None:
                 message = "Unable to get a user profile from the UserProfileService."
                 reasons.append(message)
-                self.logger.info(message)
+                # self.logger.info(message)
             else:
                 if 'user_id' in user_profile and 'experiment_bucket_map' in user_profile:
                     self.user_profile = UserProfile(
@@ -167,8 +167,9 @@ class UserProfileTracker:
         if not self.profile_updated:
             return
         try:
-            self.user_profile_service.save(self.user_profile.__dict__)
-            self.logger.info(f'Saved user profile of user "{self.user_profile.user_id}".')
+            if self.user_profile_service:
+                self.user_profile_service.save(self.user_profile.__dict__)
+                self.logger.info(f'Saved user profile of user "{self.user_profile.user_id}".')
         except Exception as exception:
             self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}".')
             # error_handler.handle_error(exception)
