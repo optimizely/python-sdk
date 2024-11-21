@@ -341,8 +341,6 @@ class DecisionService:
             if user_profile_tracker is not None and not ignore_user_profile:
                 try:
                     user_profile_tracker.update_user_profile(experiment, variation)
-                    if self.user_profile_service is not None:
-                        self.user_profile_service.save(user_profile_tracker.get_user_profile().__dict__)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
             return variation, decide_reasons

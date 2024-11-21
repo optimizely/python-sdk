@@ -633,10 +633,12 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         user_profile_tracker = user_profile.UserProfileTracker(user_id, self.user_profile_service, self.logger)
+        user_profile_tracker.load_user_profile()
         variation, _ = self.decision_service.get_variation(project_config,
                                                            experiment,
                                                            user_context,
                                                            user_profile_tracker)
+        user_profile_tracker.save_user_profile()
         if variation:
             variation_key = variation.key
 
