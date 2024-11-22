@@ -43,7 +43,7 @@ class UserProfile:
     def __init__(
         self,
         user_id: str,
-        experiment_bucket_map: Optional[dict[str, Union[Decision, dict[str, str]]]] = None,
+        experiment_bucket_map: Optional[dict[str, dict[str, Optional[str]]]] = None,
         **kwargs: Any
     ):
         self.user_id = user_id
@@ -146,18 +146,21 @@ class UserProfileTracker:
             self.user_profile = UserProfile(self.user_id, {})
 
     def update_user_profile(self, experiment: Experiment, variation: Variation) -> None:
-        if experiment.id in self.user_profile.experiment_bucket_map:
-            decision = self.user_profile.experiment_bucket_map[experiment.id]
-            if isinstance(decision, decision_service.Decision):
-                decision = decision_service.Decision(
-                    experiment=decision.experiment,
-                    variation=variation,
-                    source=decision.source
-                )
-        else:
-            decision = decision_service.Decision(experiment=None, variation=variation, source=None)
+        variation_id = variation.id
+        experiment_id = experiment.id
+        self.user_profile.save_variation_for_experiment(experiment_id, variation_id)
+        # if experiment.id in self.user_profile.experiment_bucket_map:
+        #     decision = self.user_profile.experiment_bucket_map[experiment.id]
+        #     if isinstance(decision, decision_service.Decision):
+        #         decision = decision_service.Decision(
+        #             experiment=decision.experiment,
+        #             variation=variation,
+        #             source=decision.source
+        #         )
+        # else:
+        #     decision = decision_service.Decision(experiment=None, variation=variation, source=None)
 
-        self.user_profile.experiment_bucket_map[experiment.id] = decision
+        # self.user_profile.experiment_bucket_map[experiment.id] = decision
         self.profile_updated = True
 
     def save_user_profile(self, error_handler: Optional[BaseErrorHandler] = None) -> None:
