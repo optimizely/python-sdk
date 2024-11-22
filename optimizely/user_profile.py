@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from sys import version_info
 from . import logger as _logging
 from . import decision_service
@@ -24,7 +24,6 @@ else:
     if TYPE_CHECKING:
         # prevent circular dependenacy by skipping import at runtime
         from .entities import Experiment, Variation
-        from .decision_service import Decision
         from optimizely.error_handler import BaseErrorHandler
 
 
