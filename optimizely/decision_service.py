@@ -303,7 +303,6 @@ class DecisionService:
 
         # Check to see if user has a decision available for the given experiment
         if user_profile_tracker is not None and not ignore_user_profile:
-            # user_profile_tracker.load_user_profile()
             variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
             if variation:
                 message = f'Returning previously activated variation ID "{variation}" of experiment ' \

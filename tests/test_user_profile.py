@@ -14,6 +14,7 @@
 import unittest
 
 from optimizely import user_profile
+from unittest import mock
 
 
 class UserProfileTest(unittest.TestCase):
@@ -63,3 +64,76 @@ class UserProfileServiceTest(unittest.TestCase):
 
         user_profile_service = user_profile.UserProfileService()
         self.assertIsNone(user_profile_service.save({'user_id': 'test_user', 'experiment_bucket_map': {}}))
+
+
+class UserProfileTrackerTest(unittest.TestCase):
+    def test_load_user_profile_failure(self):
+        """Test that load_user_profile handles exceptions gracefully."""
+        mock_user_profile_service = mock.MagicMock()
+        mock_logger = mock.MagicMock()
+
+        user_profile_tracker = user_profile.UserProfileTracker(
+            user_id="test_user",
+            user_profile_service=mock_user_profile_service,
+            logger=mock_logger
+        )
+        mock_user_profile_service.lookup.side_effect = Exception("Lookup failure")
+
+        user_profile_tracker.load_user_profile()
+
+        # Verify that the logger recorded the exception
+        mock_logger.exception.assert_called_once_with(
+            'Unable to retrieve user profile for user "test_user" as lookup failed.'
+        )
+
+        # Verify that the user profile is reset to an empty profile
+        self.assertEqual(user_profile_tracker.user_profile.user_id, "test_user")
+        self.assertEqual(user_profile_tracker.user_profile.experiment_bucket_map, {})
+
+    def test_load_user_profile__user_profile_invalid(self):
+        """Test that load_user_profile handles an invalid user profile format."""
+        mock_user_profile_service = mock.MagicMock()
+        mock_logger = mock.MagicMock()
+
+        user_profile_tracker = user_profile.UserProfileTracker(
+            user_id="test_user",
+            user_profile_service=mock_user_profile_service,
+            logger=mock_logger
+        )
+
+        mock_user_profile_service.lookup.return_value = {"invalid_key": "value"}
+
+        reasons = []
+        user_profile_tracker.load_user_profile(reasons=reasons)
+
+        # Verify that the logger recorded a warning for the missing keys
+        missing_keys_message = "User profile is missing keys: user_id, experiment_bucket_map"
+        self.assertIn(missing_keys_message, reasons)
+
+        # Ensure the logger logs the invalid format
+        mock_logger.info.assert_not_called()
+        self.assertEqual(user_profile_tracker.user_profile.user_id, "test_user")
+        self.assertEqual(user_profile_tracker.user_profile.experiment_bucket_map, {})
+
+        # Verify the reasons list was updated
+        self.assertIn(missing_keys_message, reasons)
+
+    def test_save_user_profile_failure(self):
+        """Test that save_user_profile handles exceptions gracefully."""
+        mock_user_profile_service = mock.MagicMock()
+        mock_logger = mock.MagicMock()
+
+        user_profile_tracker = user_profile.UserProfileTracker(
+            user_id="test_user",
+            user_profile_service=mock_user_profile_service,
+            logger=mock_logger
+        )
+
+        user_profile_tracker.profile_updated = True
+        mock_user_profile_service.save.side_effect = Exception("Save failure")
+
+        user_profile_tracker.save_user_profile()
+
+        mock_logger.warning.assert_called_once_with(
+            'Failed to save user profile of user "test_user" for exception:Save failure".'
+        )

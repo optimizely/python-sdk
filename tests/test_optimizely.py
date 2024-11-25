@@ -1819,6 +1819,35 @@ class OptimizelyTest(base.BaseTest):
             {'experiment_key': 'test_experiment', 'variation_key': variation},
         )
 
+    def test_get_variation_lookup_and_save_is_called(self):
+        """ Test that lookup is called, get_variation returns valid variation and then save is called"""
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation',
+                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast, mock.patch(
+            'optimizely.user_profile.UserProfileTracker.load_user_profile'
+        ) as mock_load_user_profile, mock.patch(
+            'optimizely.user_profile.UserProfileTracker.save_user_profile'
+        ) as mock_save_user_profile:
+            variation = self.optimizely.get_variation('test_experiment', 'test_user')
+            self.assertEqual(
+                'variation', variation,
+            )
+        self.assertEqual(mock_load_user_profile.call_count, 1)
+        self.assertEqual(mock_save_user_profile.call_count, 1)
+        self.assertEqual(mock_broadcast.call_count, 1)
+
+        mock_broadcast.assert_any_call(
+            enums.NotificationTypes.DECISION,
+            'ab-test',
+            'test_user',
+            {},
+            {'experiment_key': 'test_experiment', 'variation_key': variation},
+        )
+
     def test_get_variation_with_experiment_in_feature(self):
         """ Test that get_variation returns valid variation and broadcasts decision listener with type feature-test when
      get_variation returns feature experiment variation."""

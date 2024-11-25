@@ -119,7 +119,8 @@ class UserProfileTracker:
 
     def load_user_profile(self, reasons: Optional[list[str]] = [],
                           error_handler: Optional[BaseErrorHandler] = None) -> None:
-        reasons = reasons if reasons else []
+        if reasons is None:
+            reasons = []
         try:
             user_profile = self.user_profile_service.lookup(self.user_id) if self.user_profile_service else None
             if user_profile is None:
@@ -139,27 +140,12 @@ class UserProfileTracker:
         except Exception as exception:
             message = str(exception)
             reasons.append(message)
-            self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}"as lookup failed.')
-
-        if self.user_profile is None:
-            self.user_profile = UserProfile(self.user_id, {})
+            self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}" as lookup failed.')
 
     def update_user_profile(self, experiment: Experiment, variation: Variation) -> None:
         variation_id = variation.id
         experiment_id = experiment.id
         self.user_profile.save_variation_for_experiment(experiment_id, variation_id)
-        # if experiment.id in self.user_profile.experiment_bucket_map:
-        #     decision = self.user_profile.experiment_bucket_map[experiment.id]
-        #     if isinstance(decision, decision_service.Decision):
-        #         decision = decision_service.Decision(
-        #             experiment=decision.experiment,
-        #             variation=variation,
-        #             source=decision.source
-        #         )
-        # else:
-        #     decision = decision_service.Decision(experiment=None, variation=variation, source=None)
-
-        # self.user_profile.experiment_bucket_map[experiment.id] = decision
         self.profile_updated = True
 
     def save_user_profile(self, error_handler: Optional[BaseErrorHandler] = None) -> None:
