@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Any, Optional
 from sys import version_info
 from . import logger as _logging
-from . import decision_service
+
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
@@ -60,14 +60,7 @@ class UserProfile:
     Returns:
       Variation ID corresponding to the experiment. None if no decision available.
     """
-        experiment_data = self.experiment_bucket_map.get(experiment_id)
-
-        if isinstance(experiment_data, decision_service.Decision):
-            return experiment_data.variation.id if experiment_data.variation is not None else None
-        elif isinstance(experiment_data, dict):
-            return experiment_data.get(self.VARIATION_ID_KEY)
-
-        return None
+        return self.experiment_bucket_map.get(experiment_id, {self.VARIATION_ID_KEY: None}).get(self.VARIATION_ID_KEY)
 
     def save_variation_for_experiment(self, experiment_id: str, variation_id: str) -> None:
         """ Helper method to save new experiment/variation as part of the user's profile.
