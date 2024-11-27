@@ -21,6 +21,7 @@ from . import event_builder
 from . import exceptions
 from . import logger as _logging
 from . import project_config
+from . import user_profile
 from .config_manager import AuthDatafilePollingConfigManager
 from .config_manager import BaseConfigManager
 from .config_manager import PollingConfigManager
@@ -42,6 +43,7 @@ from .odp.lru_cache import LRUCache
 from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
+from .project_config import ProjectConfig
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
@@ -168,6 +170,7 @@ class Optimizely:
 
         self.event_builder = event_builder.EventBuilder()
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
+        self.user_profile_service = user_profile_service
 
     def _validate_instantiation_options(self) -> None:
         """ Helper method to validate all instantiation parameters.
@@ -629,8 +632,13 @@ class Optimizely:
             return None
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
-
-        variation, _ = self.decision_service.get_variation(project_config, experiment, user_context)
+        user_profile_tracker = user_profile.UserProfileTracker(user_id, self.user_profile_service, self.logger)
+        user_profile_tracker.load_user_profile()
+        variation, _ = self.decision_service.get_variation(project_config,
+                                                           experiment,
+                                                           user_context,
+                                                           user_profile_tracker)
+        user_profile_tracker.save_user_profile()
         if variation:
             variation_key = variation.key
 
@@ -701,7 +709,7 @@ class Optimizely:
         if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
-                decision.experiment else '', decision.source, feature_enabled, user_id, attributes
+                decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes
             )
 
         # Send event if Decision came from an experiment.
@@ -712,7 +720,7 @@ class Optimizely:
             }
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
-                decision.source, feature_enabled, user_id, attributes
+                str(decision.source), feature_enabled, user_id, attributes
             )
 
         if feature_enabled:
@@ -1118,73 +1126,70 @@ class Optimizely:
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
             decide_options = self.default_decide_options
 
-        # Create Optimizely Decision Result.
+        if OptimizelyDecideOption.ENABLED_FLAGS_ONLY in decide_options:
+            decide_options.remove(OptimizelyDecideOption.ENABLED_FLAGS_ONLY)
+
+        decision = self._decide_for_keys(
+            user_context,
+            [key],
+            decide_options,
+            True
+        )[key]
+
+        return decision
+
+    def _create_optimizely_decision(
+            self,
+            user_context: OptimizelyUserContext,
+            flag_key: str,
+            flag_decision: Decision,
+            decision_reasons: Optional[list[str]],
+            decide_options: list[str],
+            project_config: ProjectConfig
+    ) -> OptimizelyDecision:
         user_id = user_context.user_id
-        attributes = user_context.get_user_attributes()
-        variation_key = None
-        variation = None
         feature_enabled = False
-        rule_key = None
-        flag_key = key
+        if flag_decision.variation is not None:
+            if flag_decision.variation.featureEnabled:
+                feature_enabled = True
+
+        self.logger.info(f'Feature {flag_key} is enabled for user {user_id} {feature_enabled}"')
+
+        # Create Optimizely Decision Result.
+        attributes = user_context.get_user_attributes()
+        rule_key = flag_decision.experiment.key if flag_decision.experiment else None
         all_variables = {}
-        experiment = None
-        decision_source = DecisionSources.ROLLOUT
-        source_info: dict[str, Any] = {}
+        decision_source = flag_decision.source
         decision_event_dispatched = False
 
-        # Check forced decisions first
-        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=rule_key)
-        forced_decision_response = self.decision_service.validated_forced_decision(config,
-                                                                                   optimizely_decision_context,
-                                                                                   user_context)
-        variation, decision_reasons = forced_decision_response
-        reasons += decision_reasons
-
-        if variation:
-            decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
-        else:
-            # Regular decision
-            decision, decision_reasons = self.decision_service.get_variation_for_feature(config,
-                                                                                         feature_flag,
-                                                                                         user_context, decide_options)
-
-            reasons += decision_reasons
-
-        # Fill in experiment and variation if returned (rollouts can have featureEnabled variables as well.)
-        if decision.experiment is not None:
-            experiment = decision.experiment
-            source_info["experiment"] = experiment
-            rule_key = experiment.key if experiment else None
-        if decision.variation is not None:
-            variation = decision.variation
-            variation_key = variation.key
-            feature_enabled = variation.featureEnabled
-            decision_source = decision.source
-            source_info["variation"] = variation
+        feature_flag = project_config.feature_key_map.get(flag_key)
 
         # Send impression event if Decision came from a feature
         # test and decide options doesn't include disableDecisionEvent
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
-            if decision_source == DecisionSources.FEATURE_TEST or config.send_flag_decisions:
-                self._send_impression_event(config, experiment, variation, flag_key, rule_key or '',
-                                            decision_source, feature_enabled,
+            if decision_source == DecisionSources.FEATURE_TEST or project_config.send_flag_decisions:
+                self._send_impression_event(project_config,
+                                            flag_decision.experiment,
+                                            flag_decision.variation,
+                                            flag_key, rule_key or '',
+                                            str(decision_source), feature_enabled,
                                             user_id, attributes)
 
                 decision_event_dispatched = True
 
         # Generate all variables map if decide options doesn't include excludeVariables
-        if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options:
+        if OptimizelyDecideOption.EXCLUDE_VARIABLES not in decide_options and feature_flag:
             for variable_key, variable in feature_flag.variables.items():
                 variable_value = variable.defaultValue
                 if feature_enabled:
-                    variable_value = config.get_variable_value_for_variation(variable, decision.variation)
+                    variable_value = project_config.get_variable_value_for_variation(variable, flag_decision.variation)
                     self.logger.debug(
                         f'Got variable value "{variable_value}" for '
                         f'variable "{variable_key}" of feature flag "{flag_key}".'
                     )
 
                 try:
-                    actual_value = config.get_typecast_value(variable_value, variable.type)
+                    actual_value = project_config.get_typecast_value(variable_value, variable.type)
                 except:
                     self.logger.error('Unable to cast value. Returning None.')
                     actual_value = None
@@ -1192,7 +1197,11 @@ class Optimizely:
                 all_variables[variable_key] = actual_value
 
         should_include_reasons = OptimizelyDecideOption.INCLUDE_REASONS in decide_options
-
+        variation_key = (
+            flag_decision.variation.key
+            if flag_decision is not None and flag_decision.variation is not None
+            else None
+        )
         # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
@@ -1205,7 +1214,7 @@ class Optimizely:
                 'variables': all_variables,
                 'variation_key': variation_key,
                 'rule_key': rule_key,
-                'reasons': reasons if should_include_reasons else [],
+                'reasons': decision_reasons if should_include_reasons else [],
                 'decision_event_dispatched': decision_event_dispatched
 
             },
@@ -1213,7 +1222,7 @@ class Optimizely:
 
         return OptimizelyDecision(variation_key=variation_key, enabled=feature_enabled, variables=all_variables,
                                   rule_key=rule_key, flag_key=flag_key,
-                                  user_context=user_context, reasons=reasons if should_include_reasons else []
+                                  user_context=user_context, reasons=decision_reasons if should_include_reasons else []
                                   )
 
     def _decide_all(
@@ -1253,7 +1262,8 @@ class Optimizely:
         self,
         user_context: Optional[OptimizelyUserContext],
         keys: list[str],
-        decide_options: Optional[list[str]] = None
+        decide_options: Optional[list[str]] = None,
+        ignore_default_options: bool = False
     ) -> dict[str, OptimizelyDecision]:
         """
         Args:
@@ -1277,19 +1287,74 @@ class Optimizely:
         merged_decide_options: list[str] = []
         if isinstance(decide_options, list):
             merged_decide_options = decide_options[:]
-            merged_decide_options += self.default_decide_options
+            if not ignore_default_options:
+                merged_decide_options += self.default_decide_options
         else:
             self.logger.debug('Provided decide options is not an array. Using default decide options.')
             merged_decide_options = self.default_decide_options
 
-        enabled_flags_only = OptimizelyDecideOption.ENABLED_FLAGS_ONLY in merged_decide_options
+        decisions: dict[str, OptimizelyDecision] = {}
+        valid_keys = []
+        decision_reasons_dict = {}
 
-        decisions = {}
+        project_config = self.config_manager.get_config()
+        flags_without_forced_decision: list[entities.FeatureFlag] = []
+        flag_decisions: dict[str, Decision] = {}
+
+        if project_config is None:
+            return decisions
         for key in keys:
-            decision = self._decide(user_context, key, decide_options)
-            if enabled_flags_only and not decision.enabled:
+            feature_flag = project_config.feature_key_map.get(key)
+            if feature_flag is None:
+                decisions[key] = OptimizelyDecision(None, False, None, None, key, user_context, [])
                 continue
-            decisions[key] = decision
+            valid_keys.append(key)
+            decision_reasons: list[str] = []
+            decision_reasons_dict[key] = decision_reasons
+
+            optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(flag_key=key, rule_key=None)
+            forced_decision_response = self.decision_service.validated_forced_decision(project_config,
+                                                                                       optimizely_decision_context,
+                                                                                       user_context)
+            variation, decision_reasons = forced_decision_response
+            decision_reasons_dict[key] += decision_reasons
+
+            if variation:
+                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
+                flag_decisions[key] = decision
+            else:
+                flags_without_forced_decision.append(feature_flag)
+
+        decision_list = self.decision_service.get_variations_for_feature_list(
+            project_config,
+            flags_without_forced_decision,
+            user_context,
+            merged_decide_options
+        )
+
+        for i in range(0, len(flags_without_forced_decision)):
+            decision = decision_list[i][0]
+            reasons = decision_list[i][1]
+            flag_key = flags_without_forced_decision[i].key
+            flag_decisions[flag_key] = decision
+            decision_reasons_dict[flag_key] += reasons
+
+        for key in valid_keys:
+            flag_decision = flag_decisions[key]
+            decision_reasons = decision_reasons_dict[key]
+            optimizely_decision = self._create_optimizely_decision(
+                user_context,
+                key,
+                flag_decision,
+                decision_reasons,
+                merged_decide_options,
+                project_config
+            )
+            enabled_flags_only_missing = OptimizelyDecideOption.ENABLED_FLAGS_ONLY not in merged_decide_options
+            is_enabled = optimizely_decision.enabled
+            if enabled_flags_only_missing or is_enabled:
+                decisions[key] = optimizely_decision
+
         return decisions
 
     def _setup_odp(self, sdk_key: Optional[str]) -> None:

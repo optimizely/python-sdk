@@ -22,7 +22,7 @@ from .helpers import enums
 from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
-from .user_profile import UserProfile, UserProfileService
+from .user_profile import UserProfile, UserProfileService, UserProfileTracker
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -35,7 +35,7 @@ class Decision(NamedTuple):
     None if no experiment/variation was selected."""
     experiment: Optional[entities.Experiment]
     variation: Optional[entities.Variation]
-    source: str
+    source: Optional[str]
 
 
 class DecisionService:
@@ -247,6 +247,8 @@ class DecisionService:
         project_config: ProjectConfig,
         experiment: entities.Experiment,
         user_context: OptimizelyUserContext,
+        user_profile_tracker: Optional[UserProfileTracker],
+        reasons: list[str] = [],
         options: Optional[Sequence[str]] = None
     ) -> tuple[Optional[entities.Variation], list[str]]:
         """ Top-level function to help determine variation user should be put in.
@@ -260,7 +262,9 @@ class DecisionService:
         Args:
           project_config: Instance of ProjectConfig.
           experiment: Experiment for which user variation needs to be determined.
-          user_context: contains user id and attributes
+          user_context: contains user id and attributes.
+          user_profile_tracker: tracker for reading and updating user profile of the user.
+          reasons: Decision reasons.
           options: Decide options.
 
         Returns:
@@ -275,6 +279,8 @@ class DecisionService:
             ignore_user_profile = False
 
         decide_reasons = []
+        if reasons is not None:
+            decide_reasons += reasons
         # Check if experiment is running
         if not experiment_helper.is_experiment_running(experiment):
             message = f'Experiment "{experiment.key}" is not running.'
@@ -296,23 +302,14 @@ class DecisionService:
             return variation, decide_reasons
 
         # Check to see if user has a decision available for the given experiment
-        user_profile = UserProfile(user_id)
-        if not ignore_user_profile and self.user_profile_service:
-            try:
-                retrieved_profile = self.user_profile_service.lookup(user_id)
-            except:
-                self.logger.exception(f'Unable to retrieve user profile for user "{user_id}" as lookup failed.')
-                retrieved_profile = None
-
-            if retrieved_profile and validator.is_user_profile_valid(retrieved_profile):
-                user_profile = UserProfile(**retrieved_profile)
-                variation = self.get_stored_variation(project_config, experiment, user_profile)
-                if variation:
-                    message = f'Returning previously activated variation ID "{variation}" of experiment ' \
-                              f'"{experiment}" for user "{user_id}" from user profile.'
-                    self.logger.info(message)
-                    decide_reasons.append(message)
-                    return variation, decide_reasons
+        if user_profile_tracker is not None and not ignore_user_profile:
+            variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
+            if variation:
+                message = f'Returning previously activated variation ID "{variation}" of experiment ' \
+                          f'"{experiment}" for user "{user_id}" from user profile.'
+                self.logger.info(message)
+                decide_reasons.append(message)
+                return variation, decide_reasons
             else:
                 self.logger.warning('User profile has invalid format.')
 
@@ -340,10 +337,9 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
-            if not ignore_user_profile and self.user_profile_service:
+            if user_profile_tracker is not None and not ignore_user_profile:
                 try:
-                    user_profile.save_variation_for_experiment(experiment.id, variation.id)
-                    self.user_profile_service.save(user_profile.__dict__)
+                    user_profile_tracker.update_user_profile(experiment, variation)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
             return variation, decide_reasons
@@ -479,44 +475,7 @@ class DecisionService:
         Returns:
           Decision namedtuple consisting of experiment and variation for the user.
     """
-        decide_reasons = []
-
-        # Check if the feature flag is under an experiment and the the user is bucketed into one of these experiments
-        if feature.experimentIds:
-            # Evaluate each experiment ID and return the first bucketed experiment variation
-            for experiment_id in feature.experimentIds:
-                experiment = project_config.get_experiment_from_id(experiment_id)
-                decision_variation = None
-
-                if experiment:
-                    optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key,
-                                                                                                  experiment.key)
-
-                    forced_decision_variation, reasons_received = self.validated_forced_decision(
-                        project_config, optimizely_decision_context, user_context)
-                    decide_reasons += reasons_received
-
-                    if forced_decision_variation:
-                        decision_variation = forced_decision_variation
-                    else:
-                        decision_variation, variation_reasons = self.get_variation(project_config,
-                                                                                   experiment, user_context, options)
-                        decide_reasons += variation_reasons
-
-                    if decision_variation:
-                        message = f'User "{user_context.user_id}" bucketed into a ' \
-                                  f'experiment "{experiment.key}" of feature "{feature.key}".'
-                        self.logger.debug(message)
-                        return Decision(experiment, decision_variation,
-                                        enums.DecisionSources.FEATURE_TEST), decide_reasons
-
-        message = f'User "{user_context.user_id}" is not bucketed into any of the ' \
-                  f'experiments on the feature "{feature.key}".'
-        self.logger.debug(message)
-        variation, rollout_variation_reasons = self.get_variation_for_rollout(project_config, feature, user_context)
-        if rollout_variation_reasons:
-            decide_reasons += rollout_variation_reasons
-        return variation, decide_reasons
+        return self.get_variations_for_feature_list(project_config, [feature], user_context, options)[0]
 
     def validated_forced_decision(
         self,
@@ -580,3 +539,91 @@ class DecisionService:
                 user_context.logger.info(user_has_forced_decision_but_invalid)
 
         return None, reasons
+
+    def get_variations_for_feature_list(
+        self,
+        project_config: ProjectConfig,
+        features: list[entities.FeatureFlag],
+        user_context: OptimizelyUserContext,
+        options: Optional[Sequence[str]] = None
+    ) -> list[tuple[Decision, list[str]]]:
+        """
+        Returns the list of experiment/variation the user is bucketed in for the given list of features.
+        Args:
+                project_config: Instance of ProjectConfig.
+                features: List of features for which we are determining if it is enabled or not for the given user.
+                user_context: user context for user.
+                options: Decide options.
+
+        Returns:
+            List of Decision namedtuple consisting of experiment and variation for the user.
+        """
+        decide_reasons: list[str] = []
+
+        if options:
+            ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
+        else:
+            ignore_ups = False
+
+        user_profile_tracker: Optional[UserProfileTracker] = None
+        if self.user_profile_service is not None and not ignore_ups:
+            user_profile_tracker = UserProfileTracker(user_context.user_id, self.user_profile_service, self.logger)
+            user_profile_tracker.load_user_profile(decide_reasons, None)
+
+        decisions = []
+
+        for feature in features:
+            feature_reasons = decide_reasons.copy()
+            experiment_decision_found = False  # Track if an experiment decision was made for the feature
+
+            # Check if the feature flag is under an experiment
+            if feature.experimentIds:
+                for experiment_id in feature.experimentIds:
+                    experiment = project_config.get_experiment_from_id(experiment_id)
+                    decision_variation = None
+
+                    if experiment:
+                        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
+                            feature.key, experiment.key)
+                        forced_decision_variation, reasons_received = self.validated_forced_decision(
+                            project_config, optimizely_decision_context, user_context)
+                        feature_reasons.extend(reasons_received)
+
+                        if forced_decision_variation:
+                            decision_variation = forced_decision_variation
+                        else:
+                            decision_variation, variation_reasons = self.get_variation(
+                                project_config, experiment, user_context, user_profile_tracker, feature_reasons, options
+                            )
+                            feature_reasons.extend(variation_reasons)
+
+                        if decision_variation:
+                            self.logger.debug(
+                                f'User "{user_context.user_id}" '
+                                f'bucketed into experiment "{experiment.key}" of feature "{feature.key}".'
+                            )
+                            decision = Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST)
+                            decisions.append((decision, feature_reasons))
+                            experiment_decision_found = True  # Mark that a decision was found
+                            break  # Stop after the first successful experiment decision
+
+            # Only process rollout if no experiment decision was found
+            if not experiment_decision_found:
+                rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config,
+                                                                                   feature,
+                                                                                   user_context)
+                if rollout_reasons:
+                    feature_reasons.extend(rollout_reasons)
+                if rollout_decision:
+                    self.logger.debug(f'User "{user_context.user_id}" '
+                                      f'bucketed into rollout for feature "{feature.key}".')
+                else:
+                    self.logger.debug(f'User "{user_context.user_id}" '
+                                      f'not bucketed into any rollout for feature "{feature.key}".')
+
+                decisions.append((rollout_decision, feature_reasons))
+
+        if self.user_profile_service is not None and user_profile_tracker is not None and ignore_ups is False:
+            user_profile_tracker.save_user_profile()
+
+        return decisions

@@ -369,9 +369,11 @@ class OptimizelyTest(base.BaseTest):
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
         user_context = mock_decision.call_args[0][2]
+        user_profile_tracker = mock_decision.call_args[0][3]
 
         mock_decision.assert_called_once_with(
-            self.project_config, self.project_config.get_experiment_from_key('test_experiment'), user_context
+            self.project_config, self.project_config.get_experiment_from_key('test_experiment'),
+            user_context, user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
 
@@ -766,11 +768,13 @@ class OptimizelyTest(base.BaseTest):
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
         user_context = mock_get_variation.call_args[0][2]
+        user_profile_tracker = mock_get_variation.call_args[0][3]
 
         mock_get_variation.assert_called_once_with(
             self.project_config,
             self.project_config.get_experiment_from_key('test_experiment'),
-            user_context
+            user_context,
+            user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
         self._validate_event_object(
@@ -1120,11 +1124,12 @@ class OptimizelyTest(base.BaseTest):
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
         user_context = mock_get_variation.call_args[0][2]
-
+        user_profile_tracker = mock_get_variation.call_args[0][3]
         mock_get_variation.assert_called_once_with(
             self.project_config,
             self.project_config.get_experiment_from_key('test_experiment'),
-            user_context
+            user_context,
+            user_profile_tracker
         )
         self.assertEqual(1, mock_process.call_count)
         self._validate_event_object(
@@ -1804,6 +1809,35 @@ class OptimizelyTest(base.BaseTest):
                 'variation', variation,
             )
 
+        self.assertEqual(mock_broadcast.call_count, 1)
+
+        mock_broadcast.assert_any_call(
+            enums.NotificationTypes.DECISION,
+            'ab-test',
+            'test_user',
+            {},
+            {'experiment_key': 'test_experiment', 'variation_key': variation},
+        )
+
+    def test_get_variation_lookup_and_save_is_called(self):
+        """ Test that lookup is called, get_variation returns valid variation and then save is called"""
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation',
+                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
+        ), mock.patch(
+            'optimizely.notification_center.NotificationCenter.send_notifications'
+        ) as mock_broadcast, mock.patch(
+            'optimizely.user_profile.UserProfileTracker.load_user_profile'
+        ) as mock_load_user_profile, mock.patch(
+            'optimizely.user_profile.UserProfileTracker.save_user_profile'
+        ) as mock_save_user_profile:
+            variation = self.optimizely.get_variation('test_experiment', 'test_user')
+            self.assertEqual(
+                'variation', variation,
+            )
+        self.assertEqual(mock_load_user_profile.call_count, 1)
+        self.assertEqual(mock_save_user_profile.call_count, 1)
         self.assertEqual(mock_broadcast.call_count, 1)
 
         mock_broadcast.assert_any_call(
