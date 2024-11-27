@@ -134,6 +134,8 @@ class UserProfileTracker:
             message = str(exception)
             reasons.append(message)
             self.logger.exception(f'Unable to retrieve user profile for user "{self.user_id}" as lookup failed.')
+            if error_handler:
+                error_handler.handle_error(exception)
 
     def update_user_profile(self, experiment: Experiment, variation: Variation) -> None:
         variation_id = variation.id
@@ -151,3 +153,5 @@ class UserProfileTracker:
         except Exception as exception:
             self.logger.warning(f'Failed to save user profile of user "{self.user_profile.user_id}" '
                                 f'for exception:{exception}".')
+            if error_handler:
+                error_handler.handle_error(exception)
