@@ -1,5 +1,10 @@
 # Optimizely Python SDK Changelog
 
+## 5.1.0
+November 27th, 2024
+
+Added support for batch processing in DecideAll and DecideForKeys, enabling more efficient handling of multiple decisions in the User Profile Service.([#440](https://github.com/optimizely/python-sdk/pull/440))
+
 ## 5.0.1
 June 26th, 2024
 
