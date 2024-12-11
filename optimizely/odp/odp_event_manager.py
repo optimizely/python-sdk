@@ -75,7 +75,7 @@ class OdpEventManager:
         self.retry_count = OdpEventManagerConfig.DEFAULT_RETRY_COUNT
         self._current_batch: list[OdpEvent] = []
         """_current_batch should only be modified by the processing thread, as it is not thread safe"""
-        self.thread = Thread(target=self._run, daemon=True)
+        self.thread = Thread(target=self._run, name="OdpThread", daemon=True)
         self.thread_exception = False
         """thread_exception will be True if the processing thread did not exit cleanly"""
 

@@ -3,6 +3,7 @@ MANIFEST
 .idea/*
 .*virtualenv/*
 .mypy_cache
+.vscode/*
 
 # Output of building package
 *.egg-info
@@ -26,3 +27,4 @@ datafile.json
 
 # Sphinx documentation
 docs/build/
+

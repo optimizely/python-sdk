@@ -186,8 +186,7 @@ class BatchEventProcessor(BaseEventProcessor):
             return
 
         self.flushing_interval_deadline = self._get_time() + self._get_time(self.flush_interval.total_seconds())
-        self.executor = threading.Thread(target=self._run)
-        self.executor.daemon = True
+        self.executor = threading.Thread(target=self._run, name="EventThread", daemon=True)
         self.executor.start()
 
     def _run(self) -> None:

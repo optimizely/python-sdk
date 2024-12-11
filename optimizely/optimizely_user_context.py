@@ -336,7 +336,7 @@ class OptimizelyUserContext:
             return success
 
         if callback:
-            fetch_thread = threading.Thread(target=_fetch_qualified_segments)
+            fetch_thread = threading.Thread(target=_fetch_qualified_segments, name="FetchQualifiedSegmentsThread")
             fetch_thread.start()
             return fetch_thread
         else:

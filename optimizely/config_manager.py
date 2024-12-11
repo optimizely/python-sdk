@@ -432,7 +432,7 @@ class PollingConfigManager(StaticConfigManager):
             self._polling_thread.start()
 
     def _initialize_thread(self) -> None:
-        self._polling_thread = threading.Thread(target=self._run, daemon=True)
+        self._polling_thread = threading.Thread(target=self._run, name="PollThread", daemon=True)
 
 
 class AuthDatafilePollingConfigManager(PollingConfigManager):
