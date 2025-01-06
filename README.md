@@ -25,7 +25,7 @@ Version `3.0+`: Python 2.7+, PyPy 3.4+
 
 ### Install the SDK
 
-The SDK is available through [PyPi](https://pypi.python.org/pypi?name=optimizely-sdk&:action=display).
+The SDK is available through [PyPi](https://pypi.python.org/pypi?name=optimizely-sdk&:action=display). This is a test.
 
 To install:
 
