@@ -46,7 +46,7 @@ class EventDispatcherTest(unittest.TestCase):
         }
         event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
-        with mock.patch('requests.post') as mock_request_post:
+        with mock.patch('requests.Session.post') as mock_request_post:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 
         mock_request_post.assert_called_once_with(
@@ -69,7 +69,7 @@ class EventDispatcherTest(unittest.TestCase):
         event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
         with mock.patch(
-            'requests.post', side_effect=request_exception.RequestException('Failed Request'),
+            'requests.Session.post', side_effect=request_exception.RequestException('Failed Request'),
         ) as mock_request_post, mock.patch('logging.error') as mock_log_error:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 
