@@ -50,7 +50,7 @@ class EventDispatcher:
 
             retries = Retry(total=EventDispatchConfig.REQUEST_TIMEOUT,
                             backoff_factor=0.1,
-                            status_forcelist=[ 500, 502, 503, 504 ])
+                            status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
 
             session.mount('http://', adapter)
@@ -58,7 +58,7 @@ class EventDispatcher:
 
             if event.http_verb == HTTPVerbs.GET:
                 session.get(event.url, params=event.params,
-                             timeout=EventDispatchConfig.REQUEST_TIMEOUT).raise_for_status()
+                            timeout=EventDispatchConfig.REQUEST_TIMEOUT).raise_for_status()
             elif event.http_verb == HTTPVerbs.POST:
                 session.post(
                     event.url, data=json.dumps(event.params), headers=event.headers,

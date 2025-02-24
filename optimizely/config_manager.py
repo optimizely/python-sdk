@@ -400,12 +400,12 @@ class PollingConfigManager(StaticConfigManager):
 
             retries = Retry(total=self.retries,
                             backoff_factor=0.1,
-                            status_forcelist=[ 500, 502, 503, 504 ])
+                            status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
 
             session.mount('http://', adapter)
             session.mount("https://", adapter)
-            response = session.get(self.datafile_url, timeout=enums.ConfigManager.REQUEST_TIMEOUT)            
+            response = session.get(self.datafile_url, timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         except requests_exceptions.RequestException as err:
             self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
@@ -492,12 +492,12 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
             retries = Retry(total=self.retries,
                             backoff_factor=0.1,
-                            status_forcelist=[ 500, 502, 503, 504 ])
+                            status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
 
             session.mount('http://', adapter)
             session.mount("https://", adapter)
-            response = session.get(self.datafile_url, timeout=enums.ConfigManager.REQUEST_TIMEOUT) 
+            response = session.get(self.datafile_url, timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         except requests_exceptions.RequestException as err:
             self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
