@@ -395,7 +395,6 @@ class PollingConfigManager(StaticConfigManager):
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
         try:
-            print(f"Getting {self.datafile_url}")
             session = requests.Session()
 
             retries = Retry(total=self.retries,
@@ -487,7 +486,6 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
         try:
-            print(f"Getting {self.datafile_url}")
             session = requests.Session()
 
             retries = Retry(total=self.retries,
