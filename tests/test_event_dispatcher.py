@@ -29,7 +29,7 @@ class EventDispatcherTest(unittest.TestCase):
         params = {'a': '111001', 'n': 'test_event', 'g': '111028', 'u': 'oeutest_user'}
         event = event_builder.Event(url, params)
 
-        with mock.patch('requests.get') as mock_request_get:
+        with mock.patch('requests.Session.get') as mock_request_get:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 
         mock_request_get.assert_called_once_with(url, params=params, timeout=EventDispatchConfig.REQUEST_TIMEOUT)
