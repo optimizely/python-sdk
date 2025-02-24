@@ -404,8 +404,8 @@ class PollingConfigManager(StaticConfigManager):
 
             session.mount('http://', adapter)
             session.mount("https://", adapter)
-            response = session.get(self.datafile_url, 
-                                   headers=request_headers, 
+            response = session.get(self.datafile_url,
+                                   headers=request_headers,
                                    timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         except requests_exceptions.RequestException as err:
             self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
@@ -497,8 +497,8 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
             session.mount('http://', adapter)
             session.mount("https://", adapter)
-            response = session.get(self.datafile_url, 
-                                   headers=request_headers, 
+            response = session.get(self.datafile_url,
+                                   headers=request_headers,
                                    timeout=enums.ConfigManager.REQUEST_TIMEOUT)
         except requests_exceptions.RequestException as err:
             self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
