@@ -225,6 +225,7 @@ class PollingConfigManager(StaticConfigManager):
                                   JSON schema validation will be performed.
 
         """
+        self.retries = retries
         self._config_ready_event = threading.Event()
         super().__init__(
             datafile=datafile,
@@ -247,7 +248,6 @@ class PollingConfigManager(StaticConfigManager):
         self.stopped = threading.Event()
         self._initialize_thread()
         self._polling_thread.start()
-        self.retries = retries
 
     @staticmethod
     def get_datafile_url(sdk_key: Optional[str], url: Optional[str], url_template: Optional[str]) -> str:
