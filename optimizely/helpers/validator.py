@@ -276,9 +276,9 @@ def is_finite_number(value: Any) -> bool:
         if math.isnan(value) or math.isinf(value):
             return False
 
-    if isinstance(value, int):
-      if abs(value) > (2 ** 53):
-          return False
+    if isinstance(value, (int, float)):
+        if abs(value) > (2 ** 53):
+            return False
 
     return True
 
