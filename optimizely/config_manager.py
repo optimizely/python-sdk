@@ -19,6 +19,8 @@ import requests
 import threading
 from requests import codes as http_status_codes
 from requests import exceptions as requests_exceptions
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from . import exceptions as optimizely_exceptions
 from . import logger as optimizely_logger
@@ -200,6 +202,7 @@ class PollingConfigManager(StaticConfigManager):
         error_handler: Optional[BaseErrorHandler] = None,
         notification_center: Optional[NotificationCenter] = None,
         skip_json_validation: Optional[bool] = False,
+        retries: Optional[int] = 3,
     ):
         """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
@@ -244,6 +247,7 @@ class PollingConfigManager(StaticConfigManager):
         self.stopped = threading.Event()
         self._initialize_thread()
         self._polling_thread.start()
+        self.retries = retries
 
     @staticmethod
     def get_datafile_url(sdk_key: Optional[str], url: Optional[str], url_template: Optional[str]) -> str:
@@ -391,9 +395,17 @@ class PollingConfigManager(StaticConfigManager):
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
         try:
-            response = requests.get(
-                self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
-            )
+            print(f"Getting {self.datafile_url}")
+            session = requests.Session()
+
+            retries = Retry(total=self.retries,
+                            backoff_factor=0.1,
+                            status_forcelist=[ 500, 502, 503, 504 ])
+            adapter = HTTPAdapter(max_retries=retries)
+
+            session.mount('http://', adapter)
+            session.mount("https://", adapter)
+            response = session.get(self.datafile_url, timeout=enums.ConfigManager.REQUEST_TIMEOUT)            
         except requests_exceptions.RequestException as err:
             self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
@@ -475,9 +487,17 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
         try:
-            response = requests.get(
-                self.datafile_url, headers=request_headers, timeout=enums.ConfigManager.REQUEST_TIMEOUT,
-            )
+            print(f"Getting {self.datafile_url}")
+            session = requests.Session()
+
+            retries = Retry(total=self.retries,
+                            backoff_factor=0.1,
+                            status_forcelist=[ 500, 502, 503, 504 ])
+            adapter = HTTPAdapter(max_retries=retries)
+
+            session.mount('http://', adapter)
+            session.mount("https://", adapter)
+            response = session.get(self.datafile_url, timeout=enums.ConfigManager.REQUEST_TIMEOUT) 
         except requests_exceptions.RequestException as err:
             self.logger.error(f'Fetching datafile from {self.datafile_url} failed. Error: {err}')
             return
