@@ -48,7 +48,7 @@ class EventDispatcher:
         try:
             session = requests.Session()
 
-            retries = Retry(total=EventDispatchConfig.REQUEST_TIMEOUT,
+            retries = Retry(total=EventDispatchConfig.RETRIES,
                             backoff_factor=0.1,
                             status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
