@@ -198,7 +198,7 @@ class VersionType:
 class EventDispatchConfig:
     """Event dispatching configs."""
     REQUEST_TIMEOUT: Final = 10
-    RETRIES: Final = 2
+    RETRIES: Final = 3
 
 
 class OdpEventApiConfig:
