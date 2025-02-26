@@ -26,7 +26,7 @@ from optimizely.user_profile import UserProfileService
 from . import base
 
 
-@mock.patch('requests.get')
+@mock.patch('requests.Session.get')
 class OptimizelyFactoryTest(base.BaseTest):
     def delay(*args, **kwargs):
         time.sleep(.5)
@@ -171,7 +171,7 @@ class OptimizelyFactoryTest(base.BaseTest):
         self.assertEqual(optimizely_instance.event_processor.batch_size, 10)
 
     def test_update_odp_config_correctly(self, _):
-        with mock.patch('requests.get') as mock_request_post:
+        with mock.patch('requests.Session.get') as mock_request_post:
             mock_request_post.return_value = self.fake_server_response(
                 status_code=200,
                 content=json.dumps(self.config_dict_with_audience_segments)
@@ -194,7 +194,7 @@ class OptimizelyFactoryTest(base.BaseTest):
         test_datafile = json.dumps(self.config_dict_with_audience_segments)
         test_response = self.fake_server_response(status_code=200, content=test_datafile)
 
-        with mock.patch('requests.get', return_value=test_response, side_effect=self.delay):
+        with mock.patch('requests.Session.get', return_value=test_response, side_effect=self.delay):
             # initialize config_manager with delay, so it will receive the datafile after client initialization
             config_manager = PollingConfigManager(sdk_key='test', logger=logger)
             client = OptimizelyFactory.default_instance_with_config_manager(config_manager=config_manager)
@@ -221,7 +221,7 @@ class OptimizelyFactoryTest(base.BaseTest):
         test_datafile = json.dumps(self.config_dict_with_audience_segments)
         test_response = self.fake_server_response(status_code=200, content=test_datafile)
 
-        with mock.patch('requests.get', return_value=test_response, side_effect=self.delay):
+        with mock.patch('requests.Session.get', return_value=test_response, side_effect=self.delay):
             # initialize config_manager with delay, so it will receive the datafile after client initialization
             client = OptimizelyFactory.default_instance(sdk_key='test')
             odp_manager = client.odp_manager
@@ -247,7 +247,7 @@ class OptimizelyFactoryTest(base.BaseTest):
         test_datafile = json.dumps(self.config_dict_with_audience_segments)
         test_response = self.fake_server_response(status_code=200, content=test_datafile)
 
-        with mock.patch('requests.get', return_value=test_response, side_effect=self.delay):
+        with mock.patch('requests.Session.get', return_value=test_response, side_effect=self.delay):
             # initialize config_manager with delay, so it will receive the datafile after client initialization
             client = OptimizelyFactory.custom_instance(sdk_key='test')
             odp_manager = client.odp_manager

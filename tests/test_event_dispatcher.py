@@ -29,7 +29,7 @@ class EventDispatcherTest(unittest.TestCase):
         params = {'a': '111001', 'n': 'test_event', 'g': '111028', 'u': 'oeutest_user'}
         event = event_builder.Event(url, params)
 
-        with mock.patch('requests.get') as mock_request_get:
+        with mock.patch('requests.Session.get') as mock_request_get:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 
         mock_request_get.assert_called_once_with(url, params=params, timeout=EventDispatchConfig.REQUEST_TIMEOUT)
@@ -46,7 +46,7 @@ class EventDispatcherTest(unittest.TestCase):
         }
         event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
-        with mock.patch('requests.post') as mock_request_post:
+        with mock.patch('requests.Session.post') as mock_request_post:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 
         mock_request_post.assert_called_once_with(
@@ -69,7 +69,7 @@ class EventDispatcherTest(unittest.TestCase):
         event = event_builder.Event(url, params, http_verb='POST', headers={'Content-Type': 'application/json'})
 
         with mock.patch(
-            'requests.post', side_effect=request_exception.RequestException('Failed Request'),
+            'requests.Session.post', side_effect=request_exception.RequestException('Failed Request'),
         ) as mock_request_post, mock.patch('logging.error') as mock_log_error:
             event_dispatcher.EventDispatcher.dispatch_event(event)
 

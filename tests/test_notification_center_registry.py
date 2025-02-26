@@ -60,7 +60,7 @@ class NotificationCenterRegistryTest(BaseTest):
         test_response = self.fake_server_response(status_code=200, content=test_datafile)
         notification_center = _NotificationCenterRegistry.get_notification_center(sdk_key, logger)
 
-        with mock.patch('requests.get', return_value=test_response), \
+        with mock.patch('requests.Session.get', return_value=test_response), \
              mock.patch.object(notification_center, 'send_notifications') as mock_send:
 
             client = Optimizely(sdk_key=sdk_key, logger=logger)

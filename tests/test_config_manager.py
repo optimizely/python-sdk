@@ -218,7 +218,7 @@ class StaticConfigManagerTest(base.BaseTest):
         self.assertEqual(1, round(end_time - start_time))
 
 
-@mock.patch('requests.get')
+@mock.patch('requests.Session.get')
 class PollingConfigManagerTest(base.BaseTest):
     def test_init__no_sdk_key_no_datafile__fails(self, _):
         """ Test that initialization fails if there is no sdk_key or datafile provided. """
@@ -379,7 +379,7 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.status_code = 200
         test_response.headers = test_headers
         test_response._content = test_datafile
-        with mock.patch('requests.get', return_value=test_response) as mock_request:
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
             project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key)
             project_config_manager.stop()
 
@@ -392,7 +392,7 @@ class PollingConfigManagerTest(base.BaseTest):
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
         # Call fetch_datafile again and assert that request to URL is with If-Modified-Since header.
-        with mock.patch('requests.get', return_value=test_response) as mock_requests:
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_requests:
             project_config_manager._initialize_thread()
             project_config_manager.start()
             project_config_manager.stop()
@@ -421,7 +421,7 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.headers = test_headers
         test_response._content = test_datafile
 
-        with mock.patch('requests.get', return_value=test_response) as mock_request:
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
             project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
             project_config_manager.stop()
 
@@ -434,7 +434,7 @@ class PollingConfigManagerTest(base.BaseTest):
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
         # Call fetch_datafile again, but raise exception this time
-        with mock.patch('requests.get', return_value=MockExceptionResponse()) as mock_requests:
+        with mock.patch('requests.Session.get', return_value=MockExceptionResponse()) as mock_requests:
             project_config_manager._initialize_thread()
             project_config_manager.start()
             project_config_manager.stop()
@@ -462,7 +462,7 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.status_code = 200
         test_response.headers = test_headers
         test_response._content = test_datafile
-        with mock.patch('requests.get', return_value=test_response) as mock_request:
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
             project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key, logger=mock_logger)
             project_config_manager.stop()
 
@@ -476,7 +476,7 @@ class PollingConfigManagerTest(base.BaseTest):
 
         # Call fetch_datafile again, but raise exception this time
         with mock.patch(
-            'requests.get',
+            'requests.Session.get',
             side_effect=requests.exceptions.RequestException('Error Error !!'),
         ) as mock_requests:
             project_config_manager._initialize_thread()
@@ -506,7 +506,7 @@ class PollingConfigManagerTest(base.BaseTest):
         test_response.headers = test_headers
         test_response._content = test_datafile
 
-        with mock.patch('requests.get', return_value=test_response):
+        with mock.patch('requests.Session.get', return_value=test_response):
             project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key,
                                                                          logger=mock_logger,
                                                                          update_interval=12345678912345)
@@ -516,8 +516,9 @@ class PollingConfigManagerTest(base.BaseTest):
             # verify the error log message
             log_messages = [args[0] for args, _ in mock_logger.error.call_args_list]
             for message in log_messages:
+                print(message)
                 if "Thread for background datafile polling failed. " \
-                   "Error: timestamp too large to convert to C _PyTime_t" not in message:
+                   "Error: timestamp too large to convert to C PyTime_t" not in message:
                     assert False
 
     def test_is_running(self, _):
@@ -529,7 +530,7 @@ class PollingConfigManagerTest(base.BaseTest):
         project_config_manager.stop()
 
 
-@mock.patch('requests.get')
+@mock.patch('requests.Session.get')
 class AuthDatafilePollingConfigManagerTest(base.BaseTest):
     def test_init__datafile_access_token_none__fails(self, _):
         """ Test that initialization fails if datafile_access_token is None. """
@@ -569,7 +570,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         test_response._content = test_datafile
 
         # Call fetch_datafile and assert that request was sent with correct authorization header
-        with mock.patch('requests.get',
+        with mock.patch('requests.Session.get',
                         return_value=test_response) as mock_request:
             project_config_manager.fetch_datafile()
 
@@ -596,7 +597,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         test_response._content = test_datafile
 
         # Call fetch_datafile and assert that request was sent with correct authorization header
-        with mock.patch('requests.get', return_value=test_response) as mock_request:
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
             project_config_manager = config_manager.AuthDatafilePollingConfigManager(
                 datafile_access_token=datafile_access_token,
                 sdk_key=sdk_key,
@@ -614,7 +615,7 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
 
         # Call fetch_datafile again, but raise exception this time
         with mock.patch(
-            'requests.get',
+            'requests.Session.get',
             side_effect=requests.exceptions.RequestException('Error Error !!'),
         ) as mock_requests:
             project_config_manager._initialize_thread()

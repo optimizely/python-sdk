@@ -4696,7 +4696,7 @@ class OptimizelyTest(base.BaseTest):
             time.sleep(.5)
             return mock.DEFAULT
 
-        with mock.patch('requests.get', return_value=test_response, side_effect=delay):
+        with mock.patch('requests.Session.get', return_value=test_response, side_effect=delay):
             # initialize config_manager with delay, so it will receive the datafile after client initialization
             custom_config_manager = config_manager.PollingConfigManager(sdk_key='segments-test', logger=logger)
             client = optimizely.Optimizely(config_manager=custom_config_manager)
@@ -5428,7 +5428,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     def test_send_odp_event__send_event_with_polling_config_manager(self):
         mock_logger = mock.Mock()
         with mock.patch(
-            'requests.get',
+            'requests.Session.get',
             return_value=self.fake_server_response(
                 status_code=200,
                 content=json.dumps(self.config_dict_with_audience_segments)
@@ -5467,7 +5467,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
     def test_send_odp_event__log_error_if_odp_not_enabled_with_polling_config_manager(self):
         mock_logger = mock.Mock()
         with mock.patch(
-            'requests.get',
+            'requests.Session.get',
             return_value=self.fake_server_response(
                 status_code=200,
                 content=json.dumps(self.config_dict_with_audience_segments)

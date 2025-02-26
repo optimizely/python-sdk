@@ -17,6 +17,8 @@ from sys import version_info
 
 import requests
 from requests import exceptions as request_exception
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from . import event_builder
 from .helpers.enums import HTTPVerbs, EventDispatchConfig
@@ -44,11 +46,21 @@ class EventDispatcher:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
         try:
+            session = requests.Session()
+
+            retries = Retry(total=EventDispatchConfig.RETRIES,
+                            backoff_factor=0.1,
+                            status_forcelist=[500, 502, 503, 504])
+            adapter = HTTPAdapter(max_retries=retries)
+
+            session.mount('http://', adapter)
+            session.mount("https://", adapter)
+
             if event.http_verb == HTTPVerbs.GET:
-                requests.get(event.url, params=event.params,
-                             timeout=EventDispatchConfig.REQUEST_TIMEOUT).raise_for_status()
+                session.get(event.url, params=event.params,
+                            timeout=EventDispatchConfig.REQUEST_TIMEOUT).raise_for_status()
             elif event.http_verb == HTTPVerbs.POST:
-                requests.post(
+                session.post(
                     event.url, data=json.dumps(event.params), headers=event.headers,
                     timeout=EventDispatchConfig.REQUEST_TIMEOUT,
                 ).raise_for_status()
