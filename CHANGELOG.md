@@ -1,6 +1,6 @@
 # Optimizely Python SDK Changelog
 
-## 5.1.1
+## 5.2.0
 February 26, 2025
 
 `PollingConfigManager` now has another optional parameter `retries` that will control how many times the SDK will attempt to get the datafile if the connection fails. Previously, the SDK would only try once. Now it defaults to maximum of three attempts. When sending event data, the SDK will attempt to send event data up to three times, where as before it would only attempt once.
