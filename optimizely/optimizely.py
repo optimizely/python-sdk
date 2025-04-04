@@ -340,9 +340,7 @@ class Optimizely:
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
-        experiment_id = decision.experiment.id if decision.experiment else None
-        variation_id = decision.variation.id if decision.variation else None
-    
+
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -388,8 +386,6 @@ class Optimizely:
                 'variable_value': actual_value,
                 'variable_type': variable_type,
                 'source_info': source_info,
-                'experiment_id': experiment_id,
-                'variation_id': variation_id
             },
         )
         return actual_value
@@ -431,9 +427,7 @@ class Optimizely:
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
         decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
-        experiment_id = decision.experiment.id if decision.experiment else None
-        variation_id = decision.variation.id if decision.variation else None
-    
+
         if decision.variation:
 
             feature_enabled = decision.variation.featureEnabled
@@ -486,8 +480,6 @@ class Optimizely:
                 'variable_values': all_variables,
                 'source': decision.source,
                 'source_info': source_info,
-                'experiment_id': experiment_id,
-                'variation_id': variation_id
             },
         )
         return all_variables
@@ -654,10 +646,7 @@ class Optimizely:
             decision_notification_type = enums.DecisionNotificationTypes.FEATURE_TEST
         else:
             decision_notification_type = enums.DecisionNotificationTypes.AB_TEST
-            
-        experiment_id = experiment.id if experiment else None
-        variation_id = variation.id if variation else None
-        
+
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
             decision_notification_type,
@@ -666,8 +655,6 @@ class Optimizely:
             {
                 'experiment_key': experiment_key,
                 'variation_key': variation_key,
-                'experiment_id': experiment_id,
-                'variation_id': variation_id
             },
         )
 
@@ -754,8 +741,6 @@ class Optimizely:
                 'feature_enabled': feature_enabled,
                 'source': decision.source,
                 'source_info': source_info,
-                'experiment_id': decision.experiment.id,
-                'variation_id': decision.variation.id
             },
         )
 
@@ -1220,15 +1205,19 @@ class Optimizely:
             if flag_decision is not None and flag_decision.variation is not None
             else None
         )
-        
-        rollout_id = feature_flag.rolloutId if decision_source == DecisionSources.ROLLOUT else None
-        experiment_id = project_config.get_experiment_id_by_key_or_rollout_id(rule_key, rollout_id)
+
+        rollout_id = None
+        if decision_source == DecisionSources.ROLLOUT and feature_flag is not None:
+            rollout_id = feature_flag.rolloutId
+        experiment_id = None
+        if rule_key is not None:
+            experiment_id = project_config.get_experiment_id_by_key_or_rollout_id(rule_key, rollout_id)
         variation_id = None
-        if variation_key:
+        if experiment_id and variation_key:
             variation = project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)
             if variation:
-                variation_id = variation.id     
-        
+                variation_id = variation.id
+
         # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,

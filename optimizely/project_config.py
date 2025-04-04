@@ -722,8 +722,8 @@ class ProjectConfig:
         Retrieves the experiment ID associated with a given rule key or a specific rollout.
 
         Args:
-            key: The key associated with the experiment rule.
-            rollout_id: The ID of the rollout to search if the key is not found.
+            key: The key associated with the experiment rule. It can be experiment key or rule key.
+            rollout_id: The ID of the rollout to be searched if the key is not found in the experiment key map.
 
         Returns:
             Optional[str]: The experiment ID if found, otherwise None.
@@ -738,9 +738,9 @@ class ProjectConfig:
         if rollout_id:
             rollout = self.get_rollout_from_id(rollout_id)
             if rollout:
-                for experiment in rollout.experiments:
-                    experiment = entities.Experiment(**experiment)
+                for experiment_data in rollout.experiments:
+                    experiment = entities.Experiment(**experiment_data)
                     if experiment.key == key:
-                        return experiment.id  
+                        return experiment.id
 
         return None
