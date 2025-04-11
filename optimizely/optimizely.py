@@ -652,10 +652,7 @@ class Optimizely:
             decision_notification_type,
             user_id,
             attributes or {},
-            {
-                'experiment_key': experiment_key,
-                'variation_key': variation_key,
-            },
+            {'experiment_key': experiment_key, 'variation_key': variation_key},
         )
 
         return variation_key
