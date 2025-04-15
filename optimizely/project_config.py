@@ -728,13 +728,7 @@ class ProjectConfig:
         Returns:
             Optional[str]: The experiment ID if found, otherwise None.
         """
-        # Try getting the experiment from experiment_key_map first
-        if key:
-            experiment = self.get_experiment_from_key(key)
-            if experiment:
-                return experiment.id
-
-        # If key is not found in experiment_key_map, check a specific rollout (if provided)
+        # Check a specific rollout (if provided)
         if rollout_id:
             rollout = self.get_rollout_from_id(rollout_id)
             if rollout:
@@ -742,5 +736,11 @@ class ProjectConfig:
                     experiment = entities.Experiment(**experiment_data)
                     if experiment.key == key:
                         return experiment.id
+
+        # Try getting the experiment from experiment_key_map
+        if key:
+            experiment = self.get_experiment_from_key(key)
+            if experiment:
+                return experiment.id
 
         return None
