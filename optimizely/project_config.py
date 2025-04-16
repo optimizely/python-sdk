@@ -716,31 +716,3 @@ class ProjectConfig:
                     return variation
 
         return None
-
-    def get_experiment_id_by_key_or_rollout_id(self, key: str, rollout_id: Optional[str] = None) -> Optional[str]:
-        """
-        Retrieves the experiment ID associated with a given rule key or a specific rollout.
-
-        Args:
-            key: The key associated with the experiment rule. It can be experiment key or rule key.
-            rollout_id: The ID of the rollout to be searched if the experiment if from a rollout.
-
-        Returns:
-            Optional[str]: The experiment ID if found, otherwise None.
-        """
-        # Check a specific rollout (if provided)
-        if rollout_id:
-            rollout = self.get_rollout_from_id(rollout_id)
-            if rollout:
-                for experiment_data in rollout.experiments:
-                    rollout_experiment = entities.Experiment(**experiment_data)
-                    if rollout_experiment.key == key:
-                        return rollout_experiment.id
-
-        # Try getting the experiment from experiment_key_map
-        if key:
-            experiment = self.get_experiment_from_key(key)
-            if experiment:
-                return experiment.id
-
-        return None
