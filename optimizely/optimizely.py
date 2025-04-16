@@ -1203,17 +1203,32 @@ class Optimizely:
             else None
         )
 
-        rollout_id = None
-        if decision_source == DecisionSources.ROLLOUT and feature_flag is not None:
-            rollout_id = feature_flag.rolloutId
+        # rollout_id = None
+        # if decision_source == DecisionSources.ROLLOUT and feature_flag is not None:
+        #     rollout_id = feature_flag.rolloutId
+        # experiment_id = None
+        # if rule_key is not None:
+        #     experiment_id = project_config.get_experiment_id_by_key_or_rollout_id(rule_key, rollout_id)
+        # variation_id = None
+        # if experiment_id and variation_key:
+        #     variation = project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)
+        #     if variation:
+        #         variation_id = variation.id
+
         experiment_id = None
-        if rule_key is not None:
-            experiment_id = project_config.get_experiment_id_by_key_or_rollout_id(rule_key, rollout_id)
         variation_id = None
-        if experiment_id and variation_key:
-            variation = project_config.get_variation_from_key_by_experiment_id(experiment_id, variation_key)
-            if variation:
-                variation_id = variation.id
+
+        try:
+            if flag_decision.experiment is not None:
+                experiment_id = flag_decision.experiment.id
+        except AttributeError:
+            self.logger.warning("flag_decision.experiment has no attribute 'id'")
+
+        try:
+            if flag_decision.variation is not None:
+                variation_id = flag_decision.variation.id
+        except AttributeError:
+            self.logger.warning("flag_decision.variation has no attribute 'id'")
 
         # Send notification
         self.notification_center.send_notifications(
