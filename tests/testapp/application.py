@@ -75,7 +75,7 @@ def on_track(_event_key, _user_id, _attributes, _event_tags, event):
 @app.before_request
 def before_request():
     global user_profile_service_instance
-    global optimizely_instance
+    global optimizely_instance  # noqa: F824
 
     user_profile_service_instance = None
     optimizely_instance = None
