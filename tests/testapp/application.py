@@ -16,15 +16,15 @@ import logging
 import types
 from os import environ
 
-from flask import Flask
-from flask import request
-
 import user_profile_service
-from optimizely import logger
-from optimizely import optimizely
+from flask import CSRFProtect, Flask, request
+
+from optimizely import logger, optimizely
 from optimizely.helpers import enums
 
 app = Flask(__name__)
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 datafile = open('datafile.json', 'r')
 datafile_content = datafile.read()
