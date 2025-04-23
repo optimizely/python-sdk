@@ -75,7 +75,7 @@ def on_track(_event_key, _user_id, _attributes, _event_tags, event):
 @app.before_request
 def before_request():
     global user_profile_service_instance
-    global optimizely_instance  # noqa: F824
+    global optimizely_instance
 
     user_profile_service_instance = None
     optimizely_instance = None
@@ -118,7 +118,7 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    global optimizely_instance
+    global optimizely_instance  # noqa: F824
     global listener_return_maps
 
     optimizely_instance.notification_center.clear_all_notifications()
