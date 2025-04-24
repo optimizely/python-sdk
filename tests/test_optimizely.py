@@ -34,6 +34,11 @@ from optimizely.helpers import enums
 from optimizely.helpers.sdk_settings import OptimizelySdkSettings
 from . import base
 
+import warnings
+import urllib3
+# Suppress SystemTimeWarning from urllib3
+warnings.filterwarnings('ignore', category=urllib3.exceptions.SystemTimeWarning)
+
 
 class OptimizelyTest(base.BaseTest):
     strTest = None
@@ -3965,7 +3970,6 @@ class OptimizelyTest(base.BaseTest):
                 'source_info': {},
             },
         )
-
     def test_get_feature_variable__returns_none_if_none_feature_key(self):
         """ Test that get_feature_variable_* returns None for None feature key. """
 
@@ -5557,3 +5561,4 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
         mock_send_event.assert_called_with('fullstack', 'great', {'amazing': 'fantastic'}, {})
         mock_logger.error.assert_not_called()
+

@@ -509,7 +509,7 @@ class PollingConfigManagerTest(base.BaseTest):
         with mock.patch('requests.Session.get', return_value=test_response):
             project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key,
                                                                          logger=mock_logger,
-                                                                         update_interval=12345678912345)
+                                                                         update_interval=300)
 
             project_config_manager.stop()
 
