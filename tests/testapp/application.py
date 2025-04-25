@@ -17,7 +17,8 @@ import types
 from os import environ
 
 import user_profile_service
-from flask import CSRFProtect, Flask, request
+from flask import Flask, request
+from flask_wtf.csrf import CSRFProtect
 
 from optimizely import logger, optimizely
 from optimizely.helpers import enums
