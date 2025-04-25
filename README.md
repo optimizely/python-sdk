@@ -80,6 +80,20 @@ Each method is described below.
           config_manager=custom_config_manager
         )
 
+
+### NoOpEventDispatcher
+
+If you are only interested in using Optimizely's [free feature flag](https://www.optimizely.com/products/feature-experimentation/free-feature-flagging/) feature you
+should configure the SDK to not send any event to Optimizely's servers:
+
+    from optimizely.event_dispatcher import NoOpEventDispatcher
+
+    optimizely_client = optimizely.Optimizely(
+        sdk_key='your-sdk-key-here',
+        event_dispatcher=NoOpEventDispatcher()
+    )
+
+
 ### PollingConfigManager
 
 The [PollingConfigManager](https://github.com/optimizely/python-sdk/blob/master/optimizely/config_manager.py#L150) asynchronously polls for

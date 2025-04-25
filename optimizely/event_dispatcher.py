@@ -36,6 +36,18 @@ class CustomEventDispatcher(Protocol):
         ...
 
 
+class NoOpEventDispatcher:
+    """Event dispatcher that doesn't send any events to Optimizely's servers."""
+
+    def dispatch_event(self, event: event_builder.Event) -> None:
+        """No-op implementation that silently discards events.
+
+        Args:
+            event: Event object that would normally be sent to Optimizely's servers.
+        """
+        pass
+
+
 class EventDispatcher:
 
     @staticmethod
