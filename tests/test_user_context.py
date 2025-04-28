@@ -283,6 +283,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': True,
                 'variables': expected.variables,
+                'experiment_id': mock_experiment.id,
+                'variation_id': mock_variation.id
             },
         )
 
@@ -391,6 +393,24 @@ class UserContextTest(base.BaseTest):
 
         self.compare_opt_decisions(expected, actual)
 
+        # assert event count
+        self.assertEqual(1, mock_send_event.call_count)
+
+        # assert event payload
+        expected_experiment = project_config.get_experiment_from_key(expected.rule_key)
+        expected_var = project_config.get_variation_from_key(expected.rule_key, expected.variation_key)
+        mock_send_event.assert_called_with(
+            project_config,
+            expected_experiment,
+            expected_var,
+            expected.flag_key,
+            expected.rule_key,
+            'rollout',
+            expected.enabled,
+            'test_user',
+            user_attributes
+        )
+
         # assert notification count
         self.assertEqual(1, mock_broadcast_decision.call_count)
 
@@ -408,25 +428,9 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': True,
                 'variables': expected.variables,
+                'experiment_id': expected_experiment.id,
+                'variation_id': expected_var.id
             },
-        )
-
-        # assert event count
-        self.assertEqual(1, mock_send_event.call_count)
-
-        # assert event payload
-        expected_experiment = project_config.get_experiment_from_key(expected.rule_key)
-        expected_var = project_config.get_variation_from_key(expected.rule_key, expected.variation_key)
-        mock_send_event.assert_called_with(
-            project_config,
-            expected_experiment,
-            expected_var,
-            expected.flag_key,
-            expected.rule_key,
-            'rollout',
-            expected.enabled,
-            'test_user',
-            user_attributes
         )
 
     def test_decide_feature_rollout__send_flag_decision_false(self):
@@ -467,6 +471,8 @@ class UserContextTest(base.BaseTest):
         self.assertEqual(1, mock_broadcast_decision.call_count)
 
         # assert notification
+        expected_experiment = project_config.get_experiment_from_key(expected.rule_key)
+        expected_var = project_config.get_variation_from_key(expected.rule_key, expected.variation_key)
         mock_broadcast_decision.assert_called_with(
             enums.NotificationTypes.DECISION,
             'flag',
@@ -480,6 +486,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': False,
                 'variables': expected.variables,
+                'experiment_id': expected_experiment.id,
+                'variation_id': expected_var.id
             },
         )
 
@@ -549,7 +557,9 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': True,
                 'variables': expected.variables,
-            },
+                'experiment_id': None,
+                'variation_id': None
+            }
         )
 
         # assert event count
@@ -632,6 +642,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': False,
                 'variables': expected.variables,
+                'experiment_id': None,
+                'variation_id': None
             },
         )
 
@@ -701,6 +713,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': False,
                 'variables': expected.variables,
+                'experiment_id': mock_experiment.id,
+                'variation_id': mock_variation.id,
             },
         )
 
@@ -773,6 +787,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': False,
                 'variables': expected.variables,
+                'experiment_id': mock_experiment.id,
+                'variation_id': mock_variation.id
             },
         )
 
@@ -834,6 +850,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': True,
                 'variables': expected.variables,
+                'experiment_id': mock_experiment.id,
+                'variation_id': mock_variation.id,
             },
         )
 
@@ -948,6 +966,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': True,
                 'variables': expected.variables,
+                'experiment_id': expected_experiment.id,
+                'variation_id': expected_var.id,
             },
         )
 
@@ -1006,7 +1026,7 @@ class UserContextTest(base.BaseTest):
             enabled=True,
             variables=expected_variables,
             flag_key='test_feature_in_experiment',
-            user_context=user_context
+            user_context=user_context,
         )
 
         self.compare_opt_decisions(expected, actual)
@@ -1025,6 +1045,8 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': False,
                 'variables': expected.variables,
+                'experiment_id': mock_experiment.id,
+                'variation_id': mock_variation.id
             },
         )
 
@@ -1490,6 +1512,9 @@ class UserContextTest(base.BaseTest):
                      'User "test_user" is in variation "control" of experiment test_experiment.']
         )
 
+        expected_experiment = project_config.get_experiment_from_key(expected.rule_key)
+        expected_var = project_config.get_variation_from_key('test_experiment', expected.variation_key)
+
         # assert notification count
         self.assertEqual(1, mock_broadcast_decision.call_count)
 
@@ -1507,11 +1532,10 @@ class UserContextTest(base.BaseTest):
                 'reasons': expected.reasons,
                 'decision_event_dispatched': True,
                 'variables': expected.variables,
+                'experiment_id': expected_experiment.id,
+                'variation_id': expected_var.id
             },
         )
-
-        expected_experiment = project_config.get_experiment_from_key(expected.rule_key)
-        expected_var = project_config.get_variation_from_key('test_experiment', expected.variation_key)
 
         mock_send_event.assert_called_with(
             project_config,

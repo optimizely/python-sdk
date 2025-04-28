@@ -1202,6 +1202,22 @@ class Optimizely:
             if flag_decision is not None and flag_decision.variation is not None
             else None
         )
+
+        experiment_id = None
+        variation_id = None
+
+        try:
+            if flag_decision.experiment is not None:
+                experiment_id = flag_decision.experiment.id
+        except AttributeError:
+            self.logger.warning("flag_decision.experiment has no attribute 'id'")
+
+        try:
+            if flag_decision.variation is not None:
+                variation_id = flag_decision.variation.id
+        except AttributeError:
+            self.logger.warning("flag_decision.variation has no attribute 'id'")
+
         # Send notification
         self.notification_center.send_notifications(
             enums.NotificationTypes.DECISION,
@@ -1215,7 +1231,9 @@ class Optimizely:
                 'variation_key': variation_key,
                 'rule_key': rule_key,
                 'reasons': decision_reasons if should_include_reasons else [],
-                'decision_event_dispatched': decision_event_dispatched
+                'decision_event_dispatched': decision_event_dispatched,
+                'experiment_id': experiment_id,
+                'variation_id': variation_id
 
             },
         )
