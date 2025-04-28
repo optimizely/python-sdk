@@ -16,15 +16,16 @@ import logging
 import types
 from os import environ
 
-from flask import Flask
-from flask import request
-
 import user_profile_service
-from optimizely import logger
-from optimizely import optimizely
+from flask import Flask, request
+from flask_wtf.csrf import CSRFProtect
+
+from optimizely import logger, optimizely
 from optimizely.helpers import enums
 
 app = Flask(__name__)
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 datafile = open('datafile.json', 'r')
 datafile_content = datafile.read()
@@ -118,7 +119,7 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    global optimizely_instance
+    global optimizely_instance  # noqa: F824
     global listener_return_maps
 
     optimizely_instance.notification_center.clear_all_notifications()
