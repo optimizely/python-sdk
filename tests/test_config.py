@@ -154,6 +154,25 @@ class ConfigTest(base.BaseTest):
         self.assertEqual(expected_variation_key_map, self.project_config.variation_key_map)
         self.assertEqual(expected_variation_id_map, self.project_config.variation_id_map)
 
+    def test_cmab_field_population(self):
+        """ Test that the cmab field is populated correctly in experiments and attributes are parsed as attribute_ids. """
+
+        # Deep copy existing datafile and add cmab config to the first experiment
+        config_dict = copy.deepcopy(self.config_dict_with_multiple_experiments)
+        config_dict['experiments'][0]['cmab'] = {'attributeIds': ['808797688', '808797689'], 'trafficAllocation': 4000}
+        config_dict['experiments'][0]['trafficAllocation'] = []
+
+        opt_obj = optimizely.Optimizely(json.dumps(config_dict))
+        project_config = opt_obj.config_manager.get_config()
+
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        self.assertEqual(experiment.cmab, {'attributeIds': ['808797688', '808797689'], 'trafficAllocation': 4000})
+        
+        experiment_2 = project_config.get_experiment_from_key('test_experiment_2')
+        self.assertIsNone(experiment_2.cmab)
+        
+        print(project_config.attributes)
+
     def test_init__with_v4_datafile(self):
         """ Test that on creating object, properties are initiated correctly for version 4 datafile. """
 
