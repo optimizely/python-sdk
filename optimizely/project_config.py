@@ -94,7 +94,9 @@ class ProjectConfig:
         self.attribute_key_map: dict[str, entities.Attribute] = self._generate_key_map(
             self.attributes, 'key', entities.Attribute
         )
-
+        self.attribute_id_to_key_map: dict[str, str] = {}
+        for attribute in self.attributes:
+            self.attribute_id_to_key_map[attribute['id']] = attribute['key']
         self.audience_id_map: dict[str, entities.Audience] = self._generate_key_map(
             self.audiences, 'id', entities.Audience
         )
@@ -508,6 +510,34 @@ class ProjectConfig:
 
         self.logger.error(f'Attribute "{attribute_key}" is not in datafile.')
         self.error_handler.handle_error(exceptions.InvalidAttributeException(enums.Errors.INVALID_ATTRIBUTE))
+        return None
+
+    def get_attribute_by_key(self, key: str) -> Optional[entities.Attribute]:
+        """ Get attribute for the provided attribute key.
+
+        Args:
+            key: Attribute key for which attribute is to be fetched.
+
+        Returns:
+            Attribute corresponding to the provided attribute key.
+        """
+        if key in self.attribute_key_map:
+            return self.attribute_key_map[key]
+        self.logger.error(f'Attribute with key:"{key}" is not in datafile.')
+        return None
+
+    def get_attribute_key_by_id(self, id: str) -> Optional[str]:
+        """ Get attribute key for the provided attribute id.
+
+        Args:
+            id: Attribute id for which attribute is to be fetched.
+
+        Returns:
+            Attribute key corresponding to the provided attribute id.
+        """
+        if id in self.attribute_id_to_key_map:
+            return self.attribute_id_to_key_map[id]
+        self.logger.error(f'Attribute with id:"{id}" is not in datafile.')
         return None
 
     def get_feature_from_key(self, feature_key: str) -> Optional[entities.FeatureFlag]:

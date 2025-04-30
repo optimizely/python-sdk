@@ -194,4 +194,3 @@ class Integration(BaseEntity):
         self.key = key
         self.host = host
         self.publicKey = publicKey
-        
