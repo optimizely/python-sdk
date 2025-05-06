@@ -1,9 +1,10 @@
 import unittest
 import json
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 from optimizely.cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
 from requests.exceptions import RequestException
 from optimizely.helpers.enums import Errors
+
 
 class TestDefaultCmabClient_do_fetch(unittest.TestCase):
     def setUp(self):
@@ -53,6 +54,7 @@ class TestDefaultCmabClient_do_fetch(unittest.TestCase):
         result = self.client._do_fetch('http://fake-url', {'some': 'data'})
         self.assertIsNone(result)
         self.mock_logger.exception.assert_called_with(Errors.INVALID_CMAB_FETCH_RESPONSE)
+
 
 class TestDefaultCmabClientWithRetry(unittest.TestCase):
     def setUp(self):
@@ -110,7 +112,9 @@ class TestDefaultCmabClientWithRetry(unittest.TestCase):
         result = self.client._do_fetch_with_retry("http://fake-url", {}, self.retry_config)
         self.assertIsNone(result)
         self.assertEqual(self.mock_http_client.post.call_count, 3)  # 1 original + 2 retries
-        self.mock_logger.error.assert_called_with(Errors.CMAB_FETCH_FAILED.format("Exhausted all retries for CMAB request."))
+        self.mock_logger.error.assert_called_with(
+            Errors.CMAB_FETCH_FAILED.format("Exhausted all retries for CMAB request."))
+
 
 class TestDefaultCmabClientFetchDecision(unittest.TestCase):
     def setUp(self):
