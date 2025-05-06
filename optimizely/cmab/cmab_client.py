@@ -68,29 +68,29 @@ class DefaultCmabClient:
             return variation_id
 
         except requests.RequestException as e:
-            self.logger.error(f"Error fetching CMAB decision: {e}")
-            pass
+            self.logger.error(Errors.CMAB_FETCH_FAILED.format(str(e)))
+            return None
 
     def _do_fetch(self, url: str, request_body: str) -> Optional[str]:
         headers = {'Content-Type': 'application/json'}
         try:
             response = self.http_client.post(url, data=json.dumps(request_body), headers=headers, timeout=MAX_WAIT_TIME)
         except requests.exceptions.RequestException as e:
-            self.logger.exception(str(e))
+            self.logger.exception(Errors.CMAB_FETCH_FAILED.format(str(e)))
             return None
 
         if not 200 <= response.status_code < 300:
-            self.logger.exception(f'CMAB Request failed with status code: {response.status_code}')
+            self.logger.exception(Errors.CMAB_FETCH_FAILED.format(str(response.status_code)))
             return None
 
         try:
             body = response.json()
         except json.JSONDecodeError as e:
-            self.logger.exception(str(e))
+            self.logger.exception(Errors.INVALID_CMAB_FETCH_RESPONSE)
             return None
 
         if not self.validate_response(body):
-            self.logger.exception('Invalid response')
+            self.logger.exception(Errors.INVALID_CMAB_FETCH_RESPONSE)
             return None
 
         return str(body['predictions'][0]['variation_id'])
@@ -115,5 +115,5 @@ class DefaultCmabClient:
                 self.logger.info(f"Retrying CMAB request (attempt: {attempt + 1}) after {backoff} seconds...")
                 time.sleep(backoff)
                 backoff = min(backoff * math.pow(retry_config.backoff_multiplier, attempt + 1), retry_config.max_backoff)
-        self.logger.error("Exhausted all retries for CMAB request.")
+        self.logger.error(Errors.CMAB_FETCH_FAILED.format('Exhausted all retries for CMAB request.'))
         return None
