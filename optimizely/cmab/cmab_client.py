@@ -17,6 +17,7 @@ import math
 from typing import Dict, Any, Optional
 from optimizely import logger as _logging
 from optimizely.helpers.enums import Errors
+from optimizely.exceptions import CmabFetchError, CmabInvalidResponseError
 
 # CMAB_PREDICTION_ENDPOINT is the endpoint for CMAB predictions
 CMAB_PREDICTION_ENDPOINT = "https://prediction.cmab.optimizely.com/predict/%s"
@@ -71,8 +72,9 @@ class DefaultCmabClient:
         rule_id: str,
         user_id: str,
         attributes: Dict[str, Any],
-        cmab_uuid: str
-    ) -> Optional[str]:
+        cmab_uuid: str,
+        timeout: Optional[float] = None
+    ) -> str:
         """Fetch a decision from the CMAB prediction service.
 
         Args:
@@ -80,11 +82,13 @@ class DefaultCmabClient:
             user_id (str): The user ID for the request.
             attributes (Dict[str, Any]): User attributes for the request.
             cmab_uuid (str): Unique identifier for the CMAB request.
+            timeout (float): Maximum wait time for request to respond in seconds.
 
         Returns:
-            Optional[str]: The variation ID if successful, None otherwise.
+            str: The variation ID.
         """
         url = CMAB_PREDICTION_ENDPOINT % rule_id
+        timeout = timeout or MAX_WAIT_TIME
         cmab_attributes = [
             {"id": key, "value": value, "type": "custom_attribute"}
             for key, value in attributes.items()
@@ -101,45 +105,50 @@ class DefaultCmabClient:
 
         try:
             if self.retry_config:
-                variation_id = self._do_fetch_with_retry(url, request_body, self.retry_config)
+                variation_id = self._do_fetch_with_retry(url, request_body, self.retry_config, timeout)
             else:
-                variation_id = self._do_fetch(url, request_body)
+                variation_id = self._do_fetch(url, request_body, timeout)
             return variation_id
 
         except requests.RequestException as e:
-            self.logger.error(Errors.CMAB_FETCH_FAILED.format(str(e)))
-            return None
+            error_message = Errors.CMAB_FETCH_FAILED.format(str(e))
+            self.logger.error(error_message)
+            raise CmabFetchError(error_message)
 
-    def _do_fetch(self, url: str, request_body: Dict[str, Any]) -> Optional[str]:
+    def _do_fetch(self, url: str, request_body: Dict[str, Any], timeout: float) -> str:
         """Perform a single fetch request to the CMAB prediction service.
 
         Args:
             url (str): The endpoint URL.
             request_body (Dict[str, Any]): The request payload.
-
+            timeout (float): Maximum wait time for request to respond in seconds.
         Returns:
-            Optional[str]: The variation ID if successful, None otherwise.
+            str: The variation ID
         """
         headers = {'Content-Type': 'application/json'}
         try:
-            response = self.http_client.post(url, data=json.dumps(request_body), headers=headers, timeout=MAX_WAIT_TIME)
+            response = self.http_client.post(url, data=json.dumps(request_body), headers=headers, timeout=timeout)
         except requests.exceptions.RequestException as e:
-            self.logger.exception(Errors.CMAB_FETCH_FAILED.format(str(e)))
-            return None
+            error_message = Errors.CMAB_FETCH_FAILED.format(str(e))
+            self.logger.error(error_message)
+            raise CmabFetchError(error_message)
 
         if not 200 <= response.status_code < 300:
-            self.logger.exception(Errors.CMAB_FETCH_FAILED.format(str(response.status_code)))
-            return None
+            error_message = Errors.CMAB_FETCH_FAILED.format(str(response.status_code))
+            self.logger.error(error_message)
+            raise CmabFetchError(error_message)
 
         try:
             body = response.json()
         except json.JSONDecodeError:
-            self.logger.exception(Errors.INVALID_CMAB_FETCH_RESPONSE)
-            return None
+            error_message = Errors.INVALID_CMAB_FETCH_RESPONSE
+            self.logger.error(error_message)
+            raise CmabInvalidResponseError(error_message)
 
         if not self.validate_response(body):
-            self.logger.exception(Errors.INVALID_CMAB_FETCH_RESPONSE)
-            return None
+            error_message = Errors.INVALID_CMAB_FETCH_RESPONSE
+            self.logger.error(error_message)
+            raise CmabInvalidResponseError(error_message)
 
         return str(body['predictions'][0]['variation_id'])
 
@@ -165,27 +174,31 @@ class DefaultCmabClient:
         self,
         url: str,
         request_body: Dict[str, Any],
-        retry_config: CmabRetryConfig
-    ) -> Optional[str]:
+        retry_config: CmabRetryConfig,
+        timeout: float
+    ) -> str:
         """Perform a fetch request with retry logic.
 
         Args:
             url (str): The endpoint URL.
             request_body (Dict[str, Any]): The request payload.
             retry_config (CmabRetryConfig): Configuration for retry logic.
-
+            timeout (float): Maximum wait time for request to respond in seconds.
         Returns:
-            Optional[str]: The variation ID if successful, None otherwise.
+            str: The variation ID
         """
         backoff = retry_config.initial_backoff
         for attempt in range(retry_config.max_retries + 1):
-            variation_id = self._do_fetch(url, request_body)
-            if variation_id:
+            try:
+                variation_id = self._do_fetch(url, request_body, timeout)
                 return variation_id
-            if attempt < retry_config.max_retries:
-                self.logger.info(f"Retrying CMAB request (attempt: {attempt + 1}) after {backoff} seconds...")
-                time.sleep(backoff)
-                backoff = min(backoff * math.pow(retry_config.backoff_multiplier, attempt + 1),
-                              retry_config.max_backoff)
-        self.logger.error(Errors.CMAB_FETCH_FAILED.format('Exhausted all retries for CMAB request.'))
-        return None
+            except:
+                if attempt < retry_config.max_retries:
+                    self.logger.info(f"Retrying CMAB request (attempt: {attempt + 1}) after {backoff} seconds...")
+                    time.sleep(backoff)
+                    backoff = min(backoff * math.pow(retry_config.backoff_multiplier, attempt + 1),
+                                  retry_config.max_backoff)
+
+        error_message = Errors.CMAB_FETCH_FAILED.format('Exhausted all retries for CMAB request.')
+        self.logger.error(error_message)
+        raise CmabFetchError(error_message)
