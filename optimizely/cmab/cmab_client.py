@@ -73,7 +73,7 @@ class DefaultCmabClient:
         user_id: str,
         attributes: Dict[str, Any],
         cmab_uuid: str,
-        timeout: Optional[float] = None
+        timeout: float = MAX_WAIT_TIME
     ) -> str:
         """Fetch a decision from the CMAB prediction service.
 
@@ -82,13 +82,12 @@ class DefaultCmabClient:
             user_id (str): The user ID for the request.
             attributes (Dict[str, Any]): User attributes for the request.
             cmab_uuid (str): Unique identifier for the CMAB request.
-            timeout (float): Maximum wait time for request to respond in seconds.
+            timeout (float): Maximum wait time for request to respond in seconds. Defaults to 10 seconds.
 
         Returns:
             str: The variation ID.
         """
         url = CMAB_PREDICTION_ENDPOINT % rule_id
-        timeout = timeout or MAX_WAIT_TIME
         cmab_attributes = [
             {"id": key, "value": value, "type": "custom_attribute"}
             for key, value in attributes.items()
