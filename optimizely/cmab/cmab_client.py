@@ -19,9 +19,6 @@ from optimizely import logger as _logging
 from optimizely.helpers.enums import Errors
 from optimizely.exceptions import CmabFetchError, CmabInvalidResponseError
 
-# CMAB_PREDICTION_ENDPOINT is the endpoint for CMAB predictions
-CMAB_PREDICTION_ENDPOINT = "https://prediction.cmab.optimizely.com/predict/%s"
-
 # Default constants for CMAB requests
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_INITIAL_BACKOFF = 0.1  # in seconds (100 ms)
@@ -87,7 +84,7 @@ class DefaultCmabClient:
         Returns:
             str: The variation ID.
         """
-        url = CMAB_PREDICTION_ENDPOINT % rule_id
+        url = f"https://prediction.cmab.optimizely.com/predict/{rule_id}"
         cmab_attributes = [
             {"id": key, "value": value, "type": "custom_attribute"}
             for key, value in attributes.items()
