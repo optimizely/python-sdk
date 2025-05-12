@@ -98,18 +98,11 @@ class DefaultCmabClient:
                 "cmabUUID": cmab_uuid,
             }]
         }
-
-        try:
-            if self.retry_config:
-                variation_id = self._do_fetch_with_retry(url, request_body, self.retry_config, timeout)
-            else:
-                variation_id = self._do_fetch(url, request_body, timeout)
-            return variation_id
-
-        except requests.RequestException as e:
-            error_message = Errors.CMAB_FETCH_FAILED.format(str(e))
-            self.logger.error(error_message)
-            raise CmabFetchError(error_message)
+        if self.retry_config:
+            variation_id = self._do_fetch_with_retry(url, request_body, self.retry_config, timeout)
+        else:
+            variation_id = self._do_fetch(url, request_body, timeout)
+        return variation_id
 
     def _do_fetch(self, url: str, request_body: Dict[str, Any], timeout: float) -> str:
         """Perform a single fetch request to the CMAB prediction service.
