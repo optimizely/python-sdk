@@ -109,3 +109,9 @@ class IntegrationDict(BaseEntity):
     key: str
     host: str
     publicKey: str
+
+
+class CmabDict(BaseEntity):
+    """Cmab dict from parsed datafile json."""
+    attributeIds: list[str]
+    trafficAllocation: int

@@ -23,10 +23,14 @@ from flask_wtf.csrf import CSRFProtect
 from optimizely import logger, optimizely
 from optimizely.helpers import enums
 
+# Create the flask app
 app = Flask(__name__)
-# Initialize CSRF protection
+
+# Set up CSRF protection
+app.config["SECRET_KEY"] = environ.get("CSRF_SECRET_KEY", "default_csrf_secret_key")
 csrf = CSRFProtect(app)
 
+# Read in the datafile
 datafile = open('datafile.json', 'r')
 datafile_content = datafile.read()
 datafile.close()
