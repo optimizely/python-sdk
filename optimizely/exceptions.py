@@ -82,3 +82,21 @@ class OdpInvalidData(Exception):
     """ Raised when passing invalid ODP data. """
 
     pass
+
+
+class CmabError(Exception):
+    """Base exception for CMAB client errors."""
+
+    pass
+
+
+class CmabFetchError(CmabError):
+    """Exception raised when CMAB fetch fails."""
+
+    pass
+
+
+class CmabInvalidResponseError(CmabError):
+    """Exception raised when CMAB response is invalid."""
+
+    pass
