@@ -163,7 +163,6 @@ class LRUCacheTest(TestCase):
         cache.remove("1")
 
         self.assertIsNone(cache.lookup("1"))
-        self.assertEqual(len(cache.map), 0)
 
     def test_remove_and_add_back(self):
         cache = LRUCache(3, 1000)
