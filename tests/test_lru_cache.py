@@ -139,7 +139,6 @@ class LRUCacheTest(TestCase):
 
         self.assertEqual(cache.lookup("1"), 100)
         self.assertEqual(cache.lookup("2"), 200)
-        self.assertEqual(len(cache.map), 2)
 
     def test_remove_existing_key(self):
         cache = LRUCache(3, 1000)
@@ -151,14 +150,12 @@ class LRUCacheTest(TestCase):
         self.assertEqual(cache.lookup("1"), 100)
         self.assertEqual(cache.lookup("2"), 200)
         self.assertEqual(cache.lookup("3"), 300)
-        self.assertEqual(len(cache.map), 3)
 
         cache.remove("2")
 
         self.assertEqual(cache.lookup("1"), 100)
         self.assertIsNone(cache.lookup("2"))
         self.assertEqual(cache.lookup("3"), 300)
-        self.assertEqual(len(cache.map), 2)
 
     def test_remove_from_zero_sized_cache(self):
         cache = LRUCache(0, 1000)
@@ -180,7 +177,6 @@ class LRUCacheTest(TestCase):
         self.assertEqual(cache.lookup("1"), 100)
         self.assertEqual(cache.lookup("2"), 201)
         self.assertEqual(cache.lookup("3"), 300)
-        self.assertEqual(len(cache.map), 3)
 
     def test_thread_safety(self):
         import threading

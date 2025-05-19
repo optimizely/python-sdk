@@ -93,9 +93,6 @@ class LRUCache(Generic[K, V]):
 
     def remove(self, key: K) -> None:
         """Remove the element associated with the provided key from the cache."""
-        if self.capacity <= 0:
-            return
-
         with self.lock:
             self.map.pop(key, None)
 
