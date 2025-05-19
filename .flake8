@@ -4,5 +4,5 @@
 # Line break before operand needs to be ignored for line lengths
 # greater than max-line-length. Best practice shows W504
 ignore = E722, W504
-exclude = optimizely/lib/pymmh3.py,*virtualenv*
+exclude = optimizely/lib/pymmh3.py,*virtualenv*,tests/testapp/application.py
 max-line-length = 120
