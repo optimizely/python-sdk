@@ -97,6 +97,9 @@ class ProjectConfig:
         self.attribute_id_to_key_map: dict[str, str] = {}
         for attribute in self.attributes:
             self.attribute_id_to_key_map[attribute['id']] = attribute['key']
+        self.attribute_id_map: dict[str, entities.Attribute] = self._generate_key_map(
+            self.attributes, '', entities.Attribute
+        )
         self.audience_id_map: dict[str, entities.Audience] = self._generate_key_map(
             self.audiences, 'id', entities.Audience
         )
