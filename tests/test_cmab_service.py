@@ -50,18 +50,27 @@ class TestDefaultCmabService(unittest.TestCase):
         }
 
     def test_returns_decision_from_cache_when_valid(self):
+        expected_key = self.cmab_service._get_cache_key("user123", "exp1")
+        expected_attributes = {"age": 25, "location": "USA"}
+        expected_hash = self.cmab_service._hash_attributes(expected_attributes)
+
         self.mock_cmab_cache.lookup.return_value = {
-            "attributes_hash": self.cmab_service._hash_attributes({"age": 25, "location": "USA"}),
+            "attributes_hash": expected_hash,
             "variation_id": "varA",
             "cmab_uuid": "uuid-123"
         }
 
-        decision = self.cmab_service.get_decision(self.mock_project_config, self.mock_user_context, "exp1", [])
+        decision = self.cmab_service.get_decision(
+            self.mock_project_config, self.mock_user_context, "exp1", []
+        )
+
+        self.mock_cmab_cache.lookup.assert_called_once_with(expected_key)
         self.assertEqual(decision["variation_id"], "varA")
         self.assertEqual(decision["cmab_uuid"], "uuid-123")
 
     def test_ignores_cache_when_option_given(self):
         self.mock_cmab_client.fetch_decision.return_value = "varB"
+        expected_attributes = {"age": 25, "location": "USA"}
 
         decision = self.cmab_service.get_decision(
             self.mock_project_config,
@@ -72,11 +81,16 @@ class TestDefaultCmabService(unittest.TestCase):
 
         self.assertEqual(decision["variation_id"], "varB")
         self.assertIn('cmab_uuid', decision)
-        self.mock_cmab_client.fetch_decision.assert_called_once()
+        self.mock_cmab_client.fetch_decision.assert_called_once_with(
+            "exp1",
+            self.mock_user_context.user_id,
+            expected_attributes,
+            decision["cmab_uuid"]
+        )
 
     def test_invalidates_user_cache_when_option_given(self):
         self.mock_cmab_client.fetch_decision.return_value = "varC"
-
+        self.mock_cmab_cache.lookup.return_value = None
         self.cmab_service.get_decision(
             self.mock_project_config,
             self.mock_user_context,

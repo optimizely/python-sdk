@@ -64,7 +64,7 @@ class DefaultCmabService:
         if cached_value:
             if cached_value['attributes_hash'] == attributes_hash:
                 return CmabDecision(variation_id=cached_value['variation_id'], cmab_uuid=cached_value['cmab_uuid'])
-            elif OptimizelyDecideOption.INVALIDATE_USER_CMAB_CACHE not in options:
+            else:
                 self.cmab_cache.remove(cache_key)
 
         cmab_decision = self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
