@@ -124,8 +124,8 @@ class TestDefaultCmabService(unittest.TestCase):
         }
         self.mock_cmab_client.fetch_decision.return_value = "varE"
 
-        user_attrs = {"age": 25, "location": "USA"}
-        expected_hash = self.cmab_service._hash_attributes(user_attrs)
+        expected_attribute = {"age": 25, "location": "USA"}
+        expected_hash = self.cmab_service._hash_attributes(expected_attribute)
         expected_key = self.cmab_service._get_cache_key("user123", "exp1")
 
         decision = self.cmab_service.get_decision(self.mock_project_config, self.mock_user_context, "exp1", [])
@@ -139,6 +139,12 @@ class TestDefaultCmabService(unittest.TestCase):
             }
         )
         self.assertEqual(decision["variation_id"], "varE")
+        self.mock_cmab_client.fetch_decision.assert_called_once_with(
+            "exp1",
+            self.mock_user_context.user_id,
+            expected_attribute,
+            decision["cmab_uuid"]
+        )
 
     def test_filter_attributes_returns_correct_subset(self):
         filtered = self.cmab_service._filter_attributes(self.mock_project_config, self.mock_user_context, "exp1")
@@ -155,3 +161,27 @@ class TestDefaultCmabService(unittest.TestCase):
         hash1 = self.cmab_service._hash_attributes(attrs)
         hash2 = self.cmab_service._hash_attributes({"a": 1, "b": 2})
         self.assertEqual(hash1, hash2)
+
+    def test_only_cmab_attributes_passed_to_client(self):
+        self.mock_user_context.get_user_attributes.return_value = {
+            'age': 25,
+            'location': 'USA',
+            'extra_attr': 'value',  # This shouldn't be passed to CMAB
+            'another_extra': 123    # This shouldn't be passed to CMAB
+        }
+        self.mock_cmab_client.fetch_decision.return_value = "varF"
+
+        decision = self.cmab_service.get_decision(
+            self.mock_project_config,
+            self.mock_user_context,
+            "exp1",
+            [OptimizelyDecideOption.IGNORE_CMAB_CACHE]
+        )
+
+        # Verify only age and location are passed (attributes configured in setUp)
+        self.mock_cmab_client.fetch_decision.assert_called_once_with(
+            "exp1",
+            self.mock_user_context.user_id,
+            {"age": 25, "location": "USA"},
+            decision["cmab_uuid"]
+        )
