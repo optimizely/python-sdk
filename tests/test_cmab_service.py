@@ -20,6 +20,7 @@ from optimizely.cmab.cmab_client import DefaultCmabClient
 from optimizely.project_config import ProjectConfig
 from optimizely.entities import Attribute
 
+
 class TestDefaultCmabService(unittest.TestCase):
     def setUp(self):
         self.mock_cmab_cache = MagicMock(spec=LRUCache)
@@ -112,7 +113,7 @@ class TestDefaultCmabService(unittest.TestCase):
         user_attrs = {"age": 25, "location": "USA"}
         expected_hash = self.cmab_service._hash_attributes(user_attrs)
         expected_key = self.cmab_service._get_cache_key("user123", "exp1")
-    
+
         decision = self.cmab_service.get_decision(self.mock_project_config, self.mock_user_context, "exp1", [])
         self.mock_cmab_cache.remove.assert_called_once_with(expected_key)
         self.mock_cmab_cache.save.assert_called_once_with(
