@@ -35,6 +35,18 @@ class CmabCacheValue(TypedDict):
 
 
 class DefaultCmabService:
+    """
+    DefaultCmabService handles decisioning for Contextual Multi-Armed Bandit (CMAB) experiments,
+    including caching and filtering user attributes for efficient decision retrieval.
+
+    Attributes:
+        cmab_cache: LRUCache for user CMAB decisions.
+        cmab_client: Client to fetch decisions from the CMAB backend.
+        logger: Optional logger.
+
+    Methods:
+        get_decision: Retrieves a CMAB decision with caching and attribute filtering.
+    """
     def __init__(self, cmab_cache: LRUCache[str, CmabCacheValue],
                  cmab_client: DefaultCmabClient, logger: Optional[_logging.Logger] = None):
         self.cmab_cache = cmab_cache
