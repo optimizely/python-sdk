@@ -22,10 +22,17 @@ from .event.event_processor import BatchEventProcessor
 from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 from .notification_center import NotificationCenter
 from .optimizely import Optimizely
+from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
+from .cmab.cmab_service import DefaultCmabService, CmabCacheValue
+from .odp.lru_cache import LRUCache
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .user_profile import UserProfileService
+
+# Default constants for CMAB cache
+DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60 * 1000  # 30 minutes in milliseconds
+DEFAULT_CMAB_CACHE_SIZE = 1000
 
 
 class OptimizelyFactory:
@@ -36,6 +43,8 @@ class OptimizelyFactory:
     max_event_flush_interval: Optional[int] = None
     polling_interval: Optional[float] = None
     blocking_timeout: Optional[int] = None
+    cmab_cache_size: int = DEFAULT_CMAB_CACHE_SIZE
+    cmab_cache_timeout: int = DEFAULT_CMAB_CACHE_TIMEOUT
 
     @staticmethod
     def set_batch_size(batch_size: int) -> int:
@@ -104,16 +113,36 @@ class OptimizelyFactory:
             notification_center=notification_center,
         )
 
+        # Initialize CMAB components
+        cmab_client = DefaultCmabClient(
+            retry_config=CmabRetryConfig(),
+            logger=logger
+        )
+        cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(OptimizelyFactory.cmab_cache_size,
+                                                             OptimizelyFactory.cmab_cache_timeout)
+        cmab_service = DefaultCmabService(
+            cmab_cache=cmab_cache,
+            cmab_client=cmab_client,
+            logger=logger
+        )
+
         optimizely = Optimizely(
             datafile, None, logger, error_handler, None, None, sdk_key, config_manager, notification_center,
-            event_processor
+            event_processor, cmab_service=cmab_service
         )
         return optimizely
 
     @staticmethod
     def default_instance_with_config_manager(config_manager: BaseConfigManager) -> Optimizely:
+        # Initialize CMAB components
+        cmab_client = DefaultCmabClient(retry_config=CmabRetryConfig())
+        cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(OptimizelyFactory.cmab_cache_size,
+                                                             OptimizelyFactory.cmab_cache_timeout)
+        cmab_service = DefaultCmabService(cmab_cache=cmab_cache, cmab_client=cmab_client)
+
         return Optimizely(
-            config_manager=config_manager
+            config_manager=config_manager,
+            cmab_service=cmab_service
         )
 
     @staticmethod
@@ -174,7 +203,21 @@ class OptimizelyFactory:
             notification_center=notification_center,
         )
 
+        # Initialize CMAB components
+        cmab_client = DefaultCmabClient(
+            retry_config=CmabRetryConfig(),
+            logger=logger
+        )
+        cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(OptimizelyFactory.cmab_cache_size,
+                                                             OptimizelyFactory.cmab_cache_timeout)
+        cmab_service = DefaultCmabService(
+            cmab_cache=cmab_cache,
+            cmab_client=cmab_client,
+            logger=logger
+        )
+
         return Optimizely(
             datafile, event_dispatcher, logger, error_handler, skip_json_validation, user_profile_service,
-            sdk_key, config_manager, notification_center, event_processor, settings=settings
+            sdk_key, config_manager, notification_center, event_processor, settings=settings,
+            cmab_service=cmab_service
         )
