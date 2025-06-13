@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict
 
 from . import bucketer
 from . import entities
@@ -23,11 +23,19 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .user_profile import UserProfile, UserProfileService, UserProfileTracker
+from .cmab.cmab_service import DefaultCmabService, CmabDecision
+from optimizely.helpers.enums import Errors
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
     from .logger import Logger
+
+
+class CmabDecisionResult(TypedDict):
+    error: bool
+    result: Optional[CmabDecision]
+    reasons: List[str]
 
 
 class Decision(NamedTuple):
@@ -36,15 +44,20 @@ class Decision(NamedTuple):
     experiment: Optional[entities.Experiment]
     variation: Optional[entities.Variation]
     source: Optional[str]
+    # cmab_uuid: Optional[str]
 
 
 class DecisionService:
     """ Class encapsulating all decision related capabilities. """
 
-    def __init__(self, logger: Logger, user_profile_service: Optional[UserProfileService]):
+    def __init__(self,
+                 logger: Logger,
+                 user_profile_service: Optional[UserProfileService],
+                 cmab_service: DefaultCmabService):
         self.bucketer = bucketer.Bucketer()
         self.logger = logger
         self.user_profile_service = user_profile_service
+        self.cmab_service = cmab_service
 
         # Map of user IDs to another map of experiments to variations.
         # This contains all the forced variations set by the user
@@ -75,6 +88,48 @@ class DecisionService:
             decide_reasons.append(message)
 
         return user_id, decide_reasons
+
+    def _get_decision_for_cmab_experiment(
+        self,
+        project_config: ProjectConfig,
+        experiment: entities.Experiment,
+        user_context: OptimizelyUserContext,
+        options: Optional[Sequence[str]] = None
+    ) -> CmabDecisionResult:
+        """
+        Retrieves a decision for a contextual multi-armed bandit (CMAB) experiment.
+
+        Args:
+            project_config: Instance of ProjectConfig.
+            experiment: The experiment object for which the decision is to be made.
+            user_context: The user context containing user id and attributes.
+            options: Optional sequence of decide options.
+
+        Returns:
+            A dictionary containing:
+            - "error": Boolean indicating if there was an error.
+            - "result": The CmabDecision result or empty dict if error.
+            - "reasons": List of strings with reasons or error messages.
+        """
+        try:
+            options_list = list(options) if options is not None else []
+            cmab_decision = self.cmab_service.get_decision(
+                project_config, user_context, experiment.id, options_list
+            )
+            return {
+                "error": False,
+                "result": cmab_decision,
+                "reasons": [],
+            }
+        except Exception as e:
+            error_message = Errors.CMAB_FETCH_FAILED.format(str(e))
+            if self.logger:
+                self.logger.error(error_message)
+            return {
+                "error": True,
+                "result": None,
+                "reasons": [error_message],
+            }
 
     def set_forced_variation(
         self, project_config: ProjectConfig, experiment_key: str,
@@ -313,7 +368,7 @@ class DecisionService:
             else:
                 self.logger.warning('User profile has invalid format.')
 
-        # Bucket user and store the new decision
+        # Check audience conditions
         audience_conditions = experiment.get_audience_conditions_or_ids()
         user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(
             project_config, audience_conditions,
@@ -330,8 +385,42 @@ class DecisionService:
         # Determine bucketing ID to be used
         bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, user_context.get_user_attributes())
         decide_reasons += bucketing_id_reasons
-        variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
-        decide_reasons += bucket_reasons
+
+        if experiment.cmab:
+            CMAB_DUMMY_ENTITY_ID = "$"
+            # Build the CMAB-specific traffic allocation
+            cmab_traffic_allocation = [{
+                "entity_id": CMAB_DUMMY_ENTITY_ID,
+                "end_of_range": experiment.cmab['trafficAllocation']
+            }]
+
+            # Check if user is in CMAB traffic allocation
+            bucketed_entity_id, bucket_reasons = self.bucketer.bucket_to_entity_id(
+                bucketing_id, experiment, cmab_traffic_allocation
+            )
+            decide_reasons += bucket_reasons
+            if bucketed_entity_id != CMAB_DUMMY_ENTITY_ID:
+                message = f'User "{user_id}" not in CMAB experiment "{experiment.key}" due to traffic allocation.'
+                self.logger.info(message)
+                decide_reasons.append(message)
+                return None, decide_reasons
+
+            # User is in CMAB allocation, proceed to CMAB decision
+            decision_variation_value = self._get_decision_for_cmab_experiment(project_config,
+                                                                              experiment,
+                                                                              user_context,
+                                                                              options)
+            decide_reasons += decision_variation_value.get('reasons', [])
+            cmab_decision = decision_variation_value.get('result')
+            if not cmab_decision:
+                return None, decide_reasons
+            variation_id = cmab_decision['variation_id']
+            variation = project_config.get_variation_from_id(experiment_key=experiment.key, variation_id=variation_id)
+        else:
+            # Bucket the user
+            variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
+            decide_reasons += bucket_reasons
+
         if isinstance(variation, entities.Variation):
             message = f'User "{user_id}" is in variation "{variation.key}" of experiment {experiment.key}.'
             self.logger.info(message)

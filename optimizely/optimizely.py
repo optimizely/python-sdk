@@ -44,13 +44,18 @@ from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .project_config import ProjectConfig
-from .cmab.cmab_service import DefaultCmabService
+from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
+from .cmab.cmab_service import DefaultCmabService, CmabCacheValue
+from .odp.lru_cache import LRUCache
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
     from .user_profile import UserProfileService
     from .helpers.event_tag_utils import EventTags
 
+# Default constants for CMAB cache
+DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60 * 1000  # 30 minutes in milliseconds
+DEFAULT_CMAB_CACHE_SIZE = 1000
 
 class Optimizely:
     """ Class encapsulating all SDK functionality. """
@@ -71,7 +76,6 @@ class Optimizely:
             default_decide_options: Optional[list[str]] = None,
             event_processor_options: Optional[dict[str, Any]] = None,
             settings: Optional[OptimizelySdkSettings] = None,
-            cmab_service: Optional[DefaultCmabService] = None
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -100,7 +104,6 @@ class Optimizely:
           default_decide_options: Optional list of decide options used with the decide APIs.
           event_processor_options: Optional dict of options to be passed to the default batch event processor.
           settings: Optional instance of OptimizelySdkSettings for sdk configuration.
-          cmab_service: Optional instance of DefaultCmabService for Contextual Multi-Armed Bandit (CMAB) support.
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -172,10 +175,21 @@ class Optimizely:
         self._setup_odp(self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
-        if cmab_service:
-            cmab_service.logger = self.logger
-        self.cmab_service = cmab_service
-        self.decision_service = decision_service.DecisionService(self.logger, user_profile_service, cmab_service)
+
+        # Initialize CMAB components
+        
+        self.cmab_client = DefaultCmabClient(
+            retry_config=CmabRetryConfig(),
+            logger=logger
+        )
+        self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE,
+                                                             DEFAULT_CMAB_CACHE_TIMEOUT)
+        self.cmab_service = DefaultCmabService(
+            cmab_cache=self.cmab_cache,
+            cmab_client=self.cmab_client,
+            logger=self.logger
+        )
+        self.decision_service = decision_service.DecisionService(self.logger, user_profile_service, self.cmab_service)
         self.user_profile_service = user_profile_service
 
     def _validate_instantiation_options(self) -> None:
