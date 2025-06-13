@@ -46,7 +46,6 @@ from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .project_config import ProjectConfig
 from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
 from .cmab.cmab_service import DefaultCmabService, CmabCacheValue
-from .odp.lru_cache import LRUCache
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
@@ -56,6 +55,7 @@ if TYPE_CHECKING:
 # Default constants for CMAB cache
 DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60 * 1000  # 30 minutes in milliseconds
 DEFAULT_CMAB_CACHE_SIZE = 1000
+
 
 class Optimizely:
     """ Class encapsulating all SDK functionality. """
@@ -177,13 +177,11 @@ class Optimizely:
         self.event_builder = event_builder.EventBuilder()
 
         # Initialize CMAB components
-        
         self.cmab_client = DefaultCmabClient(
             retry_config=CmabRetryConfig(),
             logger=logger
         )
-        self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE,
-                                                             DEFAULT_CMAB_CACHE_TIMEOUT)
+        self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
         self.cmab_service = DefaultCmabService(
             cmab_cache=self.cmab_cache,
             cmab_client=self.cmab_client,
