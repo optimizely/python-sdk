@@ -808,8 +808,8 @@ class DecisionServiceTest(base.BaseTest):
             self.assertEqual('test-cmab-uuid-123', cmab_uuid)
 
             # Verify logger was called
-            mock_logger.info.assert_any_call('User "test_user" is in variation\
-                                             "variation_1" of experiment cmab_experiment.')
+            mock_logger.info.assert_any_call('User "test_user" is in variation '
+                                             '"variation_1" of experiment cmab_experiment.')
 
     def test_get_variation_cmab_experiment_user_not_in_traffic_allocation(self):
         """Test get_variation with CMAB experiment where user is not in traffic allocation."""
@@ -857,8 +857,8 @@ class DecisionServiceTest(base.BaseTest):
             mock_cmab_decision.assert_not_called()
 
             # Verify logger was called
-            mock_logger.info.assert_any_call('User "test_user" not in CMAB\
-                                             experiment "cmab_experiment" due to traffic allocation.')
+            mock_logger.info.assert_any_call('User "test_user" not in CMAB '
+                                             'experiment "cmab_experiment" due to traffic allocation.')
 
     def test_get_variation_cmab_experiment_service_error(self):
         """Test get_variation with CMAB experiment when the CMAB service returns an error."""
