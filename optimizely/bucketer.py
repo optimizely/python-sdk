@@ -22,7 +22,7 @@ from .lib import pymmh3 as mmh3
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final  # type: ignore
+    from typing import Final, cast  # type: ignore
 
 
 if TYPE_CHECKING:
@@ -193,8 +193,8 @@ class Bucketer:
 
             matched = False
             for allocation in group.trafficAllocation:
-                end_of_range = allocation.get("endOfRange", 0)
-                entity_id = allocation.get("entityId")
+                end_of_range = cast(int, allocation.get("end_of_range", 0))
+                entity_id = cast(Optional[str], allocation.get("entity_id"))
                 if bucket_val < end_of_range:
                     matched = True
                     if entity_id != experiment.id:
