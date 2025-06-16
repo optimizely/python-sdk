@@ -234,7 +234,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 )
@@ -319,7 +320,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 )
@@ -508,7 +510,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.ROLLOUT
+                        enums.DecisionSources.ROLLOUT,
+                        None
                     ),
                     []
                 )
@@ -593,7 +596,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.ROLLOUT
+                        enums.DecisionSources.ROLLOUT,
+                        None
                     ),
                     []
                 )
@@ -664,7 +668,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 )
@@ -738,7 +743,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 )
@@ -809,7 +815,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 )
@@ -915,7 +922,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         expected_experiment,
                         expected_var,
-                        enums.DecisionSources.ROLLOUT
+                        enums.DecisionSources.ROLLOUT,
+                        None
                     ),
                     []
                 )
@@ -1004,7 +1012,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 )
@@ -1423,7 +1432,8 @@ class UserContextTest(base.BaseTest):
                     decision_service.Decision(
                         mock_experiment,
                         mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
+                        enums.DecisionSources.FEATURE_TEST,
+                        None
                     ),
                     []
                 ),
