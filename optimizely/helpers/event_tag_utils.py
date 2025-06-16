@@ -81,7 +81,7 @@ def get_numeric_value(event_tags: Optional[EventTags], logger: Optional[Logger] 
   """
 
     logger_message_debug = None
-    numeric_metric_value = None
+    numeric_metric_value: Optional[float] = None
 
     if event_tags is None:
         return numeric_metric_value
