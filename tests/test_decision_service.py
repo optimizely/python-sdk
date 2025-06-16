@@ -457,7 +457,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config, experiment, user, None
             )
             self.assertIsNone(
@@ -500,7 +500,7 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.bucketer.Bucketer.bucket",
             return_value=[self.project_config.get_variation_from_id("211127", "211129"), []],
         ) as mock_bucket:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config,
                 experiment,
                 user,
@@ -535,7 +535,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
@@ -573,7 +573,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket"
         ) as mock_bucket:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
@@ -619,7 +619,7 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.bucketer.Bucketer.bucket",
             return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
             )
             self.assertEqual(
@@ -669,7 +669,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
             )
             self.assertIsNone(
@@ -719,7 +719,7 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _ = self.decision_service.get_variation(
+            variation, _, _ = self.decision_service.get_variation(
                 self.project_config,
                 experiment,
                 user,
@@ -779,7 +779,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
             self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
                 variation_received,
             )
 
@@ -810,6 +810,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     self.project_config.get_experiment_from_id("211127"),
                     self.project_config.get_variation_from_id("211127", "211129"),
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 variation_received,
             )
@@ -852,6 +853,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     self.project_config.get_experiment_from_id("211127"),
                     self.project_config.get_variation_from_id("211127", "211129"),
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 variation_received,
             )
@@ -892,7 +894,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
             self.assertEqual(
                 decision_service.Decision(
-                    everyone_else_exp, variation_to_mock, enums.DecisionSources.ROLLOUT
+                    everyone_else_exp, variation_to_mock, enums.DecisionSources.ROLLOUT, None
                 ),
                 variation_received,
             )
@@ -946,7 +948,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 self.project_config, feature, user
             )
             self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
                 variation_received,
             )
 
@@ -1013,7 +1015,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         decision_patch = mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
-            return_value=[expected_variation, []],
+            return_value=[expected_variation, [], None],
         )
         with decision_patch as mock_decision, self.mock_decision_logger:
             variation_received, _ = self.decision_service.get_variation_for_feature(
@@ -1024,6 +1026,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1104,6 +1107,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 decision,
             )
@@ -1143,7 +1147,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_variation",
-                return_value=(expected_variation, []),
+                return_value=(expected_variation, [], None),
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, options=None
@@ -1153,6 +1157,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1177,13 +1182,13 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_variation",
-                return_value=[None, []],
+                return_value=[None, [], None],
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
             )
             self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
                 variation_received,
             )
 
@@ -1209,13 +1214,13 @@ class FeatureFlagDecisionTests(base.BaseTest):
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_variation",
-                return_value=[None, []],
+                return_value=[None, [], None],
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, False
             )
             self.assertEqual(
-                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT),
+                decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
                 variation_received,
             )
 
@@ -1249,6 +1254,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1283,6 +1289,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1317,6 +1324,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1346,6 +1354,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     None,
                     None,
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 variation_received,
             )
@@ -1380,6 +1389,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1412,6 +1422,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1445,6 +1456,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.FEATURE_TEST,
+                    None
                 ),
                 variation_received,
             )
@@ -1473,6 +1485,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     None,
                     None,
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 variation_received,
             )
@@ -1507,6 +1520,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 variation_received,
             )
@@ -1538,18 +1552,12 @@ class FeatureFlagDecisionTests(base.BaseTest):
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
             )
-            print(f"variation received is: {variation_received}")
-            x = decision_service.Decision(
-                expected_experiment,
-                expected_variation,
-                enums.DecisionSources.ROLLOUT,
-            )
-            print(f"need to be:{x}")
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
                     expected_variation,
                     enums.DecisionSources.ROLLOUT,
+                    None
                 ),
                 variation_received,
             )

@@ -44,7 +44,7 @@ class Decision(NamedTuple):
     experiment: Optional[entities.Experiment]
     variation: Optional[entities.Variation]
     source: Optional[str]
-    # cmab_uuid: Optional[str]
+    cmab_uuid: Optional[str]
 
 
 class DecisionService:
@@ -58,6 +58,7 @@ class DecisionService:
         self.logger = logger
         self.user_profile_service = user_profile_service
         self.cmab_service = cmab_service
+        self.cmab_uuid = None
 
         # Map of user IDs to another map of experiments to variations.
         # This contains all the forced variations set by the user
@@ -305,7 +306,7 @@ class DecisionService:
         user_profile_tracker: Optional[UserProfileTracker],
         reasons: list[str] = [],
         options: Optional[Sequence[str]] = None
-    ) -> tuple[Optional[entities.Variation], list[str]]:
+    ) -> tuple[Optional[entities.Variation], list[str], Optional[str]]:
         """ Top-level function to help determine variation user should be put in.
 
         First, check if experiment is running.
@@ -323,11 +324,12 @@ class DecisionService:
           options: Decide options.
 
         Returns:
-          Variation user should see. None if user is not in experiment or experiment is not running
-          And an array of log messages representing decision making.
+          Variation user should see. None if user is not in experiment or experiment is not running,
+          an array of log messages representing decision making
+          and a cmab_uuid if experiment is cmab-experiment
         """
         user_id = user_context.user_id
-
+        cmab_uuid = None
         if options:
             ignore_user_profile = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
         else:
@@ -341,20 +343,20 @@ class DecisionService:
             message = f'Experiment "{experiment.key}" is not running.'
             self.logger.info(message)
             decide_reasons.append(message)
-            return None, decide_reasons
+            return None, decide_reasons, cmab_uuid
 
         # Check if the user is forced into a variation
         variation: Optional[entities.Variation]
         variation, reasons_received = self.get_forced_variation(project_config, experiment.key, user_id)
         decide_reasons += reasons_received
         if variation:
-            return variation, decide_reasons
+            return variation, decide_reasons, cmab_uuid
 
         # Check to see if user is white-listed for a certain variation
         variation, reasons_received = self.get_whitelisted_variation(project_config, experiment, user_id)
         decide_reasons += reasons_received
         if variation:
-            return variation, decide_reasons
+            return variation, decide_reasons, cmab_uuid
 
         # Check to see if user has a decision available for the given experiment
         if user_profile_tracker is not None and not ignore_user_profile:
@@ -364,7 +366,7 @@ class DecisionService:
                           f'"{experiment}" for user "{user_id}" from user profile.'
                 self.logger.info(message)
                 decide_reasons.append(message)
-                return variation, decide_reasons
+                return variation, decide_reasons, cmab_uuid
             else:
                 self.logger.warning('User profile has invalid format.')
 
@@ -380,7 +382,7 @@ class DecisionService:
             message = f'User "{user_id}" does not meet conditions to be in experiment "{experiment.key}".'
             self.logger.info(message)
             decide_reasons.append(message)
-            return None, decide_reasons
+            return None, decide_reasons, cmab_uuid
 
         # Determine bucketing ID to be used
         bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, user_context.get_user_attributes())
@@ -403,7 +405,7 @@ class DecisionService:
                 message = f'User "{user_id}" not in CMAB experiment "{experiment.key}" due to traffic allocation.'
                 self.logger.info(message)
                 decide_reasons.append(message)
-                return None, decide_reasons
+                return None, decide_reasons, cmab_uuid
 
             # User is in CMAB allocation, proceed to CMAB decision
             decision_variation_value = self._get_decision_for_cmab_experiment(project_config,
@@ -413,8 +415,9 @@ class DecisionService:
             decide_reasons += decision_variation_value.get('reasons', [])
             cmab_decision = decision_variation_value.get('result')
             if not cmab_decision:
-                return None, decide_reasons
+                return None, decide_reasons, cmab_uuid
             variation_id = cmab_decision['variation_id']
+            cmab_uuid = cmab_decision['cmab_uuid']
             variation = project_config.get_variation_from_id(experiment_key=experiment.key, variation_id=variation_id)
         else:
             # Bucket the user
@@ -431,11 +434,11 @@ class DecisionService:
                     user_profile_tracker.update_user_profile(experiment, variation)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
-            return variation, decide_reasons
+            return variation, decide_reasons, cmab_uuid
         message = f'User "{user_id}" is in no variation.'
         self.logger.info(message)
         decide_reasons.append(message)
-        return None, decide_reasons
+        return None, decide_reasons, cmab_uuid
 
     def get_variation_for_rollout(
         self, project_config: ProjectConfig, feature: entities.FeatureFlag, user_context: OptimizelyUserContext
@@ -459,7 +462,7 @@ class DecisionService:
         attributes = user_context.get_user_attributes()
 
         if not feature or not feature.rolloutId:
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
 
@@ -467,7 +470,7 @@ class DecisionService:
             message = f'There is no rollout of feature {feature.key}.'
             self.logger.debug(message)
             decide_reasons.append(message)
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
         rollout_rules = project_config.get_rollout_experiments(rollout)
 
@@ -475,7 +478,7 @@ class DecisionService:
             message = f'Rollout {rollout.id} has no experiments.'
             self.logger.debug(message)
             decide_reasons.append(message)
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
         index = 0
         while index < len(rollout_rules):
@@ -490,7 +493,7 @@ class DecisionService:
 
             if forced_decision_variation:
                 return Decision(experiment=rule, variation=forced_decision_variation,
-                                source=enums.DecisionSources.ROLLOUT), decide_reasons
+                                source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
             bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
             decide_reasons += bucket_reasons
@@ -524,7 +527,7 @@ class DecisionService:
                     self.logger.debug(message)
                     decide_reasons.append(message)
                     return Decision(experiment=rule, variation=bucketed_variation,
-                                    source=enums.DecisionSources.ROLLOUT), decide_reasons
+                                    source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
                 elif not everyone_else:
                     # skip this logging for EveryoneElse since this has a message not for everyone_else
@@ -544,7 +547,7 @@ class DecisionService:
             # the last rule is special for "Everyone Else"
             index = len(rollout_rules) - 1 if skip_to_everyone_else else index + 1
 
-        return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+        return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
     def get_variation_for_feature(
         self,
@@ -680,8 +683,9 @@ class DecisionService:
 
                         if forced_decision_variation:
                             decision_variation = forced_decision_variation
+                            cmab_uuid = None
                         else:
-                            decision_variation, variation_reasons = self.get_variation(
+                            decision_variation, variation_reasons, cmab_uuid = self.get_variation(
                                 project_config, experiment, user_context, user_profile_tracker, feature_reasons, options
                             )
                             feature_reasons.extend(variation_reasons)
@@ -691,7 +695,8 @@ class DecisionService:
                                 f'User "{user_context.user_id}" '
                                 f'bucketed into experiment "{experiment.key}" of feature "{feature.key}".'
                             )
-                            decision = Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST)
+                            decision = Decision(experiment, decision_variation,
+                                                enums.DecisionSources.FEATURE_TEST, cmab_uuid)
                             decisions.append((decision, feature_reasons))
                             experiment_decision_found = True  # Mark that a decision was found
                             break  # Stop after the first successful experiment decision

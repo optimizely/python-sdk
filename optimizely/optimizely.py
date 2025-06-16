@@ -652,10 +652,8 @@ class Optimizely:
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         user_profile_tracker = user_profile.UserProfileTracker(user_id, self.user_profile_service, self.logger)
         user_profile_tracker.load_user_profile()
-        variation, _ = self.decision_service.get_variation(project_config,
-                                                           experiment,
-                                                           user_context,
-                                                           user_profile_tracker)
+        variation, _, _ = self.decision_service.get_variation(project_config, experiment,
+                                                              user_context, user_profile_tracker)
         user_profile_tracker.save_user_profile()
         if variation:
             variation_key = variation.key
@@ -1356,7 +1354,7 @@ class Optimizely:
             decision_reasons_dict[key] += decision_reasons
 
             if variation:
-                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
+                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST, None)
                 flag_decisions[key] = decision
             else:
                 flags_without_forced_decision.append(feature_flag)
