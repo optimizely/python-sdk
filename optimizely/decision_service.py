@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
     from .logger import Logger
+    from .helpers.types import TrafficAllocation
 
 
 class CmabDecisionResult(TypedDict):
@@ -391,9 +392,9 @@ class DecisionService:
         if experiment.cmab:
             CMAB_DUMMY_ENTITY_ID = "$"
             # Build the CMAB-specific traffic allocation
-            cmab_traffic_allocation = [{
-                "entity_id": CMAB_DUMMY_ENTITY_ID,
-                "end_of_range": experiment.cmab['trafficAllocation']
+            cmab_traffic_allocation: list[TrafficAllocation] = [{
+                "entityId": CMAB_DUMMY_ENTITY_ID,
+                "endOfRange": experiment.cmab['trafficAllocation']
             }]
 
             # Check if user is in CMAB traffic allocation

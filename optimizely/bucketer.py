@@ -169,7 +169,7 @@ class Bucketer:
         self,
         bucketing_id: str,
         experiment: Experiment,
-        traffic_allocations: list,
+        traffic_allocations: list[TrafficAllocation],
         group: Optional[Group] = None
     ) -> tuple[Optional[str], list[str]]:
         """
@@ -193,8 +193,8 @@ class Bucketer:
 
             matched = False
             for allocation in group.trafficAllocation:
-                end_of_range = cast(int, allocation.get("end_of_range", 0))
-                entity_id = cast(Optional[str], allocation.get("entity_id"))
+                end_of_range = allocation['endOfRange']
+                entity_id = allocation['entityId']
                 if bucket_val < end_of_range:
                     matched = True
                     if entity_id != experiment.id:
@@ -218,8 +218,8 @@ class Bucketer:
         decide_reasons.append(f'Generated experiment bucket value {bucket_val} for key "{bucket_key}".')
 
         for allocation in traffic_allocations:
-            end_of_range = allocation.get("end_of_range", 0)
-            entity_id = allocation.get("entity_id")
+            end_of_range = allocation['endOfRange']
+            entity_id = allocation['entityId']
             if bucket_val < end_of_range:
                 decide_reasons.append(
                     f'User bucketed into entity id "{entity_id}".'
