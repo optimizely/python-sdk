@@ -22,7 +22,7 @@ from .lib import pymmh3 as mmh3
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final, cast  # type: ignore
+    from typing import Final  # type: ignore
 
 
 if TYPE_CHECKING:
