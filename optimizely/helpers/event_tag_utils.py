@@ -141,4 +141,4 @@ def get_numeric_value(event_tags: Optional[EventTags], logger: Optional[Logger] 
                 ' is in an invalid format and will not be sent to results.'
             )
 
-    return numeric_metric_value  # type: ignore[no-any-return]
+    return numeric_metric_value
