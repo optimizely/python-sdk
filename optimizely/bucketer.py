@@ -28,7 +28,7 @@ else:
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
-    from .entities import Experiment, Variation
+    from .entities import Experiment, Variation, Group
     from .helpers.types import TrafficAllocation
 
 
@@ -170,7 +170,7 @@ class Bucketer:
         bucketing_id: str,
         experiment: Experiment,
         traffic_allocations: list,
-        parent_id: Optional[str] = None
+        group: Optional[Group] = None
     ) -> tuple[Optional[str], list[str]]:
         """
         Buckets the user and returns the entity ID (for CMAB experiments).
@@ -178,41 +178,53 @@ class Bucketer:
             bucketing_id: The bucketing ID string for the user.
             experiment: The experiment object (for group/groupPolicy logic if needed).
             traffic_allocations: List of traffic allocation dicts (should have 'entity_id' and 'end_of_range' keys).
-            parent_id: (optional) Used for mutex group support; if not supplied, experiment.id is used.
+            group: (optional) Group object for mutex group support.
 
         Returns:
             Tuple of (entity_id or None, list of decide reasons).
         """
         decide_reasons = []
 
-        # If experiment is in a mutually exclusive group with random policy, check group bucketing first
         group_id = getattr(experiment, 'groupId', None)
-        group_policy = getattr(experiment, 'groupPolicy', None)
-        if group_id and group_policy == 'random':
-            bucketing_key = f"{bucketing_id}{group_id}"
-            bucket_number = self._generate_bucket_value(bucketing_key)
-            # Group traffic allocation would need to be passed in or found here
-            # For now, skipping group-level allocation (you can extend this for mutex groups)
-            decide_reasons.append(f'Checked mutex group allocation for group "{group_id}".')
+        if group_id and group and getattr(group, 'policy', None) == 'random':
+            bucket_key = bucketing_id + group_id
+            bucket_val = self._generate_bucket_value(bucket_key)
+            decide_reasons.append(f'Generated group bucket value {bucket_val} for key "{bucket_key}".')
 
-        # Main bucketing for experiment or CMAB dummy entity
-        parent_id = parent_id or experiment.id
-        bucketing_key = f"{bucketing_id}{parent_id}"
-        bucket_number = self._generate_bucket_value(bucketing_key)
-        decide_reasons.append(
-            f'Assigned bucket {bucket_number} to bucketing ID "{bucketing_id}" for parent "{parent_id}".'
-        )
+            matched = False
+            for allocation in group.trafficAllocation:
+                end_of_range = allocation.get("endOfRange", 0)
+                entity_id = allocation.get("entityId")
+                if bucket_val < end_of_range:
+                    matched = True
+                    if entity_id != experiment.id:
+                        decide_reasons.append(
+                            f'User not bucketed into experiment "{experiment.id}" (got "{entity_id}").'
+                        )
+                        return None, decide_reasons
+                    decide_reasons.append(
+                        f'User is bucketed into experiment "{experiment.id}" within group "{group_id}".'
+                    )
+                    break
+            if not matched:
+                decide_reasons.append(
+                    f'User not bucketed into any experiment in group "{group_id}".'
+                )
+                return None, decide_reasons
+
+        # Main experiment bucketing
+        bucket_key = bucketing_id + experiment.id
+        bucket_val = self._generate_bucket_value(bucket_key)
+        decide_reasons.append(f'Generated experiment bucket value {bucket_val} for key "{bucket_key}".')
 
         for allocation in traffic_allocations:
-            end_of_range = allocation.get("end_of_range") or allocation.get("endOfRange")
-            entity_id = allocation.get("entity_id") or allocation.get("entityId")
-            if end_of_range is not None and bucket_number < end_of_range:
+            end_of_range = allocation.get("end_of_range", 0)
+            entity_id = allocation.get("entity_id")
+            if bucket_val < end_of_range:
                 decide_reasons.append(
-                    f'User with bucketing ID "{bucketing_id}" bucketed into entity "{entity_id}".'
+                    f'User bucketed into entity id "{entity_id}".'
                 )
                 return entity_id, decide_reasons
 
-        decide_reasons.append(
-            f'User with bucketing ID "{bucketing_id}" not bucketed into any entity.'
-        )
+        decide_reasons.append('User not bucketed into any entity id.')
         return None, decide_reasons

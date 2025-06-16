@@ -39,7 +39,7 @@ class CmabDecisionResult(TypedDict):
 
 
 class Decision(NamedTuple):
-    """Named tuple containing selected experiment, variation and source.
+    """Named tuple containing selected experiment, variation, source and cmab_uuid.
     None if no experiment/variation was selected."""
     experiment: Optional[entities.Experiment]
     variation: Optional[entities.Variation]
@@ -397,8 +397,11 @@ class DecisionService:
             }]
 
             # Check if user is in CMAB traffic allocation
+            group = None
+            if experiment.groupId:
+                group = project_config.get_group(group_id=experiment.groupId)
             bucketed_entity_id, bucket_reasons = self.bucketer.bucket_to_entity_id(
-                bucketing_id, experiment, cmab_traffic_allocation
+                bucketing_id, experiment, cmab_traffic_allocation, group
             )
             decide_reasons += bucket_reasons
             if bucketed_entity_id != CMAB_DUMMY_ENTITY_ID:
