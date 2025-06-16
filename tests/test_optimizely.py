@@ -671,7 +671,8 @@ class OptimizelyTest(base.BaseTest):
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation_for_feature',
                 return_value=(
-                    decision_service.Decision(mock_experiment, mock_variation, enums.DecisionSources.FEATURE_TEST, None), []),
+                    decision_service.Decision(mock_experiment, mock_variation,
+                                              enums.DecisionSources.FEATURE_TEST, None), []),
         ) as mock_decision, mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'):
             self.assertTrue(opt_obj.is_feature_enabled('test_feature_in_experiment', 'test_user'))
 

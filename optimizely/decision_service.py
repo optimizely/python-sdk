@@ -417,7 +417,8 @@ class DecisionService:
                                                                               options)
             decide_reasons += decision_variation_value.get('reasons', [])
             cmab_decision = decision_variation_value.get('result')
-            if not cmab_decision:
+            if not cmab_decision or decision_variation_value['error']:
+                self.logger.error(Errors.CMAB_FETCH_FAILED.format(decide_reasons[0]))
                 return None, decide_reasons, cmab_uuid
             variation_id = cmab_decision['variation_id']
             cmab_uuid = cmab_decision['cmab_uuid']
