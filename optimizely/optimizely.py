@@ -179,7 +179,7 @@ class Optimizely:
         # Initialize CMAB components
         self.cmab_client = DefaultCmabClient(
             retry_config=CmabRetryConfig(),
-            logger=logger
+            logger=self.logger
         )
         self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
         self.cmab_service = DefaultCmabService(
