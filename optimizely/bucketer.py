@@ -28,7 +28,7 @@ else:
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
-    from .entities import Experiment, Variation
+    from .entities import Experiment, Variation, Group
     from .helpers.types import TrafficAllocation
 
 
@@ -163,4 +163,68 @@ class Bucketer:
             project_config.logger.info(message)
             decide_reasons.append(message)
 
+        return None, decide_reasons
+
+    def bucket_to_entity_id(
+        self,
+        bucketing_id: str,
+        experiment: Experiment,
+        traffic_allocations: list[TrafficAllocation],
+        group: Optional[Group] = None
+    ) -> tuple[Optional[str], list[str]]:
+        """
+        Buckets the user and returns the entity ID (for CMAB experiments).
+        Args:
+            bucketing_id: The bucketing ID string for the user.
+            experiment: The experiment object (for group/groupPolicy logic if needed).
+            traffic_allocations: List of traffic allocation dicts (should have 'entity_id' and 'end_of_range' keys).
+            group: (optional) Group object for mutex group support.
+
+        Returns:
+            Tuple of (entity_id or None, list of decide reasons).
+        """
+        decide_reasons = []
+
+        group_id = getattr(experiment, 'groupId', None)
+        if group_id and group and getattr(group, 'policy', None) == 'random':
+            bucket_key = bucketing_id + group_id
+            bucket_val = self._generate_bucket_value(bucket_key)
+            decide_reasons.append(f'Generated group bucket value {bucket_val} for key "{bucket_key}".')
+
+            matched = False
+            for allocation in group.trafficAllocation:
+                end_of_range = allocation['endOfRange']
+                entity_id = allocation['entityId']
+                if bucket_val < end_of_range:
+                    matched = True
+                    if entity_id != experiment.id:
+                        decide_reasons.append(
+                            f'User not bucketed into experiment "{experiment.id}" (got "{entity_id}").'
+                        )
+                        return None, decide_reasons
+                    decide_reasons.append(
+                        f'User is bucketed into experiment "{experiment.id}" within group "{group_id}".'
+                    )
+                    break
+            if not matched:
+                decide_reasons.append(
+                    f'User not bucketed into any experiment in group "{group_id}".'
+                )
+                return None, decide_reasons
+
+        # Main experiment bucketing
+        bucket_key = bucketing_id + experiment.id
+        bucket_val = self._generate_bucket_value(bucket_key)
+        decide_reasons.append(f'Generated experiment bucket value {bucket_val} for key "{bucket_key}".')
+
+        for allocation in traffic_allocations:
+            end_of_range = allocation['endOfRange']
+            entity_id = allocation['entityId']
+            if bucket_val < end_of_range:
+                decide_reasons.append(
+                    f'User bucketed into entity id "{entity_id}".'
+                )
+                return entity_id, decide_reasons
+
+        decide_reasons.append('User not bucketed into any entity id.')
         return None, decide_reasons
