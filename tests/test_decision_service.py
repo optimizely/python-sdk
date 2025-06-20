@@ -908,6 +908,68 @@ class DecisionServiceTest(base.BaseTest):
             # Verify logger was called
             mock_logger.error.assert_any_call('CMAB decision fetch failed with status: CMAB service error')
 
+    def test_get_variation_cmab_experiment_deep_mock_500_error(self):
+        """Test the full flow of a CMAB experiment with a 500 error from the HTTP request layer."""
+        import requests
+        from optimizely.exceptions import CmabFetchError
+        from optimizely.helpers.enums import Errors
+
+        # Create a user context
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None,
+            logger=None,
+            user_id="test_user",
+            user_attributes={}
+        )
+
+        # Create a CMAB experiment
+        cmab_experiment = entities.Experiment(
+            '111150',
+            'cmab_experiment',
+            'Running',
+            '111150',
+            [],  # No audience IDs
+            {},
+            [entities.Variation('111151', 'variation_1')],
+            [{'entityId': '111151', 'endOfRange': 10000}],
+            cmab={'trafficAllocation': 5000}
+        )
+
+        # Define HTTP error details
+        http_error = requests.exceptions.HTTPError("500 Server Error")
+        error_message = Errors.CMAB_FETCH_FAILED.format(http_error)
+        detailed_error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(cmab_experiment.key, error_message)
+
+        # Set up mocks for the entire call chain
+        with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
+            mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
+            mock.patch('optimizely.bucketer.Bucketer.bucket_to_entity_id', return_value=['$', []]), \
+            mock.patch.object(self.decision_service.cmab_service, 'get_decision', 
+                            side_effect=lambda *args, **kwargs: self.decision_service.cmab_service._fetch_decision(*args, **kwargs)), \
+            mock.patch.object(self.decision_service.cmab_service, '_fetch_decision', 
+                            side_effect=lambda *args, **kwargs: self.decision_service.cmab_service.cmab_client.fetch_decision(*args, **kwargs)), \
+            mock.patch.object(self.decision_service.cmab_service.cmab_client, 'fetch_decision', 
+                            side_effect=lambda *args, **kwargs: self.decision_service.cmab_service.cmab_client._do_fetch(*args, **kwargs)), \
+            mock.patch.object(self.decision_service.cmab_service.cmab_client, '_do_fetch',
+                            side_effect=CmabFetchError(error_message)), \
+            mock.patch.object(self.decision_service, 'logger') as mock_logger:
+            
+            # Call get_variation with the CMAB experiment
+            variation, reasons, cmab_uuid = self.decision_service.get_variation(
+                self.project_config,
+                cmab_experiment,
+                user,
+                None
+            )
+            
+            # Verify we get no variation due to CMAB service error
+            self.assertIsNone(variation)
+            self.assertIsNone(cmab_uuid)
+            self.assertIn(detailed_error_message, reasons)
+            
+            # Verify logger was called with the specific 500 error
+            mock_logger.error.assert_any_call(detailed_error_message)
+
     def test_get_variation_cmab_experiment_forced_variation(self):
         """Test get_variation with CMAB experiment when user has a forced variation."""
 

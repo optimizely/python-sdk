@@ -124,7 +124,10 @@ class DecisionService:
                 "reasons": [],
             }
         except Exception as e:
-            error_message = Errors.CMAB_FETCH_FAILED.format(str(e))
+            error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(
+                experiment.key,
+                str(e)
+            )
             if self.logger:
                 self.logger.error(error_message)
             return {
