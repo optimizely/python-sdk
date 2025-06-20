@@ -319,10 +319,15 @@ class OptimizelyTest(base.BaseTest):
 
     def test_activate(self):
         """ Test that activate calls process with right params and returns expected variation. """
-
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ) as mock_decision, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
@@ -402,9 +407,15 @@ class OptimizelyTest(base.BaseTest):
         notification_id = self.optimizely.notification_center.add_notification_listener(
             enums.NotificationTypes.ACTIVATE, on_activate
         )
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'reasons': [],
+            'cmab_uuid': None,
+            'error': False
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ), mock.patch('optimizely.event.event_processor.ForwardingEventProcessor.process'):
             self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
 
@@ -462,11 +473,15 @@ class OptimizelyTest(base.BaseTest):
             pass
 
         self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate)
-        return_tuple = (self.project_config.get_variation_from_id('test_experiment', '111129'), [], None)
-
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=return_tuple,
+                return_value=variation_result,
         ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast:
@@ -483,7 +498,7 @@ class OptimizelyTest(base.BaseTest):
                     'ab-test',
                     'test_user',
                     {},
-                    {'experiment_key': 'test_experiment', 'variation_key': return_tuple[0].key},
+                    {'experiment_key': 'test_experiment', 'variation_key': variation_result['variation'].key},
                 ),
                 mock.call(
                     enums.NotificationTypes.ACTIVATE,
@@ -503,11 +518,15 @@ class OptimizelyTest(base.BaseTest):
             pass
 
         self.optimizely.notification_center.add_notification_listener(enums.NotificationTypes.ACTIVATE, on_activate)
-        variation = (self.project_config.get_variation_from_id('test_experiment', '111129'), [], None)
-
+        variation_result = {
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False,
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129')
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=variation,
+                return_value=variation_result,
         ), mock.patch('optimizely.event.event_processor.BatchEventProcessor.process') as mock_process, mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast:
@@ -526,7 +545,7 @@ class OptimizelyTest(base.BaseTest):
                     'ab-test',
                     'test_user',
                     {'test_attribute': 'test_value'},
-                    {'experiment_key': 'test_experiment', 'variation_key': variation[0].key},
+                    {'experiment_key': 'test_experiment', 'variation_key': variation_result['variation'].key},
                 ),
                 mock.call(
                     enums.NotificationTypes.ACTIVATE,
@@ -552,9 +571,14 @@ class OptimizelyTest(base.BaseTest):
     def test_decision_listener__user_not_in_experiment(self):
         """ Test that activate calls broadcast decision with variation_key 'None' \
     when user not in experiment. """
-
+        variation_result = {
+            'variation': None,
+            'error': False,
+            'cmab_uuid': None,
+            'reasons': []
+        }
         with mock.patch('optimizely.decision_service.DecisionService.get_variation',
-                        return_value=(None, [], None), ), mock.patch(
+                        return_value=variation_result), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
@@ -716,10 +740,15 @@ class OptimizelyTest(base.BaseTest):
     def test_activate__with_attributes__audience_match(self):
         """ Test that activate calls process with right params and returns expected
     variation when attributes are provided and audience conditions are met. """
-
+        variation_result = {
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False,
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129')
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ) as mock_get_variation, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
@@ -1061,10 +1090,15 @@ class OptimizelyTest(base.BaseTest):
     def test_activate__with_attributes__audience_match__bucketing_id_provided(self):
         """ Test that activate calls process with right params and returns expected variation
     when attributes (including bucketing ID) are provided and audience conditions are met. """
-
+        variation_result = {
+            'cmab_uuid': None,
+            'error': False,
+            'reasons': [],
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129')
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ) as mock_get_variation, mock.patch('time.time', return_value=42), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ), mock.patch(
@@ -1800,10 +1834,15 @@ class OptimizelyTest(base.BaseTest):
 
     def test_get_variation(self):
         """ Test that get_variation returns valid variation and broadcasts decision with proper parameters. """
-
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'reasons': [],
+            'error': False,
+            'cmab_uuid': None
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
             variation = self.optimizely.get_variation('test_experiment', 'test_user')
             self.assertEqual(
@@ -1822,10 +1861,15 @@ class OptimizelyTest(base.BaseTest):
 
     def test_get_variation_lookup_and_save_is_called(self):
         """ Test that lookup is called, get_variation returns valid variation and then save is called"""
-
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast, mock.patch(
@@ -1855,10 +1899,15 @@ class OptimizelyTest(base.BaseTest):
 
         opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
         project_config = opt_obj.config_manager.get_config()
-
+        variation_result = {
+            'error': False,
+            'reasons': [],
+            'variation': project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': None
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
             variation = opt_obj.get_variation('test_experiment', 'test_user')
             self.assertEqual('variation', variation)
@@ -1875,9 +1924,14 @@ class OptimizelyTest(base.BaseTest):
 
     def test_get_variation__returns_none(self):
         """ Test that get_variation returns no variation and broadcasts decision with proper parameters. """
-
+        variation_result = {
+            'variation': None,
+            'reasons': [],
+            'cmab_uuid': None,
+            'error': False
+        }
         with mock.patch('optimizely.decision_service.DecisionService.get_variation',
-                        return_value=(None, [], None), ), mock.patch(
+                        return_value=variation_result, ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast:
             self.assertEqual(
@@ -4809,10 +4863,15 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         variation_key = 'variation'
         experiment_key = 'test_experiment'
         user_id = 'test_user'
-
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'reasons': [],
+            'cmab_uuid': None,
+            'error': False
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result,
         ), mock.patch('time.time', return_value=42), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ), mock.patch.object(
@@ -4950,10 +5009,15 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         variation_key = 'variation'
         experiment_key = 'test_experiment'
         user_id = ''
-
+        variation_result = {
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False,
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129')
+        }
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
-                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), [], None),
+                return_value=variation_result
         ), mock.patch('time.time', return_value=42), mock.patch(
             'optimizely.event.event_processor.ForwardingEventProcessor.process'
         ), mock.patch.object(

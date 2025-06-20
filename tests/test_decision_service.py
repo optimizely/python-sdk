@@ -457,9 +457,10 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _, _ = self.decision_service.get_variation(
+            variation_result = self.decision_service.get_variation(
                 self.project_config, experiment, user, None
             )
+            variation = variation_result['variation']
             self.assertIsNone(
                 variation
             )
@@ -500,7 +501,7 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.bucketer.Bucketer.bucket",
             return_value=[self.project_config.get_variation_from_id("211127", "211129"), []],
         ) as mock_bucket:
-            variation, _, _ = self.decision_service.get_variation(
+            _ = self.decision_service.get_variation(
                 self.project_config,
                 experiment,
                 user,
@@ -535,9 +536,9 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _, _ = self.decision_service.get_variation(
+            variation = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
-            )
+            )['variation']
             self.assertEqual(
                 entities.Variation("111128", "control"),
                 variation,
@@ -573,9 +574,9 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_audience_check, mock.patch(
             "optimizely.bucketer.Bucketer.bucket"
         ) as mock_bucket:
-            variation, _, _ = self.decision_service.get_variation(
+            variation = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
-            )
+            )['variation']
             self.assertEqual(
                 entities.Variation("111128", "control"),
                 variation,
@@ -619,9 +620,9 @@ class DecisionServiceTest(base.BaseTest):
             "optimizely.bucketer.Bucketer.bucket",
             return_value=[entities.Variation("111129", "variation"), []],
         ) as mock_bucket:
-            variation, _, _ = self.decision_service.get_variation(
+            variation = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
-            )
+            )['variation']
             self.assertEqual(
                 entities.Variation("111129", "variation"),
                 variation,
@@ -669,9 +670,9 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_bucket, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _, _ = self.decision_service.get_variation(
+            variation = self.decision_service.get_variation(
                 self.project_config, experiment, user, user_profile_tracker
-            )
+            )['variation']
             self.assertIsNone(
                 variation
             )
@@ -719,14 +720,14 @@ class DecisionServiceTest(base.BaseTest):
         ) as mock_lookup, mock.patch(
             "optimizely.user_profile.UserProfileService.save"
         ) as mock_save:
-            variation, _, _ = self.decision_service.get_variation(
+            variation = self.decision_service.get_variation(
                 self.project_config,
                 experiment,
                 user,
                 user_profile_tracker,
                 [],
                 options=['IGNORE_USER_PROFILE_SERVICE'],
-            )
+            )['variation']
             self.assertEqual(
                 entities.Variation("111129", "variation"),
                 variation,
@@ -796,16 +797,22 @@ class DecisionServiceTest(base.BaseTest):
                               'logger') as mock_logger:
 
             # Call get_variation with the CMAB experiment
-            variation, reasons, cmab_uuid = self.decision_service.get_variation(
+            variation_result = self.decision_service.get_variation(
                 self.project_config,
                 cmab_experiment,
                 user,
                 None
             )
+            cmab_uuid = variation_result['cmab_uuid']
+            variation = variation_result['variation']
+            error = variation_result['error']
+            reasons = variation_result['reasons']
 
             # Verify the variation and cmab_uuid
             self.assertEqual(entities.Variation('111151', 'variation_1'), variation)
             self.assertEqual('test-cmab-uuid-123', cmab_uuid)
+            self.assertStrictFalse(error)
+            self.assertIn('User "test_user" is in variation "variation_1" of experiment cmab_experiment.', reasons)
 
             # Verify logger was called
             mock_logger.info.assert_any_call('User "test_user" is in variation '
@@ -844,16 +851,23 @@ class DecisionServiceTest(base.BaseTest):
                               'logger') as mock_logger:
 
             # Call get_variation with the CMAB experiment
-            variation, reasons, cmab_uuid = self.decision_service.get_variation(
+            variation_result = self.decision_service.get_variation(
                 self.project_config,
                 cmab_experiment,
                 user,
                 None
             )
+            variation = variation_result['variation']
+            cmab_uuid = variation_result['cmab_uuid']
+            error = variation_result['error']
+            reasons = variation_result['reasons']
 
             # Verify we get no variation and CMAB service wasn't called
             self.assertIsNone(variation)
             self.assertIsNone(cmab_uuid)
+            self.assertStrictFalse(error)
+            self.assertIn('User "test_user" not in CMAB experiment "cmab_experiment" due to traffic allocation.',
+                          reasons)
             mock_cmab_decision.assert_not_called()
 
             # Verify logger was called
@@ -888,25 +902,25 @@ class DecisionServiceTest(base.BaseTest):
             mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
             mock.patch('optimizely.bucketer.Bucketer.bucket_to_entity_id', return_value=['$', []]), \
             mock.patch('optimizely.decision_service.DecisionService._get_decision_for_cmab_experiment',
-                       return_value={'error': True, 'result': None, 'reasons': ['CMAB service error']}), \
-            mock.patch.object(self.decision_service,
-                              'logger') as mock_logger:
+                       return_value={'error': True, 'result': None, 'reasons': ['CMAB service error']}):
 
             # Call get_variation with the CMAB experiment
-            variation, reasons, cmab_uuid = self.decision_service.get_variation(
+            variation_result = self.decision_service.get_variation(
                 self.project_config,
                 cmab_experiment,
                 user,
                 None
             )
+            variation = variation_result['variation']
+            cmab_uuid = variation_result['cmab_uuid']
+            reasons = variation_result['reasons']
+            error = variation_result['error']
 
             # Verify we get no variation due to CMAB service error
             self.assertIsNone(variation)
             self.assertIsNone(cmab_uuid)
             self.assertIn('CMAB service error', reasons)
-
-            # Verify logger was called
-            mock_logger.error.assert_any_call('CMAB decision fetch failed with status: CMAB service error')
+            self.assertStrictTrue(error)
 
     def test_get_variation_cmab_experiment_deep_mock_500_error(self):
         """Test the full flow of a CMAB experiment with a 500 error from the HTTP request layer."""
@@ -1015,17 +1029,22 @@ class DecisionServiceTest(base.BaseTest):
                        ) as mock_cmab_decision:
 
             # Call get_variation with the CMAB experiment
-            variation, reasons, cmab_uuid = self.decision_service.get_variation(
+            variation_result = self.decision_service.get_variation(
                 self.project_config,
                 cmab_experiment,
                 user,
                 None
             )
+            variation = variation_result['variation']
+            reasons = variation_result['reasons']
+            cmab_uuid = variation_result['cmab_uuid']
+            error = variation_result['error']
 
             # Verify we get the forced variation
             self.assertEqual(forced_variation, variation)
             self.assertIsNone(cmab_uuid)
             self.assertIn('User is forced into variation', reasons)
+            self.assertStrictFalse(error)
 
             # Verify CMAB-specific methods weren't called
             mock_bucket.assert_not_called()
@@ -1072,17 +1091,22 @@ class DecisionServiceTest(base.BaseTest):
                        ) as mock_cmab_decision:
 
             # Call get_variation with the CMAB experiment
-            variation, reasons, cmab_uuid = self.decision_service.get_variation(
+            variation_result = self.decision_service.get_variation(
                 self.project_config,
                 cmab_experiment,
                 user,
                 None
             )
+            variation = variation_result['variation']
+            cmab_uuid = variation_result['cmab_uuid']
+            reasons = variation_result['reasons']
+            error = variation_result['error']
 
             # Verify we get the whitelisted variation
             self.assertEqual(whitelisted_variation, variation)
             self.assertIsNone(cmab_uuid)
             self.assertIn('User is whitelisted into variation', reasons)
+            self.assertStrictFalse(error)
 
             # Verify CMAB-specific methods weren't called
             mock_bucket.assert_not_called()
@@ -1353,7 +1377,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         decision_patch = mock.patch(
             "optimizely.decision_service.DecisionService.get_variation",
-            return_value=[expected_variation, [], None],
+            return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
         )
         with decision_patch as mock_decision, self.mock_decision_logger:
             variation_received, _ = self.decision_service.get_variation_for_feature(
@@ -1485,7 +1509,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_variation",
-                return_value=(expected_variation, [], None),
+                return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, options=None
@@ -1520,7 +1544,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
 
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_variation",
-                return_value=[None, [], None],
+                return_value={'variation': None, 'cmab_uuid': None, 'reasons': [], 'error': False},
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
@@ -1552,7 +1576,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
         feature = self.project_config.get_feature_from_key("test_feature_in_group")
         with mock.patch(
                 "optimizely.decision_service.DecisionService.get_variation",
-                return_value=[None, [], None],
+                return_value={'variation': None, 'cmab_uuid': None, 'reasons': [], 'error': False},
         ) as mock_decision:
             variation_received, _ = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, False
