@@ -357,7 +357,8 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision_result = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision = decision_result['decision']
 
         if decision.variation:
 
@@ -444,7 +445,9 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision = self.decision_service.get_variation_for_feature(project_config,
+                                                                   feature_flag,
+                                                                   user_context)['decision']
 
         if decision.variation:
 
@@ -715,7 +718,7 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
+        decision = self.decision_service.get_variation_for_feature(project_config, feature, user_context)['decision']
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
@@ -1368,8 +1371,11 @@ class Optimizely:
         )
 
         for i in range(0, len(flags_without_forced_decision)):
-            decision = decision_list[i][0]
-            reasons = decision_list[i][1]
+            decision = decision_list[i]['decision']
+            reasons = decision_list[i]['reasons']
+            # Can catch errors now. Not used as decision logic implicitly handles error decision.
+            # Will be required for impression events
+            # error = decision_list[i]['error']
             flag_key = flags_without_forced_decision[i].key
             flag_decisions[flag_key] = decision
             decision_reasons_dict[flag_key] += reasons

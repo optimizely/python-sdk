@@ -1380,9 +1380,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
             return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
         )
         with decision_patch as mock_decision, self.mock_decision_logger:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, options=None
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1421,9 +1421,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         )
         with get_variation_for_rollout_patch as mock_get_variation_for_rollout, \
                 self.mock_decision_logger as mock_decision_service_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, False
-            )
+            )['decision']
             self.assertEqual(
                 expected_variation,
                 variation_received,
@@ -1461,9 +1461,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         ) as mock_audience_check, \
                 self.mock_decision_logger as mock_decision_service_logging, mock.patch(
                 "optimizely.bucketer.Bucketer.bucket", return_value=[expected_variation, []]):
-            decision, _ = self.decision_service.get_variation_for_feature(
+            decision = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1511,9 +1511,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 "optimizely.decision_service.DecisionService.get_variation",
                 return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
         ) as mock_decision:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, options=None
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1546,9 +1546,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 "optimizely.decision_service.DecisionService.get_variation",
                 return_value={'variation': None, 'cmab_uuid': None, 'reasons': [], 'error': False},
         ) as mock_decision:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
                 variation_received,
@@ -1578,9 +1578,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
                 "optimizely.decision_service.DecisionService.get_variation",
                 return_value={'variation': None, 'cmab_uuid': None, 'reasons': [], 'error': False},
         ) as mock_decision:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, False
-            )
+            )["decision"]
             self.assertEqual(
                 decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
                 variation_received,
@@ -1607,9 +1607,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=2400) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
 
             self.assertEqual(
                 decision_service.Decision(
@@ -1643,9 +1643,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4000) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1678,9 +1678,10 @@ class FeatureFlagDecisionTests(base.BaseTest):
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=6500) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
 
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            decision_result = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
             )
+            decision_received = decision_result['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1688,7 +1689,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
                     enums.DecisionSources.FEATURE_TEST,
                     None
                 ),
-                variation_received,
+                decision_received,
             )
         mock_config_logging.debug.assert_called_with('Assigned bucket 6500 to user with bucketing ID "test_user".')
         mock_generate_bucket_value.assert_called_with('test_user42224')
@@ -1707,9 +1708,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=8000) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
 
             self.assertEqual(
                 decision_service.Decision(
@@ -1743,9 +1744,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=2400) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1776,9 +1777,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4000) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1810,9 +1811,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=6500) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1839,9 +1840,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=8000) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     None,
@@ -1874,9 +1875,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=2400) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
@@ -1911,9 +1912,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
         with mock.patch(
             'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=4000) as mock_generate_bucket_value, \
                 mock.patch.object(self.project_config, 'logger') as mock_config_logging:
-            variation_received, _ = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user
-            )
+            )['decision']
             self.assertEqual(
                 decision_service.Decision(
                     expected_experiment,
