@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
+from unittest import mock
 
 from . import decision_service
 from . import entities
@@ -260,7 +261,7 @@ class Optimizely:
     def _send_impression_event(
         self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
         variation: Optional[entities.Variation], flag_key: str, rule_key: str, rule_type: str,
-        enabled: bool, user_id: str, attributes: Optional[UserAttributes]
+        enabled: bool, user_id: str, attributes: Optional[UserAttributes], cmab_uuid: Optional[str]
     ) -> None:
         """ Helper method to send impression event.
 
@@ -280,7 +281,9 @@ class Optimizely:
 
         variation_id = variation.id if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(
-            project_config, experiment, variation_id, flag_key, rule_key, rule_type, enabled, user_id, attributes
+            project_config, experiment, variation_id,
+            flag_key, rule_key, rule_type,
+            enabled, user_id, attributes, cmab_uuid
         )
 
         if user_event is None:
@@ -550,7 +553,7 @@ class Optimizely:
         # Create and dispatch impression event
         self.logger.info(f'Activating user "{user_id}" in experiment "{experiment.key}".')
         self._send_impression_event(project_config, experiment, variation, '', experiment.key,
-                                    enums.DecisionSources.EXPERIMENT, True, user_id, attributes)
+                                    enums.DecisionSources.EXPERIMENT, True, user_id, attributes, None)
 
         return variation.key
 
@@ -718,7 +721,9 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision = self.decision_service.get_variation_for_feature(project_config, feature, user_context)['decision']
+        decision_result = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
+        decision = decision_result['decision']
+        cmab_uuid = decision_result['decision'].cmab_uuid
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
@@ -729,7 +734,7 @@ class Optimizely:
         if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
-                decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes
+                decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
             )
 
         # Send event if Decision came from an experiment.
@@ -740,7 +745,7 @@ class Optimizely:
             }
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
-                str(decision.source), feature_enabled, user_id, attributes
+                str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
             )
 
         if feature_enabled:
@@ -1193,7 +1198,9 @@ class Optimizely:
                                             flag_decision.variation,
                                             flag_key, rule_key or '',
                                             str(decision_source), feature_enabled,
-                                            user_id, attributes)
+                                            user_id, attributes,
+                                            flag_decision.cmab_uuid
+                                            )
 
                 decision_event_dispatched = True
 

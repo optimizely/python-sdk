@@ -297,7 +297,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide__feature_test__send_flag_decision_false(self):
