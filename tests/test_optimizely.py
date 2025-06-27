@@ -4950,6 +4950,57 @@ class OptimizelyTest(base.BaseTest):
         metadata = log_event.params['visitors'][0]['snapshots'][0]['decisions'][0]['metadata']
         self.assertNotIn('cmab_uuid', metadata)
 
+    def test_get_variation_with_cmab_uuid(self):
+        """ Test that get_variation works correctly with CMAB UUID. """
+        expected_cmab_uuid = "get-variation-cmab-uuid"
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': expected_cmab_uuid,
+            'reasons': [],
+            'error': False
+        }
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=variation_result,
+        ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
+            variation = self.optimizely.get_variation('test_experiment', 'test_user')
+            self.assertEqual('variation', variation['variation'].key)
+
+        # Verify decision notification is sent with correct parameters
+        mock_broadcast.assert_any_call(
+            enums.NotificationTypes.DECISION,
+            'ab-test',
+            'test_user',
+            {},
+            {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
+        )
+
+    def test_get_variation_without_cmab_uuid(self):
+        """ Test that get_variation works correctly when CMAB UUID is None. """
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False
+        }
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=variation_result,
+        ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
+            variation = self.optimizely.get_variation('test_experiment', 'test_user')
+            self.assertEqual('variation', variation['variation'].key)
+
+        # Verify decision notification is sent correctly
+        mock_broadcast.assert_any_call(
+            enums.NotificationTypes.DECISION,
+            'ab-test',
+            'test_user',
+            {},
+            {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
+        )
+
 
 class OptimizelyWithExceptionTest(base.BaseTest):
     def setUp(self):
