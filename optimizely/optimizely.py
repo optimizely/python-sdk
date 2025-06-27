@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional
-from unittest import mock
+
 
 from . import decision_service
 from . import entities
@@ -540,8 +540,11 @@ class Optimizely:
 
         variation_result = self.get_variation(experiment_key, user_id, attributes)
         variation_key = None
+        cmab_uuid = None
         if variation_result and variation_result['variation']:
             variation_key = variation_result['variation'].key
+        if variation_result and variation_result['cmab_uuid']:
+            cmab_uuid = variation_result['cmab_uuid']
         if not variation_key:
             self.logger.info(f'Not activating user "{user_id}".')
             return None
@@ -555,7 +558,7 @@ class Optimizely:
         # Create and dispatch impression event
         self.logger.info(f'Activating user "{user_id}" in experiment "{experiment.key}".')
         self._send_impression_event(project_config, experiment, variation, '', experiment.key,
-                                    enums.DecisionSources.EXPERIMENT, True, user_id, attributes, None)
+                                    enums.DecisionSources.EXPERIMENT, True, user_id, attributes, cmab_uuid)
 
         return variation.key
 

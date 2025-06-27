@@ -4890,6 +4890,66 @@ class OptimizelyTest(base.BaseTest):
 
         client.close()
 
+    def test_activate_with_cmab_uuid(self):
+        """ Test that activate includes CMAB UUID when available from CMAB service. """
+        expected_cmab_uuid = "test-cmab-uuid-123"
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': expected_cmab_uuid,
+            'reasons': [],
+            'error': False
+        }
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=variation_result,
+        ), mock.patch('time.time', return_value=42), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'optimizely.event.event_processor.BatchEventProcessor.process'
+        ) as mock_process:
+            result = self.optimizely.activate('test_experiment', 'test_user')
+            self.assertEqual('variation', result)
+
+        # Verify the impression event includes CMAB UUID
+        impression_event = mock_process.call_args[0][0]
+        self.assertEqual(impression_event.cmab_uuid, expected_cmab_uuid)
+
+        # Verify the log event includes CMAB UUID in metadata
+        log_event = EventFactory.create_log_event(impression_event, self.optimizely.logger)
+        metadata = log_event.params['visitors'][0]['snapshots'][0]['decisions'][0]['metadata']
+        self.assertIn('cmab_uuid', metadata)
+        self.assertEqual(metadata['cmab_uuid'], expected_cmab_uuid)
+
+    def test_activate_without_cmab_uuid(self):
+        """ Test that activate works correctly when CMAB service returns None. """
+        variation_result = {
+            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
+            'cmab_uuid': None,
+            'reasons': [],
+            'error': False
+        }
+
+        with mock.patch(
+            'optimizely.decision_service.DecisionService.get_variation',
+            return_value=variation_result,
+        ), mock.patch('time.time', return_value=42), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'optimizely.event.event_processor.BatchEventProcessor.process'
+        ) as mock_process:
+            result = self.optimizely.activate('test_experiment', 'test_user')
+            self.assertEqual('variation', result)
+
+        # Verify the impression event has no CMAB UUID
+        impression_event = mock_process.call_args[0][0]
+        self.assertIsNone(impression_event.cmab_uuid)
+
+        # Verify the log event does not include CMAB UUID in metadata
+        log_event = EventFactory.create_log_event(impression_event, self.optimizely.logger)
+        metadata = log_event.params['visitors'][0]['snapshots'][0]['decisions'][0]['metadata']
+        self.assertNotIn('cmab_uuid', metadata)
+
 
 class OptimizelyWithExceptionTest(base.BaseTest):
     def setUp(self):
