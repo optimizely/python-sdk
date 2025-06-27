@@ -128,7 +128,8 @@ class Errors:
     ODP_INVALID_ACTION: Final = 'ODP action is not valid (cannot be empty).'
     MISSING_SDK_KEY: Final = 'SDK key not provided/cannot be found in the datafile.'
     CMAB_FETCH_FAILED: Final = 'CMAB decision fetch failed with status: {}'
-    INVALID_CMAB_FETCH_RESPONSE = 'Invalid CMAB fetch response'
+    INVALID_CMAB_FETCH_RESPONSE: Final = 'Invalid CMAB fetch response'
+    CMAB_FETCH_FAILED_DETAILED: Final = 'Failed to fetch CMAB decision for experiment key "{}" - {}'
 
 
 class ForcedDecisionLogs:

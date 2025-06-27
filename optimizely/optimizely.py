@@ -29,7 +29,7 @@ from .config_manager import StaticConfigManager
 from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .decision.optimizely_decision import OptimizelyDecision
 from .decision.optimizely_decision_message import OptimizelyDecisionMessage
-from .decision_service import Decision
+from .decision_service import Decision, VariationResult
 from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
 from .event.event_processor import BatchEventProcessor, BaseEventProcessor
@@ -44,11 +44,17 @@ from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .project_config import ProjectConfig
+from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
+from .cmab.cmab_service import DefaultCmabService, CmabCacheValue
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
     from .user_profile import UserProfileService
     from .helpers.event_tag_utils import EventTags
+
+# Default constants for CMAB cache
+DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60 * 1000  # 30 minutes in milliseconds
+DEFAULT_CMAB_CACHE_SIZE = 1000
 
 
 class Optimizely:
@@ -69,7 +75,7 @@ class Optimizely:
             datafile_access_token: Optional[str] = None,
             default_decide_options: Optional[list[str]] = None,
             event_processor_options: Optional[dict[str, Any]] = None,
-            settings: Optional[OptimizelySdkSettings] = None
+            settings: Optional[OptimizelySdkSettings] = None,
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -169,7 +175,19 @@ class Optimizely:
         self._setup_odp(self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
-        self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
+
+        # Initialize CMAB components
+        self.cmab_client = DefaultCmabClient(
+            retry_config=CmabRetryConfig(),
+            logger=self.logger
+        )
+        self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
+        self.cmab_service = DefaultCmabService(
+            cmab_cache=self.cmab_cache,
+            cmab_client=self.cmab_client,
+            logger=self.logger
+        )
+        self.decision_service = decision_service.DecisionService(self.logger, user_profile_service, self.cmab_service)
         self.user_profile_service = user_profile_service
 
     def _validate_instantiation_options(self) -> None:
@@ -339,7 +357,8 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision_result = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision = decision_result['decision']
 
         if decision.variation:
 
@@ -426,7 +445,9 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision = self.decision_service.get_variation_for_feature(project_config,
+                                                                   feature_flag,
+                                                                   user_context)['decision']
 
         if decision.variation:
 
@@ -514,8 +535,10 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
             return None
 
-        variation_key = self.get_variation(experiment_key, user_id, attributes)
-
+        variation_result = self.get_variation(experiment_key, user_id, attributes)
+        variation_key = None
+        if variation_result and variation_result['variation']:
+            variation_key = variation_result['variation'].key
         if not variation_key:
             self.logger.info(f'Not activating user "{user_id}".')
             return None
@@ -591,17 +614,18 @@ class Optimizely:
 
     def get_variation(
         self, experiment_key: str, user_id: str, attributes: Optional[UserAttributes] = None
-    ) -> Optional[str]:
-        """ Gets variation where user will be bucketed.
+    ) -> Optional[VariationResult]:
+        """
+        Returns the variation result for the given user in the specified experiment.
 
         Args:
-          experiment_key: Experiment for which user variation needs to be determined.
-          user_id: ID for user.
-          attributes: Dict representing user attributes.
+            experiment_key: The key identifying the experiment.
+            user_id: The user ID.
+            attributes: Optional dictionary of user attributes.
 
         Returns:
-          Variation key representing the variation the user will be bucketed in.
-          None if user is not in experiment or if experiment is not Running.
+            A VariationResult object containing the variation assigned to the user, or None if the user is not
+            bucketed into any variation or the experiment is not running.
         """
 
         if not self.is_valid:
@@ -634,10 +658,9 @@ class Optimizely:
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         user_profile_tracker = user_profile.UserProfileTracker(user_id, self.user_profile_service, self.logger)
         user_profile_tracker.load_user_profile()
-        variation, _ = self.decision_service.get_variation(project_config,
-                                                           experiment,
-                                                           user_context,
-                                                           user_profile_tracker)
+        variation_result = self.decision_service.get_variation(project_config, experiment,
+                                                               user_context, user_profile_tracker)
+        variation = variation_result['variation']
         user_profile_tracker.save_user_profile()
         if variation:
             variation_key = variation.key
@@ -655,7 +678,7 @@ class Optimizely:
             {'experiment_key': experiment_key, 'variation_key': variation_key},
         )
 
-        return variation_key
+        return variation_result
 
     def is_feature_enabled(self, feature_key: str, user_id: str, attributes: Optional[UserAttributes] = None) -> bool:
         """ Returns true if the feature is enabled for the given user.
@@ -698,7 +721,7 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
+        decision = self.decision_service.get_variation_for_feature(project_config, feature, user_context)['decision']
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
@@ -1338,7 +1361,7 @@ class Optimizely:
             decision_reasons_dict[key] += decision_reasons
 
             if variation:
-                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
+                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST, None)
                 flag_decisions[key] = decision
             else:
                 flags_without_forced_decision.append(feature_flag)
@@ -1351,8 +1374,11 @@ class Optimizely:
         )
 
         for i in range(0, len(flags_without_forced_decision)):
-            decision = decision_list[i][0]
-            reasons = decision_list[i][1]
+            decision = decision_list[i]['decision']
+            reasons = decision_list[i]['reasons']
+            # Can catch errors now. Not used as decision logic implicitly handles error decision.
+            # Will be required for impression events
+            # error = decision_list[i]['error']
             flag_key = flags_without_forced_decision[i].key
             flag_decisions[flag_key] = decision
             decision_reasons_dict[flag_key] += reasons
