@@ -29,7 +29,7 @@ from .config_manager import StaticConfigManager
 from .decision.optimizely_decide_option import OptimizelyDecideOption
 from .decision.optimizely_decision import OptimizelyDecision
 from .decision.optimizely_decision_message import OptimizelyDecisionMessage
-from .decision_service import Decision, VariationResult
+from .decision_service import Decision
 from .error_handler import NoOpErrorHandler, BaseErrorHandler
 from .event import event_factory, user_event_factory
 from .event.event_processor import BatchEventProcessor, BaseEventProcessor
@@ -535,10 +535,8 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('activate'))
             return None
 
-        variation_result = self.get_variation(experiment_key, user_id, attributes)
-        variation_key = None
-        if variation_result:
-            variation_key = variation_result['variation'].key
+        variation_key = self.get_variation(experiment_key, user_id, attributes)
+
         if not variation_key:
             self.logger.info(f'Not activating user "{user_id}".')
             return None
@@ -614,18 +612,17 @@ class Optimizely:
 
     def get_variation(
         self, experiment_key: str, user_id: str, attributes: Optional[UserAttributes] = None
-    ) -> Optional[VariationResult]:
-        """
-        Returns the variation result for the given user in the specified experiment.
+    ) -> Optional[str]:
+        """ Gets variation where user will be bucketed.
 
         Args:
-            experiment_key: The key identifying the experiment.
-            user_id: The user ID.
-            attributes: Optional dictionary of user attributes.
+          experiment_key: Experiment for which user variation needs to be determined.
+          user_id: ID for user.
+          attributes: Dict representing user attributes.
 
         Returns:
-            A VariationResult object containing the variation assigned to the user, or None if the user is not
-            bucketed into any variation or the experiment is not running.
+          Variation key representing the variation the user will be bucketed in.
+          None if user is not in experiment or if experiment is not Running.
         """
 
         if not self.is_valid:
@@ -678,7 +675,7 @@ class Optimizely:
             {'experiment_key': experiment_key, 'variation_key': variation_key},
         )
 
-        return variation_result
+        return variation_key
 
     def is_feature_enabled(self, feature_key: str, user_id: str, attributes: Optional[UserAttributes] = None) -> bool:
         """ Returns true if the feature is enabled for the given user.
