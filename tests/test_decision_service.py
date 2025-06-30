@@ -952,7 +952,7 @@ class DecisionServiceTest(base.BaseTest):
         # Define HTTP error details
         http_error = requests.exceptions.HTTPError("500 Server Error")
         error_message = Errors.CMAB_FETCH_FAILED.format(http_error)
-        detailed_error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(cmab_experiment.key, error_message)
+        detailed_error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(cmab_experiment.key)
 
         # Set up mocks for the entire call chain
         with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
@@ -988,7 +988,7 @@ class DecisionServiceTest(base.BaseTest):
             self.assertIn(detailed_error_message, reasons)
 
             # Verify logger was called with the specific 500 error
-            mock_logger.error.assert_any_call(detailed_error_message)
+            mock_logger.error.assert_any_call(f'{detailed_error_message} - {error_message}')
 
     def test_get_variation_cmab_experiment_forced_variation(self):
         """Test get_variation with CMAB experiment when user has a forced variation."""
