@@ -537,7 +537,7 @@ class Optimizely:
 
         variation_result = self.get_variation(experiment_key, user_id, attributes)
         variation_key = None
-        if variation_result and variation_result['variation']:
+        if variation_result:
             variation_key = variation_result['variation'].key
         if not variation_key:
             self.logger.info(f'Not activating user "{user_id}".')
