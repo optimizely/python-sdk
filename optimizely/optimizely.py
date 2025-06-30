@@ -261,7 +261,7 @@ class Optimizely:
     def _send_impression_event(
         self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
         variation: Optional[entities.Variation], flag_key: str, rule_key: str, rule_type: str,
-        enabled: bool, user_id: str, attributes: Optional[UserAttributes], cmab_uuid: Optional[str]
+        enabled: bool, user_id: str, attributes: Optional[UserAttributes], cmab_uuid: Optional[str] = None
     ) -> None:
         """ Helper method to send impression event.
 
