@@ -129,7 +129,7 @@ class Errors:
     MISSING_SDK_KEY: Final = 'SDK key not provided/cannot be found in the datafile.'
     CMAB_FETCH_FAILED: Final = 'CMAB decision fetch failed with status: {}'
     INVALID_CMAB_FETCH_RESPONSE: Final = 'Invalid CMAB fetch response'
-    CMAB_FETCH_FAILED_DETAILED: Final = 'Failed to fetch CMAB decision for experiment key "{}" - {}'
+    CMAB_FETCH_FAILED_DETAILED: Final = 'Failed to fetch CMAB data for experiment {}'
 
 
 class ForcedDecisionLogs:
