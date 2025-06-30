@@ -164,7 +164,7 @@ class DecisionService:
         except Exception as e:
             error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(experiment.key)
             if self.logger:
-                self.logger.error(f"{error_message} - {str(e)}")
+                self.logger.error(f"{error_message} {str(e)}")
             return {
                 "error": True,
                 "result": None,

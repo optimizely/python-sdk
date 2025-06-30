@@ -988,7 +988,7 @@ class DecisionServiceTest(base.BaseTest):
             self.assertIn(detailed_error_message, reasons)
 
             # Verify logger was called with the specific 500 error
-            mock_logger.error.assert_any_call(f'{detailed_error_message} - {error_message}')
+            mock_logger.error.assert_any_call(f'{detailed_error_message} {error_message}')
 
     def test_get_variation_cmab_experiment_forced_variation(self):
         """Test get_variation with CMAB experiment when user has a forced variation."""
