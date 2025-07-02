@@ -55,7 +55,6 @@ class UserEventFactoryTest(base.BaseTest):
         self.assertEqual(self.project_config.region, impression_event.event_context.region)
         self.assertEqual('EU', impression_event.event_context.region)
 
-
     def test_impression_event__with_attributes(self):
         project_config = self.project_config
         experiment = self.project_config.get_experiment_from_key('test_experiment')
