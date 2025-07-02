@@ -98,6 +98,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -166,6 +167,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -232,6 +234,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -299,6 +302,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         def side_effect(*args, **kwargs):
@@ -389,6 +393,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -465,6 +470,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -547,6 +553,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
