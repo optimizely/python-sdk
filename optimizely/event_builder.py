@@ -269,6 +269,8 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
+        params['region'] = str(project_config.region)
+
         region = project_config.region or 'US'
         events_url = self.EVENTS_URLS.get(region, self.EVENTS_URLS['US'])
 
@@ -295,6 +297,8 @@ class EventBuilder:
         conversion_params = self._get_required_params_for_conversion(project_config, event_key, event_tags)
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
+
+        params['region'] = str(project_config.region)
 
         region = project_config.region or 'US'
         events_url = self.EVENTS_URLS.get(region, self.EVENTS_URLS['US'])
