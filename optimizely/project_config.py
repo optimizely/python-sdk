@@ -40,11 +40,9 @@ SUPPORTED_VERSIONS = [
 RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 
 EntityClass = TypeVar('EntityClass')
-
 class Region(str, enums):
     US = 'US'
     EU = 'EU'
-
 class ProjectConfig:
     """ Representation of the Optimizely project config. """
 
