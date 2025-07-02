@@ -249,7 +249,8 @@ class EventBuilder:
 
     def create_impression_event(
         self, project_config: ProjectConfig, experiment: Experiment,
-        variation_id: str, user_id: str, attributes: UserAttributes
+        variation_id: str, user_id: str, attributes: UserAttributes,
+        region: str = 'US'
     ) -> Event:
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -278,7 +279,8 @@ class EventBuilder:
 
     def create_conversion_event(
         self, project_config: ProjectConfig, event_key: str,
-        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags
+        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags,
+        region: str = 'US'
     ) -> Event:
         """ Create conversion Event to be sent to the logging endpoint.
 
