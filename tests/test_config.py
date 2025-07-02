@@ -161,7 +161,6 @@ class ConfigTest(base.BaseTest):
         project_config = opt_obj.config_manager.get_config()
         self.assertEqual(project_config.region, Region.US)
 
-  
     def test_region_when_specified_in_datafile(self):
         """ Test that region is set to 'US' when specified in the config. """
         config_dict_us = copy.deepcopy(self.config_dict_with_multiple_experiments)
@@ -176,8 +175,6 @@ class ConfigTest(base.BaseTest):
         opt_obj_eu = optimizely.Optimizely(json.dumps(config_dict_eu))
         project_config_eu = opt_obj_eu.config_manager.get_config()
         self.assertEqual(project_config_eu.region, Region.EU)
-
-    
 
     def test_cmab_field_population(self):
         """ Test that the cmab field is populated correctly in experiments."""
