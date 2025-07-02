@@ -100,7 +100,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -155,7 +155,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -208,7 +208,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -280,7 +280,7 @@ class EventBuilderTest(base.BaseTest):
 
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -345,7 +345,7 @@ class EventBuilderTest(base.BaseTest):
 
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -409,7 +409,7 @@ class EventBuilderTest(base.BaseTest):
 
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -479,7 +479,7 @@ class EventBuilderTest(base.BaseTest):
 
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -515,6 +515,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -525,7 +526,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -563,6 +564,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -573,7 +575,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -618,6 +620,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -631,7 +634,7 @@ class EventBuilderTest(base.BaseTest):
 
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -681,6 +684,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -694,7 +698,7 @@ class EventBuilderTest(base.BaseTest):
 
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -735,6 +739,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -749,7 +754,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -788,6 +793,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -802,7 +808,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -843,6 +849,7 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -857,7 +864,7 @@ class EventBuilderTest(base.BaseTest):
             )
         self._validate_event_object(
             event_obj,
-            event_builder.EventBuilder.EVENTS_URL,
+            event_builder.EventBuilder.EVENTS_URLS.get('US'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
