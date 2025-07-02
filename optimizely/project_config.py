@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Optional, Type, TypeVar, cast, Any, Iterable, List
 from sys import version_info
+from enum import Enum
 
 from . import entities
 from . import exceptions
@@ -42,7 +43,7 @@ RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 EntityClass = TypeVar('EntityClass')
 
 
-class Region:
+class Region(str, Enum):
     US = 'US'
     EU = 'EU'
 
