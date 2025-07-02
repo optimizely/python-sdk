@@ -92,10 +92,11 @@ class ProjectConfig:
         self.all_segments: list[str] = []
 
         region_value = config.get('region')
+        self.region: Region
         if region_value == Region.EU.value:
-            self.region: Region = Region.EU
+            self.region = Region.EU
         else:
-            self.region: Region = Region.US
+            self.region = Region.US
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
