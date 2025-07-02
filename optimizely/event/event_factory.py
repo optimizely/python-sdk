@@ -42,7 +42,10 @@ class EventFactory:
   to record the events via the Optimizely Events API ("https://developers.optimizely.com/x/events/api/index.html")
   """
 
-    EVENT_ENDPOINT: Final = 'https://logx.optimizely.com/v1/events'
+    EVENT_ENDPOINTS: Final = {
+        'US': 'https://logx.optimizely.com/v1/events',
+        'EU': 'https://eu.logx.optimizely.com/v1/events'
+    }
     HTTP_VERB: Final = 'POST'
     HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
     ACTIVATE_EVENT_KEY: Final = 'campaign_activated'
@@ -97,7 +100,10 @@ class EventFactory:
 
         event_params = event_batch.get_event_params()
 
-        return log_event.LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
+        region = user_context.region or 'US'
+        endpoint = cls.EVENT_ENDPOINTS.get(region)
+
+        return log_event.LogEvent(endpoint, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
     @classmethod
     def _create_visitor(cls, event: Optional[user_event.UserEvent], logger: Logger) -> Optional[payload.Visitor]:

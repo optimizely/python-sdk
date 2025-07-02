@@ -22,9 +22,9 @@ from .helpers import enums
 from .helpers import types
 
 if version_info < (3, 8):
-    from typing_extensions import Final
+    from typing_extensions import Final, Literal
 else:
-    from typing import Final  # type: ignore
+    from typing import Final, Literal  # type: ignore
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -40,6 +40,8 @@ SUPPORTED_VERSIONS = [
 RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 
 EntityClass = TypeVar('EntityClass')
+
+Region = Literal['US', 'EU']
 
 
 class ProjectConfig:
@@ -84,6 +86,7 @@ class ProjectConfig:
         self.public_key_for_odp: Optional[str] = None
         self.host_for_odp: Optional[str] = None
         self.all_segments: list[str] = []
+        self.region: Region = config.get('region') or 'US'
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)

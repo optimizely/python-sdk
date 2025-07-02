@@ -41,6 +41,20 @@ class UserEventFactoryTest(base.BaseTest):
         self.assertEqual(experiment, impression_event.experiment)
         self.assertEqual(variation, impression_event.variation)
         self.assertEqual(user_id, impression_event.user_id)
+        self.assertEqual(self.project_config.region, impression_event.event_context.region)
+
+    def test_impression_event_with_region_eu(self):
+        project_config = self.project_config
+        experiment = self.project_config.get_experiment_from_key('test_experiment')
+        user_id = 'test_user'
+
+        impression_event = UserEventFactory.create_impression_event(
+            project_config, experiment, '111128', '', 'rule_key', 'rule_type', True, user_id, None, region='EU'
+        )
+
+        self.assertEqual(self.project_config.region, impression_event.event_context.region)
+        self.assertEqual('EU', impression_event.event_context.region)
+
 
     def test_impression_event__with_attributes(self):
         project_config = self.project_config
@@ -66,6 +80,7 @@ class UserEventFactoryTest(base.BaseTest):
         self.assertEqual(experiment, impression_event.experiment)
         self.assertEqual(variation, impression_event.variation)
         self.assertEqual(user_id, impression_event.user_id)
+        self.assertEqual(self.project_config.region, impression_event.event_context.region)
         self.assertEqual(
             [x.__dict__ for x in expected_attrs], [x.__dict__ for x in impression_event.visitor_attributes],
         )
@@ -91,6 +106,7 @@ class UserEventFactoryTest(base.BaseTest):
         self.assertEqual(self.project_config.bot_filtering, conversion_event.bot_filtering)
         self.assertEqual(self.project_config.get_event(event_key), conversion_event.event)
         self.assertEqual(user_id, conversion_event.user_id)
+        self.assertEqual(self.project_config.region, conversion_event.event_context.region)
         self.assertEqual(
             [x.__dict__ for x in expected_attrs], [x.__dict__ for x in conversion_event.visitor_attributes],
         )
@@ -117,6 +133,7 @@ class UserEventFactoryTest(base.BaseTest):
         self.assertEqual(self.project_config.bot_filtering, conversion_event.bot_filtering)
         self.assertEqual(self.project_config.get_event(event_key), conversion_event.event)
         self.assertEqual(user_id, conversion_event.user_id)
+        self.assertEqual(self.project_config.region, conversion_event.event_context.region)
         self.assertEqual(
             [x.__dict__ for x in expected_attrs], [x.__dict__ for x in conversion_event.visitor_attributes],
         )

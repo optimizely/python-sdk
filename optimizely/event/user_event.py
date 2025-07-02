@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Optional
 from sys import version_info
 
 from optimizely import version
+from optimizely.project_config import Region
 
 
 if version_info < (3, 8):
@@ -97,10 +98,11 @@ class ConversionEvent(UserEvent):
 class EventContext:
     """ Class respresenting User Event Context. """
 
-    def __init__(self, account_id: str, project_id: str, revision: str, anonymize_ip: bool):
+    def __init__(self, account_id: str, project_id: str, revision: str, anonymize_ip: bool, region: Region):
         self.account_id = account_id
         self.project_id = project_id
         self.revision = revision
         self.client_name = CLIENT_NAME
         self.client_version = version.__version__
         self.anonymize_ip = anonymize_ip
+        self.region = region or 'US'

@@ -21,7 +21,7 @@ from optimizely import exceptions
 from optimizely import logger
 from optimizely import optimizely
 from optimizely.helpers import enums
-from optimizely.project_config import ProjectConfig
+from optimizely.project_config import ProjectConfig, Region
 from . import base
 
 
@@ -153,6 +153,31 @@ class ConfigTest(base.BaseTest):
         self.assertEqual(expected_audience_id_map, self.project_config.audience_id_map)
         self.assertEqual(expected_variation_key_map, self.project_config.variation_key_map)
         self.assertEqual(expected_variation_id_map, self.project_config.variation_id_map)
+
+    def test_region_when_no_region(self):
+        """ Test that region defaults to 'US' when not specified in the config. """
+        config_dict = copy.deepcopy(self.config_dict_with_multiple_experiments)
+        opt_obj = optimizely.Optimizely(json.dumps(config_dict))
+        project_config = opt_obj.config_manager.get_config()
+        self.assertEqual(project_config.region, Region.US)
+
+  
+    def test_region_when_specified_in_datafile(self):
+        """ Test that region is set to 'US' when specified in the config. """
+        config_dict_us = copy.deepcopy(self.config_dict_with_multiple_experiments)
+        config_dict_us['region'] = 'US'
+        opt_obj_us = optimizely.Optimizely(json.dumps(config_dict_us))
+        project_config_us = opt_obj_us.config_manager.get_config()
+        self.assertEqual(project_config_us.region, Region.US)
+
+        """ Test that region is set to 'EU' when specified in the config. """
+        config_dict_eu = copy.deepcopy(self.config_dict_with_multiple_experiments)
+        config_dict_eu['region'] = 'EU'
+        opt_obj_eu = optimizely.Optimizely(json.dumps(config_dict_eu))
+        project_config_eu = opt_obj_eu.config_manager.get_config()
+        self.assertEqual(project_config_eu.region, Region.EU)
+
+    
 
     def test_cmab_field_population(self):
         """ Test that the cmab field is populated correctly in experiments."""
