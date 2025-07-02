@@ -90,7 +90,12 @@ class ProjectConfig:
         self.public_key_for_odp: Optional[str] = None
         self.host_for_odp: Optional[str] = None
         self.all_segments: list[str] = []
-        self.region: Region = config.get('region') or 'US'
+
+        region_value = config.get('region')
+        if region_value == Region.EU.value:
+            self.region: Region = Region.EU
+        else:
+            self.region: Region = Region.US
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
