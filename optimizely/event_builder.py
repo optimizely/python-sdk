@@ -269,10 +269,10 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
-        params['region'] = str(project_config.region)
+        params['region'] = project_config.region.value
 
         region = project_config.region or 'US'
-        events_url = self.EVENTS_URLS.get(region, self.EVENTS_URLS['US'])
+        events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
 
         return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
 
@@ -298,9 +298,9 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
 
-        params['region'] = str(project_config.region)
+        params['region'] = project_config.region.value
 
         region = project_config.region or 'US'
-        events_url = self.EVENTS_URLS.get(region, self.EVENTS_URLS['US'])
+        events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
 
         return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
