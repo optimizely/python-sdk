@@ -22,9 +22,9 @@ from .helpers import enums
 from .helpers import types
 
 if version_info < (3, 8):
-    from typing_extensions import Final, Literal
+    from typing_extensions import Final
 else:
-    from typing import Final, Literal  # type: ignore
+    from typing import Final  # type: ignore
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -41,8 +41,9 @@ RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 
 EntityClass = TypeVar('EntityClass')
 
-Region = Literal['US', 'EU']
-
+class Region(str, enums):
+    US = 'US'
+    EU = 'EU'
 
 class ProjectConfig:
     """ Representation of the Optimizely project config. """
