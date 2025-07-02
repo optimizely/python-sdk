@@ -42,7 +42,7 @@ RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 EntityClass = TypeVar('EntityClass')
 
 
-class Region(str, enums):
+class Region:
     US = 'US'
     EU = 'EU'
 
