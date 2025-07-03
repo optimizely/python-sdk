@@ -1369,14 +1369,19 @@ class Optimizely:
             user_context,
             merged_decide_options
         )
-
+        print("here")
         for i in range(0, len(flags_without_forced_decision)):
             decision = decision_list[i]['decision']
             reasons = decision_list[i]['reasons']
-            # Can catch errors now. Not used as decision logic implicitly handles error decision.
-            # Will be required for impression events
-            # error = decision_list[i]['error']
+            error = decision_list[i]['error']
             flag_key = flags_without_forced_decision[i].key
+            # store error decision against key and remove key from valid keys
+            if error:
+                optimizely_decision = OptimizelyDecision.new_error_decision(flags_without_forced_decision[i].key,
+                                                                            user_context, reasons)
+                decisions[flag_key] = optimizely_decision
+                if flag_key in valid_keys:
+                    valid_keys.remove(flag_key)
             flag_decisions[flag_key] = decision
             decision_reasons_dict[flag_key] += reasons
 

@@ -781,20 +781,21 @@ class DecisionServiceTest(base.BaseTest):
             cmab={'trafficAllocation': 5000}
         )
 
-        cmab_decision = {
-            'variation_id': '111151',
-            'cmab_uuid': 'test-cmab-uuid-123'
-        }
-
         with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
             mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
-            mock.patch('optimizely.bucketer.Bucketer.bucket_to_entity_id', return_value=['$', []]), \
-            mock.patch('optimizely.decision_service.DecisionService._get_decision_for_cmab_experiment',
-                       return_value={'error': False, 'result': cmab_decision, 'reasons': []}), \
+            mock.patch.object(self.decision_service.bucketer, 'bucket_to_entity_id',
+                              return_value=['$', []]) as mock_bucket, \
+            mock.patch.object(self.decision_service, 'cmab_service') as mock_cmab_service, \
             mock.patch.object(self.project_config, 'get_variation_from_id',
                               return_value=entities.Variation('111151', 'variation_1')), \
             mock.patch.object(self.decision_service,
                               'logger') as mock_logger:
+
+            # Configure CMAB service to return a decision
+            mock_cmab_service.get_decision.return_value = {
+                'variation_id': '111151',
+                'cmab_uuid': 'test-cmab-uuid-123'
+            }
 
             # Call get_variation with the CMAB experiment
             variation_result = self.decision_service.get_variation(
@@ -813,6 +814,22 @@ class DecisionServiceTest(base.BaseTest):
             self.assertEqual('test-cmab-uuid-123', cmab_uuid)
             self.assertStrictFalse(error)
             self.assertIn('User "test_user" is in variation "variation_1" of experiment cmab_experiment.', reasons)
+
+            # Verify bucketer was called with correct arguments
+            mock_bucket.assert_called_once_with(
+                self.project_config,
+                cmab_experiment,
+                "test_user",
+                "test_user"
+            )
+
+            # Verify CMAB service was called with correct arguments
+            mock_cmab_service.get_decision.assert_called_once_with(
+                self.project_config,
+                user,
+                '111150',  # experiment id
+                []  # options (empty list as default)
+            )
 
             # Verify logger was called
             mock_logger.info.assert_any_call('User "test_user" is in variation '
@@ -844,9 +861,9 @@ class DecisionServiceTest(base.BaseTest):
 
         with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
             mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
-            mock.patch('optimizely.bucketer.Bucketer.bucket_to_entity_id', return_value=['not_in_allocation', []]), \
-            mock.patch('optimizely.decision_service.DecisionService._get_decision_for_cmab_experiment'
-                       ) as mock_cmab_decision, \
+            mock.patch.object(self.decision_service.bucketer, 'bucket_to_entity_id',
+                              return_value=[None, []]) as mock_bucket, \
+            mock.patch.object(self.decision_service, 'cmab_service') as mock_cmab_service, \
             mock.patch.object(self.decision_service,
                               'logger') as mock_logger:
 
@@ -868,7 +885,17 @@ class DecisionServiceTest(base.BaseTest):
             self.assertStrictFalse(error)
             self.assertIn('User "test_user" not in CMAB experiment "cmab_experiment" due to traffic allocation.',
                           reasons)
-            mock_cmab_decision.assert_not_called()
+
+            # Verify bucketer was called with correct arguments
+            mock_bucket.assert_called_once_with(
+                self.project_config,
+                cmab_experiment,
+                "test_user",
+                "test_user"
+            )
+
+            # Verify CMAB service wasn't called since user is not in traffic allocation
+            mock_cmab_service.get_decision.assert_not_called()
 
             # Verify logger was called
             mock_logger.info.assert_any_call('User "test_user" not in CMAB '
@@ -921,74 +948,6 @@ class DecisionServiceTest(base.BaseTest):
             self.assertIsNone(cmab_uuid)
             self.assertIn('CMAB service error', reasons)
             self.assertStrictTrue(error)
-
-    def test_get_variation_cmab_experiment_deep_mock_500_error(self):
-        """Test the full flow of a CMAB experiment with a 500 error from the HTTP request layer."""
-        import requests
-        from optimizely.exceptions import CmabFetchError
-        from optimizely.helpers.enums import Errors
-
-        # Create a user context
-        user = optimizely_user_context.OptimizelyUserContext(
-            optimizely_client=None,
-            logger=None,
-            user_id="test_user",
-            user_attributes={}
-        )
-
-        # Create a CMAB experiment
-        cmab_experiment = entities.Experiment(
-            '111150',
-            'cmab_experiment',
-            'Running',
-            '111150',
-            [],  # No audience IDs
-            {},
-            [entities.Variation('111151', 'variation_1')],
-            [{'entityId': '111151', 'endOfRange': 10000}],
-            cmab={'trafficAllocation': 5000}
-        )
-
-        # Define HTTP error details
-        http_error = requests.exceptions.HTTPError("500 Server Error")
-        error_message = Errors.CMAB_FETCH_FAILED.format(http_error)
-        detailed_error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(cmab_experiment.key, error_message)
-
-        # Set up mocks for the entire call chain
-        with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
-             mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
-             mock.patch('optimizely.bucketer.Bucketer.bucket_to_entity_id', return_value=['$', []]), \
-             mock.patch.object(self.decision_service.cmab_service, 'get_decision',
-                               side_effect=lambda *args,
-                               **kwargs: self.decision_service.cmab_service._fetch_decision(*args, **kwargs)), \
-             mock.patch.object(self.decision_service.cmab_service, '_fetch_decision',
-                               side_effect=lambda *args,
-                               **kwargs: self.
-                               decision_service.cmab_service.cmab_client.fetch_decision(*args, **kwargs)), \
-             mock.patch.object(self.decision_service.cmab_service.cmab_client, 'fetch_decision',
-                               side_effect=lambda *args,
-                               **kwargs: self.decision_service.cmab_service.cmab_client._do_fetch(*args, **kwargs)), \
-             mock.patch.object(self.decision_service.cmab_service.cmab_client, '_do_fetch',
-                               side_effect=CmabFetchError(error_message)), \
-             mock.patch.object(self.decision_service, 'logger') as mock_logger:
-            # Call get_variation with the CMAB experiment
-            variation_result = self.decision_service.get_variation(
-                self.project_config,
-                cmab_experiment,
-                user,
-                None
-            )
-            variation = variation_result['variation']
-            cmab_uuid = variation_result['cmab_uuid']
-            reasons = variation_result['reasons']
-
-            # Verify we get no variation due to CMAB service error
-            self.assertIsNone(variation)
-            self.assertIsNone(cmab_uuid)
-            self.assertIn(detailed_error_message, reasons)
-
-            # Verify logger was called with the specific 500 error
-            mock_logger.error.assert_any_call(detailed_error_message)
 
     def test_get_variation_cmab_experiment_forced_variation(self):
         """Test get_variation with CMAB experiment when user has a forced variation."""

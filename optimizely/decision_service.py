@@ -30,7 +30,6 @@ if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
     from .logger import Logger
-    from .helpers.types import TrafficAllocation
 
 
 class CmabDecisionResult(TypedDict):
@@ -134,6 +133,7 @@ class DecisionService:
         project_config: ProjectConfig,
         experiment: entities.Experiment,
         user_context: OptimizelyUserContext,
+        bucketing_id: str,
         options: Optional[Sequence[str]] = None
     ) -> CmabDecisionResult:
         """
@@ -143,14 +143,36 @@ class DecisionService:
             project_config: Instance of ProjectConfig.
             experiment: The experiment object for which the decision is to be made.
             user_context: The user context containing user id and attributes.
+            bucketing_id: The bucketing ID to use for traffic allocation.
             options: Optional sequence of decide options.
 
         Returns:
             A dictionary containing:
             - "error": Boolean indicating if there was an error.
-            - "result": The CmabDecision result or empty dict if error.
+            - "result": The CmabDecision result or None if error.
             - "reasons": List of strings with reasons or error messages.
         """
+        decide_reasons: list[str] = []
+        user_id = user_context.user_id
+
+        # Check if user is in CMAB traffic allocation
+        bucketed_entity_id, bucket_reasons = self.bucketer.bucket_to_entity_id(
+            project_config, experiment, user_id, bucketing_id
+        )
+        decide_reasons.extend(bucket_reasons)
+
+        if not bucketed_entity_id:
+            message = f'User "{user_context.user_id}" not in CMAB experiment ' \
+                      f'"{experiment.key}" due to traffic allocation.'
+            self.logger.info(message)
+            decide_reasons.append(message)
+            return {
+                "error": False,
+                "result": None,
+                "reasons": decide_reasons,
+            }
+
+        # User is in CMAB allocation, proceed to CMAB decision
         try:
             options_list = list(options) if options is not None else []
             cmab_decision = self.cmab_service.get_decision(
@@ -159,7 +181,7 @@ class DecisionService:
             return {
                 "error": False,
                 "result": cmab_decision,
-                "reasons": [],
+                "reasons": decide_reasons,
             }
         except Exception as e:
             error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(
@@ -468,49 +490,25 @@ class DecisionService:
         # If so, handle CMAB-specific traffic allocation and decision logic.
         # Otherwise, proceed with standard bucketing logic for non-CMAB experiments.
         if experiment.cmab:
-            CMAB_DUMMY_ENTITY_ID = "$"
-            # Build the CMAB-specific traffic allocation
-            cmab_traffic_allocation: list[TrafficAllocation] = [{
-                "entityId": CMAB_DUMMY_ENTITY_ID,
-                "endOfRange": experiment.cmab['trafficAllocation']
-            }]
-
-            # Check if user is in CMAB traffic allocation
-            group = None
-            if experiment.groupId:
-                group = project_config.get_group(group_id=experiment.groupId)
-            bucketed_entity_id, bucket_reasons = self.bucketer.bucket_to_entity_id(
-                bucketing_id, experiment, cmab_traffic_allocation, group
-            )
-            decide_reasons += bucket_reasons
-            if bucketed_entity_id != CMAB_DUMMY_ENTITY_ID:
-                message = f'User "{user_id}" not in CMAB experiment "{experiment.key}" due to traffic allocation.'
-                self.logger.info(message)
-                decide_reasons.append(message)
-                return {
-                    'cmab_uuid': None,
-                    'error': False,
-                    'reasons': decide_reasons,
-                    'variation': None
-                }
-
-            # User is in CMAB allocation, proceed to CMAB decision
+            experiment.cmab
             cmab_decision_result = self._get_decision_for_cmab_experiment(project_config,
                                                                           experiment,
                                                                           user_context,
+                                                                          bucketing_id,
                                                                           options)
             decide_reasons += cmab_decision_result.get('reasons', [])
             cmab_decision = cmab_decision_result.get('result')
-            if not cmab_decision or cmab_decision_result['error']:
+            if cmab_decision_result['error']:
                 return {
                     'cmab_uuid': None,
                     'error': True,
                     'reasons': decide_reasons,
                     'variation': None
                 }
-            variation_id = cmab_decision['variation_id']
-            cmab_uuid = cmab_decision['cmab_uuid']
-            variation = project_config.get_variation_from_id(experiment_key=experiment.key, variation_id=variation_id)
+            variation_id = cmab_decision['variation_id'] if cmab_decision else None
+            cmab_uuid = cmab_decision['cmab_uuid'] if cmab_decision else None
+            variation = project_config.get_variation_from_id(experiment_key=experiment.key,
+                                                             variation_id=variation_id) if variation_id else None
         else:
             # Bucket the user
             variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
