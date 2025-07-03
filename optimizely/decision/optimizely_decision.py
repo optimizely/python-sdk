@@ -48,3 +48,23 @@ class OptimizelyDecision:
             'user_context': self.user_context.as_json() if self.user_context else None,
             'reasons': self.reasons
         }
+
+    @classmethod
+    def new_error_decision(cls, key: str, user: OptimizelyUserContext, reasons: list[str]) -> OptimizelyDecision:
+        """Create a new OptimizelyDecision representing an error state.
+        Args:
+            key: The flag key
+            user: The user context
+            reasons: List of reasons explaining the error
+        Returns:
+            OptimizelyDecision with error state values
+        """
+        return cls(
+            variation_key=None,
+            enabled=False,
+            variables={},
+            rule_key=None,
+            flag_key=key,
+            user_context=user,
+            reasons=[reasons[-1]] if reasons else []
+        )

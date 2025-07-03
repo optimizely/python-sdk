@@ -113,6 +113,7 @@ class EventFactoryTest(base.BaseTest):
                 False,
                 'test_user',
                 None,
+                None
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -177,6 +178,7 @@ class EventFactoryTest(base.BaseTest):
                 True,
                 'test_user',
                 {'test_attribute': 'test_value'},
+                None
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -239,6 +241,7 @@ class EventFactoryTest(base.BaseTest):
                 True,
                 'test_user',
                 {'do_you_know_me': 'test_value'},
+                None
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -394,6 +397,7 @@ class EventFactoryTest(base.BaseTest):
                 False,
                 'test_user',
                 {'$opt_user_agent': 'Edge'},
+                None
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -466,6 +470,7 @@ class EventFactoryTest(base.BaseTest):
                 False,
                 'test_user',
                 None,
+                None
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -544,6 +549,7 @@ class EventFactoryTest(base.BaseTest):
                 True,
                 'test_user',
                 {'$opt_user_agent': 'Chrome'},
+                None
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -916,6 +922,139 @@ class EventFactoryTest(base.BaseTest):
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        self._validate_event_object(
+            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+        )
+
+    def test_create_impression_event_with_cmab_uuid(self):
+        """ Test that create_impression_event creates LogEvent object with CMAB UUID in metadata. """
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'decisions': [
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation',
+                                              'enabled': False,
+                                              'cmab_uuid': 'test-cmab-uuid-123'
+                                              }
+                                 }
+                            ],
+                            'events': [
+                                {
+                                    'timestamp': 42123,
+                                    'entity_id': '111182',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'campaign_activated',
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            'client_name': 'python-sdk',
+            'client_version': version.__version__,
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+        }
+
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            event_obj = UserEventFactory.create_impression_event(
+                self.project_config,
+                self.project_config.get_experiment_from_key('test_experiment'),
+                '111129',
+                '',
+                'rule_key',
+                'experiment',
+                False,
+                'test_user',
+                None,
+                'test-cmab-uuid-123'  # cmab_uuid parameter
+            )
+
+        log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        self._validate_event_object(
+            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+        )
+
+    def test_create_impression_event_without_cmab_uuid(self):
+        """ Test that create_impression_event creates LogEvent object without CMAB UUID when not provided. """
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'decisions': [
+                                {
+                                    'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                    'metadata': {
+                                        'flag_key': '',
+                                        'rule_key': 'rule_key',
+                                        'rule_type': 'experiment',
+                                        'variation_key': 'variation',
+                                        'enabled': False
+                                    }
+                                }
+                            ],
+                            'events': [
+                                {
+                                    'timestamp': 42123,
+                                    'entity_id': '111182',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'campaign_activated',
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            'client_name': 'python-sdk',
+            'client_version': version.__version__,
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+        }
+
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            event_obj = UserEventFactory.create_impression_event(
+                self.project_config,
+                self.project_config.get_experiment_from_key('test_experiment'),
+                '111129',
+                '',
+                'rule_key',
+                'experiment',
+                False,
+                'test_user',
+                None,
+                None  # No cmab_uuid
+            )
+
+        log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        # Verify no cmab_uuid in metadata
+        metadata = log_event.params['visitors'][0]['snapshots'][0]['decisions'][0]['metadata']
+        self.assertNotIn('cmab_uuid', metadata)
 
         self._validate_event_object(
             log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,

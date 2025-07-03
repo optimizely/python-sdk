@@ -226,19 +226,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -301,7 +297,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide__feature_test__send_flag_decision_false(self):
@@ -311,19 +308,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -408,7 +401,8 @@ class UserContextTest(base.BaseTest):
             'rollout',
             expected.enabled,
             'test_user',
-            user_attributes
+            user_attributes,
+            None
         )
 
         # assert notification count
@@ -500,19 +494,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = None
         mock_variation = None
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.ROLLOUT, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.ROLLOUT
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -575,7 +565,8 @@ class UserContextTest(base.BaseTest):
             'rollout',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide_feature_null_variation__send_flag_decision_false(self):
@@ -585,19 +576,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = None
         mock_variation = None
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.ROLLOUT, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.ROLLOUT
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -656,19 +643,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -730,19 +713,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -801,19 +780,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -868,7 +843,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide__option__include_reasons__feature_test(self):
@@ -907,19 +883,15 @@ class UserContextTest(base.BaseTest):
 
         expected_experiment = project_config.get_experiment_from_key('211127')
         expected_var = project_config.get_variation_from_key('211127', '211229')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(expected_experiment, expected_var,
+                                                  enums.DecisionSources.ROLLOUT, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        expected_experiment,
-                        expected_var,
-                        enums.DecisionSources.ROLLOUT
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -984,7 +956,8 @@ class UserContextTest(base.BaseTest):
             'rollout',
             expected.enabled,
             'test_user',
-            user_attributes
+            user_attributes,
+            None
         )
 
     def test_decide__default_options__with__options(self):
@@ -996,19 +969,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                )
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ), mock.patch(
             'optimizely.notification_center.NotificationCenter.send_notifications'
         ) as mock_broadcast_decision, mock.patch(
@@ -1151,8 +1120,12 @@ class UserContextTest(base.BaseTest):
             mock_decision.experiment = mock.MagicMock(key='test_experiment')
             mock_decision.variation = mock.MagicMock(key='variation')
             mock_decision.source = enums.DecisionSources.FEATURE_TEST
-
-            mock_get_variations.return_value = [(mock_decision, [])]
+            get_variation_for_feature_return_value = {
+                'decision': mock_decision,
+                'reasons': [],
+                'error': False
+            }
+            mock_get_variations.return_value = [get_variation_for_feature_return_value]
 
             user_context.decide_for_keys(flags, options)
 
@@ -1416,18 +1389,15 @@ class UserContextTest(base.BaseTest):
 
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+        get_variation_for_feature_return_value = {
+            'decision': decision_service.Decision(mock_experiment, mock_variation,
+                                                  enums.DecisionSources.FEATURE_TEST, None),
+            'reasons': [],
+            'error': False
+        }
         with mock.patch(
             'optimizely.decision_service.DecisionService.get_variations_for_feature_list',
-            return_value=[
-                (
-                    decision_service.Decision(
-                        mock_experiment,
-                        mock_variation,
-                        enums.DecisionSources.FEATURE_TEST
-                    ),
-                    []
-                ),
-            ]
+            return_value=[get_variation_for_feature_return_value]
         ):
             user_context = opt_obj.create_user_context('test_user')
             decision = user_context.decide('test_feature_in_experiment', [DecideOption.DISABLE_DECISION_EVENT])
@@ -1546,7 +1516,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {}
+            {},
+            None
         )
 
         self.assertTrue('User "test_user" is in variation "control" of experiment test_experiment.'
