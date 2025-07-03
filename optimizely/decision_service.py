@@ -487,7 +487,6 @@ class DecisionService:
         # If so, handle CMAB-specific traffic allocation and decision logic.
         # Otherwise, proceed with standard bucketing logic for non-CMAB experiments.
         if experiment.cmab:
-            experiment.cmab
             cmab_decision_result = self._get_decision_for_cmab_experiment(project_config,
                                                                           experiment,
                                                                           user_context,

@@ -179,8 +179,16 @@ class Bucketer:
             project_config.logger.info(message)
             decide_reasons.append(message)
 
+        traffic_allocations: list[TrafficAllocation] = experiment.trafficAllocation
+        if experiment.cmab:
+            traffic_allocations = [
+                {
+                    "entityId": "$",
+                    "endOfRange": experiment.cmab['trafficAllocation']
+                }
+            ]
         # Bucket user if not in white-list and in group (if any)
         variation_id = self.find_bucket(project_config, bucketing_id,
-                                        experiment.id, experiment.trafficAllocation)
+                                        experiment.id, traffic_allocations)
 
         return variation_id, decide_reasons
