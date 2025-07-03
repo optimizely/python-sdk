@@ -5771,3 +5771,33 @@ class OptimizelyWithLoggingTest(base.BaseTest):
 
         mock_send_event.assert_called_with('fullstack', 'great', {'amazing': 'fantastic'}, {})
         mock_logger.error.assert_not_called()
+
+    def test_decide_returns_error_decision_when_decision_service_fails(self):
+        """Test that decide returns error decision when CMAB decision service fails."""
+        import copy
+        config_dict = copy.deepcopy(self.config_dict_with_features)
+        config_dict['experiments'][0]['cmab'] = {'attributeIds': ['808797688', '808797689'], 'trafficAllocation': 4000}
+        config_dict['experiments'][0]['trafficAllocation'] = []
+        opt_obj = optimizely.Optimizely(json.dumps(config_dict))
+        user_context = opt_obj.create_user_context('test_user')
+
+        # Mock decision service to return an error from CMAB
+        error_decision_result = {
+            'decision': decision_service.Decision(None, None, enums.DecisionSources.ROLLOUT, None),
+            'reasons': ['CMAB service failed to fetch decision'],
+            'error': True
+        }
+
+        with mock.patch.object(
+            opt_obj.decision_service, 'get_variations_for_feature_list',
+            return_value=[error_decision_result]
+        ):
+            # Call decide
+            decision = user_context.decide('test_feature_in_experiment')
+            print(decision.__dict__)
+            # Verify the decision contains the error information
+            self.assertFalse(decision.enabled)
+            self.assertIsNone(decision.variation_key)
+            self.assertIsNone(decision.rule_key)
+            self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
+            self.assertIn('CMAB service failed to fetch decision', decision.reasons)

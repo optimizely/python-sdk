@@ -52,12 +52,10 @@ class OptimizelyDecision:
     @classmethod
     def new_error_decision(cls, key: str, user: OptimizelyUserContext, reasons: list[str]) -> OptimizelyDecision:
         """Create a new OptimizelyDecision representing an error state.
-
         Args:
             key: The flag key
             user: The user context
             reasons: List of reasons explaining the error
-
         Returns:
             OptimizelyDecision with error state values
         """
