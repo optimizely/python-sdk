@@ -399,7 +399,7 @@ def hash128(key: bytes, seed: int = 0x0, x64arch: bool = True) -> int:
 
         return h4 << 96 | h3 << 64 | h2 << 32 | h1
 
-    key = bytearray(xencode(key))
+    key = bytes(xencode(key))
 
     if x64arch:
         return hash128_x64(key, seed)
