@@ -86,6 +86,7 @@ class EventFactory:
             return None
 
         user_context = first_event.event_context
+        region_value = user_context.region.value if hasattr(user_context.region, 'value') else user_context.region
         event_batch = payload.EventBatch(
             user_context.account_id,
             user_context.project_id,
@@ -93,7 +94,7 @@ class EventFactory:
             user_context.client_name,
             user_context.client_version,
             user_context.anonymize_ip,
-            user_context.region,
+            region_value,
             True,
         )
 
