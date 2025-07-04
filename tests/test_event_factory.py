@@ -98,6 +98,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -118,7 +119,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event__with_attributes(self):
@@ -162,6 +167,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -182,7 +188,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_when_attribute_is_not_in_datafile(self):
@@ -224,6 +234,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -244,7 +255,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_calls_is_attribute_valid(self):
@@ -287,6 +302,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         def side_effect(*args, **kwargs):
@@ -296,38 +312,38 @@ class EventFactoryTest(base.BaseTest):
 
             return False
 
-            attributes = {
-                'test_attribute': 'test_value',
-                'boolean_key': True,
-                'integer_key': 0,
-                'double_key': 5.5,
-            }
+        attributes = {
+            'test_attribute': 'test_value',
+            'boolean_key': True,
+            'integer_key': 0,
+            'double_key': 5.5,
+        }
 
-            with mock.patch('time.time', return_value=42.123), mock.patch(
-                'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-            ), mock.patch(
-                'optimizely.helpers.validator.is_attribute_valid', side_effect=side_effect,
-            ):
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'optimizely.helpers.validator.is_attribute_valid', side_effect=side_effect,
+        ):
 
-                event_obj = UserEventFactory.create_impression_event(
-                    self.project_config,
-                    self.project_config.get_experiment_from_key('test_experiment'),
-                    '111129',
-                    '',
-                    'experiment',
-                    'test_user',
-                    attributes,
-                )
-
-            log_event = EventFactory.create_log_event(event_obj, self.logger)
-
-            self._validate_event_object(
-                log_event,
-                EventFactory.EVENT_ENDPOINT,
-                expected_params,
-                EventFactory.HTTP_VERB,
-                EventFactory.HTTP_HEADERS,
+            event_obj = UserEventFactory.create_impression_event(
+                self.project_config,
+                self.project_config.get_experiment_from_key('test_experiment'),
+                '111129',
+                '',
+                'experiment',
+                'test_user',
+                attributes,
             )
+
+        log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        self._validate_event_object(
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
+        )
 
     def test_create_impression_event__with_user_agent_when_bot_filtering_is_enabled(self,):
         """ Test that create_impression_event creates Event object
@@ -377,6 +393,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -399,7 +416,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event__with_empty_attributes_when_bot_filtering_is_enabled(self,):
@@ -449,6 +470,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -471,7 +493,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event__with_user_agent_when_bot_filtering_is_disabled(self,):
@@ -527,6 +553,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -549,7 +576,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event(self):
@@ -582,6 +613,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -594,7 +626,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_attributes(self):
@@ -629,6 +665,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -641,7 +678,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_user_agent_when_bot_filtering_is_enabled(self,):
@@ -683,6 +724,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -697,7 +739,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_user_agent_when_bot_filtering_is_disabled(self,):
@@ -744,6 +790,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -758,7 +805,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_event_tags(self):
@@ -796,6 +847,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -812,7 +864,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_invalid_event_tags(self):
@@ -848,6 +904,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -864,7 +921,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__when_event_is_used_in_multiple_experiments(self):
@@ -902,6 +963,7 @@ class EventFactoryTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -918,5 +980,9 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )

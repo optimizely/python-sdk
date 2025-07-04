@@ -42,7 +42,10 @@ class EventFactory:
   to record the events via the Optimizely Events API ("https://developers.optimizely.com/x/events/api/index.html")
   """
 
-    EVENT_ENDPOINT: Final = 'https://logx.optimizely.com/v1/events'
+    EVENT_ENDPOINTS: Final = {
+        'US': 'https://logx.optimizely.com/v1/events',
+        'EU': 'https://eu.logx.optimizely.com/v1/events'
+    }
     HTTP_VERB: Final = 'POST'
     HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
     ACTIVATE_EVENT_KEY: Final = 'campaign_activated'
@@ -83,6 +86,7 @@ class EventFactory:
             return None
 
         user_context = first_event.event_context
+        region_value = user_context.region.value if hasattr(user_context.region, 'value') else user_context.region
         event_batch = payload.EventBatch(
             user_context.account_id,
             user_context.project_id,
@@ -90,6 +94,7 @@ class EventFactory:
             user_context.client_name,
             user_context.client_version,
             user_context.anonymize_ip,
+            region_value,
             True,
         )
 
@@ -97,7 +102,10 @@ class EventFactory:
 
         event_params = event_batch.get_event_params()
 
-        return log_event.LogEvent(cls.EVENT_ENDPOINT, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
+        region_str = user_context.region.value if hasattr(user_context.region, 'value') else str(user_context.region)
+        endpoint = cls.EVENT_ENDPOINTS.get(region_str, cls.EVENT_ENDPOINTS['US'])
+
+        return log_event.LogEvent(endpoint, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
     @classmethod
     def _create_visitor(cls, event: Optional[user_event.UserEvent], logger: Logger) -> Optional[payload.Visitor]:

@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Optional, Type, TypeVar, cast, Any, Iterable, List
 from sys import version_info
+from enum import Enum
 
 from . import entities
 from . import exceptions
@@ -40,6 +41,11 @@ SUPPORTED_VERSIONS = [
 RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 
 EntityClass = TypeVar('EntityClass')
+
+
+class Region(str, Enum):
+    US = 'US'
+    EU = 'EU'
 
 
 class ProjectConfig:
@@ -84,6 +90,13 @@ class ProjectConfig:
         self.public_key_for_odp: Optional[str] = None
         self.host_for_odp: Optional[str] = None
         self.all_segments: list[str] = []
+
+        region_value = config.get('region')
+        self.region: Region
+        if region_value == Region.EU.value:
+            self.region = Region.EU
+        else:
+            self.region = Region.US
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)

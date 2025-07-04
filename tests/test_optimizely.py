@@ -365,6 +365,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -380,6 +381,76 @@ class OptimizelyTest(base.BaseTest):
         self._validate_event_object(
             log_event.__dict__,
             'https://logx.optimizely.com/v1/events',
+            expected_params,
+            'POST',
+            {'Content-Type': 'application/json'},
+        )
+
+    def test_activate_with_eu_hosting(self):
+        """ Test that activate calls process with right params and returns expected variation. """
+        """ Test EU hosting for activate method. """
+
+        with mock.patch(
+                'optimizely.decision_service.DecisionService.get_variation',
+                return_value=(self.project_config.get_variation_from_id('test_experiment', '111129'), []),
+        ) as mock_decision, mock.patch('time.time', return_value=42), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'optimizely.event.event_processor.BatchEventProcessor.process'
+        ) as mock_process:
+            self.assertEqual('variation', self.optimizely.activate('test_experiment', 'test_user'))
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'decisions': [
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'test_experiment',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation',
+                                              'enabled': True},
+                                 }
+                            ],
+                            'events': [
+                                {
+                                    'timestamp': 42000,
+                                    'entity_id': '111182',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'campaign_activated',
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            'client_version': version.__version__,
+            'client_name': 'python-sdk',
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+            'region': 'EU',
+        }
+
+        log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
+        user_context = mock_decision.call_args[0][2]
+        user_profile_tracker = mock_decision.call_args[0][3]
+
+        mock_decision.assert_called_once_with(
+            self.project_config, self.project_config.get_experiment_from_key('test_experiment'),
+            user_context, user_profile_tracker
+        )
+        self.assertEqual(1, mock_process.call_count)
+
+        self._validate_event_object(
+            log_event.__dict__,
+            'https://eu.logx.optimizely.com/v1/events',
             expected_params,
             'POST',
             {'Content-Type': 'application/json'},
@@ -764,6 +835,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -848,6 +920,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1044,6 +1117,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1120,6 +1194,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1288,6 +1363,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1424,6 +1500,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1504,6 +1581,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
 
@@ -1560,6 +1638,7 @@ class OptimizelyTest(base.BaseTest):
             'account_id': '12001',
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1648,6 +1727,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -1703,6 +1783,7 @@ class OptimizelyTest(base.BaseTest):
             'account_id': '12001',
             'anonymize_ip': False,
             'revision': '42',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -2103,6 +2184,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '1',
+            'region': 'US',
         }
 
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
@@ -2204,6 +2286,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '1',
+            'region': 'US',
         }
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
 
@@ -2356,6 +2439,7 @@ class OptimizelyTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '1',
+            'region': 'US',
         }
         log_event = EventFactory.create_log_event(mock_process.call_args[0][0], self.optimizely.logger)
 

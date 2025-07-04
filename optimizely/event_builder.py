@@ -54,7 +54,10 @@ class EventBuilder:
     """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (batch). """
 
-    EVENTS_URL: Final = 'https://logx.optimizely.com/v1/events'
+    EVENTS_URLS: Final = {
+        'US': 'https://logx.optimizely.com/v1/events',
+        'EU': 'https://eu.logx.optimizely.com/v1/events'
+    }
     HTTP_VERB: Final = 'POST'
     HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
 
@@ -246,7 +249,8 @@ class EventBuilder:
 
     def create_impression_event(
         self, project_config: ProjectConfig, experiment: Experiment,
-        variation_id: str, user_id: str, attributes: UserAttributes
+        variation_id: str, user_id: str, attributes: UserAttributes,
+        region: str = 'US'
     ) -> Event:
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -266,11 +270,17 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
-        return Event(self.EVENTS_URL, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
+        params['region'] = project_config.region.value
+
+        region = project_config.region or 'US'
+        events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
+
+        return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
 
     def create_conversion_event(
         self, project_config: ProjectConfig, event_key: str,
-        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags
+        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags,
+        region: str = 'US'
     ) -> Event:
         """ Create conversion Event to be sent to the logging endpoint.
 
@@ -289,4 +299,10 @@ class EventBuilder:
         conversion_params = self._get_required_params_for_conversion(project_config, event_key, event_tags)
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
-        return Event(self.EVENTS_URL, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
+
+        params['region'] = project_config.region.value
+
+        region = project_config.region or 'US'
+        events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
+
+        return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
