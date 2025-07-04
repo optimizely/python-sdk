@@ -93,6 +93,7 @@ class EventFactory:
             user_context.client_name,
             user_context.client_version,
             user_context.anonymize_ip,
+            user_context.region,
             True,
         )
 
