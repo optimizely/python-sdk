@@ -102,8 +102,8 @@ class EventFactory:
 
         event_params = event_batch.get_event_params()
 
-        region = user_context.region or 'US'
-        endpoint = cls.EVENT_ENDPOINTS.get(region, cls.EVENT_ENDPOINTS['US'])
+        region_str = user_context.region.value if hasattr(user_context.region, 'value') else str(user_context.region)
+        endpoint = cls.EVENT_ENDPOINTS.get(region_str, cls.EVENT_ENDPOINTS['US'])
 
         return log_event.LogEvent(endpoint, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 
