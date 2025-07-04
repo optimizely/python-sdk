@@ -312,38 +312,38 @@ class EventFactoryTest(base.BaseTest):
 
             return False
 
-            attributes = {
-                'test_attribute': 'test_value',
-                'boolean_key': True,
-                'integer_key': 0,
-                'double_key': 5.5,
-            }
+        attributes = {
+            'test_attribute': 'test_value',
+            'boolean_key': True,
+            'integer_key': 0,
+            'double_key': 5.5,
+        }
 
-            with mock.patch('time.time', return_value=42.123), mock.patch(
-                'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
-            ), mock.patch(
-                'optimizely.helpers.validator.is_attribute_valid', side_effect=side_effect,
-            ):
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ), mock.patch(
+            'optimizely.helpers.validator.is_attribute_valid', side_effect=side_effect,
+        ):
 
-                event_obj = UserEventFactory.create_impression_event(
-                    self.project_config,
-                    self.project_config.get_experiment_from_key('test_experiment'),
-                    '111129',
-                    '',
-                    'experiment',
-                    'test_user',
-                    attributes,
-                )
-
-            log_event = EventFactory.create_log_event(event_obj, self.logger)
-
-            self._validate_event_object(
-                log_event,
-                EventFactory.EVENT_ENDPOINTS.get('US'),
-                expected_params,
-                EventFactory.HTTP_VERB,
-                EventFactory.HTTP_HEADERS,
+            event_obj = UserEventFactory.create_impression_event(
+                self.project_config,
+                self.project_config.get_experiment_from_key('test_experiment'),
+                '111129',
+                '',
+                'experiment',
+                'test_user',
+                attributes,
             )
+
+        log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        self._validate_event_object(
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
+        )
 
     def test_create_impression_event__with_user_agent_when_bot_filtering_is_enabled(self,):
         """ Test that create_impression_event creates Event object

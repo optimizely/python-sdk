@@ -208,6 +208,7 @@ class EventBuilderTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'do_you_know_me': 'test_value'},
+                'US'
             )
         self._validate_event_object(
             event_obj,
@@ -280,6 +281,7 @@ class EventBuilderTest(base.BaseTest):
                 '111129',
                 'test_user',
                 attributes,
+                'US',
             )
 
         self._validate_event_object(
@@ -346,6 +348,7 @@ class EventBuilderTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'$opt_user_agent': 'Edge'},
+                'US'
             )
 
         self._validate_event_object(
@@ -411,6 +414,7 @@ class EventBuilderTest(base.BaseTest):
                 '111129',
                 'test_user',
                 None,
+                'US'
             )
 
         self._validate_event_object(
@@ -482,6 +486,7 @@ class EventBuilderTest(base.BaseTest):
                 '111129',
                 'test_user',
                 {'$opt_user_agent': 'Chrome'},
+                'US'
             )
 
         self._validate_event_object(
@@ -529,7 +534,7 @@ class EventBuilderTest(base.BaseTest):
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', None, None
+                self.project_config, 'test_event', 'test_user', None, None, 'US'
             )
         self._validate_event_object(
             event_obj,
@@ -578,7 +583,7 @@ class EventBuilderTest(base.BaseTest):
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', {'test_attribute': 'test_value'}, None,
+                self.project_config, 'test_event', 'test_user', {'test_attribute': 'test_value'}, None, 'US'
             )
         self._validate_event_object(
             event_obj,
@@ -636,7 +641,7 @@ class EventBuilderTest(base.BaseTest):
             'optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=True,
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None,
+                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None, 'US'
             )
 
         self._validate_event_object(
@@ -700,7 +705,7 @@ class EventBuilderTest(base.BaseTest):
             'optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=False,
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None,
+                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None, 'US'
             )
 
         self._validate_event_object(
@@ -758,6 +763,7 @@ class EventBuilderTest(base.BaseTest):
                 'test_user',
                 {'test_attribute': 'test_value'},
                 {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
+                'US'
             )
         self._validate_event_object(
             event_obj,
@@ -812,6 +818,7 @@ class EventBuilderTest(base.BaseTest):
                 'test_user',
                 {'test_attribute': 'test_value'},
                 {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
+                'US'
             )
         self._validate_event_object(
             event_obj,
@@ -868,6 +875,7 @@ class EventBuilderTest(base.BaseTest):
                 'test_user',
                 {'test_attribute': 'test_value'},
                 {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
+                'US'
             )
         self._validate_event_object(
             event_obj,
