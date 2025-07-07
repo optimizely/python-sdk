@@ -119,6 +119,34 @@ class Bucketer:
             and array of log messages representing decision making.
      */.
         """
+        variation_id, decide_reasons = self.bucket_to_entity_id(project_config, experiment, user_id, bucketing_id)
+        if variation_id:
+            variation = project_config.get_variation_from_id_by_experiment_id(experiment.id, variation_id)
+            return variation, decide_reasons
+
+        else:
+            message = 'Bucketed into an empty traffic range. Returning nil.'
+            project_config.logger.info(message)
+            decide_reasons.append(message)
+
+        return None, decide_reasons
+
+    def bucket_to_entity_id(
+        self, project_config: ProjectConfig,
+        experiment: Experiment, user_id: str, bucketing_id: str
+    ) -> tuple[Optional[str], list[str]]:
+        """
+        For a given experiment and bucketing ID determines variation ID to be shown to user.
+
+        Args:
+            project_config: Instance of ProjectConfig.
+            experiment: The experiment object (used for group/groupPolicy logic if needed).
+            user_id: The user ID string.
+            bucketing_id: The bucketing ID string for the user.
+
+        Returns:
+            Tuple of (entity_id or None, list of decide reasons).
+        """
         decide_reasons: list[str] = []
         if not experiment:
             return None, decide_reasons
@@ -151,16 +179,16 @@ class Bucketer:
             project_config.logger.info(message)
             decide_reasons.append(message)
 
+        traffic_allocations: list[TrafficAllocation] = experiment.trafficAllocation
+        if experiment.cmab:
+            traffic_allocations = [
+                {
+                    "entityId": "$",
+                    "endOfRange": experiment.cmab['trafficAllocation']
+                }
+            ]
         # Bucket user if not in white-list and in group (if any)
         variation_id = self.find_bucket(project_config, bucketing_id,
-                                        experiment.id, experiment.trafficAllocation)
-        if variation_id:
-            variation = project_config.get_variation_from_id_by_experiment_id(experiment.id, variation_id)
-            return variation, decide_reasons
+                                        experiment.id, traffic_allocations)
 
-        else:
-            message = 'Bucketed into an empty traffic range. Returning nil.'
-            project_config.logger.info(message)
-            decide_reasons.append(message)
-
-        return None, decide_reasons
+        return variation_id, decide_reasons

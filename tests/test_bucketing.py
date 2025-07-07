@@ -337,7 +337,12 @@ class BucketerWithLoggingTest(base.BaseTest):
                 variation
             )
         mock_config_logging.debug.assert_called_once_with('Assigned bucket 8400 to user with bucketing ID "test_user".')
-        mock_config_logging.info.assert_called_once_with('User "test_user" is in no experiment.')
+        mock_config_logging.info.assert_has_calls(
+            [
+                mock.call('User "test_user" is in no experiment.'),
+                mock.call('Bucketed into an empty traffic range. Returning nil.')
+            ]
+        )
 
         # In group, no matching experiment
         with mock.patch(
@@ -378,8 +383,11 @@ class BucketerWithLoggingTest(base.BaseTest):
                 variation
             )
         mock_config_logging.debug.assert_called_once_with('Assigned bucket 42 to user with bucketing ID "test_user".')
-        mock_config_logging.info.assert_called_once_with(
-            'User "test_user" is not in experiment "group_exp_2" of group 19228.'
+        mock_config_logging.info.assert_has_calls(
+            [
+                mock.call('User "test_user" is not in experiment "group_exp_2" of group 19228.'),
+                mock.call('Bucketed into an empty traffic range. Returning nil.')
+            ]
         )
 
         # In group no matching variation
