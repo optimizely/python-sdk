@@ -5794,7 +5794,7 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         ):
             # Call decide
             decision = user_context.decide('test_feature_in_experiment')
-            print(decision.__dict__)
+
             # Verify the decision contains the error information
             self.assertFalse(decision.enabled)
             self.assertIsNone(decision.variation_key)

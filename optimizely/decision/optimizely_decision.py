@@ -66,5 +66,5 @@ class OptimizelyDecision:
             rule_key=None,
             flag_key=key,
             user_context=user,
-            reasons=[reasons[-1]] if reasons else []
+            reasons=reasons if reasons else []
         )
