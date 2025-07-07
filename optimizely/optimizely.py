@@ -721,9 +721,9 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision_result = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
-        decision = decision_result['decision']
-        cmab_uuid = decision_result['decision'].cmab_uuid
+        decision = self.decision_service.get_variation_for_feature(project_config, feature, user_context)['decision']
+        cmab_uuid = decision.cmab_uuid
+
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
