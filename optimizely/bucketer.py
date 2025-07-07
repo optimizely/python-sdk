@@ -124,7 +124,7 @@ class Bucketer:
             variation = project_config.get_variation_from_id_by_experiment_id(experiment.id, variation_id)
             return variation, decide_reasons
 
-        elif not decide_reasons:
+        else:
             message = 'Bucketed into an empty traffic range. Returning nil.'
             project_config.logger.info(message)
             decide_reasons.append(message)
