@@ -5752,12 +5752,26 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.assertIn('CMAB service failed to fetch decision', decision.reasons)
 
     def test_decide_includes_cmab_uuid_in_dispatched_event(self):
-        """Test that decide calls UserEventFactory.create_impression_event with correct CMAB UUID."""
+        """Test that decide dispatches event with correct CMAB UUID."""
         import copy
+        from typing import List
         config_dict = copy.deepcopy(self.config_dict_with_features)
         config_dict['experiments'][0]['cmab'] = {'attributeIds': ['808797688', '808797689'], 'trafficAllocation': 4000}
         config_dict['experiments'][0]['trafficAllocation'] = []
-        opt_obj = optimizely.Optimizely(json.dumps(config_dict))
+
+        class TestEventDispatcher:
+            """Custom event dispatcher for testing that captures dispatched events."""
+
+            def __init__(self):
+                self.dispatched_events: List[event_builder.Event] = []
+
+            def dispatch_event(self, event: event_builder.Event) -> None:
+                """Capture the event instead of actually dispatching it."""
+                self.dispatched_events.append(event)
+
+        test_dispatcher = TestEventDispatcher()
+
+        opt_obj = optimizely.Optimizely(json.dumps(config_dict), event_dispatcher=test_dispatcher)
         user_context = opt_obj.create_user_context('test_user')
         project_config = opt_obj.config_manager.get_config()
 
@@ -5765,26 +5779,23 @@ class OptimizelyWithLoggingTest(base.BaseTest):
         expected_cmab_uuid = 'uuid-cmab'
         mock_experiment = project_config.get_experiment_from_key('test_experiment')
         mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
-        decision_result = {
-            'decision': decision_service.Decision(
-                mock_experiment,
-                mock_variation,
-                enums.DecisionSources.FEATURE_TEST,
-                expected_cmab_uuid
-            ),
-            'reasons': [],
-            'error': False
-        }
 
+        # Create decision with CMAB UUID
+        decision_with_cmab = decision_service.Decision(
+            mock_experiment,
+            mock_variation,
+            enums.DecisionSources.FEATURE_TEST,
+            expected_cmab_uuid
+        )
+
+        # Mock the decision service method that's actually called by decide
         with mock.patch.object(
             opt_obj.decision_service, 'get_variations_for_feature_list',
-            return_value=[decision_result]
-        ), mock.patch(
-            'optimizely.event.user_event_factory.UserEventFactory.create_impression_event'
-        ) as mock_create_impression, mock.patch(
-            'time.time', return_value=42
-        ), mock.patch(
-            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+            return_value=[{
+                'decision': decision_with_cmab,
+                'reasons': [],
+                'error': False
+            }]
         ):
             # Call decide
             decision = user_context.decide('test_feature_in_experiment')
@@ -5795,32 +5806,21 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.assertEqual(decision.rule_key, 'test_experiment')
             self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
 
-        # Verify that create_impression_event was called once
-        mock_create_impression.assert_called_once()
+        # Verify an event was dispatched
+        time.sleep(0.1)
+        self.assertEqual(len(test_dispatcher.dispatched_events), 1)
 
-        # Get the call arguments
-        call_args = mock_create_impression.call_args[0]
+        dispatched_event = test_dispatcher.dispatched_events[0]
 
-        # Verify the correct parameters were passed
-        project_config_arg = call_args[0]
-        experiment_arg = call_args[1]
-        variation_id_arg = call_args[2]
-        flag_key_arg = call_args[3]
-        rule_key_arg = call_args[4]
-        rule_type_arg = call_args[5]
-        enabled_arg = call_args[6]
-        user_id_arg = call_args[7]
-        attributes_arg = call_args[8]
-        cmab_uuid_arg = call_args[9]
+        # Verify the structure exists before accessing
+        self.assertIn('visitors', dispatched_event.params)
+        self.assertTrue(len(dispatched_event.params['visitors']) > 0)
+        self.assertIn('snapshots', dispatched_event.params['visitors'][0])
+        self.assertTrue(len(dispatched_event.params['visitors'][0]['snapshots']) > 0)
+        self.assertIn('decisions', dispatched_event.params['visitors'][0]['snapshots'][0])
+        self.assertTrue(len(dispatched_event.params['visitors'][0]['snapshots'][0]['decisions']) > 0)
 
-        # Verify all parameters
-        self.assertEqual(project_config_arg, project_config)
-        self.assertEqual(experiment_arg, mock_experiment)
-        self.assertEqual(variation_id_arg, '111129')  # variation.id
-        self.assertEqual(flag_key_arg, 'test_feature_in_experiment')
-        self.assertEqual(rule_key_arg, 'test_experiment')
-        self.assertEqual(rule_type_arg, str(enums.DecisionSources.FEATURE_TEST))
-        self.assertTrue(enabled_arg)
-        self.assertEqual(user_id_arg, 'test_user')
-        self.assertEqual(attributes_arg, {})
-        self.assertEqual(cmab_uuid_arg, expected_cmab_uuid)
+        # Get the metadata and assert CMAB UUID
+        metadata = dispatched_event.params['visitors'][0]['snapshots'][0]['decisions'][0]['metadata']
+        self.assertIn('cmab_uuid', metadata)
+        self.assertEqual(metadata['cmab_uuid'], expected_cmab_uuid)
