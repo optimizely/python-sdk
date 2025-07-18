@@ -4890,57 +4890,6 @@ class OptimizelyTest(base.BaseTest):
 
         client.close()
 
-    def test_get_variation_with_cmab_uuid(self):
-        """ Test that get_variation works correctly with CMAB UUID. """
-        expected_cmab_uuid = "get-variation-cmab-uuid"
-        variation_result = {
-            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
-            'cmab_uuid': expected_cmab_uuid,
-            'reasons': [],
-            'error': False
-        }
-
-        with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation',
-            return_value=variation_result,
-        ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
-            variation = self.optimizely.get_variation('test_experiment', 'test_user')
-            self.assertEqual('variation', variation)
-
-        # Verify decision notification is sent with correct parameters
-        mock_broadcast.assert_any_call(
-            enums.NotificationTypes.DECISION,
-            'ab-test',
-            'test_user',
-            {},
-            {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
-        )
-
-    def test_get_variation_without_cmab_uuid(self):
-        """ Test that get_variation works correctly when CMAB UUID is None. """
-        variation_result = {
-            'variation': self.project_config.get_variation_from_id('test_experiment', '111129'),
-            'cmab_uuid': None,
-            'reasons': [],
-            'error': False
-        }
-
-        with mock.patch(
-            'optimizely.decision_service.DecisionService.get_variation',
-            return_value=variation_result,
-        ), mock.patch('optimizely.notification_center.NotificationCenter.send_notifications') as mock_broadcast:
-            variation = self.optimizely.get_variation('test_experiment', 'test_user')
-            self.assertEqual('variation', variation)
-
-        # Verify decision notification is sent correctly
-        mock_broadcast.assert_any_call(
-            enums.NotificationTypes.DECISION,
-            'ab-test',
-            'test_user',
-            {},
-            {'experiment_key': 'test_experiment', 'variation_key': 'variation'},
-        )
-
 
 class OptimizelyWithExceptionTest(base.BaseTest):
     def setUp(self):
@@ -5801,3 +5750,77 @@ class OptimizelyWithLoggingTest(base.BaseTest):
             self.assertIsNone(decision.rule_key)
             self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
             self.assertIn('CMAB service failed to fetch decision', decision.reasons)
+
+    def test_decide_includes_cmab_uuid_in_dispatched_event(self):
+        """Test that decide calls UserEventFactory.create_impression_event with correct CMAB UUID."""
+        import copy
+        config_dict = copy.deepcopy(self.config_dict_with_features)
+        config_dict['experiments'][0]['cmab'] = {'attributeIds': ['808797688', '808797689'], 'trafficAllocation': 4000}
+        config_dict['experiments'][0]['trafficAllocation'] = []
+        opt_obj = optimizely.Optimizely(json.dumps(config_dict))
+        user_context = opt_obj.create_user_context('test_user')
+        project_config = opt_obj.config_manager.get_config()
+
+        # Mock decision service to return a CMAB result
+        expected_cmab_uuid = 'uuid-cmab'
+        mock_experiment = project_config.get_experiment_from_key('test_experiment')
+        mock_variation = project_config.get_variation_from_id('test_experiment', '111129')
+        decision_result = {
+            'decision': decision_service.Decision(
+                mock_experiment,
+                mock_variation,
+                enums.DecisionSources.FEATURE_TEST,
+                expected_cmab_uuid
+            ),
+            'reasons': [],
+            'error': False
+        }
+
+        with mock.patch.object(
+            opt_obj.decision_service, 'get_variations_for_feature_list',
+            return_value=[decision_result]
+        ), mock.patch(
+            'optimizely.event.user_event_factory.UserEventFactory.create_impression_event'
+        ) as mock_create_impression, mock.patch(
+            'time.time', return_value=42
+        ), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            # Call decide
+            decision = user_context.decide('test_feature_in_experiment')
+
+            # Verify the decision contains the expected information
+            self.assertTrue(decision.enabled)
+            self.assertEqual(decision.variation_key, 'variation')
+            self.assertEqual(decision.rule_key, 'test_experiment')
+            self.assertEqual(decision.flag_key, 'test_feature_in_experiment')
+
+        # Verify that create_impression_event was called once
+        mock_create_impression.assert_called_once()
+
+        # Get the call arguments
+        call_args = mock_create_impression.call_args[0]
+
+        # Verify the correct parameters were passed
+        project_config_arg = call_args[0]
+        experiment_arg = call_args[1]
+        variation_id_arg = call_args[2]
+        flag_key_arg = call_args[3]
+        rule_key_arg = call_args[4]
+        rule_type_arg = call_args[5]
+        enabled_arg = call_args[6]
+        user_id_arg = call_args[7]
+        attributes_arg = call_args[8]
+        cmab_uuid_arg = call_args[9]
+
+        # Verify all parameters
+        self.assertEqual(project_config_arg, project_config)
+        self.assertEqual(experiment_arg, mock_experiment)
+        self.assertEqual(variation_id_arg, '111129')  # variation.id
+        self.assertEqual(flag_key_arg, 'test_feature_in_experiment')
+        self.assertEqual(rule_key_arg, 'test_experiment')
+        self.assertEqual(rule_type_arg, str(enums.DecisionSources.FEATURE_TEST))
+        self.assertTrue(enabled_arg)
+        self.assertEqual(user_id_arg, 'test_user')
+        self.assertEqual(attributes_arg, {})
+        self.assertEqual(cmab_uuid_arg, expected_cmab_uuid)
