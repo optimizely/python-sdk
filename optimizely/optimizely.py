@@ -44,11 +44,17 @@ from .odp.odp_manager import OdpManager
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .project_config import ProjectConfig
+from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
+from .cmab.cmab_service import DefaultCmabService, CmabCacheValue
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
     from .user_profile import UserProfileService
     from .helpers.event_tag_utils import EventTags
+
+# Default constants for CMAB cache
+DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60 * 1000  # 30 minutes in milliseconds
+DEFAULT_CMAB_CACHE_SIZE = 1000
 
 
 class Optimizely:
@@ -69,7 +75,7 @@ class Optimizely:
             datafile_access_token: Optional[str] = None,
             default_decide_options: Optional[list[str]] = None,
             event_processor_options: Optional[dict[str, Any]] = None,
-            settings: Optional[OptimizelySdkSettings] = None
+            settings: Optional[OptimizelySdkSettings] = None,
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -169,7 +175,19 @@ class Optimizely:
         self._setup_odp(self.config_manager.get_sdk_key())
 
         self.event_builder = event_builder.EventBuilder()
-        self.decision_service = decision_service.DecisionService(self.logger, user_profile_service)
+
+        # Initialize CMAB components
+        self.cmab_client = DefaultCmabClient(
+            retry_config=CmabRetryConfig(),
+            logger=self.logger
+        )
+        self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
+        self.cmab_service = DefaultCmabService(
+            cmab_cache=self.cmab_cache,
+            cmab_client=self.cmab_client,
+            logger=self.logger
+        )
+        self.decision_service = decision_service.DecisionService(self.logger, user_profile_service, self.cmab_service)
         self.user_profile_service = user_profile_service
 
     def _validate_instantiation_options(self) -> None:
@@ -339,7 +357,8 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision_result = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision = decision_result['decision']
 
         if decision.variation:
 
@@ -426,7 +445,9 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
+        decision = self.decision_service.get_variation_for_feature(project_config,
+                                                                   feature_flag,
+                                                                   user_context)['decision']
 
         if decision.variation:
 
@@ -634,10 +655,9 @@ class Optimizely:
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
         user_profile_tracker = user_profile.UserProfileTracker(user_id, self.user_profile_service, self.logger)
         user_profile_tracker.load_user_profile()
-        variation, _ = self.decision_service.get_variation(project_config,
-                                                           experiment,
-                                                           user_context,
-                                                           user_profile_tracker)
+        variation_result = self.decision_service.get_variation(project_config, experiment,
+                                                               user_context, user_profile_tracker)
+        variation = variation_result['variation']
         user_profile_tracker.save_user_profile()
         if variation:
             variation_key = variation.key
@@ -698,7 +718,7 @@ class Optimizely:
 
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
-        decision, _ = self.decision_service.get_variation_for_feature(project_config, feature, user_context)
+        decision = self.decision_service.get_variation_for_feature(project_config, feature, user_context)['decision']
         is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
@@ -1338,7 +1358,7 @@ class Optimizely:
             decision_reasons_dict[key] += decision_reasons
 
             if variation:
-                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST)
+                decision = Decision(None, variation, enums.DecisionSources.FEATURE_TEST, None)
                 flag_decisions[key] = decision
             else:
                 flags_without_forced_decision.append(feature_flag)
@@ -1349,11 +1369,18 @@ class Optimizely:
             user_context,
             merged_decide_options
         )
-
         for i in range(0, len(flags_without_forced_decision)):
-            decision = decision_list[i][0]
-            reasons = decision_list[i][1]
+            decision = decision_list[i]['decision']
+            reasons = decision_list[i]['reasons']
+            error = decision_list[i]['error']
             flag_key = flags_without_forced_decision[i].key
+            # store error decision against key and remove key from valid keys
+            if error:
+                optimizely_decision = OptimizelyDecision.new_error_decision(flags_without_forced_decision[i].key,
+                                                                            user_context, reasons)
+                decisions[flag_key] = optimizely_decision
+                if flag_key in valid_keys:
+                    valid_keys.remove(flag_key)
             flag_decisions[flag_key] = decision
             decision_reasons_dict[flag_key] += reasons
 

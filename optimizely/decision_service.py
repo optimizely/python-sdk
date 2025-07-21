@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict
 
 from . import bucketer
 from . import entities
@@ -23,6 +23,8 @@ from .helpers import experiment as experiment_helper
 from .helpers import validator
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .user_profile import UserProfile, UserProfileService, UserProfileTracker
+from .cmab.cmab_service import DefaultCmabService, CmabDecision
+from optimizely.helpers.enums import Errors
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -30,21 +32,71 @@ if TYPE_CHECKING:
     from .logger import Logger
 
 
+class CmabDecisionResult(TypedDict):
+    """
+    TypedDict representing the result of a CMAB (Contextual Multi-Armed Bandit) decision.
+
+    Attributes:
+        error (bool): Indicates whether an error occurred during the decision process.
+        result (Optional[CmabDecision]): Resulting CmabDecision object if the decision was successful, otherwise None.
+        reasons (List[str]): A list of reasons or messages explaining the outcome or any errors encountered.
+    """
+    error: bool
+    result: Optional[CmabDecision]
+    reasons: List[str]
+
+
+class VariationResult(TypedDict):
+    """
+    TypedDict representing the result of a variation decision process.
+
+    Attributes:
+        cmab_uuid (Optional[str]): The unique identifier for the CMAB experiment, if applicable.
+        error (bool): Indicates whether an error occurred during the decision process.
+        reasons (List[str]): A list of reasons explaining the outcome or any errors encountered.
+        variation (Optional[entities.Variation]): The selected variation entity, or None if no variation was assigned.
+    """
+    cmab_uuid: Optional[str]
+    error: bool
+    reasons: List[str]
+    variation: Optional[entities.Variation]
+
+
+class DecisionResult(TypedDict):
+    """
+    A TypedDict representing the result of a decision process.
+
+    Attributes:
+        decision (Decision): The decision object containing the outcome of the evaluation.
+        error (bool): Indicates whether an error occurred during the decision process.
+        reasons (List[str]): A list of reasons explaining the decision or any errors encountered.
+    """
+    decision: Decision
+    error: bool
+    reasons: List[str]
+
+
 class Decision(NamedTuple):
-    """Named tuple containing selected experiment, variation and source.
+    """Named tuple containing selected experiment, variation, source and cmab_uuid.
     None if no experiment/variation was selected."""
     experiment: Optional[entities.Experiment]
     variation: Optional[entities.Variation]
     source: Optional[str]
+    cmab_uuid: Optional[str]
 
 
 class DecisionService:
     """ Class encapsulating all decision related capabilities. """
 
-    def __init__(self, logger: Logger, user_profile_service: Optional[UserProfileService]):
+    def __init__(self,
+                 logger: Logger,
+                 user_profile_service: Optional[UserProfileService],
+                 cmab_service: DefaultCmabService):
         self.bucketer = bucketer.Bucketer()
         self.logger = logger
         self.user_profile_service = user_profile_service
+        self.cmab_service = cmab_service
+        self.cmab_uuid = None
 
         # Map of user IDs to another map of experiments to variations.
         # This contains all the forced variations set by the user
@@ -75,6 +127,74 @@ class DecisionService:
             decide_reasons.append(message)
 
         return user_id, decide_reasons
+
+    def _get_decision_for_cmab_experiment(
+        self,
+        project_config: ProjectConfig,
+        experiment: entities.Experiment,
+        user_context: OptimizelyUserContext,
+        bucketing_id: str,
+        options: Optional[Sequence[str]] = None
+    ) -> CmabDecisionResult:
+        """
+        Retrieves a decision for a contextual multi-armed bandit (CMAB) experiment.
+
+        Args:
+            project_config: Instance of ProjectConfig.
+            experiment: The experiment object for which the decision is to be made.
+            user_context: The user context containing user id and attributes.
+            bucketing_id: The bucketing ID to use for traffic allocation.
+            options: Optional sequence of decide options.
+
+        Returns:
+            A dictionary containing:
+            - "error": Boolean indicating if there was an error.
+            - "result": The CmabDecision result or None if error.
+            - "reasons": List of strings with reasons or error messages.
+        """
+        decide_reasons: list[str] = []
+        user_id = user_context.user_id
+
+        # Check if user is in CMAB traffic allocation
+        bucketed_entity_id, bucket_reasons = self.bucketer.bucket_to_entity_id(
+            project_config, experiment, user_id, bucketing_id
+        )
+        decide_reasons.extend(bucket_reasons)
+
+        if not bucketed_entity_id:
+            message = f'User "{user_context.user_id}" not in CMAB experiment ' \
+                      f'"{experiment.key}" due to traffic allocation.'
+            self.logger.info(message)
+            decide_reasons.append(message)
+            return {
+                "error": False,
+                "result": None,
+                "reasons": decide_reasons,
+            }
+
+        # User is in CMAB allocation, proceed to CMAB decision
+        try:
+            options_list = list(options) if options is not None else []
+            cmab_decision = self.cmab_service.get_decision(
+                project_config, user_context, experiment.id, options_list
+            )
+            return {
+                "error": False,
+                "result": cmab_decision,
+                "reasons": decide_reasons,
+            }
+        except Exception as e:
+            error_message = Errors.CMAB_FETCH_FAILED_DETAILED.format(
+                experiment.key
+            )
+            decide_reasons.append(error_message)
+            if self.logger:
+                self.logger.error(f'{error_message} {str(e)}')
+            return {
+                "error": True,
+                "result": None,
+                "reasons": decide_reasons,
+            }
 
     def set_forced_variation(
         self, project_config: ProjectConfig, experiment_key: str,
@@ -250,29 +370,38 @@ class DecisionService:
         user_profile_tracker: Optional[UserProfileTracker],
         reasons: list[str] = [],
         options: Optional[Sequence[str]] = None
-    ) -> tuple[Optional[entities.Variation], list[str]]:
-        """ Top-level function to help determine variation user should be put in.
+    ) -> VariationResult:
+        """
+        Determines the variation a user should be assigned to for a given experiment.
 
-        First, check if experiment is running.
-        Second, check if user is forced in a variation.
-        Third, check if there is a stored decision for the user and return the corresponding variation.
-        Fourth, figure out if user is in the experiment by evaluating audience conditions if any.
-        Fifth, bucket the user and return the variation.
+        The decision process is as follows:
+        1. Check if the experiment is running.
+        2. Check if the user is forced into a variation via the forced variation map.
+        3. Check if the user is whitelisted into a variation for the experiment.
+        4. If user profile tracking is enabled and not ignored, check for a stored variation.
+        5. Evaluate audience conditions to determine if the user qualifies for the experiment.
+        6. For CMAB experiments:
+            a. Check if the user is in the CMAB traffic allocation.
+            b. If so, fetch the CMAB decision and assign the corresponding variation and cmab_uuid.
+        7. For non-CMAB experiments, bucket the user into a variation.
+        8. If a variation is assigned, optionally update the user profile.
 
         Args:
-          project_config: Instance of ProjectConfig.
-          experiment: Experiment for which user variation needs to be determined.
-          user_context: contains user id and attributes.
-          user_profile_tracker: tracker for reading and updating user profile of the user.
-          reasons: Decision reasons.
-          options: Decide options.
+            project_config: Instance of ProjectConfig.
+            experiment: Experiment for which the user's variation needs to be determined.
+            user_context: Contains user id and attributes.
+            user_profile_tracker: Tracker for reading and updating the user's profile.
+            reasons: List of decision reasons.
+            options: Decide options.
 
         Returns:
-          Variation user should see. None if user is not in experiment or experiment is not running
-          And an array of log messages representing decision making.
+            A VariationResult dictionary with:
+                - 'variation': The assigned Variation (or None if not assigned).
+                - 'reasons': A list of log messages representing decision making.
+                - 'cmab_uuid': The cmab_uuid if the experiment is a CMAB experiment, otherwise None.
+                - 'error': Boolean indicating if an error occurred during the decision process.
         """
         user_id = user_context.user_id
-
         if options:
             ignore_user_profile = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
         else:
@@ -286,20 +415,35 @@ class DecisionService:
             message = f'Experiment "{experiment.key}" is not running.'
             self.logger.info(message)
             decide_reasons.append(message)
-            return None, decide_reasons
+            return {
+                'cmab_uuid': None,
+                'error': False,
+                'reasons': decide_reasons,
+                'variation': None
+            }
 
         # Check if the user is forced into a variation
         variation: Optional[entities.Variation]
         variation, reasons_received = self.get_forced_variation(project_config, experiment.key, user_id)
         decide_reasons += reasons_received
         if variation:
-            return variation, decide_reasons
+            return {
+                'cmab_uuid': None,
+                'error': False,
+                'reasons': decide_reasons,
+                'variation': variation
+            }
 
         # Check to see if user is white-listed for a certain variation
         variation, reasons_received = self.get_whitelisted_variation(project_config, experiment, user_id)
         decide_reasons += reasons_received
         if variation:
-            return variation, decide_reasons
+            return {
+                'cmab_uuid': None,
+                'error': False,
+                'reasons': decide_reasons,
+                'variation': variation
+            }
 
         # Check to see if user has a decision available for the given experiment
         if user_profile_tracker is not None and not ignore_user_profile:
@@ -309,11 +453,16 @@ class DecisionService:
                           f'"{experiment}" for user "{user_id}" from user profile.'
                 self.logger.info(message)
                 decide_reasons.append(message)
-                return variation, decide_reasons
+                return {
+                    'cmab_uuid': None,
+                    'error': False,
+                    'reasons': decide_reasons,
+                    'variation': variation
+                }
             else:
                 self.logger.warning('User profile has invalid format.')
 
-        # Bucket user and store the new decision
+        # Check audience conditions
         audience_conditions = experiment.get_audience_conditions_or_ids()
         user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(
             project_config, audience_conditions,
@@ -325,13 +474,45 @@ class DecisionService:
             message = f'User "{user_id}" does not meet conditions to be in experiment "{experiment.key}".'
             self.logger.info(message)
             decide_reasons.append(message)
-            return None, decide_reasons
+            return {
+                'cmab_uuid': None,
+                'error': False,
+                'reasons': decide_reasons,
+                'variation': None
+            }
 
         # Determine bucketing ID to be used
         bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, user_context.get_user_attributes())
         decide_reasons += bucketing_id_reasons
-        variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
-        decide_reasons += bucket_reasons
+        cmab_uuid = None
+
+        # Check if this is a CMAB experiment
+        # If so, handle CMAB-specific traffic allocation and decision logic.
+        # Otherwise, proceed with standard bucketing logic for non-CMAB experiments.
+        if experiment.cmab:
+            cmab_decision_result = self._get_decision_for_cmab_experiment(project_config,
+                                                                          experiment,
+                                                                          user_context,
+                                                                          bucketing_id,
+                                                                          options)
+            decide_reasons += cmab_decision_result.get('reasons', [])
+            cmab_decision = cmab_decision_result.get('result')
+            if cmab_decision_result['error']:
+                return {
+                    'cmab_uuid': None,
+                    'error': True,
+                    'reasons': decide_reasons,
+                    'variation': None
+                }
+            variation_id = cmab_decision['variation_id'] if cmab_decision else None
+            cmab_uuid = cmab_decision['cmab_uuid'] if cmab_decision else None
+            variation = project_config.get_variation_from_id(experiment_key=experiment.key,
+                                                             variation_id=variation_id) if variation_id else None
+        else:
+            # Bucket the user
+            variation, bucket_reasons = self.bucketer.bucket(project_config, experiment, user_id, bucketing_id)
+            decide_reasons += bucket_reasons
+
         if isinstance(variation, entities.Variation):
             message = f'User "{user_id}" is in variation "{variation.key}" of experiment {experiment.key}.'
             self.logger.info(message)
@@ -342,11 +523,21 @@ class DecisionService:
                     user_profile_tracker.update_user_profile(experiment, variation)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
-            return variation, decide_reasons
+            return {
+                'cmab_uuid': cmab_uuid,
+                'error': False,
+                'reasons': decide_reasons,
+                'variation': variation
+            }
         message = f'User "{user_id}" is in no variation.'
         self.logger.info(message)
         decide_reasons.append(message)
-        return None, decide_reasons
+        return {
+            'cmab_uuid': None,
+            'error': False,
+            'reasons': decide_reasons,
+            'variation': None
+        }
 
     def get_variation_for_rollout(
         self, project_config: ProjectConfig, feature: entities.FeatureFlag, user_context: OptimizelyUserContext
@@ -370,7 +561,7 @@ class DecisionService:
         attributes = user_context.get_user_attributes()
 
         if not feature or not feature.rolloutId:
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
         rollout = project_config.get_rollout_from_id(feature.rolloutId)
 
@@ -378,7 +569,7 @@ class DecisionService:
             message = f'There is no rollout of feature {feature.key}.'
             self.logger.debug(message)
             decide_reasons.append(message)
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
         rollout_rules = project_config.get_rollout_experiments(rollout)
 
@@ -386,7 +577,7 @@ class DecisionService:
             message = f'Rollout {rollout.id} has no experiments.'
             self.logger.debug(message)
             decide_reasons.append(message)
-            return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+            return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
         index = 0
         while index < len(rollout_rules):
@@ -401,7 +592,7 @@ class DecisionService:
 
             if forced_decision_variation:
                 return Decision(experiment=rule, variation=forced_decision_variation,
-                                source=enums.DecisionSources.ROLLOUT), decide_reasons
+                                source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
             bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
             decide_reasons += bucket_reasons
@@ -435,7 +626,7 @@ class DecisionService:
                     self.logger.debug(message)
                     decide_reasons.append(message)
                     return Decision(experiment=rule, variation=bucketed_variation,
-                                    source=enums.DecisionSources.ROLLOUT), decide_reasons
+                                    source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
                 elif not everyone_else:
                     # skip this logging for EveryoneElse since this has a message not for everyone_else
@@ -455,7 +646,7 @@ class DecisionService:
             # the last rule is special for "Everyone Else"
             index = len(rollout_rules) - 1 if skip_to_everyone_else else index + 1
 
-        return Decision(None, None, enums.DecisionSources.ROLLOUT), decide_reasons
+        return Decision(None, None, enums.DecisionSources.ROLLOUT, None), decide_reasons
 
     def get_variation_for_feature(
         self,
@@ -463,7 +654,7 @@ class DecisionService:
         feature: entities.FeatureFlag,
         user_context: OptimizelyUserContext,
         options: Optional[list[str]] = None
-    ) -> tuple[Decision, list[str]]:
+    ) -> DecisionResult:
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
         Args:
@@ -473,8 +664,11 @@ class DecisionService:
           options: Decide options.
 
         Returns:
-          Decision namedtuple consisting of experiment and variation for the user.
-    """
+          A DecisionResult dictionary containing:
+            - 'decision': Decision namedtuple with experiment, variation, source, and cmab_uuid.
+            - 'error': Boolean indicating if an error occurred during the decision process.
+            - 'reasons': List of log messages representing decision making for the feature.
+        """
         return self.get_variations_for_feature_list(project_config, [feature], user_context, options)[0]
 
     def validated_forced_decision(
@@ -546,17 +740,21 @@ class DecisionService:
         features: list[entities.FeatureFlag],
         user_context: OptimizelyUserContext,
         options: Optional[Sequence[str]] = None
-    ) -> list[tuple[Decision, list[str]]]:
+    ) -> list[DecisionResult]:
         """
         Returns the list of experiment/variation the user is bucketed in for the given list of features.
+
         Args:
-                project_config: Instance of ProjectConfig.
-                features: List of features for which we are determining if it is enabled or not for the given user.
-                user_context: user context for user.
-                options: Decide options.
+            project_config: Instance of ProjectConfig.
+            features: List of features for which we are determining if it is enabled or not for the given user.
+            user_context: user context for user.
+            options: Decide options.
 
         Returns:
-            List of Decision namedtuple consisting of experiment and variation for the user.
+            A list of DecisionResult dictionaries, each containing:
+                - 'decision': Decision namedtuple with experiment, variation, source, and cmab_uuid.
+                - 'error': Boolean indicating if an error occurred during the decision process.
+                - 'reasons': List of log messages representing decision making for each feature.
         """
         decide_reasons: list[str] = []
 
@@ -591,23 +789,46 @@ class DecisionService:
 
                         if forced_decision_variation:
                             decision_variation = forced_decision_variation
+                            cmab_uuid = None
+                            error = False
                         else:
-                            decision_variation, variation_reasons = self.get_variation(
+                            variation_result = self.get_variation(
                                 project_config, experiment, user_context, user_profile_tracker, feature_reasons, options
                             )
+                            cmab_uuid = variation_result['cmab_uuid']
+                            variation_reasons = variation_result['reasons']
+                            decision_variation = variation_result['variation']
+                            error = variation_result['error']
                             feature_reasons.extend(variation_reasons)
+
+                        if error:
+                            decision = Decision(experiment, None, enums.DecisionSources.FEATURE_TEST, cmab_uuid)
+                            decision_result: DecisionResult = {
+                                'decision': decision,
+                                'error': True,
+                                'reasons': feature_reasons
+                            }
+                            decisions.append(decision_result)
+                            experiment_decision_found = True
+                            break
 
                         if decision_variation:
                             self.logger.debug(
                                 f'User "{user_context.user_id}" '
                                 f'bucketed into experiment "{experiment.key}" of feature "{feature.key}".'
                             )
-                            decision = Decision(experiment, decision_variation, enums.DecisionSources.FEATURE_TEST)
-                            decisions.append((decision, feature_reasons))
+                            decision = Decision(experiment, decision_variation,
+                                                enums.DecisionSources.FEATURE_TEST, cmab_uuid)
+                            decision_result = {
+                                'decision': decision,
+                                'error': False,
+                                'reasons': feature_reasons
+                            }
+                            decisions.append(decision_result)
                             experiment_decision_found = True  # Mark that a decision was found
                             break  # Stop after the first successful experiment decision
 
-            # Only process rollout if no experiment decision was found
+            # Only process rollout if no experiment decision was found and no error
             if not experiment_decision_found:
                 rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config,
                                                                                    feature,
@@ -621,7 +842,12 @@ class DecisionService:
                     self.logger.debug(f'User "{user_context.user_id}" '
                                       f'not bucketed into any rollout for feature "{feature.key}".')
 
-                decisions.append((rollout_decision, feature_reasons))
+                decision_result = {
+                    'decision': rollout_decision,
+                    'error': False,
+                    'reasons': feature_reasons
+                }
+                decisions.append(decision_result)
 
         if self.user_profile_service is not None and user_profile_tracker is not None and ignore_ups is False:
             user_profile_tracker.save_user_profile()
