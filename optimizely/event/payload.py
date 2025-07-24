@@ -33,8 +33,7 @@ class EventBatch:
         client_version: str,
         anonymize_ip: bool,
         enrich_decisions: bool = True,
-        visitors: Optional[list[Visitor]] = None,
-        region: str = 'US'
+        visitors: Optional[list[Visitor]] = None
     ):
         self.account_id = account_id
         self.project_id = project_id
@@ -44,7 +43,6 @@ class EventBatch:
         self.anonymize_ip = anonymize_ip
         self.enrich_decisions = enrich_decisions
         self.visitors = visitors or []
-        self.region = region
 
     def __eq__(self, other: object) -> bool:
         batch_obj = self.get_event_params()

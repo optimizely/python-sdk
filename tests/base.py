@@ -57,7 +57,6 @@ class BaseTest(unittest.TestCase):
 
     def setUp(self, config_dict='config_dict'):
         self.config_dict = {
-            'region': 'US',
             'revision': '42',
             'sdkKey': 'basic-test',
             'version': '2',
@@ -151,7 +150,6 @@ class BaseTest(unittest.TestCase):
 
         # datafile version 4
         self.config_dict_with_features = {
-            'region': 'US',
             'revision': '1',
             'sdkKey': 'features-test',
             'accountId': '12001',
@@ -555,7 +553,6 @@ class BaseTest(unittest.TestCase):
         }
 
         self.config_dict_with_multiple_experiments = {
-            'region': 'US',
             'revision': '42',
             'sdkKey': 'multiple-experiments',
             'version': '2',
@@ -689,7 +686,6 @@ class BaseTest(unittest.TestCase):
             'accountId': '10367498574',
             'events': [{'experimentIds': ['10420810910'], 'id': '10404198134', 'key': 'winning'}],
             'revision': '1337',
-            'region': 'US',
         }
 
         self.config_dict_with_typed_audiences = {
@@ -1082,7 +1078,6 @@ class BaseTest(unittest.TestCase):
             ],
             'revision': '3',
             'sdkKey': 'typed-audiences',
-            'region': 'US',
         }
 
         self.config_dict_with_audience_segments = {
@@ -1280,7 +1275,6 @@ class BaseTest(unittest.TestCase):
             ],
             'revision': '101',
             'sdkKey': 'segments-test',
-            'region': 'US',
         }
 
         config = getattr(self, config_dict)

@@ -84,6 +84,7 @@ class EventBuilder:
         CUSTOM: Final = 'custom'
         ANONYMIZE_IP: Final = 'anonymize_ip'
         REVISION: Final = 'revision'
+        REGION: Final = 'region'
 
     def _get_attributes_data(
         self, project_config: ProjectConfig, attributes: UserAttributes
@@ -173,6 +174,7 @@ class EventBuilder:
         common_params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
         common_params[self.EventParams.ANONYMIZE_IP] = project_config.get_anonymize_ip_value()
         common_params[self.EventParams.REVISION] = project_config.get_revision()
+        common_params[self.EventParams.REGION] = project_config.region.value
 
         return common_params
 
@@ -249,8 +251,7 @@ class EventBuilder:
 
     def create_impression_event(
         self, project_config: ProjectConfig, experiment: Experiment,
-        variation_id: str, user_id: str, attributes: UserAttributes,
-        region: str = 'US'
+        variation_id: str, user_id: str, attributes: UserAttributes
     ) -> Event:
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -270,17 +271,14 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
-        params['region'] = project_config.region.value
-
-        region = project_config.region or 'US'
+        region =  params.get('region', 'US')
         events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
 
         return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
 
     def create_conversion_event(
         self, project_config: ProjectConfig, event_key: str,
-        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags,
-        region: str = 'US'
+        user_id: str, attributes: UserAttributes, event_tags: event_tag_utils.EventTags
     ) -> Event:
         """ Create conversion Event to be sent to the logging endpoint.
 
@@ -300,9 +298,7 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
 
-        params['region'] = project_config.region.value
-
-        region = project_config.region or 'US'
+        region = params.get('region', 'US')
         events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
 
         return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)

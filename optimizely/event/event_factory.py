@@ -86,7 +86,6 @@ class EventFactory:
             return None
 
         user_context = first_event.event_context
-        region_value = user_context.region.value if hasattr(user_context.region, 'value') else user_context.region
         event_batch = payload.EventBatch(
             user_context.account_id,
             user_context.project_id,
@@ -95,15 +94,22 @@ class EventFactory:
             user_context.client_version,
             user_context.anonymize_ip,
             True,
-            region_value,
         )
 
         event_batch.visitors = visitors
 
         event_params = event_batch.get_event_params()
 
-        region_str = user_context.region.value if hasattr(user_context.region, 'value') else str(user_context.region)
-        endpoint = cls.EVENT_ENDPOINTS.get(region_str, cls.EVENT_ENDPOINTS['US'])
+        region = user_context.region
+        if hasattr(region, 'value'):
+            region_str = region.value
+        elif region is None:
+            region_str = 'US'  # Default to US
+        else:
+            region_str = str(region)
+        
+        region_key = region_str.upper()
+        endpoint = cls.EVENT_ENDPOINTS.get(region_key, cls.EVENT_ENDPOINTS['US'])
 
         return log_event.LogEvent(endpoint, event_params, cls.HTTP_VERB, cls.HTTP_HEADERS)
 

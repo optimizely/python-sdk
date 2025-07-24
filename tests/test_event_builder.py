@@ -37,6 +37,7 @@ class EventBuilderTest(base.BaseTest):
     def setUp(self, *args, **kwargs):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
         self.event_builder = self.optimizely.event_builder
+        self.maxDiff = None
 
     def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
         """ Helper method to validate properties of the event object. """
@@ -86,7 +87,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -142,7 +142,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -196,7 +195,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -207,8 +205,7 @@ class EventBuilderTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'test_user',
-                {'do_you_know_me': 'test_value'},
-                'US'
+                {'do_you_know_me': 'test_value'}
             )
         self._validate_event_object(
             event_obj,
@@ -254,7 +251,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         def side_effect(*args, **kwargs):
@@ -280,8 +276,7 @@ class EventBuilderTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'test_user',
-                attributes,
-                'US',
+                attributes
             )
 
         self._validate_event_object(
@@ -334,7 +329,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -347,8 +341,7 @@ class EventBuilderTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'test_user',
-                {'$opt_user_agent': 'Edge'},
-                'US'
+                {'$opt_user_agent': 'Edge'}
             )
 
         self._validate_event_object(
@@ -400,7 +393,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -413,8 +405,7 @@ class EventBuilderTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'test_user',
-                None,
-                'US'
+                None
             )
 
         self._validate_event_object(
@@ -472,7 +463,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -485,8 +475,7 @@ class EventBuilderTest(base.BaseTest):
                 self.project_config.get_experiment_from_key('test_experiment'),
                 '111129',
                 'test_user',
-                {'$opt_user_agent': 'Chrome'},
-                'US'
+                {'$opt_user_agent': 'Chrome'}
             )
 
         self._validate_event_object(
@@ -527,14 +516,13 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', None, None, 'US'
+                self.project_config, 'test_event', 'test_user', None, None
             )
         self._validate_event_object(
             event_obj,
@@ -576,14 +564,13 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
             'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', {'test_attribute': 'test_value'}, None, 'US'
+                self.project_config, 'test_event', 'test_user', {'test_attribute': 'test_value'}, None
             )
         self._validate_event_object(
             event_obj,
@@ -632,7 +619,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -641,7 +627,7 @@ class EventBuilderTest(base.BaseTest):
             'optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=True,
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None, 'US'
+                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Edge'}, None
             )
 
         self._validate_event_object(
@@ -696,7 +682,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -705,7 +690,7 @@ class EventBuilderTest(base.BaseTest):
             'optimizely.project_config.ProjectConfig.get_bot_filtering_value', return_value=False,
         ):
             event_obj = self.event_builder.create_conversion_event(
-                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None, 'US'
+                self.project_config, 'test_event', 'test_user', {'$opt_user_agent': 'Chrome'}, None
             )
 
         self._validate_event_object(
@@ -751,7 +736,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -762,8 +746,7 @@ class EventBuilderTest(base.BaseTest):
                 'test_event',
                 'test_user',
                 {'test_attribute': 'test_value'},
-                {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
-                'US'
+                {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'}
             )
         self._validate_event_object(
             event_obj,
@@ -806,7 +789,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -817,8 +799,7 @@ class EventBuilderTest(base.BaseTest):
                 'test_event',
                 'test_user',
                 {'test_attribute': 'test_value'},
-                {'revenue': '4200', 'value': True, 'non-revenue': 'abc'},
-                'US'
+                {'revenue': '4200', 'value': True, 'non-revenue': 'abc'}
             )
         self._validate_event_object(
             event_obj,
@@ -863,7 +844,6 @@ class EventBuilderTest(base.BaseTest):
             'enrich_decisions': True,
             'anonymize_ip': False,
             'revision': '42',
-            'region': 'US',
         }
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
@@ -874,8 +854,7 @@ class EventBuilderTest(base.BaseTest):
                 'test_event',
                 'test_user',
                 {'test_attribute': 'test_value'},
-                {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'},
-                'US'
+                {'revenue': 4200, 'value': 1.234, 'non-revenue': 'abc'}
             )
         self._validate_event_object(
             event_obj,
