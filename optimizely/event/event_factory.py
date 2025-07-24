@@ -107,7 +107,7 @@ class EventFactory:
             region_str = 'US'  # Default to US
         else:
             region_str = str(region)
-        
+
         region_key = region_str.upper()
         endpoint = cls.EVENT_ENDPOINTS.get(region_key, cls.EVENT_ENDPOINTS['US'])
 

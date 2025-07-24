@@ -410,7 +410,7 @@ class OptimizelyTest(base.BaseTest):
             'anonymize_ip': False,
             'region': 'EU'  # Setting the region to EU
         }
-        
+
         with mock.patch(
                 'optimizely.decision_service.DecisionService.get_variation',
                 return_value=variation_result,

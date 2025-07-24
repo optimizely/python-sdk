@@ -33,7 +33,7 @@ class EventBatch:
         client_version: str,
         anonymize_ip: bool,
         enrich_decisions: bool = True,
-        visitors: Optional[list[Visitor]] = None
+        visitors: Optional[list[Visitor]] = None,
     ):
         self.account_id = account_id
         self.project_id = project_id

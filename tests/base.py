@@ -1274,7 +1274,7 @@ class BaseTest(unittest.TestCase):
                 }
             ],
             'revision': '101',
-            'sdkKey': 'segments-test',
+            'sdkKey': 'segments-test'
         }
 
         config = getattr(self, config_dict)
