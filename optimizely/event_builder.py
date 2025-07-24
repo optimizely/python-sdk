@@ -84,7 +84,6 @@ class EventBuilder:
         CUSTOM: Final = 'custom'
         ANONYMIZE_IP: Final = 'anonymize_ip'
         REVISION: Final = 'revision'
-        REGION: Final = 'region'
 
     def _get_attributes_data(
         self, project_config: ProjectConfig, attributes: UserAttributes
@@ -174,7 +173,6 @@ class EventBuilder:
         common_params[self.EventParams.SOURCE_SDK_VERSION] = version.__version__
         common_params[self.EventParams.ANONYMIZE_IP] = project_config.get_anonymize_ip_value()
         common_params[self.EventParams.REVISION] = project_config.get_revision()
-        common_params[self.EventParams.REGION] = project_config.region.value
 
         return common_params
 
@@ -271,7 +269,7 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
-        region = params.get('region', 'US')
+        region = project_config.region.value if hasattr(project_config.region, 'value') else 'US'
         events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
 
         return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
@@ -298,7 +296,7 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
 
-        region = params.get('region', 'US')
+        region = project_config.region.value if hasattr(project_config.region, 'value') else 'US'
         events_url = self.EVENTS_URLS.get(str(region), self.EVENTS_URLS['US'])
 
         return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)

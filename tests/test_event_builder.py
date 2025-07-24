@@ -17,6 +17,7 @@ from operator import itemgetter
 
 from optimizely import event_builder
 from optimizely import version
+from optimizely.project_config import Region
 from . import base
 
 
@@ -37,7 +38,6 @@ class EventBuilderTest(base.BaseTest):
     def setUp(self, *args, **kwargs):
         base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
         self.event_builder = self.optimizely.event_builder
-        self.maxDiff = None
 
     def _validate_event_object(self, event_obj, expected_url, expected_params, expected_verb, expected_headers):
         """ Helper method to validate properties of the event object. """
@@ -102,6 +102,60 @@ class EventBuilderTest(base.BaseTest):
         self._validate_event_object(
             event_obj,
             event_builder.EventBuilder.EVENTS_URLS.get('US'),
+            expected_params,
+            event_builder.EventBuilder.HTTP_VERB,
+            event_builder.EventBuilder.HTTP_HEADERS,
+        )
+
+    def test_create_impression_event_with_EU(self):
+        """ Test that create_impression_event creates Event object with right params and EU region. """
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'decisions': [
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182'}
+                            ],
+                            'events': [
+                                {
+                                    'timestamp': 42123,
+                                    'entity_id': '111182',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'campaign_activated',
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            'client_name': 'python-sdk',
+            'client_version': version.__version__,
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+        }
+
+        with mock.patch.object(self.project_config, 'region', new=Region.EU), mock.patch(
+            'time.time', return_value=42.123
+        ), mock.patch(
+            'optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5042
+        ), mock.patch('uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'):
+            event_obj = self.event_builder.create_impression_event(
+                self.project_config,
+                self.project_config.get_experiment_from_key('test_experiment'),
+                '111129',
+                'test_user',
+                None,
+            )
+        self._validate_event_object(
+            event_obj,
+            event_builder.EventBuilder.EVENTS_URLS.get('EU'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
@@ -527,6 +581,54 @@ class EventBuilderTest(base.BaseTest):
         self._validate_event_object(
             event_obj,
             event_builder.EventBuilder.EVENTS_URLS.get('US'),
+            expected_params,
+            event_builder.EventBuilder.HTTP_VERB,
+            event_builder.EventBuilder.HTTP_HEADERS,
+        )
+
+    def test_create_conversion_event_with_eu(self):
+        """ Test that create_conversion_event creates Event object
+    with right params when no attributes are provided. """
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'events': [
+                                {
+                                    'timestamp': 42123,
+                                    'entity_id': '111095',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'test_event',
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+            'client_name': 'python-sdk',
+            'client_version': version.__version__,
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+        }
+
+        with mock.patch.object(self.project_config, 'region', new=Region.EU), mock.patch(
+            'time.time', return_value=42.123
+        ), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            event_obj = self.event_builder.create_conversion_event(
+                self.project_config, 'test_event', 'test_user', None, None
+            )
+        self._validate_event_object(
+            event_obj,
+            event_builder.EventBuilder.EVENTS_URLS.get('EU'),
             expected_params,
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
