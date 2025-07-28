@@ -112,6 +112,34 @@ class UserEventFactoryTest(base.BaseTest):
             [x.__dict__ for x in expected_attrs], [x.__dict__ for x in conversion_event.visitor_attributes],
         )
 
+    def test_conversion_event_eu(self):
+        project_config = self.project_config
+        user_id = 'test_user'
+        event_key = 'test_event'
+        user_attributes = {'test_attribute': 'test_value', 'boolean_key': True}
+
+        project_config.region = 'EU'
+
+        conversion_event = UserEventFactory.create_conversion_event(
+            project_config, event_key, user_id, user_attributes, None
+        )
+
+        expected_attrs = EventFactory.build_attribute_list(user_attributes, project_config)
+
+        self.assertEqual(self.project_config.project_id, conversion_event.event_context.project_id)
+        self.assertEqual(self.project_config.revision, conversion_event.event_context.revision)
+        self.assertEqual(self.project_config.account_id, conversion_event.event_context.account_id)
+        self.assertEqual(
+            self.project_config.anonymize_ip, conversion_event.event_context.anonymize_ip,
+        )
+        self.assertEqual(self.project_config.bot_filtering, conversion_event.bot_filtering)
+        self.assertEqual(self.project_config.get_event(event_key), conversion_event.event)
+        self.assertEqual(user_id, conversion_event.user_id)
+        self.assertEqual('EU', conversion_event.event_context.region)
+        self.assertEqual(
+            [x.__dict__ for x in expected_attrs], [x.__dict__ for x in conversion_event.visitor_attributes],
+        )
+
     def test_conversion_event__with_event_tags(self):
         project_config = self.project_config
         user_id = 'test_user'
