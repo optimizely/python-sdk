@@ -297,7 +297,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide__feature_test__send_flag_decision_false(self):
@@ -400,7 +401,8 @@ class UserContextTest(base.BaseTest):
             'rollout',
             expected.enabled,
             'test_user',
-            user_attributes
+            user_attributes,
+            None
         )
 
         # assert notification count
@@ -563,7 +565,8 @@ class UserContextTest(base.BaseTest):
             'rollout',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide_feature_null_variation__send_flag_decision_false(self):
@@ -840,7 +843,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {'browser': 'chrome'}
+            {'browser': 'chrome'},
+            None
         )
 
     def test_decide__option__include_reasons__feature_test(self):
@@ -952,7 +956,8 @@ class UserContextTest(base.BaseTest):
             'rollout',
             expected.enabled,
             'test_user',
-            user_attributes
+            user_attributes,
+            None
         )
 
     def test_decide__default_options__with__options(self):
@@ -1511,7 +1516,8 @@ class UserContextTest(base.BaseTest):
             'feature-test',
             expected.enabled,
             'test_user',
-            {}
+            {},
+            None
         )
 
         self.assertTrue('User "test_user" is in variation "control" of experiment test_experiment.'

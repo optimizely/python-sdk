@@ -81,12 +81,15 @@ class Decision:
 class Metadata:
     """ Class respresenting Metadata. """
 
-    def __init__(self, flag_key: str, rule_key: str, rule_type: str, variation_key: str, enabled: bool):
+    def __init__(self, flag_key: str, rule_key: str, rule_type: str,
+                 variation_key: str, enabled: bool, cmab_uuid: Optional[str] = None):
         self.flag_key = flag_key
         self.rule_key = rule_key
         self.rule_type = rule_type
         self.variation_key = variation_key
         self.enabled = enabled
+        if cmab_uuid:
+            self.cmab_uuid = cmab_uuid
 
 
 class Snapshot:
