@@ -71,7 +71,8 @@ class ImpressionEvent(UserEvent):
         rule_key: str,
         rule_type: str,
         enabled: bool,
-        bot_filtering: Optional[bool] = None
+        bot_filtering: Optional[bool] = None,
+        cmab_uuid: Optional[str] = None
     ):
         super().__init__(event_context, user_id, visitor_attributes, bot_filtering)
         self.experiment = experiment
@@ -80,6 +81,7 @@ class ImpressionEvent(UserEvent):
         self.rule_key = rule_key
         self.rule_type = rule_type
         self.enabled = enabled
+        self.cmab_uuid = cmab_uuid
 
 
 class ConversionEvent(UserEvent):

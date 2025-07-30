@@ -40,7 +40,8 @@ class UserEventFactory:
         rule_type: str,
         enabled: bool,
         user_id: str,
-        user_attributes: Optional[UserAttributes]
+        user_attributes: Optional[UserAttributes],
+        cmab_uuid: Optional[str]
     ) -> Optional[user_event.ImpressionEvent]:
         """ Create impression Event to be sent to the logging endpoint.
 
@@ -94,6 +95,7 @@ class UserEventFactory:
             rule_type,
             enabled,
             project_config.get_bot_filtering_value(),
+            cmab_uuid,
         )
 
     @classmethod
