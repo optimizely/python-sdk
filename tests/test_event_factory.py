@@ -180,6 +180,7 @@ class EventFactoryTest(base.BaseTest):
                 False,
                 'test_user',
                 None,
+                None,
             )
 
         log_event = EventFactory.create_log_event(event_obj, self.logger)
@@ -1157,7 +1158,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_without_cmab_uuid(self):
@@ -1226,5 +1231,9 @@ class EventFactoryTest(base.BaseTest):
         self.assertNotIn('cmab_uuid', metadata)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )

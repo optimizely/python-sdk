@@ -51,7 +51,7 @@ class UserEventFactoryTest(base.BaseTest):
         project_config.region = 'EU'
 
         impression_event = UserEventFactory.create_impression_event(
-            project_config, experiment, '111128', '', 'rule_key', 'rule_type', True, user_id, None
+            project_config, experiment, '111128', '', 'rule_key', 'rule_type', True, user_id, None, None
         )
 
         self.assertEqual(self.project_config.region, impression_event.event_context.region)
