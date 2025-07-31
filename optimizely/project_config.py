@@ -41,6 +41,7 @@ RESERVED_ATTRIBUTE_PREFIX: Final = '$opt_'
 
 EntityClass = TypeVar('EntityClass')
 
+
 class ProjectConfig:
     """ Representation of the Optimizely project config. """
 
