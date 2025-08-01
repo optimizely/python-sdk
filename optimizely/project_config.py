@@ -85,6 +85,9 @@ class ProjectConfig:
         self.host_for_odp: Optional[str] = None
         self.all_segments: list[str] = []
 
+        region_value = config.get('region')
+        self.region: str = region_value or 'US'
+
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
         self.experiment_id_map: dict[str, entities.Experiment] = self._generate_key_map(

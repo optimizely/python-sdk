@@ -119,7 +119,78 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
+        )
+
+    def test_create_impression_event_with_eu(self):
+        """ Test that create_impression_event creates LogEvent object with right params and region is EU. """
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'decisions': [
+                                {'variation_id': '111129', 'experiment_id': '111127', 'campaign_id': '111182',
+                                 'metadata': {'flag_key': '',
+                                              'rule_key': 'rule_key',
+                                              'rule_type': 'experiment',
+                                              'variation_key': 'variation',
+                                              'enabled': False}}
+                            ],
+                            'events': [
+                                {
+                                    'timestamp': 42123,
+                                    'entity_id': '111182',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'campaign_activated',
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            'client_name': 'python-sdk',
+            'client_version': version.__version__,
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+        }
+
+        self.project_config.region = 'EU'
+
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            event_obj = UserEventFactory.create_impression_event(
+                self.project_config,
+                self.project_config.get_experiment_from_key('test_experiment'),
+                '111129',
+                '',
+                'rule_key',
+                'experiment',
+                False,
+                'test_user',
+                None,
+                None,
+            )
+
+        log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        self._validate_event_object(
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('EU'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event__with_attributes(self):
@@ -184,7 +255,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_when_attribute_is_not_in_datafile(self):
@@ -247,7 +322,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_calls_is_attribute_valid(self):
@@ -403,7 +482,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event__with_empty_attributes_when_bot_filtering_is_enabled(self,):
@@ -476,7 +559,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event__with_user_agent_when_bot_filtering_is_disabled(self,):
@@ -555,7 +642,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event(self):
@@ -600,7 +691,62 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
+        )
+
+    def test_create_conversion_event_with_eu(self):
+        """ Test that create_conversion_event creates Event object
+    with right params when no attributes are provided and region is EU. """
+
+        expected_params = {
+            'account_id': '12001',
+            'project_id': '111001',
+            'visitors': [
+                {
+                    'visitor_id': 'test_user',
+                    'attributes': [],
+                    'snapshots': [
+                        {
+                            'events': [
+                                {
+                                    'timestamp': 42123,
+                                    'entity_id': '111095',
+                                    'uuid': 'a68cf1ad-0393-4e18-af87-efe8f01a7c9c',
+                                    'key': 'test_event',
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ],
+            'client_name': 'python-sdk',
+            'client_version': version.__version__,
+            'enrich_decisions': True,
+            'anonymize_ip': False,
+            'revision': '42',
+        }
+
+        self.project_config.region = 'EU'
+
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            event_obj = UserEventFactory.create_conversion_event(
+                self.project_config, 'test_event', 'test_user', None, None
+            )
+
+        log_event = EventFactory.create_log_event(event_obj, self.logger)
+
+        self._validate_event_object(
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('EU'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_attributes(self):
@@ -647,7 +793,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_user_agent_when_bot_filtering_is_enabled(self,):
@@ -703,7 +853,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_user_agent_when_bot_filtering_is_disabled(self,):
@@ -764,7 +918,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_event_tags(self):
@@ -818,7 +976,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__with_invalid_event_tags(self):
@@ -870,7 +1032,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_conversion_event__when_event_is_used_in_multiple_experiments(self):
@@ -924,7 +1090,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_with_cmab_uuid(self):
@@ -988,7 +1158,11 @@ class EventFactoryTest(base.BaseTest):
         log_event = EventFactory.create_log_event(event_obj, self.logger)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )
 
     def test_create_impression_event_without_cmab_uuid(self):
@@ -1057,5 +1231,9 @@ class EventFactoryTest(base.BaseTest):
         self.assertNotIn('cmab_uuid', metadata)
 
         self._validate_event_object(
-            log_event, EventFactory.EVENT_ENDPOINT, expected_params, EventFactory.HTTP_VERB, EventFactory.HTTP_HEADERS,
+            log_event,
+            EventFactory.EVENT_ENDPOINTS.get('US'),
+            expected_params,
+            EventFactory.HTTP_VERB,
+            EventFactory.HTTP_HEADERS,
         )

@@ -77,7 +77,11 @@ class UserEventFactory:
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
 
         event_context = user_event.EventContext(
-            project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
+            project_config.account_id,
+            project_config.project_id,
+            project_config.revision,
+            project_config.anonymize_ip,
+            project_config.region
         )
 
         return user_event.ImpressionEvent(
@@ -117,7 +121,11 @@ class UserEventFactory:
     """
 
         event_context = user_event.EventContext(
-            project_config.account_id, project_config.project_id, project_config.revision, project_config.anonymize_ip,
+            project_config.account_id,
+            project_config.project_id,
+            project_config.revision,
+            project_config.anonymize_ip,
+            project_config.region
         )
 
         return user_event.ConversionEvent(

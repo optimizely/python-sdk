@@ -576,7 +576,7 @@ class CustomForwardingEventDispatcher:
         self.is_updated = is_updated
 
     def dispatch_event(self, log_event):
-        if log_event.http_verb == 'POST' and log_event.url == EventFactory.EVENT_ENDPOINT:
+        if log_event.http_verb == 'POST' and log_event.url in EventFactory.EVENT_ENDPOINTS.values():
             self.is_updated = True
         return self.is_updated
 

@@ -54,7 +54,10 @@ class EventBuilder:
     """ Class which encapsulates methods to build events for tracking
   impressions and conversions using the new V3 event API (batch). """
 
-    EVENTS_URL: Final = 'https://logx.optimizely.com/v1/events'
+    EVENTS_URLS: Final = {
+        'US': 'https://logx.optimizely.com/v1/events',
+        'EU': 'https://eu.logx.optimizely.com/v1/events'
+    }
     HTTP_VERB: Final = 'POST'
     HTTP_HEADERS: Final = {'Content-Type': 'application/json'}
 
@@ -266,7 +269,11 @@ class EventBuilder:
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(impression_params)
 
-        return Event(self.EVENTS_URL, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
+        region = project_config.region or 'US'
+        region_key = str(region).upper()
+        events_url = self.EVENTS_URLS.get(region_key, self.EVENTS_URLS['US'])
+
+        return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
 
     def create_conversion_event(
         self, project_config: ProjectConfig, event_key: str,
@@ -289,4 +296,9 @@ class EventBuilder:
         conversion_params = self._get_required_params_for_conversion(project_config, event_key, event_tags)
 
         params[self.EventParams.USERS][0][self.EventParams.SNAPSHOTS].append(conversion_params)
-        return Event(self.EVENTS_URL, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
+
+        region = project_config.region or 'US'
+        region_key = str(region).upper()
+        events_url = self.EVENTS_URLS.get(region_key, self.EVENTS_URLS['US'])
+
+        return Event(events_url, params, http_verb=self.HTTP_VERB, headers=self.HTTP_HEADERS)
