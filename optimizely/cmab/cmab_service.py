@@ -69,36 +69,41 @@ class DefaultCmabService:
 
         lock_index = self._get_lock_index(user_context.user_id, rule_id)
         with self.locks[lock_index]:
-            filtered_attributes = self._filter_attributes(project_config, user_context, rule_id)
+            return self._get_decision(project_config, user_context, rule_id, options)
 
-            if OptimizelyDecideOption.IGNORE_CMAB_CACHE in options:
-                return self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
+    def _get_decision(self, project_config: ProjectConfig, user_context: OptimizelyUserContext,
+                      rule_id: str, options: List[str]) -> CmabDecision:
 
-            if OptimizelyDecideOption.RESET_CMAB_CACHE in options:
-                self.cmab_cache.reset()
+        filtered_attributes = self._filter_attributes(project_config, user_context, rule_id)
 
-            cache_key = self._get_cache_key(user_context.user_id, rule_id)
+        if OptimizelyDecideOption.IGNORE_CMAB_CACHE in options:
+            return self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
 
-            if OptimizelyDecideOption.INVALIDATE_USER_CMAB_CACHE in options:
+        if OptimizelyDecideOption.RESET_CMAB_CACHE in options:
+            self.cmab_cache.reset()
+
+        cache_key = self._get_cache_key(user_context.user_id, rule_id)
+
+        if OptimizelyDecideOption.INVALIDATE_USER_CMAB_CACHE in options:
+            self.cmab_cache.remove(cache_key)
+
+        cached_value = self.cmab_cache.lookup(cache_key)
+
+        attributes_hash = self._hash_attributes(filtered_attributes)
+
+        if cached_value:
+            if cached_value['attributes_hash'] == attributes_hash:
+                return CmabDecision(variation_id=cached_value['variation_id'], cmab_uuid=cached_value['cmab_uuid'])
+            else:
                 self.cmab_cache.remove(cache_key)
 
-            cached_value = self.cmab_cache.lookup(cache_key)
-
-            attributes_hash = self._hash_attributes(filtered_attributes)
-
-            if cached_value:
-                if cached_value['attributes_hash'] == attributes_hash:
-                    return CmabDecision(variation_id=cached_value['variation_id'], cmab_uuid=cached_value['cmab_uuid'])
-                else:
-                    self.cmab_cache.remove(cache_key)
-
-            cmab_decision = self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
-            self.cmab_cache.save(cache_key, {
-                'attributes_hash': attributes_hash,
-                'variation_id': cmab_decision['variation_id'],
-                'cmab_uuid': cmab_decision['cmab_uuid'],
-            })
-            return cmab_decision
+        cmab_decision = self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
+        self.cmab_cache.save(cache_key, {
+            'attributes_hash': attributes_hash,
+            'variation_id': cmab_decision['variation_id'],
+            'cmab_uuid': cmab_decision['cmab_uuid'],
+        })
+        return cmab_decision
 
     def _fetch_decision(self, rule_id: str, user_id: str, attributes: UserAttributes) -> CmabDecision:
         cmab_uuid = str(uuid.uuid4())
