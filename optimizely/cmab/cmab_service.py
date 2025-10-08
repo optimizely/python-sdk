@@ -13,6 +13,7 @@
 import uuid
 import json
 import hashlib
+import threading
 
 from typing import Optional, List, TypedDict
 from optimizely.cmab.cmab_client import DefaultCmabClient
@@ -21,6 +22,8 @@ from optimizely.optimizely_user_context import OptimizelyUserContext, UserAttrib
 from optimizely.project_config import ProjectConfig
 from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 from optimizely import logger as _logging
+
+NUM_LOCK_STRIPES = 1000
 
 
 class CmabDecision(TypedDict):
@@ -52,40 +55,50 @@ class DefaultCmabService:
         self.cmab_cache = cmab_cache
         self.cmab_client = cmab_client
         self.logger = logger
+        self.locks = [threading.Lock() for _ in range(NUM_LOCK_STRIPES)]
+
+    def _get_lock_index(self, user_id: str, rule_id: str) -> int:
+        """Calculate the lock index for a given user and rule combination."""
+        # Create a hash of user_id + rule_id for consistent lock selection
+        hash_input = f"{user_id}{rule_id}"
+        hash_value = int(hashlib.md5(hash_input.encode()).hexdigest(), 16) % NUM_LOCK_STRIPES
+        return hash_value
 
     def get_decision(self, project_config: ProjectConfig, user_context: OptimizelyUserContext,
                      rule_id: str, options: List[str]) -> CmabDecision:
 
-        filtered_attributes = self._filter_attributes(project_config, user_context, rule_id)
+        lock_index = self._get_lock_index(user_context.user_id, rule_id)
+        with self.locks[lock_index]:
+            filtered_attributes = self._filter_attributes(project_config, user_context, rule_id)
 
-        if OptimizelyDecideOption.IGNORE_CMAB_CACHE in options:
-            return self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
+            if OptimizelyDecideOption.IGNORE_CMAB_CACHE in options:
+                return self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
 
-        if OptimizelyDecideOption.RESET_CMAB_CACHE in options:
-            self.cmab_cache.reset()
+            if OptimizelyDecideOption.RESET_CMAB_CACHE in options:
+                self.cmab_cache.reset()
 
-        cache_key = self._get_cache_key(user_context.user_id, rule_id)
+            cache_key = self._get_cache_key(user_context.user_id, rule_id)
 
-        if OptimizelyDecideOption.INVALIDATE_USER_CMAB_CACHE in options:
-            self.cmab_cache.remove(cache_key)
-
-        cached_value = self.cmab_cache.lookup(cache_key)
-
-        attributes_hash = self._hash_attributes(filtered_attributes)
-
-        if cached_value:
-            if cached_value['attributes_hash'] == attributes_hash:
-                return CmabDecision(variation_id=cached_value['variation_id'], cmab_uuid=cached_value['cmab_uuid'])
-            else:
+            if OptimizelyDecideOption.INVALIDATE_USER_CMAB_CACHE in options:
                 self.cmab_cache.remove(cache_key)
 
-        cmab_decision = self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
-        self.cmab_cache.save(cache_key, {
-            'attributes_hash': attributes_hash,
-            'variation_id': cmab_decision['variation_id'],
-            'cmab_uuid': cmab_decision['cmab_uuid'],
-        })
-        return cmab_decision
+            cached_value = self.cmab_cache.lookup(cache_key)
+
+            attributes_hash = self._hash_attributes(filtered_attributes)
+
+            if cached_value:
+                if cached_value['attributes_hash'] == attributes_hash:
+                    return CmabDecision(variation_id=cached_value['variation_id'], cmab_uuid=cached_value['cmab_uuid'])
+                else:
+                    self.cmab_cache.remove(cache_key)
+
+            cmab_decision = self._fetch_decision(rule_id, user_context.user_id, filtered_attributes)
+            self.cmab_cache.save(cache_key, {
+                'attributes_hash': attributes_hash,
+                'variation_id': cmab_decision['variation_id'],
+                'cmab_uuid': cmab_decision['cmab_uuid'],
+            })
+            return cmab_decision
 
     def _fetch_decision(self, rule_id: str, user_id: str, attributes: UserAttributes) -> CmabDecision:
         cmab_uuid = str(uuid.uuid4())

@@ -12,7 +12,7 @@
 # limitations under the License.
 import unittest
 from unittest.mock import MagicMock
-from optimizely.cmab.cmab_service import DefaultCmabService
+from optimizely.cmab.cmab_service import DefaultCmabService, NUM_LOCK_STRIPES
 from optimizely.optimizely_user_context import OptimizelyUserContext
 from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 from optimizely.odp.lru_cache import LRUCache
@@ -185,3 +185,41 @@ class TestDefaultCmabService(unittest.TestCase):
             {"age": 25, "location": "USA"},
             decision["cmab_uuid"]
         )
+
+    def test_same_user_rule_combination_uses_consistent_lock(self):
+        """Verifies that the same user/rule combination always uses the same lock index"""
+        user_id = "test_user"
+        rule_id = "test_rule"
+
+        # Get lock index multiple times
+        index1 = self.cmab_service._get_lock_index(user_id, rule_id)
+        index2 = self.cmab_service._get_lock_index(user_id, rule_id)
+        index3 = self.cmab_service._get_lock_index(user_id, rule_id)
+
+        # All should be the same
+        self.assertEqual(index1, index2, "Same user/rule should always use same lock")
+        self.assertEqual(index2, index3, "Same user/rule should always use same lock")
+
+    def test_lock_striping_distribution(self):
+        """Verifies that different user/rule combinations use different locks to allow for better concurrency"""
+        test_cases = [
+            ("user1", "rule1"),
+            ("user2", "rule1"),
+            ("user1", "rule2"),
+            ("user3", "rule3"),
+            ("user4", "rule4"),
+        ]
+
+        lock_indices = set()
+        for user_id, rule_id in test_cases:
+            index = self.cmab_service._get_lock_index(user_id, rule_id)
+
+            # Verify index is within expected range
+            self.assertGreaterEqual(index, 0, "Lock index should be non-negative")
+            self.assertLess(index, NUM_LOCK_STRIPES, "Lock index should be less than NUM_LOCK_STRIPES")
+
+            lock_indices.add(index)
+
+        # We should have multiple different lock indices (though not necessarily all unique due to hash collisions)
+        self.assertGreater(len(lock_indices), 1,
+                           "Different user/rule combinations should generally use different locks")
