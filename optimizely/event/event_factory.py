@@ -25,7 +25,7 @@ from . import user_event
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final  # type: ignore
+    from typing import Final
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime

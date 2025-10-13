@@ -26,7 +26,7 @@ from .helpers.enums import HTTPVerbs, EventDispatchConfig
 if version_info < (3, 8):
     from typing_extensions import Protocol
 else:
-    from typing import Protocol  # type: ignore
+    from typing import Protocol
 
 
 class CustomEventDispatcher(Protocol):

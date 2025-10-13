@@ -20,7 +20,7 @@ from optimizely import event_builder
 if version_info < (3, 8):
     from typing_extensions import Literal
 else:
-    from typing import Literal  # type: ignore
+    from typing import Literal
 
 
 class LogEvent(event_builder.Event):

@@ -34,7 +34,7 @@ from .user_event import UserEvent
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final  # type: ignore
+    from typing import Final
 
 
 class BaseEventProcessor(ABC):
