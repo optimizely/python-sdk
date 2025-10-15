@@ -19,7 +19,7 @@ from . import logger as _logging
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final, TYPE_CHECKING  # type: ignore
+    from typing import Final, TYPE_CHECKING
 
     if TYPE_CHECKING:
         # prevent circular dependenacy by skipping import at runtime

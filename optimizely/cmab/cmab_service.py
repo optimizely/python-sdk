@@ -13,6 +13,7 @@
 import uuid
 import json
 import hashlib
+import threading
 
 from typing import Optional, List, TypedDict
 from optimizely.cmab.cmab_client import DefaultCmabClient
@@ -21,6 +22,8 @@ from optimizely.optimizely_user_context import OptimizelyUserContext, UserAttrib
 from optimizely.project_config import ProjectConfig
 from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 from optimizely import logger as _logging
+from optimizely.lib import pymmh3 as mmh3
+NUM_LOCK_STRIPES = 1000
 
 
 class CmabDecision(TypedDict):
@@ -52,9 +55,24 @@ class DefaultCmabService:
         self.cmab_cache = cmab_cache
         self.cmab_client = cmab_client
         self.logger = logger
+        self.locks = [threading.Lock() for _ in range(NUM_LOCK_STRIPES)]
+
+    def _get_lock_index(self, user_id: str, rule_id: str) -> int:
+        """Calculate the lock index for a given user and rule combination."""
+        # Create a hash of user_id + rule_id for consistent lock selection
+        hash_input = f"{user_id}{rule_id}"
+        hash_value = mmh3.hash(hash_input, seed=0) & 0xFFFFFFFF  # Convert to unsigned
+        return hash_value % NUM_LOCK_STRIPES
 
     def get_decision(self, project_config: ProjectConfig, user_context: OptimizelyUserContext,
                      rule_id: str, options: List[str]) -> CmabDecision:
+
+        lock_index = self._get_lock_index(user_context.user_id, rule_id)
+        with self.locks[lock_index]:
+            return self._get_decision(project_config, user_context, rule_id, options)
+
+    def _get_decision(self, project_config: ProjectConfig, user_context: OptimizelyUserContext,
+                      rule_id: str, options: List[str]) -> CmabDecision:
 
         filtered_attributes = self._filter_attributes(project_config, user_context, rule_id)
 

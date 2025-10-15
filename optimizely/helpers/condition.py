@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 if version_info < (3, 8):
     from typing_extensions import Literal, Final
 else:
-    from typing import Literal, Final  # type: ignore
+    from typing import Literal, Final
 
 
 class ConditionOperatorTypes:

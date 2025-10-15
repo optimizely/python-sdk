@@ -25,7 +25,7 @@ from .helpers import validator
 if version_info < (3, 8):
     from typing_extensions import Final, Literal
 else:
-    from typing import Final, Literal  # type: ignore
+    from typing import Final, Literal
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime

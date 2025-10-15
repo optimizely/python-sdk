@@ -22,7 +22,7 @@ from sys import version_info
 if version_info < (3, 8):
     from typing_extensions import Protocol
 else:
-    from typing import Protocol  # type: ignore
+    from typing import Protocol
 
 # generic type definitions for LRUCache parameters
 K = TypeVar('K', bound=Hashable, contravariant=True)

@@ -20,7 +20,7 @@ from .helpers import enums
 if version_info < (3, 8):
     from typing_extensions import Final
 else:
-    from typing import Final  # type: ignore
+    from typing import Final
 
 
 _DEFAULT_LOG_FORMAT: Final = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s'
