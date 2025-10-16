@@ -84,7 +84,7 @@ class DefaultCmabClient:
         Returns:
             str: The variation ID.
         """
-        url = f"https://prediction.cmab.optimizely.com/predict/{rule_id}"
+        url = f"https://prep.prediction.cmab.optimizely.com/predict/{rule_id}"
         cmab_attributes = [
             {"id": key, "value": value, "type": "custom_attribute"}
             for key, value in attributes.items()
