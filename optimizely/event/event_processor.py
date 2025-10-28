@@ -72,7 +72,7 @@ class BatchEventProcessor(BaseEventProcessor):
 
     def __init__(
         self,
-        event_dispatcher: Optional[type[EventDispatcher] | CustomEventDispatcher] = None,
+        event_dispatcher: Optional[EventDispatcher | CustomEventDispatcher] = None,
         logger: Optional[_logging.Logger] = None,
         start_on_init: bool = False,
         event_queue: Optional[queue.Queue[UserEvent | Signal]] = None,

@@ -60,7 +60,7 @@ class TestDefaultCmabService(unittest.TestCase):
             "cmab_uuid": "uuid-123"
         }
 
-        decision = self.cmab_service.get_decision(
+        decision, _ = self.cmab_service.get_decision(
             self.mock_project_config, self.mock_user_context, "exp1", []
         )
 
@@ -72,7 +72,7 @@ class TestDefaultCmabService(unittest.TestCase):
         self.mock_cmab_client.fetch_decision.return_value = "varB"
         expected_attributes = {"age": 25, "location": "USA"}
 
-        decision = self.cmab_service.get_decision(
+        decision, _ = self.cmab_service.get_decision(
             self.mock_project_config,
             self.mock_user_context,
             "exp1",
@@ -105,7 +105,7 @@ class TestDefaultCmabService(unittest.TestCase):
     def test_resets_cache_when_option_given(self):
         self.mock_cmab_client.fetch_decision.return_value = "varD"
 
-        decision = self.cmab_service.get_decision(
+        decision, _ = self.cmab_service.get_decision(
             self.mock_project_config,
             self.mock_user_context,
             "exp1",
@@ -128,7 +128,7 @@ class TestDefaultCmabService(unittest.TestCase):
         expected_hash = self.cmab_service._hash_attributes(expected_attribute)
         expected_key = self.cmab_service._get_cache_key("user123", "exp1")
 
-        decision = self.cmab_service.get_decision(self.mock_project_config, self.mock_user_context, "exp1", [])
+        decision, _ = self.cmab_service.get_decision(self.mock_project_config, self.mock_user_context, "exp1", [])
         self.mock_cmab_cache.remove.assert_called_once_with(expected_key)
         self.mock_cmab_cache.save.assert_called_once_with(
             expected_key,
@@ -171,7 +171,7 @@ class TestDefaultCmabService(unittest.TestCase):
         }
         self.mock_cmab_client.fetch_decision.return_value = "varF"
 
-        decision = self.cmab_service.get_decision(
+        decision, _ = self.cmab_service.get_decision(
             self.mock_project_config,
             self.mock_user_context,
             "exp1",

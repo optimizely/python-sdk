@@ -175,9 +175,10 @@ class DecisionService:
         # User is in CMAB allocation, proceed to CMAB decision
         try:
             options_list = list(options) if options is not None else []
-            cmab_decision = self.cmab_service.get_decision(
+            cmab_decision, cmab_reasons = self.cmab_service.get_decision(
                 project_config, user_context, experiment.id, options_list
             )
+            decide_reasons.extend(cmab_reasons)
             return {
                 "error": False,
                 "result": cmab_decision,
