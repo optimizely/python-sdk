@@ -22,6 +22,9 @@ from .event.event_processor import BatchEventProcessor
 from .event_dispatcher import EventDispatcher, CustomEventDispatcher
 from .notification_center import NotificationCenter
 from .optimizely import Optimizely
+from .odp.lru_cache import LRUCache
+from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
+from .cmab.cmab_service import DefaultCmabService, DEFAULT_CMAB_CACHE_TIMEOUT, DEFAULT_CMAB_CACHE_SIZE
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -36,6 +39,9 @@ class OptimizelyFactory:
     max_event_flush_interval: Optional[int] = None
     polling_interval: Optional[float] = None
     blocking_timeout: Optional[int] = None
+    cmab_cache_size: Optional[int] = None
+    cmab_cache_ttl: Optional[int] = None
+    cmab_custom_cache: Optional[LRUCache] = None
 
     @staticmethod
     def set_batch_size(batch_size: int) -> int:
@@ -76,6 +82,51 @@ class OptimizelyFactory:
         return OptimizelyFactory.blocking_timeout
 
     @staticmethod
+    def set_cmab_cache_size(cache_size: int, logger: Optional[optimizely_logger.Logger] = None) -> Optional[int]:
+        """ Convenience method for setting the maximum number of items in CMAB cache.
+        Args:
+          cache_size: Maximum number of items in CMAB cache.
+          logger: Optional logger for logging messages.
+        """
+        logger = logger or optimizely_logger.NoOpLogger()
+
+        if not isinstance(cache_size, int) or cache_size <= 0:
+            logger.error(
+                f"CMAB cache size is invalid, setting to default size {DEFAULT_CMAB_CACHE_SIZE}."
+            )
+            return None
+
+        OptimizelyFactory.cmab_cache_size = cache_size
+        return OptimizelyFactory.cmab_cache_size
+
+    @staticmethod
+    def set_cmab_cache_ttl(cache_ttl: int, logger: Optional[optimizely_logger.Logger] = None) -> Optional[int]:
+        """ Convenience method for setting CMAB cache TTL.
+        Args:
+          cache_ttl: Time in seconds for cache entries to live.
+          logger: Optional logger for logging messages.
+        """
+        logger = logger or optimizely_logger.NoOpLogger()
+
+        if not isinstance(cache_ttl, (int, float)) or cache_ttl <= 0:
+            logger.error(
+                f"CMAB cache TTL is invalid, setting to default TTL {DEFAULT_CMAB_CACHE_TIMEOUT}."
+            )
+            return None
+
+        OptimizelyFactory.cmab_cache_ttl = int(cache_ttl)
+        return OptimizelyFactory.cmab_cache_ttl
+
+    @staticmethod
+    def set_cmab_custom_cache(custom_cache: LRUCache) -> LRUCache:
+        """ Convenience method for setting custom CMAB cache.
+        Args:
+          custom_cache: Cache implementation with lookup, save, remove, and reset methods.
+        """
+        OptimizelyFactory.cmab_custom_cache = custom_cache
+        return OptimizelyFactory.cmab_custom_cache
+
+    @staticmethod
     def default_instance(sdk_key: str, datafile: Optional[str] = None) -> Optimizely:
         """ Returns a new optimizely instance..
           Args:
@@ -104,9 +155,17 @@ class OptimizelyFactory:
             notification_center=notification_center,
         )
 
+        # Initialize CMAB components
+        cmab_client = DefaultCmabClient(retry_config=CmabRetryConfig(), logger=logger)
+        cmab_cache = OptimizelyFactory.cmab_custom_cache or LRUCache(
+            OptimizelyFactory.cmab_cache_size or DEFAULT_CMAB_CACHE_SIZE,
+            OptimizelyFactory.cmab_cache_ttl or DEFAULT_CMAB_CACHE_TIMEOUT
+        )
+        cmab_service = DefaultCmabService(cmab_cache, cmab_client, logger)
+
         optimizely = Optimizely(
             datafile, None, logger, error_handler, None, None, sdk_key, config_manager, notification_center,
-            event_processor
+            event_processor, cmab_service=cmab_service
         )
         return optimizely
 
@@ -174,7 +233,16 @@ class OptimizelyFactory:
             notification_center=notification_center,
         )
 
+        # Initialize CMAB components
+        cmab_client = DefaultCmabClient(retry_config=CmabRetryConfig(), logger=logger)
+        cmab_cache = OptimizelyFactory.cmab_custom_cache or LRUCache(
+            OptimizelyFactory.cmab_cache_size or DEFAULT_CMAB_CACHE_SIZE,
+            OptimizelyFactory.cmab_cache_ttl or DEFAULT_CMAB_CACHE_TIMEOUT
+        )
+        cmab_service = DefaultCmabService(cmab_cache, cmab_client, logger)
+
         return Optimizely(
             datafile, event_dispatcher, logger, error_handler, skip_json_validation, user_profile_service,
-            sdk_key, config_manager, notification_center, event_processor, settings=settings
+            sdk_key, config_manager, notification_center, event_processor, settings=settings,
+            cmab_service=cmab_service
         )

@@ -23,7 +23,10 @@ from optimizely.project_config import ProjectConfig
 from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 from optimizely import logger as _logging
 from optimizely.lib import pymmh3 as mmh3
+
 NUM_LOCK_STRIPES = 1000
+DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60  # 30 minutes
+DEFAULT_CMAB_CACHE_SIZE = 1000
 
 
 class CmabDecision(TypedDict):
@@ -111,9 +114,13 @@ class DefaultCmabService:
                 if self.logger:
                     self.logger.debug(reason)
                 reasons.append(reason)
-                return CmabDecision(variation_id=cached_value['variation_id'], cmab_uuid=cached_value['cmab_uuid']), reasons
+                return CmabDecision(variation_id=cached_value['variation_id'],
+                                    cmab_uuid=cached_value['cmab_uuid']), reasons
             else:
-                reason = f"CMAB cache attributes mismatch for user '{user_context.user_id}' and rule '{rule_id}', fetching new decision."
+                reason = (
+                    f"CMAB cache attributes mismatch for user '{user_context.user_id}' "
+                    f"and rule '{rule_id}', fetching new decision."
+                )
                 if self.logger:
                     self.logger.debug(reason)
                 reasons.append(reason)
