@@ -26,7 +26,7 @@ from optimizely.lib import pymmh3 as mmh3
 
 NUM_LOCK_STRIPES = 1000
 DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60  # 30 minutes
-DEFAULT_CMAB_CACHE_SIZE = 1000
+DEFAULT_CMAB_CACHE_SIZE = 10000
 
 
 class CmabDecision(TypedDict):
