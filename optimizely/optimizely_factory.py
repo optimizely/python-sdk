@@ -24,7 +24,7 @@ from .notification_center import NotificationCenter
 from .optimizely import Optimizely
 from .odp.lru_cache import LRUCache
 from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
-from .cmab.cmab_service import DefaultCmabService, DEFAULT_CMAB_CACHE_TIMEOUT, DEFAULT_CMAB_CACHE_SIZE
+from .cmab.cmab_service import DefaultCmabService, CmabCacheValue, DEFAULT_CMAB_CACHE_TIMEOUT, DEFAULT_CMAB_CACHE_SIZE
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
@@ -41,7 +41,7 @@ class OptimizelyFactory:
     blocking_timeout: Optional[int] = None
     cmab_cache_size: Optional[int] = None
     cmab_cache_ttl: Optional[int] = None
-    cmab_custom_cache: Optional[LRUCache] = None
+    cmab_custom_cache: Optional[LRUCache[str, CmabCacheValue]] = None
 
     @staticmethod
     def set_batch_size(batch_size: int) -> int:
@@ -118,7 +118,7 @@ class OptimizelyFactory:
         return OptimizelyFactory.cmab_cache_ttl
 
     @staticmethod
-    def set_cmab_custom_cache(custom_cache: LRUCache) -> LRUCache:
+    def set_cmab_custom_cache(custom_cache: LRUCache[str, CmabCacheValue]) -> LRUCache:
         """ Convenience method for setting custom CMAB cache.
         Args:
           custom_cache: Cache implementation with lookup, save, remove, and reset methods.
