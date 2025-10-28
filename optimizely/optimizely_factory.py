@@ -118,7 +118,7 @@ class OptimizelyFactory:
         return OptimizelyFactory.cmab_cache_ttl
 
     @staticmethod
-    def set_cmab_custom_cache(custom_cache: LRUCache[str, CmabCacheValue]) -> LRUCache:
+    def set_cmab_custom_cache(custom_cache: LRUCache[str, CmabCacheValue]) -> LRUCache[str, CmabCacheValue]:
         """ Convenience method for setting custom CMAB cache.
         Args:
           custom_cache: Cache implementation with lookup, save, remove, and reset methods.
