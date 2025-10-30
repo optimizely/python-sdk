@@ -98,15 +98,15 @@ class ProjectConfig:
         for holdout in self.holdouts:
             if holdout.get('status') != 'Running':
                 continue
-            
+
             holdout_id = holdout['id']
             self.holdout_id_map[holdout_id] = holdout
-            
+
             included_flags = holdout.get('includedFlags')
             if not included_flags:
                 # This is a global holdout
                 self.global_holdouts[holdout_id] = holdout
-                
+
                 excluded_flags = holdout.get('excludedFlags')
                 if excluded_flags:
                     for flag_id in excluded_flags:
