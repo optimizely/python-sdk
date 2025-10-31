@@ -25,6 +25,7 @@ DEFAULT_INITIAL_BACKOFF = 0.1  # in seconds (100 ms)
 DEFAULT_MAX_BACKOFF = 10  # in seconds
 DEFAULT_BACKOFF_MULTIPLIER = 2.0
 MAX_WAIT_TIME = 10.0
+DEFAULT_PREDICTION_ENDPOINT = "https://prediction.cmab.optimizely.com/predict/{}"
 
 
 class CmabRetryConfig:
@@ -52,17 +53,21 @@ class DefaultCmabClient:
     """
     def __init__(self, http_client: Optional[requests.Session] = None,
                  retry_config: Optional[CmabRetryConfig] = None,
-                 logger: Optional[_logging.Logger] = None):
+                 logger: Optional[_logging.Logger] = None,
+                 prediction_endpoint: Optional[str] = None):
         """Initialize the CMAB client.
 
         Args:
             http_client (Optional[requests.Session]): HTTP client for making requests.
             retry_config (Optional[CmabRetryConfig]): Configuration for retry logic.
             logger (Optional[_logging.Logger]): Logger for logging messages.
+            prediction_endpoint (Optional[str]): Custom prediction endpoint URL template.
+                                                  Use {} as placeholder for rule_id.
         """
         self.http_client = http_client or requests.Session()
         self.retry_config = retry_config
         self.logger = _logging.adapt_logger(logger or _logging.NoOpLogger())
+        self.prediction_endpoint = prediction_endpoint or DEFAULT_PREDICTION_ENDPOINT
 
     def fetch_decision(
         self,
@@ -84,7 +89,7 @@ class DefaultCmabClient:
         Returns:
             str: The variation ID.
         """
-        url = f"https://prediction.cmab.optimizely.com/predict/{rule_id}"
+        url = self.prediction_endpoint.format(rule_id)
         cmab_attributes = [
             {"id": key, "value": value, "type": "custom_attribute"}
             for key, value in attributes.items()

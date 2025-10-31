@@ -245,3 +245,81 @@ class TestDefaultCmabClient(unittest.TestCase):
         self.mock_logger.error.assert_called_with(
             Errors.CMAB_FETCH_FAILED.format('Exhausted all retries for CMAB request.')
         )
+
+    def test_custom_prediction_endpoint(self):
+        """Test that custom prediction endpoint is used correctly."""
+        custom_endpoint = "https://custom.endpoint.com/predict/{}"
+        client = DefaultCmabClient(
+            http_client=self.mock_http_client,
+            logger=self.mock_logger,
+            prediction_endpoint=custom_endpoint
+        )
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'predictions': [{'variation_id': 'abc123'}]
+        }
+        self.mock_http_client.post.return_value = mock_response
+
+        result = client.fetch_decision(self.rule_id, self.user_id, self.attributes, self.cmab_uuid)
+
+        self.assertEqual(result, 'abc123')
+        expected_custom_url = custom_endpoint.format(self.rule_id)
+        self.mock_http_client.post.assert_called_once_with(
+            expected_custom_url,
+            data=json.dumps(self.expected_body),
+            headers=self.expected_headers,
+            timeout=10.0
+        )
+
+    def test_default_prediction_endpoint(self):
+        """Test that default prediction endpoint is used when none is provided."""
+        client = DefaultCmabClient(
+            http_client=self.mock_http_client,
+            logger=self.mock_logger
+        )
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'predictions': [{'variation_id': 'def456'}]
+        }
+        self.mock_http_client.post.return_value = mock_response
+
+        result = client.fetch_decision(self.rule_id, self.user_id, self.attributes, self.cmab_uuid)
+
+        self.assertEqual(result, 'def456')
+        # Should use the default production endpoint
+        self.mock_http_client.post.assert_called_once_with(
+            self.expected_url,
+            data=json.dumps(self.expected_body),
+            headers=self.expected_headers,
+            timeout=10.0
+        )
+
+    def test_empty_prediction_endpoint_uses_default(self):
+        """Test that empty string prediction endpoint falls back to default."""
+        client = DefaultCmabClient(
+            http_client=self.mock_http_client,
+            logger=self.mock_logger,
+            prediction_endpoint=""
+        )
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'predictions': [{'variation_id': 'ghi789'}]
+        }
+        self.mock_http_client.post.return_value = mock_response
+
+        result = client.fetch_decision(self.rule_id, self.user_id, self.attributes, self.cmab_uuid)
+
+        self.assertEqual(result, 'ghi789')
+        # Should use the default production endpoint when empty string is provided
+        self.mock_http_client.post.assert_called_once_with(
+            self.expected_url,
+            data=json.dumps(self.expected_body),
+            headers=self.expected_headers,
+            timeout=10.0
+        )

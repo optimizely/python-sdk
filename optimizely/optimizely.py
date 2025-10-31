@@ -178,9 +178,14 @@ class Optimizely:
         self.event_builder = event_builder.EventBuilder()
 
         # Initialize CMAB components
+        cmab_prediction_endpoint = None
+        if self.sdk_settings and self.sdk_settings.cmab_prediction_endpoint:
+            cmab_prediction_endpoint = self.sdk_settings.cmab_prediction_endpoint
+
         self.cmab_client = DefaultCmabClient(
             retry_config=CmabRetryConfig(),
-            logger=self.logger
+            logger=self.logger,
+            prediction_endpoint=cmab_prediction_endpoint
         )
         self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
         self.cmab_service = DefaultCmabService(
