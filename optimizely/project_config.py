@@ -88,6 +88,38 @@ class ProjectConfig:
         region_value = config.get('region')
         self.region: str = region_value or 'US'
 
+        self.holdouts: list[dict[str, Any]] = config.get('holdouts', [])
+        self.holdout_id_map: dict[str, dict[str, Any]] = {}
+        self.global_holdouts: dict[str, dict[str, Any]] = {}
+        self.included_holdouts: dict[str, list[dict[str, Any]]] = {}
+        self.excluded_holdouts: dict[str, list[dict[str, Any]]] = {}
+        self.flag_holdouts_map: dict[str, list[dict[str, Any]]] = {}
+
+        for holdout in self.holdouts:
+            if holdout.get('status') != 'Running':
+                continue
+
+            holdout_id = holdout['id']
+            self.holdout_id_map[holdout_id] = holdout
+
+            included_flags = holdout.get('includedFlags')
+            if not included_flags:
+                # This is a global holdout
+                self.global_holdouts[holdout_id] = holdout
+
+                excluded_flags = holdout.get('excludedFlags')
+                if excluded_flags:
+                    for flag_id in excluded_flags:
+                        if flag_id not in self.excluded_holdouts:
+                            self.excluded_holdouts[flag_id] = []
+                        self.excluded_holdouts[flag_id].append(holdout)
+            else:
+                # This holdout applies to specific flags
+                for flag_id in included_flags:
+                    if flag_id not in self.included_holdouts:
+                        self.included_holdouts[flag_id] = []
+                    self.included_holdouts[flag_id].append(holdout)
+
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
         self.experiment_id_map: dict[str, entities.Experiment] = self._generate_key_map(
@@ -751,4 +783,63 @@ class ProjectConfig:
                 if getattr(variation, variation_attribute) == target_value:
                     return variation
 
+        return None
+
+    def get_holdouts_for_flag(self, flag_key: str) -> list[Any]:
+        """ Helper method to get holdouts from an applied feature flag.
+
+        Args:
+            flag_key: Key of the feature flag.
+
+        Returns:
+            The holdouts that apply for a specific flag.
+        """
+        feature_flag = self.feature_key_map.get(flag_key)
+        if not feature_flag:
+            return []
+
+        flag_id = feature_flag.id
+
+        # Check cache first
+        if flag_id in self.flag_holdouts_map:
+            return self.flag_holdouts_map[flag_id]
+
+        holdouts = []
+
+        # Add global holdouts that don't exclude this flag
+        for holdout in self.global_holdouts.values():
+            is_excluded = False
+            excluded_flags = holdout.get('excludedFlags')
+            if excluded_flags:
+                for excluded_flag_id in excluded_flags:
+                    if excluded_flag_id == flag_id:
+                        is_excluded = True
+                        break
+            if not is_excluded:
+                holdouts.append(holdout)
+
+        # Add holdouts that specifically include this flag
+        if flag_id in self.included_holdouts:
+            holdouts.extend(self.included_holdouts[flag_id])
+
+        # Cache the result
+        self.flag_holdouts_map[flag_id] = holdouts
+
+        return holdouts
+
+    def get_holdout(self, holdout_id: str) -> Optional[dict[str, Any]]:
+        """ Helper method to get holdout from holdout ID.
+
+        Args:
+            holdout_id: ID of the holdout.
+
+        Returns:
+            The holdout corresponding to the provided holdout ID.
+        """
+        holdout = self.holdout_id_map.get(holdout_id)
+
+        if holdout:
+            return holdout
+
+        self.logger.error(f'Holdout with ID "{holdout_id}" not found.')
         return None
