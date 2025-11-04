@@ -792,10 +792,13 @@ class DecisionServiceTest(base.BaseTest):
                               'logger') as mock_logger:
 
             # Configure CMAB service to return a decision
-            mock_cmab_service.get_decision.return_value = {
-                'variation_id': '111151',
-                'cmab_uuid': 'test-cmab-uuid-123'
-            }
+            mock_cmab_service.get_decision.return_value = (
+                {
+                    'variation_id': '111151',
+                    'cmab_uuid': 'test-cmab-uuid-123'
+                },
+                []  # reasons list
+            )
 
             # Call get_variation with the CMAB experiment
             variation_result = self.decision_service.get_variation(

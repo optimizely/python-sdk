@@ -20,7 +20,7 @@ from optimizely.helpers.enums import Errors
 from optimizely.exceptions import CmabFetchError, CmabInvalidResponseError
 
 # Default constants for CMAB requests
-DEFAULT_MAX_RETRIES = 3
+DEFAULT_MAX_RETRIES = 1
 DEFAULT_INITIAL_BACKOFF = 0.1  # in seconds (100 ms)
 DEFAULT_MAX_BACKOFF = 10  # in seconds
 DEFAULT_BACKOFF_MULTIPLIER = 2.0
