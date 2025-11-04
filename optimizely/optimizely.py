@@ -46,16 +46,12 @@ from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 from .optimizely_user_context import OptimizelyUserContext, UserAttributes
 from .project_config import ProjectConfig
 from .cmab.cmab_client import DefaultCmabClient, CmabRetryConfig
-from .cmab.cmab_service import DefaultCmabService, CmabCacheValue
+from .cmab.cmab_service import DefaultCmabService, CmabCacheValue, DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
     from .user_profile import UserProfileService
     from .helpers.event_tag_utils import EventTags
-
-# Default constants for CMAB cache
-DEFAULT_CMAB_CACHE_TIMEOUT = 30 * 60 * 1000  # 30 minutes in milliseconds
-DEFAULT_CMAB_CACHE_SIZE = 1000
 
 
 class Optimizely:
@@ -77,6 +73,7 @@ class Optimizely:
             default_decide_options: Optional[list[str]] = None,
             event_processor_options: Optional[dict[str, Any]] = None,
             settings: Optional[OptimizelySdkSettings] = None,
+            cmab_service: Optional[DefaultCmabService] = None,
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -178,16 +175,20 @@ class Optimizely:
         self.event_builder = event_builder.EventBuilder()
 
         # Initialize CMAB components
-        self.cmab_client = DefaultCmabClient(
-            retry_config=CmabRetryConfig(),
-            logger=self.logger
-        )
-        self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE, DEFAULT_CMAB_CACHE_TIMEOUT)
-        self.cmab_service = DefaultCmabService(
-            cmab_cache=self.cmab_cache,
-            cmab_client=self.cmab_client,
-            logger=self.logger
-        )
+        if cmab_service:
+            self.cmab_service = cmab_service
+        else:
+            self.cmab_client = DefaultCmabClient(
+                retry_config=CmabRetryConfig(),
+                logger=self.logger
+            )
+            self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE,
+                                                                      DEFAULT_CMAB_CACHE_TIMEOUT)
+            self.cmab_service = DefaultCmabService(
+                cmab_cache=self.cmab_cache,
+                cmab_client=self.cmab_client,
+                logger=self.logger
+            )
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service, self.cmab_service)
         self.user_profile_service = user_profile_service
 
