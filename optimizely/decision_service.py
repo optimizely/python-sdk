@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict, Dict
 
 from . import bucketer
 from . import entities
@@ -83,6 +83,7 @@ class Decision(NamedTuple):
     variation: Optional[entities.Variation]
     source: Optional[str]
     cmab_uuid: Optional[str]
+    holdout: Optional[Dict[str, str]]
 
 
 class DecisionService:
@@ -744,7 +745,7 @@ class DecisionService:
 
     def get_variation_for_holdout(
         self,
-        holdout: dict[str, str],
+        holdout: Dict[str, str],
         user_context: OptimizelyUserContext,
         project_config: ProjectConfig
     ) -> DecisionResult:
@@ -806,14 +807,23 @@ class DecisionService:
         decide_reasons.extend(bucket_reasons)
 
         if variation:
+            # For holdouts, variation is a dict, not a Variation entity
+            variation_key = variation['key'] if isinstance(variation, dict) else variation.key
             message = (
-                f"The user '{user_id}' is bucketed into variation '{variation['key']}' "
+                f"The user '{user_id}' is bucketed into variation '{variation_key}' "
                 f"of holdout '{holdout['key']}'."
             )
             self.logger.info(message)
             decide_reasons.append(message)
 
-            holdout_decision = Decision(holdout, variation, enums.DecisionSources.HOLDOUT, None)
+            # Create Decision with holdout - experiment is None, holdout field contains the holdout dict
+            holdout_decision: Decision = Decision(
+                experiment=None,
+                variation=None,
+                source=enums.DecisionSources.HOLDOUT,
+                cmab_uuid=None,
+                holdout=holdout
+            )
             return {
                 'decision': holdout_decision,
                 'error': False,

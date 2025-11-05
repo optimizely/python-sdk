@@ -221,12 +221,13 @@ class Bucketer:
             decide_reasons.append(message)
 
         if has_cmab:
-            traffic_allocations = [
-                {
-                    "entityId": "$",
-                    "endOfRange": experiment.cmab['trafficAllocation']
-                }
-            ]
+            if experiment.cmab:
+                traffic_allocations = [
+                    {
+                        "entityId": "$",
+                        "endOfRange": experiment.cmab['trafficAllocation']
+                    }
+                ]
 
         # Bucket user if not in white-list and in group (if any)
         variation_id = self.find_bucket(project_config, bucketing_id,

@@ -262,8 +262,8 @@ class ProjectConfig:
                 variations = holdout.get('variations')
                 if variations:
                     for variation in variations:
-                        variation_key = variation.get('key')
-                        variation_id = variation.get('id')
+                        variation_key = variation.get('key') if isinstance(variation, dict) else None
+                        variation_id = variation.get('id') if isinstance(variation, dict) else None
                         if variation_key and variation_id:
                             self.variation_key_map[holdout_key][variation_key] = variation
                             self.variation_id_map[holdout_key][variation_id] = variation
