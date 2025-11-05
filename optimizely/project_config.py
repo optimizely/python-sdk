@@ -218,6 +218,21 @@ class ProjectConfig:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
                 rules.append(self.experiment_id_map[exp_id])
+
+            flag_id = feature.id
+            applicable_holdouts = []
+
+            if flag_id in self.included_holdouts:
+                applicable_holdouts.extend(self.included_holdouts[flag_id])
+
+            for holdout in self.global_holdouts.values():
+                excluded_flag_ids = holdout.get('excludedFlags', [])
+                if flag_id not in excluded_flag_ids:
+                    applicable_holdouts.append(holdout)
+
+            if applicable_holdouts:
+                self.flag_holdouts_map[feature.key] = applicable_holdouts
+
             rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
             if rollout:
                 for exp in rollout.experiments:
@@ -230,6 +245,30 @@ class ProjectConfig:
                     if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
                         variations.append(rule_variation)
             self.flag_variations_map[feature.key] = variations
+
+        if self.holdouts:
+            for holdout in self.holdouts:
+                holdout_key = holdout.get('key')
+                holdout_id = holdout.get('id')
+
+                if not holdout_key or not holdout_id:
+                    continue
+
+                self.variation_key_map[holdout_key] = {}
+                self.variation_id_map[holdout_key] = {}
+                self.variation_id_map_by_experiment_id[holdout_id] = {}
+                self.variation_key_map_by_experiment_id[holdout_id] = {}
+
+                variations = holdout.get('variations')
+                if variations:
+                    for variation in variations:
+                        variation_key = variation.get('key')
+                        variation_id = variation.get('id')
+                        if variation_key and variation_id:
+                            self.variation_key_map[holdout_key][variation_key] = variation
+                            self.variation_id_map[holdout_key][variation_id] = variation
+                            self.variation_key_map_by_experiment_id[holdout_id][variation_key] = variation
+                            self.variation_id_map_by_experiment_id[holdout_id][variation_id] = variation
 
     @staticmethod
     def _generate_key_map(
@@ -794,38 +833,10 @@ class ProjectConfig:
         Returns:
             The holdouts that apply for a specific flag.
         """
-        feature_flag = self.feature_key_map.get(flag_key)
-        if not feature_flag:
+        if not self.holdouts:
             return []
 
-        flag_id = feature_flag.id
-
-        # Check cache first
-        if flag_id in self.flag_holdouts_map:
-            return self.flag_holdouts_map[flag_id]
-
-        holdouts = []
-
-        # Add global holdouts that don't exclude this flag
-        for holdout in self.global_holdouts.values():
-            is_excluded = False
-            excluded_flags = holdout.get('excludedFlags')
-            if excluded_flags:
-                for excluded_flag_id in excluded_flags:
-                    if excluded_flag_id == flag_id:
-                        is_excluded = True
-                        break
-            if not is_excluded:
-                holdouts.append(holdout)
-
-        # Add holdouts that specifically include this flag
-        if flag_id in self.included_holdouts:
-            holdouts.extend(self.included_holdouts[flag_id])
-
-        # Cache the result
-        self.flag_holdouts_map[flag_id] = holdouts
-
-        return holdouts
+        return self.flag_holdouts_map.get(flag_key, [])
 
     def get_holdout(self, holdout_id: str) -> Optional[dict[str, Any]]:
         """ Helper method to get holdout from holdout ID.

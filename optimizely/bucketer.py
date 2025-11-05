@@ -119,16 +119,41 @@ class Bucketer:
             and array of log messages representing decision making.
      */.
         """
+        # Check if experiment is None first
+        if not experiment:
+            message = 'Invalid entity key provided for bucketing. Returning nil.'
+            project_config.logger.debug(message)
+            return None, []
+        
+        if isinstance(experiment, dict):
+            # This is a holdout dictionary
+            experiment_key = experiment.get('key', '')
+            experiment_id = experiment.get('id', '')
+        else:
+            # This is an Experiment object
+            experiment_key = experiment.key
+            experiment_id = experiment.id
+
+        if not experiment_key or not experiment_key.strip():
+            message = 'Invalid entity key provided for bucketing. Returning nil.'
+            project_config.logger.debug(message)
+            return None, []
+
         variation_id, decide_reasons = self.bucket_to_entity_id(project_config, experiment, user_id, bucketing_id)
         if variation_id:
-            variation = project_config.get_variation_from_id_by_experiment_id(experiment.id, variation_id)
+            if isinstance(experiment, dict):
+                # For holdouts, find the variation in the holdout's variations array
+                variations = experiment.get('variations', [])
+                variation = next((v for v in variations if v.get('id') == variation_id), None)
+            else:
+                # For experiments, use the existing method
+                variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
             return variation, decide_reasons
-
-        else:
-            message = 'Bucketed into an empty traffic range. Returning nil.'
-            project_config.logger.info(message)
-            decide_reasons.append(message)
-
+        
+        # No variation found - log message for empty traffic range
+        message = 'Bucketed into an empty traffic range. Returning nil.'
+        project_config.logger.info(message)
+        decide_reasons.append(message)
         return None, decide_reasons
 
     def bucket_to_entity_id(
@@ -151,9 +176,25 @@ class Bucketer:
         if not experiment:
             return None, decide_reasons
 
+        # Handle both Experiment objects and holdout dictionaries
+        if isinstance(experiment, dict):
+            # This is a holdout dictionary - holdouts don't have groups
+            experiment_key = experiment.get('key', '')
+            experiment_id = experiment.get('id', '')
+            traffic_allocations = experiment.get('trafficAllocation', [])
+            has_cmab = False
+            group_policy = None
+        else:
+            # This is an Experiment object
+            experiment_key = experiment.key
+            experiment_id = experiment.id
+            traffic_allocations = experiment.trafficAllocation
+            has_cmab = bool(experiment.cmab)
+            group_policy = getattr(experiment, 'groupPolicy', None)
+
         # Determine if experiment is in a mutually exclusive group.
-        # This will not affect evaluation of rollout rules.
-        if experiment.groupPolicy in GROUP_POLICIES:
+        # This will not affect evaluation of rollout rules or holdouts.
+        if group_policy and group_policy in GROUP_POLICIES:
             group = project_config.get_group(experiment.groupId)
 
             if not group:
@@ -169,26 +210,26 @@ class Bucketer:
                 decide_reasons.append(message)
                 return None, decide_reasons
 
-            if user_experiment_id != experiment.id:
-                message = f'User "{user_id}" is not in experiment "{experiment.key}" of group {experiment.groupId}.'
+            if user_experiment_id != experiment_id:
+                message = f'User "{user_id}" is not in experiment "{experiment_key}" of group {experiment.groupId}.'
                 project_config.logger.info(message)
                 decide_reasons.append(message)
                 return None, decide_reasons
 
-            message = f'User "{user_id}" is in experiment {experiment.key} of group {experiment.groupId}.'
+            message = f'User "{user_id}" is in experiment {experiment_key} of group {experiment.groupId}.'
             project_config.logger.info(message)
             decide_reasons.append(message)
 
-        traffic_allocations: list[TrafficAllocation] = experiment.trafficAllocation
-        if experiment.cmab:
+        if has_cmab:
             traffic_allocations = [
                 {
                     "entityId": "$",
                     "endOfRange": experiment.cmab['trafficAllocation']
                 }
             ]
+
         # Bucket user if not in white-list and in group (if any)
         variation_id = self.find_bucket(project_config, bucketing_id,
-                                        experiment.id, traffic_allocations)
+                                        experiment_id, traffic_allocations)
 
         return variation_id, decide_reasons
