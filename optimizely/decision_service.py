@@ -714,8 +714,10 @@ class DecisionService:
             if not holdout_decision['decision']:
                 continue
 
-            message = f"The user '{user_id}' is bucketed into holdout '{holdout['key']}' " \
-                    f"for feature flag '{feature_flag.key}'."
+            message = (
+                f"The user '{user_id}' is bucketed into holdout '{holdout['key']}' "
+                f"for feature flag '{feature_flag.key}'."
+            )
             self.logger.info(message)
             reasons.append(message)
             return {
@@ -729,11 +731,11 @@ class DecisionService:
         fallback_result = self.get_variations_for_feature_list(
             project_config, [feature_flag], user_context, decide_options
         )[0]
-        
+
         # Merge reasons
         if fallback_result.get('reasons'):
             reasons.extend(fallback_result['reasons'])
-        
+
         return {
             'decision': fallback_result.get('decision'),
             'error': fallback_result.get('error', False),
@@ -758,7 +760,7 @@ class DecisionService:
             A DecisionResult for the holdout.
         """
         from optimizely.helpers.enums import ExperimentAudienceEvaluationLogs
-        
+
         decide_reasons: list[str] = []
         user_id = user_context.user_id
         attributes = user_context.get_user_attributes()
@@ -780,7 +782,7 @@ class DecisionService:
         # Check audience conditions
         audience_conditions = holdout.get('audienceIds')
         user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(
-            project_config, 
+            project_config,
             audience_conditions,
             ExperimentAudienceEvaluationLogs,
             holdout.get('key', 'unknown'),
@@ -804,8 +806,10 @@ class DecisionService:
         decide_reasons.extend(bucket_reasons)
 
         if variation:
-            message = f"The user '{user_id}' is bucketed into variation '{variation['key']}' " \
-                    f"of holdout '{holdout['key']}'."
+            message = (
+                f"The user '{user_id}' is bucketed into variation '{variation['key']}' "
+                f"of holdout '{holdout['key']}'."
+            )
             self.logger.info(message)
             decide_reasons.append(message)
 

@@ -124,7 +124,7 @@ class Bucketer:
             message = 'Invalid entity key provided for bucketing. Returning nil.'
             project_config.logger.debug(message)
             return None, []
-        
+
         if isinstance(experiment, dict):
             # This is a holdout dictionary
             experiment_key = experiment.get('key', '')
@@ -149,7 +149,7 @@ class Bucketer:
                 # For experiments, use the existing method
                 variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
             return variation, decide_reasons
-        
+
         # No variation found - log message for empty traffic range
         message = 'Bucketed into an empty traffic range. Returning nil.'
         project_config.logger.info(message)
