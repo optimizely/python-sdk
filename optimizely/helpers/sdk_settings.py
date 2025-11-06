@@ -33,7 +33,8 @@ class OptimizelySdkSettings:
             odp_event_manager: Optional[OdpEventManager] = None,
             odp_segment_request_timeout: Optional[int] = None,
             odp_event_request_timeout: Optional[int] = None,
-            odp_event_flush_interval: Optional[int] = None
+            odp_event_flush_interval: Optional[int] = None,
+            cmab_prediction_endpoint: Optional[str] = None
     ) -> None:
         """
         Args:
@@ -52,6 +53,8 @@ class OptimizelySdkSettings:
             send successfully (optional).
           odp_event_request_timeout: Time to wait in seconds for send_odp_events request to send successfully.
           odp_event_flush_interval: Time to wait for events to accumulate before sending a batch in seconds (optional).
+          cmab_prediction_endpoint: Custom CMAB prediction endpoint URL template (optional).
+            Use {} as placeholder for rule_id. Defaults to production endpoint if not provided.
         """
 
         self.odp_disabled = odp_disabled
@@ -63,3 +66,4 @@ class OptimizelySdkSettings:
         self.fetch_segments_timeout = odp_segment_request_timeout
         self.odp_event_timeout = odp_event_request_timeout
         self.odp_flush_interval = odp_event_flush_interval
+        self.cmab_prediction_endpoint = cmab_prediction_endpoint

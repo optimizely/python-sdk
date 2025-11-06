@@ -178,9 +178,15 @@ class Optimizely:
         if cmab_service:
             self.cmab_service = cmab_service
         else:
+            # Get custom prediction endpoint from settings if provided
+            cmab_prediction_endpoint = None
+            if self.sdk_settings and self.sdk_settings.cmab_prediction_endpoint:
+                cmab_prediction_endpoint = self.sdk_settings.cmab_prediction_endpoint
+
             self.cmab_client = DefaultCmabClient(
                 retry_config=CmabRetryConfig(),
-                logger=self.logger
+                logger=self.logger,
+                prediction_endpoint=cmab_prediction_endpoint
             )
             self.cmab_cache: LRUCache[str, CmabCacheValue] = LRUCache(DEFAULT_CMAB_CACHE_SIZE,
                                                                       DEFAULT_CMAB_CACHE_TIMEOUT)
