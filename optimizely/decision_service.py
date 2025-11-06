@@ -83,7 +83,7 @@ class Decision(NamedTuple):
     variation: Optional[entities.Variation]
     source: Optional[str]
     cmab_uuid: Optional[str]
-    holdout: Optional[Dict[str, str]]
+    holdout: Optional[Dict[str, str]] = None
 
 
 class DecisionService:
@@ -712,7 +712,8 @@ class DecisionService:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
             reasons.extend(holdout_decision['reasons'])
 
-            if not holdout_decision['decision']:
+            decision = holdout_decision['decision']
+            if (decision.experiment is None and decision.variation is None and decision.holdout is None):
                 continue
 
             message = (
@@ -738,7 +739,7 @@ class DecisionService:
             reasons.extend(fallback_result['reasons'])
 
         return {
-            'decision': fallback_result.get('decision'),
+            'decision': fallback_result['decision'],
             'error': fallback_result.get('error', False),
             'reasons': reasons
         }
@@ -772,7 +773,7 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             return {
-                'decision': None,
+                'decision': Decision(None, None, None, None, None),
                 'error': False,
                 'reasons': decide_reasons
             }
@@ -793,17 +794,22 @@ class DecisionService:
         decide_reasons.extend(reasons_received)
 
         if not user_meets_audience_conditions:
-            message = f"User '{user_id}' does not meet the conditions for holdout '{holdout['key']}'."
+            message = (
+                f"User '{user_id}' does not meet the conditions for holdout "
+                f"'{holdout['key']}'."
+            )
             self.logger.debug(message)
             decide_reasons.append(message)
             return {
-                'decision': None,
+                'decision': Decision(None, None, None, None, None),
                 'error': False,
                 'reasons': decide_reasons
             }
 
         # Bucket user into holdout variation
-        variation, bucket_reasons = self.bucketer.bucket(project_config, holdout, user_id, bucketing_id)
+        variation, bucket_reasons = self.bucketer.bucket(
+            project_config, holdout, user_id, bucketing_id  # type: ignore[arg-type]
+        )
         decide_reasons.extend(bucket_reasons)
 
         if variation:
@@ -834,7 +840,7 @@ class DecisionService:
         self.logger.info(message)
         decide_reasons.append(message)
         return {
-            'decision': None,
+            'decision': Decision(None, None, None, None, None),
             'error': False,
             'reasons': decide_reasons
         }
