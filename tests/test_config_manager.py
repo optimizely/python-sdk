@@ -517,8 +517,10 @@ class PollingConfigManagerTest(base.BaseTest):
             log_messages = [args[0] for args, _ in mock_logger.error.call_args_list]
             for message in log_messages:
                 print(message)
-                if "Thread for background datafile polling failed. " \
-                   "Error: timestamp too large to convert to C PyTime_t" not in message:
+                # Check for key parts of the error message (version-agnostic for Python 3.11+)
+                if not ("Thread for background datafile polling failed" in message and
+                        "timestamp too large to convert to C" in message and
+                        "PyTime_t" in message):
                     assert False
 
     def test_is_running(self, _):
