@@ -251,7 +251,7 @@ class Optimizely:
         """
         if variation is None:
             return False
-        
+
         try:
             if isinstance(variation, dict):
                 feature_enabled = variation.get('featureEnabled', False)
