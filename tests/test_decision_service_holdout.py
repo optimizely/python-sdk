@@ -290,8 +290,8 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         if decision_result.get('decision'):
             decision = decision_result['decision']
             self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
-            self.assertIsNotNone(decision.holdout)
-            self.assertEqual(decision.holdout.get('key'), 'test_holdout')
+            self.assertIsNotNone(decision.variation)
+            self.assertIsNone(decision.experiment)
 
     def test_no_holdout_decision_falls_through_to_experiment_and_rollout(self):
         """When holdout returns no decision, should fall through to experiment and rollout evaluation."""

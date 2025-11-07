@@ -12,7 +12,9 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict, Dict
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict
+
+from optimizely.helpers.types import HoldoutDict
 
 from . import bucketer
 from . import entities
@@ -83,7 +85,6 @@ class Decision(NamedTuple):
     variation: Optional[entities.Variation]
     source: Optional[str]
     cmab_uuid: Optional[str]
-    holdout: Optional[Dict[str, str]] = None
 
 
 class DecisionService:
@@ -713,7 +714,8 @@ class DecisionService:
             reasons.extend(holdout_decision['reasons'])
 
             decision = holdout_decision['decision']
-            if (decision.experiment is None and decision.variation is None and decision.holdout is None):
+            # Check if user was bucketed into holdout (has a variation)
+            if decision.variation is None:
                 continue
 
             message = (
@@ -746,7 +748,7 @@ class DecisionService:
 
     def get_variation_for_holdout(
         self,
-        holdout: Dict[str, str],
+        holdout: HoldoutDict,
         user_context: OptimizelyUserContext,
         project_config: ProjectConfig
     ) -> DecisionResult:
@@ -754,7 +756,7 @@ class DecisionService:
         Get the variation for holdout.
 
         Args:
-            holdout: The holdout configuration.
+            holdout: The holdout configuration (HoldoutDict).
             user_context: The user context.
             project_config: The project config.
 
@@ -773,7 +775,7 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             return {
-                'decision': Decision(None, None, None, None, None),
+                'decision': Decision(None, None, enums.DecisionSources.HOLDOUT, None),
                 'error': False,
                 'reasons': decide_reasons
             }
@@ -801,7 +803,7 @@ class DecisionService:
             self.logger.debug(message)
             decide_reasons.append(message)
             return {
-                'decision': Decision(None, None, None, None, None),
+                'decision': Decision(None, None, enums.DecisionSources.HOLDOUT, None),
                 'error': False,
                 'reasons': decide_reasons
             }
@@ -822,13 +824,12 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
 
-            # Create Decision with holdout - experiment is None, holdout field contains the holdout dict
+            # Create Decision for holdout - experiment is None, source is HOLDOUT
             holdout_decision: Decision = Decision(
                 experiment=None,
-                variation=None,
+                variation=variation,
                 source=enums.DecisionSources.HOLDOUT,
-                cmab_uuid=None,
-                holdout=holdout
+                cmab_uuid=None
             )
             return {
                 'decision': holdout_decision,
@@ -840,7 +841,7 @@ class DecisionService:
         self.logger.info(message)
         decide_reasons.append(message)
         return {
-            'decision': Decision(None, None, None, None, None),
+            'decision': Decision(None, None, enums.DecisionSources.HOLDOUT, None),
             'error': False,
             'reasons': decide_reasons
         }
