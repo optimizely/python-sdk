@@ -12,9 +12,9 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict, Union
 
-from optimizely.helpers.types import HoldoutDict
+from optimizely.helpers.types import HoldoutDict, VariationDict
 
 from . import bucketer
 from . import entities
@@ -61,7 +61,7 @@ class VariationResult(TypedDict):
     cmab_uuid: Optional[str]
     error: bool
     reasons: List[str]
-    variation: Optional[entities.Variation]
+    variation: Optional[Union[entities.Variation, VariationDict]]
 
 
 class DecisionResult(TypedDict):
@@ -82,7 +82,7 @@ class Decision(NamedTuple):
     """Named tuple containing selected experiment, variation, source and cmab_uuid.
     None if no experiment/variation was selected."""
     experiment: Optional[entities.Experiment]
-    variation: Optional[entities.Variation]
+    variation: Optional[Union[entities.Variation, VariationDict]]
     source: Optional[str]
     cmab_uuid: Optional[str]
 
@@ -953,7 +953,7 @@ class DecisionService:
             if feature.experimentIds:
                 for experiment_id in feature.experimentIds:
                     experiment = project_config.get_experiment_from_id(experiment_id)
-                    decision_variation = None
+                    decision_variation: Optional[Union[entities.Variation, VariationDict]] = None
 
                     if experiment:
                         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(

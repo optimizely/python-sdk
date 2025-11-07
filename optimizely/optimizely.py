@@ -13,7 +13,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
+
+from optimizely.helpers.types import VariationDict
 
 
 from . import decision_service
@@ -198,6 +200,67 @@ class Optimizely:
         self.decision_service = decision_service.DecisionService(self.logger, user_profile_service, self.cmab_service)
         self.user_profile_service = user_profile_service
 
+    def _get_variation_key(self, variation: Optional[Union[entities.Variation, VariationDict]]) -> Optional[str]:
+        """Helper to extract variation key from either dict (holdout) or Variation object.
+        Args:
+            variation: Either a dict (from holdout) or entities.Variation object
+        Returns:
+            The variation key as a string, or None if not available
+        """
+        if variation is None:
+            return None
+
+        try:
+            # Try dict access first (for holdouts)
+            if isinstance(variation, dict):
+                return variation.get('key')
+            # Otherwise assume it's a Variation entity object
+            else:
+                return variation.key
+        except (AttributeError, KeyError, TypeError):
+            self.logger.warning(f"Unable to extract variation key from {type(variation)}")
+            return None
+
+    def _get_variation_id(self, variation: Optional[Union[entities.Variation, VariationDict]]) -> Optional[str]:
+        """Helper to extract variation id from either dict (holdout) or Variation object.
+        Args:
+            variation: Either a dict (from holdout) or entities.Variation object
+        Returns:
+            The variation id as a string, or None if not available
+        """
+        if variation is None:
+            return None
+
+        try:
+            # Try dict access first (for holdouts)
+            if isinstance(variation, dict):
+                return variation.get('id')
+            # Otherwise assume it's a Variation entity object
+            else:
+                return variation.id
+        except (AttributeError, KeyError, TypeError):
+            self.logger.warning(f"Unable to extract variation id from {type(variation)}")
+            return None
+
+    def _get_feature_enabled(self, variation: Optional[Union[entities.Variation, VariationDict]]) -> bool:
+        """Helper to extract featureEnabled flag from either dict (holdout) or Variation object.
+        Args:
+            variation: Either a dict (from holdout) or entities.Variation object
+        Returns:
+            The featureEnabled value, defaults to False if not available
+        """
+        if variation is None:
+            return False
+        
+        try:
+            if isinstance(variation, dict):
+                feature_enabled = variation.get('featureEnabled', False)
+                return bool(feature_enabled) if feature_enabled is not None else False
+            else:
+                return variation.featureEnabled if hasattr(variation, 'featureEnabled') else False
+        except (AttributeError, KeyError, TypeError):
+            return False
+
     def _validate_instantiation_options(self) -> None:
         """ Helper method to validate all instantiation parameters.
 
@@ -267,7 +330,7 @@ class Optimizely:
 
     def _send_impression_event(
         self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
-        variation: Optional[entities.Variation], flag_key: str, rule_key: str, rule_type: str,
+        variation: Optional[Union[entities.Variation, VariationDict]], flag_key: str, rule_key: str, rule_type: str,
         enabled: bool, user_id: str, attributes: Optional[UserAttributes], cmab_uuid: Optional[str] = None
     ) -> None:
         """ Helper method to send impression event.
@@ -286,7 +349,7 @@ class Optimizely:
         if not experiment:
             experiment = entities.Experiment.get_default()
 
-        variation_id = variation.id if variation is not None else None
+        variation_id = self._get_variation_id(variation) if variation is not None else None
         user_event = user_event_factory.UserEventFactory.create_impression_event(
             project_config, experiment, variation_id,
             flag_key, rule_key, rule_type,
@@ -372,7 +435,7 @@ class Optimizely:
 
         if decision.variation:
 
-            feature_enabled = decision.variation.featureEnabled
+            feature_enabled = self._get_feature_enabled(decision.variation)
             if feature_enabled:
                 variable_value = project_config.get_variable_value_for_variation(variable, decision.variation)
                 self.logger.info(
@@ -393,7 +456,7 @@ class Optimizely:
         if decision.source == enums.DecisionSources.FEATURE_TEST:
             source_info = {
                 'experiment_key': decision.experiment.key if decision.experiment else None,
-                'variation_key': decision.variation.key if decision.variation else None,
+                'variation_key': self._get_variation_key(decision.variation),
             }
 
         try:
@@ -461,7 +524,7 @@ class Optimizely:
 
         if decision.variation:
 
-            feature_enabled = decision.variation.featureEnabled
+            feature_enabled = self._get_feature_enabled(decision.variation)
             if feature_enabled:
                 self.logger.info(
                     f'Feature "{feature_key}" is enabled for user "{user_id}".'
@@ -497,7 +560,7 @@ class Optimizely:
         if decision.source == enums.DecisionSources.FEATURE_TEST:
             source_info = {
                 'experiment_key': decision.experiment.key if decision.experiment else None,
-                'variation_key': decision.variation.key if decision.variation else None,
+                'variation_key': self._get_variation_key(decision.variation),
             }
 
         self.notification_center.send_notifications(
@@ -670,7 +733,7 @@ class Optimizely:
         variation = variation_result['variation']
         user_profile_tracker.save_user_profile()
         if variation:
-            variation_key = variation.key
+            variation_key = self._get_variation_key(variation)
 
         if project_config.is_feature_experiment(experiment.id):
             decision_notification_type = enums.DecisionNotificationTypes.FEATURE_TEST
@@ -735,7 +798,7 @@ class Optimizely:
         is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
 
         if decision.variation:
-            if decision.variation.featureEnabled is True:
+            if self._get_feature_enabled(decision.variation) is True:
                 feature_enabled = True
 
         if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
@@ -748,7 +811,7 @@ class Optimizely:
         if is_source_experiment and decision.variation and decision.experiment:
             source_info = {
                 'experiment_key': decision.experiment.key,
-                'variation_key': decision.variation.key,
+                'variation_key': self._get_variation_key(decision.variation),
             }
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
@@ -1182,7 +1245,7 @@ class Optimizely:
         user_id = user_context.user_id
         feature_enabled = False
         if flag_decision.variation is not None:
-            if flag_decision.variation.featureEnabled:
+            if self._get_feature_enabled(flag_decision.variation):
                 feature_enabled = True
 
         self.logger.info(f'Feature {flag_key} is enabled for user {user_id} {feature_enabled}"')
@@ -1231,11 +1294,7 @@ class Optimizely:
                 all_variables[variable_key] = actual_value
 
         should_include_reasons = OptimizelyDecideOption.INCLUDE_REASONS in decide_options
-        variation_key = (
-            flag_decision.variation.key
-            if flag_decision is not None and flag_decision.variation is not None
-            else None
-        )
+        variation_key = self._get_variation_key(flag_decision.variation)
 
         experiment_id = None
         variation_id = None
@@ -1248,7 +1307,7 @@ class Optimizely:
 
         try:
             if flag_decision.variation is not None:
-                variation_id = flag_decision.variation.id
+                variation_id = self._get_variation_id(flag_decision.variation)
         except AttributeError:
             self.logger.warning("flag_decision.variation has no attribute 'id'")
 
