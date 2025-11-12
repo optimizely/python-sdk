@@ -99,6 +99,7 @@ class DecisionSources:
     EXPERIMENT: Final = 'experiment'
     FEATURE_TEST: Final = 'feature-test'
     ROLLOUT: Final = 'rollout'
+    HOLDOUT: Final = 'holdout'
 
 
 class Errors:

@@ -12,7 +12,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Optional, Any
+from typing import Literal, Optional, Any
 from sys import version_info
 
 
@@ -115,3 +115,16 @@ class CmabDict(BaseEntity):
     """Cmab dict from parsed datafile json."""
     attributeIds: list[str]
     trafficAllocation: int
+
+
+HoldoutStatus = Literal['Draft', 'Running', 'Concluded', 'Archived']
+
+
+class HoldoutDict(ExperimentDict):
+    """Holdout dict from parsed datafile json.
+
+    Extends ExperimentDict with holdout-specific properties.
+    """
+    holdoutStatus: HoldoutStatus
+    includedFlags: list[str]
+    excludedFlags: list[str]

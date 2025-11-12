@@ -12,7 +12,7 @@
 # limitations under the License.
 from __future__ import annotations
 import json
-from typing import TYPE_CHECKING, Optional, Type, TypeVar, cast, Any, Iterable, List
+from typing import TYPE_CHECKING, Optional, Type, TypeVar, Union, cast, Any, Iterable, List
 from sys import version_info
 
 from . import entities
@@ -20,6 +20,8 @@ from . import exceptions
 from .helpers import condition as condition_helper
 from .helpers import enums
 from .helpers import types
+
+from optimizely.helpers.types import HoldoutDict, VariationDict
 
 if version_info < (3, 8):
     from typing_extensions import Final
@@ -88,12 +90,12 @@ class ProjectConfig:
         region_value = config.get('region')
         self.region: str = region_value or 'US'
 
-        self.holdouts: list[dict[str, Any]] = config.get('holdouts', [])
-        self.holdout_id_map: dict[str, dict[str, Any]] = {}
-        self.global_holdouts: dict[str, dict[str, Any]] = {}
-        self.included_holdouts: dict[str, list[dict[str, Any]]] = {}
-        self.excluded_holdouts: dict[str, list[dict[str, Any]]] = {}
-        self.flag_holdouts_map: dict[str, list[dict[str, Any]]] = {}
+        self.holdouts: list[HoldoutDict] = config.get('holdouts', [])
+        self.holdout_id_map: dict[str, HoldoutDict] = {}
+        self.global_holdouts: dict[str, HoldoutDict] = {}
+        self.included_holdouts: dict[str, list[HoldoutDict]] = {}
+        self.excluded_holdouts: dict[str, list[HoldoutDict]] = {}
+        self.flag_holdouts_map: dict[str, list[HoldoutDict]] = {}
 
         for holdout in self.holdouts:
             if holdout.get('status') != 'Running':
@@ -218,6 +220,21 @@ class ProjectConfig:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
                 rules.append(self.experiment_id_map[exp_id])
+
+            flag_id = feature.id
+            applicable_holdouts = []
+
+            if flag_id in self.included_holdouts:
+                applicable_holdouts.extend(self.included_holdouts[flag_id])
+
+            for holdout in self.global_holdouts.values():
+                excluded_flag_ids = holdout.get('excludedFlags', [])
+                if flag_id not in excluded_flag_ids:
+                    applicable_holdouts.append(holdout)
+
+            if applicable_holdouts:
+                self.flag_holdouts_map[feature.key] = applicable_holdouts
+
             rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
             if rollout:
                 for exp in rollout.experiments:
@@ -230,6 +247,30 @@ class ProjectConfig:
                     if len(list(filter(lambda variation: variation.id == rule_variation.id, variations))) == 0:
                         variations.append(rule_variation)
             self.flag_variations_map[feature.key] = variations
+
+        if self.holdouts:
+            for holdout in self.holdouts:
+                holdout_key = holdout.get('key')
+                holdout_id = holdout.get('id')
+
+                if not holdout_key or not holdout_id:
+                    continue
+
+                self.variation_key_map[holdout_key] = {}
+                self.variation_id_map[holdout_key] = {}
+                self.variation_id_map_by_experiment_id[holdout_id] = {}
+                self.variation_key_map_by_experiment_id[holdout_id] = {}
+
+                variations = holdout.get('variations')
+                if variations:
+                    for variation in variations:
+                        variation_key = variation.get('key') if isinstance(variation, dict) else None
+                        variation_id = variation.get('id') if isinstance(variation, dict) else None
+                        if variation_key and variation_id:
+                            self.variation_key_map[holdout_key][variation_key] = variation
+                            self.variation_id_map[holdout_key][variation_id] = variation
+                            self.variation_key_map_by_experiment_id[holdout_id][variation_key] = variation
+                            self.variation_id_map_by_experiment_id[holdout_id][variation_id] = variation
 
     @staticmethod
     def _generate_key_map(
@@ -615,7 +656,7 @@ class ProjectConfig:
         return None
 
     def get_variable_value_for_variation(
-        self, variable: Optional[entities.Variable], variation: Optional[entities.Variation]
+        self, variable: Optional[entities.Variable], variation: Optional[Union[entities.Variation, VariationDict]]
     ) -> Optional[str]:
         """ Get the variable value for the given variation.
 
@@ -629,12 +670,21 @@ class ProjectConfig:
 
         if not variable or not variation:
             return None
-        if variation.id not in self.variation_variable_usage_map:
-            self.logger.error(f'Variation with ID "{variation.id}" is not in the datafile.')
+
+        # Extract variation ID from either Variation entity or dict
+        if isinstance(variation, dict):
+            variation_id = variation.get('id')
+            if not variation_id:
+                return None
+        else:
+            variation_id = variation.id
+
+        if variation_id not in self.variation_variable_usage_map:
+            self.logger.error(f'Variation with ID "{variation_id}" is not in the datafile.')
             return None
 
         # Get all variable usages for the given variation
-        variable_usages = self.variation_variable_usage_map[variation.id]
+        variable_usages = self.variation_variable_usage_map[variation_id]
 
         # Find usage in given variation
         variable_usage = None
@@ -643,7 +693,6 @@ class ProjectConfig:
 
         if variable_usage:
             variable_value = variable_usage.value
-
         else:
             variable_value = variable.defaultValue
 
@@ -785,7 +834,7 @@ class ProjectConfig:
 
         return None
 
-    def get_holdouts_for_flag(self, flag_key: str) -> list[Any]:
+    def get_holdouts_for_flag(self, flag_key: str) -> list[HoldoutDict]:
         """ Helper method to get holdouts from an applied feature flag.
 
         Args:
@@ -794,40 +843,12 @@ class ProjectConfig:
         Returns:
             The holdouts that apply for a specific flag.
         """
-        feature_flag = self.feature_key_map.get(flag_key)
-        if not feature_flag:
+        if not self.holdouts:
             return []
 
-        flag_id = feature_flag.id
+        return self.flag_holdouts_map.get(flag_key, [])
 
-        # Check cache first
-        if flag_id in self.flag_holdouts_map:
-            return self.flag_holdouts_map[flag_id]
-
-        holdouts = []
-
-        # Add global holdouts that don't exclude this flag
-        for holdout in self.global_holdouts.values():
-            is_excluded = False
-            excluded_flags = holdout.get('excludedFlags')
-            if excluded_flags:
-                for excluded_flag_id in excluded_flags:
-                    if excluded_flag_id == flag_id:
-                        is_excluded = True
-                        break
-            if not is_excluded:
-                holdouts.append(holdout)
-
-        # Add holdouts that specifically include this flag
-        if flag_id in self.included_holdouts:
-            holdouts.extend(self.included_holdouts[flag_id])
-
-        # Cache the result
-        self.flag_holdouts_map[flag_id] = holdouts
-
-        return holdouts
-
-    def get_holdout(self, holdout_id: str) -> Optional[dict[str, Any]]:
+    def get_holdout(self, holdout_id: str) -> Optional[HoldoutDict]:
         """ Helper method to get holdout from holdout ID.
 
         Args:

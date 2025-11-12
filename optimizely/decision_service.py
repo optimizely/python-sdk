@@ -12,7 +12,9 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict
+from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict, Union
+
+from optimizely.helpers.types import HoldoutDict, VariationDict
 
 from . import bucketer
 from . import entities
@@ -59,7 +61,7 @@ class VariationResult(TypedDict):
     cmab_uuid: Optional[str]
     error: bool
     reasons: List[str]
-    variation: Optional[entities.Variation]
+    variation: Optional[Union[entities.Variation, VariationDict]]
 
 
 class DecisionResult(TypedDict):
@@ -80,7 +82,7 @@ class Decision(NamedTuple):
     """Named tuple containing selected experiment, variation, source and cmab_uuid.
     None if no experiment/variation was selected."""
     experiment: Optional[entities.Experiment]
-    variation: Optional[entities.Variation]
+    variation: Optional[Union[entities.Variation, VariationDict]]
     source: Optional[str]
     cmab_uuid: Optional[str]
 
@@ -670,7 +672,179 @@ class DecisionService:
             - 'error': Boolean indicating if an error occurred during the decision process.
             - 'reasons': List of log messages representing decision making for the feature.
         """
-        return self.get_variations_for_feature_list(project_config, [feature], user_context, options)[0]
+        holdouts = project_config.get_holdouts_for_flag(feature.key)
+
+        if holdouts:
+            # Has holdouts - use get_decision_for_flag which checks holdouts first
+            return self.get_decision_for_flag(feature, user_context, project_config, options)
+        else:
+            return self.get_variations_for_feature_list(project_config, [feature], user_context, options)[0]
+
+    def get_decision_for_flag(
+        self,
+        feature_flag: entities.FeatureFlag,
+        user_context: OptimizelyUserContext,
+        project_config: ProjectConfig,
+        decide_options: Optional[Sequence[str]] = None,
+        user_profile_tracker: Optional[UserProfileTracker] = None,
+        decide_reasons: Optional[list[str]] = None
+    ) -> DecisionResult:
+        """
+        Get the decision for a single feature flag.
+        Processes holdouts, experiments, and rollouts in that order.
+
+        Args:
+            feature_flag: The feature flag to get a decision for.
+            user_context: The user context.
+            project_config: The project config.
+            decide_options: Sequence of decide options.
+            user_profile_tracker: The user profile tracker.
+            decide_reasons: List of decision reasons to merge.
+
+        Returns:
+            A DecisionResult for the feature flag.
+        """
+        reasons = decide_reasons.copy() if decide_reasons else []
+        user_id = user_context.user_id
+
+        # Check holdouts
+        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
+        for holdout in holdouts:
+            holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
+            reasons.extend(holdout_decision['reasons'])
+
+            decision = holdout_decision['decision']
+            # Check if user was bucketed into holdout (has a variation)
+            if decision.variation is None:
+                continue
+
+            message = (
+                f"The user '{user_id}' is bucketed into holdout '{holdout['key']}' "
+                f"for feature flag '{feature_flag.key}'."
+            )
+            self.logger.info(message)
+            reasons.append(message)
+            return {
+                'decision': holdout_decision['decision'],
+                'error': False,
+                'reasons': reasons
+            }
+
+        # If no holdout decision, fall back to existing experiment/rollout logic
+        # Use get_variations_for_feature_list which handles experiments and rollouts
+        fallback_result = self.get_variations_for_feature_list(
+            project_config, [feature_flag], user_context, decide_options
+        )[0]
+
+        # Merge reasons
+        if fallback_result.get('reasons'):
+            reasons.extend(fallback_result['reasons'])
+
+        return {
+            'decision': fallback_result['decision'],
+            'error': fallback_result.get('error', False),
+            'reasons': reasons
+        }
+
+    def get_variation_for_holdout(
+        self,
+        holdout: HoldoutDict,
+        user_context: OptimizelyUserContext,
+        project_config: ProjectConfig
+    ) -> DecisionResult:
+        """
+        Get the variation for holdout.
+
+        Args:
+            holdout: The holdout configuration (HoldoutDict).
+            user_context: The user context.
+            project_config: The project config.
+
+        Returns:
+            A DecisionResult for the holdout.
+        """
+        from optimizely.helpers.enums import ExperimentAudienceEvaluationLogs
+
+        decide_reasons: list[str] = []
+        user_id = user_context.user_id
+        attributes = user_context.get_user_attributes()
+
+        if not holdout or not holdout.get('status') or holdout.get('status') != 'Running':
+            key = holdout.get('key') if holdout else 'unknown'
+            message = f"Holdout '{key}' is not running."
+            self.logger.info(message)
+            decide_reasons.append(message)
+            return {
+                'decision': Decision(None, None, enums.DecisionSources.HOLDOUT, None),
+                'error': False,
+                'reasons': decide_reasons
+            }
+
+        bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, attributes)
+        decide_reasons.extend(bucketing_id_reasons)
+
+        # Check audience conditions
+        audience_conditions = holdout.get('audienceIds')
+        user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(
+            project_config,
+            audience_conditions,
+            ExperimentAudienceEvaluationLogs,
+            holdout.get('key', 'unknown'),
+            user_context,
+            self.logger
+        )
+        decide_reasons.extend(reasons_received)
+
+        if not user_meets_audience_conditions:
+            message = (
+                f"User '{user_id}' does not meet the conditions for holdout "
+                f"'{holdout['key']}'."
+            )
+            self.logger.debug(message)
+            decide_reasons.append(message)
+            return {
+                'decision': Decision(None, None, enums.DecisionSources.HOLDOUT, None),
+                'error': False,
+                'reasons': decide_reasons
+            }
+
+        # Bucket user into holdout variation
+        variation, bucket_reasons = self.bucketer.bucket(
+            project_config, holdout, user_id, bucketing_id  # type: ignore[arg-type]
+        )
+        decide_reasons.extend(bucket_reasons)
+
+        if variation:
+            # For holdouts, variation is a dict, not a Variation entity
+            variation_key = variation['key'] if isinstance(variation, dict) else variation.key
+            message = (
+                f"The user '{user_id}' is bucketed into variation '{variation_key}' "
+                f"of holdout '{holdout['key']}'."
+            )
+            self.logger.info(message)
+            decide_reasons.append(message)
+
+            # Create Decision for holdout - experiment is None, source is HOLDOUT
+            holdout_decision: Decision = Decision(
+                experiment=None,
+                variation=variation,
+                source=enums.DecisionSources.HOLDOUT,
+                cmab_uuid=None
+            )
+            return {
+                'decision': holdout_decision,
+                'error': False,
+                'reasons': decide_reasons
+            }
+
+        message = f"User '{user_id}' is not bucketed into any variation for holdout '{holdout['key']}'."
+        self.logger.info(message)
+        decide_reasons.append(message)
+        return {
+            'decision': Decision(None, None, enums.DecisionSources.HOLDOUT, None),
+            'error': False,
+            'reasons': decide_reasons
+        }
 
     def validated_forced_decision(
         self,
@@ -779,7 +953,7 @@ class DecisionService:
             if feature.experimentIds:
                 for experiment_id in feature.experimentIds:
                     experiment = project_config.get_experiment_from_id(experiment_id)
-                    decision_variation = None
+                    decision_variation: Optional[Union[entities.Variation, VariationDict]] = None
 
                     if experiment:
                         optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
