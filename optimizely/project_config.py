@@ -834,11 +834,11 @@ class ProjectConfig:
 
         return None
 
-    def get_holdouts_for_flag(self, flag_key: str) -> list[HoldoutDict]:
+    def get_holdouts_for_flag(self, flag_id: str) -> list[HoldoutDict]:
         """ Helper method to get holdouts from an applied feature flag.
 
         Args:
-            flag_key: Key of the feature flag.
+            flag_id: (REQUIRED) ID of the feature flag.
 
         Returns:
             The holdouts that apply for a specific flag.
@@ -846,7 +846,7 @@ class ProjectConfig:
         if not self.holdouts:
             return []
 
-        return self.flag_holdouts_map.get(flag_key, [])
+        return self.flag_holdouts_map.get(flag_id, [])
 
     def get_holdout(self, holdout_id: str) -> Optional[HoldoutDict]:
         """ Helper method to get holdout from holdout ID.
