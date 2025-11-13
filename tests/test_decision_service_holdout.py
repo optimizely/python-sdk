@@ -278,20 +278,49 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
         user_context = self.opt_obj.create_user_context('testUserId', {})
 
-        decision_result = self.decision_service_with_holdouts.get_variation_for_feature(
-            self.config_with_holdouts,
-            feature_flag,
-            user_context
+        # Mock get_holdouts_for_flag to return holdouts
+        holdout = self.config_with_holdouts.holdouts[0] if self.config_with_holdouts.holdouts else None
+        self.assertIsNotNone(holdout)
+
+        holdout_variation = holdout['variations'][0]
+
+        # Create a holdout decision
+        mock_holdout_decision = decision_service.Decision(
+            experiment=holdout,
+            variation=holdout_variation,
+            source=enums.DecisionSources.HOLDOUT,
+            cmab_uuid=None
         )
 
-        self.assertIsNotNone(decision_result)
+        mock_holdout_result = {
+            'decision': mock_holdout_decision,
+            'error': False,
+            'reasons': []
+        }
 
-        # Decision should be valid
-        if decision_result.get('decision'):
-            decision = decision_result['decision']
-            self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
-            self.assertIsNotNone(decision.variation)
-            self.assertIsNone(decision.experiment)
+        # Mock get_holdouts_for_flag to return holdouts so the holdout path is taken
+        with mock.patch.object(
+            self.config_with_holdouts,
+            'get_holdouts_for_flag',
+            return_value=[holdout]
+        ):
+            with mock.patch.object(
+                self.opt_obj.decision_service,
+                'get_variation_for_holdout',
+                return_value=mock_holdout_result
+            ):
+                decision_result = self.opt_obj.decision_service.get_variation_for_feature(
+                    self.config_with_holdouts,
+                    feature_flag,
+                    user_context
+                )
+
+                self.assertIsNotNone(decision_result)
+
+                # Decision should be valid and from holdout
+                decision = decision_result['decision']
+                self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+                self.assertIsNotNone(decision.variation)
 
     def test_no_holdout_decision_falls_through_to_experiment_and_rollout(self):
         """When holdout returns no decision, should fall through to experiment and rollout evaluation."""
@@ -566,3 +595,318 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         self.assertIsNotNone(decision_result)
         self.assertIn('decision', decision_result)
         self.assertIn('reasons', decision_result)
+
+    # Holdout Impression Events tests
+
+    def test_decide_with_holdout_sends_impression_event(self):
+        """Should send impression event for holdout decision."""
+        # Create optimizely instance with mocked event processor
+        spy_event_processor = mock.MagicMock()
+
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'holdout_1',
+                'key': 'test_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'holdout_var_1',
+                        'key': 'holdout_control',
+                        'featureEnabled': True,
+                        'variables': []
+                    },
+                    {
+                        'id': 'holdout_var_2',
+                        'key': 'holdout_treatment',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'holdout_var_1',
+                        'endOfRange': 5000
+                    },
+                    {
+                        'entityId': 'holdout_var_2',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt_with_mocked_events = optimizely_module.Optimizely(
+            datafile=config_json,
+            logger=self.spy_logger,
+            error_handler=self.error_handler,
+            event_processor=spy_event_processor
+        )
+
+        try:
+            # Use a specific user ID that will be bucketed into a holdout
+            test_user_id = 'user_bucketed_into_holdout'
+
+            config = opt_with_mocked_events.config_manager.get_config()
+            feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+            self.assertIsNotNone(feature_flag, "Feature flag 'test_feature_in_experiment' should exist")
+
+            user_attributes = {}
+
+            user_context = opt_with_mocked_events.create_user_context(test_user_id, user_attributes)
+            decision = user_context.decide(feature_flag.key)
+
+            self.assertIsNotNone(decision, 'Decision should not be None')
+
+            # Find the actual holdout if this is a holdout decision
+            actual_holdout = None
+            if config.holdouts and decision.rule_key:
+                actual_holdout = next(
+                    (h for h in config.holdouts if h.get('key') == decision.rule_key),
+                    None
+                )
+
+            # Only continue if this is a holdout decision
+            if actual_holdout:
+                self.assertEqual(decision.flag_key, feature_flag.key)
+
+                holdout_variation = next(
+                    (v for v in actual_holdout['variations'] if v.get('key') == decision.variation_key),
+                    None
+                )
+
+                self.assertIsNotNone(
+                    holdout_variation,
+                    f"Variation '{decision.variation_key}' should be from the chosen holdout '{actual_holdout['key']}'"
+                )
+
+                self.assertEqual(
+                    decision.enabled,
+                    holdout_variation.get('featureEnabled'),
+                    "Enabled flag should match holdout variation's featureEnabled value"
+                )
+
+                # Verify impression event was sent
+                self.assertGreater(spy_event_processor.process.call_count, 0)
+
+                # Verify impression event contains correct user details
+                call_args_list = spy_event_processor.process.call_args_list
+                user_event_found = False
+                for call_args in call_args_list:
+                    if call_args[0]:  # Check positional args
+                        user_event = call_args[0][0]
+                        if hasattr(user_event, 'user_id') and user_event.user_id == test_user_id:
+                            user_event_found = True
+                            break
+
+                self.assertTrue(user_event_found, 'Impression event should contain correct user ID')
+        finally:
+            opt_with_mocked_events.close()
+
+    def test_decide_with_holdout_does_not_send_impression_when_disabled(self):
+        """Should not send impression event when DISABLE_DECISION_EVENT option is used."""
+        # Create optimizely instance with mocked event processor
+        spy_event_processor = mock.MagicMock()
+
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'holdout_1',
+                'key': 'test_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'holdout_var_1',
+                        'key': 'holdout_control',
+                        'featureEnabled': True,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'holdout_var_1',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt_with_mocked_events = optimizely_module.Optimizely(
+            datafile=config_json,
+            logger=self.spy_logger,
+            error_handler=self.error_handler,
+            event_processor=spy_event_processor
+        )
+
+        try:
+            test_user_id = 'user_bucketed_into_holdout'
+
+            config = opt_with_mocked_events.config_manager.get_config()
+            feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+            self.assertIsNotNone(feature_flag)
+
+            user_attributes = {}
+
+            user_context = opt_with_mocked_events.create_user_context(test_user_id, user_attributes)
+            decision = user_context.decide(
+                feature_flag.key,
+                [OptimizelyDecideOption.DISABLE_DECISION_EVENT]
+            )
+
+            self.assertIsNotNone(decision, 'Decision should not be None')
+
+            # Find the chosen holdout if this is a holdout decision
+            chosen_holdout = None
+            if config.holdouts and decision.rule_key:
+                chosen_holdout = next(
+                    (h for h in config.holdouts if h.get('key') == decision.rule_key),
+                    None
+                )
+
+            if chosen_holdout:
+                self.assertEqual(decision.flag_key, feature_flag.key)
+
+                # Verify no impression event was sent
+                spy_event_processor.process.assert_not_called()
+        finally:
+            opt_with_mocked_events.close()
+
+    def test_decide_with_holdout_sends_correct_notification_content(self):
+        """Should send correct notification content for holdout decision."""
+        captured_notifications = []
+
+        def notification_callback(notification_type, user_id, user_attributes, decision_info):
+            captured_notifications.append(decision_info.copy())
+
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'holdout_1',
+                'key': 'test_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'holdout_var_1',
+                        'key': 'holdout_control',
+                        'featureEnabled': True,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'holdout_var_1',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt_with_mocked_events = optimizely_module.Optimizely(
+            datafile=config_json,
+            logger=self.spy_logger,
+            error_handler=self.error_handler
+        )
+
+        try:
+            opt_with_mocked_events.notification_center.add_notification_listener(
+                enums.NotificationTypes.DECISION,
+                notification_callback
+            )
+
+            test_user_id = 'holdout_test_user'
+            config = opt_with_mocked_events.config_manager.get_config()
+            feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+            holdout = config.holdouts[0] if config.holdouts else None
+            self.assertIsNotNone(holdout, 'Should have at least one holdout configured')
+
+            holdout_variation = holdout['variations'][0]
+            self.assertIsNotNone(holdout_variation, 'Holdout should have at least one variation')
+
+            mock_experiment = mock.MagicMock()
+            mock_experiment.key = holdout['key']
+            mock_experiment.id = holdout['id']
+
+            # Mock the decision service to return a holdout decision
+            holdout_decision = decision_service.Decision(
+                experiment=mock_experiment,
+                variation=holdout_variation,
+                source=enums.DecisionSources.HOLDOUT,
+                cmab_uuid=None
+            )
+
+            holdout_decision_result = {
+                'decision': holdout_decision,
+                'error': False,
+                'reasons': []
+            }
+
+            # Mock get_variations_for_feature_list to return holdout decision
+            with mock.patch.object(
+                opt_with_mocked_events.decision_service,
+                'get_variations_for_feature_list',
+                return_value=[holdout_decision_result]
+            ):
+                user_context = opt_with_mocked_events.create_user_context(test_user_id, {})
+                decision = user_context.decide(feature_flag.key)
+
+            self.assertIsNotNone(decision, 'Decision should not be None')
+            self.assertEqual(len(captured_notifications), 1, 'Should have captured exactly one decision notification')
+
+            notification = captured_notifications[0]
+            rule_key = notification.get('rule_key')
+
+            self.assertEqual(rule_key, holdout['key'], 'RuleKey should match holdout key')
+
+            # Verify holdout notification structure
+            self.assertIn('flag_key', notification, 'Holdout notification should contain flag_key')
+            self.assertIn('enabled', notification, 'Holdout notification should contain enabled flag')
+            self.assertIn('variation_key', notification, 'Holdout notification should contain variation_key')
+            self.assertIn('experiment_id', notification, 'Holdout notification should contain experiment_id')
+            self.assertIn('variation_id', notification, 'Holdout notification should contain variation_id')
+
+            flag_key = notification.get('flag_key')
+            self.assertEqual(flag_key, 'test_feature_in_experiment', 'FlagKey should match the requested flag')
+
+            experiment_id = notification.get('experiment_id')
+            self.assertEqual(experiment_id, holdout['id'], 'ExperimentId in notification should match holdout ID')
+
+            variation_id = notification.get('variation_id')
+            self.assertEqual(variation_id, holdout_variation['id'], 'VariationId should match holdout variation ID')
+
+            variation_key = notification.get('variation_key')
+            self.assertEqual(
+                variation_key,
+                holdout_variation['key'],
+                'VariationKey in notification should match holdout variation key'
+            )
+
+            enabled = notification.get('enabled')
+            self.assertIsNotNone(enabled, 'Enabled flag should be present in notification')
+            self.assertEqual(
+                enabled,
+                holdout_variation.get('featureEnabled'),
+                "Enabled flag should match holdout variation's featureEnabled value"
+            )
+
+            self.assertIn(flag_key, config.feature_key_map, f"FlagKey '{flag_key}' should exist in config")
+
+            self.assertIn('variables', notification, 'Notification should contain variables')
+            self.assertIn('reasons', notification, 'Notification should contain reasons')
+            self.assertIn(
+                'decision_event_dispatched', notification,
+                'Notification should contain decision_event_dispatched'
+            )
+        finally:
+            opt_with_mocked_events.close()

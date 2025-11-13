@@ -453,7 +453,7 @@ class Optimizely:
                 f'Returning default value for variable "{variable_key}" of feature flag "{feature_key}".'
             )
 
-        if decision.source == enums.DecisionSources.FEATURE_TEST:
+        if decision.source in (enums.DecisionSources.FEATURE_TEST, enums.DecisionSources.HOLDOUT):
             source_info = {
                 'experiment_key': decision.experiment.key if decision.experiment else None,
                 'variation_key': self._get_variation_key(decision.variation),

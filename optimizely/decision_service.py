@@ -672,7 +672,7 @@ class DecisionService:
             - 'error': Boolean indicating if an error occurred during the decision process.
             - 'reasons': List of log messages representing decision making for the feature.
         """
-        holdouts = project_config.get_holdouts_for_flag(feature.key)
+        holdouts = project_config.get_holdouts_for_flag(feature.id)
 
         if holdouts:
             # Has holdouts - use get_decision_for_flag which checks holdouts first
@@ -708,7 +708,7 @@ class DecisionService:
         user_id = user_context.user_id
 
         # Check holdouts
-        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
+        holdouts = project_config.get_holdouts_for_flag(feature_flag.id)
         for holdout in holdouts:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
             reasons.extend(holdout_decision['reasons'])
