@@ -1,5 +1,64 @@
 # Optimizely Python SDK Changelog
 
+## 5.3.0
+November 13th, 2025
+
+This release introduces **Contextual Multi-Armed Bandit (CMAB)** support in the Optimizely Python SDK along with several enhancements, bug fixes, and infrastructure improvements.
+
+---
+
+### New Features
+
+#### **CMAB Support**
+
+A major addition in this release is support for **Contextual Multi-Armed Bandit (CMAB)**, enabling adaptive experimentation based on contextual user data.
+
+The CMAB feature includes:
+
+- CMAB Client and Service implementations to communicate with CMAB APIs ([#453](https://github.com/optimizely/python-sdk/pull/453), [#455](https://github.com/optimizely/python-sdk/pull/455))
+- Decision Service updates to handle CMAB-based decisioning ([#457](https://github.com/optimizely/python-sdk/pull/457))
+- Impression event updates to include CMAB UUID ([#458](https://github.com/optimizely/python-sdk/pull/458))
+- Cache system enhancements including a new `remove()` method for CMAB cache ([#454](https://github.com/optimizely/python-sdk/pull/454))
+- Configuration options to customize CMAB cache parameters ([#463](https://github.com/optimizely/python-sdk/pull/463))
+- Exposure of CMAB prediction endpoint for programmatic access ([#466](https://github.com/optimizely/python-sdk/pull/466))
+
+These updates collectively enable Python SDK users to leverage machine learning–driven bandit optimization strategies within Optimizely Feature Experimentation.
+
+---
+
+#### **Multi-Region Data Hosting**
+
+- Added SDK support for multi-region data hosting, allowing projects to specify their data residency region ([#459](https://github.com/optimizely/python-sdk/pull/459)).
+
+---
+
+### Security Fixes
+
+- Addressed a CSRF security warning by properly importing and registering `CSRFProtect`  
+  ([#448](https://github.com/optimizely/python-sdk/pull/448), [#450](https://github.com/optimizely/python-sdk/pull/450), [#452](https://github.com/optimizely/python-sdk/pull/452)).
+
+---
+
+### Enhancements
+
+- Updated project configuration to track CMAB properties ([#451](https://github.com/optimizely/python-sdk/pull/451)).
+- Removed unused `testapp` folder from tests as part of maintenance cleanup ([#461](https://github.com/optimizely/python-sdk/pull/461)).
+
+---
+
+### Bug Fixes
+
+- Fixed concurrency issues in CMAB service to ensure thread-safe cache and decision logic ([#462](https://github.com/optimizely/python-sdk/pull/462)).
+
+---
+
+### New Contributors
+
+- [@esrakartalOpt](https://github.com/esrakartalOpt) made their first contribution in [#459](https://github.com/optimizely/python-sdk/pull/459).
+
+---
+
+
 ## 5.2.0
 February 26, 2025
 
