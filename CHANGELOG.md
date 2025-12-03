@@ -1,5 +1,12 @@
 # Optimizely Python SDK Changelog
 
+## 5.3.1
+December 3rd, 2025
+
+Minor update
+- Added Holdouts support: Holdouts Feature Experimentation feature is now officially supported. ([469](https://github.com/optimizely/python-sdk/pull/469))
+
+
 ## 5.3.0
 November 13th, 2025
 
