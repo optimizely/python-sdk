@@ -873,7 +873,7 @@ class UserContextTest(base.BaseTest):
             'Audiences for rule 1 collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule 1.',
             'User "test_user" bucketed into a targeting rule 1.',
-            'The user "test_user" is bucketed into a rollout for feature flag "test_feature_in_rollout".'
+            "The user 'test_user' is bucketed into a rollout for feature flag 'test_feature_in_rollout'."
         ]
 
         self.assertEqual(expected_reasons, actual.reasons)
