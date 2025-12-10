@@ -433,7 +433,7 @@ class Optimizely:
         decision_result = self.decision_service.get_variation_for_feature(project_config, feature_flag, user_context)
         decision = decision_result['decision']
 
-        if decision.variation:
+        if decision and decision.variation:
 
             feature_enabled = self._get_feature_enabled(decision.variation)
             if feature_enabled:
@@ -792,23 +792,24 @@ class Optimizely:
         user_context = OptimizelyUserContext(self, self.logger, user_id, attributes, False)
 
         decision = self.decision_service.get_variation_for_feature(project_config, feature, user_context)['decision']
-        cmab_uuid = decision.cmab_uuid
+        cmab_uuid = decision.cmab_uuid if decision else None
 
-        is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST
-        is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT
+        is_source_experiment = decision.source == enums.DecisionSources.FEATURE_TEST if decision else False
+        is_source_rollout = decision.source == enums.DecisionSources.ROLLOUT if decision else False
 
-        if decision.variation:
+        if decision and decision.variation:
             if self._get_feature_enabled(decision.variation) is True:
                 feature_enabled = True
 
-        if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
+        if (decision and (is_source_rollout or not decision.variation) and
+                project_config.get_send_flag_decisions_value()):
             self._send_impression_event(
                 project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
                 decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
             )
 
         # Send event if Decision came from an experiment.
-        if is_source_experiment and decision.variation and decision.experiment:
+        if decision and is_source_experiment and decision.variation and decision.experiment:
             source_info = {
                 'experiment_key': decision.experiment.key,
                 'variation_key': self._get_variation_key(decision.variation),
@@ -1244,7 +1245,7 @@ class Optimizely:
     ) -> OptimizelyDecision:
         user_id = user_context.user_id
         feature_enabled = False
-        if flag_decision.variation is not None:
+        if flag_decision and flag_decision.variation is not None:
             if self._get_feature_enabled(flag_decision.variation):
                 feature_enabled = True
 
@@ -1252,9 +1253,9 @@ class Optimizely:
 
         # Create Optimizely Decision Result.
         attributes = user_context.get_user_attributes()
-        rule_key = flag_decision.experiment.key if flag_decision.experiment else None
+        rule_key = flag_decision.experiment.key if (flag_decision and flag_decision.experiment) else None
         all_variables = {}
-        decision_source = flag_decision.source
+        decision_source = flag_decision.source if flag_decision else None
         decision_event_dispatched = False
 
         feature_flag = project_config.feature_key_map.get(flag_key)
@@ -1262,7 +1263,9 @@ class Optimizely:
         # Send impression event if Decision came from a feature
         # test and decide options doesn't include disableDecisionEvent
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
-            if decision_source == DecisionSources.FEATURE_TEST or project_config.send_flag_decisions:
+            if (decision_source == DecisionSources.FEATURE_TEST or
+                    decision_source == DecisionSources.HOLDOUT or
+                    project_config.send_flag_decisions):
                 self._send_impression_event(project_config,
                                             flag_decision.experiment,
                                             flag_decision.variation,

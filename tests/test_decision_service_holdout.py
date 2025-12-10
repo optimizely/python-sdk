@@ -507,9 +507,16 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
             # If both have decisions, they should match
             if decision1 and decision2:
-                # Variation is an object, not a dict, so use attributes
-                var1_id = decision1.variation.id if decision1.variation else None
-                var2_id = decision2.variation.id if decision2.variation else None
+                # Variation can be either an object or a dict (for holdouts)
+                def get_variation_id(variation):
+                    if variation is None:
+                        return None
+                    if isinstance(variation, dict):
+                        return variation.get('id')
+                    return variation.id
+
+                var1_id = get_variation_id(decision1.variation)
+                var2_id = get_variation_id(decision2.variation)
 
                 self.assertEqual(
                     var1_id, var2_id,

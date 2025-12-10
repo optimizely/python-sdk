@@ -92,7 +92,7 @@ class ProjectConfig:
 
         self.holdouts: list[HoldoutDict] = config.get('holdouts', [])
         self.holdout_id_map: dict[str, HoldoutDict] = {}
-        self.global_holdouts: dict[str, HoldoutDict] = {}
+        self.global_holdouts: list[HoldoutDict] = []
         self.included_holdouts: dict[str, list[HoldoutDict]] = {}
         self.excluded_holdouts: dict[str, list[HoldoutDict]] = {}
         self.flag_holdouts_map: dict[str, list[HoldoutDict]] = {}
@@ -101,26 +101,39 @@ class ProjectConfig:
             if holdout.get('status') != 'Running':
                 continue
 
+            # Ensure holdout has layerId field (holdouts don't have campaigns)
+            if 'layerId' not in holdout:
+                holdout['layerId'] = ''
+
             holdout_id = holdout['id']
             self.holdout_id_map[holdout_id] = holdout
 
-            included_flags = holdout.get('includedFlags')
-            if not included_flags:
-                # This is a global holdout
-                self.global_holdouts[holdout_id] = holdout
+            included_flags = holdout.get('includedFlags', [])
+            excluded_flags = holdout.get('excludedFlags', [])
 
-                excluded_flags = holdout.get('excludedFlags')
-                if excluded_flags:
-                    for flag_id in excluded_flags:
-                        if flag_id not in self.excluded_holdouts:
-                            self.excluded_holdouts[flag_id] = []
-                        self.excluded_holdouts[flag_id].append(holdout)
-            else:
-                # This holdout applies to specific flags
+            has_included = bool(included_flags)
+            has_excluded = bool(excluded_flags)
+
+            if not has_included and not has_excluded:
+                # No included or excluded flags - this is a global holdout
+                self.global_holdouts.append(holdout)
+
+            elif has_included:
+                # Has included flags - add to included_holdouts map
+                # (works for both cases with or without excluded flags)
                 for flag_id in included_flags:
                     if flag_id not in self.included_holdouts:
                         self.included_holdouts[flag_id] = []
                     self.included_holdouts[flag_id].append(holdout)
+
+            elif has_excluded and not has_included:
+                # No included flags but has excluded flags - global with exclusions
+                self.global_holdouts.append(holdout)
+
+                for flag_id in excluded_flags:
+                    if flag_id not in self.excluded_holdouts:
+                        self.excluded_holdouts[flag_id] = []
+                    self.excluded_holdouts[flag_id].append(holdout)
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -220,20 +233,6 @@ class ProjectConfig:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
                 rules.append(self.experiment_id_map[exp_id])
-
-            flag_id = feature.id
-            applicable_holdouts = []
-
-            if flag_id in self.included_holdouts:
-                applicable_holdouts.extend(self.included_holdouts[flag_id])
-
-            for holdout in self.global_holdouts.values():
-                excluded_flag_ids = holdout.get('excludedFlags', [])
-                if flag_id not in excluded_flag_ids:
-                    applicable_holdouts.append(holdout)
-
-            if applicable_holdouts:
-                self.flag_holdouts_map[feature.key] = applicable_holdouts
 
             rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
             if rollout:
@@ -839,6 +838,7 @@ class ProjectConfig:
 
         Args:
             flag_key: Key of the feature flag.
+                     This parameter is required and should not be null/None.
 
         Returns:
             The holdouts that apply for a specific flag.
@@ -846,7 +846,39 @@ class ProjectConfig:
         if not self.holdouts:
             return []
 
-        return self.flag_holdouts_map.get(flag_key, [])
+        # Check cache first (before validation, so we cache the validation result too)
+        if flag_key in self.flag_holdouts_map:
+            return self.flag_holdouts_map[flag_key]
+
+        # Validate that the flag exists in the datafile
+        feature = self.feature_key_map.get(flag_key)
+        if not feature:
+            # Cache the empty result for non-existent flags
+            self.flag_holdouts_map[flag_key] = []
+            return []
+
+        flag_id = feature.id
+
+        # Prioritize global holdouts first
+        excluded = self.excluded_holdouts.get(flag_id, [])
+
+        if excluded:
+            # Filter out excluded holdouts from global holdouts
+            active_holdouts = [
+                holdout for holdout in self.global_holdouts
+                if holdout not in excluded
+            ]
+        else:
+            active_holdouts = self.global_holdouts.copy()
+
+        # Append included holdouts
+        included = self.included_holdouts.get(flag_id, [])
+        active_holdouts.extend(included)
+
+        # Cache the result
+        self.flag_holdouts_map[flag_key] = active_holdouts
+
+        return self.flag_holdouts_map[flag_key]
 
     def get_holdout(self, holdout_id: str) -> Optional[HoldoutDict]:
         """ Helper method to get holdout from holdout ID.
