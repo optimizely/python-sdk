@@ -261,6 +261,25 @@ class Optimizely:
         except (AttributeError, KeyError, TypeError):
             return False
 
+    def _get_experiment_key(self, experiment: Optional[Union[entities.Experiment, dict]]) -> Optional[str]:
+        """Helper to extract experiment/holdout key from either dict or Experiment object.
+        Args:
+            experiment: Either a dict (from holdout) or entities.Experiment object
+        Returns:
+            The experiment/holdout key as a string, or None if not available
+        """
+        if experiment is None:
+            return None
+
+        try:
+            if isinstance(experiment, dict):
+                return experiment.get('key')
+            else:
+                return experiment.key
+        except (AttributeError, KeyError, TypeError):
+            self.logger.warning(f"Unable to extract experiment key from {type(experiment)}")
+            return None
+
     def _validate_instantiation_options(self) -> None:
         """ Helper method to validate all instantiation parameters.
 
@@ -455,7 +474,7 @@ class Optimizely:
 
         if decision.source in (enums.DecisionSources.FEATURE_TEST, enums.DecisionSources.HOLDOUT):
             source_info = {
-                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'experiment_key': self._get_experiment_key(decision.experiment),
                 'variation_key': self._get_variation_key(decision.variation),
             }
 
@@ -559,7 +578,7 @@ class Optimizely:
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
             source_info = {
-                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'experiment_key': self._get_experiment_key(decision.experiment),
                 'variation_key': self._get_variation_key(decision.variation),
             }
 
@@ -804,19 +823,21 @@ class Optimizely:
         if (decision and (is_source_rollout or not decision.variation) and
                 project_config.get_send_flag_decisions_value()):
             self._send_impression_event(
-                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
-                decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
+                project_config, decision.experiment, decision.variation, feature.key,
+                self._get_experiment_key(decision.experiment) or '', str(decision.source), feature_enabled,
+                user_id, attributes, cmab_uuid
             )
 
         # Send event if Decision came from an experiment.
         if decision and is_source_experiment and decision.variation and decision.experiment:
             source_info = {
-                'experiment_key': decision.experiment.key,
+                'experiment_key': self._get_experiment_key(decision.experiment),
                 'variation_key': self._get_variation_key(decision.variation),
             }
             self._send_impression_event(
-                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
-                str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
+                project_config, decision.experiment, decision.variation, feature.key,
+                self._get_experiment_key(decision.experiment) or '', str(decision.source), feature_enabled,
+                user_id, attributes, cmab_uuid
             )
 
         if feature_enabled:
@@ -1253,7 +1274,7 @@ class Optimizely:
 
         # Create Optimizely Decision Result.
         attributes = user_context.get_user_attributes()
-        rule_key = flag_decision.experiment.key if (flag_decision and flag_decision.experiment) else None
+        rule_key = self._get_experiment_key(flag_decision.experiment) if flag_decision else None
         all_variables = {}
         decision_source = flag_decision.source if flag_decision else None
         decision_event_dispatched = False
