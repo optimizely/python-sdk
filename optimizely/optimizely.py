@@ -1252,7 +1252,12 @@ class Optimizely:
 
         # Create Optimizely Decision Result.
         attributes = user_context.get_user_attributes()
-        rule_key = flag_decision.experiment.key if flag_decision.experiment else None
+        # For holdouts, experiment is a dict; for experiments, it's an Experiment entity
+        if flag_decision.experiment:
+            rule_key = (flag_decision.experiment['key'] if isinstance(flag_decision.experiment, dict)
+                        else flag_decision.experiment.key)
+        else:
+            rule_key = None
         all_variables = {}
         decision_source = flag_decision.source
         decision_event_dispatched = False
@@ -1303,9 +1308,11 @@ class Optimizely:
 
         try:
             if flag_decision.experiment is not None:
-                experiment_id = flag_decision.experiment.id
-        except AttributeError:
-            self.logger.warning("flag_decision.experiment has no attribute 'id'")
+                # For holdouts, experiment is a dict; for experiments, it's an Experiment entity
+                experiment_id = (flag_decision.experiment['id'] if isinstance(flag_decision.experiment, dict)
+                                 else flag_decision.experiment.id)
+        except (AttributeError, KeyError, TypeError):
+            self.logger.warning("Unable to extract experiment_id from flag_decision.experiment")
 
         try:
             if flag_decision.variation is not None:

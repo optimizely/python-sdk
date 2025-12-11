@@ -824,9 +824,9 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
 
-            # Create Decision for holdout - experiment is None, source is HOLDOUT
+            # Create Decision for holdout - pass holdout dict as experiment so rule_key can be extracted
             holdout_decision: Decision = Decision(
-                experiment=None,
+                experiment=holdout,  # type: ignore[arg-type]
                 variation=variation,
                 source=enums.DecisionSources.HOLDOUT,
                 cmab_uuid=None
