@@ -91,10 +91,11 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-            - "pypy-3.9"
-            - "pypy-3.10"
-            - "3.9"
-            - "3.10"
+            # disabled due to librt is not available on this pypy version
+            # - "pypy-3.9"
+            # - "pypy-3.10"
+            # - "3.9"
+            # - "3.10"
             - "3.11"
             - "3.12"
     steps:

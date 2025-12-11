@@ -1512,7 +1512,9 @@ class HoldoutConfigTest(base.BaseTest):
 
         self.assertIn('holdout_1', self.config_with_holdouts.holdout_id_map)
         self.assertIn('holdout_2', self.config_with_holdouts.holdout_id_map)
-        self.assertIn('holdout_1', self.config_with_holdouts.global_holdouts)
+        # Check if holdout_1 is in global_holdouts (list of dicts)
+        holdout_ids = [h['id'] for h in self.config_with_holdouts.global_holdouts]
+        self.assertIn('holdout_1', holdout_ids)
 
         # Use correct feature flag IDs
         boolean_feature_id = '91111'
