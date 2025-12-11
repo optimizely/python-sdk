@@ -833,12 +833,12 @@ class ProjectConfig:
 
         return None
 
-    def get_holdouts_for_flag(self, flag_key_or_id: str) -> list[HoldoutDict]:
+    def get_holdouts_for_flag(self, flag_key: str) -> list[HoldoutDict]:
         """ Helper method to get holdouts from an applied feature flag.
 
         Args:
-            flag_key_or_id: Key or ID of the feature flag.
-                           This parameter is required and should not be null/None.
+            flag_key: Key of the feature flag.
+                     This parameter is required and should not be null/None.
 
         Returns:
             The holdouts that apply for a specific flag.
@@ -846,31 +846,22 @@ class ProjectConfig:
         if not self.holdouts:
             return []
 
-        # Check cache first (before validation, so we cache the validation result too)
-        if flag_key_or_id in self.flag_holdouts_map:
-            return self.flag_holdouts_map[flag_key_or_id]
-
-        # Find the flag by key or ID
-        flag_id = None
-        for flag in self.feature_flags:
-            if flag['id'] == flag_key_or_id or flag['key'] == flag_key_or_id:
-                flag_id = flag['id']
-                break
-
-        if flag_id is None:
-            # Cache the empty result for non-existent flags
-            self.flag_holdouts_map[flag_key_or_id] = []
+        # Get the feature flag to extract flag_id
+        feature = self.feature_key_map.get(flag_key)
+        if not feature:
             return []
+
+        flag_id = feature.id
+
+        # Check cache first (before validation, so we cache the validation result too)
+        if flag_id in self.flag_holdouts_map:
+            return self.flag_holdouts_map[flag_id]
 
         # Prioritize global holdouts first
         excluded = self.excluded_holdouts.get(flag_id, [])
 
         if excluded:
-            # Filter out excluded holdouts from global holdouts
-            active_holdouts = [
-                holdout for holdout in self.global_holdouts
-                if holdout not in excluded
-            ]
+            active_holdouts = [holdout for holdout in self.global_holdouts if holdout not in excluded]
         else:
             active_holdouts = self.global_holdouts.copy()
 
@@ -878,10 +869,10 @@ class ProjectConfig:
         included = self.included_holdouts.get(flag_id, [])
         active_holdouts.extend(included)
 
-        # Cache the result using the input parameter as the cache key
-        self.flag_holdouts_map[flag_key_or_id] = active_holdouts
+        # Cache the result
+        self.flag_holdouts_map[flag_id] = active_holdouts
 
-        return self.flag_holdouts_map[flag_key_or_id]
+        return self.flag_holdouts_map[flag_id]
 
     def get_holdout(self, holdout_id: str) -> Optional[HoldoutDict]:
         """ Helper method to get holdout from holdout ID.

@@ -708,14 +708,14 @@ class DecisionService:
         user_id = user_context.user_id
 
         # Check holdouts
-        holdouts = project_config.get_holdouts_for_flag(feature_flag.id)
+        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
         for holdout in holdouts:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
             reasons.extend(holdout_decision['reasons'])
 
             decision = holdout_decision['decision']
             # Check if user was bucketed into holdout (has a variation)
-            if decision is None or decision.variation is None:
+            if decision.variation is None:
                 continue
 
             message = (
@@ -905,9 +905,9 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
 
-            # Create Decision for holdout - pass holdout dict as experiment, source is HOLDOUT
+            # Create Decision for holdout - experiment is None, source is HOLDOUT
             holdout_decision: Decision = Decision(
-                experiment=holdout,  # type: ignore[arg-type]
+                experiment=None,
                 variation=variation,
                 source=enums.DecisionSources.HOLDOUT,
                 cmab_uuid=None
@@ -1017,7 +1017,7 @@ class DecisionService:
             ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
 
         user_profile_tracker: Optional[UserProfileTracker] = None
-        if not ignore_ups and self.user_profile_service:
+        if self.user_profile_service is not None and not ignore_ups:
             user_id = user_context.user_id
             user_profile_tracker = UserProfileTracker(user_id, self.user_profile_service, self.logger)
             user_profile_tracker.load_user_profile([], None)
