@@ -707,7 +707,7 @@ class DecisionService:
         reasons = decide_reasons.copy() if decide_reasons else []
         user_id = user_context.user_id
 
-        # Check holdouts
+        # Check holdouts first (they take precedence)
         holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
         for holdout in holdouts:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
@@ -730,21 +730,84 @@ class DecisionService:
                 'reasons': reasons
             }
 
-        # If no holdout decision, fall back to existing experiment/rollout logic
-        # Use get_variations_for_feature_list which handles experiments and rollouts
-        fallback_result = self.get_variations_for_feature_list(
-            project_config, [feature_flag], user_context, decide_options
-        )[0]
+        # Check if the feature flag is under an experiment
+        if feature_flag.experimentIds:
+            for experiment_id in feature_flag.experimentIds:
+                experiment = project_config.get_experiment_from_id(experiment_id)
+                decision_variation: Optional[Union[entities.Variation, VariationDict]] = None
 
-        # Merge reasons
-        if fallback_result.get('reasons'):
-            reasons.extend(fallback_result['reasons'])
+                if experiment:
+                    optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
+                        feature_flag.key, experiment.key)
+                    forced_decision_variation, reasons_received = self.validated_forced_decision(
+                        project_config, optimizely_decision_context, user_context)
+                    reasons.extend(reasons_received)
 
-        return {
-            'decision': fallback_result['decision'],
-            'error': fallback_result.get('error', False),
-            'reasons': reasons
-        }
+                    if forced_decision_variation:
+                        decision_variation = forced_decision_variation
+                        cmab_uuid = None
+                        error = False
+                    else:
+                        variation_result = self.get_variation(
+                            project_config, experiment, user_context, user_profile_tracker, reasons, decide_options
+                        )
+                        cmab_uuid = variation_result['cmab_uuid']
+                        variation_reasons = variation_result['reasons']
+                        decision_variation = variation_result['variation']
+                        error = variation_result['error']
+                        reasons.extend(variation_reasons)
+
+                    if error:
+                        # If there's an error (e.g., CMAB error), return immediately without falling back to rollout
+                        decision = Decision(experiment, None, enums.DecisionSources.FEATURE_TEST, cmab_uuid)
+                        return {
+                            'decision': decision,
+                            'error': True,
+                            'reasons': reasons
+                        }
+
+                    if decision_variation:
+                        self.logger.debug(
+                            f'User "{user_context.user_id}" '
+                            f'bucketed into experiment "{experiment.key}" of feature "{feature_flag.key}".'
+                        )
+                        decision = Decision(experiment, decision_variation,
+                                            enums.DecisionSources.FEATURE_TEST, cmab_uuid)
+                        return {
+                            'decision': decision,
+                            'error': False,
+                            'reasons': reasons
+                        }
+
+        # Fall back to rollout
+        rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config,
+                                                                           feature_flag,
+                                                                           user_context)
+        reasons.extend(rollout_reasons)
+
+        if rollout_decision and rollout_decision.variation:
+            # Check if this was a forced decision (last reason contains "forced decision map")
+            is_forced_decision = reasons and 'forced decision map' in reasons[-1] if reasons else False
+
+            if not is_forced_decision:
+                # Only add the "bucketed into rollout" message for normal bucketing
+                message = f"The user '{user_id}' is bucketed into a rollout for feature flag '{feature_flag.key}'."
+                self.logger.info(message)
+                reasons.append(message)
+
+            return {
+                'decision': rollout_decision,
+                'error': False,
+                'reasons': reasons
+            }
+        else:
+            message = f"The user '{user_id}' is not bucketed into a rollout for feature flag '{feature_flag.key}'."
+            self.logger.info(message)
+            return {
+                'decision': Decision(None, None, enums.DecisionSources.ROLLOUT, None),
+                'error': False,
+                'reasons': reasons
+            }
 
     def get_variation_for_holdout(
         self,
@@ -946,116 +1009,10 @@ class DecisionService:
         decisions = []
 
         for feature in features:
-            feature_reasons = decide_reasons.copy()
-            experiment_decision_found = False  # Track if an experiment decision was made for the feature
-            holdout_decision_found = False  # Track if a holdout decision was made for the feature
-            user_id = user_context.user_id
-
-            # Check holdouts first (they take precedence over experiments and rollouts)
-            holdouts = project_config.get_holdouts_for_flag(feature.key)
-            for holdout in holdouts:
-                holdout_decision_result = self.get_variation_for_holdout(holdout, user_context, project_config)
-                feature_reasons.extend(holdout_decision_result['reasons'])
-
-                decision = holdout_decision_result['decision']
-                # Check if user was bucketed into holdout (has a variation)
-                if decision.variation is None:
-                    continue
-
-                message = (
-                    f"The user '{user_id}' is bucketed into holdout '{holdout['key']}' "
-                    f"for feature flag '{feature.key}'."
-                )
-                self.logger.info(message)
-                feature_reasons.append(message)
-
-                decision_result: DecisionResult = {
-                    'decision': holdout_decision_result['decision'],
-                    'error': False,
-                    'reasons': feature_reasons
-                }
-                decisions.append(decision_result)
-                holdout_decision_found = True
-                break
-
-            # If holdout decision found, skip experiment and rollout evaluation
-            if holdout_decision_found:
-                continue
-
-            # Check if the feature flag is under an experiment
-            if feature.experimentIds:
-                for experiment_id in feature.experimentIds:
-                    experiment = project_config.get_experiment_from_id(experiment_id)
-                    decision_variation: Optional[Union[entities.Variation, VariationDict]] = None
-
-                    if experiment:
-                        optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
-                            feature.key, experiment.key)
-                        forced_decision_variation, reasons_received = self.validated_forced_decision(
-                            project_config, optimizely_decision_context, user_context)
-                        feature_reasons.extend(reasons_received)
-
-                        if forced_decision_variation:
-                            decision_variation = forced_decision_variation
-                            cmab_uuid = None
-                            error = False
-                        else:
-                            variation_result = self.get_variation(
-                                project_config, experiment, user_context, user_profile_tracker, feature_reasons, options
-                            )
-                            cmab_uuid = variation_result['cmab_uuid']
-                            variation_reasons = variation_result['reasons']
-                            decision_variation = variation_result['variation']
-                            error = variation_result['error']
-                            feature_reasons.extend(variation_reasons)
-
-                        if error:
-                            decision = Decision(experiment, None, enums.DecisionSources.FEATURE_TEST, cmab_uuid)
-                            decision_result = {
-                                'decision': decision,
-                                'error': True,
-                                'reasons': feature_reasons
-                            }
-                            decisions.append(decision_result)
-                            experiment_decision_found = True
-                            break
-
-                        if decision_variation:
-                            self.logger.debug(
-                                f'User "{user_context.user_id}" '
-                                f'bucketed into experiment "{experiment.key}" of feature "{feature.key}".'
-                            )
-                            decision = Decision(experiment, decision_variation,
-                                                enums.DecisionSources.FEATURE_TEST, cmab_uuid)
-                            decision_result = {
-                                'decision': decision,
-                                'error': False,
-                                'reasons': feature_reasons
-                            }
-                            decisions.append(decision_result)
-                            experiment_decision_found = True  # Mark that a decision was found
-                            break  # Stop after the first successful experiment decision
-
-            # Only process rollout if no experiment decision was found and no error
-            if not experiment_decision_found:
-                rollout_decision, rollout_reasons = self.get_variation_for_rollout(project_config,
-                                                                                   feature,
-                                                                                   user_context)
-                if rollout_reasons:
-                    feature_reasons.extend(rollout_reasons)
-                if rollout_decision:
-                    self.logger.debug(f'User "{user_context.user_id}" '
-                                      f'bucketed into rollout for feature "{feature.key}".')
-                else:
-                    self.logger.debug(f'User "{user_context.user_id}" '
-                                      f'not bucketed into any rollout for feature "{feature.key}".')
-
-                decision_result = {
-                    'decision': rollout_decision,
-                    'error': False,
-                    'reasons': feature_reasons
-                }
-                decisions.append(decision_result)
+            decision = self.get_decision_for_flag(
+                feature, user_context, project_config, options, user_profile_tracker, decide_reasons
+            )
+            decisions.append(decision)
 
         if self.user_profile_service is not None and user_profile_tracker is not None and ignore_ups is False:
             user_profile_tracker.save_user_profile()

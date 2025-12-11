@@ -872,7 +872,8 @@ class UserContextTest(base.BaseTest):
             'Evaluating audiences for rule 1: ["11154"].',
             'Audiences for rule 1 collectively evaluated to TRUE.',
             'User "test_user" meets audience conditions for targeting rule 1.',
-            'User "test_user" bucketed into a targeting rule 1.'
+            'User "test_user" bucketed into a targeting rule 1.',
+            "The user 'test_user' is bucketed into a rollout for feature flag 'test_feature_in_rollout'."
         ]
 
         self.assertEqual(expected_reasons, actual.reasons)
@@ -1270,7 +1271,8 @@ class UserContextTest(base.BaseTest):
             'Evaluating audiences for rule Everyone Else: [].',
             'Audiences for rule Everyone Else collectively evaluated to TRUE.',
             'User "abcde" meets audience conditions for targeting rule Everyone Else.',
-            'User "abcde" bucketed into a targeting rule Everyone Else.'
+            'User "abcde" bucketed into a targeting rule Everyone Else.',
+            "The user 'abcde' is bucketed into a rollout for feature flag 'test_feature_in_rollout'."
         ]
 
         self.assertEqual(expected_reasons, actual.reasons)
