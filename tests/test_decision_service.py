@@ -1399,8 +1399,8 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config, feature, user
         )
 
-        # Assert info log messages were generated (changed from debug due to new flow through get_decision_for_flag)
-        self.assertEqual(1, mock_decision_service_logging.info.call_count)
+        # Assert debug log messages were generated (rollout decisions log at debug level)
+        self.assertEqual(1, mock_decision_service_logging.debug.call_count)
 
     def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(
             self,

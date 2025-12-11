@@ -67,11 +67,7 @@ class UserEventFactory:
         variation: Optional[Variation] = None
         experiment_id = None
         if activated_experiment:
-            # Handle both Experiment objects and holdout dicts
-            if isinstance(activated_experiment, dict):
-                experiment_id = activated_experiment.get('id')
-            else:
-                experiment_id = activated_experiment.id
+            experiment_id = activated_experiment.id
 
         if variation_id and flag_key:
             # need this condition when we send events involving forced decisions
