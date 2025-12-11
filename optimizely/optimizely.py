@@ -454,8 +454,12 @@ class Optimizely:
             )
 
         if decision.source in (enums.DecisionSources.FEATURE_TEST, enums.DecisionSources.HOLDOUT):
+            experiment_key = None
+            if decision.experiment:
+                experiment_key = (decision.experiment['key'] if isinstance(decision.experiment, dict)
+                                  else decision.experiment.key)
             source_info = {
-                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'experiment_key': experiment_key,
                 'variation_key': self._get_variation_key(decision.variation),
             }
 
@@ -558,8 +562,12 @@ class Optimizely:
             all_variables[variable_key] = actual_value
 
         if decision.source == enums.DecisionSources.FEATURE_TEST:
+            experiment_key = None
+            if decision.experiment:
+                experiment_key = (decision.experiment['key'] if isinstance(decision.experiment, dict)
+                                  else decision.experiment.key)
             source_info = {
-                'experiment_key': decision.experiment.key if decision.experiment else None,
+                'experiment_key': experiment_key,
                 'variation_key': self._get_variation_key(decision.variation),
             }
 
@@ -802,19 +810,25 @@ class Optimizely:
                 feature_enabled = True
 
         if (is_source_rollout or not decision.variation) and project_config.get_send_flag_decisions_value():
+            experiment_key = ''
+            if decision.experiment:
+                experiment_key = (decision.experiment['key'] if isinstance(decision.experiment, dict)
+                                  else decision.experiment.key)
             self._send_impression_event(
-                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key if
-                decision.experiment else '', str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
+                project_config, decision.experiment, decision.variation, feature.key, experiment_key,
+                str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
             )
 
         # Send event if Decision came from an experiment.
         if is_source_experiment and decision.variation and decision.experiment:
+            experiment_key = (decision.experiment['key'] if isinstance(decision.experiment, dict)
+                              else decision.experiment.key)
             source_info = {
-                'experiment_key': decision.experiment.key,
+                'experiment_key': experiment_key,
                 'variation_key': self._get_variation_key(decision.variation),
             }
             self._send_impression_event(
-                project_config, decision.experiment, decision.variation, feature.key, decision.experiment.key,
+                project_config, decision.experiment, decision.variation, feature.key, experiment_key,
                 str(decision.source), feature_enabled, user_id, attributes, cmab_uuid
             )
 
