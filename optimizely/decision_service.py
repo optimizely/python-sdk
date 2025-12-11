@@ -948,6 +948,39 @@ class DecisionService:
         for feature in features:
             feature_reasons = decide_reasons.copy()
             experiment_decision_found = False  # Track if an experiment decision was made for the feature
+            holdout_decision_found = False  # Track if a holdout decision was made for the feature
+            user_id = user_context.user_id
+
+            # Check holdouts first (they take precedence over experiments and rollouts)
+            holdouts = project_config.get_holdouts_for_flag(feature.key)
+            for holdout in holdouts:
+                holdout_decision_result = self.get_variation_for_holdout(holdout, user_context, project_config)
+                feature_reasons.extend(holdout_decision_result['reasons'])
+
+                decision = holdout_decision_result['decision']
+                # Check if user was bucketed into holdout (has a variation)
+                if decision.variation is None:
+                    continue
+
+                message = (
+                    f"The user '{user_id}' is bucketed into holdout '{holdout['key']}' "
+                    f"for feature flag '{feature.key}'."
+                )
+                self.logger.info(message)
+                feature_reasons.append(message)
+
+                decision_result: DecisionResult = {
+                    'decision': holdout_decision_result['decision'],
+                    'error': False,
+                    'reasons': feature_reasons
+                }
+                decisions.append(decision_result)
+                holdout_decision_found = True
+                break
+
+            # If holdout decision found, skip experiment and rollout evaluation
+            if holdout_decision_found:
+                continue
 
             # Check if the feature flag is under an experiment
             if feature.experimentIds:
@@ -978,7 +1011,7 @@ class DecisionService:
 
                         if error:
                             decision = Decision(experiment, None, enums.DecisionSources.FEATURE_TEST, cmab_uuid)
-                            decision_result: DecisionResult = {
+                            decision_result = {
                                 'decision': decision,
                                 'error': True,
                                 'reasons': feature_reasons
