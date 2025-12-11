@@ -1252,7 +1252,15 @@ class Optimizely:
 
         # Create Optimizely Decision Result.
         attributes = user_context.get_user_attributes()
-        rule_key = flag_decision.experiment.key if flag_decision.experiment else None
+        # Handle both Experiment entities and holdout dicts
+        if flag_decision.experiment:
+            if isinstance(flag_decision.experiment, dict):
+                # Holdout is a dict, not an Experiment entity
+                rule_key = flag_decision.experiment.get('key')
+            else:
+                rule_key = flag_decision.experiment.key
+        else:
+            rule_key = None
         all_variables = {}
         decision_source = flag_decision.source
         decision_event_dispatched = False
