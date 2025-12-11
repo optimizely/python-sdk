@@ -907,7 +907,7 @@ class DecisionService:
 
             # Create Decision for holdout - pass holdout dict as experiment, source is HOLDOUT
             holdout_decision: Decision = Decision(
-                experiment=None,
+                experiment=holdout,  # type: ignore[arg-type]
                 variation=variation,
                 source=enums.DecisionSources.HOLDOUT,
                 cmab_uuid=None
