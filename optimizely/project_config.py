@@ -833,12 +833,12 @@ class ProjectConfig:
 
         return None
 
-    def get_holdouts_for_flag(self, flag_key: str) -> list[HoldoutDict]:
+    def get_holdouts_for_flag(self, flag_key_or_id: str) -> list[HoldoutDict]:
         """ Helper method to get holdouts from an applied feature flag.
 
         Args:
-            flag_key: Key of the feature flag.
-                     This parameter is required and should not be null/None.
+            flag_key_or_id: Key or ID of the feature flag.
+                           This parameter is required and should not be null/None.
 
         Returns:
             The holdouts that apply for a specific flag.
@@ -847,17 +847,20 @@ class ProjectConfig:
             return []
 
         # Check cache first (before validation, so we cache the validation result too)
-        if flag_key in self.flag_holdouts_map:
-            return self.flag_holdouts_map[flag_key]
+        if flag_key_or_id in self.flag_holdouts_map:
+            return self.flag_holdouts_map[flag_key_or_id]
 
-        # Validate that the flag exists in the datafile
-        feature = self.feature_key_map.get(flag_key)
-        if not feature:
+        # Find the flag by key or ID
+        flag_id = None
+        for flag in self.feature_flags:
+            if flag['id'] == flag_key_or_id or flag['key'] == flag_key_or_id:
+                flag_id = flag['id']
+                break
+
+        if flag_id is None:
             # Cache the empty result for non-existent flags
-            self.flag_holdouts_map[flag_key] = []
+            self.flag_holdouts_map[flag_key_or_id] = []
             return []
-
-        flag_id = feature.id
 
         # Prioritize global holdouts first
         excluded = self.excluded_holdouts.get(flag_id, [])
@@ -875,10 +878,10 @@ class ProjectConfig:
         included = self.included_holdouts.get(flag_id, [])
         active_holdouts.extend(included)
 
-        # Cache the result
-        self.flag_holdouts_map[flag_key] = active_holdouts
+        # Cache the result using the input parameter as the cache key
+        self.flag_holdouts_map[flag_key_or_id] = active_holdouts
 
-        return self.flag_holdouts_map[flag_key]
+        return self.flag_holdouts_map[flag_key_or_id]
 
     def get_holdout(self, holdout_id: str) -> Optional[HoldoutDict]:
         """ Helper method to get holdout from holdout ID.

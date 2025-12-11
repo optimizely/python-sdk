@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Optional, Union
 
-from optimizely.helpers.types import VariationDict
+from optimizely.helpers.types import HoldoutDict, VariationDict
 
 
 from . import decision_service
@@ -261,10 +261,10 @@ class Optimizely:
         except (AttributeError, KeyError, TypeError):
             return False
 
-    def _get_experiment_key(self, experiment: Optional[Union[entities.Experiment, dict]]) -> Optional[str]:
+    def _get_experiment_key(self, experiment: Optional[Union[entities.Experiment, HoldoutDict]]) -> Optional[str]:
         """Helper to extract experiment/holdout key from either dict or Experiment object.
         Args:
-            experiment: Either a dict (from holdout) or entities.Experiment object
+            experiment: Either a HoldoutDict (from holdout) or entities.Experiment object
         Returns:
             The experiment/holdout key as a string, or None if not available
         """

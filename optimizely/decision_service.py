@@ -708,7 +708,7 @@ class DecisionService:
         user_id = user_context.user_id
 
         # Check holdouts
-        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
+        holdouts = project_config.get_holdouts_for_flag(feature_flag.id)
         for holdout in holdouts:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
             reasons.extend(holdout_decision['reasons'])
@@ -907,7 +907,7 @@ class DecisionService:
 
             # Create Decision for holdout - pass holdout dict as experiment, source is HOLDOUT
             holdout_decision: Decision = Decision(
-                experiment=holdout,
+                experiment=None,
                 variation=variation,
                 source=enums.DecisionSources.HOLDOUT,
                 cmab_uuid=None
