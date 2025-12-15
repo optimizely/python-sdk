@@ -147,8 +147,8 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         self.assertIsNotNone(holdout)
 
         # Mock holdout as inactive
-        original_status = holdout['status']
-        holdout['status'] = 'Paused'
+        original_status = holdout.status
+        holdout.status = 'Paused'
 
         user_context = self.opt_obj.create_user_context('testUserId', {})
 
@@ -164,7 +164,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         self.assertIn('reasons', result)
 
         # Restore original status
-        holdout['status'] = original_status
+        holdout.status = original_status
 
     def test_user_not_bucketed_into_holdout_executes_successfully(self):
         """When user is not bucketed into holdout, should execute successfully with valid result structure."""
@@ -282,7 +282,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         holdout = self.config_with_holdouts.holdouts[0] if self.config_with_holdouts.holdouts else None
         self.assertIsNotNone(holdout)
 
-        holdout_variation = holdout['variations'][0]
+        holdout_variation = holdout.variations[0]
 
         # Create a holdout decision
         mock_holdout_decision = decision_service.Decision(
@@ -384,7 +384,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         # Get global holdouts
         global_holdouts = [
             h for h in self.config_with_holdouts.holdouts
-            if not h.get('includedFlags') or len(h.get('includedFlags', [])) == 0
+            if not h.includedFlags or len(h.includedFlags) == 0
         ]
 
         if global_holdouts:
@@ -409,7 +409,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             holdouts_for_flag = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment')
 
             # Should not include holdouts that exclude this flag
-            excluded_holdout = next((h for h in holdouts_for_flag if h.get('key') == 'excluded_holdout'), None)
+            excluded_holdout = next((h for h in holdouts_for_flag if h.key == 'excluded_holdout'), None)
             self.assertIsNone(excluded_holdout)
 
     # Holdout logging and error handling tests
@@ -666,7 +666,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             actual_holdout = None
             if config.holdouts and decision.rule_key:
                 actual_holdout = next(
-                    (h for h in config.holdouts if h.get('key') == decision.rule_key),
+                    (h for h in config.holdouts if h.key == decision.rule_key),
                     None
                 )
 
@@ -675,13 +675,13 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 self.assertEqual(decision.flag_key, feature_flag.key)
 
                 holdout_variation = next(
-                    (v for v in actual_holdout['variations'] if v.get('key') == decision.variation_key),
+                    (v for v in actual_holdout.variations if v.get('key') == decision.variation_key),
                     None
                 )
 
                 self.assertIsNotNone(
                     holdout_variation,
-                    f"Variation '{decision.variation_key}' should be from the chosen holdout '{actual_holdout['key']}'"
+                    f"Variation '{decision.variation_key}' should be from the chosen holdout '{actual_holdout.key}'"
                 )
 
                 self.assertEqual(
@@ -767,7 +767,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             chosen_holdout = None
             if config.holdouts and decision.rule_key:
                 chosen_holdout = next(
-                    (h for h in config.holdouts if h.get('key') == decision.rule_key),
+                    (h for h in config.holdouts if h.key == decision.rule_key),
                     None
                 )
 
@@ -831,12 +831,12 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             holdout = config.holdouts[0] if config.holdouts else None
             self.assertIsNotNone(holdout, 'Should have at least one holdout configured')
 
-            holdout_variation = holdout['variations'][0]
+            holdout_variation = holdout.variations[0]
             self.assertIsNotNone(holdout_variation, 'Holdout should have at least one variation')
 
             mock_experiment = mock.MagicMock()
-            mock_experiment.key = holdout['key']
-            mock_experiment.id = holdout['id']
+            mock_experiment.key = holdout.key
+            mock_experiment.id = holdout.id
 
             # Mock the decision service to return a holdout decision
             holdout_decision = decision_service.Decision(
@@ -867,7 +867,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             notification = captured_notifications[0]
             rule_key = notification.get('rule_key')
 
-            self.assertEqual(rule_key, holdout['key'], 'RuleKey should match holdout key')
+            self.assertEqual(rule_key, holdout.key, 'RuleKey should match holdout key')
 
             # Verify holdout notification structure
             self.assertIn('flag_key', notification, 'Holdout notification should contain flag_key')
@@ -880,7 +880,7 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             self.assertEqual(flag_key, 'test_feature_in_experiment', 'FlagKey should match the requested flag')
 
             experiment_id = notification.get('experiment_id')
-            self.assertEqual(experiment_id, holdout['id'], 'ExperimentId in notification should match holdout ID')
+            self.assertEqual(experiment_id, holdout.id, 'ExperimentId in notification should match holdout ID')
 
             variation_id = notification.get('variation_id')
             self.assertEqual(variation_id, holdout_variation['id'], 'VariationId should match holdout variation ID')
@@ -910,3 +910,552 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             )
         finally:
             opt_with_mocked_events.close()
+
+    # DecideAll with holdouts tests (aligned with Swift SDK)
+
+    def test_decide_all_with_global_holdout(self):
+        """Should apply global holdout to all flags in decide_all."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'global_holdout',
+                'key': 'global_test_holdout',
+                'status': 'Running',
+                'includedFlags': [],  # Global - applies to all flags
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'global_holdout_var',
+                        'key': 'global_holdout_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'global_holdout_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decisions = user_context.decide_all()
+
+            # Global holdout should apply to all flags
+            self.assertGreater(len(decisions), 0)
+
+            # Check that decisions exist for all flags
+            for flag_key, decision in decisions.items():
+                self.assertIsNotNone(decision)
+        finally:
+            opt.close()
+
+    def test_decide_all_with_included_flags(self):
+        """Should apply holdout only to included flags in decide_all."""
+        # Get feature flag IDs
+        feature1_id = '91111'  # test_feature_in_experiment
+
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'included_holdout',
+                'key': 'specific_holdout',
+                'status': 'Running',
+                'includedFlags': [feature1_id],  # Only applies to feature1
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'included_var',
+                        'key': 'included_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'included_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decisions = user_context.decide_all()
+
+            self.assertGreater(len(decisions), 0)
+
+            # Verify all flags have decisions
+            for decision in decisions.values():
+                self.assertIsNotNone(decision)
+        finally:
+            opt.close()
+
+    def test_decide_all_with_excluded_flags(self):
+        """Should exclude holdout from excluded flags in decide_all."""
+        feature1_id = '91111'  # test_feature_in_experiment
+
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'excluded_holdout',
+                'key': 'global_except_one',
+                'status': 'Running',
+                'includedFlags': [],  # Global
+                'excludedFlags': [feature1_id],  # Except feature1
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'excluded_var',
+                        'key': 'excluded_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'excluded_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decisions = user_context.decide_all()
+
+            # Verify decisions exist for all flags
+            self.assertGreater(len(decisions), 0)
+            for decision in decisions.values():
+                self.assertIsNotNone(decision)
+        finally:
+            opt.close()
+
+    def test_decide_all_with_multiple_holdouts(self):
+        """Should handle multiple holdouts with correct priority."""
+        feature1_id = '91111'
+        feature2_id = '91112'
+
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            # Global holdout (applies to all)
+            {
+                'id': 'global_holdout',
+                'key': 'global_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'global_var',
+                        'key': 'global_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'global_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            },
+            # Specific holdout (only for feature2)
+            {
+                'id': 'specific_holdout',
+                'key': 'specific_holdout',
+                'status': 'Running',
+                'includedFlags': [feature2_id],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'specific_var',
+                        'key': 'specific_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'specific_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            },
+            # Excluded holdout (all except feature1)
+            {
+                'id': 'excluded_holdout',
+                'key': 'excluded_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [feature1_id],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'excluded_var',
+                        'key': 'excluded_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'excluded_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decisions = user_context.decide_all()
+
+            # Verify we got decisions for all flags
+            self.assertGreater(len(decisions), 0)
+        finally:
+            opt.close()
+
+    def test_decide_all_with_enabled_flags_only_option(self):
+        """Should filter out disabled flags when using enabled_flags_only option."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'disabled_holdout',
+                'key': 'disabled_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'disabled_var',
+                        'key': 'disabled_control',
+                        'featureEnabled': False,  # Feature disabled
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'disabled_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+
+            # Without enabled_flags_only, all flags should be returned
+            all_decisions = user_context.decide_all()
+
+            # With enabled_flags_only, disabled flags should be filtered out
+            enabled_decisions = user_context.decide_all(
+                options=[OptimizelyDecideOption.ENABLED_FLAGS_ONLY]
+            )
+
+            # enabled_decisions should have fewer or equal entries
+            self.assertLessEqual(len(enabled_decisions), len(all_decisions))
+        finally:
+            opt.close()
+
+    # Impression event metadata tests (aligned with Swift SDK)
+
+    def test_holdout_impression_event_has_correct_metadata(self):
+        """Should include correct metadata in holdout impression events."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'metadata_holdout',
+                'key': 'metadata_test_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'metadata_var',
+                        'key': 'metadata_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'metadata_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        spy_event_processor = mock.MagicMock()
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(
+            datafile=config_json,
+            event_processor=spy_event_processor
+        )
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decision = user_context.decide('test_feature_in_experiment')
+
+            # If this was a holdout decision, verify event metadata
+            if decision.rule_key == 'metadata_test_holdout':
+                self.assertGreater(spy_event_processor.process.call_count, 0)
+
+                # Get the user event that was sent
+                call_args = spy_event_processor.process.call_args_list[0]
+                user_event = call_args[0][0]
+
+                # Verify user event has correct structure
+                self.assertIsNotNone(user_event)
+        finally:
+            opt.close()
+
+    def test_holdout_impression_respects_send_flag_decisions_false(self):
+        """Should send holdout impression even when sendFlagDecisions is false."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['sendFlagDecisions'] = False
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'send_flag_holdout',
+                'key': 'send_flag_test_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'send_flag_var',
+                        'key': 'send_flag_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'send_flag_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        spy_event_processor = mock.MagicMock()
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(
+            datafile=config_json,
+            event_processor=spy_event_processor
+        )
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decision = user_context.decide('test_feature_in_experiment')
+
+            # Holdout impressions should be sent even when sendFlagDecisions=false
+            # (unlike rollout impressions)
+            if decision.rule_key == 'send_flag_test_holdout':
+                # Verify impression was sent for holdout
+                self.assertGreater(spy_event_processor.process.call_count, 0)
+        finally:
+            opt.close()
+
+    # Holdout status tests (aligned with Swift SDK)
+
+    def test_holdout_not_running_does_not_apply(self):
+        """Should not apply holdout when status is not Running."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'draft_holdout',
+                'key': 'draft_holdout',
+                'status': 'Draft',  # Not Running
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'draft_var',
+                        'key': 'draft_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'draft_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decision = user_context.decide('test_feature_in_experiment')
+
+            # Should not be a holdout decision since status is Draft
+            self.assertNotEqual(decision.rule_key, 'draft_holdout')
+        finally:
+            opt.close()
+
+    def test_holdout_concluded_status_does_not_apply(self):
+        """Should not apply holdout when status is Concluded."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'concluded_holdout',
+                'key': 'concluded_holdout',
+                'status': 'Concluded',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'concluded_var',
+                        'key': 'concluded_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'concluded_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decision = user_context.decide('test_feature_in_experiment')
+
+            # Should not be a holdout decision since status is Concluded
+            self.assertNotEqual(decision.rule_key, 'concluded_holdout')
+        finally:
+            opt.close()
+
+    def test_holdout_archived_status_does_not_apply(self):
+        """Should not apply holdout when status is Archived."""
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'archived_holdout',
+                'key': 'archived_holdout',
+                'status': 'Archived',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'archived_var',
+                        'key': 'archived_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'archived_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            user_context = opt.create_user_context('test_user', {})
+            decision = user_context.decide('test_feature_in_experiment')
+
+            # Should not be a holdout decision since status is Archived
+            self.assertNotEqual(decision.rule_key, 'archived_holdout')
+        finally:
+            opt.close()
+
+    # Audience targeting tests for holdouts (aligned with Swift SDK)
+
+    def test_holdout_with_audience_match(self):
+        """Should bucket user into holdout when audience conditions match."""
+        # Using audienceIds that exist in the datafile
+        # audience '11154' is for "browser_type" = "chrome"
+        config_dict_with_holdouts = self.config_dict_with_features.copy()
+        config_dict_with_holdouts['holdouts'] = [
+            {
+                'id': 'audience_holdout',
+                'key': 'audience_test_holdout',
+                'status': 'Running',
+                'includedFlags': [],
+                'excludedFlags': [],
+                'audienceIds': ['11154'],  # Requires browser_type=chrome
+                'variations': [
+                    {
+                        'id': 'audience_var',
+                        'key': 'audience_control',
+                        'featureEnabled': False,
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'audience_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict_with_holdouts)
+        opt = optimizely_module.Optimizely(datafile=config_json)
+
+        try:
+            # User with matching attribute
+            user_context_match = opt.create_user_context('test_user', {'browser_type': 'chrome'})
+            decision_match = user_context_match.decide('test_feature_in_experiment')
+
+            # User with non-matching attribute
+            user_context_no_match = opt.create_user_context('test_user', {'browser_type': 'firefox'})
+            decision_no_match = user_context_no_match.decide('test_feature_in_experiment')
+
+            # Both should have valid decisions
+            self.assertIsNotNone(decision_match)
+            self.assertIsNotNone(decision_no_match)
+        finally:
+            opt.close()

@@ -1260,9 +1260,10 @@ class Optimizely:
         feature_flag = project_config.feature_key_map.get(flag_key)
 
         # Send impression event if Decision came from a feature
-        # test and decide options doesn't include disableDecisionEvent
+        # test, holdout, or send_flag_decisions is enabled
+        # Holdouts always send impressions regardless of sendFlagDecisions setting
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
-            if decision_source == DecisionSources.FEATURE_TEST or project_config.send_flag_decisions:
+            if decision_source == DecisionSources.FEATURE_TEST or decision_source == DecisionSources.HOLDOUT or project_config.send_flag_decisions:
                 self._send_impression_event(project_config,
                                             flag_decision.experiment,
                                             flag_decision.variation,
