@@ -234,15 +234,16 @@ class ProjectConfig:
             flag_id = feature.id
             applicable_holdouts: list[entities.Holdout] = []
 
-            # Add flag-specific included holdouts first
-            if flag_id in self.included_holdouts:
-                applicable_holdouts.extend(self.included_holdouts[flag_id])
-
-            # Add global holdouts (excluding any that explicitly exclude this flag)
+            # Add global holdouts FIRST (they have higher priority)
+            # Excluding any that explicitly exclude this flag
             excluded_holdouts = self.excluded_holdouts.get(flag_id, [])
             for holdout in self.global_holdouts:
                 if holdout not in excluded_holdouts:
                     applicable_holdouts.append(holdout)
+
+            # Add flag-specific included holdouts AFTER global holdouts
+            if flag_id in self.included_holdouts:
+                applicable_holdouts.extend(self.included_holdouts[flag_id])
 
             if applicable_holdouts:
                 self.flag_holdouts_map[feature.key] = applicable_holdouts
