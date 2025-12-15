@@ -17,7 +17,8 @@
       "Bash(python3 -m unittest tests.test_decision_service_holdout)",
       "Bash(python3 -m unittest discover tests -p \"test_*.py\" -v)",
       "Bash(git add -A)",
-      "Bash(git commit -m \"Fix config tests for holdout entity changes\n\n- Add required fields (variations, trafficAllocation, audienceIds) to holdout test configs\n- Fix BaseEntity __eq__ to handle comparisons with non-entity types\n- Fix test assertion to check for holdout IDs in global_holdouts list\n- All 86 config tests passing\n- All 12 holdout config tests passing\")"
+      "Bash(git commit -m \"Fix config tests for holdout entity changes\n\n- Add required fields (variations, trafficAllocation, audienceIds) to holdout test configs\n- Fix BaseEntity __eq__ to handle comparisons with non-entity types\n- Fix test assertion to check for holdout IDs in global_holdouts list\n- All 86 config tests passing\n- All 12 holdout config tests passing\")",
+      "Bash(python3 -m unittest tests.test_bucketing -v)"
     ]
   }
 }

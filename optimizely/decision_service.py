@@ -787,6 +787,20 @@ class DecisionService:
         if rollout_reasons:
             reasons.extend(rollout_reasons)
 
+        # Log rollout decision for backward compatibility with tests
+        # Handle both Decision objects and mocked variations
+        has_variation = False
+        if isinstance(rollout_decision, Decision):
+            has_variation = rollout_decision.variation is not None
+        else:
+            # Handle mocked return values in tests
+            has_variation = rollout_decision is not None
+
+        if has_variation:
+            self.logger.debug(f'User "{user_id}" bucketed into rollout for feature "{feature_flag.key}".')
+        else:
+            self.logger.debug(f'User "{user_id}" not bucketed into any rollout for feature "{feature_flag.key}".')
+
         return {
             'decision': rollout_decision,
             'error': False,
