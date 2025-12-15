@@ -674,11 +674,29 @@ class DecisionService:
             - 'error': Boolean indicating if an error occurred during the decision process.
             - 'reasons': List of log messages representing decision making for the feature.
         """
+        # Check if user profile service should be ignored
+        if options:
+            ignore_ups = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
+        else:
+            ignore_ups = False
+
+        # Create user profile tracker for sticky bucketing (same pattern as get_variations_for_feature_list)
+        user_profile_tracker: Optional[UserProfileTracker] = None
+        if self.user_profile_service is not None and not ignore_ups:
+            user_profile_tracker = UserProfileTracker(user_context.user_id, self.user_profile_service, self.logger)
+            # Load user profile once before processing
+            user_profile_tracker.load_user_profile([], None)
+
         # CRITICAL FIX: Always call get_decision_for_flag (matching Swift SDK behavior)
         # Swift always goes through getDecisionForFlag which checks holdouts first,
         # then experiments, then rollouts - regardless of whether holdouts exist.
-        # Previously Python had conditional logic that created two different code paths.
-        return self.get_decision_for_flag(feature, user_context, project_config, options)
+        result = self.get_decision_for_flag(feature, user_context, project_config, options, user_profile_tracker)
+
+        # Save user profile after decision (same pattern as get_variations_for_feature_list)
+        if user_profile_tracker is not None and not ignore_ups:
+            user_profile_tracker.save_user_profile()
+
+        return result
 
     def get_decision_for_flag(
         self,
