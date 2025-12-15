@@ -69,11 +69,13 @@ class UserEventFactory:
         if activated_experiment:
             experiment_id = activated_experiment.id
 
-        if variation_id and flag_key:
+        if variation_id and flag_key and rule_type != enums.DecisionSources.HOLDOUT:
             # need this condition when we send events involving forced decisions
             # (F-to-D or E-to-D with any ruleKey/variationKey combinations)
+            # But NOT for holdouts - they use experiment_id lookup instead
             variation = project_config.get_flag_variation(flag_key, 'id', variation_id)
         elif variation_id and experiment_id:
+            # For holdouts, experiments, and rollouts - lookup by experiment/holdout ID
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
 
         event_context = user_event.EventContext(
