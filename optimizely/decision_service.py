@@ -659,6 +659,9 @@ class DecisionService:
     ) -> DecisionResult:
         """ Returns the experiment/variation the user is bucketed in for the given feature.
 
+        Aligned with Swift SDK which always evaluates holdouts for every feature.
+        Swift: getVariationForFeature → getVariationForFeatureList → getDecisionForFlag (always)
+
         Args:
           project_config: Instance of ProjectConfig.
           feature: Feature for which we are determining if it is enabled or not for the given user.
@@ -671,13 +674,11 @@ class DecisionService:
             - 'error': Boolean indicating if an error occurred during the decision process.
             - 'reasons': List of log messages representing decision making for the feature.
         """
-        holdouts = project_config.get_holdouts_for_flag(feature.key)
-
-        if holdouts:
-            # Has holdouts - use get_decision_for_flag which checks holdouts first
-            return self.get_decision_for_flag(feature, user_context, project_config, options)
-        else:
-            return self.get_variations_for_feature_list(project_config, [feature], user_context, options)[0]
+        # CRITICAL FIX: Always call get_decision_for_flag (matching Swift SDK behavior)
+        # Swift always goes through getDecisionForFlag which checks holdouts first,
+        # then experiments, then rollouts - regardless of whether holdouts exist.
+        # Previously Python had conditional logic that created two different code paths.
+        return self.get_decision_for_flag(feature, user_context, project_config, options)
 
     def get_decision_for_flag(
         self,
