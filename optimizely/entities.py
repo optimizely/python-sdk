@@ -220,8 +220,8 @@ class Holdout(BaseEntity):
         variations: list[VariationDict],
         trafficAllocation: list[TrafficAllocation],
         audienceIds: list[str],
-        includedFlags: list[str],
-        excludedFlags: list[str],
+        includedFlags: Optional[list[str]] = None,
+        excludedFlags: Optional[list[str]] = None,
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
         **kwargs: Any
     ):
