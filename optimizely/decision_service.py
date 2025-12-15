@@ -14,7 +14,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple, Optional, Sequence, List, TypedDict, Union
 
-from optimizely.helpers.types import HoldoutDict, VariationDict
 
 from . import bucketer
 from . import entities
@@ -719,7 +718,7 @@ class DecisionService:
                 continue
 
             message = (
-                f"The user '{user_id}' is bucketed into holdout '{holdout['key']}' "
+                f"The user '{user_id}' is bucketed into holdout '{holdout.key}' "
                 f"for feature flag '{feature_flag.key}'."
             )
             self.logger.info(message)
@@ -748,15 +747,17 @@ class DecisionService:
 
     def get_variation_for_holdout(
         self,
-        holdout: HoldoutDict,
+        holdout: entities.Holdout,
         user_context: OptimizelyUserContext,
         project_config: ProjectConfig
     ) -> DecisionResult:
         """
         Get the variation for holdout.
 
+        Aligned with Swift SDK's getVariationForHoldout which returns DecisionResponse<Variation>.
+
         Args:
-            holdout: The holdout configuration (HoldoutDict).
+            holdout: The holdout configuration (Holdout entity).
             user_context: The user context.
             project_config: The project config.
 
@@ -769,9 +770,10 @@ class DecisionService:
         user_id = user_context.user_id
         attributes = user_context.get_user_attributes()
 
-        if not holdout or not holdout.get('status') or holdout.get('status') != 'Running':
-            key = holdout.get('key') if holdout else 'unknown'
-            message = f"Holdout '{key}' is not running."
+        # Check if holdout is activated (Running status)
+        # Aligned with Swift's: guard holdout.isActivated else { return nil }
+        if not holdout.is_activated:
+            message = f"Holdout '{holdout.key}' is not running."
             self.logger.info(message)
             decide_reasons.append(message)
             return {
@@ -783,13 +785,14 @@ class DecisionService:
         bucketing_id, bucketing_id_reasons = self._get_bucketing_id(user_id, attributes)
         decide_reasons.extend(bucketing_id_reasons)
 
-        # Check audience conditions
-        audience_conditions = holdout.get('audienceIds')
+        # Check audience conditions using the same method as experiments
+        # Holdout now has get_audience_conditions_or_ids() just like Experiment
+        audience_conditions = holdout.get_audience_conditions_or_ids()
         user_meets_audience_conditions, reasons_received = audience_helper.does_user_meet_audience_conditions(
             project_config,
             audience_conditions,
             ExperimentAudienceEvaluationLogs,
-            holdout.get('key', 'unknown'),
+            holdout.key,
             user_context,
             self.logger
         )
@@ -798,7 +801,7 @@ class DecisionService:
         if not user_meets_audience_conditions:
             message = (
                 f"User '{user_id}' does not meet the conditions for holdout "
-                f"'{holdout['key']}'."
+                f"'{holdout.key}'."
             )
             self.logger.debug(message)
             decide_reasons.append(message)
@@ -810,23 +813,23 @@ class DecisionService:
 
         # Bucket user into holdout variation
         variation, bucket_reasons = self.bucketer.bucket(
-            project_config, holdout, user_id, bucketing_id  # type: ignore[arg-type]
+            project_config, holdout, user_id, bucketing_id
         )
         decide_reasons.extend(bucket_reasons)
 
         if variation:
-            # For holdouts, variation is a dict, not a Variation entity
-            variation_key = variation['key'] if isinstance(variation, dict) else variation.key
             message = (
-                f"The user '{user_id}' is bucketed into variation '{variation_key}' "
-                f"of holdout '{holdout['key']}'."
+                f"The user '{user_id}' is bucketed into variation '{variation.key}' "
+                f"of holdout '{holdout.key}'."
             )
             self.logger.info(message)
             decide_reasons.append(message)
 
-            # Create Decision for holdout - experiment is None, source is HOLDOUT
+            # CRITICAL FIX: Return holdout as the experiment field (matching Swift SDK)
+            # Swift: return FeatureDecision(experiment: holdout, variation: variation, source: .holdout)
+            # Previously Python returned experiment=None which was inconsistent
             holdout_decision: Decision = Decision(
-                experiment=None,
+                experiment=holdout,  # Changed from None to holdout
                 variation=variation,
                 source=enums.DecisionSources.HOLDOUT,
                 cmab_uuid=None
@@ -837,7 +840,7 @@ class DecisionService:
                 'reasons': decide_reasons
             }
 
-        message = f"User '{user_id}' is not bucketed into any variation for holdout '{holdout['key']}'."
+        message = f"User '{user_id}' is not bucketed into any variation for holdout '{holdout.key}'."
         self.logger.info(message)
         decide_reasons.append(message)
         return {

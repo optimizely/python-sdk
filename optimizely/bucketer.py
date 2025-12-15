@@ -125,14 +125,10 @@ class Bucketer:
             project_config.logger.debug(message)
             return None, []
 
-        if isinstance(experiment, dict):
-            # This is a holdout dictionary
-            experiment_key = experiment.get('key', '')
-            experiment_id = experiment.get('id', '')
-        else:
-            # This is an Experiment object
-            experiment_key = experiment.key
-            experiment_id = experiment.id
+        # Handle both Experiment and Holdout entities (aligned with Swift SDK)
+        # Both have key and id attributes
+        experiment_key = experiment.key
+        experiment_id = experiment.id
 
         if not experiment_key or not experiment_key.strip():
             message = 'Invalid entity key provided for bucketing. Returning nil.'
@@ -141,13 +137,10 @@ class Bucketer:
 
         variation_id, decide_reasons = self.bucket_to_entity_id(project_config, experiment, user_id, bucketing_id)
         if variation_id:
-            if isinstance(experiment, dict):
-                # For holdouts, find the variation in the holdout's variations array
-                variations = experiment.get('variations', [])
-                variation = next((v for v in variations if v.get('id') == variation_id), None)
-            else:
-                # For experiments, use the existing method
-                variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+            # Use the same variation lookup method for both experiments and holdouts
+            # This works because we now convert holdout variations to Variation entities
+            # in project_config.py (matching Swift SDK approach)
+            variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
             return variation, decide_reasons
 
         # No variation found - log message for empty traffic range
@@ -176,21 +169,19 @@ class Bucketer:
         if not experiment:
             return None, decide_reasons
 
-        # Handle both Experiment objects and holdout dictionaries
-        if isinstance(experiment, dict):
-            # This is a holdout dictionary - holdouts don't have groups
-            experiment_key = experiment.get('key', '')
-            experiment_id = experiment.get('id', '')
-            traffic_allocations = experiment.get('trafficAllocation', [])
-            has_cmab = False
-            group_policy = None
-        else:
-            # This is an Experiment object
-            experiment_key = experiment.key
-            experiment_id = experiment.id
-            traffic_allocations = experiment.trafficAllocation
-            has_cmab = bool(experiment.cmab)
-            group_policy = getattr(experiment, 'groupPolicy', None)
+        # Handle both Experiment and Holdout entities (aligned with Swift SDK)
+        # Both entities have key, id, and trafficAllocation attributes
+        from . import entities
+
+        experiment_key = experiment.key
+        experiment_id = experiment.id
+        traffic_allocations = experiment.trafficAllocation
+
+        # Check if this is a Holdout entity
+        # Holdouts don't have groups or CMAB
+        is_holdout = isinstance(experiment, entities.Holdout)
+        has_cmab = False if is_holdout else bool(getattr(experiment, 'cmab', None))
+        group_policy = None if is_holdout else getattr(experiment, 'groupPolicy', None)
 
         # Determine if experiment is in a mutually exclusive group.
         # This will not affect evaluation of rollout rules or holdouts.

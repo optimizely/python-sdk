@@ -21,7 +21,6 @@ from .helpers import condition as condition_helper
 from .helpers import enums
 from .helpers import types
 
-from optimizely.helpers.types import HoldoutDict, VariationDict
 
 if version_info < (3, 8):
     from typing_extensions import Final
@@ -90,34 +89,45 @@ class ProjectConfig:
         region_value = config.get('region')
         self.region: str = region_value or 'US'
 
-        self.holdouts: list[HoldoutDict] = config.get('holdouts', [])
-        self.holdout_id_map: dict[str, HoldoutDict] = {}
-        self.global_holdouts: dict[str, HoldoutDict] = {}
-        self.included_holdouts: dict[str, list[HoldoutDict]] = {}
-        self.excluded_holdouts: dict[str, list[HoldoutDict]] = {}
-        self.flag_holdouts_map: dict[str, list[HoldoutDict]] = {}
+        # Parse holdouts from datafile and convert to Holdout entities
+        holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
+        self.holdouts: list[entities.Holdout] = []
+        self.holdout_id_map: dict[str, entities.Holdout] = {}
+        self.global_holdouts: list[entities.Holdout] = []
+        self.included_holdouts: dict[str, list[entities.Holdout]] = {}
+        self.excluded_holdouts: dict[str, list[entities.Holdout]] = {}
+        self.flag_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
-        for holdout in self.holdouts:
-            if holdout.get('status') != 'Running':
+        # Convert holdout dicts to Holdout entities
+        for holdout_data in holdouts_data:
+            # Create Holdout entity - aligned with Swift SDK where Holdout is a proper entity
+            holdout = entities.Holdout(**holdout_data)
+            self.holdouts.append(holdout)
+
+            # Only process Running holdouts (matching Swift's filtering at decision time,
+            # but doing it here for efficiency like the original Python implementation)
+            if not holdout.is_activated:
                 continue
 
-            holdout_id = holdout['id']
-            self.holdout_id_map[holdout_id] = holdout
+            # Map by ID for quick lookup
+            self.holdout_id_map[holdout.id] = holdout
 
-            included_flags = holdout.get('includedFlags')
-            if not included_flags:
+            # Categorize as global vs flag-specific
+            # Global holdouts: apply to all flags unless explicitly excluded
+            # Flag-specific holdouts: only apply to explicitly included flags
+            if not holdout.includedFlags:
                 # This is a global holdout
-                self.global_holdouts[holdout_id] = holdout
+                self.global_holdouts.append(holdout)
 
-                excluded_flags = holdout.get('excludedFlags')
-                if excluded_flags:
-                    for flag_id in excluded_flags:
+                # Track which flags this global holdout excludes
+                if holdout.excludedFlags:
+                    for flag_id in holdout.excludedFlags:
                         if flag_id not in self.excluded_holdouts:
                             self.excluded_holdouts[flag_id] = []
                         self.excluded_holdouts[flag_id].append(holdout)
             else:
-                # This holdout applies to specific flags
-                for flag_id in included_flags:
+                # This holdout applies to specific flags only
+                for flag_id in holdout.includedFlags:
                     if flag_id not in self.included_holdouts:
                         self.included_holdouts[flag_id] = []
                     self.included_holdouts[flag_id].append(holdout)
@@ -222,14 +232,16 @@ class ProjectConfig:
                 rules.append(self.experiment_id_map[exp_id])
 
             flag_id = feature.id
-            applicable_holdouts = []
+            applicable_holdouts: list[entities.Holdout] = []
 
+            # Add flag-specific included holdouts first
             if flag_id in self.included_holdouts:
                 applicable_holdouts.extend(self.included_holdouts[flag_id])
 
-            for holdout in self.global_holdouts.values():
-                excluded_flag_ids = holdout.get('excludedFlags', [])
-                if flag_id not in excluded_flag_ids:
+            # Add global holdouts (excluding any that explicitly exclude this flag)
+            excluded_holdouts = self.excluded_holdouts.get(flag_id, [])
+            for holdout in self.global_holdouts:
+                if holdout not in excluded_holdouts:
                     applicable_holdouts.append(holdout)
 
             if applicable_holdouts:
@@ -248,29 +260,27 @@ class ProjectConfig:
                         variations.append(rule_variation)
             self.flag_variations_map[feature.key] = variations
 
+        # Process holdout variations - aligned with Swift SDK where holdout variations
+        # are converted to Variation entities just like experiment variations
         if self.holdouts:
             for holdout in self.holdouts:
-                holdout_key = holdout.get('key')
-                holdout_id = holdout.get('id')
+                # Initialize variation maps for this holdout
+                self.variation_key_map[holdout.key] = {}
+                self.variation_id_map[holdout.key] = {}
+                self.variation_id_map_by_experiment_id[holdout.id] = {}
+                self.variation_key_map_by_experiment_id[holdout.id] = {}
 
-                if not holdout_key or not holdout_id:
-                    continue
+                # Convert holdout variations to Variation entities
+                # This ensures holdouts work the same way as experiments throughout the SDK
+                if holdout.variations:
+                    for variation_dict in holdout.variations:
+                        variation = entities.Variation(**variation_dict)
 
-                self.variation_key_map[holdout_key] = {}
-                self.variation_id_map[holdout_key] = {}
-                self.variation_id_map_by_experiment_id[holdout_id] = {}
-                self.variation_key_map_by_experiment_id[holdout_id] = {}
-
-                variations = holdout.get('variations')
-                if variations:
-                    for variation in variations:
-                        variation_key = variation.get('key') if isinstance(variation, dict) else None
-                        variation_id = variation.get('id') if isinstance(variation, dict) else None
-                        if variation_key and variation_id:
-                            self.variation_key_map[holdout_key][variation_key] = variation
-                            self.variation_id_map[holdout_key][variation_id] = variation
-                            self.variation_key_map_by_experiment_id[holdout_id][variation_key] = variation
-                            self.variation_id_map_by_experiment_id[holdout_id][variation_id] = variation
+                        # Map variations by key and ID (same pattern as experiments)
+                        self.variation_key_map[holdout.key][variation.key] = variation
+                        self.variation_id_map[holdout.key][variation.id] = variation
+                        self.variation_key_map_by_experiment_id[holdout.id][variation.key] = variation
+                        self.variation_id_map_by_experiment_id[holdout.id][variation.id] = variation
 
     @staticmethod
     def _generate_key_map(
@@ -834,28 +844,32 @@ class ProjectConfig:
 
         return None
 
-    def get_holdouts_for_flag(self, flag_key: str) -> list[HoldoutDict]:
+    def get_holdouts_for_flag(self, flag_key: str) -> list[entities.Holdout]:
         """ Helper method to get holdouts from an applied feature flag.
+
+        Aligned with Swift SDK's getHoldoutForFlag(id:) which returns [Holdout].
 
         Args:
             flag_key: Key of the feature flag.
 
         Returns:
-            The holdouts that apply for a specific flag.
+            The holdouts that apply for a specific flag as Holdout entity objects.
         """
         if not self.holdouts:
             return []
 
         return self.flag_holdouts_map.get(flag_key, [])
 
-    def get_holdout(self, holdout_id: str) -> Optional[HoldoutDict]:
+    def get_holdout(self, holdout_id: str) -> Optional[entities.Holdout]:
         """ Helper method to get holdout from holdout ID.
+
+        Aligned with Swift SDK's getHoldout(id:) which returns Holdout?.
 
         Args:
             holdout_id: ID of the holdout.
 
         Returns:
-            The holdout corresponding to the provided holdout ID.
+            The holdout corresponding to the provided holdout ID as a Holdout entity object.
         """
         holdout = self.holdout_id_map.get(holdout_id)
 
