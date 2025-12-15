@@ -270,17 +270,15 @@ class ProjectConfig:
                 self.variation_id_map_by_experiment_id[holdout.id] = {}
                 self.variation_key_map_by_experiment_id[holdout.id] = {}
 
-                # Convert holdout variations to Variation entities
-                # This ensures holdouts work the same way as experiments throughout the SDK
+                # Keep holdout variations as dicts (aligned with Swift SDK)
+                # Holdouts use VariationDict format, not Variation entities
                 if holdout.variations:
                     for variation_dict in holdout.variations:
-                        variation = entities.Variation(**variation_dict)
-
-                        # Map variations by key and ID (same pattern as experiments)
-                        self.variation_key_map[holdout.key][variation.key] = variation
-                        self.variation_id_map[holdout.key][variation.id] = variation
-                        self.variation_key_map_by_experiment_id[holdout.id][variation.key] = variation
-                        self.variation_id_map_by_experiment_id[holdout.id][variation.id] = variation
+                        # Map variations by key and ID using dict format
+                        self.variation_key_map[holdout.key][variation_dict['key']] = variation_dict
+                        self.variation_id_map[holdout.key][variation_dict['id']] = variation_dict
+                        self.variation_key_map_by_experiment_id[holdout.id][variation_dict['key']] = variation_dict
+                        self.variation_id_map_by_experiment_id[holdout.id][variation_dict['id']] = variation_dict
 
     @staticmethod
     def _generate_key_map(

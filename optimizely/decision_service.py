@@ -784,7 +784,8 @@ class DecisionService:
         rollout_decision, rollout_reasons = self.get_variation_for_rollout(
             project_config, feature_flag, user_context
         )
-        reasons.extend(rollout_reasons)
+        if rollout_reasons:
+            reasons.extend(rollout_reasons)
 
         return {
             'decision': rollout_decision,
@@ -865,8 +866,10 @@ class DecisionService:
         decide_reasons.extend(bucket_reasons)
 
         if variation:
+            # Holdout variations are dicts (aligned with Swift SDK)
+            variation_key = variation.get('key') if isinstance(variation, dict) else variation.key
             message = (
-                f"The user '{user_id}' is bucketed into variation '{variation.key}' "
+                f"The user '{user_id}' is bucketed into variation '{variation_key}' "
                 f"of holdout '{holdout.key}'."
             )
             self.logger.info(message)

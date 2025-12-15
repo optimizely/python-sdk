@@ -507,9 +507,16 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
             # If both have decisions, they should match
             if decision1 and decision2:
-                # Variation is an object, not a dict, so use attributes
-                var1_id = decision1.variation.id if decision1.variation else None
-                var2_id = decision2.variation.id if decision2.variation else None
+                # Handle both dict and Variation entity formats
+                if decision1.variation:
+                    var1_id = decision1.variation['id'] if isinstance(decision1.variation, dict) else decision1.variation.id
+                else:
+                    var1_id = None
+
+                if decision2.variation:
+                    var2_id = decision2.variation['id'] if isinstance(decision2.variation, dict) else decision2.variation.id
+                else:
+                    var2_id = None
 
                 self.assertEqual(
                     var1_id, var2_id,

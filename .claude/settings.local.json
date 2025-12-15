@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/muzahidul.islam/opti/python-sdk -name \"*.py\" -type f -exec grep -l \"oldout\" {} ;)",
+      "Bash(python -m py_compile optimizely/project_config.py)",
+      "Bash(python -m py_compile optimizely/decision_service.py)",
+      "Bash(python -m py_compile optimizely/bucketer.py)",
+      "Bash(python -c \"from optimizely import entities; print(''entities.py imports successfully'')\")",
+      "Bash(python -c \"from optimizely import project_config; print(''project_config.py imports successfully'')\")",
+      "Bash(pip install -r requirements/core.txt)",
+      "Bash(python3 -c \"from optimizely import project_config; print(''project_config.py imports successfully'')\")",
+      "Bash(python3 -m pip install jsonschema requests --quiet)",
+      "Bash(python3 -c \"import jsonschema; print(''jsonschema installed'')\")",
+      "Bash(python3 -c \"from optimizely import decision_service; print(''decision_service.py imports successfully'')\")",
+      "Bash(python3 -c \"from optimizely import bucketer; print(''bucketer.py imports successfully'')\")",
+      "Bash(python3 -m mypy optimizely/entities.py --no-error-summary)",
+      "Bash(python3 -m unittest tests.test_decision_service_holdout)",
+      "Bash(python3 -m unittest discover tests -p \"test_*.py\" -v)"
+    ]
+  }
+}

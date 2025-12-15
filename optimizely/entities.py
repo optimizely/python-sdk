@@ -258,3 +258,15 @@ class Holdout(BaseEntity):
 
     def __str__(self) -> str:
         return self.key
+
+    def __getitem__(self, key: str) -> Any:
+        """Enable dict-style access for backward compatibility with tests."""
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Enable dict-style assignment for backward compatibility with tests."""
+        setattr(self, key, value)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Enable dict-style .get() method for backward compatibility with tests."""
+        return getattr(self, key, default)
