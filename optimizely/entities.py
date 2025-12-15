@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
 class BaseEntity:
     def __eq__(self, other: object) -> bool:
+        if not hasattr(other, '__dict__'):
+            return False
         return self.__dict__ == other.__dict__
 
 
