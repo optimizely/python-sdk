@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
 class BaseEntity:
     def __eq__(self, other: object) -> bool:
+        if not hasattr(other, '__dict__'):
+            return False
         return self.__dict__ == other.__dict__
 
 
@@ -194,3 +196,77 @@ class Integration(BaseEntity):
         self.key = key
         self.host = host
         self.publicKey = publicKey
+
+
+class Holdout(BaseEntity):
+    """Holdout entity representing a holdout experiment for measuring incremental impact.
+
+    Aligned with Swift SDK implementation where Holdout is a proper entity class
+    that conforms to ExperimentCore protocol.
+    """
+
+    class Status:
+        """Holdout status constants matching Swift enum Status."""
+        DRAFT: Final = 'Draft'
+        RUNNING: Final = 'Running'
+        CONCLUDED: Final = 'Concluded'
+        ARCHIVED: Final = 'Archived'
+
+    def __init__(
+        self,
+        id: str,
+        key: str,
+        status: str,
+        variations: list[VariationDict],
+        trafficAllocation: list[TrafficAllocation],
+        audienceIds: list[str],
+        includedFlags: Optional[list[str]] = None,
+        excludedFlags: Optional[list[str]] = None,
+        audienceConditions: Optional[Sequence[str | list[str]]] = None,
+        **kwargs: Any
+    ):
+        self.id = id
+        self.key = key
+        self.status = status
+        self.variations = variations
+        self.trafficAllocation = trafficAllocation
+        self.audienceIds = audienceIds
+        self.audienceConditions = audienceConditions
+        self.includedFlags = includedFlags or []
+        self.excludedFlags = excludedFlags or []
+        self.layerId = ''
+
+    def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
+        """Returns audienceConditions if present, otherwise audienceIds.
+
+        This matches the Experiment.get_audience_conditions_or_ids() method
+        and enables holdouts to work with the same audience evaluation logic.
+        """
+        return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
+
+    @property
+    def is_activated(self) -> bool:
+        """Check if the holdout is activated (running).
+
+        Matches Swift's isActivated computed property:
+        var isActivated: Bool { return status == .running }
+
+        Returns:
+            True if status is 'Running', False otherwise.
+        """
+        return self.status == self.Status.RUNNING
+
+    def __str__(self) -> str:
+        return self.key
+
+    def __getitem__(self, key: str) -> Any:
+        """Enable dict-style access for backward compatibility with tests."""
+        return getattr(self, key)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Enable dict-style assignment for backward compatibility with tests."""
+        setattr(self, key, value)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Enable dict-style .get() method for backward compatibility with tests."""
+        return getattr(self, key, default)

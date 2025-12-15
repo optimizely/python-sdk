@@ -1393,6 +1393,9 @@ class HoldoutConfigTest(base.BaseTest):
                 'id': 'holdout_1',
                 'key': 'global_holdout',
                 'status': 'Running',
+                'variations': [],
+                'trafficAllocation': [],
+                'audienceIds': [],
                 'includedFlags': [],
                 'excludedFlags': [boolean_feature_id]
             },
@@ -1400,6 +1403,9 @@ class HoldoutConfigTest(base.BaseTest):
                 'id': 'holdout_2',
                 'key': 'specific_holdout',
                 'status': 'Running',
+                'variations': [],
+                'trafficAllocation': [],
+                'audienceIds': [],
                 'includedFlags': [multi_variate_feature_id],
                 'excludedFlags': []
             },
@@ -1407,6 +1413,9 @@ class HoldoutConfigTest(base.BaseTest):
                 'id': 'holdout_3',
                 'key': 'inactive_holdout',
                 'status': 'Inactive',
+                'variations': [],
+                'trafficAllocation': [],
+                'audienceIds': [],
                 'includedFlags': [boolean_feature_id],
                 'excludedFlags': []
             }
@@ -1512,9 +1521,9 @@ class HoldoutConfigTest(base.BaseTest):
 
         self.assertIn('holdout_1', self.config_with_holdouts.holdout_id_map)
         self.assertIn('holdout_2', self.config_with_holdouts.holdout_id_map)
-        # Check if holdout_1 is in global_holdouts (list of dicts)
-        holdout_ids = [h['id'] for h in self.config_with_holdouts.global_holdouts]
-        self.assertIn('holdout_1', holdout_ids)
+        # Check if a holdout with ID 'holdout_1' exists in global_holdouts
+        holdout_ids_in_global = [h.id for h in self.config_with_holdouts.global_holdouts]
+        self.assertIn('holdout_1', holdout_ids_in_global)
 
         # Use correct feature flag IDs
         boolean_feature_id = '91111'

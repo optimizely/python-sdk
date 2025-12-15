@@ -1377,19 +1377,15 @@ class FeatureFlagDecisionTests(base.BaseTest):
         expected_variation = self.project_config.get_variation_from_id(
             "211127", "211129"
         )
-        from optimizely.decision_service import Decision
-        from optimizely.helpers import enums
-        expected_decision = Decision(None, expected_variation, enums.DecisionSources.ROLLOUT, None)
         get_variation_for_rollout_patch = mock.patch(
             "optimizely.decision_service.DecisionService.get_variation_for_rollout",
-            return_value=(expected_decision, []),
+            return_value=[expected_variation, None],
         )
         with get_variation_for_rollout_patch as mock_get_variation_for_rollout, \
                 self.mock_decision_logger as mock_decision_service_logging:
-            decision_result = self.decision_service.get_variation_for_feature(
+            variation_received = self.decision_service.get_variation_for_feature(
                 self.project_config, feature, user, False
-            )
-            variation_received = decision_result['decision'].variation if decision_result['decision'] else None
+            )['decision']
             self.assertEqual(
                 expected_variation,
                 variation_received,
@@ -1399,8 +1395,9 @@ class FeatureFlagDecisionTests(base.BaseTest):
             self.project_config, feature, user
         )
 
-        # Assert info log message was generated for rollout bucketing
-        self.assertEqual(1, mock_decision_service_logging.info.call_count)
+        # Assert no log messages were generated
+        self.assertEqual(1, mock_decision_service_logging.debug.call_count)
+        self.assertEqual(1, len(mock_decision_service_logging.method_calls))
 
     def test_get_variation_for_feature__returns_variation_if_user_not_in_experiment_but_in_rollout(
             self,

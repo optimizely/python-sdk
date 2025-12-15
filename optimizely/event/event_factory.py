@@ -125,6 +125,9 @@ class EventFactory:
             if isinstance(event.variation, entities.Variation):
                 variation_id = event.variation.id
                 variation_key = event.variation.key
+            elif isinstance(event.variation, dict):
+                variation_id = event.variation.get('id', '')
+                variation_key = event.variation.get('key', '')
 
             if event.experiment:
                 experiment_layerId = event.experiment.layerId

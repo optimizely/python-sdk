@@ -28,8 +28,8 @@ else:
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
-    from .entities import Experiment, Variation
-    from .helpers.types import TrafficAllocation
+    from .entities import Experiment, Variation, Holdout
+    from .helpers.types import TrafficAllocation, VariationDict
 
 
 MAX_TRAFFIC_VALUE: Final = 10000
@@ -104,8 +104,8 @@ class Bucketer:
 
     def bucket(
         self, project_config: ProjectConfig,
-        experiment: Experiment, user_id: str, bucketing_id: str
-    ) -> tuple[Optional[Variation], list[str]]:
+        experiment: Experiment | Holdout, user_id: str, bucketing_id: str
+    ) -> tuple[Optional[Variation | VariationDict], list[str]]:
         """ For a given experiment and bucketing ID determines variation to be shown to user.
 
         Args:
@@ -125,14 +125,9 @@ class Bucketer:
             project_config.logger.debug(message)
             return None, []
 
-        if isinstance(experiment, dict):
-            # This is a holdout dictionary
-            experiment_key = experiment.get('key', '')
-            experiment_id = experiment.get('id', '')
-        else:
-            # This is an Experiment object
-            experiment_key = experiment.key
-            experiment_id = experiment.id
+        # Handle both Experiment and Holdout entities
+        experiment_key = experiment.key
+        experiment_id = experiment.id
 
         if not experiment_key or not experiment_key.strip():
             message = 'Invalid entity key provided for bucketing. Returning nil.'
@@ -141,13 +136,7 @@ class Bucketer:
 
         variation_id, decide_reasons = self.bucket_to_entity_id(project_config, experiment, user_id, bucketing_id)
         if variation_id:
-            if isinstance(experiment, dict):
-                # For holdouts, find the variation in the holdout's variations array
-                variations = experiment.get('variations', [])
-                variation = next((v for v in variations if v.get('id') == variation_id), None)
-            else:
-                # For experiments, use the existing method
-                variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
+            variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
             return variation, decide_reasons
 
         # No variation found - log message for empty traffic range
@@ -158,7 +147,7 @@ class Bucketer:
 
     def bucket_to_entity_id(
         self, project_config: ProjectConfig,
-        experiment: Experiment, user_id: str, bucketing_id: str
+        experiment: Experiment | Holdout, user_id: str, bucketing_id: str
     ) -> tuple[Optional[str], list[str]]:
         """
         For a given experiment and bucketing ID determines variation ID to be shown to user.
@@ -176,58 +165,52 @@ class Bucketer:
         if not experiment:
             return None, decide_reasons
 
-        # Handle both Experiment objects and holdout dictionaries
-        if isinstance(experiment, dict):
-            # This is a holdout dictionary - holdouts don't have groups
-            experiment_key = experiment.get('key', '')
-            experiment_id = experiment.get('id', '')
-            traffic_allocations = experiment.get('trafficAllocation', [])
-            has_cmab = False
-            group_policy = None
-        else:
-            # This is an Experiment object
-            experiment_key = experiment.key
-            experiment_id = experiment.id
-            traffic_allocations = experiment.trafficAllocation
-            has_cmab = bool(experiment.cmab)
+        # Handle both Experiment and Holdout entities
+        # Both entities have key, id, and trafficAllocation attributes
+        from . import entities
+
+        experiment_key = experiment.key
+        experiment_id = experiment.id
+        traffic_allocations = experiment.trafficAllocation
+
+        # Determine if experiment is in a mutually exclusive group
+        # Holdouts don't have groupId or groupPolicy - use isinstance for type narrowing
+        if isinstance(experiment, entities.Experiment):
             group_policy = getattr(experiment, 'groupPolicy', None)
+            if group_policy and group_policy in GROUP_POLICIES:
+                group = project_config.get_group(experiment.groupId)
 
-        # Determine if experiment is in a mutually exclusive group.
-        # This will not affect evaluation of rollout rules or holdouts.
-        if group_policy and group_policy in GROUP_POLICIES:
-            group = project_config.get_group(experiment.groupId)
+                if not group:
+                    return None, decide_reasons
 
-            if not group:
-                return None, decide_reasons
+                user_experiment_id = self.find_bucket(
+                    project_config, bucketing_id, experiment.groupId, group.trafficAllocation,
+                )
 
-            user_experiment_id = self.find_bucket(
-                project_config, bucketing_id, experiment.groupId, group.trafficAllocation,
-            )
+                if not user_experiment_id:
+                    message = f'User "{user_id}" is in no experiment.'
+                    project_config.logger.info(message)
+                    decide_reasons.append(message)
+                    return None, decide_reasons
 
-            if not user_experiment_id:
-                message = f'User "{user_id}" is in no experiment.'
+                if user_experiment_id != experiment_id:
+                    message = f'User "{user_id}" is not in experiment "{experiment_key}" of group {experiment.groupId}.'
+                    project_config.logger.info(message)
+                    decide_reasons.append(message)
+                    return None, decide_reasons
+
+                message = f'User "{user_id}" is in experiment {experiment_key} of group {experiment.groupId}.'
                 project_config.logger.info(message)
                 decide_reasons.append(message)
-                return None, decide_reasons
 
-            if user_experiment_id != experiment_id:
-                message = f'User "{user_id}" is not in experiment "{experiment_key}" of group {experiment.groupId}.'
-                project_config.logger.info(message)
-                decide_reasons.append(message)
-                return None, decide_reasons
-
-            message = f'User "{user_id}" is in experiment {experiment_key} of group {experiment.groupId}.'
-            project_config.logger.info(message)
-            decide_reasons.append(message)
-
-        if has_cmab:
-            if experiment.cmab:
-                traffic_allocations = [
-                    {
-                        "entityId": "$",
-                        "endOfRange": experiment.cmab['trafficAllocation']
-                    }
-                ]
+        # Holdouts don't have cmab - use isinstance for type narrowing
+        if isinstance(experiment, entities.Experiment) and experiment.cmab:
+            traffic_allocations = [
+                {
+                    "entityId": "$",
+                    "endOfRange": experiment.cmab['trafficAllocation']
+                }
+            ]
 
         # Bucket user if not in white-list and in group (if any)
         variation_id = self.find_bucket(project_config, bucketing_id,
