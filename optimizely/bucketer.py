@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, cast
 import math
 from sys import version_info
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from .project_config import ProjectConfig
     from .entities import Experiment, Variation, Holdout
-    from .helpers.types import TrafficAllocation, VariationDict
+    from .helpers.types import TrafficAllocation
 
 
 MAX_TRAFFIC_VALUE: Final = 10000
@@ -105,7 +105,7 @@ class Bucketer:
     def bucket(
         self, project_config: ProjectConfig,
         experiment: Experiment | Holdout, user_id: str, bucketing_id: str
-    ) -> tuple[Optional[Variation | VariationDict], list[str]]:
+    ) -> tuple[Variation | None, list[str]]:
         """ For a given experiment and bucketing ID determines variation to be shown to user.
 
         Args:
@@ -137,7 +137,8 @@ class Bucketer:
         variation_id, decide_reasons = self.bucket_to_entity_id(project_config, experiment, user_id, bucketing_id)
         if variation_id:
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
-            return variation, decide_reasons
+            # Cast is safe here because experiments always use Variation entities, not VariationDict
+            return cast(Optional[Variation], variation), decide_reasons
 
         # No variation found - log message for empty traffic range
         message = 'Bucketed into an empty traffic range. Returning nil.'
