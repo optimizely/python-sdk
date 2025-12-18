@@ -138,7 +138,7 @@ class Bucketer:
         if variation_id:
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
             # Cast is safe here because experiments always use Variation entities, not VariationDict
-            return cast(Optional[Variation], variation), decide_reasons
+            return cast('Optional[Variation]', variation), decide_reasons
 
         # No variation found - log message for empty traffic range
         message = 'Bucketed into an empty traffic range. Returning nil.'
