@@ -1,5 +1,15 @@
 # Optimizely Python SDK Changelog
 
+## 5.3.1
+December 17, 2025
+
+### Minor update
+- Added support for Holdouts in Feature Experimentation, enabling global traffic exclusion from experiments for statistical confidence validation. ([#469](https://github.com/optimizely/python-sdk/pull/469))
+- Resolved issues with Holdout impression event handling and notification delivery. ([#471](https://github.com/optimizely/python-sdk/pull/471))
+
+---
+
+
 ## 5.3.0
 November 13th, 2025
 
