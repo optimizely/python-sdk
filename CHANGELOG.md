@@ -38,6 +38,13 @@ These updates collectively enable Python SDK users to leverage machine learningâ
 
 ---
 
+#### **Holdout**
+
+- Added holdout support for default decision service ([#467](https://github.com/optimizely/python-sdk/pull/467))
+- Project Config updated for Holdout ([#464](https://github.com/optimizely/python-sdk/pull/464))
+
+---
+
 #### **Multi-Region Data Hosting**
 
 - Added SDK support for multi-region data hosting, allowing projects to specify their data residency region ([#459](https://github.com/optimizely/python-sdk/pull/459)).
