@@ -234,7 +234,6 @@ class Holdout(BaseEntity):
         self.audienceConditions = audienceConditions
         self.includedFlags = includedFlags or []
         self.excludedFlags = excludedFlags or []
-        self.layerId = ''
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """Returns audienceConditions if present, otherwise audienceIds.

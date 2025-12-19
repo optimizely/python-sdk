@@ -241,7 +241,7 @@ class ProjectConfig:
                 if holdout not in excluded_holdouts:
                     applicable_holdouts.append(holdout)
 
-            # Add flag-specific included holdouts AFTER global holdouts
+            # Add flag-specific local holdouts AFTER global holdouts
             if flag_id in self.included_holdouts:
                 applicable_holdouts.extend(self.included_holdouts[flag_id])
 
