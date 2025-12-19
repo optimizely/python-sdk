@@ -27,9 +27,10 @@ else:
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
-    from optimizely.entities import Experiment, Variation, Event
+    from optimizely.entities import Experiment, Variation, Event, Holdout
     from optimizely.event.payload import VisitorAttribute
     from optimizely.helpers.event_tag_utils import EventTags
+    from optimizely.helpers.types import VariationDict
 
 
 CLIENT_NAME: Final = 'python-sdk'
@@ -63,9 +64,9 @@ class ImpressionEvent(UserEvent):
         self,
         event_context: EventContext,
         user_id: str,
-        experiment: Experiment,
+        experiment: Experiment | Holdout,
         visitor_attributes: list[VisitorAttribute],
-        variation: Optional[Variation],
+        variation: Optional[Variation | VariationDict],
         flag_key: str,
         rule_key: str,
         rule_type: str,

@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from optimizely.optimizely_user_context import UserAttributes
     from optimizely.project_config import ProjectConfig
-    from optimizely.entities import Experiment, Variation
+    from optimizely.entities import Experiment, Variation, Holdout
+    from optimizely.helpers.types import VariationDict
 
 
 class UserEventFactory:
@@ -33,7 +34,7 @@ class UserEventFactory:
     def create_impression_event(
         cls,
         project_config: ProjectConfig,
-        activated_experiment: Experiment,
+        activated_experiment: Experiment | Holdout,
         variation_id: Optional[str],
         flag_key: str,
         rule_key: str,
@@ -64,16 +65,16 @@ class UserEventFactory:
         if not activated_experiment and rule_type is not enums.DecisionSources.ROLLOUT:
             return None
 
-        variation: Optional[Variation] = None
+        variation: Optional[Variation | VariationDict] = None
         experiment_id = None
         if activated_experiment:
             experiment_id = activated_experiment.id
 
-        if variation_id and flag_key:
+        if variation_id and flag_key and rule_type != enums.DecisionSources.HOLDOUT:
             # need this condition when we send events involving forced decisions
-            # (F-to-D or E-to-D with any ruleKey/variationKey combinations)
             variation = project_config.get_flag_variation(flag_key, 'id', variation_id)
         elif variation_id and experiment_id:
+            # For holdouts, experiments, and rollouts - lookup by experiment/holdout ID
             variation = project_config.get_variation_from_id_by_experiment_id(experiment_id, variation_id)
 
         event_context = user_event.EventContext(
