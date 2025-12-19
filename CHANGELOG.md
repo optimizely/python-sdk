@@ -1,10 +1,17 @@
 # Optimizely Python SDK Changelog
 
 ## 5.4.0
-December 17, 2025
+December 19th, 2025
 
 ### New Features
+
+Holdout features:
+
 - Added support for Holdouts in Feature Experimentation, enabling global traffic exclusion from experiments for statistical confidence validation. ([#469](https://github.com/optimizely/python-sdk/pull/469))
+- Added holdout support for default decision service ([#467](https://github.com/optimizely/python-sdk/pull/467))
+- Project Config updated for Holdout ([#464](https://github.com/optimizely/python-sdk/pull/464))
+
+---
 
 ### Bug Fixes
 - Resolved issues with Holdout impression event handling and notification delivery. ([#471](https://github.com/optimizely/python-sdk/pull/471))
@@ -35,13 +42,6 @@ The CMAB feature includes:
 - Exposure of CMAB prediction endpoint for programmatic access ([#466](https://github.com/optimizely/python-sdk/pull/466))
 
 These updates collectively enable Python SDK users to leverage machine learning–driven bandit optimization strategies within Optimizely Feature Experimentation.
-
----
-
-#### **Holdout**
-
-- Added holdout support for default decision service ([#467](https://github.com/optimizely/python-sdk/pull/467))
-- Project Config updated for Holdout ([#464](https://github.com/optimizely/python-sdk/pull/464))
 
 ---
 
