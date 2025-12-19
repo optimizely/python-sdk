@@ -329,7 +329,8 @@ class Optimizely:
         return True
 
     def _send_impression_event(
-        self, project_config: project_config.ProjectConfig, experiment: Optional[entities.Experiment],
+        self, project_config: project_config.ProjectConfig,
+        experiment: Optional[Union[entities.Experiment, entities.Holdout]],
         variation: Optional[Union[entities.Variation, VariationDict]], flag_key: str, rule_key: str, rule_type: str,
         enabled: bool, user_id: str, attributes: Optional[UserAttributes], cmab_uuid: Optional[str] = None
     ) -> None:
@@ -625,7 +626,8 @@ class Optimizely:
         self._send_impression_event(project_config, experiment, variation, '', experiment.key,
                                     enums.DecisionSources.EXPERIMENT, True, user_id, attributes)
 
-        return variation.key
+        # Handle both Variation entity and VariationDict
+        return variation['key'] if isinstance(variation, dict) else variation.key
 
     def track(
         self, event_key: str, user_id: str,
@@ -1120,7 +1122,10 @@ class Optimizely:
             return None
 
         forced_variation, _ = self.decision_service.get_forced_variation(project_config, experiment_key, user_id)
-        return forced_variation.key if forced_variation else None
+        if forced_variation:
+            # Handle both Variation entity and VariationDict
+            return forced_variation['key'] if isinstance(forced_variation, dict) else forced_variation.key
+        return None
 
     def get_optimizely_config(self) -> Optional[OptimizelyConfig]:
         """ Gets OptimizelyConfig instance for the current project config.
@@ -1260,9 +1265,10 @@ class Optimizely:
         feature_flag = project_config.feature_key_map.get(flag_key)
 
         # Send impression event if Decision came from a feature
-        # test and decide options doesn't include disableDecisionEvent
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
-            if decision_source == DecisionSources.FEATURE_TEST or project_config.send_flag_decisions:
+            if (decision_source == DecisionSources.FEATURE_TEST or
+                    decision_source == DecisionSources.HOLDOUT or
+                    project_config.send_flag_decisions):
                 self._send_impression_event(project_config,
                                             flag_decision.experiment,
                                             flag_decision.variation,
