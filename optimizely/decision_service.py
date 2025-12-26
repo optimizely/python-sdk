@@ -413,7 +413,15 @@ class DecisionService:
                 - 'error': Boolean indicating if an error occurred during the decision process.
         """
         user_id = user_context.user_id
-        if options:
+
+        if experiment.cmab:
+            # CMAB experiments are excluded from user profile storage to allow dynamic decision-making
+            ignore_user_profile = True
+            self.logger.debug(
+                f'Skipping user profile service for CMAB experiment "{experiment.key}". '
+                f'CMAB decisions are dynamic and not stored for sticky bucketing.'
+            )
+        elif options:
             ignore_user_profile = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
         else:
             ignore_user_profile = False
@@ -529,18 +537,11 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
-            # CMAB experiments are excluded from user profile storage to allow dynamic decision-making
             if user_profile_tracker is not None and not ignore_user_profile:
-                if not experiment.cmab:
-                    try:
-                        user_profile_tracker.update_user_profile(experiment, variation)
-                    except:
-                        self.logger.exception(f'Unable to save user profile for user "{user_id}".')
-                else:
-                    self.logger.debug(
-                        f'Skipping user profile update for CMAB experiment "{experiment.key}". '
-                        f'CMAB decisions are dynamic and not stored for sticky bucketing.'
-                    )
+                try:
+                    user_profile_tracker.update_user_profile(experiment, variation)
+                except:
+                    self.logger.exception(f'Unable to save user profile for user "{user_id}".')
             return {
                 'cmab_uuid': cmab_uuid,
                 'error': False,

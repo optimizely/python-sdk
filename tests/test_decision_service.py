@@ -1145,8 +1145,8 @@ class DecisionServiceTest(base.BaseTest):
             mock_update_profile.assert_not_called()
 
             # Verify debug log was called to explain CMAB exclusion
-            mock_logger.debug.assert_called_with(
-                'Skipping user profile update for CMAB experiment "cmab_experiment". '
+            mock_logger.debug.assert_any_call(
+                'Skipping user profile service for CMAB experiment "cmab_experiment". '
                 'CMAB decisions are dynamic and not stored for sticky bucketing.'
             )
 
