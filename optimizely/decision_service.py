@@ -529,11 +529,18 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
+            # CMAB experiments are excluded from user profile storage to allow dynamic decision-making
             if user_profile_tracker is not None and not ignore_user_profile:
-                try:
-                    user_profile_tracker.update_user_profile(experiment, variation)
-                except:
-                    self.logger.exception(f'Unable to save user profile for user "{user_id}".')
+                if not experiment.cmab:
+                    try:
+                        user_profile_tracker.update_user_profile(experiment, variation)
+                    except:
+                        self.logger.exception(f'Unable to save user profile for user "{user_id}".')
+                else:
+                    self.logger.debug(
+                        f'Skipping user profile update for CMAB experiment "{experiment.key}". '
+                        f'CMAB decisions are dynamic and not stored for sticky bucketing.'
+                    )
             return {
                 'cmab_uuid': cmab_uuid,
                 'error': False,
