@@ -1116,7 +1116,7 @@ class DecisionServiceTest(base.BaseTest):
             mock.patch.object(self.project_config, 'get_variation_from_id',
                               return_value=entities.Variation('111151', 'variation_1')), \
             mock.patch.object(user_profile_tracker, 'update_user_profile') as mock_update_profile, \
-            mock.patch.object(self.decision_service, 'logger') as mock_logger:
+                mock.patch.object(self.decision_service, 'logger') as mock_logger:
 
             # Configure CMAB service to return a decision
             mock_cmab_service.get_decision.return_value = (
@@ -1175,7 +1175,7 @@ class DecisionServiceTest(base.BaseTest):
                        return_value=[True, []]), \
             mock.patch('optimizely.bucketer.Bucketer.bucket',
                        return_value=[entities.Variation("111129", "variation"), []]), \
-            mock.patch.object(user_profile_tracker, 'update_user_profile') as mock_update_profile:
+                mock.patch.object(user_profile_tracker, 'update_user_profile') as mock_update_profile:
 
             # Call get_variation with standard experiment and user profile tracker
             variation_result = self.decision_service.get_variation(
@@ -1227,7 +1227,7 @@ class DecisionServiceTest(base.BaseTest):
             mock.patch.object(self.project_config, 'get_variation_from_id',
                               return_value=entities.Variation('111151', 'variation_1')), \
             mock.patch.object(user_profile_tracker, 'update_user_profile') as mock_update_profile, \
-            mock.patch.object(self.decision_service, 'logger'):
+                mock.patch.object(self.decision_service, 'logger'):
 
             mock_cmab_service.get_decision.return_value = (
                 {'variation_id': '111151', 'cmab_uuid': 'test-uuid'},
