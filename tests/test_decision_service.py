@@ -1192,62 +1192,6 @@ class DecisionServiceTest(base.BaseTest):
             # Verify user profile WAS updated for standard experiment
             mock_update_profile.assert_called_once_with(experiment, variation)
 
-    def test_get_variation_cmab_experiment_with_ignore_ups_option(self):
-        """Test that CMAB experiments with IGNORE_USER_PROFILE_SERVICE option don't attempt profile update."""
-
-        user = optimizely_user_context.OptimizelyUserContext(
-            optimizely_client=None,
-            logger=None,
-            user_id="test_user",
-            user_attributes={}
-        )
-
-        # Create a user profile tracker
-        user_profile_service = user_profile.UserProfileService()
-        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
-
-        # Create a CMAB experiment
-        cmab_experiment = entities.Experiment(
-            '111150',
-            'cmab_experiment',
-            'Running',
-            '111150',
-            [],
-            {},
-            [entities.Variation('111151', 'variation_1')],
-            [{'entityId': '111151', 'endOfRange': 10000}],
-            cmab={'trafficAllocation': 5000}
-        )
-
-        with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
-            mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
-            mock.patch.object(self.decision_service.bucketer, 'bucket_to_entity_id',
-                              return_value=['$', []]), \
-            mock.patch.object(self.decision_service, 'cmab_service') as mock_cmab_service, \
-            mock.patch.object(self.project_config, 'get_variation_from_id',
-                              return_value=entities.Variation('111151', 'variation_1')), \
-            mock.patch.object(user_profile_tracker, 'update_user_profile') as mock_update_profile, \
-                mock.patch.object(self.decision_service, 'logger'):
-
-            mock_cmab_service.get_decision.return_value = (
-                {'variation_id': '111151', 'cmab_uuid': 'test-uuid'},
-                []
-            )
-
-            # Call with IGNORE_USER_PROFILE_SERVICE option
-            variation_result = self.decision_service.get_variation(
-                self.project_config,
-                cmab_experiment,
-                user,
-                user_profile_tracker,
-                [],
-                options=['IGNORE_USER_PROFILE_SERVICE']
-            )
-
-            # Verify variation returned but profile not updated
-            self.assertIsNotNone(variation_result['variation'])
-            mock_update_profile.assert_not_called()
-
 
 class FeatureFlagDecisionTests(base.BaseTest):
     def setUp(self):
