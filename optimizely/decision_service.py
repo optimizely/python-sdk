@@ -413,15 +413,7 @@ class DecisionService:
                 - 'error': Boolean indicating if an error occurred during the decision process.
         """
         user_id = user_context.user_id
-
-        if experiment.cmab:
-            # CMAB experiments are excluded from user profile storage to allow dynamic decision-making
-            ignore_user_profile = True
-            self.logger.debug(
-                f'Skipping user profile service for CMAB experiment "{experiment.key}". '
-                f'CMAB decisions are dynamic and not stored for sticky bucketing.'
-            )
-        elif options:
+        if options:
             ignore_user_profile = OptimizelyDecideOption.IGNORE_USER_PROFILE_SERVICE in options
         else:
             ignore_user_profile = False
@@ -523,6 +515,11 @@ class DecisionService:
                     'reasons': decide_reasons,
                     'variation': None
                 }
+            ignore_user_profile = True
+            self.logger.debug(
+                f'Skipping user profile service for CMAB experiment "{experiment.key}". '
+                f'CMAB decisions are dynamic and not stored for sticky bucketing.'
+            )
             variation_id = cmab_decision['variation_id'] if cmab_decision else None
             cmab_uuid = cmab_decision['cmab_uuid'] if cmab_decision else None
             variation = project_config.get_variation_from_id(experiment_key=experiment.key,
