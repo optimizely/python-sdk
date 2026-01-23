@@ -8,17 +8,18 @@ This module provides Fix linting and formatting issues across SDKs.
 """
 
 from __future__ import annotations
+from typing import Dict, Any
 import logging
 
 
 class LintingHelper:
     """Fix linting and formatting issues across SDKs"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize LintingHelper."""
         pass
 
-    def run_linter(self, file_path: str, fix: bool) -> dict:
+    def run_linter(self, file_path: str, fix: bool) -> Dict[str, Any]:
         """
         Run linter on file and optionally fix issues
 
