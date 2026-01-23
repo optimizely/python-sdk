@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo new --lib optimizely-core)",
+      "Bash(cargo new --lib optimizely-bucketing)",
+      "Bash(cargo new --lib optimizely-config)",
+      "Bash(cargo new --lib optimizely-audience)",
+      "Bash(cargo new --lib optimizely-decision)",
+      "Bash(cargo new --lib optimizely-events)",
+      "Bash(cargo new --lib optimizely-user-profile)",
+      "Bash(cargo new --lib optimizely)",
+      "Bash(cargo build)",
+      "Bash(cargo test -p optimizely-bucketing)",
+      "Bash(python3 tests/python_validator.py)",
+      "Bash(find crates -name \"*.rs\" -exec wc -l {} +)",
+      "Bash(tree -I 'target|__pycache__' -L 3)",
+      "Bash(ls /Users/muzahidul.islam/opti/python-sdk/tests/*.json)",
+      "Bash(find /Users/muzahidul.islam/opti/python-sdk/tests -name \"*.py\" -exec grep -l \"datafile.*=\" {})",
+      "Bash(cargo build -p optimizely-config)",
+      "Bash(cargo test -p optimizely-config)",
+      "Bash(python3 tests/config_validator.py)",
+      "Bash(cargo test --workspace)",
+      "Bash(cargo build --workspace)",
+      "Bash(cargo test -p optimizely-audience)",
+      "Bash(cargo test -p optimizely-core)",
+      "Bash(cargo test -p optimizely-decision)",
+      "Bash(cargo test -p optimizely)",
+      "Bash(ls -la /Users/muzahidul.islam/opti/fullstack-sdk-compatibility-suite/features/activate/*.feature)",
+      "Bash(npm test features/activate/default_usage.feature)",
+      "Bash(cargo build --release --workspace)",
+      "Bash(export DATAFILES_DIR=\"/Users/muzahidul.islam/opti/fullstack-sdk-compatibility-suite/features/support/datafiles\")",
+      "Bash(export RUST_LOG=\"debug,rust_testapp=debug\")",
+      "Bash(cargo run --release)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill -9)",
+      "Bash(cargo build --release -p rust-testapp)",
+      "Bash(DATAFILES_DIR=/Users/muzahidul.islam/opti/fullstack-sdk-compatibility-suite/features/support/datafiles RUST_LOG=debug cargo run --release -p rust-testapp)",
+      "Bash(npm test features/activate/experiment_status.feature:75)",
+      "Bash(cat ab_experiments.json)",
+      "Bash(DATAFILES_DIR=/Users/muzahidul.islam/opti/fullstack-sdk-compatibility-suite/features/support/datafiles RUST_LOG=info,rust_testapp=debug cargo run --release -p rust-testapp)",
+      "Bash(npm test features/activate/experiment_status.feature)",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix high-priority FSC test blockers\n\nThis commit fixes two critical issues preventing FSC tests from passing:\n\n1. **Added dispatched_events field to response context**\n   - Modified FscResponse::new\\(\\) and FscResponse::with_listeners\\(\\) to automatically\n     add dispatched_events: [] to all response contexts\n   - Fixes \"expected undefined to deeply equal []\" errors in many test scenarios\n   - File: src/models.rs\n\n2. **Added comprehensive FSC test status documentation**\n   - Created FSC_TEST_STATUS.md documenting all test results and issues\n   - Identified high-priority blockers and created actionable fix plan\n   - Documents 1/15 feature files fully passing before this commit\n\n**Test Results**:\n- experiment_status.feature: 4/4 scenarios passing \\(was 0/4\\)\n- All inactive experiment tests passing\n- All active experiment tests passing \\(including audience targeting\\)\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ],
+    "additionalDirectories": [
+      "/Users/muzahidul.islam/opti/python-testapp"
+    ]
+  }
+}
