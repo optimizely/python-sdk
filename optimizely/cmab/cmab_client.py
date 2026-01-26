@@ -22,7 +22,7 @@ from optimizely.exceptions import CmabFetchError, CmabInvalidResponseError
 # Default constants for CMAB requests
 DEFAULT_MAX_RETRIES = 1
 DEFAULT_INITIAL_BACKOFF = 0.1  # in seconds (100 ms)
-DEFAULT_MAX_BACKOFF = 10  # in seconds
+DEFAULT_MAX_BACKOFF = 3  # in seconds
 DEFAULT_BACKOFF_MULTIPLIER = 2.0
 MAX_WAIT_TIME = 10.0
 DEFAULT_PREDICTION_ENDPOINT = "https://prediction.cmab.optimizely.com/predict/{}"
