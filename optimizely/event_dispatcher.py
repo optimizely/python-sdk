@@ -49,7 +49,7 @@ class EventDispatcher:
             session = requests.Session()
 
             retries = Retry(total=EventDispatchConfig.RETRIES,
-                            backoff_factor=0.2,
+                            backoff_factor=1.5,
                             status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
 
