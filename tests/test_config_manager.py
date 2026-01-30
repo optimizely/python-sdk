@@ -637,3 +637,102 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+
+class RetryBackoffConfigurationTest(base.BaseTest):
+    """Test suite for retry backoff configuration in config managers."""
+
+    def test_polling_config_manager_retry_backoff_factor(self):
+        """Test that PollingConfigManager uses correct backoff_factor for 3 second max interval."""
+        from urllib3.util.retry import Retry as ActualRetry
+        test_datafile = json.dumps(self.config_dict_with_features)
+
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.PollingConfigManager(
+                sdk_key='test_sdk_key',
+                datafile=test_datafile,
+            )
+
+        # Capture the Retry object created during fetch
+        captured_retry = None
+        original_retry_init = ActualRetry.__init__
+
+        def capture_retry_init(self, *args, **kwargs):
+            nonlocal captured_retry
+            original_retry_init(self, *args, **kwargs)
+            captured_retry = self
+
+        with mock.patch('urllib3.util.retry.Retry.__init__', side_effect=capture_retry_init, autospec=True):
+            with mock.patch('requests.Session.get') as mock_get:
+                mock_response = mock.Mock()
+                mock_response.status_code = 200
+                mock_response.headers = {}
+                mock_response.text = test_datafile
+                mock_get.return_value = mock_response
+
+                # Trigger the fetch
+                project_config_manager.fetch_datafile()
+
+        # Verify the Retry object has correct backoff_factor
+        self.assertIsNotNone(captured_retry, "Retry object should have been created")
+        self.assertEqual(0.75, captured_retry.backoff_factor,
+                        "Backoff factor should be 0.75 for 3 second max interval")
+        self.assertEqual(3, captured_retry.total,
+                        "Total retries should be 3")
+        self.assertEqual([500, 502, 503, 504], captured_retry.status_forcelist,
+                        "Status forcelist should include server errors")
+
+    def test_auth_datafile_polling_config_manager_retry_backoff_factor(self):
+        """Test that AuthDatafilePollingConfigManager uses correct backoff_factor for 3 second max interval."""
+        from urllib3.util.retry import Retry as ActualRetry
+        test_datafile = json.dumps(self.config_dict_with_features)
+        datafile_access_token = 'test_token'
+
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.AuthDatafilePollingConfigManager(
+                sdk_key='test_sdk_key',
+                datafile=test_datafile,
+                datafile_access_token=datafile_access_token,
+            )
+
+        # Capture the Retry object created during fetch
+        captured_retry = None
+        original_retry_init = ActualRetry.__init__
+
+        def capture_retry_init(self, *args, **kwargs):
+            nonlocal captured_retry
+            original_retry_init(self, *args, **kwargs)
+            captured_retry = self
+
+        with mock.patch('urllib3.util.retry.Retry.__init__', side_effect=capture_retry_init, autospec=True):
+            with mock.patch('requests.Session.get') as mock_get:
+                mock_response = mock.Mock()
+                mock_response.status_code = 200
+                mock_response.headers = {}
+                mock_response.text = test_datafile
+                mock_get.return_value = mock_response
+
+                # Trigger the fetch
+                project_config_manager.fetch_datafile()
+
+        # Verify the Retry object has correct backoff_factor
+        self.assertIsNotNone(captured_retry, "Retry object should have been created")
+        self.assertEqual(0.75, captured_retry.backoff_factor,
+                        "Backoff factor should be 0.75 for 3 second max interval")
+        self.assertEqual(3, captured_retry.total,
+                        "Total retries should be 3")
+        self.assertEqual([500, 502, 503, 504], captured_retry.status_forcelist,
+                        "Status forcelist should include server errors")
+
+    def test_max_retry_interval_calculation(self):
+        """Test that the max retry interval equals 3 seconds with backoff_factor=0.75 and 3 retries.
+
+        The formula is: backoff_factor * (2 ** (retries - 1))
+        With backoff_factor=0.75 and retries=3: 0.75 * (2 ** 2) = 0.75 * 4 = 3 seconds
+        """
+        backoff_factor = 0.75
+        retries = 3
+        max_interval = backoff_factor * (2 ** (retries - 1))
+
+        self.assertEqual(3.0, max_interval,
+                         "Max retry interval should be 3 seconds")
