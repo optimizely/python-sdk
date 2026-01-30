@@ -398,7 +398,7 @@ class PollingConfigManager(StaticConfigManager):
             session = requests.Session()
 
             retries = Retry(total=self.retries,
-                            backoff_factor=0.1,
+                            backoff_factor=0.75,
                             status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
 
@@ -491,7 +491,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             session = requests.Session()
 
             retries = Retry(total=self.retries,
-                            backoff_factor=0.1,
+                            backoff_factor=0.75,
                             status_forcelist=[500, 502, 503, 504])
             adapter = HTTPAdapter(max_retries=retries)
 
