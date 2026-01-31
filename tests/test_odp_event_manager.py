@@ -571,3 +571,35 @@ class OdpEventManagerTest(BaseTest):
         event_manager = OdpEventManager(mock_logger)
         event_manager.send_event(**self.events[0])
         mock_logger.debug.assert_called_with('ODP event queue: cannot send before config has been set.')
+
+    def test_odp_event_manager_retry_backoff_capped_at_3s(self, *args):
+        """Test that exponential backoff is capped at 3 seconds."""
+        mock_logger = mock.Mock()
+        event_manager = OdpEventManager(mock_logger)
+        event_manager.start(self.odp_config)
+
+        # Set retry count to 5 to test capping behavior
+        event_manager.retry_count = 5
+        number_of_tries = event_manager.retry_count + 1
+
+        with mock.patch.object(
+            event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=True
+        ) as mock_send, mock.patch('time.sleep') as mock_sleep:
+            event_manager.send_event(**self.events[0])
+            event_manager.flush()
+            event_manager.event_queue.join()
+
+        mock_send.assert_has_calls(
+            [mock.call(self.api_key, self.api_host, [self.processed_events[0]])] * number_of_tries
+        )
+        self.assertEqual(len(event_manager._current_batch), 0)
+        # Verify exponential backoff delays: 0.2s, 0.4s, 0.8s, 1.6s, 3.0s (capped at 3s)
+        mock_sleep.assert_has_calls([
+            mock.call(0.2),
+            mock.call(0.4),
+            mock.call(0.8),
+            mock.call(1.6),
+            mock.call(3.0)
+        ])
+        mock_logger.debug.assert_any_call('Error dispatching ODP events, retrying after 3.0s.')
+        event_manager.stop()
