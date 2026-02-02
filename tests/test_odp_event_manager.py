@@ -265,7 +265,7 @@ class OdpEventManagerTest(BaseTest):
 
         with mock.patch.object(
             event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, return_value=True
-        ) as mock_send, mock.patch('time.sleep') as mock_sleep:
+        ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
             event_manager.flush()
@@ -275,9 +275,7 @@ class OdpEventManagerTest(BaseTest):
             [mock.call(self.api_key, self.api_host, self.processed_events)] * number_of_tries
         )
         self.assertEqual(len(event_manager._current_batch), 0)
-        # Verify exponential backoff delays: 0.2s, 0.4s, 0.8s
-        mock_sleep.assert_has_calls([mock.call(0.2), mock.call(0.4), mock.call(0.8)])
-        mock_logger.debug.assert_any_call('Error dispatching ODP events, retrying after 0.2s.')
+        mock_logger.debug.assert_any_call('Error dispatching ODP events, scheduled to retry.')
         mock_logger.error.assert_called_once_with(
             f'ODP event send failed (Failed after 3 retries: {self.processed_events}).'
         )
@@ -290,7 +288,7 @@ class OdpEventManagerTest(BaseTest):
 
         with mock.patch.object(
             event_manager.api_manager, 'send_odp_events', new_callable=CopyingMock, side_effect=[True, True, False]
-        ) as mock_send, mock.patch('time.sleep') as mock_sleep:
+        ) as mock_send:
             event_manager.send_event(**self.events[0])
             event_manager.send_event(**self.events[1])
             event_manager.flush()
@@ -298,9 +296,7 @@ class OdpEventManagerTest(BaseTest):
 
         mock_send.assert_has_calls([mock.call(self.api_key, self.api_host, self.processed_events)] * 3)
         self.assertEqual(len(event_manager._current_batch), 0)
-        # Verify exponential backoff delays: 0.2s, 0.4s (only 2 delays for 3 attempts)
-        mock_sleep.assert_has_calls([mock.call(0.2), mock.call(0.4)])
-        mock_logger.debug.assert_any_call('Error dispatching ODP events, retrying after 0.2s.')
+        mock_logger.debug.assert_any_call('Error dispatching ODP events, scheduled to retry.')
         mock_logger.error.assert_not_called()
         self.assertStrictTrue(event_manager.is_running)
         event_manager.stop()
