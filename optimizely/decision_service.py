@@ -515,11 +515,6 @@ class DecisionService:
                     'reasons': decide_reasons,
                     'variation': None
                 }
-            ignore_user_profile = True
-            self.logger.debug(
-                f'Skipping user profile service for CMAB experiment "{experiment.key}". '
-                f'CMAB decisions are dynamic and not stored for sticky bucketing.'
-            )
             variation_id = cmab_decision['variation_id'] if cmab_decision else None
             cmab_uuid = cmab_decision['cmab_uuid'] if cmab_decision else None
             variation = project_config.get_variation_from_id(experiment_key=experiment.key,
