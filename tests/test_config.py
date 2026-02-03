@@ -1545,3 +1545,410 @@ class HoldoutConfigTest(base.BaseTest):
         boolean_feature_id = '91111'
         included_for_boolean = self.config_with_holdouts.included_holdouts.get(boolean_feature_id)
         self.assertIsNone(included_for_boolean)
+
+    def test_holdout_experiments_field__defaults_to_empty_list(self):
+        """ Test that holdout experiments field defaults to empty list. """
+
+        # Create a holdout without experiments field
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'holdout_no_exp',
+                'key': 'no_experiments_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': []
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdout = config.get_holdout('holdout_no_exp')
+        self.assertIsNotNone(holdout)
+        self.assertEqual(holdout.experiments, [])
+        self.assertFalse(holdout.is_local)
+
+    def test_holdout_experiments_field__is_populated_from_datafile(self):
+        """ Test that holdout experiments field is populated from datafile. """
+
+        # Create a holdout with experiments field
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'holdout_with_exp',
+                'key': 'with_experiments_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127', '32222']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdout = config.get_holdout('holdout_with_exp')
+        self.assertIsNotNone(holdout)
+        self.assertEqual(holdout.experiments, ['111127', '32222'])
+        self.assertTrue(holdout.is_local)
+
+    def test_holdout_is_local__returns_true_when_experiments_not_empty(self):
+        """ Test that is_local returns True when experiments list is not empty. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'local_holdout',
+                'key': 'local_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['exp_1', 'exp_2']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdout = config.get_holdout('local_holdout')
+        self.assertTrue(holdout.is_local)
+
+    def test_holdout_is_local__returns_false_when_experiments_empty(self):
+        """ Test that is_local returns False when experiments list is empty. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'global_holdout',
+                'key': 'global_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': []
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdout = config.get_holdout('global_holdout')
+        self.assertFalse(holdout.is_local)
+
+    def test_get_holdouts_for_experiment__returns_empty_for_non_existent_experiment(self):
+        """ Test that get_holdouts_for_experiment returns empty list for non-existent experiment. """
+
+        holdouts = self.project_config.get_holdouts_for_experiment('non_existent_experiment')
+        self.assertEqual([], holdouts)
+
+    def test_get_holdouts_for_experiment__returns_holdouts_for_valid_experiment(self):
+        """ Test that get_holdouts_for_experiment returns holdouts for a valid experiment. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'holdout_exp1',
+                'key': 'holdout_exp1',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdouts = config.get_holdouts_for_experiment('111127')
+        self.assertEqual(1, len(holdouts))
+        self.assertEqual('holdout_exp1', holdouts[0].id)
+
+    def test_get_holdouts_for_experiment__one_holdout_multiple_experiments(self):
+        """ Test that one holdout targeting multiple experiments appears in all mappings. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'multi_exp_holdout',
+                'key': 'multi_exp_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127', '32222', '32223']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        # Verify holdout appears in all three experiment mappings
+        holdouts_exp1 = config.get_holdouts_for_experiment('111127')
+        holdouts_exp2 = config.get_holdouts_for_experiment('32222')
+        holdouts_exp3 = config.get_holdouts_for_experiment('32223')
+
+        self.assertEqual(1, len(holdouts_exp1))
+        self.assertEqual(1, len(holdouts_exp2))
+        self.assertEqual(1, len(holdouts_exp3))
+
+        self.assertEqual('multi_exp_holdout', holdouts_exp1[0].id)
+        self.assertEqual('multi_exp_holdout', holdouts_exp2[0].id)
+        self.assertEqual('multi_exp_holdout', holdouts_exp3[0].id)
+
+    def test_get_holdouts_for_experiment__multiple_holdouts_one_experiment(self):
+        """ Test that multiple holdouts targeting same experiment all appear in mapping. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'holdout_1_exp',
+                'key': 'holdout_1_exp',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127']
+            },
+            {
+                'id': 'holdout_2_exp',
+                'key': 'holdout_2_exp',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127']
+            },
+            {
+                'id': 'holdout_3_exp',
+                'key': 'holdout_3_exp',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdouts = config.get_holdouts_for_experiment('111127')
+        self.assertEqual(3, len(holdouts))
+
+        holdout_ids = {h.id for h in holdouts}
+        self.assertEqual({'holdout_1_exp', 'holdout_2_exp', 'holdout_3_exp'}, holdout_ids)
+
+    def test_get_holdouts_for_experiment__maintains_insertion_order(self):
+        """ Test that get_holdouts_for_experiment maintains insertion order. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'holdout_first',
+                'key': 'holdout_first',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['exp1']
+            },
+            {
+                'id': 'holdout_second',
+                'key': 'holdout_second',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['exp1']
+            },
+            {
+                'id': 'holdout_third',
+                'key': 'holdout_third',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['exp1']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdouts = config.get_holdouts_for_experiment('exp1')
+        self.assertEqual(3, len(holdouts))
+        self.assertEqual('holdout_first', holdouts[0].id)
+        self.assertEqual('holdout_second', holdouts[1].id)
+        self.assertEqual('holdout_third', holdouts[2].id)
+
+    def test_experiment_holdouts_mapping_independent_of_flag_mapping(self):
+        """ Test that experiment mapping works independently from flag mapping. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'flag_holdout',
+                'key': 'flag_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': ['91114'],  # test_feature_in_experiment_and_rollout
+                'excludedFlags': [],
+                'experiments': []
+            },
+            {
+                'id': 'exp_holdout_global',
+                'key': 'exp_holdout_global',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['111127']
+            },
+            {
+                'id': 'exp_holdout_specific',
+                'key': 'exp_holdout_specific',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': ['91114'],
+                'excludedFlags': [],
+                'experiments': ['111127']
+            },
+            {
+                'id': 'global_holdout',
+                'key': 'global_holdout',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': []
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        # Verify flag mapping works correctly
+        # exp_holdout_global has no includedFlags, so it's global and applies to all flags
+        # exp_holdout_specific has includedFlags, so it only applies to that flag
+        flag_holdouts = config.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
+        flag_holdout_ids = {h.id for h in flag_holdouts}
+
+        # Should include global (including exp_holdout_global), and flag-specific
+        self.assertIn('global_holdout', flag_holdout_ids)
+        self.assertIn('flag_holdout', flag_holdout_ids)
+        self.assertIn('exp_holdout_global', flag_holdout_ids)  # Global because no includedFlags
+        self.assertIn('exp_holdout_specific', flag_holdout_ids)  # Specific to this flag
+
+        # Verify experiment mapping works independently
+        exp_holdouts = config.get_holdouts_for_experiment('111127')
+        exp_holdout_ids = {h.id for h in exp_holdouts}
+
+        # Should include both holdouts that target experiment 111127
+        self.assertEqual(2, len(exp_holdouts))
+        self.assertIn('exp_holdout_global', exp_holdout_ids)
+        self.assertIn('exp_holdout_specific', exp_holdout_ids)
+
+        # global_holdout has no experiments, so it shouldn't be in experiment mapping
+        self.assertNotIn('global_holdout', exp_holdout_ids)
+        # flag_holdout has no experiments, so it shouldn't be in experiment mapping
+        self.assertNotIn('flag_holdout', exp_holdout_ids)
+
+    def test_holdout_equality__includes_experiments_field(self):
+        """ Test that holdout equality comparison includes experiments field. """
+
+        config_body = copy.deepcopy(self.config_dict_with_features)
+        config_body['holdouts'] = [
+            {
+                'id': 'holdout_a',
+                'key': 'holdout_a',
+                'status': 'Running',
+                'variations': [{'id': '1', 'key': 'on'}],
+                'trafficAllocation': [],
+                'audienceIds': [],
+                'includedFlags': [],
+                'excludedFlags': [],
+                'experiments': ['exp1', 'exp2']
+            }
+        ]
+
+        config_json = json.dumps(config_body)
+        opt_obj = optimizely.Optimizely(config_json)
+        config = opt_obj.config_manager.get_config()
+
+        holdout1 = config.get_holdout('holdout_a')
+
+        # Create identical holdout
+        holdout2 = entities.Holdout(
+            id='holdout_a',
+            key='holdout_a',
+            status='Running',
+            variations=[{'id': '1', 'key': 'on'}],
+            trafficAllocation=[],
+            audienceIds=[],
+            includedFlags=[],
+            excludedFlags=[],
+            experiments=['exp1', 'exp2']
+        )
+
+        self.assertEqual(holdout1, holdout2)
+
+        # Create holdout with different experiments
+        holdout3 = entities.Holdout(
+            id='holdout_a',
+            key='holdout_a',
+            status='Running',
+            variations=[{'id': '1', 'key': 'on'}],
+            trafficAllocation=[],
+            audienceIds=[],
+            includedFlags=[],
+            excludedFlags=[],
+            experiments=['exp3']
+        )
+
+        self.assertNotEqual(holdout1, holdout3)
