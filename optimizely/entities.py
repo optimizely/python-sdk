@@ -223,6 +223,7 @@ class Holdout(BaseEntity):
         includedFlags: Optional[list[str]] = None,
         excludedFlags: Optional[list[str]] = None,
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
+        experiments: Optional[list[str]] = None,
         **kwargs: Any
     ):
         self.id = id
@@ -234,6 +235,7 @@ class Holdout(BaseEntity):
         self.audienceConditions = audienceConditions
         self.includedFlags = includedFlags or []
         self.excludedFlags = excludedFlags or []
+        self.experiments = experiments or []
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """Returns audienceConditions if present, otherwise audienceIds.
@@ -254,6 +256,19 @@ class Holdout(BaseEntity):
             True if status is 'Running', False otherwise.
         """
         return self.status == self.Status.RUNNING
+
+    @property
+    def is_local(self) -> bool:
+        """Check if the holdout is local (experiment-specific).
+
+        A holdout is considered local if it targets specific experiments.
+        Matches Swift's isLocal computed property:
+        var isLocal: Bool { return !experiments.isEmpty }
+
+        Returns:
+            True if experiments list is not empty, False otherwise.
+        """
+        return len(self.experiments) > 0
 
     def __str__(self) -> str:
         return self.key

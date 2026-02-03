@@ -128,3 +128,4 @@ class HoldoutDict(ExperimentDict):
     holdoutStatus: HoldoutStatus
     includedFlags: list[str]
     excludedFlags: list[str]
+    experiments: list[str]

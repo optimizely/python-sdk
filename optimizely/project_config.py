@@ -97,6 +97,7 @@ class ProjectConfig:
         self.included_holdouts: dict[str, list[entities.Holdout]] = {}
         self.excluded_holdouts: dict[str, list[entities.Holdout]] = {}
         self.flag_holdouts_map: dict[str, list[entities.Holdout]] = {}
+        self.experiment_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
         # Convert holdout dicts to Holdout entities
         for holdout_data in holdouts_data:
@@ -130,6 +131,13 @@ class ProjectConfig:
                     if flag_id not in self.included_holdouts:
                         self.included_holdouts[flag_id] = []
                     self.included_holdouts[flag_id].append(holdout)
+
+            # Build experiment-to-holdout mappings for local holdouts
+            if holdout.experiments:
+                for experiment_id in holdout.experiments:
+                    if experiment_id not in self.experiment_holdouts_map:
+                        self.experiment_holdouts_map[experiment_id] = []
+                    self.experiment_holdouts_map[experiment_id].append(holdout)
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -876,3 +884,18 @@ class ProjectConfig:
 
         self.logger.error(f'Holdout with ID "{holdout_id}" not found.')
         return None
+
+    def get_holdouts_for_experiment(self, experiment_id: str) -> list[entities.Holdout]:
+        """ Helper method to get holdouts targeting a specific experiment.
+
+        Args:
+            experiment_id: ID of the experiment.
+
+        Returns:
+            The holdouts that apply to this experiment as Holdout entity objects.
+            Returns empty list if no holdouts target this experiment.
+        """
+        if not self.holdouts:
+            return []
+
+        return self.experiment_holdouts_map.get(experiment_id, [])
