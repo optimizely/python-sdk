@@ -2,7 +2,7 @@
 # https://docs.astral.sh/ruff/configuration/
 
 line-length = 120
-target-version = "py38"
+target-version = "py39"
 
 exclude = [
     ".git",
