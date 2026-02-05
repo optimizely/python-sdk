@@ -531,6 +531,80 @@ class PollingConfigManagerTest(base.BaseTest):
 
         project_config_manager.stop()
 
+    def test_custom_headers(self, _):
+        """ Test that custom headers are included in datafile fetch requests. """
+        sdk_key = 'some_key'
+        custom_headers = {
+            'X-Custom-Header': 'custom_value',
+            'X-Another-Header': 'another_value'
+        }
+
+        expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
+            project_config_manager = config_manager.PollingConfigManager(
+                sdk_key=sdk_key,
+                custom_headers=custom_headers
+            )
+            project_config_manager.stop()
+
+        # Assert that custom headers were included in the request
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers=custom_headers,
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT
+        )
+        self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+    def test_custom_headers_override_internal_headers(self, _):
+        """ Test that custom headers override internal SDK headers. """
+        sdk_key = 'some_key'
+        custom_last_modified = 'Custom Last Modified Time'
+        custom_headers = {
+            'If-Modified-Since': custom_last_modified,
+            'X-Custom-Header': 'custom_value'
+        }
+
+        expected_datafile_url = enums.ConfigManager.DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        # First request to set last_modified
+        with mock.patch('requests.Session.get', return_value=test_response):
+            project_config_manager = config_manager.PollingConfigManager(
+                sdk_key=sdk_key,
+                custom_headers=custom_headers
+            )
+            project_config_manager.stop()
+
+        # Second request should use custom header value instead of internal last_modified
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
+            project_config_manager._initialize_thread()
+            project_config_manager.start()
+            project_config_manager.stop()
+
+        # Assert that custom If-Modified-Since header overrides the internal one
+        expected_headers = {
+            'If-Modified-Since': custom_last_modified,  # User's value should be used
+            'X-Custom-Header': 'custom_value'
+        }
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers=expected_headers,
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT
+        )
+
 
 @mock.patch('requests.Session.get')
 class AuthDatafilePollingConfigManagerTest(base.BaseTest):
@@ -637,3 +711,88 @@ class AuthDatafilePollingConfigManagerTest(base.BaseTest):
         )
         self.assertEqual(test_headers['Last-Modified'], project_config_manager.last_modified)
         self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+    def test_custom_headers(self, _):
+        """ Test that custom headers are included in authenticated datafile fetch requests. """
+        datafile_access_token = 'some_token'
+        sdk_key = 'some_key'
+        custom_headers = {
+            'X-Custom-Header': 'custom_value',
+            'X-Another-Header': 'another_value'
+        }
+
+        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'), mock.patch(
+            'optimizely.config_manager.AuthDatafilePollingConfigManager._run'
+        ):
+            project_config_manager = config_manager.AuthDatafilePollingConfigManager(
+                datafile_access_token=datafile_access_token,
+                sdk_key=sdk_key,
+                custom_headers=custom_headers
+            )
+
+        expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        # Call fetch_datafile and assert that request was sent with both authorization and custom headers
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
+            project_config_manager.fetch_datafile()
+
+        expected_headers = {
+            'Authorization': f'Bearer {datafile_access_token}',
+            'X-Custom-Header': 'custom_value',
+            'X-Another-Header': 'another_value'
+        }
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers=expected_headers,
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
+    def test_custom_headers_override_authorization(self, _):
+        """ Test that custom Authorization header overrides internal SDK authorization header. """
+        datafile_access_token = 'some_token'
+        custom_auth = 'Bearer custom_token'
+        sdk_key = 'some_key'
+        custom_headers = {
+            'Authorization': custom_auth,
+            'X-Custom-Header': 'custom_value'
+        }
+
+        with mock.patch('optimizely.config_manager.AuthDatafilePollingConfigManager.fetch_datafile'), mock.patch(
+            'optimizely.config_manager.AuthDatafilePollingConfigManager._run'
+        ):
+            project_config_manager = config_manager.AuthDatafilePollingConfigManager(
+                datafile_access_token=datafile_access_token,
+                sdk_key=sdk_key,
+                custom_headers=custom_headers
+            )
+
+        expected_datafile_url = enums.ConfigManager.AUTHENTICATED_DATAFILE_URL_TEMPLATE.format(sdk_key=sdk_key)
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        # Call fetch_datafile and assert that custom Authorization header is used
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
+            project_config_manager.fetch_datafile()
+
+        expected_headers = {
+            'Authorization': custom_auth,  # User's custom auth should override
+            'X-Custom-Header': 'custom_value'
+        }
+        mock_request.assert_called_once_with(
+            expected_datafile_url,
+            headers=expected_headers,
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT,
+        )
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
+
