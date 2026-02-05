@@ -76,6 +76,7 @@ class Optimizely:
             event_processor_options: Optional[dict[str, Any]] = None,
             settings: Optional[OptimizelySdkSettings] = None,
             cmab_service: Optional[DefaultCmabService] = None,
+            custom_headers: Optional[dict[str, str]] = None,
     ) -> None:
         """ Optimizely init method for managing Custom projects.
 
@@ -104,6 +105,8 @@ class Optimizely:
           default_decide_options: Optional list of decide options used with the decide APIs.
           event_processor_options: Optional dict of options to be passed to the default batch event processor.
           settings: Optional instance of OptimizelySdkSettings for sdk configuration.
+          custom_headers: Optional dictionary of custom headers to include in datafile fetch requests.
+                         User-provided headers take precedence over SDK internal headers.
         """
         self.logger_name = '.'.join([__name__, self.__class__.__name__])
         self.is_valid = True
@@ -163,6 +166,8 @@ class Optimizely:
         if not self.config_manager:
             if sdk_key:
                 config_manager_options['sdk_key'] = sdk_key
+                if custom_headers:
+                    config_manager_options['custom_headers'] = custom_headers
                 if datafile_access_token:
                     config_manager_options['datafile_access_token'] = datafile_access_token
                     self.config_manager = AuthDatafilePollingConfigManager(**config_manager_options)

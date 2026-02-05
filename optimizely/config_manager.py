@@ -203,6 +203,7 @@ class PollingConfigManager(StaticConfigManager):
         notification_center: Optional[NotificationCenter] = None,
         skip_json_validation: Optional[bool] = False,
         retries: Optional[int] = 3,
+        custom_headers: Optional[dict[str, str]] = None,
     ):
         """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
@@ -223,9 +224,12 @@ class PollingConfigManager(StaticConfigManager):
             skip_json_validation: Optional boolean param which allows skipping JSON schema
                                   validation upon object invocation. By default
                                   JSON schema validation will be performed.
+            custom_headers: Optional dictionary of custom headers to include in datafile fetch requests.
+                           User-provided headers take precedence over SDK internal headers.
 
         """
         self.retries = retries
+        self.custom_headers = custom_headers or {}
         self._config_ready_event = threading.Event()
         super().__init__(
             datafile=datafile,
@@ -394,6 +398,9 @@ class PollingConfigManager(StaticConfigManager):
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
+        # Merge custom headers, with user-provided headers taking precedence
+        request_headers.update(self.custom_headers)
+
         try:
             session = requests.Session()
 
@@ -486,6 +493,9 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
         if self.last_modified:
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
+
+        # Merge custom headers, with user-provided headers taking precedence
+        request_headers.update(self.custom_headers)
 
         try:
             session = requests.Session()
