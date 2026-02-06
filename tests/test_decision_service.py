@@ -2008,3 +2008,233 @@ class FeatureFlagDecisionTests(base.BaseTest):
         mock_config_logging.debug.assert_called_with(
             'Assigned bucket 4000 to user with bucketing ID "test_user".')
         mock_generate_bucket_value.assert_called_with("test_user211147")
+
+    def test_get_variation_for_feature__skips_experiment_with_unsupported_type(self):
+        """ Test that experiments with unsupported types are skipped and falls back to rollout """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Add unsupported type field to experiment
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = 'unsupported_type'
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch.object(opt_obj.decision_service, 'logger') as mock_logging, \
+             mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5000):
+
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            # Should skip experiment and evaluate rollout
+            expected_experiment = project_config.get_experiment_from_id('211147')
+            expected_variation = project_config.get_variation_from_id('211147', '211149')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.ROLLOUT,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+            # Verify skip message was logged
+            mock_logging.debug.assert_any_call(
+                "Experiment 'test_experiment' has unsupported type 'unsupported_type'. Skipping to next experiment."
+            )
+
+    def test_get_variation_for_feature__evaluates_experiment_with_supported_type_ab(self):
+        """ Test that experiments with 'a/b' type are evaluated """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Add 'a/b' type to experiment
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = 'a/b'
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        expected_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+        with mock.patch(
+                "optimizely.decision_service.DecisionService.get_variation",
+                return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
+        ):
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            expected_experiment = project_config.get_experiment_from_key('test_experiment')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+    def test_get_variation_for_feature__evaluates_experiment_with_supported_type_mab(self):
+        """ Test that experiments with 'mab' type are evaluated """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Add 'mab' type to experiment
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = 'mab'
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=1500):
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            expected_experiment = project_config.get_experiment_from_key('test_experiment')
+            expected_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+    def test_get_variation_for_feature__evaluates_experiment_with_supported_type_cmab(self):
+        """ Test that experiments with 'cmab' type are evaluated """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Add 'cmab' type to experiment
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = 'cmab'
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=1500):
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            expected_experiment = project_config.get_experiment_from_key('test_experiment')
+            expected_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+    def test_get_variation_for_feature__evaluates_experiment_with_supported_type_feature_rollouts(self):
+        """ Test that experiments with 'feature_rollouts' type are evaluated """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Add 'feature_rollouts' type to experiment
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = 'feature_rollouts'
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=1500):
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            expected_experiment = project_config.get_experiment_from_key('test_experiment')
+            expected_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+    def test_get_variation_for_feature__evaluates_experiment_when_type_is_none(self):
+        """ Test that experiments with type=None are evaluated normally """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Ensure type is None (default)
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = None
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=1500):
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            expected_experiment = project_config.get_experiment_from_key('test_experiment')
+            expected_variation = project_config.get_variation_from_id('test_experiment', '111129')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.FEATURE_TEST,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+    def test_get_variation_for_feature__skips_unsupported_experiment_returns_rollout(self):
+        """ Test that when experiment has unsupported type, rollout is evaluated """
+
+        opt_obj = optimizely.Optimizely(json.dumps(self.config_dict_with_features))
+        project_config = opt_obj.config_manager.get_config()
+
+        # Add unsupported type to experiment
+        experiment = project_config.get_experiment_from_key('test_experiment')
+        experiment.type = 'unsupported_type'
+
+        user_context = opt_obj.create_user_context('test_user')
+
+        with mock.patch.object(opt_obj.decision_service, 'logger') as mock_logging, \
+             mock.patch('optimizely.bucketer.Bucketer._generate_bucket_value', return_value=5000):
+
+            variation_received = opt_obj.decision_service.get_variation_for_feature(
+                project_config, project_config.get_feature_from_key('test_feature_in_experiment'), user_context
+            )
+
+            # Should skip experiment and return rollout decision
+            expected_experiment = project_config.get_experiment_from_id('211147')
+            expected_variation = project_config.get_variation_from_id('211147', '211149')
+
+            self.assertEqual(
+                decision_service.Decision(
+                    expected_experiment,
+                    expected_variation,
+                    enums.DecisionSources.ROLLOUT,
+                    None
+                ),
+                variation_received['decision'],
+            )
+
+            # Verify experiment was skipped
+            mock_logging.debug.assert_any_call(
+                "Experiment 'test_experiment' has unsupported type 'unsupported_type'. Skipping to next experiment."
+            )

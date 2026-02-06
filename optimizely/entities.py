@@ -86,6 +86,7 @@ class Experiment(BaseEntity):
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
         groupId: Optional[str] = None,
         groupPolicy: Optional[str] = None,
+        type: Optional[str] = None,
         cmab: Optional[CmabDict] = None,
         **kwargs: Any
     ):
@@ -100,6 +101,7 @@ class Experiment(BaseEntity):
         self.layerId = layerId
         self.groupId = groupId
         self.groupPolicy = groupPolicy
+        self.type = type
         self.cmab = cmab
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
