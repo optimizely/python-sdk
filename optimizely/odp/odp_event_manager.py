@@ -164,7 +164,7 @@ class OdpEventManager:
         self.logger.debug(f'ODP event queue: flushing batch size {batch_len}.')
         should_retry = False
         initial_retry_interval = 0.2  # 200ms
-        max_retry_interval = 1.0  # 1 second
+        max_retry_interval = 3.0  # 3 seconds
 
         for i in range(1 + self.retry_count):
             try:
