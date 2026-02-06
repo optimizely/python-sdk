@@ -34,6 +34,10 @@ if TYPE_CHECKING:
     from .logger import Logger
 
 
+# Supported experiment types
+SUPPORTED_EXPERIMENT_TYPES = ['a/b', 'mab', 'cmab', 'feature_rollouts']
+
+
 class CmabDecisionResult(TypedDict):
     """
     TypedDict representing the result of a CMAB (Contextual Multi-Armed Bandit) decision.
@@ -762,6 +766,16 @@ class DecisionService:
                 experiment = project_config.get_experiment_from_id(experiment_id)
 
                 if experiment:
+                    # Check if experiment type is supported
+                    if experiment.type is not None and experiment.type not in SUPPORTED_EXPERIMENT_TYPES:
+                        message = (
+                            f"Experiment '{experiment.key}' has unsupported type '{experiment.type}'. "
+                            f"Skipping to next experiment."
+                        )
+                        self.logger.debug(message)
+                        reasons.append(message)
+                        continue
+
                     # Check for forced decision
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
                         feature_flag.key, experiment.key)
