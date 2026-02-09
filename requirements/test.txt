@@ -1,5 +1,5 @@
 coverage
-flake8 >= 4.0.1
+ruff >= 0.15.0
 funcsigs >= 0.4
 pytest >= 6.2.0
 pytest-cov

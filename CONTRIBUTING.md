@@ -15,7 +15,7 @@ Development process
 2.  Please follow the [commit message guidelines](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-guidelines)
     for each commit message.
 3.  Make sure to add tests!
-4.  Run `flake8` to ensure there are no lint errors.
+4.  Run `ruff check .` to ensure there are no lint errors.
 5.  `git push` your changes to GitHub.
 6.  Open a PR from your fork into the master branch of the original
     repo.
@@ -34,12 +34,12 @@ Pull request acceptance criteria
     -   Tests are located in `/tests` with one file per class.
 -   Please don't change the `__version__`. We'll take care of bumping
     the version when we next release.
--   Lint your code with Flake8 before submitting.
+-   Lint your code with Ruff before submitting.
 
 Style
 -----
 
-We enforce Flake8 rules.
+We enforce Ruff linting rules (Flake8-equivalent: pycodestyle + Pyflakes).
 
 License
 -------
