@@ -457,7 +457,14 @@ class DecisionService:
             }
 
         # Check to see if user has a decision available for the given experiment
-        if user_profile_tracker is not None and not ignore_user_profile:
+        # CMAB experiments are excluded from UPS (sticky bucketing) because CMAB
+        # decisions are dynamic and should not be persisted across sessions.
+        if experiment.cmab:
+            if user_profile_tracker is not None and not ignore_user_profile:
+                message = 'Skipping user profile service for CMAB experiment.'
+                self.logger.info(message)
+                decide_reasons.append(message)
+        elif user_profile_tracker is not None and not ignore_user_profile:
             variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
             if variation:
                 message = f'Returning previously activated variation ID "{variation}" of experiment ' \
@@ -529,7 +536,8 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
-            if user_profile_tracker is not None and not ignore_user_profile:
+            # CMAB experiments are excluded from UPS to preserve dynamic decision-making.
+            if user_profile_tracker is not None and not ignore_user_profile and not experiment.cmab:
                 try:
                     user_profile_tracker.update_user_profile(experiment, variation)
                 except:

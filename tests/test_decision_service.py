@@ -1075,6 +1075,173 @@ class DecisionServiceTest(base.BaseTest):
             mock_cmab_decision.assert_not_called()
 
 
+    def test_get_variation_cmab_experiment_skips_ups_lookup(self):
+        """Test that get_variation skips UPS lookup for CMAB experiments."""
+
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None,
+            logger=None,
+            user_id="test_user",
+            user_attributes={}
+        )
+
+        # Create a CMAB experiment
+        cmab_experiment = entities.Experiment(
+            '111150',
+            'cmab_experiment',
+            'Running',
+            '111150',
+            [],
+            {},
+            [
+                entities.Variation('111151', 'variation_1'),
+                entities.Variation('111152', 'variation_2')
+            ],
+            [
+                {'entityId': '111151', 'endOfRange': 5000},
+                {'entityId': '111152', 'endOfRange': 10000}
+            ],
+            cmab={'trafficAllocation': 5000}
+        )
+
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
+
+        with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
+            mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
+            mock.patch.object(self.decision_service.bucketer, 'bucket_to_entity_id',
+                              return_value=['$', []]), \
+            mock.patch.object(self.decision_service, 'cmab_service') as mock_cmab_service, \
+            mock.patch.object(self.project_config, 'get_variation_from_id',
+                              return_value=entities.Variation('111151', 'variation_1')), \
+            mock.patch.object(self.decision_service, 'logger') as mock_logger, \
+            mock.patch('optimizely.decision_service.DecisionService.get_stored_variation') as mock_get_stored:
+
+            mock_cmab_service.get_decision.return_value = (
+                {
+                    'variation_id': '111151',
+                    'cmab_uuid': 'test-cmab-uuid-123'
+                },
+                []
+            )
+
+            variation_result = self.decision_service.get_variation(
+                self.project_config,
+                cmab_experiment,
+                user,
+                user_profile_tracker
+            )
+
+            # Verify UPS lookup was NOT called for CMAB experiment
+            mock_get_stored.assert_not_called()
+
+            # Verify the skip reason was logged
+            mock_logger.info.assert_any_call('Skipping user profile service for CMAB experiment.')
+
+            # Verify the decision reason is included
+            self.assertIn('Skipping user profile service for CMAB experiment.', variation_result['reasons'])
+
+            # Verify we still get a valid variation from CMAB
+            self.assertEqual(entities.Variation('111151', 'variation_1'), variation_result['variation'])
+            self.assertEqual('test-cmab-uuid-123', variation_result['cmab_uuid'])
+
+    def test_get_variation_cmab_experiment_skips_ups_save(self):
+        """Test that get_variation skips UPS save for CMAB experiments."""
+
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None,
+            logger=None,
+            user_id="test_user",
+            user_attributes={}
+        )
+
+        # Create a CMAB experiment
+        cmab_experiment = entities.Experiment(
+            '111150',
+            'cmab_experiment',
+            'Running',
+            '111150',
+            [],
+            {},
+            [
+                entities.Variation('111151', 'variation_1'),
+                entities.Variation('111152', 'variation_2')
+            ],
+            [
+                {'entityId': '111151', 'endOfRange': 5000},
+                {'entityId': '111152', 'endOfRange': 10000}
+            ],
+            cmab={'trafficAllocation': 5000}
+        )
+
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
+
+        with mock.patch('optimizely.helpers.experiment.is_experiment_running', return_value=True), \
+            mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
+            mock.patch.object(self.decision_service.bucketer, 'bucket_to_entity_id',
+                              return_value=['$', []]), \
+            mock.patch.object(self.decision_service, 'cmab_service') as mock_cmab_service, \
+            mock.patch.object(self.project_config, 'get_variation_from_id',
+                              return_value=entities.Variation('111151', 'variation_1')), \
+            mock.patch.object(self.decision_service, 'logger'), \
+            mock.patch.object(user_profile_tracker, 'update_user_profile') as mock_update_profile:
+
+            mock_cmab_service.get_decision.return_value = (
+                {
+                    'variation_id': '111151',
+                    'cmab_uuid': 'test-cmab-uuid-123'
+                },
+                []
+            )
+
+            variation_result = self.decision_service.get_variation(
+                self.project_config,
+                cmab_experiment,
+                user,
+                user_profile_tracker
+            )
+
+            # Verify UPS save was NOT called for CMAB experiment
+            mock_update_profile.assert_not_called()
+
+            # Verify we still get a valid variation
+            self.assertEqual(entities.Variation('111151', 'variation_1'), variation_result['variation'])
+
+    def test_get_variation_non_cmab_experiment_uses_ups(self):
+        """Test that get_variation still uses UPS for non-CMAB experiments."""
+
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None,
+            logger=None,
+            user_id="test_user",
+            user_attributes={}
+        )
+
+        user_profile_service = user_profile.UserProfileService()
+        user_profile_tracker = user_profile.UserProfileTracker(user.user_id, user_profile_service)
+        experiment = self.project_config.get_experiment_from_key("test_experiment")
+
+        with mock.patch.object(self.decision_service, 'logger'), \
+            mock.patch('optimizely.decision_service.DecisionService.get_whitelisted_variation',
+                       return_value=[None, []]), \
+            mock.patch('optimizely.decision_service.DecisionService.get_stored_variation',
+                       return_value=None) as mock_get_stored, \
+            mock.patch('optimizely.helpers.audience.does_user_meet_audience_conditions', return_value=[True, []]), \
+            mock.patch('optimizely.bucketer.Bucketer.bucket',
+                       return_value=[entities.Variation('111129', 'variation'), []]):
+
+            self.decision_service.get_variation(
+                self.project_config,
+                experiment,
+                user,
+                user_profile_tracker
+            )
+
+            # Verify UPS lookup WAS called for non-CMAB experiment
+            mock_get_stored.assert_called_once()
+
+
 class FeatureFlagDecisionTests(base.BaseTest):
     def setUp(self):
         base.BaseTest.setUp(self)
