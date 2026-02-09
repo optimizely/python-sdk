@@ -193,7 +193,7 @@ def is_user_profile_valid(user_profile: dict[str, Any]) -> bool:
     if not user_profile:
         return False
 
-    if not type(user_profile) is dict:
+    if type(user_profile) is not dict:
         return False
 
     if UserProfile.USER_ID_KEY not in user_profile:
@@ -203,7 +203,7 @@ def is_user_profile_valid(user_profile: dict[str, Any]) -> bool:
         return False
 
     experiment_bucket_map = user_profile.get(UserProfile.EXPERIMENT_BUCKET_MAP_KEY)
-    if not type(experiment_bucket_map) is dict:
+    if type(experiment_bucket_map) is not dict:
         return False
 
     for decision in experiment_bucket_map.values():
