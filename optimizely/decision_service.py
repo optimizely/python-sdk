@@ -457,7 +457,8 @@ class DecisionService:
             }
 
         # Check to see if user has a decision available for the given experiment
-        if user_profile_tracker is not None and not ignore_user_profile:
+        # Exclude CMAB experiments from UPS retrieval (they require fresh decisions each time)
+        if user_profile_tracker is not None and not ignore_user_profile and not experiment.cmab:
             variation = self.get_stored_variation(project_config, experiment, user_profile_tracker.get_user_profile())
             if variation:
                 message = f'Returning previously activated variation ID "{variation}" of experiment ' \
@@ -472,6 +473,10 @@ class DecisionService:
                 }
             else:
                 self.logger.warning('User profile has invalid format.')
+        elif experiment.cmab and user_profile_tracker is not None and not ignore_user_profile:
+            message = 'Skipping UPS lookup for CMAB experiment (requires fresh decision).'
+            self.logger.debug(message)
+            decide_reasons.append(message)
 
         # Check audience conditions
         audience_conditions = experiment.get_audience_conditions_or_ids()
@@ -515,11 +520,6 @@ class DecisionService:
                     'reasons': decide_reasons,
                     'variation': None
                 }
-            ignore_user_profile = True
-            self.logger.debug(
-                f'Skipping user profile service for CMAB experiment "{experiment.key}". '
-                f'CMAB decisions are dynamic and not stored for sticky bucketing.'
-            )
             variation_id = cmab_decision['variation_id'] if cmab_decision else None
             cmab_uuid = cmab_decision['cmab_uuid'] if cmab_decision else None
             variation = project_config.get_variation_from_id(experiment_key=experiment.key,
@@ -534,11 +534,16 @@ class DecisionService:
             self.logger.info(message)
             decide_reasons.append(message)
             # Store this new decision and return the variation for the user
-            if user_profile_tracker is not None and not ignore_user_profile:
+            # Exclude CMAB experiments from UPS (they have their own dynamic decision logic)
+            if user_profile_tracker is not None and not ignore_user_profile and not experiment.cmab:
                 try:
                     user_profile_tracker.update_user_profile(experiment, variation)
                 except:
                     self.logger.exception(f'Unable to save user profile for user "{user_id}".')
+            elif experiment.cmab and user_profile_tracker is not None and not ignore_user_profile:
+                message = 'Skipping UPS save for CMAB experiment (dynamic decisions not persisted).'
+                self.logger.debug(message)
+                decide_reasons.append(message)
             return {
                 'cmab_uuid': cmab_uuid,
                 'error': False,
