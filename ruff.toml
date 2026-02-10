@@ -1,0 +1,38 @@
+# Ruff configuration
+# https://docs.astral.sh/ruff/configuration/
+
+line-length = 120
+target-version = "py39"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "*virtualenv*",
+    "optimizely/lib/pymmh3.py",
+    "tests/testapp/application.py",
+]
+
+[lint]
+# Flake8-equivalent rules:
+# E, W = pycodestyle (style errors & warnings)
+# F = Pyflakes (logic errors, undefined names, unused imports)
+select = ["E", "W", "F"]
+
+# Match current flake8 ignores
+# E722 - do not use bare 'except'
+ignore = ["E722"]
+
+# Allow autofix for all rules
+fixable = ["ALL"]
+unfixable = []
+
+[lint.per-file-ignores]
+# Ignore unused imports in __init__ files
+"__init__.py" = ["F401"]
+
+[lint.isort]
+known-first-party = ["optimizely"]

@@ -33,17 +33,12 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-      # flake8 version should be same as the version in requirements/test.txt
-      # to avoid lint errors on CI
-    - name: pip install flak8
-      run: pip install flake8>=4.1.0
-    - name: Lint with flake8
+    - name: Install dependencies for linting
       run: |
-        flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        python -m pip install --upgrade pip
+        pip install -r requirements/test.txt
+    - name: Lint with Ruff
+      run: ruff check .
 
   integration_tests:
     uses: optimizely/python-sdk/.github/workflows/integration_test.yml@master
