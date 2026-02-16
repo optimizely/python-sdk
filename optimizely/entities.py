@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Final, Optional, Sequence
 from sys import version_info
 
 if version_info < (3, 8):
@@ -72,6 +72,20 @@ class Event(BaseEntity):
         self.experimentIds = experimentIds
 
 
+class ExperimentTypes:
+    """Supported experiment types recognized by the SDK.
+
+    Experiments with a type not in SUPPORTED_TYPES will be skipped during flag decisions.
+    If an experiment has no type (None), it is still evaluated.
+    """
+    AB = 'a/b'
+    MAB = 'mab'
+    CMAB = 'cmab'
+    FEATURE_ROLLOUTS = 'feature_rollouts'
+
+    SUPPORTED_TYPES: Final = frozenset({AB, MAB, CMAB, FEATURE_ROLLOUTS})
+
+
 class Experiment(BaseEntity):
     def __init__(
         self,
@@ -87,6 +101,7 @@ class Experiment(BaseEntity):
         groupId: Optional[str] = None,
         groupPolicy: Optional[str] = None,
         cmab: Optional[CmabDict] = None,
+        type: Optional[str] = None,
         **kwargs: Any
     ):
         self.id = id
@@ -101,6 +116,7 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
         self.cmab = cmab
+        self.type = type
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """ Returns audienceConditions if present, otherwise audienceIds. """
