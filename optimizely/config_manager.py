@@ -204,7 +204,7 @@ class PollingConfigManager(StaticConfigManager):
         skip_json_validation: Optional[bool] = False,
         retries: Optional[int] = 3,
     ):
-        """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
+        """ Initialize config manager. One of sdk_key or url is required if datafile is not provided.
 
         Args:
             sdk_key: Optional string uniquely identifying the datafile. If not provided, datafile must
@@ -235,9 +235,6 @@ class PollingConfigManager(StaticConfigManager):
             skip_json_validation=skip_json_validation,
         )
         self._sdk_key = sdk_key or self._sdk_key
-
-        if self._sdk_key is None:
-            raise optimizely_exceptions.InvalidInputException(enums.Errors.MISSING_SDK_KEY)
 
         self.datafile_url = self.get_datafile_url(
             self._sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE

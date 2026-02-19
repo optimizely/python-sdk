@@ -224,11 +224,33 @@ class PollingConfigManagerTest(base.BaseTest):
         """ Test that initialization fails if there is no sdk_key or datafile provided. """
         self.assertRaisesRegex(
             optimizely_exceptions.InvalidInputException,
-            enums.Errors.MISSING_SDK_KEY,
+            'Must provide at least one of sdk_key or url.',
             config_manager.PollingConfigManager,
             sdk_key=None,
             datafile=None,
         )
+
+    def test_init__url_only__succeeds(self, _):
+        """ Test that initialization succeeds when only url is provided (no sdk_key). """
+        test_url = 'https://mydatafiles.com/my_datafile.json'
+        test_headers = {'Last-Modified': 'New Time'}
+        test_datafile = json.dumps(self.config_dict_with_features)
+        test_response = requests.Response()
+        test_response.status_code = 200
+        test_response.headers = test_headers
+        test_response._content = test_datafile
+
+        with mock.patch('requests.Session.get', return_value=test_response) as mock_request:
+            project_config_manager = config_manager.PollingConfigManager(url=test_url)
+            project_config_manager.stop()
+
+        mock_request.assert_called_once_with(
+            test_url,
+            headers={},
+            timeout=enums.ConfigManager.REQUEST_TIMEOUT
+        )
+        self.assertEqual(test_url, project_config_manager.datafile_url)
+        self.assertIsInstance(project_config_manager.get_config(), project_config.ProjectConfig)
 
     def test_get_datafile_url__no_sdk_key_no_url_raises(self, _):
         """ Test that get_datafile_url raises exception if no sdk_key or url is provided. """
@@ -271,6 +293,14 @@ class PollingConfigManagerTest(base.BaseTest):
         expected_url = test_url_template.format(sdk_key=test_sdk_key)
         self.assertEqual(
             expected_url, config_manager.PollingConfigManager.get_datafile_url(test_sdk_key, None, test_url_template),
+        )
+
+    def test_get_datafile_url__url_provided(self, _):
+        """ Test get_datafile_url when only url is provided (no sdk_key). """
+        test_url = 'www.myoptimizelydatafiles.com/my_key.json'
+        # url_template is ignored when url is provided
+        self.assertEqual(
+            test_url, config_manager.PollingConfigManager.get_datafile_url(None, test_url, None),
         )
 
     def test_get_datafile_url__url_and_template_provided(self, _):
