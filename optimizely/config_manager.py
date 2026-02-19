@@ -204,7 +204,7 @@ class PollingConfigManager(StaticConfigManager):
         skip_json_validation: Optional[bool] = False,
         retries: Optional[int] = 3,
     ):
-        """ Initialize config manager. One of sdk_key or url is required if datafile is not provided.
+        """ Initialize config manager. One of sdk_key or datafile has to be set to be able to use.
 
         Args:
             sdk_key: Optional string uniquely identifying the datafile. If not provided, datafile must
