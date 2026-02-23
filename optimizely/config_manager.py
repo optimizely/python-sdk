@@ -236,9 +236,6 @@ class PollingConfigManager(StaticConfigManager):
         )
         self._sdk_key = sdk_key or self._sdk_key
 
-        if self._sdk_key is None:
-            raise optimizely_exceptions.InvalidInputException(enums.Errors.MISSING_SDK_KEY)
-
         self.datafile_url = self.get_datafile_url(
             self._sdk_key, url, url_template or self.DATAFILE_URL_TEMPLATE
         )
