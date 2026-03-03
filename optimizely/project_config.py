@@ -251,7 +251,15 @@ class ProjectConfig:
                                 'endOfRange': 10000,
                             })
                             # Update variation maps for this experiment
-                            var_entity = entities.Variation(**everyone_else_variation)
+                            var_entity = entities.Variation(
+                                id=everyone_else_variation['id'],
+                                key=everyone_else_variation['key'],
+                                featureEnabled=bool(everyone_else_variation.get('featureEnabled', False)),
+                                variables=cast(
+                                    Optional[list[entities.Variable]],
+                                    everyone_else_variation.get('variables'),
+                                ),
+                            )
                             self.variation_key_map[experiment.key][var_entity.key] = var_entity
                             self.variation_id_map[experiment.key][var_entity.id] = var_entity
                             self.variation_id_map_by_experiment_id[experiment.id][var_entity.id] = var_entity
