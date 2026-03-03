@@ -234,23 +234,19 @@ class ProjectConfig:
 
             # Feature Rollout support: inject the "everyone else" variation
             # into any experiment with type == "feature_rollout"
-            rollout_for_flag = (
-                None if len(feature.rolloutId) == 0
-                else self.rollout_id_map.get(feature.rolloutId)
-            )
-            if rollout_for_flag:
-                everyone_else_variation = self._get_everyone_else_variation(rollout_for_flag)
-                if everyone_else_variation is not None:
+            rollout_for_flag = self.get_rollout_from_id(feature.rolloutId) if feature.rolloutId else None
+            if rollout_for_flag and rollout_for_flag.experiments:
+                everyone_else_rule = rollout_for_flag.experiments[-1]
+                everyone_else_variations = everyone_else_rule.get('variations', [])
+                if everyone_else_variations:
+                    everyone_else_variation = everyone_else_variations[0]
                     for experiment in rules:
                         if getattr(experiment, 'type', None) == 'feature_rollout':
-                            # Append the everyone else variation to the experiment
                             experiment.variations.append(everyone_else_variation)
-                            # Add traffic allocation entry with endOfRange=10000
                             experiment.trafficAllocation.append({
                                 'entityId': everyone_else_variation['id'],
                                 'endOfRange': 10000,
                             })
-                            # Update variation maps for this experiment
                             var_entity = entities.Variation(
                                 id=everyone_else_variation['id'],
                                 key=everyone_else_variation['key'],
@@ -339,32 +335,6 @@ class ProjectConfig:
             key_map[obj[key]] = entity_class(**obj)
 
         return key_map
-
-    @staticmethod
-    def _get_everyone_else_variation(rollout: entities.Layer) -> Optional[types.VariationDict]:
-        """ Get the "everyone else" variation from a rollout.
-
-        The "everyone else" rule is the last experiment in the rollout,
-        and its first variation is the "everyone else" variation.
-
-        Args:
-            rollout: The rollout (Layer) entity to get the variation from.
-
-        Returns:
-            The "everyone else" variation dict, or None if not available.
-        """
-        if not rollout.experiments:
-            return None
-
-        everyone_else_rule = rollout.experiments[-1]
-        variations = everyone_else_rule.get('variations', []) if isinstance(
-            everyone_else_rule, dict
-        ) else getattr(everyone_else_rule, 'variations', [])
-
-        if not variations:
-            return None
-
-        return variations[0]
 
     @staticmethod
     def _deserialize_audience(audience_map: dict[str, entities.Audience]) -> dict[str, entities.Audience]:
