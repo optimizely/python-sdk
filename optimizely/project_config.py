@@ -234,35 +234,31 @@ class ProjectConfig:
 
             # Feature Rollout support: inject the "everyone else" variation
             # into any experiment with type == "feature_rollout"
-            rollout_for_flag = self.get_rollout_from_id(feature.rolloutId) if feature.rolloutId else None
-            if rollout_for_flag and rollout_for_flag.experiments:
-                everyone_else_rule = rollout_for_flag.experiments[-1]
-                everyone_else_variations = everyone_else_rule.get('variations', [])
-                if everyone_else_variations:
-                    everyone_else_variation = everyone_else_variations[0]
-                    for experiment in rules:
-                        if getattr(experiment, 'type', None) == 'feature_rollout':
-                            experiment.variations.append(everyone_else_variation)
-                            experiment.trafficAllocation.append({
-                                'entityId': everyone_else_variation['id'],
-                                'endOfRange': 10000,
-                            })
-                            var_entity = entities.Variation(
-                                id=everyone_else_variation['id'],
-                                key=everyone_else_variation['key'],
-                                featureEnabled=bool(everyone_else_variation.get('featureEnabled', False)),
-                                variables=cast(
-                                    Optional[list[entities.Variable]],
-                                    everyone_else_variation.get('variables'),
-                                ),
-                            )
-                            self.variation_key_map[experiment.key][var_entity.key] = var_entity
-                            self.variation_id_map[experiment.key][var_entity.id] = var_entity
-                            self.variation_id_map_by_experiment_id[experiment.id][var_entity.id] = var_entity
-                            self.variation_key_map_by_experiment_id[experiment.id][var_entity.key] = var_entity
-                            self.variation_variable_usage_map[var_entity.id] = self._generate_key_map(
-                                var_entity.variables, 'id', entities.Variation.VariableUsage
-                            )
+            everyone_else_variation = self._get_everyone_else_variation(feature)
+            if everyone_else_variation is not None:
+                for experiment in rules:
+                    if getattr(experiment, 'type', None) == 'feature_rollout':
+                        experiment.variations.append(everyone_else_variation)
+                        experiment.trafficAllocation.append({
+                            'entityId': everyone_else_variation['id'],
+                            'endOfRange': 10000,
+                        })
+                        var_entity = entities.Variation(
+                            id=everyone_else_variation['id'],
+                            key=everyone_else_variation['key'],
+                            featureEnabled=bool(everyone_else_variation.get('featureEnabled', False)),
+                            variables=cast(
+                                Optional[list[entities.Variable]],
+                                everyone_else_variation.get('variables'),
+                            ),
+                        )
+                        self.variation_key_map[experiment.key][var_entity.key] = var_entity
+                        self.variation_id_map[experiment.key][var_entity.id] = var_entity
+                        self.variation_id_map_by_experiment_id[experiment.id][var_entity.id] = var_entity
+                        self.variation_key_map_by_experiment_id[experiment.id][var_entity.key] = var_entity
+                        self.variation_variable_usage_map[var_entity.id] = self._generate_key_map(
+                            var_entity.variables, 'id', entities.Variation.VariableUsage
+                        )
 
             flag_id = feature.id
             applicable_holdouts: list[entities.Holdout] = []
@@ -698,6 +694,32 @@ class ProjectConfig:
 
         self.logger.error(f'Rollout with ID "{rollout_id}" is not in datafile.')
         return None
+
+    def _get_everyone_else_variation(self, flag: entities.FeatureFlag) -> Optional[types.VariationDict]:
+        """ Get the "everyone else" variation for a feature flag.
+
+        The "everyone else" rule is the last experiment in the flag's rollout,
+        and its first variation is the "everyone else" variation.
+
+        Args:
+            flag: The feature flag to get the everyone else variation for.
+
+        Returns:
+            The "everyone else" variation dict, or None if not available.
+        """
+        if not flag.rolloutId:
+            return None
+
+        rollout = self.get_rollout_from_id(flag.rolloutId)
+        if not rollout or not rollout.experiments:
+            return None
+
+        everyone_else_rule = rollout.experiments[-1]
+        variations = everyone_else_rule.get('variations', [])
+        if not variations:
+            return None
+
+        return variations[0]
 
     def get_variable_value_for_variation(
         self, variable: Optional[entities.Variable], variation: Optional[Union[entities.Variation, VariationDict]]
