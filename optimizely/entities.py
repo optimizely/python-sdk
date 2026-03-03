@@ -87,6 +87,7 @@ class Experiment(BaseEntity):
         groupId: Optional[str] = None,
         groupPolicy: Optional[str] = None,
         cmab: Optional[CmabDict] = None,
+        type: Optional[str] = None,
         **kwargs: Any
     ):
         self.id = id
@@ -101,6 +102,7 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
         self.cmab = cmab
+        self.type = type
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """ Returns audienceConditions if present, otherwise audienceIds. """
