@@ -102,6 +102,13 @@ class DecisionSources:
     HOLDOUT: Final = 'holdout'
 
 
+class ExperimentTypes:
+    AB: Final = 'a/b'
+    MAB: Final = 'mab'
+    CMAB: Final = 'cmab'
+    FEATURE_ROLLOUT: Final = 'feature_rollout'
+
+
 class Errors:
     INVALID_ATTRIBUTE: Final = 'Provided attribute is not in datafile.'
     INVALID_ATTRIBUTE_FORMAT: Final = 'Attributes provided are in an invalid format.'

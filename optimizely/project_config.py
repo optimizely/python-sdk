@@ -237,7 +237,7 @@ class ProjectConfig:
             everyone_else_variation = self._get_everyone_else_variation(feature)
             if everyone_else_variation is not None:
                 for experiment in rules:
-                    if getattr(experiment, 'type', None) == 'feature_rollout':
+                    if getattr(experiment, 'type', None) == enums.ExperimentTypes.FEATURE_ROLLOUT:
                         experiment.variations.append(everyone_else_variation)
                         experiment.trafficAllocation.append({
                             'entityId': everyone_else_variation['id'],
