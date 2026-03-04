@@ -22,7 +22,7 @@ else:
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
-    from .helpers.types import ExperimentDict, TrafficAllocation, VariableDict, VariationDict, CmabDict
+    from .helpers.types import ExperimentDict, ExperimentType, TrafficAllocation, VariableDict, VariationDict, CmabDict
 
 
 class BaseEntity:
@@ -87,7 +87,7 @@ class Experiment(BaseEntity):
         groupId: Optional[str] = None,
         groupPolicy: Optional[str] = None,
         cmab: Optional[CmabDict] = None,
-        type: Optional[str] = None,
+        type: Optional[ExperimentType] = None,
         **kwargs: Any
     ):
         self.id = id
