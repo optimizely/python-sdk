@@ -237,7 +237,7 @@ class ProjectConfig:
             everyone_else_variation = self._get_everyone_else_variation(feature)
             if everyone_else_variation is not None:
                 for experiment in rules:
-                    if experiment.type == 'feature_rollout':
+                    if experiment.type == enums.ExperimentTypes.fr:
                         experiment.variations.append({
                             'id': everyone_else_variation.id,
                             'key': everyone_else_variation.key,

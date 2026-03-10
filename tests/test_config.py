@@ -1567,6 +1567,58 @@ class FeatureRolloutConfigTest(base.BaseTest):
         }
         return datafile
 
+    def test_experiment_type_field_parsed(self):
+        """Test that the 'type' field value is preserved on Experiment after config parsing."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_1',
+                    'key': 'feature_rollout_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
+                    'variations': [{'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}],
+                    'type': 'feature_rollout',
+                },
+            ],
+            rollouts=[
+                {
+                    'id': 'rollout_1',
+                    'experiments': [
+                        {
+                            'id': 'rollout_rule_1',
+                            'key': 'rollout_rule_1',
+                            'status': 'Running',
+                            'forcedVariations': {},
+                            'layerId': 'rollout_1',
+                            'audienceIds': [],
+                            'trafficAllocation': [{'entityId': 'everyone_var', 'endOfRange': 10000}],
+                            'variations': [
+                                {'key': 'everyone_var', 'id': 'everyone_var', 'featureEnabled': False}
+                            ],
+                        }
+                    ],
+                }
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_1'],
+                    'rolloutId': 'rollout_1',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        experiment = config.experiment_id_map['exp_1']
+        self.assertEqual(experiment.type, 'feature_rollout')
+
     def test_experiment_type_field_none_when_missing(self):
         """Test that experiments without 'type' field have type=None."""
         datafile = self._build_datafile(
