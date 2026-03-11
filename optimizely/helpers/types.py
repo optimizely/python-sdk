@@ -117,7 +117,9 @@ class CmabDict(BaseEntity):
     trafficAllocation: int
 
 
-ExperimentType = Literal['a/b', 'multi_armed_bandit', 'contextual_multi_armed_bandit', 'targeted_delivery', 'feature_rollout']
+ExperimentType = Literal[
+    'a/b', 'multi_armed_bandit', 'contextual_multi_armed_bandit', 'targeted_delivery', 'feature_rollout'
+]
 
 HoldoutStatus = Literal['Draft', 'Running', 'Concluded', 'Archived']
 
