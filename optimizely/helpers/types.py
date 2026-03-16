@@ -118,7 +118,7 @@ class CmabDict(BaseEntity):
 
 
 ExperimentType = Literal[
-    'a/b', 'multi_armed_bandit', 'contextual_multi_armed_bandit', 'targeted_delivery', 'feature_rollout'
+    'ab', 'mab', 'cmab', 'td', 'fr'
 ]
 
 HoldoutStatus = Literal['Draft', 'Running', 'Concluded', 'Archived']

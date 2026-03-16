@@ -230,11 +230,11 @@ class OdpManagerConfig:
 
 
 class ExperimentTypes:
-    ab: Final = 'a/b'
-    mab: Final = 'multi_armed_bandit'
-    cmab: Final = 'contextual_multi_armed_bandit'
-    td: Final = 'targeted_delivery'
-    fr: Final = 'feature_rollout'
+    ab: Final = 'ab'
+    mab: Final = 'mab'
+    cmab: Final = 'cmab'
+    td: Final = 'td'
+    fr: Final = 'fr'
 
 
 class OdpSegmentsCacheConfig:

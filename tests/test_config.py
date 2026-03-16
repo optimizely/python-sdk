@@ -1580,7 +1580,7 @@ class FeatureRolloutConfigTest(base.BaseTest):
                     'audienceIds': [],
                     'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
                     'variations': [{'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}],
-                    'type': 'feature_rollout',
+                    'type': 'fr',
                 },
             ],
             rollouts=[
@@ -1617,7 +1617,7 @@ class FeatureRolloutConfigTest(base.BaseTest):
         config = opt.config_manager.get_config()
 
         experiment = config.experiment_id_map['exp_1']
-        self.assertEqual(experiment.type, 'feature_rollout')
+        self.assertEqual(experiment.type, 'fr')
 
     def test_experiment_type_field_none_when_missing(self):
         """Test that experiments without 'type' field have type=None."""
@@ -1666,7 +1666,7 @@ class FeatureRolloutConfigTest(base.BaseTest):
                     'variations': [
                         {'key': 'rollout_var', 'id': 'rollout_var', 'featureEnabled': True}
                     ],
-                    'type': 'feature_rollout',
+                    'type': 'fr',
                 },
             ],
             rollouts=[
@@ -1750,7 +1750,7 @@ class FeatureRolloutConfigTest(base.BaseTest):
                     'variations': [
                         {'key': 'rollout_var', 'id': 'rollout_var', 'featureEnabled': True}
                     ],
-                    'type': 'feature_rollout',
+                    'type': 'fr',
                 },
             ],
             rollouts=[
@@ -1819,7 +1819,7 @@ class FeatureRolloutConfigTest(base.BaseTest):
                     'variations': [
                         {'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}
                     ],
-                    'type': 'a/b',
+                    'type': 'ab',
                 },
             ],
             rollouts=[
@@ -1883,7 +1883,7 @@ class FeatureRolloutConfigTest(base.BaseTest):
                     'variations': [
                         {'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}
                     ],
-                    'type': 'feature_rollout',
+                    'type': 'fr',
                 },
             ],
             feature_flags=[
