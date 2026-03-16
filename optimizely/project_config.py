@@ -189,7 +189,24 @@ class ProjectConfig:
         self.variation_key_map_by_experiment_id: dict[str, dict[str, Union[entities.Variation, VariationDict]]] = {}
         self.flag_variations_map: dict[str, list[entities.Variation]] = {}
 
+        valid_experiment_types = {
+            enums.ExperimentTypes.ab,
+            enums.ExperimentTypes.mab,
+            enums.ExperimentTypes.cmab,
+            enums.ExperimentTypes.td,
+            enums.ExperimentTypes.fr,
+        }
         for experiment in self.experiment_id_map.values():
+            if experiment.type is not None and experiment.type not in valid_experiment_types:
+                self.logger.error(
+                    f'Experiment "{experiment.key}" has invalid type "{experiment.type}". '
+                    f'Valid types: {valid_experiment_types}.'
+                )
+                self.error_handler.handle_error(
+                    exceptions.InvalidExperimentException(
+                        f'Invalid experiment type: {experiment.type}'
+                    )
+                )
             self.experiment_key_map[experiment.key] = experiment
             self.variation_key_map[experiment.key] = self._generate_key_map(
                 experiment.variations, 'key', entities.Variation
