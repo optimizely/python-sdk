@@ -22,7 +22,7 @@ else:
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
-    from .helpers.types import ExperimentDict, TrafficAllocation, VariableDict, VariationDict, CmabDict
+    from .helpers.types import ExperimentDict, ExperimentType, TrafficAllocation, VariableDict, VariationDict, CmabDict
 
 
 class BaseEntity:
@@ -87,6 +87,7 @@ class Experiment(BaseEntity):
         groupId: Optional[str] = None,
         groupPolicy: Optional[str] = None,
         cmab: Optional[CmabDict] = None,
+        type: Optional[ExperimentType] = None,
         **kwargs: Any
     ):
         self.id = id
@@ -101,6 +102,7 @@ class Experiment(BaseEntity):
         self.groupId = groupId
         self.groupPolicy = groupPolicy
         self.cmab = cmab
+        self.type = type
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """ Returns audienceConditions if present, otherwise audienceIds. """

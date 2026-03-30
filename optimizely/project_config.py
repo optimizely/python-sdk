@@ -189,7 +189,24 @@ class ProjectConfig:
         self.variation_key_map_by_experiment_id: dict[str, dict[str, Union[entities.Variation, VariationDict]]] = {}
         self.flag_variations_map: dict[str, list[entities.Variation]] = {}
 
+        valid_experiment_types = {
+            enums.ExperimentTypes.ab,
+            enums.ExperimentTypes.mab,
+            enums.ExperimentTypes.cmab,
+            enums.ExperimentTypes.td,
+            enums.ExperimentTypes.fr,
+        }
         for experiment in self.experiment_id_map.values():
+            if experiment.type is not None and experiment.type not in valid_experiment_types:
+                self.logger.error(
+                    f'Experiment "{experiment.key}" has invalid type "{experiment.type}". '
+                    f'Valid types: {valid_experiment_types}.'
+                )
+                self.error_handler.handle_error(
+                    exceptions.InvalidExperimentException(
+                        f'Invalid experiment type: {experiment.type}'
+                    )
+                )
             self.experiment_key_map[experiment.key] = experiment
             self.variation_key_map[experiment.key] = self._generate_key_map(
                 experiment.variations, 'key', entities.Variation
@@ -231,6 +248,37 @@ class ProjectConfig:
                 # Add this experiment in experiment-feature map.
                 self.experiment_feature_map[exp_id] = [feature.id]
                 rules.append(self.experiment_id_map[exp_id])
+
+            # Feature Rollout support: inject the "everyone else" variation
+            # into any experiment with type == "feature_rollout"
+            everyone_else_variation = self._get_everyone_else_variation(feature)
+            if everyone_else_variation is not None:
+                for experiment in rules:
+                    if experiment.type == enums.ExperimentTypes.fr:
+                        experiment.variations.append({
+                            'id': everyone_else_variation.id,
+                            'key': everyone_else_variation.key,
+                            'featureEnabled': everyone_else_variation.featureEnabled,
+                            'variables': cast(
+                                list[types.VariableDict],
+                                everyone_else_variation.variables,
+                            ),
+                        })
+                        experiment.trafficAllocation.append({
+                            'entityId': everyone_else_variation.id,
+                            'endOfRange': 10000,
+                        })
+                        self.variation_key_map[experiment.key][everyone_else_variation.key] = everyone_else_variation
+                        self.variation_id_map[experiment.key][everyone_else_variation.id] = everyone_else_variation
+                        self.variation_id_map_by_experiment_id[experiment.id][everyone_else_variation.id] = (
+                            everyone_else_variation
+                        )
+                        self.variation_key_map_by_experiment_id[experiment.id][everyone_else_variation.key] = (
+                            everyone_else_variation
+                        )
+                        self.variation_variable_usage_map[everyone_else_variation.id] = self._generate_key_map(
+                            everyone_else_variation.variables, 'id', entities.Variation.VariableUsage
+                        )
 
             flag_id = feature.id
             applicable_holdouts: list[entities.Holdout] = []
@@ -666,6 +714,41 @@ class ProjectConfig:
 
         self.logger.error(f'Rollout with ID "{rollout_id}" is not in datafile.')
         return None
+
+    def _get_everyone_else_variation(self, flag: entities.FeatureFlag) -> Optional[entities.Variation]:
+        """ Get the "everyone else" variation for a feature flag.
+
+        The "everyone else" rule is the last experiment in the flag's rollout,
+        and its first variation is the "everyone else" variation.
+
+        Args:
+            flag: The feature flag to get the everyone else variation for.
+
+        Returns:
+            The "everyone else" Variation entity, or None if not available.
+        """
+        if not flag.rolloutId:
+            return None
+
+        rollout = self.get_rollout_from_id(flag.rolloutId)
+        if not rollout or not rollout.experiments:
+            return None
+
+        everyone_else_rule = rollout.experiments[-1]
+        variations = everyone_else_rule.get('variations', [])
+        if not variations:
+            return None
+
+        variation_dict = variations[0]
+        return entities.Variation(
+            id=variation_dict['id'],
+            key=variation_dict['key'],
+            featureEnabled=bool(variation_dict.get('featureEnabled', False)),
+            variables=cast(
+                Optional[list[entities.Variable]],
+                variation_dict.get('variables'),
+            ),
+        )
 
     def get_variable_value_for_variation(
         self, variable: Optional[entities.Variable], variation: Optional[Union[entities.Variation, VariationDict]]

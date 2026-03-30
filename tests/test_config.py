@@ -1545,3 +1545,366 @@ class HoldoutConfigTest(base.BaseTest):
         boolean_feature_id = '91111'
         included_for_boolean = self.config_with_holdouts.included_holdouts.get(boolean_feature_id)
         self.assertIsNone(included_for_boolean)
+
+
+class FeatureRolloutConfigTest(base.BaseTest):
+    """Tests for Feature Rollout support in ProjectConfig parsing."""
+
+    def _build_datafile(self, experiments=None, rollouts=None, feature_flags=None):
+        """Build a minimal valid datafile with the given components."""
+        datafile = {
+            'version': '4',
+            'accountId': '12001',
+            'projectId': '111001',
+            'revision': '1',
+            'experiments': experiments or [],
+            'events': [],
+            'attributes': [],
+            'audiences': [],
+            'groups': [],
+            'rollouts': rollouts or [],
+            'featureFlags': feature_flags or [],
+        }
+        return datafile
+
+    def test_experiment_type_field_parsed(self):
+        """Test that the 'type' field value is preserved on Experiment after config parsing."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_1',
+                    'key': 'feature_rollout_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
+                    'variations': [{'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}],
+                    'type': 'fr',
+                },
+            ],
+            rollouts=[
+                {
+                    'id': 'rollout_1',
+                    'experiments': [
+                        {
+                            'id': 'rollout_rule_1',
+                            'key': 'rollout_rule_1',
+                            'status': 'Running',
+                            'forcedVariations': {},
+                            'layerId': 'rollout_1',
+                            'audienceIds': [],
+                            'trafficAllocation': [{'entityId': 'everyone_var', 'endOfRange': 10000}],
+                            'variations': [
+                                {'key': 'everyone_var', 'id': 'everyone_var', 'featureEnabled': False}
+                            ],
+                        }
+                    ],
+                }
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_1'],
+                    'rolloutId': 'rollout_1',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        experiment = config.experiment_id_map['exp_1']
+        self.assertEqual(experiment.type, 'fr')
+
+    def test_experiment_type_field_none_when_missing(self):
+        """Test that experiments without 'type' field have type=None."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_ab',
+                    'key': 'ab_test_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
+                    'variations': [{'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}],
+                },
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_ab'],
+                    'rolloutId': '',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        experiment = config.experiment_id_map['exp_ab']
+        self.assertIsNone(experiment.type)
+
+    def test_feature_rollout_injects_everyone_else_variation(self):
+        """Test that feature_rollout experiments get the everyone else variation injected."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_fr',
+                    'key': 'feature_rollout_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'rollout_var', 'endOfRange': 5000}],
+                    'variations': [
+                        {'key': 'rollout_var', 'id': 'rollout_var', 'featureEnabled': True}
+                    ],
+                    'type': 'fr',
+                },
+            ],
+            rollouts=[
+                {
+                    'id': 'rollout_1',
+                    'experiments': [
+                        {
+                            'id': 'rollout_targeted_rule',
+                            'key': 'rollout_targeted_rule',
+                            'status': 'Running',
+                            'forcedVariations': {},
+                            'layerId': 'rollout_1',
+                            'audienceIds': ['audience_1'],
+                            'trafficAllocation': [{'entityId': 'targeted_var', 'endOfRange': 10000}],
+                            'variations': [
+                                {'key': 'targeted_var', 'id': 'targeted_var', 'featureEnabled': True}
+                            ],
+                        },
+                        {
+                            'id': 'rollout_everyone_else',
+                            'key': 'rollout_everyone_else',
+                            'status': 'Running',
+                            'forcedVariations': {},
+                            'layerId': 'rollout_1',
+                            'audienceIds': [],
+                            'trafficAllocation': [
+                                {'entityId': 'everyone_else_var', 'endOfRange': 10000}
+                            ],
+                            'variations': [
+                                {
+                                    'key': 'everyone_else_var',
+                                    'id': 'everyone_else_var',
+                                    'featureEnabled': False,
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_fr'],
+                    'rolloutId': 'rollout_1',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        experiment = config.experiment_id_map['exp_fr']
+
+        # Should now have 2 variations: original + everyone else
+        self.assertEqual(len(experiment.variations), 2)
+
+        # Verify the everyone else variation was appended
+        variation_ids = [v['id'] if isinstance(v, dict) else v.id for v in experiment.variations]
+        self.assertIn('everyone_else_var', variation_ids)
+
+        # Verify traffic allocation was appended with endOfRange=10000
+        self.assertEqual(len(experiment.trafficAllocation), 2)
+        last_allocation = experiment.trafficAllocation[-1]
+        self.assertEqual(last_allocation['entityId'], 'everyone_else_var')
+        self.assertEqual(last_allocation['endOfRange'], 10000)
+
+    def test_feature_rollout_variation_maps_updated(self):
+        """Test that variation maps are properly updated after injection."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_fr',
+                    'key': 'feature_rollout_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'rollout_var', 'endOfRange': 5000}],
+                    'variations': [
+                        {'key': 'rollout_var', 'id': 'rollout_var', 'featureEnabled': True}
+                    ],
+                    'type': 'fr',
+                },
+            ],
+            rollouts=[
+                {
+                    'id': 'rollout_1',
+                    'experiments': [
+                        {
+                            'id': 'rollout_everyone_else',
+                            'key': 'rollout_everyone_else',
+                            'status': 'Running',
+                            'forcedVariations': {},
+                            'layerId': 'rollout_1',
+                            'audienceIds': [],
+                            'trafficAllocation': [
+                                {'entityId': 'everyone_else_var', 'endOfRange': 10000}
+                            ],
+                            'variations': [
+                                {
+                                    'key': 'everyone_else_var',
+                                    'id': 'everyone_else_var',
+                                    'featureEnabled': False,
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_fr'],
+                    'rolloutId': 'rollout_1',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        # Check variation_key_map is updated
+        self.assertIn('everyone_else_var', config.variation_key_map['feature_rollout_exp'])
+
+        # Check variation_id_map is updated
+        self.assertIn('everyone_else_var', config.variation_id_map['feature_rollout_exp'])
+
+        # Check variation_id_map_by_experiment_id is updated
+        self.assertIn('everyone_else_var', config.variation_id_map_by_experiment_id['exp_fr'])
+
+        # Check variation_key_map_by_experiment_id is updated
+        self.assertIn('everyone_else_var', config.variation_key_map_by_experiment_id['exp_fr'])
+
+    def test_non_feature_rollout_experiments_unchanged(self):
+        """Test that experiments without type=feature_rollout are not modified."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_ab',
+                    'key': 'ab_test_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
+                    'variations': [
+                        {'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}
+                    ],
+                    'type': 'ab',
+                },
+            ],
+            rollouts=[
+                {
+                    'id': 'rollout_1',
+                    'experiments': [
+                        {
+                            'id': 'rollout_everyone_else',
+                            'key': 'rollout_everyone_else',
+                            'status': 'Running',
+                            'forcedVariations': {},
+                            'layerId': 'rollout_1',
+                            'audienceIds': [],
+                            'trafficAllocation': [
+                                {'entityId': 'everyone_else_var', 'endOfRange': 10000}
+                            ],
+                            'variations': [
+                                {
+                                    'key': 'everyone_else_var',
+                                    'id': 'everyone_else_var',
+                                    'featureEnabled': False,
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_ab'],
+                    'rolloutId': 'rollout_1',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        experiment = config.experiment_id_map['exp_ab']
+
+        # Should still have only 1 variation
+        self.assertEqual(len(experiment.variations), 1)
+        # Should still have only 1 traffic allocation
+        self.assertEqual(len(experiment.trafficAllocation), 1)
+
+    def test_feature_rollout_with_no_rollout(self):
+        """Test feature_rollout experiment with empty rolloutId is not modified."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_fr',
+                    'key': 'feature_rollout_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
+                    'variations': [
+                        {'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}
+                    ],
+                    'type': 'fr',
+                },
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_fr'],
+                    'rolloutId': '',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        experiment = config.experiment_id_map['exp_fr']
+
+        # Without a rollout, no injection should occur
+        self.assertEqual(len(experiment.variations), 1)
+        self.assertEqual(len(experiment.trafficAllocation), 1)
+
+
+

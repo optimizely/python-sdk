@@ -229,6 +229,14 @@ class OdpManagerConfig:
     EVENT_TYPE: Final = 'fullstack'
 
 
+class ExperimentTypes:
+    ab: Final = 'ab'
+    mab: Final = 'mab'
+    cmab: Final = 'cmab'
+    td: Final = 'td'
+    fr: Final = 'fr'
+
+
 class OdpSegmentsCacheConfig:
     """ODP Segment Cache configs."""
     DEFAULT_CAPACITY: Final = 10_000
