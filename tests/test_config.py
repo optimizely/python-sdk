@@ -1651,6 +1651,41 @@ class FeatureRolloutConfigTest(base.BaseTest):
         experiment = config.experiment_id_map['exp_ab']
         self.assertIsNone(experiment.type)
 
+    def test_unknown_experiment_type_accepted(self):
+        """Test that experiments with unknown type values are accepted without error."""
+        datafile = self._build_datafile(
+            experiments=[
+                {
+                    'id': 'exp_unknown',
+                    'key': 'unknown_type_exp',
+                    'status': 'Running',
+                    'forcedVariations': {},
+                    'layerId': 'layer_1',
+                    'audienceIds': [],
+                    'trafficAllocation': [{'entityId': 'var_1', 'endOfRange': 5000}],
+                    'variations': [{'key': 'var_1', 'id': 'var_1', 'featureEnabled': True}],
+                    'type': 'new_unknown_type',
+                },
+            ],
+            feature_flags=[
+                {
+                    'id': 'flag_1',
+                    'key': 'test_flag',
+                    'experimentIds': ['exp_unknown'],
+                    'rolloutId': '',
+                    'variables': [],
+                },
+            ],
+        )
+
+        opt = optimizely.Optimizely(json.dumps(datafile))
+        config = opt.config_manager.get_config()
+
+        self.assertIsNotNone(config)
+        experiment = config.experiment_id_map['exp_unknown']
+        self.assertEqual(experiment.type, 'new_unknown_type')
+        self.assertEqual(experiment.key, 'unknown_type_exp')
+
     def test_feature_rollout_injects_everyone_else_variation(self):
         """Test that feature_rollout experiments get the everyone else variation injected."""
         datafile = self._build_datafile(
