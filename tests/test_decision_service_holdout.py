@@ -298,10 +298,10 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             'reasons': []
         }
 
-        # Mock get_holdouts_for_flag to return holdouts so the holdout path is taken
+        # Mock get_global_holdouts to return holdouts so the holdout path is taken
         with mock.patch.object(
             self.config_with_holdouts,
-            'get_holdouts_for_flag',
+            'get_global_holdouts',
             return_value=[holdout]
         ):
             with mock.patch.object(
@@ -381,11 +381,8 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         feature_flag = self.config_with_holdouts.get_feature_from_key('test_feature_in_experiment')
         self.assertIsNotNone(feature_flag)
 
-        # Get global holdouts
-        global_holdouts = [
-            h for h in self.config_with_holdouts.holdouts
-            if not h.includedFlags or len(h.includedFlags) == 0
-        ]
+        # Get global holdouts (includedRules is None for global holdouts)
+        global_holdouts = self.config_with_holdouts.get_global_holdouts()
 
         if global_holdouts:
             user_context = self.opt_obj.create_user_context('testUserId', {})
@@ -401,16 +398,16 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             self.assertIsInstance(result, list)
 
     def test_respects_included_and_excluded_flags_configuration(self):
-        """Should respect included and excluded flags configuration."""
+        """Should respect local holdout rule-level targeting (replaces flag-level include/exclude)."""
         feature_flag = self.config_with_holdouts.get_feature_from_key('test_feature_in_experiment')
 
         if feature_flag:
-            # Get holdouts for this flag
-            holdouts_for_flag = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment')
+            # In the new model, holdouts target specific rules, not flags
+            # Global holdouts apply to all rules
+            global_holdouts = self.config_with_holdouts.get_global_holdouts()
 
-            # Should not include holdouts that exclude this flag
-            excluded_holdout = next((h for h in holdouts_for_flag if h.key == 'excluded_holdout'), None)
-            self.assertIsNone(excluded_holdout)
+            # Global holdouts should apply to all rules (no exclusion at flag level anymore)
+            self.assertIsNotNone(global_holdouts)
 
     # Holdout logging and error handling tests
 

@@ -21,6 +21,11 @@ if version_info < (3, 8):
 else:
     from typing import TypedDict  # type: ignore
 
+if version_info < (3, 11):
+    from typing_extensions import NotRequired
+else:
+    from typing import NotRequired  # type: ignore
+
 
 # Intermediate types for type checking deserialized datafile json before actual class instantiation.
 # These aren't used for anything other than type signatures
@@ -130,5 +135,4 @@ class HoldoutDict(ExperimentDict):
     Extends ExperimentDict with holdout-specific properties.
     """
     holdoutStatus: HoldoutStatus
-    includedFlags: list[str]
-    excludedFlags: list[str]
+    includedRules: NotRequired[Optional[list[str]]]

@@ -222,8 +222,7 @@ class Holdout(BaseEntity):
         variations: list[VariationDict],
         trafficAllocation: list[TrafficAllocation],
         audienceIds: list[str],
-        includedFlags: Optional[list[str]] = None,
-        excludedFlags: Optional[list[str]] = None,
+        includedRules: Optional[list[str]] = None,
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
         **kwargs: Any
     ):
@@ -234,8 +233,10 @@ class Holdout(BaseEntity):
         self.trafficAllocation = trafficAllocation
         self.audienceIds = audienceIds
         self.audienceConditions = audienceConditions
-        self.includedFlags = includedFlags or []
-        self.excludedFlags = excludedFlags or []
+        # None = global holdout (applies to all rules)
+        # [] = local holdout with no rules (effectively no holdout)
+        # [rule_id, ...] = local holdout targeting specific rules
+        self.includedRules = includedRules
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """Returns audienceConditions if present, otherwise audienceIds.
@@ -256,6 +257,15 @@ class Holdout(BaseEntity):
             True if status is 'Running', False otherwise.
         """
         return self.status == self.Status.RUNNING
+
+    @property
+    def is_global(self) -> bool:
+        """Check if the holdout is global (applies to all rules).
+
+        Returns:
+            True if includedRules is None (global), False otherwise (local).
+        """
+        return self.includedRules is None
 
     def __str__(self) -> str:
         return self.key
