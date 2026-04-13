@@ -18,16 +18,12 @@ Tests rule-level holdout targeting instead of flag-level targeting.
 """
 
 import json
-import unittest
 from unittest import mock
 
-from optimizely import decision_service
 from optimizely import error_handler
 from optimizely import logger
 from optimizely import optimizely as optimizely_module
-from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 from optimizely import entities
-from optimizely.helpers import enums
 from tests import base
 
 
