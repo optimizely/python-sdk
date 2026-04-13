@@ -1,4 +1,4 @@
-# Copyright 2025 Optimizely and contributors
+# Copyright 2026 Optimizely and contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -386,7 +386,3 @@ class LocalHoldoutsDecisionFlowTest(base.BaseTest):
         holdouts = self.project_config.get_holdouts_for_rule(rule_id)
         self.assertEqual(len(holdouts), 1)
         self.assertEqual(holdouts[0].key, 'local_test_holdout')
-
-
-if __name__ == '__main__':
-    unittest.main()
