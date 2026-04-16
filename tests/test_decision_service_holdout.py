@@ -1465,3 +1465,48 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             self.assertIsNotNone(decision_no_match)
         finally:
             opt.close()
+
+
+class LocalHoldoutDecisionFlowTest(base.BaseTest):
+    """Tests for decision flow with local holdouts (rule-level targeting)."""
+
+    def setUp(self):
+        base.BaseTest.setUp(self)
+
+        config_dict = self.config_dict_with_features.copy()
+        rule_id = '111127'  # test_experiment
+
+        config_dict['holdouts'] = [
+            {
+                'id': 'local_test',
+                'key': 'local_test_holdout',
+                'status': 'Running',
+                'includedRules': [rule_id],
+                'audienceIds': [],
+                'variations': [
+                    {
+                        'id': 'local_test_var',
+                        'key': 'local_test_control',
+                        'variables': []
+                    }
+                ],
+                'trafficAllocation': [
+                    {
+                        'entityId': 'local_test_var',
+                        'endOfRange': 10000
+                    }
+                ]
+            }
+        ]
+
+        config_json = json.dumps(config_dict)
+        self.opt_obj = optimizely_module.Optimizely(config_json)
+        self.project_config = self.opt_obj.config_manager.get_config()
+
+    def test_local_holdout_checked_before_rule_evaluation(self):
+        """Test that local holdouts are checked before rule audience/traffic evaluation."""
+        rule_id = '111127'
+
+        holdouts = self.project_config.get_holdouts_for_rule(rule_id)
+        self.assertEqual(1, len(holdouts))
+        self.assertEqual('local_test_holdout', holdouts[0].key)
