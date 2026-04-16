@@ -200,6 +200,36 @@ class StaticConfigManagerTest(base.BaseTest):
         mock_logger.error.assert_called_once_with('Provided "datafile" is in an invalid format.')
         self.assertEqual(0, mock_notification_center.call_count)
 
+    def test_set_config__exception_in_except_block_is_not_swallowed(self):
+        """ Test that an exception raised inside the except block propagates
+        to the caller instead of being silently swallowed.
+
+        Per Python docs, a return inside a finally clause suppresses any
+        in-flight exception. The _set_config method must not use return in
+        finally, so that unexpected errors in the error-handling path are
+        surfaced rather than silently lost.
+        """
+        test_datafile = json.dumps(self.config_dict_with_features)
+        mock_logger = mock.Mock()
+
+        with mock.patch('optimizely.config_manager.BaseConfigManager._validate_instantiation_options'):
+            project_config_manager = config_manager.StaticConfigManager(
+                datafile=test_datafile, logger=mock_logger,
+            )
+
+        # Make ProjectConfig raise so we enter the bare except block,
+        # then make the except block itself raise by breaking INVALID_INPUT.
+        with mock.patch(
+            'optimizely.project_config.ProjectConfig.__init__',
+            side_effect=Exception('something broke'),
+        ), mock.patch.object(
+            enums.Errors, 'INVALID_INPUT', new=None,
+        ):
+            # The except block will raise AttributeError ('NoneType' has no 'format').
+            # Correct behavior: this exception must propagate to the caller.
+            with self.assertRaises(AttributeError):
+                project_config_manager._set_config(test_datafile)
+
     def test_get_config(self):
         """ Test get_config. """
         test_datafile = json.dumps(self.config_dict_with_features)
