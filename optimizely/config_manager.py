@@ -145,14 +145,14 @@ class StaticConfigManager(BaseConfigManager):
         except optimizely_exceptions.UnsupportedDatafileVersionException as error:
             error_msg = error.args[0]
             error_to_handle = error
-        except:
+        except Exception:
             error_msg = enums.Errors.INVALID_INPUT.format('datafile')
             error_to_handle = optimizely_exceptions.InvalidInputException(error_msg)
-        finally:
-            if error_msg or config is None:
-                self.logger.error(error_msg)
-                self.error_handler.handle_error(error_to_handle or Exception('Unknown Error'))
-                return
+
+        if error_msg or config is None:
+            self.logger.error(error_msg)
+            self.error_handler.handle_error(error_to_handle or Exception('Unknown Error'))
+            return
 
         previous_revision = self._config.get_revision() if self._config else None
 
