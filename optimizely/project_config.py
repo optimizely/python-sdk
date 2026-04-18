@@ -93,10 +93,6 @@ class ProjectConfig:
         holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
         self.holdouts: list[entities.Holdout] = []
         self.holdout_id_map: dict[str, entities.Holdout] = {}
-        self.global_holdouts: list[entities.Holdout] = []
-        self.included_holdouts: dict[str, list[entities.Holdout]] = {}
-        self.excluded_holdouts: dict[str, list[entities.Holdout]] = {}
-        self.flag_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
         # Convert holdout dicts to Holdout entities
         for holdout_data in holdouts_data:
@@ -104,32 +100,12 @@ class ProjectConfig:
             holdout = entities.Holdout(**holdout_data)
             self.holdouts.append(holdout)
 
-            # Only process Running holdouts but doing it here for efficiency like the original Python implementation)
+            # Only process Running holdouts
             if not holdout.is_activated:
                 continue
 
             # Map by ID for quick lookup
             self.holdout_id_map[holdout.id] = holdout
-
-            # Categorize as global vs flag-specific
-            # Global holdouts: apply to all flags unless explicitly excluded
-            # Flag-specific holdouts: only apply to explicitly included flags
-            if not holdout.includedFlags:
-                # This is a global holdout
-                self.global_holdouts.append(holdout)
-
-                # Track which flags this global holdout excludes
-                if holdout.excludedFlags:
-                    for flag_id in holdout.excludedFlags:
-                        if flag_id not in self.excluded_holdouts:
-                            self.excluded_holdouts[flag_id] = []
-                        self.excluded_holdouts[flag_id].append(holdout)
-            else:
-                # This holdout applies to specific flags only
-                for flag_id in holdout.includedFlags:
-                    if flag_id not in self.included_holdouts:
-                        self.included_holdouts[flag_id] = []
-                    self.included_holdouts[flag_id].append(holdout)
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -262,22 +238,6 @@ class ProjectConfig:
                         self.variation_variable_usage_map[everyone_else_variation.id] = self._generate_key_map(
                             everyone_else_variation.variables, 'id', entities.Variation.VariableUsage
                         )
-
-            flag_id = feature.id
-            applicable_holdouts: list[entities.Holdout] = []
-
-            # Add global holdouts first, excluding any that are explicitly excluded for this flag
-            excluded_holdouts = self.excluded_holdouts.get(flag_id, [])
-            for holdout in self.global_holdouts:
-                if holdout not in excluded_holdouts:
-                    applicable_holdouts.append(holdout)
-
-            # Add flag-specific local holdouts AFTER global holdouts
-            if flag_id in self.included_holdouts:
-                applicable_holdouts.extend(self.included_holdouts[flag_id])
-
-            if applicable_holdouts:
-                self.flag_holdouts_map[feature.key] = applicable_holdouts
 
             rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
             if rollout:
@@ -912,19 +872,6 @@ class ProjectConfig:
 
         return None
 
-    def get_holdouts_for_flag(self, flag_key: str) -> list[entities.Holdout]:
-        """ Helper method to get holdouts from an applied feature flag.
-
-        Args:
-            flag_key: Key of the feature flag.
-
-        Returns:
-            The holdouts that apply for a specific flag as Holdout entity objects.
-        """
-        if not self.holdouts:
-            return []
-
-        return self.flag_holdouts_map.get(flag_key, [])
 
     def get_holdout(self, holdout_id: str) -> Optional[entities.Holdout]:
         """ Helper method to get holdout from holdout ID.

@@ -1395,9 +1395,7 @@ class HoldoutConfigTest(base.BaseTest):
                 'status': 'Running',
                 'variations': [],
                 'trafficAllocation': [],
-                'audienceIds': [],
-                'includedFlags': [],
-                'excludedFlags': [boolean_feature_id]
+                'audienceIds': []
             },
             {
                 'id': 'holdout_2',
@@ -1405,9 +1403,7 @@ class HoldoutConfigTest(base.BaseTest):
                 'status': 'Running',
                 'variations': [],
                 'trafficAllocation': [],
-                'audienceIds': [],
-                'includedFlags': [multi_variate_feature_id],
-                'excludedFlags': []
+                'audienceIds': []
             },
             {
                 'id': 'holdout_3',
@@ -1415,64 +1411,13 @@ class HoldoutConfigTest(base.BaseTest):
                 'status': 'Inactive',
                 'variations': [],
                 'trafficAllocation': [],
-                'audienceIds': [],
-                'includedFlags': [boolean_feature_id],
-                'excludedFlags': []
+                'audienceIds': []
             }
         ]
 
         self.config_json_with_holdouts = json.dumps(config_body_with_holdouts)
         opt_obj = optimizely.Optimizely(self.config_json_with_holdouts)
         self.config_with_holdouts = opt_obj.config_manager.get_config()
-
-    def test_get_holdouts_for_flag__non_existent_flag(self):
-        """ Test that get_holdouts_for_flag returns empty array for non-existent flag. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('non_existent_flag')
-        self.assertEqual([], holdouts)
-
-    def test_get_holdouts_for_flag__returns_global_and_specific_holdouts(self):
-        """ Test that get_holdouts_for_flag returns global holdouts that do not exclude the flag
-        and specific holdouts that include the flag. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
-        self.assertEqual(2, len(holdouts))
-
-        global_holdout = next((h for h in holdouts if h['key'] == 'global_holdout'), None)
-        self.assertIsNotNone(global_holdout)
-        self.assertEqual('holdout_1', global_holdout['id'])
-
-        specific_holdout = next((h for h in holdouts if h['key'] == 'specific_holdout'), None)
-        self.assertIsNotNone(specific_holdout)
-        self.assertEqual('holdout_2', specific_holdout['id'])
-
-    def test_get_holdouts_for_flag__excludes_global_holdouts_for_excluded_flags(self):
-        """ Test that get_holdouts_for_flag does not return global holdouts that exclude the flag. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('boolean_single_variable_feature')
-        self.assertEqual(0, len(holdouts))
-
-        global_holdout = next((h for h in holdouts if h['key'] == 'global_holdout'), None)
-        self.assertIsNone(global_holdout)
-
-    def test_get_holdouts_for_flag__caches_results(self):
-        """ Test that get_holdouts_for_flag caches results for subsequent calls. """
-
-        holdouts1 = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
-        holdouts2 = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
-
-        # Should be the same object (cached)
-        self.assertIs(holdouts1, holdouts2)
-        self.assertEqual(2, len(holdouts1))
-
-    def test_get_holdouts_for_flag__returns_only_global_for_non_targeted_flags(self):
-        """ Test that get_holdouts_for_flag returns only global holdouts for flags not specifically targeted. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_rollout')
-
-        # Should only include global holdout (not excluded and no specific targeting)
-        self.assertEqual(1, len(holdouts))
-        self.assertEqual('global_holdout', holdouts[0]['key'])
 
     def test_get_holdout__returns_holdout_for_valid_id(self):
         """ Test that get_holdout returns holdout when valid ID is provided. """
