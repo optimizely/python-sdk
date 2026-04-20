@@ -1384,10 +1384,6 @@ class HoldoutConfigTest(base.BaseTest):
         # Create config with holdouts
         config_body_with_holdouts = self.config_dict_with_features.copy()
 
-        # Use correct feature flag IDs from the datafile
-        boolean_feature_id = '91111'  # boolean_single_variable_feature
-        multi_variate_feature_id = '91114'  # test_feature_in_experiment_and_rollout
-
         config_body_with_holdouts['holdouts'] = [
             {
                 'id': 'holdout_1',
@@ -1395,9 +1391,7 @@ class HoldoutConfigTest(base.BaseTest):
                 'status': 'Running',
                 'variations': [],
                 'trafficAllocation': [],
-                'audienceIds': [],
-                'includedFlags': [],
-                'excludedFlags': [boolean_feature_id]
+                'audienceIds': []
             },
             {
                 'id': 'holdout_2',
@@ -1405,9 +1399,7 @@ class HoldoutConfigTest(base.BaseTest):
                 'status': 'Running',
                 'variations': [],
                 'trafficAllocation': [],
-                'audienceIds': [],
-                'includedFlags': [multi_variate_feature_id],
-                'excludedFlags': []
+                'audienceIds': []
             },
             {
                 'id': 'holdout_3',
@@ -1415,64 +1407,13 @@ class HoldoutConfigTest(base.BaseTest):
                 'status': 'Inactive',
                 'variations': [],
                 'trafficAllocation': [],
-                'audienceIds': [],
-                'includedFlags': [boolean_feature_id],
-                'excludedFlags': []
+                'audienceIds': []
             }
         ]
 
         self.config_json_with_holdouts = json.dumps(config_body_with_holdouts)
         opt_obj = optimizely.Optimizely(self.config_json_with_holdouts)
         self.config_with_holdouts = opt_obj.config_manager.get_config()
-
-    def test_get_holdouts_for_flag__non_existent_flag(self):
-        """ Test that get_holdouts_for_flag returns empty array for non-existent flag. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('non_existent_flag')
-        self.assertEqual([], holdouts)
-
-    def test_get_holdouts_for_flag__returns_global_and_specific_holdouts(self):
-        """ Test that get_holdouts_for_flag returns global holdouts that do not exclude the flag
-        and specific holdouts that include the flag. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
-        self.assertEqual(2, len(holdouts))
-
-        global_holdout = next((h for h in holdouts if h['key'] == 'global_holdout'), None)
-        self.assertIsNotNone(global_holdout)
-        self.assertEqual('holdout_1', global_holdout['id'])
-
-        specific_holdout = next((h for h in holdouts if h['key'] == 'specific_holdout'), None)
-        self.assertIsNotNone(specific_holdout)
-        self.assertEqual('holdout_2', specific_holdout['id'])
-
-    def test_get_holdouts_for_flag__excludes_global_holdouts_for_excluded_flags(self):
-        """ Test that get_holdouts_for_flag does not return global holdouts that exclude the flag. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('boolean_single_variable_feature')
-        self.assertEqual(0, len(holdouts))
-
-        global_holdout = next((h for h in holdouts if h['key'] == 'global_holdout'), None)
-        self.assertIsNone(global_holdout)
-
-    def test_get_holdouts_for_flag__caches_results(self):
-        """ Test that get_holdouts_for_flag caches results for subsequent calls. """
-
-        holdouts1 = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
-        holdouts2 = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment_and_rollout')
-
-        # Should be the same object (cached)
-        self.assertIs(holdouts1, holdouts2)
-        self.assertEqual(2, len(holdouts1))
-
-    def test_get_holdouts_for_flag__returns_only_global_for_non_targeted_flags(self):
-        """ Test that get_holdouts_for_flag returns only global holdouts for flags not specifically targeted. """
-
-        holdouts = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_rollout')
-
-        # Should only include global holdout (not excluded and no specific targeting)
-        self.assertEqual(1, len(holdouts))
-        self.assertEqual('global_holdout', holdouts[0]['key'])
 
     def test_get_holdout__returns_holdout_for_valid_id(self):
         """ Test that get_holdout returns holdout when valid ID is provided. """
@@ -1515,36 +1456,6 @@ class HoldoutConfigTest(base.BaseTest):
 
             self.assertIsNotNone(result)
             mock_logger.error.assert_not_called()
-
-    def test_holdout_initialization__categorizes_holdouts_properly(self):
-        """ Test that holdouts are properly categorized during initialization. """
-
-        self.assertIn('holdout_1', self.config_with_holdouts.holdout_id_map)
-        self.assertIn('holdout_2', self.config_with_holdouts.holdout_id_map)
-        # Check if a holdout with ID 'holdout_1' exists in global_holdouts
-        holdout_ids_in_global = [h.id for h in self.config_with_holdouts.global_holdouts]
-        self.assertIn('holdout_1', holdout_ids_in_global)
-
-        # Use correct feature flag IDs
-        boolean_feature_id = '91111'
-        multi_variate_feature_id = '91114'
-
-        self.assertIn(multi_variate_feature_id, self.config_with_holdouts.included_holdouts)
-        self.assertTrue(len(self.config_with_holdouts.included_holdouts[multi_variate_feature_id]) > 0)
-        self.assertNotIn(boolean_feature_id, self.config_with_holdouts.included_holdouts)
-
-        self.assertIn(boolean_feature_id, self.config_with_holdouts.excluded_holdouts)
-        self.assertTrue(len(self.config_with_holdouts.excluded_holdouts[boolean_feature_id]) > 0)
-
-    def test_holdout_initialization__only_processes_running_holdouts(self):
-        """ Test that only running holdouts are processed during initialization. """
-
-        self.assertNotIn('holdout_3', self.config_with_holdouts.holdout_id_map)
-        self.assertNotIn('holdout_3', self.config_with_holdouts.global_holdouts)
-
-        boolean_feature_id = '91111'
-        included_for_boolean = self.config_with_holdouts.included_holdouts.get(boolean_feature_id)
-        self.assertIsNone(included_for_boolean)
 
 
 class FeatureRolloutConfigTest(base.BaseTest):

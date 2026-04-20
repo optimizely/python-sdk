@@ -62,8 +62,6 @@ class BucketerHoldoutTest(base.BaseTest):
                 'id': 'holdout_1',
                 'key': 'test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -92,8 +90,6 @@ class BucketerHoldoutTest(base.BaseTest):
                 'id': 'holdout_empty_1',
                 'key': 'empty_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [],
                 'trafficAllocation': []

@@ -222,8 +222,6 @@ class Holdout(BaseEntity):
         variations: list[VariationDict],
         trafficAllocation: list[TrafficAllocation],
         audienceIds: list[str],
-        includedFlags: Optional[list[str]] = None,
-        excludedFlags: Optional[list[str]] = None,
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
         **kwargs: Any
     ):
@@ -234,8 +232,6 @@ class Holdout(BaseEntity):
         self.trafficAllocation = trafficAllocation
         self.audienceIds = audienceIds
         self.audienceConditions = audienceConditions
-        self.includedFlags = includedFlags or []
-        self.excludedFlags = excludedFlags or []
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """Returns audienceConditions if present, otherwise audienceIds.
