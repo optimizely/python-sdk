@@ -86,10 +86,10 @@ from optimizely.helpers import enums as opt_enums
 # CONFIGURATION -- Update these values for your environment
 # ============================================================
 # Environment: Development
-SDK_KEY = "your-sdk-key-here"               # From project Settings -> Environments tab -> Development
+SDK_KEY = "your_sdk_key_here"               # From project Settings -> Environments tab -> Development
 FLAG_KEY = "feature_rollout_flag"            # The flag key you created
 EVENT_KEY = "feature_rollout_event"                       # The event key for tracking
-DATAFILE_URL = "your-datafile-url-here"      # From project Settings -> Environments tab -> Development
+DATAFILE_URL = "your_datafile_url_here"      # From project Settings -> Environments tab -> Development
 # Example DATAFILE_URL: https://cdn.optimizely.com/datafiles/<SDK_KEY>.json
 
 
