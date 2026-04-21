@@ -21,7 +21,7 @@ OPTIMIZELY PROJECT SETUP:
    - This creates default variations: "on" (featureEnabled: true) and
      "off" (featureEnabled: false).
 4. On the flag's Ruleset page, click "Add Rule" -> "Feature Rollout".
-   - Name: "rollout_rule", Key: "rollout-rule"
+   - Name: "fr_rule", Key: "fr_rule"
    - Variation: Change dropdown from "Off" to "On"
      (IMPORTANT: defaults to "Off" -- you must change it!)
    - Audience: "Everyone" (default)
@@ -56,12 +56,13 @@ RUNNING TESTS:
 TEST CASES:
 1. basic_rollout     -- Happy path: user gets rollout variation + impression
 2. everyone_else     -- 0% traffic: user gets baseline "off" variation
-3. traffic_split     -- 50% traffic: verify ~50/50 distribution
+3. traffic_split     -- 50% traffic: verify ~50/50 distribution + deterministic bucketing
 4. audience_targeting-- Audience match/miss behavior
 5. forced_variation  -- Allowlist overrides bucketing
 6. conversion_tracking -- track() dispatches conversion event
 7. disable_decision_event -- DISABLE_DECISION_EVENT suppresses impression
-8. flag_off          -- Paused ruleset returns default "off"
+8. rule_fallthrough  -- Audience mismatch -> fallthrough, no impression
+9. fr_skip_to_ab_rule -- FR audience miss -> lands in A/B test below
 
 REPORTING RESULTS:
 - Share your test output (PASS/FAIL) in the dedicated bug bash Teams channel
@@ -70,16 +71,17 @@ REPORTING RESULTS:
 """
 
 import argparse
+import math
 import sys
 import time
 import uuid
-import logging
 
 from optimizely import optimizely, logger as opt_logger
 from optimizely.config_manager import PollingConfigManager
 from optimizely.event_dispatcher import EventDispatcher as DefaultEventDispatcher
 from optimizely.decision.optimizely_decide_option import OptimizelyDecideOption
 from optimizely.helpers import enums as opt_enums
+from optimizely.lib import pymmh3 as mmh3
 
 
 # ============================================================
@@ -91,6 +93,8 @@ FLAG_KEY = "feature_rollout_flag"            # The flag key you created
 EVENT_KEY = "feature_rollout_event"                       # The event key for tracking
 DATAFILE_URL = "your_datafile_url_here"      # From project Settings -> Environments tab -> Development
 # Example DATAFILE_URL: https://cdn.optimizely.com/datafiles/<SDK_KEY>.json
+ROLLOUT_RULE_KEY = "fr_rule"    # Your Feature Rollout rule key
+AB_RULE_KEY = "ab_test_rule"                 # Your A/B test rule key (for test_fr_skip_to_ab_rule)
 
 
 # ============================================================
@@ -126,8 +130,35 @@ class CapturingEventDispatcher:
                             return True
         return False
 
+    def get_impression_metadata(self):
+        """Extract metadata dicts from all captured impression (decision) events.
+
+        Returns a list of metadata dicts, each with keys:
+        flag_key, rule_key, rule_type, variation_key, enabled.
+        """
+        results = []
+        for event in self.captured_events:
+            for visitor in event.params.get('visitors', []):
+                for snapshot in visitor.get('snapshots', []):
+                    for decision in snapshot.get('decisions', []):
+                        metadata = decision.get('metadata')
+                        if metadata:
+                            results.append(metadata)
+        return results
+
     def clear(self):
         self.captured_events.clear()
+
+
+def _generate_bucket_value(bucketing_id):
+    """Replicate SDK bucketing: MurmurHash3 -> bucket value in [0, 10000).
+
+    This mirrors optimizely.bucketer.Bucketer._generate_bucket_value().
+    """
+    hash_val = mmh3.hash(bucketing_id, 1) & 0xFFFFFFFF
+    ratio = float(hash_val) / math.pow(2, 32)
+    return math.floor(ratio * 10000)
+
 
 def create_client(event_dispatcher=None):
     """Initialize a fresh Optimizely client with debug logging."""
@@ -211,7 +242,8 @@ def print_report(lines):
 def test_basic_rollout():
     out = ["Test 1: basic_rollout", "Verifying: user gets rollout variation at 100% traffic"]
 
-    client = create_client()
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
     user_id = f"user_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id)
     decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
@@ -220,10 +252,28 @@ def test_basic_rollout():
     out.append(f"User: {user_id}")
     out.append(format_decision(decision))
 
-    passed = decision.enabled is True and decision.variation_key == "on"
+    # Check impression event metadata
+    metadata_list = dispatcher.get_impression_metadata()
+    print(metadata_list)
+    impression_ok = len(metadata_list) == 1
+    metadata_detail = ""
+    if impression_ok:
+        md = metadata_list[0]
+        out.append(f"Impression metadata: rule_key='{md.get('rule_key')}', variation_key='{md.get('variation_key')}'")
+        if md.get('variation_key') != "on":
+            impression_ok = False
+            metadata_detail += f"Impression variation_key: expected 'on', got '{md.get('variation_key')}'. "
+        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+            impression_ok = False
+            metadata_detail += f"Impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+    else:
+        metadata_detail += f"Expected 1 impression event, got {len(metadata_list)}. "
+
+    passed = decision.enabled is True and decision.variation_key == "on" and impression_ok
     detail = ""
-    if not passed:
-        detail = f"Expected enabled=True, variation_key='on'; got enabled={decision.enabled}, variation_key='{decision.variation_key}'"
+    if not (decision.enabled is True and decision.variation_key == "on"):
+        detail = f"Expected enabled=True, variation_key='on'; got enabled={decision.enabled}, variation_key='{decision.variation_key}'. "
+    detail += metadata_detail
     out.append(format_result("basic_rollout", passed, detail))
     print_report(out)
 
@@ -248,7 +298,8 @@ def test_basic_rollout():
 def test_everyone_else():
     out = ["Test 2: everyone_else", "Verifying: 0% traffic -> user gets baseline 'off' variation"]
 
-    client = create_client()
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
     user_id = f"user_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id)
     decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
@@ -257,10 +308,27 @@ def test_everyone_else():
     out.append(f"User: {user_id}")
     out.append(format_decision(decision))
 
-    passed = decision.variation_key == "off" and decision.enabled is False
+    # Check impression event metadata -- impression should still be dispatched
+    metadata_list = dispatcher.get_impression_metadata()
+    impression_ok = len(metadata_list) == 1
+    metadata_detail = ""
+    if impression_ok:
+        md = metadata_list[0]
+        out.append(f"Impression metadata: rule_key='{md.get('rule_key')}', variation_key='{md.get('variation_key')}'")
+        if md.get('variation_key') != "off":
+            impression_ok = False
+            metadata_detail += f"Impression variation_key: expected 'off', got '{md.get('variation_key')}'. "
+        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+            impression_ok = False
+            metadata_detail += f"Impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+    else:
+        metadata_detail += f"Expected 1 impression event (baseline), got {len(metadata_list)}. "
+
+    passed = decision.variation_key == "off" and decision.enabled is False and impression_ok
     detail = ""
-    if not passed:
-        detail = f"Expected variation_key='off', enabled=False; got variation_key='{decision.variation_key}', enabled={decision.enabled}"
+    if not (decision.variation_key == "off" and decision.enabled is False):
+        detail = f"Expected variation_key='off', enabled=False; got variation_key='{decision.variation_key}', enabled={decision.enabled}. "
+    detail += metadata_detail
     out.append(format_result("everyone_else", passed, detail))
     print_report(out)
 
@@ -281,10 +349,12 @@ def test_everyone_else():
 #   2. Tolerance: +/- 5% (i.e., 45%-55% for each variation)
 # ============================================================
 def test_traffic_split():
-    out = ["Test 3: traffic_split", "Verifying: 50% traffic split over 1000 users"]
+    out = ["Test 3: traffic_split", "Verifying: 50% traffic split over 1000 users + deterministic bucketing"]
 
-    client = create_client()
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
 
+    # --- Part 1: Statistical distribution check ---
     on_count = 0
     off_count = 0
     total = 1000
@@ -299,19 +369,72 @@ def test_traffic_split():
         elif decision.variation_key == "off":
             off_count += 1
 
-    client.close()
-
     on_pct = (on_count / total) * 100
     off_pct = (off_count / total) * 100
 
-    out.append(f"Results over {total} users:")
+    out.append(f"Part 1 - Statistical distribution over {total} users:")
     out.append(f"  'on'  count: {on_count} ({on_pct:.1f}%)")
     out.append(f"  'off' count: {off_count} ({off_pct:.1f}%)")
 
-    passed = 45.0 <= on_pct <= 55.0 and 45.0 <= off_pct <= 55.0
+    distribution_ok = 45.0 <= on_pct <= 55.0 and 45.0 <= off_pct <= 55.0
+
+    # --- Part 2: Deterministic bucketing with specific user IDs ---
+    # Get the experiment ID from the project config so we can compute bucket values
+    config = client.config_manager.get_config()
+    experiment = config.experiment_key_map.get(ROLLOUT_RULE_KEY)
+    bucketing_detail = ""
+
+    if experiment is None:
+        bucketing_detail += f"Could not find experiment with key '{ROLLOUT_RULE_KEY}' in config. Skipping bucketing check. "
+        bucketing_ok = False
+    else:
+        experiment_id = experiment.id
+        out.append(f"\nPart 2 - Deterministic bucketing (experiment_id={experiment_id}):")
+
+        # Test with specific user IDs -- compute expected variation via bucketing
+        test_user_ids = [
+            "bucketing_user_alpha",
+            "bucketing_user_beta",
+            "bucketing_user_gamma",
+            "bucketing_user_delta",
+            "bucketing_user_epsilon",
+            "bucketing_user_zeta",
+            "bucketing_user_eta",
+            "bucketing_user_theta",
+            "bucketing_user_iota",
+            "bucketing_user_kappa",
+        ]
+
+        bucketing_ok = True
+        dispatcher.clear()
+
+        for uid in test_user_ids:
+            # Compute expected bucket value using the same algorithm as the SDK
+            bucketing_key = f"{uid}{experiment_id}"
+            bucket_value = _generate_bucket_value(bucketing_key)
+
+            # For 50% traffic: bucket < 5000 -> "on", bucket >= 5000 -> "off"
+            expected_variation = "on" if bucket_value < 5000 else "off"
+
+            user = client.create_user_context(uid)
+            decision = user.decide(FLAG_KEY)
+
+            match = decision.variation_key == expected_variation
+            status = "OK" if match else "MISMATCH"
+            out.append(f"  {uid}: bucket={bucket_value}, expected='{expected_variation}', "
+                       f"got='{decision.variation_key}' [{status}]")
+
+            if not match:
+                bucketing_ok = False
+                bucketing_detail += f"User '{uid}' (bucket={bucket_value}): expected '{expected_variation}', got '{decision.variation_key}'. "
+
+    client.close()
+
+    passed = distribution_ok and bucketing_ok
     detail = ""
-    if not passed:
-        detail = f"Distribution outside 45-55% tolerance: on={on_pct:.1f}%, off={off_pct:.1f}%"
+    if not distribution_ok:
+        detail += f"Distribution outside 45-55% tolerance: on={on_pct:.1f}%, off={off_pct:.1f}%. "
+    detail += bucketing_detail
     out.append(format_result("traffic_split", passed, detail))
     print_report(out)
 
@@ -342,7 +465,8 @@ def test_traffic_split():
 def test_audience_targeting():
     out = ["Test 4: audience_targeting", "Verifying: audience match/miss behavior"]
 
-    client = create_client()
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
 
     us_user_id = f"us_user_{uuid.uuid4().hex[:8]}"
     us_user = client.create_user_context(us_user_id, {"country": "US"})
@@ -362,12 +486,28 @@ def test_audience_targeting():
     us_passed = us_decision.enabled is True and us_decision.variation_key == "on"
     uk_skipped_rollout = uk_decision.rule_key != us_decision.rule_key or uk_decision.variation_key != "on"
 
-    passed = us_passed and uk_skipped_rollout
+    # Check impression metadata for US user
+    metadata_list = dispatcher.get_impression_metadata()
+    impression_ok = True
+    metadata_detail = ""
+    # Find the impression for the US user (should have rule_key matching rollout)
+    us_impressions = [md for md in metadata_list if md.get('rule_key') == ROLLOUT_RULE_KEY]
+    if len(us_impressions) == 0:
+        impression_ok = False
+        metadata_detail += f"No impression event found with rule_key='{ROLLOUT_RULE_KEY}' for US user. "
+    elif us_impressions[0].get('variation_key') != "on":
+        impression_ok = False
+        metadata_detail += f"US user impression variation_key: expected 'on', got '{us_impressions[0].get('variation_key')}'. "
+    else:
+        out.append(f"US user impression: rule_key='{us_impressions[0].get('rule_key')}', variation_key='{us_impressions[0].get('variation_key')}'")
+
+    passed = us_passed and uk_skipped_rollout and impression_ok
     detail = ""
     if not us_passed:
         detail += f"US user: expected on/enabled=True, got {us_decision.variation_key}/enabled={us_decision.enabled}. "
     if not uk_skipped_rollout:
-        detail += f"UK user: expected to skip rollout rule, but got same rule_key='{uk_decision.rule_key}' with variation='on'."
+        detail += f"UK user: expected to skip rollout rule, but got same rule_key='{uk_decision.rule_key}' with variation='on'. "
+    detail += metadata_detail
     out.append(format_result("audience_targeting", passed, detail))
     print_report(out)
 
@@ -393,7 +533,8 @@ def test_audience_targeting():
 def test_forced_variation():
     out = ["Test 5: forced_variation", "Verifying: allowlist overrides normal bucketing"]
 
-    client = create_client()
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
 
     forced_user = client.create_user_context("forced_user_123")
     forced_decision = forced_user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
@@ -412,12 +553,26 @@ def test_forced_variation():
     forced_passed = forced_decision.variation_key == "on" and forced_decision.enabled is True
     regular_passed = regular_decision.variation_key == "off" and regular_decision.enabled is False
 
-    passed = forced_passed and regular_passed
+    # Check impression metadata for forced user
+    metadata_list = dispatcher.get_impression_metadata()
+    impression_ok = True
+    metadata_detail = ""
+    forced_impressions = [md for md in metadata_list
+                          if md.get('variation_key') == "on" and md.get('rule_key') == ROLLOUT_RULE_KEY]
+    if len(forced_impressions) == 0:
+        impression_ok = False
+        metadata_detail += f"No impression with variation_key='on' and rule_key='{ROLLOUT_RULE_KEY}' found for forced user. "
+    else:
+        out.append(f"Forced user impression: rule_key='{forced_impressions[0].get('rule_key')}', "
+                   f"variation_key='{forced_impressions[0].get('variation_key')}'")
+
+    passed = forced_passed and regular_passed and impression_ok
     detail = ""
     if not forced_passed:
         detail += f"Forced user: expected 'on'/enabled=True, got '{forced_decision.variation_key}'/enabled={forced_decision.enabled}. "
     if not regular_passed:
-        detail += f"Regular user: expected 'off'/enabled=False, got '{regular_decision.variation_key}'/enabled={regular_decision.enabled}."
+        detail += f"Regular user: expected 'off'/enabled=False, got '{regular_decision.variation_key}'/enabled={regular_decision.enabled}. "
+    detail += metadata_detail
     out.append(format_result("forced_variation", passed, detail))
     print_report(out)
 
@@ -448,6 +603,23 @@ def test_conversion_tracking():
     user = client.create_user_context(user_id)
     decision = user.decide(FLAG_KEY)
 
+    # Check impression metadata from decide() before clearing
+    metadata_list = dispatcher.get_impression_metadata()
+    impression_ok = True
+    metadata_detail = ""
+    if len(metadata_list) == 1:
+        md = metadata_list[0]
+        out.append(f"Impression metadata: rule_key='{md.get('rule_key')}', variation_key='{md.get('variation_key')}'")
+        if md.get('variation_key') != "on":
+            impression_ok = False
+            metadata_detail += f"Impression variation_key: expected 'on', got '{md.get('variation_key')}'. "
+        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+            impression_ok = False
+            metadata_detail += f"Impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+    else:
+        impression_ok = False
+        metadata_detail += f"Expected 1 impression from decide(), got {len(metadata_list)}. "
+
     # Clear events from decide() so we only check track() below
     dispatcher.clear()
     user.track_event(EVENT_KEY)
@@ -461,12 +633,13 @@ def test_conversion_tracking():
     out.append(f"Conversion event dispatched: {conversion_dispatched}")
 
     decision_ok = decision.enabled is True and decision.variation_key == "on"
-    passed = decision_ok and conversion_dispatched
+    passed = decision_ok and conversion_dispatched and impression_ok
     detail = ""
     if not decision_ok:
         detail = f"User did not qualify for rollout (expected on/True, got {decision.variation_key}/{decision.enabled}). "
     if not conversion_dispatched:
-        detail += f"Conversion event for '{EVENT_KEY}' was NOT dispatched -- expected it to be sent."
+        detail += f"Conversion event for '{EVENT_KEY}' was NOT dispatched -- expected it to be sent. "
+    detail += metadata_detail
     out.append(format_result("conversion_tracking", passed, detail))
     print_report(out)
 
@@ -521,6 +694,23 @@ def test_disable_decision_event():
     out.append(format_decision(decision_normal, label="Normal decision"))
     out.append(f"Impression dispatched: {impression_after_normal} (expected: True)")
 
+    # Check impression metadata for the normal (non-suppressed) call
+    metadata_list = dispatcher2.get_impression_metadata()
+    metadata_ok = True
+    metadata_detail = ""
+    if len(metadata_list) == 1:
+        md = metadata_list[0]
+        out.append(f"Normal call impression metadata: rule_key='{md.get('rule_key')}', variation_key='{md.get('variation_key')}'")
+        if md.get('variation_key') != "on":
+            metadata_ok = False
+            metadata_detail += f"Normal call impression variation_key: expected 'on', got '{md.get('variation_key')}'. "
+        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+            metadata_ok = False
+            metadata_detail += f"Normal call impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+    elif impression_after_normal:
+        metadata_ok = False
+        metadata_detail += f"Expected 1 impression metadata, got {len(metadata_list)}. "
+
     decisions_ok = (
         decision_suppressed.enabled is True
         and decision_suppressed.variation_key == "on"
@@ -530,7 +720,7 @@ def test_disable_decision_event():
     suppression_ok = not impression_after_suppressed
     normal_ok = impression_after_normal
 
-    passed = decisions_ok and suppression_ok and normal_ok
+    passed = decisions_ok and suppression_ok and normal_ok and metadata_ok
     detail = ""
     if not decisions_ok:
         detail += "One or both decisions returned unexpected values. "
@@ -538,6 +728,7 @@ def test_disable_decision_event():
         detail += "DISABLE_DECISION_EVENT did NOT suppress the impression -- event was still dispatched. "
     if not normal_ok:
         detail += "Normal decide() did NOT dispatch an impression -- expected one. "
+    detail += metadata_detail
     out.append(format_result("disable_decision_event", passed, detail))
     print_report(out)
 
@@ -578,14 +769,15 @@ def test_disable_decision_event():
 #   3. decide() returns enabled=True, variation_key="on"
 #   4. rule_key is NOT the Feature Rollout rule key -- it should
 #      be the Targeted Delivery's rule key
+#   5. NO impression event is dispatched (Targeted Deliveries
+#      do not dispatch impression events)
 # ============================================================
-ROLLOUT_RULE_KEY = "feature_rollout_rule"  # Your Feature Rollout rule key
-
 def test_rule_fallthrough():
     out = ["Test 8: rule_fallthrough",
-           "Verifying: audience mismatch causes fallthrough to next rule"]
+           "Verifying: audience mismatch causes fallthrough to next rule, no impression"]
 
-    client = create_client()
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
 
     # UK user should NOT match the "US Users" audience on the Feature Rollout,
     # causing them to skip it and fall through to the Targeted Delivery
@@ -600,13 +792,101 @@ def test_rule_fallthrough():
     got_on = decision.enabled is True and decision.variation_key == "on"
     skipped_rollout = decision.rule_key != ROLLOUT_RULE_KEY
 
-    passed = got_on and skipped_rollout
+    # Targeted Deliveries should NOT dispatch impression events
+    no_impression = not dispatcher.has_impression()
+    out.append(f"Impression dispatched: {dispatcher.has_impression()} (expected: False)")
+
+    passed = got_on and skipped_rollout and no_impression
     detail = ""
     if not got_on:
         detail += f"Expected enabled=True, variation_key='on'; got enabled={decision.enabled}, variation_key='{decision.variation_key}'. Is the Targeted Delivery variation set to 'On'? "
     if not skipped_rollout:
-        detail += f"User was bucketed into the Feature Rollout rule (rule_key='{decision.rule_key}') instead of falling through. Is the rollout audience set to 'US Users'?"
+        detail += f"User was bucketed into the Feature Rollout rule (rule_key='{decision.rule_key}') instead of falling through. Is the rollout audience set to 'US Users'? "
+    if not no_impression:
+        detail += "Impression event was dispatched but should NOT be for a Targeted Delivery fallthrough. "
     out.append(format_result("rule_fallthrough", passed, detail))
+    print_report(out)
+
+
+# ============================================================
+# TEST 9: fr_skip_to_ab_rule
+# ============================================================
+# When a user does not match the Feature Rollout rule's audience
+# but DOES match the audience of an A/B test rule placed below it,
+# the user should skip the FR and be bucketed into the A/B test.
+#
+# UI SETUP:
+#   1. Keep the Feature Rollout rule with Audience = "US Users",
+#      Traffic = 100%, Variation = "On"
+#   2. Add an A/B Test rule BELOW the Feature Rollout (and below
+#      any Targeted Delivery if present):
+#      - Click "Add Rule" -> "A/B Test"
+#      - Name / Key: match AB_RULE_KEY in config above
+#      - Traffic Allocation: 100%
+#      - Audience: "Everyone"
+#      - Variations: use default "on" and "off"
+#      - Metrics: add your event ("feature_rollout_event")
+#      - Save the rule
+#   3. Make sure all rules and the ruleset are Running
+#   4. Wait ~1 min for datafile to update
+#
+# Expected:
+#   1. User with country="UK" skips the Feature Rollout rule
+#   2. User is bucketed into the A/B test rule
+#   3. decide() returns rule_key matching AB_RULE_KEY
+#   4. An impression event IS dispatched (A/B tests send impressions)
+#   5. Impression metadata has the A/B rule's rule_key and the
+#      correct variation_key
+# ============================================================
+def test_fr_skip_to_ab_rule():
+    out = ["Test 9: fr_skip_to_ab_rule",
+           "Verifying: user skips FR (audience mismatch), falls into A/B test"]
+
+    dispatcher = CapturingEventDispatcher()
+    client = create_client(event_dispatcher=dispatcher)
+
+    # UK user should NOT match "US Users" audience on the FR rule,
+    # skip it, and land in the A/B test rule below
+    user_id = f"ab_fallthrough_{uuid.uuid4().hex[:8]}"
+    user = client.create_user_context(user_id, {"country": "UK"})
+    decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    client.close()
+
+    out.append(f"User: {user_id} (country=UK)")
+    out.append(format_decision(decision))
+
+    # Decision should come from the AB rule, not the FR rule
+    skipped_rollout = decision.rule_key != ROLLOUT_RULE_KEY
+    in_ab_rule = decision.rule_key == AB_RULE_KEY
+
+    # Impression event should be dispatched for A/B test
+    has_impression = dispatcher.has_impression()
+    metadata_list = dispatcher.get_impression_metadata()
+
+    impression_ok = True
+    metadata_detail = ""
+    if not has_impression:
+        impression_ok = False
+        metadata_detail += "No impression event dispatched -- A/B tests should dispatch impressions. "
+    elif len(metadata_list) >= 1:
+        md = metadata_list[0]
+        out.append(f"Impression metadata: rule_key='{md.get('rule_key')}', variation_key='{md.get('variation_key')}'")
+        if md.get('rule_key') != AB_RULE_KEY:
+            impression_ok = False
+            metadata_detail += f"Impression rule_key: expected '{AB_RULE_KEY}', got '{md.get('rule_key')}'. "
+        if md.get('variation_key') != decision.variation_key:
+            impression_ok = False
+            metadata_detail += (f"Impression variation_key mismatch: decision says '{decision.variation_key}', "
+                                f"impression says '{md.get('variation_key')}'. ")
+
+    passed = skipped_rollout and in_ab_rule and impression_ok
+    detail = ""
+    if not skipped_rollout:
+        detail += f"User was bucketed into the Feature Rollout rule (rule_key='{decision.rule_key}') instead of skipping. "
+    if not in_ab_rule:
+        detail += f"Expected rule_key='{AB_RULE_KEY}', got '{decision.rule_key}'. "
+    detail += metadata_detail
+    out.append(format_result("fr_skip_to_ab_rule", passed, detail))
     print_report(out)
 
 
@@ -618,11 +898,12 @@ TESTS = {
     # "basic_rollout": test_basic_rollout,
     # "everyone_else": test_everyone_else,
     # "traffic_split": test_traffic_split,
-    # "audience_targeting": test_audience_targeting,
+    "audience_targeting": test_audience_targeting,
     # "forced_variation": test_forced_variation,
-    "conversion_tracking": test_conversion_tracking,
+    # "conversion_tracking": test_conversion_tracking,
     # "disable_decision_event": test_disable_decision_event,
     # "rule_fallthrough": test_rule_fallthrough,
+    # "fr_skip_to_ab_rule": test_fr_skip_to_ab_rule,
 }
 
 
