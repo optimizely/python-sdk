@@ -12,30 +12,39 @@ that the Python SDK correctly evaluates Feature Rollout rules, dispatches
 impression/conversion events, and handles edge cases.
 
 OPTIMIZELY PROJECT SETUP:
+
+Each test uses its own flag, so all flags are configured once upfront
+and no UI changes are needed between test runs.
+
+Prerequisites:
 1. Create or reuse a Feature Experimentation project.
 2. Go to left sidebar -> Events -> "Create New Event..."
-   - Create an event (e.g., Name: "feature_rollout_event", Key: "feature_rollout_event").
+   - Name/Key: "feature_rollout_event"
    - IMPORTANT: Events must be created BEFORE adding rules with metrics.
-3. Go to left sidebar -> Flags -> "Create New Flag..."
-   - Name: "feature_rollout_test", Key: "feature_rollout_test"
-   - This creates default variations: "on" (featureEnabled: true) and
-     "off" (featureEnabled: false).
-4. On the flag's Ruleset page, click "Add Rule" -> "Feature Rollout".
-   - Name: "fr_rule", Key: "fr_rule"
-   - Variation: Change dropdown from "Off" to "On"
-     (IMPORTANT: defaults to "Off" -- you must change it!)
-   - Audience: "Everyone" (default)
-   - Traffic Allocation: 100%
-   - Metrics: Click "+ Add Metric" -> select your event ("feature_rollout_event")
-   - Click "Save"
-5. Activate the rule (two-step process):
-   a. Click "Run" on the rule -> confirm the "Ready to Run" dialog -> Ok
-   b. Click "Run" on the ruleset (next to "Development -- Draft")
-   Both must show "Running" status.
-6. Find your SDK Key and Datafile URL:
+3. Go to left sidebar -> Audiences -> Create a custom audience:
+   - Name: "US Users"
+   - Condition: custom attribute "country" equals "US"
+4. Find your SDK Key and Datafile URL:
    - Go to left sidebar -> Settings (project-level, NOT flag Settings)
    - Environments tab -> Development row
    - Copy the SDK Key and Datafile URL
+
+Create the following 7 flags (left sidebar -> Flags -> "Create New Flag...").
+For each flag, add a Feature Rollout rule with the settings shown, add
+the "feature_rollout_event" metric, save, and activate (Run rule + Run ruleset).
+IMPORTANT: Variation defaults to "Off" -- always change it to "On".
+
+  Flag                  | Rule Key                  | Traffic | Audience  | Extra
+  ----------------------|---------------------------|---------|-----------|------
+  fr_basic_rollout      | fr_basic_rollout_rule     | 100%    | Everyone  | -- (also used by conversion_tracking, disable_decision_event)
+  fr_everyone_else      | fr_everyone_else_rule     | 0%      | Everyone  | --
+  fr_traffic_split      | fr_traffic_split_rule     | 50%     | Everyone  | --
+  fr_audience_targeting | fr_audience_targeting_rule| 100%    | US Users  | --
+  fr_forced_variation   | fr_forced_variation_rule  | 0%      | Everyone  | Allowlist: "forced_user_123" -> On
+  fr_rule_fallthrough   | fr_rule_fallthrough_rule  | 100%    | US Users  | + Targeted Delivery "fr_rule_fallthrough_td" below (variation=On, audience=Everyone)
+  fr_skip_to_ab         | fr_skip_to_ab_rule        | 100%    | US Users  | + A/B Test "fr_skip_to_ab_ab_rule" below (100% traffic, audience=Everyone, metric=feature_rollout_event)
+
+After creating all flags, wait ~1 min for the datafile to update on CDN.
 
 ENVIRONMENT: Development
 
@@ -47,11 +56,10 @@ SDK SETUP:
 5. Fill in the CONFIGURATION section below with your Development values
 
 RUNNING TESTS:
-- Run one test at a time: python test_feature_rollout.py --test=basic_rollout
-- To see available tests: python test_feature_rollout.py --test=help
-- Each test has a UI SETUP comment -- read it and make any required
-  UI changes BEFORE running that test
-- After UI changes, wait ~1 min for the datafile to update on CDN
+- Run all tests:  python test_feature_rollout.py
+- Run one test:   python test_feature_rollout.py --test=basic_rollout
+- List tests:     python test_feature_rollout.py --test=help
+- All flags should be configured before running any test (see table above)
 
 TEST CASES:
 1. basic_rollout     -- Happy path: user gets rollout variation + impression
@@ -71,6 +79,7 @@ REPORTING RESULTS:
 """
 
 import argparse
+from dataclasses import dataclass
 import math
 import sys
 import time
@@ -89,12 +98,62 @@ from optimizely.lib import pymmh3 as mmh3
 # ============================================================
 # Environment: Development
 SDK_KEY = "your_sdk_key_here"               # From project Settings -> Environments tab -> Development
-FLAG_KEY = "feature_rollout_flag"            # The flag key you created
-EVENT_KEY = "feature_rollout_event"                       # The event key for tracking
-DATAFILE_URL = "your_datafile_url_here"      # From project Settings -> Environments tab -> Development
+DATAFILE_URL = "your_datafile_url_here"       # From project Settings -> Environments tab -> Development
 # Example DATAFILE_URL: https://cdn.optimizely.com/datafiles/<SDK_KEY>.json
-ROLLOUT_RULE_KEY = "fr_rule"    # Your Feature Rollout rule key
-AB_RULE_KEY = "ab_test_rule"                 # Your A/B test rule key (for test_fr_skip_to_ab_rule)
+EVENT_KEY = "feature_rollout_event"          # The event key for tracking (shared across all flags)
+
+
+@dataclass
+class TestConfig:
+    """Per-test flag and rule key configuration."""
+    flag_key: str
+    fr_rule_key: str
+    ab_rule_key: str = ""
+    td_rule_key: str = ""
+
+
+# Each test gets its own flag so all flags can be pre-configured once
+# in the Optimizely UI, eliminating UI changes between test runs.
+TEST_CONFIGS = {
+    "basic_rollout": TestConfig(
+        flag_key="fr_basic_rollout",
+        fr_rule_key="fr_basic_rollout_rule",
+    ),  # shared flag with conversion_tracking, disable_decision_event
+    "everyone_else": TestConfig(
+        flag_key="fr_everyone_else",
+        fr_rule_key="fr_everyone_else_rule",
+    ),
+    "traffic_split": TestConfig(
+        flag_key="fr_traffic_split",
+        fr_rule_key="fr_traffic_split_rule",
+    ),
+    "audience_targeting": TestConfig(
+        flag_key="fr_audience_targeting",
+        fr_rule_key="fr_audience_targeting_rule",
+    ),
+    "forced_variation": TestConfig(
+        flag_key="fr_forced_variation",
+        fr_rule_key="fr_forced_variation_rule",
+    ),
+    "conversion_tracking": TestConfig(
+        flag_key="fr_basic_rollout",
+        fr_rule_key="fr_basic_rollout_rule",
+    ),  # shares flag with basic_rollout
+    "disable_decision_event": TestConfig(
+        flag_key="fr_basic_rollout",
+        fr_rule_key="fr_basic_rollout_rule",
+    ),  # shares flag with basic_rollout
+    "rule_fallthrough": TestConfig(
+        flag_key="fr_rule_fallthrough",
+        fr_rule_key="fr_rule_fallthrough_rule",
+        td_rule_key="fr_rule_fallthrough_td",
+    ),
+    "fr_skip_to_ab_rule": TestConfig(
+        flag_key="fr_skip_to_ab",
+        fr_rule_key="fr_skip_to_ab_rule",
+        ab_rule_key="fr_skip_to_ab_ab_rule",
+    ),
+}
 
 
 # ============================================================
@@ -229,9 +288,9 @@ def print_report(lines):
 # Happy path: user qualifies for the rollout and receives the
 # rollout variation. Impression event is dispatched.
 #
-# UI SETUP: None (use the default setup from project setup above --
-#   Feature Rollout rule at 100% traffic to "on", audience=Everyone,
-#   rule and ruleset both Running)
+# UI SETUP: Flag "fr_basic_rollout" should already be configured:
+#   Feature Rollout rule "fr_basic_rollout_rule" at 100% traffic,
+#   variation=On, audience=Everyone, rule and ruleset both Running.
 #
 # Expected:
 #   1. decide() returns variation_key="on", enabled=True
@@ -239,14 +298,14 @@ def print_report(lines):
 #   3. Debug logs show an impression event dispatched with
 #      rule_type="feature-test"
 # ============================================================
-def test_basic_rollout():
+def test_basic_rollout(cfg):
     out = ["Test 1: basic_rollout", "Verifying: user gets rollout variation at 100% traffic"]
 
     dispatcher = CapturingEventDispatcher()
     client = create_client(event_dispatcher=dispatcher)
     user_id = f"user_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id)
-    decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    decision = user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
     client.close()
 
     out.append(f"User: {user_id}")
@@ -254,7 +313,6 @@ def test_basic_rollout():
 
     # Check impression event metadata
     metadata_list = dispatcher.get_impression_metadata()
-    print(metadata_list)
     impression_ok = len(metadata_list) == 1
     metadata_detail = ""
     if impression_ok:
@@ -263,9 +321,9 @@ def test_basic_rollout():
         if md.get('variation_key') != "on":
             impression_ok = False
             metadata_detail += f"Impression variation_key: expected 'on', got '{md.get('variation_key')}'. "
-        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+        if md.get('rule_key') != cfg.fr_rule_key:
             impression_ok = False
-            metadata_detail += f"Impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+            metadata_detail += f"Impression rule_key: expected '{cfg.fr_rule_key}', got '{md.get('rule_key')}'. "
     else:
         metadata_detail += f"Expected 1 impression event, got {len(metadata_list)}. "
 
@@ -276,6 +334,7 @@ def test_basic_rollout():
     detail += metadata_detail
     out.append(format_result("basic_rollout", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -284,25 +343,23 @@ def test_basic_rollout():
 # User is in the audience but falls outside traffic distribution,
 # so they receive the "everyone else" (baseline) variation.
 #
-# UI SETUP: Change the Feature Rollout's traffic allocation to 0%.
-#   - On the flag's Ruleset page, edit the rollout rule
-#   - Set traffic allocation slider to 0%
-#   - Save the rule
-#   - Wait ~1 min for datafile to update
+# UI SETUP: Flag "fr_everyone_else" should already be configured:
+#   Feature Rollout rule "fr_everyone_else_rule" at 0% traffic,
+#   variation=On, audience=Everyone, rule and ruleset both Running.
 #
 # Expected:
 #   1. decide() returns variation_key="off", enabled=False
 #   2. An impression event is STILL dispatched (user is in the
 #      experiment, just assigned to the baseline)
 # ============================================================
-def test_everyone_else():
+def test_everyone_else(cfg):
     out = ["Test 2: everyone_else", "Verifying: 0% traffic -> user gets baseline 'off' variation"]
 
     dispatcher = CapturingEventDispatcher()
     client = create_client(event_dispatcher=dispatcher)
     user_id = f"user_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id)
-    decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    decision = user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
     client.close()
 
     out.append(f"User: {user_id}")
@@ -318,9 +375,9 @@ def test_everyone_else():
         if md.get('variation_key') != "off":
             impression_ok = False
             metadata_detail += f"Impression variation_key: expected 'off', got '{md.get('variation_key')}'. "
-        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+        if md.get('rule_key') != cfg.fr_rule_key:
             impression_ok = False
-            metadata_detail += f"Impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+            metadata_detail += f"Impression rule_key: expected '{cfg.fr_rule_key}', got '{md.get('rule_key')}'. "
     else:
         metadata_detail += f"Expected 1 impression event (baseline), got {len(metadata_list)}. "
 
@@ -331,6 +388,7 @@ def test_everyone_else():
     detail += metadata_detail
     out.append(format_result("everyone_else", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -339,16 +397,15 @@ def test_everyone_else():
 # Verify correct traffic distribution between the rollout
 # variation and the "everyone else" baseline.
 #
-# UI SETUP: Set the Feature Rollout traffic allocation to 50%.
-#   - Edit the rollout rule, set traffic slider to 50%
-#   - Save the rule
-#   - Wait ~1 min for datafile to update
+# UI SETUP: Flag "fr_traffic_split" should already be configured:
+#   Feature Rollout rule "fr_traffic_split_rule" at 50% traffic,
+#   variation=On, audience=Everyone, rule and ruleset both Running.
 #
 # Expected:
 #   1. Over 1000 users, approximately 50% get "on" and 50% get "off"
 #   2. Tolerance: +/- 5% (i.e., 45%-55% for each variation)
 # ============================================================
-def test_traffic_split():
+def test_traffic_split(cfg):
     out = ["Test 3: traffic_split", "Verifying: 50% traffic split over 1000 users + deterministic bucketing"]
 
     dispatcher = CapturingEventDispatcher()
@@ -362,7 +419,7 @@ def test_traffic_split():
     for i in range(total):
         user_id = f"split_user_{i}_{uuid.uuid4().hex[:6]}"
         user = client.create_user_context(user_id)
-        decision = user.decide(FLAG_KEY)
+        decision = user.decide(cfg.flag_key)
 
         if decision.variation_key == "on":
             on_count += 1
@@ -381,11 +438,11 @@ def test_traffic_split():
     # --- Part 2: Deterministic bucketing with specific user IDs ---
     # Get the experiment ID from the project config so we can compute bucket values
     config = client.config_manager.get_config()
-    experiment = config.experiment_key_map.get(ROLLOUT_RULE_KEY)
+    experiment = config.experiment_key_map.get(cfg.fr_rule_key)
     bucketing_detail = ""
 
     if experiment is None:
-        bucketing_detail += f"Could not find experiment with key '{ROLLOUT_RULE_KEY}' in config. Skipping bucketing check. "
+        bucketing_detail += f"Could not find experiment with key '{cfg.fr_rule_key}' in config. Skipping bucketing check. "
         bucketing_ok = False
     else:
         experiment_id = experiment.id
@@ -417,7 +474,7 @@ def test_traffic_split():
             expected_variation = "on" if bucket_value < 5000 else "off"
 
             user = client.create_user_context(uid)
-            decision = user.decide(FLAG_KEY)
+            decision = user.decide(cfg.flag_key)
 
             match = decision.variation_key == expected_variation
             status = "OK" if match else "MISMATCH"
@@ -437,6 +494,7 @@ def test_traffic_split():
     detail += bucketing_detail
     out.append(format_result("traffic_split", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -446,15 +504,10 @@ def test_traffic_split():
 # Users not matching skip the rule and fall through to the
 # next rule or get the default.
 #
-# UI SETUP:
-#   1. Create a custom audience (left sidebar -> Audiences):
-#      - Name: "US Users"
-#      - Condition: custom attribute "country" equals "US"
-#   2. Edit the Feature Rollout rule:
-#      - Change Audience from "Everyone" to "US Users"
-#      - Set traffic allocation back to 100%
-#      - Save the rule
-#   3. Wait ~1 min for datafile to update
+# UI SETUP: Flag "fr_audience_targeting" should already be configured:
+#   Feature Rollout rule "fr_audience_targeting_rule" at 100% traffic,
+#   variation=On, audience="US Users" (country equals "US"),
+#   rule and ruleset both Running.
 #
 # Expected:
 #   1. User with country="US" gets the rollout variation ("on")
@@ -462,7 +515,7 @@ def test_traffic_split():
 #      decision from this rollout rule -- they skip it and
 #      fall through to the next rule or targeted delivery
 # ============================================================
-def test_audience_targeting():
+def test_audience_targeting(cfg):
     out = ["Test 4: audience_targeting", "Verifying: audience match/miss behavior"]
 
     dispatcher = CapturingEventDispatcher()
@@ -470,11 +523,11 @@ def test_audience_targeting():
 
     us_user_id = f"us_user_{uuid.uuid4().hex[:8]}"
     us_user = client.create_user_context(us_user_id, {"country": "US"})
-    us_decision = us_user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    us_decision = us_user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
 
     uk_user_id = f"uk_user_{uuid.uuid4().hex[:8]}"
     uk_user = client.create_user_context(uk_user_id, {"country": "UK"})
-    uk_decision = uk_user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    uk_decision = uk_user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
 
     client.close()
 
@@ -491,10 +544,10 @@ def test_audience_targeting():
     impression_ok = True
     metadata_detail = ""
     # Find the impression for the US user (should have rule_key matching rollout)
-    us_impressions = [md for md in metadata_list if md.get('rule_key') == ROLLOUT_RULE_KEY]
+    us_impressions = [md for md in metadata_list if md.get('rule_key') == cfg.fr_rule_key]
     if len(us_impressions) == 0:
         impression_ok = False
-        metadata_detail += f"No impression event found with rule_key='{ROLLOUT_RULE_KEY}' for US user. "
+        metadata_detail += f"No impression event found with rule_key='{cfg.fr_rule_key}' for US user. "
     elif us_impressions[0].get('variation_key') != "on":
         impression_ok = False
         metadata_detail += f"US user impression variation_key: expected 'on', got '{us_impressions[0].get('variation_key')}'. "
@@ -510,6 +563,7 @@ def test_audience_targeting():
     detail += metadata_detail
     out.append(format_result("audience_targeting", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -517,31 +571,27 @@ def test_audience_targeting():
 # ============================================================
 # Allowlist (forced variations) overrides normal bucketing.
 #
-# UI SETUP:
-#   1. Edit the Feature Rollout rule
-#   2. Change Audience back to "Everyone"
-#   3. Set traffic allocation to 0% (so nobody normally gets "on")
-#   4. In the Allowlist section, add user ID "forced_user_123"
-#      and force them into the "on" variation
-#   5. Save the rule
-#   6. Wait ~1 min for datafile to update
+# UI SETUP: Flag "fr_forced_variation" should already be configured:
+#   Feature Rollout rule "fr_forced_variation_rule" at 0% traffic,
+#   variation=On, audience=Everyone, Allowlist: "forced_user_123" -> On,
+#   rule and ruleset both Running.
 #
 # Expected:
 #   1. User "forced_user_123" gets variation "on" despite 0% traffic
 #   2. Any other user gets "off" (0% traffic, no allowlist entry)
 # ============================================================
-def test_forced_variation():
+def test_forced_variation(cfg):
     out = ["Test 5: forced_variation", "Verifying: allowlist overrides normal bucketing"]
 
     dispatcher = CapturingEventDispatcher()
     client = create_client(event_dispatcher=dispatcher)
 
     forced_user = client.create_user_context("forced_user_123")
-    forced_decision = forced_user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    forced_decision = forced_user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
 
     regular_user_id = f"regular_{uuid.uuid4().hex[:8]}"
     regular_user = client.create_user_context(regular_user_id)
-    regular_decision = regular_user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    regular_decision = regular_user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
 
     client.close()
 
@@ -558,10 +608,10 @@ def test_forced_variation():
     impression_ok = True
     metadata_detail = ""
     forced_impressions = [md for md in metadata_list
-                          if md.get('variation_key') == "on" and md.get('rule_key') == ROLLOUT_RULE_KEY]
+                          if md.get('variation_key') == "on" and md.get('rule_key') == cfg.fr_rule_key]
     if len(forced_impressions) == 0:
         impression_ok = False
-        metadata_detail += f"No impression with variation_key='on' and rule_key='{ROLLOUT_RULE_KEY}' found for forced user. "
+        metadata_detail += f"No impression with variation_key='on' and rule_key='{cfg.fr_rule_key}' found for forced user. "
     else:
         out.append(f"Forced user impression: rule_key='{forced_impressions[0].get('rule_key')}', "
                    f"variation_key='{forced_impressions[0].get('variation_key')}'")
@@ -575,6 +625,7 @@ def test_forced_variation():
     detail += metadata_detail
     out.append(format_result("forced_variation", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -582,28 +633,28 @@ def test_forced_variation():
 # ============================================================
 # track() dispatches a conversion event for feature rollout users.
 #
-# UI SETUP: Reset to the basic setup:
-#   1. Remove any allowlist entries
-#   2. Set Audience back to "Everyone"
-#   3. Set traffic allocation to 100%
-#   4. Save the rule
-#   5. Wait ~1 min for datafile to update
+# UI SETUP: Uses shared flag "fr_basic_rollout" (same as basic_rollout):
+#   Feature Rollout rule "fr_basic_rollout_rule" at 100% traffic,
+#   variation=On, audience=Everyone, rule and ruleset both Running.
 #
 # Expected:
 #   1. decide() returns "on" (user qualifies)
 #   2. track() call dispatches a conversion event
 #   3. Debug logs show the conversion event with the event key
 # ============================================================
-def test_conversion_tracking():
+def test_conversion_tracking(cfg):
     out = ["Test 6: conversion_tracking", "Verifying: track() dispatches conversion event"]
 
     dispatcher = CapturingEventDispatcher()
     client = create_client(event_dispatcher=dispatcher)
     user_id = f"track_user_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id)
-    decision = user.decide(FLAG_KEY)
+    decision = user.decide(cfg.flag_key)
+    user.track_event(EVENT_KEY)
+    client.close()  # flush all pending events
 
-    # Check impression metadata from decide() before clearing
+    # Check all events after close (event processor is async)
+    conversion_dispatched = dispatcher.has_conversion(EVENT_KEY)
     metadata_list = dispatcher.get_impression_metadata()
     impression_ok = True
     metadata_detail = ""
@@ -613,19 +664,12 @@ def test_conversion_tracking():
         if md.get('variation_key') != "on":
             impression_ok = False
             metadata_detail += f"Impression variation_key: expected 'on', got '{md.get('variation_key')}'. "
-        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+        if md.get('rule_key') != cfg.fr_rule_key:
             impression_ok = False
-            metadata_detail += f"Impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+            metadata_detail += f"Impression rule_key: expected '{cfg.fr_rule_key}', got '{md.get('rule_key')}'. "
     else:
         impression_ok = False
         metadata_detail += f"Expected 1 impression from decide(), got {len(metadata_list)}. "
-
-    # Clear events from decide() so we only check track() below
-    dispatcher.clear()
-    user.track_event(EVENT_KEY)
-    client.close()
-
-    conversion_dispatched = dispatcher.has_conversion(EVENT_KEY)
 
     out.append(f"User: {user_id}")
     out.append(format_decision(decision))
@@ -642,6 +686,7 @@ def test_conversion_tracking():
     detail += metadata_detail
     out.append(format_result("conversion_tracking", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -650,8 +695,9 @@ def test_conversion_tracking():
 # DISABLE_DECISION_EVENT decide option suppresses the impression
 # event while still returning the correct decision.
 #
-# UI SETUP: None (use basic setup from test 6 -- 100% traffic,
-#   audience=Everyone, rule and ruleset Running)
+# UI SETUP: Uses shared flag "fr_basic_rollout" (same as basic_rollout):
+#   Feature Rollout rule "fr_basic_rollout_rule" at 100% traffic,
+#   variation=On, audience=Everyone, rule and ruleset both Running.
 #
 # Expected:
 #   1. decide() with DISABLE_DECISION_EVENT returns the correct
@@ -660,7 +706,7 @@ def test_conversion_tracking():
 #   3. Compare with a normal decide() call which SHOULD show
 #      the impression event
 # ============================================================
-def test_disable_decision_event():
+def test_disable_decision_event(cfg):
     out = ["Test 7: disable_decision_event", "Verifying: DISABLE_DECISION_EVENT suppresses impression"]
 
     # Call 1: decide() WITH DISABLE_DECISION_EVENT — should NOT dispatch impression
@@ -669,7 +715,7 @@ def test_disable_decision_event():
     user_id = f"nodecision_{uuid.uuid4().hex[:8]}"
     user = client1.create_user_context(user_id)
     decision_suppressed = user.decide(
-        FLAG_KEY,
+        cfg.flag_key,
         [OptimizelyDecideOption.DISABLE_DECISION_EVENT, OptimizelyDecideOption.INCLUDE_REASONS]
     )
     client1.close()
@@ -680,7 +726,7 @@ def test_disable_decision_event():
     client2 = create_client(event_dispatcher=dispatcher2)
     user2_id = f"withdecision_{uuid.uuid4().hex[:8]}"
     user2 = client2.create_user_context(user2_id)
-    decision_normal = user2.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    decision_normal = user2.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
     client2.close()
     impression_after_normal = dispatcher2.has_impression()
 
@@ -704,9 +750,9 @@ def test_disable_decision_event():
         if md.get('variation_key') != "on":
             metadata_ok = False
             metadata_detail += f"Normal call impression variation_key: expected 'on', got '{md.get('variation_key')}'. "
-        if md.get('rule_key') != ROLLOUT_RULE_KEY:
+        if md.get('rule_key') != cfg.fr_rule_key:
             metadata_ok = False
-            metadata_detail += f"Normal call impression rule_key: expected '{ROLLOUT_RULE_KEY}', got '{md.get('rule_key')}'. "
+            metadata_detail += f"Normal call impression rule_key: expected '{cfg.fr_rule_key}', got '{md.get('rule_key')}'. "
     elif impression_after_normal:
         metadata_ok = False
         metadata_detail += f"Expected 1 impression metadata, got {len(metadata_list)}. "
@@ -731,6 +777,7 @@ def test_disable_decision_event():
     detail += metadata_detail
     out.append(format_result("disable_decision_event", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -743,24 +790,12 @@ def test_disable_decision_event():
 # into the "everyone else" baseline of the SAME rule. Only an
 # audience mismatch causes the SDK to skip the rule entirely.
 #
-# UI SETUP:
-#   1. If you haven't already, create a "US Users" audience
-#      (left sidebar -> Audiences -> custom attribute "country"
-#      equals "US"). You may have created this for test 4.
-#   2. Edit the Feature Rollout rule:
-#      - Set Audience to "US Users"
-#      - Set Traffic to 100%, Variation to "On"
-#      - Save the rule
-#   3. Add a Targeted Delivery rule BELOW the Feature Rollout:
-#      - Click "Add Rule" -> "Targeted Delivery"
-#      - Name: "fallback_delivery"
-#      - Variation: Change from "Off" to "On"
-#        (IMPORTANT: defaults to "Off" -- you must change it!)
-#      - Audience: "Everyone"
-#      - Save the rule
-#   4. Make sure both rules and the ruleset are Running
-#      (Run each rule, then Run the ruleset)
-#   5. Wait ~1 min for datafile to update
+# UI SETUP: Flag "fr_rule_fallthrough" should already be configured:
+#   1. Feature Rollout rule "fr_rule_fallthrough_rule" at 100% traffic,
+#      variation=On, audience="US Users" (country equals "US")
+#   2. Targeted Delivery rule "fr_rule_fallthrough_td" BELOW the FR rule:
+#      variation=On, audience=Everyone
+#   3. Both rules and ruleset Running.
 #
 # Expected:
 #   1. User with country="UK" does NOT match the Feature Rollout
@@ -772,7 +807,7 @@ def test_disable_decision_event():
 #   5. NO impression event is dispatched (Targeted Deliveries
 #      do not dispatch impression events)
 # ============================================================
-def test_rule_fallthrough():
+def test_rule_fallthrough(cfg):
     out = ["Test 8: rule_fallthrough",
            "Verifying: audience mismatch causes fallthrough to next rule, no impression"]
 
@@ -783,14 +818,14 @@ def test_rule_fallthrough():
     # causing them to skip it and fall through to the Targeted Delivery
     user_id = f"fallthrough_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id, {"country": "UK"})
-    decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    decision = user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
     client.close()
 
     out.append(f"User: {user_id} (country=UK)")
     out.append(format_decision(decision))
 
     got_on = decision.enabled is True and decision.variation_key == "on"
-    skipped_rollout = decision.rule_key != ROLLOUT_RULE_KEY
+    skipped_rollout = decision.rule_key != cfg.fr_rule_key
 
     # Targeted Deliveries should NOT dispatch impression events
     no_impression = not dispatcher.has_impression()
@@ -806,6 +841,7 @@ def test_rule_fallthrough():
         detail += "Impression event was dispatched but should NOT be for a Targeted Delivery fallthrough. "
     out.append(format_result("rule_fallthrough", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -815,30 +851,23 @@ def test_rule_fallthrough():
 # but DOES match the audience of an A/B test rule placed below it,
 # the user should skip the FR and be bucketed into the A/B test.
 #
-# UI SETUP:
-#   1. Keep the Feature Rollout rule with Audience = "US Users",
-#      Traffic = 100%, Variation = "On"
-#   2. Add an A/B Test rule BELOW the Feature Rollout (and below
-#      any Targeted Delivery if present):
-#      - Click "Add Rule" -> "A/B Test"
-#      - Name / Key: match AB_RULE_KEY in config above
-#      - Traffic Allocation: 100%
-#      - Audience: "Everyone"
-#      - Variations: use default "on" and "off"
-#      - Metrics: add your event ("feature_rollout_event")
-#      - Save the rule
-#   3. Make sure all rules and the ruleset are Running
-#   4. Wait ~1 min for datafile to update
+# UI SETUP: Flag "fr_skip_to_ab" should already be configured:
+#   1. Feature Rollout rule "fr_skip_to_ab_rule" at 100% traffic,
+#      variation=On, audience="US Users" (country equals "US")
+#   2. A/B Test rule "fr_skip_to_ab_ab_rule" BELOW the FR rule:
+#      traffic=100%, audience=Everyone, variations=on/off,
+#      metric=feature_rollout_event
+#   3. All rules and ruleset Running.
 #
 # Expected:
 #   1. User with country="UK" skips the Feature Rollout rule
 #   2. User is bucketed into the A/B test rule
-#   3. decide() returns rule_key matching AB_RULE_KEY
+#   3. decide() returns rule_key matching the A/B test rule key
 #   4. An impression event IS dispatched (A/B tests send impressions)
 #   5. Impression metadata has the A/B rule's rule_key and the
 #      correct variation_key
 # ============================================================
-def test_fr_skip_to_ab_rule():
+def test_fr_skip_to_ab_rule(cfg):
     out = ["Test 9: fr_skip_to_ab_rule",
            "Verifying: user skips FR (audience mismatch), falls into A/B test"]
 
@@ -849,15 +878,15 @@ def test_fr_skip_to_ab_rule():
     # skip it, and land in the A/B test rule below
     user_id = f"ab_fallthrough_{uuid.uuid4().hex[:8]}"
     user = client.create_user_context(user_id, {"country": "UK"})
-    decision = user.decide(FLAG_KEY, [OptimizelyDecideOption.INCLUDE_REASONS])
+    decision = user.decide(cfg.flag_key, [OptimizelyDecideOption.INCLUDE_REASONS])
     client.close()
 
     out.append(f"User: {user_id} (country=UK)")
     out.append(format_decision(decision))
 
     # Decision should come from the AB rule, not the FR rule
-    skipped_rollout = decision.rule_key != ROLLOUT_RULE_KEY
-    in_ab_rule = decision.rule_key == AB_RULE_KEY
+    skipped_rollout = decision.rule_key != cfg.fr_rule_key
+    in_ab_rule = decision.rule_key == cfg.ab_rule_key
 
     # Impression event should be dispatched for A/B test
     has_impression = dispatcher.has_impression()
@@ -871,9 +900,9 @@ def test_fr_skip_to_ab_rule():
     elif len(metadata_list) >= 1:
         md = metadata_list[0]
         out.append(f"Impression metadata: rule_key='{md.get('rule_key')}', variation_key='{md.get('variation_key')}'")
-        if md.get('rule_key') != AB_RULE_KEY:
+        if md.get('rule_key') != cfg.ab_rule_key:
             impression_ok = False
-            metadata_detail += f"Impression rule_key: expected '{AB_RULE_KEY}', got '{md.get('rule_key')}'. "
+            metadata_detail += f"Impression rule_key: expected '{cfg.ab_rule_key}', got '{md.get('rule_key')}'. "
         if md.get('variation_key') != decision.variation_key:
             impression_ok = False
             metadata_detail += (f"Impression variation_key mismatch: decision says '{decision.variation_key}', "
@@ -884,10 +913,11 @@ def test_fr_skip_to_ab_rule():
     if not skipped_rollout:
         detail += f"User was bucketed into the Feature Rollout rule (rule_key='{decision.rule_key}') instead of skipping. "
     if not in_ab_rule:
-        detail += f"Expected rule_key='{AB_RULE_KEY}', got '{decision.rule_key}'. "
+        detail += f"Expected rule_key='{cfg.ab_rule_key}', got '{decision.rule_key}'. "
     detail += metadata_detail
     out.append(format_result("fr_skip_to_ab_rule", passed, detail))
     print_report(out)
+    return passed
 
 
 # ============================================================
@@ -895,15 +925,15 @@ def test_fr_skip_to_ab_rule():
 # ============================================================
 
 TESTS = {
-    # "basic_rollout": test_basic_rollout,
-    # "everyone_else": test_everyone_else,
-    # "traffic_split": test_traffic_split,
+    "basic_rollout": test_basic_rollout,
+    "everyone_else": test_everyone_else,
+    "traffic_split": test_traffic_split,
     "audience_targeting": test_audience_targeting,
-    # "forced_variation": test_forced_variation,
-    # "conversion_tracking": test_conversion_tracking,
-    # "disable_decision_event": test_disable_decision_event,
-    # "rule_fallthrough": test_rule_fallthrough,
-    # "fr_skip_to_ab_rule": test_fr_skip_to_ab_rule,
+    "forced_variation": test_forced_variation,
+    "conversion_tracking": test_conversion_tracking,
+    "disable_decision_event": test_disable_decision_event,
+    "rule_fallthrough": test_rule_fallthrough,
+    "fr_skip_to_ab_rule": test_fr_skip_to_ab_rule,
 }
 
 
@@ -915,23 +945,23 @@ def main():
     parser.add_argument(
         "--test",
         default=None,
-        help="Name of the test to run (e.g., basic_rollout). Use --test=help to list all.",
+        help="Name of the test to run (e.g., basic_rollout), 'all' to run all (default), or 'help' to list.",
     )
     args = parser.parse_args()
 
-    test_name = args.test.strip() if args.test else next(iter(TESTS))
+    test_name = args.test.strip() if args.test else "all"
 
-    if test_name == "help" or test_name not in TESTS:
+    if test_name == "help" or (test_name not in TESTS and test_name != "all"):
         print("\nAvailable tests:")
         print("-" * 50)
+        print("  --test=all  (run all tests, default)")
         for name in TESTS:
-            # Extract the first line of the docstring-like comment
             print(f"  --test={name}")
         print("-" * 50)
         if test_name != "help":
             print(f"\nUnknown test: '{test_name}'")
-        print("\nRun one test at a time. Read the UI SETUP comment in each")
-        print("test before running -- some tests require UI changes first.")
+        print("\nEach test uses its own flag -- set up all flags once")
+        print("before running (see setup docs at top of file).")
         sys.exit(0)
 
     # Validate configuration
@@ -941,12 +971,26 @@ def main():
         print("  Find them in: project Settings -> Environments tab -> Development")
         sys.exit(1)
 
+    tests_to_run = list(TESTS.keys()) if test_name == "all" else [test_name]
+
     print(f"\n{'=' * 50}")
     print(f"Feature Rollouts Bug Bash - Python SDK")
-    print(f"Running test: {test_name}")
+    print(f"Running: {', '.join(tests_to_run)}")
     print(f"{'=' * 50}")
 
-    TESTS[test_name]()
+    results = {}
+    for name in tests_to_run:
+        cfg = TEST_CONFIGS[name]
+        results[name] = TESTS[name](cfg)
+
+    if len(results) > 1:
+        pass_count = sum(1 for v in results.values() if v)
+        fail_count = len(results) - pass_count
+        print(f"\n{'=' * 50}")
+        print(f"SUMMARY: {pass_count} passed, {fail_count} failed out of {len(results)} tests")
+        for name, passed in results.items():
+            print(f"  {'PASS' if passed else 'FAIL'}: {name}")
+        print(f"{'=' * 50}\n")
 
 
 if __name__ == "__main__":
