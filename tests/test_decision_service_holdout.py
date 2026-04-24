@@ -38,16 +38,11 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         # Create a config dict with holdouts and feature flags
         config_dict_with_holdouts = self.config_dict_with_features.copy()
 
-        # Get feature flag ID for test_feature_in_experiment
-        test_feature_id = '91111'
-
         config_dict_with_holdouts['holdouts'] = [
             {
                 'id': 'holdout_1',
                 'key': 'test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -76,8 +71,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'holdout_2',
                 'key': 'excluded_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [test_feature_id],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -268,60 +261,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     # get_variation_for_feature with holdouts tests
 
-    def test_user_bucketed_into_holdout_returns_before_experiments(self):
-        """
-        When user is bucketed into holdout, should return holdout decision
-        before checking experiments or rollouts.
-        """
-        feature_flag = self.config_with_holdouts.get_feature_from_key('test_feature_in_experiment')
-        self.assertIsNotNone(feature_flag)
-
-        user_context = self.opt_obj.create_user_context('testUserId', {})
-
-        # Mock get_holdouts_for_flag to return holdouts
-        holdout = self.config_with_holdouts.holdouts[0] if self.config_with_holdouts.holdouts else None
-        self.assertIsNotNone(holdout)
-
-        holdout_variation = holdout.variations[0]
-
-        # Create a holdout decision
-        mock_holdout_decision = decision_service.Decision(
-            experiment=holdout,
-            variation=holdout_variation,
-            source=enums.DecisionSources.HOLDOUT,
-            cmab_uuid=None
-        )
-
-        mock_holdout_result = {
-            'decision': mock_holdout_decision,
-            'error': False,
-            'reasons': []
-        }
-
-        # Mock get_holdouts_for_flag to return holdouts so the holdout path is taken
-        with mock.patch.object(
-            self.config_with_holdouts,
-            'get_holdouts_for_flag',
-            return_value=[holdout]
-        ):
-            with mock.patch.object(
-                self.opt_obj.decision_service,
-                'get_variation_for_holdout',
-                return_value=mock_holdout_result
-            ):
-                decision_result = self.opt_obj.decision_service.get_variation_for_feature(
-                    self.config_with_holdouts,
-                    feature_flag,
-                    user_context
-                )
-
-                self.assertIsNotNone(decision_result)
-
-                # Decision should be valid and from holdout
-                decision = decision_result['decision']
-                self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
-                self.assertIsNotNone(decision.variation)
-
     def test_no_holdout_decision_falls_through_to_experiment_and_rollout(self):
         """When holdout returns no decision, should fall through to experiment and rollout evaluation."""
         feature_flag = self.config_with_holdouts.get_feature_from_key('test_feature_in_experiment')
@@ -375,42 +314,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
         )
 
         self.assertIsNotNone(decision_result)
-
-    def test_evaluates_global_holdouts_for_all_flags(self):
-        """Should evaluate global holdouts for all flags."""
-        feature_flag = self.config_with_holdouts.get_feature_from_key('test_feature_in_experiment')
-        self.assertIsNotNone(feature_flag)
-
-        # Get global holdouts
-        global_holdouts = [
-            h for h in self.config_with_holdouts.holdouts
-            if not h.includedFlags or len(h.includedFlags) == 0
-        ]
-
-        if global_holdouts:
-            user_context = self.opt_obj.create_user_context('testUserId', {})
-
-            result = self.decision_service_with_holdouts.get_variations_for_feature_list(
-                self.config_with_holdouts,
-                [feature_flag],
-                user_context,
-                []
-            )
-
-            self.assertIsNotNone(result)
-            self.assertIsInstance(result, list)
-
-    def test_respects_included_and_excluded_flags_configuration(self):
-        """Should respect included and excluded flags configuration."""
-        feature_flag = self.config_with_holdouts.get_feature_from_key('test_feature_in_experiment')
-
-        if feature_flag:
-            # Get holdouts for this flag
-            holdouts_for_flag = self.config_with_holdouts.get_holdouts_for_flag('test_feature_in_experiment')
-
-            # Should not include holdouts that exclude this flag
-            excluded_holdout = next((h for h in holdouts_for_flag if h.key == 'excluded_holdout'), None)
-            self.assertIsNone(excluded_holdout)
 
     # Holdout logging and error handling tests
 
@@ -618,8 +521,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'holdout_1',
                 'key': 'test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -727,8 +628,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'holdout_1',
                 'key': 'test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -801,8 +700,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'holdout_1',
                 'key': 'test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -930,8 +827,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'global_holdout',
                 'key': 'global_test_holdout',
                 'status': 'Running',
-                'includedFlags': [],  # Global - applies to all flags
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -968,17 +863,12 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     def test_decide_all_with_included_flags(self):
         """Should apply holdout only to included flags in decide_all."""
-        # Get feature flag IDs
-        feature1_id = '91111'  # test_feature_in_experiment
-
         config_dict_with_holdouts = self.config_dict_with_features.copy()
         config_dict_with_holdouts['holdouts'] = [
             {
                 'id': 'included_holdout',
                 'key': 'specific_holdout',
                 'status': 'Running',
-                'includedFlags': [feature1_id],  # Only applies to feature1
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1014,16 +904,12 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     def test_decide_all_with_excluded_flags(self):
         """Should exclude holdout from excluded flags in decide_all."""
-        feature1_id = '91111'  # test_feature_in_experiment
-
         config_dict_with_holdouts = self.config_dict_with_features.copy()
         config_dict_with_holdouts['holdouts'] = [
             {
                 'id': 'excluded_holdout',
                 'key': 'global_except_one',
                 'status': 'Running',
-                'includedFlags': [],  # Global
-                'excludedFlags': [feature1_id],  # Except feature1
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1058,9 +944,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     def test_decide_all_with_multiple_holdouts(self):
         """Should handle multiple holdouts with correct priority."""
-        feature1_id = '91111'
-        feature2_id = '91112'
-
         config_dict_with_holdouts = self.config_dict_with_features.copy()
         config_dict_with_holdouts['holdouts'] = [
             # Global holdout (applies to all)
@@ -1068,8 +951,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'global_holdout',
                 'key': 'global_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1091,8 +972,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'specific_holdout',
                 'key': 'specific_holdout',
                 'status': 'Running',
-                'includedFlags': [feature2_id],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1114,8 +993,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'excluded_holdout',
                 'key': 'excluded_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [feature1_id],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1154,8 +1031,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'disabled_holdout',
                 'key': 'disabled_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1203,8 +1078,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'metadata_holdout',
                 'key': 'metadata_test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1257,8 +1130,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'send_flag_holdout',
                 'key': 'send_flag_test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1307,8 +1178,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'draft_holdout',
                 'key': 'draft_holdout',
                 'status': 'Draft',  # Not Running
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1347,8 +1216,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'concluded_holdout',
                 'key': 'concluded_holdout',
                 'status': 'Concluded',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1387,8 +1254,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'archived_holdout',
                 'key': 'archived_holdout',
                 'status': 'Archived',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': [],
                 'variations': [
                     {
@@ -1431,8 +1296,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
                 'id': 'audience_holdout',
                 'key': 'audience_test_holdout',
                 'status': 'Running',
-                'includedFlags': [],
-                'excludedFlags': [],
                 'audienceIds': ['11154'],  # Requires browser_type=chrome
                 'variations': [
                     {

@@ -130,5 +130,3 @@ class HoldoutDict(ExperimentDict):
     Extends ExperimentDict with holdout-specific properties.
     """
     holdoutStatus: HoldoutStatus
-    includedFlags: list[str]
-    excludedFlags: list[str]

@@ -93,9 +93,6 @@ class ProjectConfig:
         holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
         self.holdouts: list[entities.Holdout] = []
         self.holdout_id_map: dict[str, entities.Holdout] = {}
-        self.global_holdouts: list[entities.Holdout] = []
-        self.included_holdouts: dict[str, list[entities.Holdout]] = {}
-        self.excluded_holdouts: dict[str, list[entities.Holdout]] = {}
         self.flag_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
         # Convert holdout dicts to Holdout entities
@@ -104,32 +101,12 @@ class ProjectConfig:
             holdout = entities.Holdout(**holdout_data)
             self.holdouts.append(holdout)
 
-            # Only process Running holdouts but doing it here for efficiency like the original Python implementation)
+            # Only process Running holdouts
             if not holdout.is_activated:
                 continue
 
             # Map by ID for quick lookup
             self.holdout_id_map[holdout.id] = holdout
-
-            # Categorize as global vs flag-specific
-            # Global holdouts: apply to all flags unless explicitly excluded
-            # Flag-specific holdouts: only apply to explicitly included flags
-            if not holdout.includedFlags:
-                # This is a global holdout
-                self.global_holdouts.append(holdout)
-
-                # Track which flags this global holdout excludes
-                if holdout.excludedFlags:
-                    for flag_id in holdout.excludedFlags:
-                        if flag_id not in self.excluded_holdouts:
-                            self.excluded_holdouts[flag_id] = []
-                        self.excluded_holdouts[flag_id].append(holdout)
-            else:
-                # This holdout applies to specific flags only
-                for flag_id in holdout.includedFlags:
-                    if flag_id not in self.included_holdouts:
-                        self.included_holdouts[flag_id] = []
-                    self.included_holdouts[flag_id].append(holdout)
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -263,19 +240,8 @@ class ProjectConfig:
                             everyone_else_variation.variables, 'id', entities.Variation.VariableUsage
                         )
 
-            flag_id = feature.id
-            applicable_holdouts: list[entities.Holdout] = []
-
-            # Add global holdouts first, excluding any that are explicitly excluded for this flag
-            excluded_holdouts = self.excluded_holdouts.get(flag_id, [])
-            for holdout in self.global_holdouts:
-                if holdout not in excluded_holdouts:
-                    applicable_holdouts.append(holdout)
-
-            # Add flag-specific local holdouts AFTER global holdouts
-            if flag_id in self.included_holdouts:
-                applicable_holdouts.extend(self.included_holdouts[flag_id])
-
+            # Map all running holdouts to this flag
+            applicable_holdouts = list(self.holdout_id_map.values())
             if applicable_holdouts:
                 self.flag_holdouts_map[feature.key] = applicable_holdouts
 
