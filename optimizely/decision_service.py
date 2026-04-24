@@ -733,7 +733,30 @@ class DecisionService:
         reasons = decide_reasons.copy() if decide_reasons else []
         user_id = user_context.user_id
 
-        # Check experiments then rollouts
+        # Check holdouts
+        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
+        for holdout in holdouts:
+            holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
+            reasons.extend(holdout_decision['reasons'])
+
+            decision = holdout_decision['decision']
+            # Check if user was bucketed into holdout (has a variation)
+            if decision.variation is None:
+                continue
+
+            message = (
+                f"The user '{user_id}' is bucketed into holdout '{holdout.key}' "
+                f"for feature flag '{feature_flag.key}'."
+            )
+            self.logger.info(message)
+            reasons.append(message)
+            return {
+                'decision': holdout_decision['decision'],
+                'error': False,
+                'reasons': reasons
+            }
+
+        # If no holdout decision, check experiments then rollouts
         if feature_flag.experimentIds:
             for experiment_id in feature_flag.experimentIds:
                 experiment = project_config.get_experiment_from_id(experiment_id)

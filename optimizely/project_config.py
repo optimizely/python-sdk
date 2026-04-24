@@ -93,6 +93,7 @@ class ProjectConfig:
         holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
         self.holdouts: list[entities.Holdout] = []
         self.holdout_id_map: dict[str, entities.Holdout] = {}
+        self.flag_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
         # Convert holdout dicts to Holdout entities
         for holdout_data in holdouts_data:
@@ -238,6 +239,11 @@ class ProjectConfig:
                         self.variation_variable_usage_map[everyone_else_variation.id] = self._generate_key_map(
                             everyone_else_variation.variables, 'id', entities.Variation.VariableUsage
                         )
+
+            # Map all running holdouts to this flag
+            applicable_holdouts = list(self.holdout_id_map.values())
+            if applicable_holdouts:
+                self.flag_holdouts_map[feature.key] = applicable_holdouts
 
             rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
             if rollout:
@@ -871,6 +877,20 @@ class ProjectConfig:
                     return variation
 
         return None
+
+    def get_holdouts_for_flag(self, flag_key: str) -> list[entities.Holdout]:
+        """ Helper method to get holdouts from an applied feature flag.
+
+        Args:
+            flag_key: Key of the feature flag.
+
+        Returns:
+            The holdouts that apply for a specific flag as Holdout entity objects.
+        """
+        if not self.holdouts:
+            return []
+
+        return self.flag_holdouts_map.get(flag_key, [])
 
     def get_holdout(self, holdout_id: str) -> Optional[entities.Holdout]:
         """ Helper method to get holdout from holdout ID.

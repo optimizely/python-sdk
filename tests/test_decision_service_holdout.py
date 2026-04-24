@@ -863,9 +863,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     def test_decide_all_with_included_flags(self):
         """Should apply holdout only to included flags in decide_all."""
-        # Get feature flag IDs
-        feature1_id = '91111'  # test_feature_in_experiment
-
         config_dict_with_holdouts = self.config_dict_with_features.copy()
         config_dict_with_holdouts['holdouts'] = [
             {
@@ -907,8 +904,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     def test_decide_all_with_excluded_flags(self):
         """Should exclude holdout from excluded flags in decide_all."""
-        feature1_id = '91111'  # test_feature_in_experiment
-
         config_dict_with_holdouts = self.config_dict_with_features.copy()
         config_dict_with_holdouts['holdouts'] = [
             {
@@ -949,9 +944,6 @@ class DecisionServiceHoldoutTest(base.BaseTest):
 
     def test_decide_all_with_multiple_holdouts(self):
         """Should handle multiple holdouts with correct priority."""
-        feature1_id = '91111'
-        feature2_id = '91112'
-
         config_dict_with_holdouts = self.config_dict_with_features.copy()
         config_dict_with_holdouts['holdouts'] = [
             # Global holdout (applies to all)
