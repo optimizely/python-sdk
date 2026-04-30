@@ -1,7 +1,7 @@
 # Optimizely Python SDK Changelog
 
 ## 5.5.0
-April 29th, 2026
+April 30th, 2026
 
 ### New Features
 
