@@ -1,5 +1,33 @@
 # Optimizely Python SDK Changelog
 
+## 5.5.0
+April 30th, 2026
+
+### New Features
+
+#### **Feature Rollout Support**
+
+- Added support for Feature Rollouts, a new rule type that combines Targeted Delivery simplicity with A/B test measurement capabilities. During project config parsing, the "everyone else" variation from the flag's rollout is automatically injected into feature rollout experiments, enabling correct evaluation without changes to decision logic. ([#499](https://github.com/optimizely/python-sdk/pull/499))
+- Removed experiment type validation from config parsing to support flexible rule types. ([#500](https://github.com/optimizely/python-sdk/pull/500))
+
+---
+
+### Enhancements
+
+- Added event retry support for reliable event dispatching. ([#475](https://github.com/optimizely/python-sdk/pull/475))
+- Excluded CMAB experiments from UserProfileService to prevent stale cached decisions. ([#474](https://github.com/optimizely/python-sdk/pull/474))
+- Cleaned up flag-level holdout fields for simplified configuration. ([#507](https://github.com/optimizely/python-sdk/pull/507))
+
+---
+
+### Bug Fixes
+
+- Fixed `return` in `finally` block silently swallowing exceptions. ([#505](https://github.com/optimizely/python-sdk/pull/505))
+- Fixed `PollingConfigManager` rejecting valid URL-only configuration. ([#497](https://github.com/optimizely/python-sdk/pull/497))
+
+---
+
+
 ## 5.4.0
 December 19th, 2025
 
