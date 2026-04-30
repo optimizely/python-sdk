@@ -16,9 +16,7 @@ April 29th, 2026
 
 - Added event retry support for reliable event dispatching. ([#475](https://github.com/optimizely/python-sdk/pull/475))
 - Excluded CMAB experiments from UserProfileService to prevent stale cached decisions. ([#474](https://github.com/optimizely/python-sdk/pull/474))
-- Replaced flake8 with ruff for faster, more comprehensive linting. ([#492](https://github.com/optimizely/python-sdk/pull/492))
 - Cleaned up flag-level holdout fields for simplified configuration. ([#507](https://github.com/optimizely/python-sdk/pull/507))
-- Resolved Arnica code risk warnings. ([#498](https://github.com/optimizely/python-sdk/pull/498))
 
 ---
 
