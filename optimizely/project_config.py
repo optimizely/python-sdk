@@ -93,7 +93,12 @@ class ProjectConfig:
         holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
         self.holdouts: list[entities.Holdout] = []
         self.holdout_id_map: dict[str, entities.Holdout] = {}
+        # Legacy flag-level map kept for backward compatibility
         self.flag_holdouts_map: dict[str, list[entities.Holdout]] = {}
+        # Global holdouts (includedRules is None) — evaluated at flag level
+        self.global_holdouts: list[entities.Holdout] = []
+        # Rule-level holdouts map: rule_id -> [Holdout] for local holdouts
+        self.rule_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
         # Convert holdout dicts to Holdout entities
         for holdout_data in holdouts_data:
@@ -107,6 +112,16 @@ class ProjectConfig:
 
             # Map by ID for quick lookup
             self.holdout_id_map[holdout.id] = holdout
+
+            # Categorize holdout as global or local
+            if holdout.is_global:
+                self.global_holdouts.append(holdout)
+            else:
+                # Local holdout: map each included rule ID to this holdout
+                for rule_id in holdout.included_rules or []:
+                    if rule_id not in self.rule_holdouts_map:
+                        self.rule_holdouts_map[rule_id] = []
+                    self.rule_holdouts_map[rule_id].append(holdout)
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -240,10 +255,9 @@ class ProjectConfig:
                             everyone_else_variation.variables, 'id', entities.Variation.VariableUsage
                         )
 
-            # Map all running holdouts to this flag
-            applicable_holdouts = list(self.holdout_id_map.values())
-            if applicable_holdouts:
-                self.flag_holdouts_map[feature.key] = applicable_holdouts
+            # Map global holdouts to this flag (for legacy flag-level access)
+            if self.global_holdouts:
+                self.flag_holdouts_map[feature.key] = list(self.global_holdouts)
 
             rollout = None if len(feature.rolloutId) == 0 else self.rollout_id_map[feature.rolloutId]
             if rollout:
@@ -881,16 +895,41 @@ class ProjectConfig:
     def get_holdouts_for_flag(self, flag_key: str) -> list[entities.Holdout]:
         """ Helper method to get holdouts from an applied feature flag.
 
+        Returns global holdouts for the given flag (backward-compatible).
+
         Args:
             flag_key: Key of the feature flag.
 
         Returns:
-            The holdouts that apply for a specific flag as Holdout entity objects.
+            The global holdouts that apply for a specific flag as Holdout entity objects.
         """
         if not self.holdouts:
             return []
 
         return self.flag_holdouts_map.get(flag_key, [])
+
+    def get_global_holdouts(self) -> list[entities.Holdout]:
+        """Return all global holdouts (holdouts with includedRules == None).
+
+        Global holdouts are evaluated at flag level before forced decisions.
+
+        Returns:
+            List of global Holdout entities.
+        """
+        return self.global_holdouts
+
+    def get_holdouts_for_rule(self, rule_id: str) -> list[entities.Holdout]:
+        """Return local holdouts targeting a specific rule.
+
+        Local holdouts are evaluated per-rule before audience and traffic checks.
+
+        Args:
+            rule_id: The experiment or delivery rule ID to look up.
+
+        Returns:
+            List of Holdout entities targeting the given rule ID.
+        """
+        return self.rule_holdouts_map.get(rule_id, [])
 
     def get_holdout(self, holdout_id: str) -> Optional[entities.Holdout]:
         """ Helper method to get holdout from holdout ID.

@@ -599,8 +599,25 @@ class DecisionService:
         while index < len(rollout_rules):
             skip_to_everyone_else = False
 
-            # check forced decision first
             rule = rollout_rules[index]
+
+            # Check local holdouts targeting this delivery rule (NEW - local holdouts)
+            local_holdouts = project_config.get_holdouts_for_rule(rule.id)
+            for local_holdout in local_holdouts:
+                local_holdout_decision = self.get_variation_for_holdout(
+                    local_holdout, user_context, project_config
+                )
+                decide_reasons.extend(local_holdout_decision['reasons'])
+                if local_holdout_decision['decision'].variation is not None:
+                    message = (
+                        f"The user '{user_id}' is bucketed into local holdout "
+                        f"'{local_holdout.key}' for rollout rule '{rule.key}'."
+                    )
+                    self.logger.info(message)
+                    decide_reasons.append(message)
+                    return local_holdout_decision['decision'], decide_reasons
+
+            # check forced decision first
             optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(feature.key, rule.key)
             forced_decision_variation, reasons_received = self.validated_forced_decision(
                 project_config, optimizely_decision_context, user_context)
@@ -733,8 +750,8 @@ class DecisionService:
         reasons = decide_reasons.copy() if decide_reasons else []
         user_id = user_context.user_id
 
-        # Check holdouts
-        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
+        # Check global holdouts (evaluated at flag level, before forced decisions)
+        holdouts = project_config.get_global_holdouts()
         for holdout in holdouts:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
             reasons.extend(holdout_decision['reasons'])
@@ -762,6 +779,26 @@ class DecisionService:
                 experiment = project_config.get_experiment_from_id(experiment_id)
 
                 if experiment:
+                    # Check local holdouts targeting this experiment rule (NEW - local holdouts)
+                    local_holdouts = project_config.get_holdouts_for_rule(experiment.id)
+                    for local_holdout in local_holdouts:
+                        local_holdout_decision = self.get_variation_for_holdout(
+                            local_holdout, user_context, project_config
+                        )
+                        reasons.extend(local_holdout_decision['reasons'])
+                        if local_holdout_decision['decision'].variation is not None:
+                            message = (
+                                f"The user '{user_id}' is bucketed into local holdout "
+                                f"'{local_holdout.key}' for experiment rule '{experiment.key}'."
+                            )
+                            self.logger.info(message)
+                            reasons.append(message)
+                            return {
+                                'decision': local_holdout_decision['decision'],
+                                'error': False,
+                                'reasons': reasons
+                            }
+
                     # Check for forced decision
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
                         feature_flag.key, experiment.key)

@@ -130,3 +130,4 @@ class HoldoutDict(ExperimentDict):
     Extends ExperimentDict with holdout-specific properties.
     """
     holdoutStatus: HoldoutStatus
+    includedRules: Optional[list[str]]  # None = global holdout, list of rule IDs = local holdout

@@ -1331,3 +1331,346 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             self.assertIsNotNone(decision_no_match)
         finally:
             opt.close()
+
+
+# ---------------------------------------------------------------------------
+# Local Holdout Tests (FSSDK-12369)
+# ---------------------------------------------------------------------------
+
+class LocalHoldoutTest(base.BaseTest):
+    """Tests for local holdout support (includedRules field).
+
+    Covers:
+    - Data model: is_global property, includedRules parsing
+    - Mapping logic: get_global_holdouts(), get_holdouts_for_rule()
+    - Decision flow: local holdout evaluated before rule audience/traffic
+    - Source tracking: source and experiment_id correct
+    - Edge cases: backward compat, empty array vs None, unknown rule IDs
+    """
+
+    def setUp(self):
+        base.BaseTest.setUp(self)
+        self.error_handler = error_handler.NoOpErrorHandler()
+        self.spy_logger = mock.MagicMock(spec=logger.SimpleLogger)
+        self.spy_logger.logger = self.spy_logger
+        self.spy_user_profile_service = mock.MagicMock()
+        self.spy_cmab_service = mock.MagicMock()
+
+    def tearDown(self):
+        if hasattr(self, 'opt_obj'):
+            self.opt_obj.close()
+
+    def _make_holdout(
+        self,
+        holdout_id: str,
+        key: str,
+        status: str = 'Running',
+        included_rules=None,
+        traffic_end: int = 10000,
+    ) -> dict:
+        """Build a minimal holdout dict for tests."""
+        holdout: dict = {
+            'id': holdout_id,
+            'key': key,
+            'status': status,
+            'audienceIds': [],
+            'variations': [
+                {'id': f'{holdout_id}_var', 'key': 'holdout_v', 'variables': []}
+            ],
+            'trafficAllocation': [
+                {'entityId': f'{holdout_id}_var', 'endOfRange': traffic_end}
+            ],
+        }
+        if included_rules is not None:
+            holdout['includedRules'] = included_rules
+        return holdout
+
+    def _build_opt(self, holdouts: list) -> 'optimizely_module.Optimizely':
+        cfg = self.config_dict_with_features.copy()
+        cfg['holdouts'] = holdouts
+        self.opt_obj = optimizely_module.Optimizely(json.dumps(cfg))
+        return self.opt_obj
+
+    # ------------------------------------------------------------------
+    # Data model tests
+    # ------------------------------------------------------------------
+
+    def test_holdout_entity_is_global_when_included_rules_absent(self):
+        """Holdout with no includedRules field is global (is_global == True)."""
+        from optimizely import entities
+        h = entities.Holdout(
+            id='h1', key='h1', status='Running',
+            variations=[], trafficAllocation=[], audienceIds=[]
+        )
+        self.assertTrue(h.is_global)
+        self.assertIsNone(h.included_rules)
+
+    def test_holdout_entity_is_not_global_when_included_rules_is_list(self):
+        """Holdout with includedRules list is local (is_global == False)."""
+        from optimizely import entities
+        h = entities.Holdout(
+            id='h2', key='h2', status='Running',
+            variations=[], trafficAllocation=[], audienceIds=[],
+            includedRules=['rule_1', 'rule_2']
+        )
+        self.assertFalse(h.is_global)
+        self.assertEqual(h.included_rules, ['rule_1', 'rule_2'])
+
+    def test_holdout_entity_empty_included_rules_is_not_global(self):
+        """Holdout with empty includedRules [] is local (not global)."""
+        from optimizely import entities
+        h = entities.Holdout(
+            id='h3', key='h3', status='Running',
+            variations=[], trafficAllocation=[], audienceIds=[],
+            includedRules=[]
+        )
+        self.assertFalse(h.is_global)
+        self.assertEqual(h.included_rules, [])
+
+    # ------------------------------------------------------------------
+    # ProjectConfig mapping tests
+    # ------------------------------------------------------------------
+
+    def test_get_global_holdouts_returns_only_global(self):
+        """get_global_holdouts() returns only holdouts with includedRules == None."""
+        opt = self._build_opt([
+            self._make_holdout('gh1', 'global_h1'),          # global (no includedRules)
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127']),  # local
+        ])
+        config = opt.config_manager.get_config()
+        global_holdouts = config.get_global_holdouts()
+        self.assertEqual(len(global_holdouts), 1)
+        self.assertEqual(global_holdouts[0].id, 'gh1')
+
+    def test_get_holdouts_for_rule_returns_local_holdouts_for_rule(self):
+        """get_holdouts_for_rule() returns local holdouts targeting a given rule ID."""
+        # '111127' is the experiment ID for test_feature_in_experiment
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127']),
+            self._make_holdout('lh2', 'local_h2', included_rules=['other_rule']),
+        ])
+        config = opt.config_manager.get_config()
+        holdouts_for_rule = config.get_holdouts_for_rule('111127')
+        self.assertEqual(len(holdouts_for_rule), 1)
+        self.assertEqual(holdouts_for_rule[0].id, 'lh1')
+
+    def test_get_holdouts_for_rule_returns_empty_for_unknown_rule(self):
+        """get_holdouts_for_rule() returns [] for a rule ID not in any holdout."""
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127']),
+        ])
+        config = opt.config_manager.get_config()
+        self.assertEqual(config.get_holdouts_for_rule('nonexistent_rule'), [])
+
+    def test_holdout_targeting_multiple_rules_registered_for_each(self):
+        """A single local holdout with multiple includedRules appears in each rule's list."""
+        opt = self._build_opt([
+            self._make_holdout('lh_multi', 'local_multi', included_rules=['rule_a', 'rule_b', '111127']),
+        ])
+        config = opt.config_manager.get_config()
+        self.assertEqual(len(config.get_holdouts_for_rule('rule_a')), 1)
+        self.assertEqual(len(config.get_holdouts_for_rule('rule_b')), 1)
+        self.assertEqual(len(config.get_holdouts_for_rule('111127')), 1)
+        self.assertEqual(config.get_holdouts_for_rule('rule_a')[0].id, 'lh_multi')
+
+    def test_local_holdout_not_added_to_global_holdouts(self):
+        """Local holdouts are NOT included in get_global_holdouts()."""
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127']),
+        ])
+        config = opt.config_manager.get_config()
+        self.assertEqual(config.get_global_holdouts(), [])
+
+    def test_empty_included_rules_holdout_not_registered_in_rule_map(self):
+        """A holdout with includedRules=[] is local but targets no rules."""
+        opt = self._build_opt([
+            self._make_holdout('lh_empty', 'local_empty', included_rules=[]),
+        ])
+        config = opt.config_manager.get_config()
+        # empty includedRules → not global, and not in any rule map
+        self.assertEqual(config.get_global_holdouts(), [])
+        self.assertEqual(config.get_holdouts_for_rule('111127'), [])
+
+    def test_non_running_local_holdout_not_in_rule_map(self):
+        """Non-running local holdouts are not registered in rule_holdouts_map."""
+        opt = self._build_opt([
+            self._make_holdout('lh_draft', 'local_draft', status='Draft', included_rules=['111127']),
+        ])
+        config = opt.config_manager.get_config()
+        self.assertEqual(config.get_holdouts_for_rule('111127'), [])
+
+    # ------------------------------------------------------------------
+    # Backward compatibility
+    # ------------------------------------------------------------------
+
+    def test_backward_compat_old_datafile_without_included_rules(self):
+        """Old datafiles without includedRules parse correctly as global holdouts."""
+        cfg = self.config_dict_with_features.copy()
+        cfg['holdouts'] = [
+            {
+                'id': 'old_h1',
+                'key': 'old_holdout',
+                'status': 'Running',
+                'audienceIds': [],
+                'variations': [{'id': 'old_v1', 'key': 'old_control', 'variables': []}],
+                'trafficAllocation': [{'entityId': 'old_v1', 'endOfRange': 10000}],
+                # No includedRules key — simulates old datafile
+            }
+        ]
+        self.opt_obj = optimizely_module.Optimizely(json.dumps(cfg))
+        config = self.opt_obj.config_manager.get_config()
+
+        global_holdouts = config.get_global_holdouts()
+        self.assertEqual(len(global_holdouts), 1)
+        self.assertEqual(global_holdouts[0].id, 'old_h1')
+        self.assertTrue(global_holdouts[0].is_global)
+
+    def test_global_and_local_holdouts_coexist(self):
+        """Global and local holdouts can coexist; each is mapped correctly."""
+        opt = self._build_opt([
+            self._make_holdout('gh1', 'global_h'),               # global
+            self._make_holdout('lh1', 'local_h', included_rules=['111127']),  # local
+        ])
+        config = opt.config_manager.get_config()
+        self.assertEqual(len(config.get_global_holdouts()), 1)
+        self.assertEqual(config.get_global_holdouts()[0].id, 'gh1')
+        self.assertEqual(len(config.get_holdouts_for_rule('111127')), 1)
+        self.assertEqual(config.get_holdouts_for_rule('111127')[0].id, 'lh1')
+
+    # ------------------------------------------------------------------
+    # Decision flow: local holdout evaluated before rule
+    # ------------------------------------------------------------------
+
+    def test_local_holdout_hit_returns_holdout_decision_for_experiment_rule(self):
+        """When user hits local holdout, decision source is HOLDOUT for experiment rule."""
+        # '111127' is the experiment ID for test_feature_in_experiment
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127'], traffic_end=10000),
+        ])
+        config = opt.config_manager.get_config()
+        ds = decision_service.DecisionService(
+            self.spy_logger, self.spy_user_profile_service, self.spy_cmab_service
+        )
+
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        self.assertIsNotNone(feature_flag)
+        user_context = opt.create_user_context('testUserId', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_context, config)
+
+        self.assertIsNotNone(result)
+        decision = result['decision']
+        # Decision source must be HOLDOUT
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        # Experiment on the decision must be the holdout
+        self.assertEqual(decision.experiment.id, 'lh1')
+
+    def test_local_holdout_miss_falls_through_to_rule_evaluation(self):
+        """When user misses local holdout (traffic=0%), decision falls through to experiment."""
+        # 0% traffic => user never hits local holdout
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127'], traffic_end=0),
+        ])
+        config = opt.config_manager.get_config()
+        ds = decision_service.DecisionService(
+            self.spy_logger, self.spy_user_profile_service, self.spy_cmab_service
+        )
+
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        user_context = opt.create_user_context('testUserId', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_context, config)
+        self.assertIsNotNone(result)
+        decision = result['decision']
+        # Should not be a holdout decision (fell through to experiment or rollout)
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
+    def test_local_holdout_only_applies_to_its_rule(self):
+        """Local holdout targeting rule X does not affect other rules."""
+        opt = self._build_opt([
+            # Local holdout targets only 'other_rule', NOT '111127'
+            self._make_holdout('lh1', 'local_h1', included_rules=['other_rule'], traffic_end=10000),
+        ])
+        config = opt.config_manager.get_config()
+        ds = decision_service.DecisionService(
+            self.spy_logger, self.spy_user_profile_service, self.spy_cmab_service
+        )
+
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        user_context = opt.create_user_context('testUserId', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_context, config)
+        self.assertIsNotNone(result)
+        # The local holdout targets 'other_rule', not '111127', so it should NOT apply
+        decision = result['decision']
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
+    def test_global_holdout_evaluated_before_local_holdout(self):
+        """Global holdout is evaluated at flag level before local holdouts per rule."""
+        opt = self._build_opt([
+            # Global holdout with 100% traffic
+            self._make_holdout('gh1', 'global_h', traffic_end=10000),
+            # Local holdout also with 100% traffic
+            self._make_holdout('lh1', 'local_h', included_rules=['111127'], traffic_end=10000),
+        ])
+        config = opt.config_manager.get_config()
+        ds = decision_service.DecisionService(
+            self.spy_logger, self.spy_user_profile_service, self.spy_cmab_service
+        )
+
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        user_context = opt.create_user_context('testUserId', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_context, config)
+        decision = result['decision']
+        # Global holdout evaluated first — result must come from global holdout 'gh1'
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(decision.experiment.id, 'gh1')
+
+    def test_local_holdout_logs_reason_for_experiment_rule(self):
+        """Local holdout hit populates decision reasons for experiment rule."""
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127'], traffic_end=10000),
+        ])
+        config = opt.config_manager.get_config()
+        ds = decision_service.DecisionService(
+            self.spy_logger, self.spy_user_profile_service, self.spy_cmab_service
+        )
+
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        user_context = opt.create_user_context('testUserId', {})
+
+        result = ds.get_decision_for_flag(feature_flag, user_context, config)
+        self.assertGreater(len(result['reasons']), 0)
+        # There should be a reason mentioning local holdout
+        reasons_text = ' '.join(result['reasons'])
+        self.assertIn('local holdout', reasons_text)
+
+    def test_local_holdout_with_unknown_rule_id_does_not_crash(self):
+        """Holdout with rule ID not in datafile is silently skipped (no crash)."""
+        opt = self._build_opt([
+            self._make_holdout('lh_unknown', 'local_unknown', included_rules=['nonexistent_rule_999']),
+        ])
+        config = opt.config_manager.get_config()
+        ds = decision_service.DecisionService(
+            self.spy_logger, self.spy_user_profile_service, self.spy_cmab_service
+        )
+
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        user_context = opt.create_user_context('testUserId', {})
+
+        # Should not raise any exception
+        result = ds.get_decision_for_flag(feature_flag, user_context, config)
+        self.assertIsNotNone(result)
+        self.assertIn('decision', result)
+
+    def test_decide_api_with_local_holdout(self):
+        """End-to-end: decide() API returns HOLDOUT source when user hits local holdout."""
+        opt = self._build_opt([
+            self._make_holdout('lh1', 'local_h1', included_rules=['111127'], traffic_end=10000),
+        ])
+        user_context = opt.create_user_context('testUserId', {})
+        decision = user_context.decide('test_feature_in_experiment', [OptimizelyDecideOption.INCLUDE_REASONS])
+        self.assertIsNotNone(decision)
+        # Reasons should be populated
+        self.assertGreater(len(decision.reasons), 0)
