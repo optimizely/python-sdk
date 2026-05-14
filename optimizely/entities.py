@@ -223,6 +223,7 @@ class Holdout(BaseEntity):
         trafficAllocation: list[TrafficAllocation],
         audienceIds: list[str],
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
+        includedRules: Optional[list[str]] = None,
         **kwargs: Any
     ):
         self.id = id
@@ -232,6 +233,8 @@ class Holdout(BaseEntity):
         self.trafficAllocation = trafficAllocation
         self.audienceIds = audienceIds
         self.audienceConditions = audienceConditions
+        # None = global holdout (applies to all rules); list of rule IDs = local holdout
+        self.included_rules: Optional[list[str]] = includedRules
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """Returns audienceConditions if present, otherwise audienceIds.
@@ -240,6 +243,18 @@ class Holdout(BaseEntity):
         and enables holdouts to work with the same audience evaluation logic.
         """
         return self.audienceConditions if self.audienceConditions is not None else self.audienceIds
+
+    @property
+    def is_global(self) -> bool:
+        """Check if this is a global holdout (applies to all rules across all flags).
+
+        A holdout is global when includedRules is None (absent from datafile).
+        An empty list [] is a local holdout that targets no rules (different from global).
+
+        Returns:
+            True if included_rules is None (global), False otherwise (local).
+        """
+        return self.included_rules is None
 
     @property
     def is_activated(self) -> bool:
