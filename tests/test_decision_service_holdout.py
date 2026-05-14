@@ -1331,3 +1331,314 @@ class DecisionServiceHoldoutTest(base.BaseTest):
             self.assertIsNotNone(decision_no_match)
         finally:
             opt.close()
+
+
+# ---------------------------------------------------------------------------
+# Level 2: Local Holdouts Decision Service Tests (FSSDK-12369)
+# ---------------------------------------------------------------------------
+
+_HOLDOUT_VARIATION = [{'id': 'hvar_1', 'key': 'holdout_control', 'variables': []}]
+_FULL_TRAFFIC = [{'entityId': 'hvar_1', 'endOfRange': 10000}]
+_NO_TRAFFIC = [{'entityId': 'hvar_1', 'endOfRange': 0}]
+
+
+def _holdout(holdout_id, key, included_rules=None, traffic=None, status='Running'):
+    """Build a minimal holdout datafile dict."""
+    h = {
+        'id': holdout_id,
+        'key': key,
+        'status': status,
+        'audienceIds': [],
+        'variations': _HOLDOUT_VARIATION,
+        'trafficAllocation': traffic or _FULL_TRAFFIC,
+    }
+    if included_rules is not None:
+        h['includedRules'] = included_rules
+    return h
+
+
+class LocalHoldoutDecisionServiceTest(base.BaseTest):
+    """Level 2 decision service tests for local holdouts (FSSDK-12369).
+
+    These tests exercise the decision flow branches introduced by local holdouts
+    and must live in the decision service test file per [UNITTEST] spec.
+
+    Experiment '111127' is the experiment rule for feature 'test_feature_in_experiment'.
+    Rollout '211111' with rule '211147' (no audience, 60% traffic) is the delivery rule
+    for 'test_feature_in_rollout'.
+    """
+
+    def setUp(self):
+        base.BaseTest.setUp(self)
+        self.error_handler = error_handler.NoOpErrorHandler()
+        self.spy_logger = mock.MagicMock(spec=logger.SimpleLogger)
+        self.spy_logger.logger = self.spy_logger
+        self.spy_user_profile_service = mock.MagicMock()
+        self.spy_cmab_service = mock.MagicMock()
+
+    def tearDown(self):
+        if hasattr(self, 'opt_obj'):
+            self.opt_obj.close()
+
+    def _make_opt(self, holdouts):
+        cfg = self.config_dict_with_features.copy()
+        cfg['holdouts'] = holdouts
+        self.opt_obj = optimizely_module.Optimizely(json.dumps(cfg))
+        return self.opt_obj
+
+    def _decision_svc(self):
+        return decision_service.DecisionService(
+            self.spy_logger,
+            self.spy_user_profile_service,
+            self.spy_cmab_service,
+        )
+
+    # ------------------------------------------------------------------
+    # Branch 1: Global holdout evaluated at flag level
+    # ------------------------------------------------------------------
+
+    def test_global_holdout_evaluated_before_any_rule(self):
+        """User in a global holdout returns holdout decision before any rule is evaluated.
+
+        The global holdout has full traffic allocation and no audience restriction,
+        so the user must be caught at flag level before experiments are checked.
+        """
+        opt = self._make_opt([_holdout('gh1', 'global_full', traffic=_FULL_TRAFFIC)])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+
+        # Mock get_variation so we can assert it was NOT called (holdout short-circuits)
+        with mock.patch.object(ds, 'get_variation', wraps=ds.get_variation) as mock_get_variation:
+            user_ctx = opt.create_user_context('user_in_global_holdout', {})
+            result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        decision = result['decision']
+        self.assertIsNotNone(decision)
+        # Source must be HOLDOUT
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        # Experiment-level get_variation should not have been called
+        mock_get_variation.assert_not_called()
+
+    def test_global_holdout_miss_falls_through_to_experiment(self):
+        """User not in the global holdout falls through to experiment evaluation."""
+        # Zero-traffic global holdout — nobody bucketed in
+        opt = self._make_opt([_holdout('gh1', 'global_zero', traffic=_NO_TRAFFIC)])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('testUserId', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertIsNotNone(result)
+        # Source must NOT be HOLDOUT — user fell through to experiment or rollout
+        decision = result['decision']
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
+    # ------------------------------------------------------------------
+    # Branch 2: Local holdout hit — user bucketed into local holdout for rule X
+    # ------------------------------------------------------------------
+
+    def test_local_holdout_hit_returns_holdout_decision_for_experiment_rule(self):
+        """User bucketed into local holdout for experiment rule X returns holdout decision.
+
+        The experiment rule ID is '111127' (test_experiment linked to test_feature_in_experiment).
+        The local holdout targets only this rule with full traffic.
+        Audience and traffic allocation for the experiment itself must NOT be evaluated.
+        """
+        experiment_rule_id = '111127'
+        opt = self._make_opt([
+            _holdout('lh1', 'local_for_exp', included_rules=[experiment_rule_id], traffic=_FULL_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+
+        with mock.patch.object(ds, 'get_variation', wraps=ds.get_variation) as mock_get_var:
+            user_ctx = opt.create_user_context('user_in_local_holdout', {})
+            result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        decision = result['decision']
+        # User must be caught by local holdout
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        # Regular experiment evaluation (get_variation) must not have run
+        mock_get_var.assert_not_called()
+
+    def test_local_holdout_hit_returns_holdout_decision_for_delivery_rule(self):
+        """User bucketed into local holdout for delivery/rollout rule returns holdout decision.
+
+        Rule '211147' is the everyone-else rollout rule for 'test_feature_in_rollout'.
+        The local holdout targets this delivery rule with full traffic.
+        """
+        delivery_rule_id = '211147'
+        opt = self._make_opt([
+            _holdout('lh2', 'local_for_delivery', included_rules=[delivery_rule_id], traffic=_FULL_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_rollout')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('user_delivery_holdout', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertIsNotNone(result)
+        decision = result['decision']
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
+    # ------------------------------------------------------------------
+    # Branch 3: Local holdout miss — user falls through to regular rule evaluation
+    # ------------------------------------------------------------------
+
+    def test_local_holdout_miss_falls_through_to_regular_rule_evaluation(self):
+        """User not bucketed into local holdout falls through to normal experiment evaluation.
+
+        Zero-traffic local holdout — nobody bucketed in — user proceeds to experiment.
+        """
+        experiment_rule_id = '111127'
+        opt = self._make_opt([
+            _holdout('lh_miss', 'local_no_traffic', included_rules=[experiment_rule_id], traffic=_NO_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('testUserId', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertIsNotNone(result)
+        decision = result['decision']
+        # Source must NOT be HOLDOUT — missed the local holdout
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
+    # ------------------------------------------------------------------
+    # Branch 4: Rule specificity — local holdout for rule X does NOT affect rule Y
+    # ------------------------------------------------------------------
+
+    def test_local_holdout_for_rule_x_does_not_affect_rule_y(self):
+        """Local holdout targeting experiment rule '111127' must not apply to rollout rule '211147'.
+
+        get_holdouts_for_rule('211147') should return empty — the holdout only targets '111127'.
+        """
+        experiment_rule_id = '111127'
+        delivery_rule_id = '211147'
+
+        opt = self._make_opt([
+            _holdout('lh_x', 'local_for_exp_only', included_rules=[experiment_rule_id], traffic=_FULL_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+
+        # Verify rule map specificity via project config API
+        holdouts_for_exp = config.get_holdouts_for_rule(experiment_rule_id)
+        holdouts_for_delivery = config.get_holdouts_for_rule(delivery_rule_id)
+
+        self.assertEqual(len(holdouts_for_exp), 1)
+        self.assertEqual(holdouts_for_exp[0].id, 'lh_x')
+        self.assertEqual(holdouts_for_delivery, [])
+
+    def test_two_rules_each_with_own_local_holdout_are_independent(self):
+        """Each rule's local holdout evaluation is independent of other rules."""
+        exp_rule_id = '111127'
+        delivery_rule_id = '211147'
+
+        opt = self._make_opt([
+            _holdout('lh_exp', 'for_exp', included_rules=[exp_rule_id], traffic=_FULL_TRAFFIC),
+            _holdout('lh_del', 'for_del', included_rules=[delivery_rule_id], traffic=_FULL_TRAFFIC),
+        ])
+        config = opt.config_manager.get_config()
+
+        exp_holdouts = config.get_holdouts_for_rule(exp_rule_id)
+        del_holdouts = config.get_holdouts_for_rule(delivery_rule_id)
+
+        exp_ids = {h.id for h in exp_holdouts}
+        del_ids = {h.id for h in del_holdouts}
+
+        self.assertIn('lh_exp', exp_ids)
+        self.assertNotIn('lh_del', exp_ids)
+
+        self.assertIn('lh_del', del_ids)
+        self.assertNotIn('lh_exp', del_ids)
+
+    # ------------------------------------------------------------------
+    # Branch 5: Experiment vs delivery rules — local holdout applies to both
+    # ------------------------------------------------------------------
+
+    def test_local_holdout_applies_to_experiment_rule(self):
+        """Local holdout check applies to experiment rules in get_decision_for_flag."""
+        experiment_rule_id = '111127'
+        opt = self._make_opt([
+            _holdout('lh_exp', 'for_experiment', included_rules=[experiment_rule_id], traffic=_FULL_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('user_exp_holdout', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+
+    def test_local_holdout_applies_to_rollout_delivery_rule(self):
+        """Local holdout check applies to rollout/delivery rules in get_decision_for_flag."""
+        delivery_rule_id = '211147'
+        opt = self._make_opt([
+            _holdout('lh_del', 'for_delivery', included_rules=[delivery_rule_id], traffic=_FULL_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+        # test_feature_in_rollout only has rollout rules, no experiment rules
+        feature_flag = config.get_feature_from_key('test_feature_in_rollout')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('user_delivery_holdout', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertIsNotNone(result)
+        decision = result['decision']
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
+    # ------------------------------------------------------------------
+    # Precedence: Global → Forced → Local → Regular rule
+    # ------------------------------------------------------------------
+
+    def test_global_holdout_takes_precedence_over_local_holdout(self):
+        """Global holdout evaluated first — user caught before local holdout check."""
+        experiment_rule_id = '111127'
+        opt = self._make_opt([
+            _holdout('gh1', 'global_full', traffic=_FULL_TRAFFIC),          # global, full traffic
+            _holdout('lh1', 'local_full', included_rules=[experiment_rule_id], traffic=_FULL_TRAFFIC),
+        ])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+
+        ds = self._decision_svc()
+
+        # Mock local holdout evaluation to verify it is never reached
+        with mock.patch.object(config, 'get_holdouts_for_rule', wraps=config.get_holdouts_for_rule) as mock_local:
+            user_ctx = opt.create_user_context('user_global_first', {})
+            result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        # get_holdouts_for_rule should NOT be called — global holdout short-circuited
+        mock_local.assert_not_called()
+
+    def test_no_holdouts_at_all_falls_through_to_experiment(self):
+        """When there are no holdouts, decision falls through to experiment evaluation."""
+        opt = self._make_opt([])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('testUserId', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        self.assertIsNotNone(result)
+        decision = result['decision']
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
