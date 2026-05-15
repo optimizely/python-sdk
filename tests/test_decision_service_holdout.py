@@ -1629,6 +1629,48 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         # get_holdouts_for_rule should NOT be called — global holdout short-circuited
         mock_local.assert_not_called()
 
+    def test_forced_decision_beats_100_percent_local_holdout(self):
+        """Forced decision MUST win over a 100% traffic local holdout targeting the same rule.
+
+        MANDATORY ENFORCEMENT TEST (cross-sdk guideline):
+        Setup: User has a forced decision set for rule 'test_experiment'. A local holdout
+        targets rule '111127' (same rule) with 100% traffic allocation.
+        Assert: The forced decision variation is returned — NOT the holdout variation.
+        If this test fails, the per-rule ordering (forced → local holdout → regular) is wrong.
+        """
+        from optimizely.optimizely_user_context import OptimizelyUserContext
+
+        experiment_rule_id = '111127'  # id of 'test_experiment'
+        forced_variation_key = 'control'  # a valid variation key in test_experiment
+
+        opt = self._make_opt([
+            _holdout('lh_full', 'local_full_traffic', included_rules=[experiment_rule_id], traffic=_FULL_TRAFFIC)
+        ])
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+        self.assertIsNotNone(feature_flag)
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('forced_user', {})
+
+        # Set forced decision for 'test_feature_in_experiment' with rule 'test_experiment'
+        decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
+            flag_key='test_feature_in_experiment',
+            rule_key='test_experiment'
+        )
+        forced_decision = OptimizelyUserContext.OptimizelyForcedDecision(
+            variation_key=forced_variation_key
+        )
+        user_ctx.set_forced_decision(decision_context, forced_decision)
+
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        decision = result['decision']
+        self.assertIsNotNone(decision)
+        # The forced decision variation must be returned, NOT a holdout variation
+        self.assertEqual(decision.variation.key, forced_variation_key)
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+
     def test_no_holdouts_at_all_falls_through_to_experiment(self):
         """When there are no holdouts, decision falls through to experiment evaluation."""
         opt = self._make_opt([])
