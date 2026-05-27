@@ -281,6 +281,8 @@ class OdpEventManager:
         # Filter out identifiers with None or empty string values.
         valid_identifiers = {k: v for k, v in identifiers.items() if v}
 
+        # Identify requires 2+ identifiers to link (e.g., vuid + fs_user_id).
+        # A single identifier has no cross-reference value and generates unnecessary traffic.
         if len(valid_identifiers) < 2:
             self.logger.debug(
                 'ODP identify event is not dispatched (fewer than 2 valid identifiers).'
