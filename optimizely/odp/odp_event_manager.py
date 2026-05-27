@@ -283,7 +283,7 @@ class OdpEventManager:
 
         if len(valid_identifiers) < 2:
             self.logger.debug(
-                'ODP identify event is not dispatched (only one identifier provided).'
+                'ODP identify event is not dispatched (fewer than 2 valid identifiers).'
             )
             return
 
