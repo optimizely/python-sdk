@@ -73,7 +73,8 @@ class OptimizelyUserContext:
         ] = {}
 
         if self.client and identify:
-            self.client._identify_user(user_id)
+            from optimizely.helpers.enums import OdpManagerConfig
+            self.client._identify_user({OdpManagerConfig.KEY_FOR_USER_ID: user_id})
 
     class OptimizelyDecisionContext:
         """ Using class with attributes here instead of namedtuple because
