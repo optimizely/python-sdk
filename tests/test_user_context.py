@@ -2094,7 +2094,7 @@ class UserContextTest(base.BaseTest):
         with mock.patch.object(client, '_identify_user') as identify:
             OptimizelyUserContext(client, mock_logger, 'user-id')
 
-        identify.assert_called_once_with('user-id')
+        identify.assert_called_once_with({'fs_user_id': 'user-id'})
         mock_logger.error.assert_not_called()
         client.close()
 
@@ -2104,7 +2104,7 @@ class UserContextTest(base.BaseTest):
         with mock.patch.object(client, '_identify_user') as identify:
             user_context = OptimizelyUserContext(client, mock_logger, 'user-id')
 
-        identify.assert_called_once_with('user-id')
+        identify.assert_called_once_with({'fs_user_id': 'user-id'})
         mock_logger.error.assert_not_called()
 
         with mock.patch.object(client, '_identify_user') as identify:

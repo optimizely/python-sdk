@@ -48,7 +48,7 @@ class OdpManagerTest(base.BaseTest):
         mock_logger.reset_mock()
 
         # these call should be dropped gracefully with None
-        manager.identify_user('user1')
+        manager.identify_user({'fs_user_id': 'user1'})
 
         manager.send_event('t1', 'a1', {}, {})
         mock_logger.error.assert_called_once_with('ODP is not enabled.')
@@ -126,10 +126,11 @@ class OdpManagerTest(base.BaseTest):
 
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
 
+        identifiers = {'fs_user_id': 'user1', 'email': 'user@example.com'}
         with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
-            manager.identify_user('user1')
+            manager.identify_user(identifiers)
 
-        mock_identify_user.assert_called_once_with('user1')
+        mock_identify_user.assert_called_once_with(identifiers)
         mock_logger.error.assert_not_called()
 
     def test_identify_user_odp_integrated(self):
@@ -139,13 +140,14 @@ class OdpManagerTest(base.BaseTest):
         manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config('key1', 'host1', [])
 
+        identifiers = {'fs_user_id': 'user1', 'email': 'user@example.com'}
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            manager.identify_user('user1')
+            manager.identify_user(identifiers)
 
         mock_dispatch_event.assert_called_once_with({
             'type': 'fullstack',
             'action': 'identified',
-            'identifiers': {'fs_user_id': 'user1'},
+            'identifiers': {'fs_user_id': 'user1', 'email': 'user@example.com'},
             'data': {
                 'idempotence_id': mock.ANY,
                 'data_source_type': 'sdk',
@@ -161,8 +163,9 @@ class OdpManagerTest(base.BaseTest):
         manager = OdpManager(False, CustomCache(), event_manager=event_manager, logger=mock_logger)
         manager.update_odp_config(None, None, [])
 
+        identifiers = {'fs_user_id': 'user1', 'email': 'user@example.com'}
         with mock.patch.object(event_manager, 'dispatch') as mock_dispatch_event:
-            manager.identify_user('user1')
+            manager.identify_user(identifiers)
 
         mock_dispatch_event.assert_not_called()
         mock_logger.error.assert_not_called()
@@ -175,12 +178,93 @@ class OdpManagerTest(base.BaseTest):
         manager = OdpManager(False, OptimizelySegmentsCache, event_manager=event_manager, logger=mock_logger)
         manager.enabled = False
 
+        identifiers = {'fs_user_id': 'user1', 'email': 'user@example.com'}
         with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
-            manager.identify_user('user1')
+            manager.identify_user(identifiers)
 
         mock_identify_user.assert_not_called()
         mock_logger.error.assert_not_called()
         mock_logger.debug.assert_called_with('ODP identify event is not dispatched (ODP disabled).')
+
+    def test_identify_user_single_identifier_skipped(self):
+        """Single identifier should NOT trigger an ODP identify event."""
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(mock_logger, OdpEventApiManager())
+
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
+
+        with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
+            manager.identify_user({'fs_user_id': 'user1'})
+
+        mock_identify_user.assert_not_called()
+        mock_logger.debug.assert_any_call('ODP identify event is not dispatched (fewer than 2 valid identifiers).')
+
+    def test_identify_user_multiple_identifiers_sent(self):
+        """Multiple identifiers should trigger an ODP identify event."""
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(mock_logger, OdpEventApiManager())
+
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
+
+        identifiers = {'fs_user_id': 'user1', 'vuid': 'vuid-abc'}
+        with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
+            manager.identify_user(identifiers)
+
+        mock_identify_user.assert_called_once_with(identifiers)
+
+    def test_identify_user_three_identifiers_sent(self):
+        """Three identifiers should trigger an ODP identify event with all identifiers."""
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(mock_logger, OdpEventApiManager())
+
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
+
+        identifiers = {'fs_user_id': 'user1', 'vuid': 'vuid-abc', 'email': 'user@example.com'}
+        with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
+            manager.identify_user(identifiers)
+
+        mock_identify_user.assert_called_once_with(identifiers)
+
+    def test_identify_user_null_empty_values_not_counted(self):
+        """Null and empty identifier values should not count toward the identifier total."""
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(mock_logger, OdpEventApiManager())
+
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
+
+        # Two identifiers but one is empty - should not send
+        with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
+            manager.identify_user({'fs_user_id': 'user1', 'email': ''})
+
+        mock_identify_user.assert_not_called()
+        mock_logger.debug.assert_any_call('ODP identify event is not dispatched (fewer than 2 valid identifiers).')
+
+        mock_logger.reset_mock()
+
+        # Two identifiers but one is None - should not send
+        with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
+            manager.identify_user({'fs_user_id': 'user1', 'email': None})
+
+        mock_identify_user.assert_not_called()
+        mock_logger.debug.assert_any_call('ODP identify event is not dispatched (fewer than 2 valid identifiers).')
+
+    def test_identify_user_zero_identifiers_skipped(self):
+        """Zero identifiers should NOT trigger an ODP identify event."""
+        mock_logger = mock.MagicMock()
+        event_manager = OdpEventManager(mock_logger, OdpEventApiManager())
+
+        manager = OdpManager(False, LRUCache(10, 20), event_manager=event_manager, logger=mock_logger)
+        manager.update_odp_config('key1', 'host1', [])
+
+        with mock.patch.object(event_manager, 'identify_user') as mock_identify_user:
+            manager.identify_user({})
+
+        mock_identify_user.assert_not_called()
+        mock_logger.debug.assert_any_call('ODP identify event is not dispatched (fewer than 2 valid identifiers).')
 
     def test_send_event_datafile_not_ready(self):
         mock_logger = mock.MagicMock()
