@@ -73,7 +73,7 @@ class OdpManager:
 
         return self.segment_manager.fetch_qualified_segments(user_key, user_value, options)
 
-    def identify_user(self, user_id: str) -> None:
+    def identify_user(self, identifiers: dict[str, str]) -> None:
         if not self.enabled or not self.event_manager:
             self.logger.debug('ODP identify event is not dispatched (ODP disabled).')
             return
@@ -81,7 +81,12 @@ class OdpManager:
             self.logger.debug('ODP identify event is not dispatched (ODP not integrated).')
             return
 
-        self.event_manager.identify_user(user_id)
+        valid_identifiers = {k: v for k, v in identifiers.items() if v}
+        if len(valid_identifiers) < 2:
+            self.logger.debug('ODP identify event is not dispatched (only one identifier provided).')
+            return
+
+        self.event_manager.identify_user(valid_identifiers)
 
     def send_event(self, type: str, action: str, identifiers: dict[str, str], data: dict[str, Any]) -> None:
         """
