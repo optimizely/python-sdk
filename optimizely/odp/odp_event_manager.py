@@ -267,9 +267,9 @@ class OdpEventManager:
         except Full:
             self.logger.warning(Errors.ODP_EVENT_FAILED.format("Queue is full"))
 
-    def identify_user(self, user_id: str) -> None:
+    def identify_user(self, identifiers: dict[str, str]) -> None:
         self.send_event(OdpManagerConfig.EVENT_TYPE, 'identified',
-                        {OdpManagerConfig.KEY_FOR_USER_ID: user_id}, {})
+                        identifiers, {})
 
     def update_config(self) -> None:
         """Adds update config signal to event_queue."""
