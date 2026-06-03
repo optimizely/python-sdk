@@ -610,6 +610,24 @@ class DecisionService:
                 return Decision(experiment=rule, variation=forced_decision_variation,
                                 source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
+            # Check local holdouts targeting this specific delivery rule (FSSDK-12369)
+            local_holdouts = project_config.get_holdouts_for_rule(rule.id)
+            for holdout in local_holdouts:
+                local_holdout_decision = self.get_variation_for_holdout(
+                    holdout, user_context, project_config
+                )
+                decide_reasons.extend(local_holdout_decision['reasons'])
+
+                local_decision = local_holdout_decision['decision']
+                if local_decision.variation is not None:
+                    message = (
+                        f"The user '{user_id}' is bucketed into local holdout '{holdout.key}' "
+                        f"for delivery rule '{rule.key}'."
+                    )
+                    self.logger.info(message)
+                    decide_reasons.append(message)
+                    return local_decision, decide_reasons
+
             bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
             decide_reasons += bucket_reasons
 
@@ -733,9 +751,9 @@ class DecisionService:
         reasons = decide_reasons.copy() if decide_reasons else []
         user_id = user_context.user_id
 
-        # Check holdouts
-        holdouts = project_config.get_holdouts_for_flag(feature_flag.key)
-        for holdout in holdouts:
+        # Check global holdouts (flag level — before any rules are evaluated)
+        global_holdouts = project_config.get_global_holdouts()
+        for holdout in global_holdouts:
             holdout_decision = self.get_variation_for_holdout(holdout, user_context, project_config)
             reasons.extend(holdout_decision['reasons'])
 
@@ -756,7 +774,7 @@ class DecisionService:
                 'reasons': reasons
             }
 
-        # If no holdout decision, check experiments then rollouts
+        # If no global holdout decision, check experiments then rollouts
         if feature_flag.experimentIds:
             for experiment_id in feature_flag.experimentIds:
                 experiment = project_config.get_experiment_from_id(experiment_id)
@@ -777,6 +795,28 @@ class DecisionService:
                             'error': False,
                             'reasons': reasons
                         }
+
+                    # Check local holdouts targeting this specific experiment rule (FSSDK-12369)
+                    local_holdouts = project_config.get_holdouts_for_rule(experiment.id)
+                    for holdout in local_holdouts:
+                        local_holdout_decision = self.get_variation_for_holdout(
+                            holdout, user_context, project_config
+                        )
+                        reasons.extend(local_holdout_decision['reasons'])
+
+                        local_decision = local_holdout_decision['decision']
+                        if local_decision.variation is not None:
+                            message = (
+                                f"The user '{user_id}' is bucketed into local holdout '{holdout.key}' "
+                                f"for experiment rule '{experiment.key}'."
+                            )
+                            self.logger.info(message)
+                            reasons.append(message)
+                            return {
+                                'decision': local_holdout_decision['decision'],
+                                'error': False,
+                                'reasons': reasons
+                            }
 
                     # Get variation for experiment
                     variation_result = self.get_variation(
