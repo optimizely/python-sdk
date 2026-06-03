@@ -267,9 +267,30 @@ class OdpEventManager:
         except Full:
             self.logger.warning(Errors.ODP_EVENT_FAILED.format("Queue is full"))
 
-    def identify_user(self, user_id: str) -> None:
+    def identify_user(self, identifiers: dict[str, str]) -> None:
+        """Send an identify event to ODP if there are multiple valid identifiers.
+
+        An identify event is only useful when there are two or more identifiers
+        to link together in the ODP user profile. Sending a single identifier
+        provides no linking value and wastes a network call.
+
+        Args:
+            identifiers: A dictionary of identifier key-value pairs
+                (e.g. {"fs_user_id": "abc", "email": "a@b.com"}).
+        """
+        # Filter out identifiers with None or empty string values.
+        valid_identifiers = {k: v for k, v in identifiers.items() if v}
+
+        # Identify requires 2+ identifiers to link (e.g., vuid + fs_user_id).
+        # A single identifier has no cross-reference value and generates unnecessary traffic.
+        if len(valid_identifiers) < 2:
+            self.logger.debug(
+                'ODP identify event is not dispatched (fewer than 2 valid identifiers).'
+            )
+            return
+
         self.send_event(OdpManagerConfig.EVENT_TYPE, 'identified',
-                        {OdpManagerConfig.KEY_FOR_USER_ID: user_id}, {})
+                        valid_identifiers, {})
 
     def update_config(self) -> None:
         """Adds update config signal to event_queue."""

@@ -1541,7 +1541,7 @@ class Optimizely:
             config.all_segments
         )
 
-    def _identify_user(self, user_id: str) -> None:
+    def _identify_user(self, identifiers: dict[str, str]) -> None:
         if not self.is_valid:
             self.logger.error(enums.Errors.INVALID_OPTIMIZELY.format('identify_user'))
             return
@@ -1551,7 +1551,7 @@ class Optimizely:
             self.logger.error(enums.Errors.INVALID_PROJECT_CONFIG.format('identify_user'))
             return
 
-        self.odp_manager.identify_user(user_id)
+        self.odp_manager.identify_user(identifiers)
 
     def _fetch_qualified_segments(self, user_id: str, options: Optional[list[str]] = None) -> Optional[list[str]]:
         if not self.is_valid:

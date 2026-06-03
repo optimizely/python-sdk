@@ -19,6 +19,7 @@ import threading
 from typing import TYPE_CHECKING, Any, Callable, Optional, NewType, Dict
 
 from optimizely.decision import optimizely_decision
+from optimizely.helpers.enums import OdpManagerConfig
 
 if TYPE_CHECKING:
     # prevent circular dependency by skipping import at runtime
@@ -73,7 +74,8 @@ class OptimizelyUserContext:
         ] = {}
 
         if self.client and identify:
-            self.client._identify_user(user_id)
+            identifiers = {OdpManagerConfig.KEY_FOR_USER_ID: user_id}
+            self.client._identify_user(identifiers)
 
     class OptimizelyDecisionContext:
         """ Using class with attributes here instead of namedtuple because
