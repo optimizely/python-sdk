@@ -233,7 +233,11 @@ class Holdout(BaseEntity):
         self.trafficAllocation = trafficAllocation
         self.audienceIds = audienceIds
         self.audienceConditions = audienceConditions
-        # None = global holdout (applies to all rules); list of rule IDs = local holdout
+        # Per-rule targeting list for local holdouts. Scope is NOT determined by this
+        # field — it is determined by which datafile section the entity was parsed
+        # from ('holdouts' = global, 'localHoldouts' = local). ProjectConfig strips
+        # this field on entries parsed from the 'holdouts' section so that entities
+        # built from that section always satisfy is_global. See FSSDK-12760.
         self.included_rules: Optional[list[str]] = includedRules
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
@@ -248,8 +252,17 @@ class Holdout(BaseEntity):
     def is_global(self) -> bool:
         """Check if this is a global holdout (applies to all rules across all flags).
 
-        A holdout is global when includedRules is None (absent from datafile).
-        An empty list [] is a local holdout that targets no rules (different from global).
+        Authoritative scope is the datafile section the entity came from:
+        the top-level 'holdouts' section is global, 'localHoldouts' is local.
+        ProjectConfig enforces this by stripping 'includedRules' from entries
+        parsed out of the 'holdouts' section before constructing the entity,
+        so for entities built via ProjectConfig this property is consistent
+        with section membership.
+
+        At the entity level the property is still computed from
+        ``included_rules`` for code holding entity references directly:
+        None → global, [] or non-empty list → local. An empty list is a
+        local holdout that targets no rules (distinct from None/global).
 
         Returns:
             True if included_rules is None (global), False otherwise (local).

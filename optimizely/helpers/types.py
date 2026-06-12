@@ -130,4 +130,9 @@ class HoldoutDict(ExperimentDict):
     Extends ExperimentDict with holdout-specific properties.
     """
     holdoutStatus: HoldoutStatus
-    includedRules: Optional[list[str]]  # None = global holdout; list of rule IDs = local holdout
+    # Per-rule targeting list for local holdouts. Holdout scope is determined by which
+    # top-level datafile section the entry appears in ('holdouts' vs 'localHoldouts'),
+    # NOT by this field. On 'holdouts'-section entries this field is ignored and
+    # stripped at parse time (see ProjectConfig). On 'localHoldouts'-section entries
+    # the field is required; missing or None is an error and the entry is excluded.
+    includedRules: Optional[list[str]]
