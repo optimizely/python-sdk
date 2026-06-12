@@ -1380,9 +1380,33 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         if hasattr(self, 'opt_obj'):
             self.opt_obj.close()
 
-    def _make_opt(self, holdouts):
+    def _make_opt(self, holdouts, local_holdouts=None):
+        """Build an Optimizely instance from holdout entries.
+
+        Per FSSDK-12760, the datafile partitions holdouts into two top-level sections:
+        - 'holdouts' → global holdouts (every entry is global, regardless of includedRules)
+        - 'localHoldouts' → local holdouts (rule-scoped via includedRules)
+
+        For convenience, this helper auto-routes entries: any entry in `holdouts`
+        whose `includedRules` is a non-None list is moved to the `localHoldouts`
+        section. Tests that explicitly want to control sectioning can pass both
+        `holdouts` and `local_holdouts` lists.
+        """
         cfg = self.config_dict_with_features.copy()
-        cfg['holdouts'] = holdouts
+        if local_holdouts is None:
+            globals_list: list = []
+            locals_list: list = []
+            for h in holdouts:
+                if h.get('includedRules') is not None:
+                    locals_list.append(h)
+                else:
+                    globals_list.append(h)
+            cfg['holdouts'] = globals_list
+            if locals_list:
+                cfg['localHoldouts'] = locals_list
+        else:
+            cfg['holdouts'] = holdouts
+            cfg['localHoldouts'] = local_holdouts
         self.opt_obj = optimizely_module.Optimizely(json.dumps(cfg))
         return self.opt_obj
 
