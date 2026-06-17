@@ -233,7 +233,8 @@ class Holdout(BaseEntity):
         self.trafficAllocation = trafficAllocation
         self.audienceIds = audienceIds
         self.audienceConditions = audienceConditions
-        # None = global holdout (applies to all rules); list of rule IDs = local holdout
+        # Per-rule targeting for local holdouts. Scope comes from the datafile
+        # section, not this field; ProjectConfig strips it on 'holdouts' entries.
         self.included_rules: Optional[list[str]] = includedRules
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
@@ -246,13 +247,11 @@ class Holdout(BaseEntity):
 
     @property
     def is_global(self) -> bool:
-        """Check if this is a global holdout (applies to all rules across all flags).
+        """True if this is a global holdout.
 
-        A holdout is global when includedRules is None (absent from datafile).
-        An empty list [] is a local holdout that targets no rules (different from global).
-
-        Returns:
-            True if included_rules is None (global), False otherwise (local).
+        Scope is set by the datafile section ('holdouts' vs 'localHoldouts').
+        ProjectConfig strips 'includedRules' on 'holdouts' entries, so this
+        property stays consistent with section membership.
         """
         return self.included_rules is None
 

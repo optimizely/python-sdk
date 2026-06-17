@@ -90,17 +90,49 @@ class ProjectConfig:
         self.region: str = region_value or 'US'
 
         # Parse holdouts from datafile and convert to Holdout entities
-        holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
+        global_holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
+        local_holdouts_data: list[types.HoldoutDict] = config.get('localHoldouts', [])
         self.holdouts: list[entities.Holdout] = []
         self.holdout_id_map: dict[str, entities.Holdout] = {}
-        # Global holdouts (includedRules is None) — evaluated at flag level before any rule
+        # Global holdouts — evaluated at flag level before any rule
         self.global_holdouts: list[entities.Holdout] = []
         # Rule-level holdouts — map from rule ID to holdouts targeting that rule
         self.rule_holdouts_map: dict[str, list[entities.Holdout]] = {}
 
-        # Convert holdout dicts to Holdout entities
-        for holdout_data in holdouts_data:
-            # Create Holdout entity
+        # Process global holdouts: section membership is the sole signal for scope.
+        # Drop any 'includedRules' field on entries here so the entity is unambiguously
+        # global (is_global → True), even if the datafile incorrectly includes one.
+        for holdout_data in global_holdouts_data:
+            sanitized = cast(types.HoldoutDict, dict(holdout_data))
+            if sanitized.pop('includedRules', None) is not None:  # type: ignore[misc]
+                self.logger.warning(
+                    f'Global holdout "{holdout_data.get("key", "")}" '
+                    f'(id: {holdout_data.get("id", "<unknown>")}) has "includedRules" '
+                    f'which will be ignored; global holdouts apply to all flags.'
+                )
+            holdout = entities.Holdout(**sanitized)
+            self.holdouts.append(holdout)
+
+            # Only process Running holdouts
+            if not holdout.is_activated:
+                continue
+
+            # Map by ID for quick lookup
+            self.holdout_id_map[holdout.id] = holdout
+            self.global_holdouts.append(holdout)
+
+        # Process local holdouts: every entry must carry 'includedRules' (list of rule IDs).
+        # Entries without 'includedRules' are invalid per spec — log an error and exclude
+        # them from evaluation (do NOT fall back to global application).
+        for holdout_data in local_holdouts_data:
+            if 'includedRules' not in holdout_data or holdout_data.get('includedRules') is None:
+                holdout_id = holdout_data.get('id', '<unknown>')
+                self.logger.error(
+                    f'Local holdout with ID "{holdout_id}" is missing required "includedRules" '
+                    f'field and will be excluded from evaluation.'
+                )
+                continue
+
             holdout = entities.Holdout(**holdout_data)
             self.holdouts.append(holdout)
 
@@ -111,15 +143,11 @@ class ProjectConfig:
             # Map by ID for quick lookup
             self.holdout_id_map[holdout.id] = holdout
 
-            # Classify holdout as global or local based on includedRules
-            if holdout.is_global:
-                self.global_holdouts.append(holdout)
-            else:
-                # Local holdout — register for each targeted rule ID
-                for rule_id in (holdout.included_rules or []):
-                    if rule_id not in self.rule_holdouts_map:
-                        self.rule_holdouts_map[rule_id] = []
-                    self.rule_holdouts_map[rule_id].append(holdout)
+            # Register for each targeted rule ID
+            for rule_id in (holdout.included_rules or []):
+                if rule_id not in self.rule_holdouts_map:
+                    self.rule_holdouts_map[rule_id] = []
+                self.rule_holdouts_map[rule_id].append(holdout)
 
         # Utility maps for quick lookup
         self.group_id_map: dict[str, entities.Group] = self._generate_key_map(self.groups, 'id', entities.Group)
@@ -887,9 +915,11 @@ class ProjectConfig:
         return None
 
     def get_global_holdouts(self) -> list[entities.Holdout]:
-        """Return all global holdouts (includedRules is None).
+        """Return all global holdouts (parsed from the top-level 'holdouts' section).
 
         Global holdouts are evaluated at flag level before any rule is checked.
+        Section membership in 'holdouts' is the sole signal for global scope —
+        any 'includedRules' field on these entries is ignored.
 
         Returns:
             List of global Holdout entities that are currently running.
@@ -899,9 +929,11 @@ class ProjectConfig:
     def get_holdouts_for_rule(self, rule_id: str) -> list[entities.Holdout]:
         """Return local holdouts that target a specific rule.
 
-        Local holdouts are evaluated per-rule, before the rule's audience and
-        traffic allocation checks. A rule ID not present in any holdout's
-        includedRules simply returns an empty list — silently skipped.
+        Local holdouts come from the top-level 'localHoldouts' datafile section and
+        are scoped per-rule via their 'includedRules' field. They are evaluated
+        before the rule's audience and traffic allocation checks. A rule ID not
+        present in any holdout's includedRules simply returns an empty list —
+        silently skipped.
 
         Args:
             rule_id: The experiment or delivery rule ID to look up.
