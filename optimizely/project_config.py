@@ -89,19 +89,7 @@ class ProjectConfig:
         region_value = config.get('region')
         self.region: str = region_value or 'US'
 
-        # Parse holdouts from datafile and convert to Holdout entities.
-        #
-        # Two top-level datafile sections drive holdout scoping (Gen 3+):
-        #   - 'holdouts'      → ALL entries are global holdouts (applied to every flag).
-        #                       Any 'includedRules' field on these entries is IGNORED;
-        #                       section membership alone determines scope.
-        #   - 'localHoldouts' → ALL entries are local holdouts (rule-scoped via
-        #                       'includedRules'). Entries missing 'includedRules' are
-        #                       invalid and skipped with an error log.
-        #
-        # Backward compatibility: older datafiles that only emit the 'holdouts' section
-        # continue to work — every entry is treated as global, matching pre-localHoldouts
-        # behavior. The 'localHoldouts' key is simply absent and parsed as an empty list.
+        # Parse holdouts from datafile and convert to Holdout entities
         global_holdouts_data: list[types.HoldoutDict] = config.get('holdouts', [])
         local_holdouts_data: list[types.HoldoutDict] = config.get('localHoldouts', [])
         self.holdouts: list[entities.Holdout] = []
