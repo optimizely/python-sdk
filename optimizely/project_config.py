@@ -103,9 +103,13 @@ class ProjectConfig:
         # Drop any 'includedRules' field on entries here so the entity is unambiguously
         # global (is_global → True), even if the datafile incorrectly includes one.
         for holdout_data in global_holdouts_data:
-            # Copy the typed dict and remove includedRules without losing its shape.
             sanitized = cast(types.HoldoutDict, dict(holdout_data))
-            sanitized.pop('includedRules', None)  # type: ignore[misc]
+            if sanitized.pop('includedRules', None) is not None:  # type: ignore[misc]
+                self.logger.warning(
+                    f'Global holdout "{holdout_data.get("key", "")}" '
+                    f'(id: {holdout_data.get("id", "<unknown>")}) has "includedRules" '
+                    f'which will be ignored; global holdouts apply to all flags.'
+                )
             holdout = entities.Holdout(**sanitized)
             self.holdouts.append(holdout)
 
