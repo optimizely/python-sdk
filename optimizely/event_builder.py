@@ -191,10 +191,6 @@ class EventBuilder:
     """
         snapshot: dict[str, list[dict[str, Any]]] = {}
 
-        # FSSDK-12813: Normalize decision-event IDs uniformly across all
-        # decision types. campaign_id falls back to experiment_id when
-        # invalid; variation_id becomes None when invalid; entity_id mirrors
-        # the normalized campaign_id (FR-009).
         normalized_campaign_id = event_id_normalizer.normalize_campaign_id(
             experiment.layerId, experiment.id
         )

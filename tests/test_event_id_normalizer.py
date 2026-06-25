@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Unit tests for :mod:`optimizely.event.event_id_normalizer` (FSSDK-12813)."""
+"""Unit tests for :mod:`optimizely.event.event_id_normalizer`."""
 
 import unittest
 
@@ -143,7 +143,7 @@ class NormalizeCampaignIdTest(unittest.TestCase):
         )
 
     def test_returns_campaign_id_when_opaque_string(self):
-        # FSSDK-12813: opaque IDs (e.g. holdout layer IDs) pass through.
+        # Opaque IDs (e.g. holdout layer IDs) pass through.
         self.assertEqual(
             'default-12345',
             event_id_normalizer.normalize_campaign_id('default-12345', '111127'),

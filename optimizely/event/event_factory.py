@@ -135,12 +135,6 @@ class EventFactory:
                 if isinstance(event.experiment, entities.Experiment):
                     experiment_layerId = event.experiment.layerId
 
-            # FSSDK-12813: Normalize decision-event IDs uniformly across all
-            # decision types (experiment, feature test, rollout, holdout).
-            # campaign_id falls back to experiment_id when invalid.
-            # variation_id becomes None when invalid.
-            # entity_id on the impression event mirrors campaign_id (FR-009)
-            # so the two fields are byte-equivalent for the same event.
             normalized_campaign_id = event_id_normalizer.normalize_campaign_id(
                 experiment_layerId, experiment_id
             )

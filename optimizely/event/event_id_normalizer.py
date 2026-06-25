@@ -15,7 +15,7 @@
 
 This module provides byte-equivalent, cross-SDK normalization for the
 ``campaign_id``, ``variation_id``, and impression ``entity_id`` fields that
-appear in dispatched decision events. See FSSDK-12813.
+appear in dispatched decision events.
 
 Rules:
   * ``campaign_id`` and impression ``entity_id`` accept **any non-empty

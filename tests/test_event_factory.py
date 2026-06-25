@@ -1240,7 +1240,7 @@ class EventFactoryTest(base.BaseTest):
 
 
 class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
-    """FSSDK-12813: end-to-end decision-event ID normalization.
+    """End-to-end decision-event ID normalization.
 
     These tests build real ``ImpressionEvent`` instances using crafted
     Experiment/Variation objects, then call ``EventFactory.create_log_event``
@@ -1323,24 +1323,21 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         self.assertEqual('111127', event['entity_id'])
 
     def test_opaque_string_campaign_id_passes_through(self):
-        # FSSDK-12813: opaque (non-numeric) campaign_id values are valid and
-        # pass through unchanged per the relaxed FR-001 contract.
         impression = self._build_impression('111127', 'campaign_a', '111129')
         decision, event = self._dispatched_decision(impression)
         self.assertEqual('campaign_a', decision['campaign_id'])
         self.assertEqual('campaign_a', event['entity_id'])
 
     def test_prefixed_opaque_campaign_id_passes_through(self):
-        # FSSDK-12813: e.g. holdout layer IDs like "default-12345".
+        # Holdout layer IDs are opaque strings like "default-12345".
         impression = self._build_impression('111127', 'default-12345', '111129')
         decision, event = self._dispatched_decision(impression)
         self.assertEqual('default-12345', decision['campaign_id'])
         self.assertEqual('default-12345', event['entity_id'])
 
     def test_whitespace_campaign_id_passes_through(self):
-        # FSSDK-12813: whitespace is a non-empty string and so is accepted;
-        # character-content validation is deferred to the upstream datafile
-        # producer.
+        # Whitespace is a non-empty string; character-content validation is
+        # the upstream datafile producer's responsibility.
         impression = self._build_impression('111127', ' ', '111129')
         decision, event = self._dispatched_decision(impression)
         self.assertEqual(' ', decision['campaign_id'])
@@ -1370,8 +1367,6 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
 
     # ------------------------------------------------------------------ FR-005
     def test_normalization_applies_to_rollout_decisions(self):
-        # FSSDK-12813: empty campaign_id falls back to experiment_id;
-        # non-numeric variation_id normalizes to None.
         impression = self._build_impression(
             '111127', '', 'bad_var', rule_type='rollout'
         )
@@ -1399,8 +1394,8 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         self.assertEqual('111127', event['entity_id'])
 
     def test_holdout_with_opaque_layer_id_passes_through(self):
-        # FSSDK-12813: the canonical holdout case — opaque layerId like
-        # "default-12345" is now a valid campaign_id and is NOT replaced.
+        # Canonical holdout case: opaque layerId like "default-12345" is a
+        # valid campaign_id and must not be replaced.
         impression = self._build_impression(
             '111127', 'default-12345', '111129', rule_type='holdout'
         )
@@ -1427,7 +1422,7 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         for layer_id, exp_id, expected in [
             ('111182', '111127', '111182'),         # numeric campaign_id wins
             ('', '111127', '111127'),                # empty falls back to experiment_id
-            # FSSDK-12813: opaque non-numeric IDs now pass through unchanged.
+            # Opaque non-numeric IDs pass through unchanged.
             ('default-12345', '111127', 'default-12345'),
             ('layer_abc', '111127', 'layer_abc'),
             ('007', '111127', '007'),                # leading zeros preserved
