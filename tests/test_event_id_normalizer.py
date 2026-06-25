@@ -18,8 +18,49 @@ import unittest
 from optimizely.event import event_id_normalizer
 
 
+class IsNonEmptyStringTest(unittest.TestCase):
+    """Cover :func:`event_id_normalizer.is_non_empty_string` (FR-001/FR-009).
+
+    Any non-empty string is valid for ``campaign_id`` / ``entity_id`` — IDs
+    may be numeric like ``"12345"`` or opaque like ``"default-12345"``.
+    """
+
+    def test_returns_true_for_numeric_string(self):
+        self.assertTrue(event_id_normalizer.is_non_empty_string('12345'))
+
+    def test_returns_true_for_opaque_string(self):
+        # Opaque IDs are explicitly valid for campaign_id / entity_id.
+        self.assertTrue(event_id_normalizer.is_non_empty_string('default-12345'))
+        self.assertTrue(event_id_normalizer.is_non_empty_string('layer_abc'))
+        self.assertTrue(event_id_normalizer.is_non_empty_string('abc'))
+
+    def test_returns_true_for_whitespace_string(self):
+        # Whitespace is a non-empty string and so is accepted; the spec
+        # explicitly defers any character-content validation upstream.
+        self.assertTrue(event_id_normalizer.is_non_empty_string(' '))
+
+    def test_returns_false_for_empty_string(self):
+        self.assertFalse(event_id_normalizer.is_non_empty_string(''))
+
+    def test_returns_false_for_none(self):
+        self.assertFalse(event_id_normalizer.is_non_empty_string(None))
+
+    def test_returns_false_for_non_string_types(self):
+        # Non-string types are out of scope per the spec assumptions; the
+        # predicate rejects them so the fallback path fires.
+        self.assertFalse(event_id_normalizer.is_non_empty_string(12345))
+        self.assertFalse(event_id_normalizer.is_non_empty_string(123.0))
+        self.assertFalse(event_id_normalizer.is_non_empty_string(True))
+        self.assertFalse(event_id_normalizer.is_non_empty_string(['123']))
+        self.assertFalse(event_id_normalizer.is_non_empty_string({'id': '123'}))
+
+
 class IsNumericIdStringTest(unittest.TestCase):
-    """Cover :func:`event_id_normalizer.is_numeric_id_string` edge cases."""
+    """Cover :func:`event_id_normalizer.is_numeric_id_string` edge cases.
+
+    Used only for ``variation_id`` (FR-003), which retains the strict
+    decimal-digit contract.
+    """
 
     def test_returns_true_for_decimal_digit_string(self):
         self.assertTrue(event_id_normalizer.is_numeric_id_string('12345'))
@@ -29,7 +70,7 @@ class IsNumericIdStringTest(unittest.TestCase):
         self.assertTrue(event_id_normalizer.is_numeric_id_string('9'))
 
     def test_returns_true_for_leading_zeros(self):
-        # FR-001 explicitly allows leading zeros.
+        # FR-003 explicitly allows leading zeros.
         self.assertTrue(event_id_normalizer.is_numeric_id_string('007'))
         self.assertTrue(event_id_normalizer.is_numeric_id_string('00000'))
 
@@ -40,7 +81,7 @@ class IsNumericIdStringTest(unittest.TestCase):
         self.assertFalse(event_id_normalizer.is_numeric_id_string(None))
 
     def test_returns_false_for_int(self):
-        # FR-001 requires the value to be a string.
+        # FR-003 requires the value to be a string.
         self.assertFalse(event_id_normalizer.is_numeric_id_string(12345))
         self.assertFalse(event_id_normalizer.is_numeric_id_string(0))
 
@@ -89,12 +130,34 @@ class IsNumericIdStringTest(unittest.TestCase):
 
 
 class NormalizeCampaignIdTest(unittest.TestCase):
-    """Cover :func:`event_id_normalizer.normalize_campaign_id` per FR-001/002, FR-009."""
+    """Cover :func:`event_id_normalizer.normalize_campaign_id` per FR-001/002, FR-009.
 
-    def test_returns_campaign_id_when_valid(self):
+    Per the relaxed spec, any non-empty string is valid for campaign_id —
+    fallback to ``experiment_id`` fires only on empty/None/missing.
+    """
+
+    def test_returns_campaign_id_when_numeric(self):
         self.assertEqual(
             '111182',
             event_id_normalizer.normalize_campaign_id('111182', '111127'),
+        )
+
+    def test_returns_campaign_id_when_opaque_string(self):
+        # FSSDK-12813: opaque IDs (e.g. holdout layer IDs) pass through.
+        self.assertEqual(
+            'default-12345',
+            event_id_normalizer.normalize_campaign_id('default-12345', '111127'),
+        )
+        self.assertEqual(
+            'layer_abc',
+            event_id_normalizer.normalize_campaign_id('layer_abc', '111127'),
+        )
+
+    def test_returns_campaign_id_when_whitespace_string(self):
+        # Whitespace is non-empty; passes through (validation deferred upstream).
+        self.assertEqual(
+            ' ',
+            event_id_normalizer.normalize_campaign_id(' ', '111127'),
         )
 
     def test_falls_back_to_experiment_id_when_campaign_id_empty(self):
@@ -109,30 +172,18 @@ class NormalizeCampaignIdTest(unittest.TestCase):
             event_id_normalizer.normalize_campaign_id(None, '111127'),
         )
 
-    def test_falls_back_to_experiment_id_when_campaign_id_non_numeric(self):
+    def test_falls_back_to_opaque_experiment_id(self):
+        # Both fields may be opaque non-numeric strings.
         self.assertEqual(
-            '111127',
-            event_id_normalizer.normalize_campaign_id('abc', '111127'),
+            'exp_42',
+            event_id_normalizer.normalize_campaign_id('', 'exp_42'),
         )
 
-    def test_falls_back_to_experiment_id_when_campaign_id_whitespace(self):
-        self.assertEqual(
-            '111127',
-            event_id_normalizer.normalize_campaign_id(' ', '111127'),
-        )
-
-    def test_falls_back_to_experiment_id_when_campaign_id_int(self):
-        # An int input is invalid (FR-001 requires a string).
-        self.assertEqual(
-            '111127',
-            event_id_normalizer.normalize_campaign_id(111182, '111127'),
-        )
-
-    def test_returns_empty_string_when_both_invalid(self):
+    def test_returns_empty_string_when_both_empty_or_none(self):
         # Do not drop / fail dispatch (FR-006); return ''.
         self.assertEqual('', event_id_normalizer.normalize_campaign_id(None, None))
         self.assertEqual('', event_id_normalizer.normalize_campaign_id('', ''))
-        self.assertEqual('', event_id_normalizer.normalize_campaign_id('abc', 'xyz'))
+        self.assertEqual('', event_id_normalizer.normalize_campaign_id(None, ''))
 
     def test_preserves_leading_zeros(self):
         self.assertEqual(
@@ -142,7 +193,10 @@ class NormalizeCampaignIdTest(unittest.TestCase):
 
 
 class NormalizeVariationIdTest(unittest.TestCase):
-    """Cover :func:`event_id_normalizer.normalize_variation_id` per FR-003/004."""
+    """Cover :func:`event_id_normalizer.normalize_variation_id` per FR-003/004.
+
+    ``variation_id`` retains the strict numeric-string contract.
+    """
 
     def test_returns_variation_id_when_valid(self):
         self.assertEqual(
@@ -174,18 +228,6 @@ class NormalizeVariationIdTest(unittest.TestCase):
 
     def test_preserves_leading_zeros(self):
         self.assertEqual('007', event_id_normalizer.normalize_variation_id('007'))
-
-
-class NormalizeStringIdTest(unittest.TestCase):
-    """Cover the generic :func:`event_id_normalizer.normalize_string_id` helper."""
-
-    def test_returns_value_when_valid(self):
-        self.assertEqual('42', event_id_normalizer.normalize_string_id('42'))
-
-    def test_returns_none_when_invalid(self):
-        self.assertIsNone(event_id_normalizer.normalize_string_id(''))
-        self.assertIsNone(event_id_normalizer.normalize_string_id(None))
-        self.assertIsNone(event_id_normalizer.normalize_string_id('xx'))
 
 
 if __name__ == '__main__':

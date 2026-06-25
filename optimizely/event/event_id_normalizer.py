@@ -18,12 +18,16 @@ This module provides byte-equivalent, cross-SDK normalization for the
 appear in dispatched decision events. See FSSDK-12813.
 
 Rules:
-  * A "numeric ID string" is a non-empty :class:`str` consisting entirely of
-    decimal digits ``0-9``. Leading zeros are allowed. Whitespace, negatives,
-    decimals, and exponents are INVALID.
-  * ``campaign_id`` -> when invalid, falls back to ``experiment_id`` (which is
-    itself passed through :func:`normalize_string_id`).
-  * ``variation_id`` -> when invalid, becomes ``None``.
+  * ``campaign_id`` and impression ``entity_id`` accept **any non-empty
+    string** (numeric like ``"12345"`` or opaque like ``"default-12345"`` /
+    ``"layer_abc"``). The fallback to ``experiment_id`` fires ONLY when the
+    value is the empty string, ``None``, or missing. Non-string types are
+    out of scope for this normalization path (per spec assumptions; the
+    upstream datafile producer delivers string or null values).
+  * ``variation_id`` retains the stricter contract: it MUST be a non-empty
+    string of decimal digits ``0-9`` (leading zeros allowed). Empty,
+    whitespace, non-string, and non-numeric inputs are normalized to
+    ``None`` so the wire payload carries an explicit null.
   * ``entity_id`` on impression events shares the campaign_id normalization
     and is therefore byte-equivalent to the normalized campaign_id for the
     same impression (FR-009).
@@ -37,11 +41,23 @@ from __future__ import annotations
 from typing import Any, Optional
 
 
+def is_non_empty_string(value: Any) -> bool:
+    """Return ``True`` if ``value`` is a non-empty :class:`str`.
+
+    Used for ``campaign_id`` and ``entity_id`` validation per the relaxed
+    FR-001 / FR-009 contract: any non-empty string is accepted regardless of
+    character content (IDs may be opaque, e.g. ``"default-12345"``).
+    """
+    return isinstance(value, str) and value != ''
+
+
 def is_numeric_id_string(value: Any) -> bool:
     """Return ``True`` if ``value`` is a non-empty decimal-digit string.
 
-    Whitespace, signs, decimal points, exponents, and non-string types all
-    return ``False``. Leading zeros are accepted.
+    Used for ``variation_id`` validation per FR-003 (the only field that
+    retains the strict numeric-string contract). Whitespace, signs, decimal
+    points, exponents, and non-string types all return ``False``. Leading
+    zeros are accepted.
     """
     if not isinstance(value, str):
         return False
@@ -54,22 +70,18 @@ def is_numeric_id_string(value: Any) -> bool:
     return value.isascii() and value.isdigit()
 
 
-def normalize_string_id(value: Any) -> Optional[str]:
-    """Return ``value`` if it's a numeric ID string, otherwise ``None``."""
-    return value if is_numeric_id_string(value) else None
-
-
 def normalize_campaign_id(campaign_id: Any, experiment_id: Any) -> str:
     """Normalize a decision-event ``campaign_id`` (FR-001/FR-002, FR-009).
 
-    If ``campaign_id`` is a valid numeric ID string it is returned unchanged.
-    Otherwise the function falls back to ``experiment_id`` (after applying
-    the same validation). If neither is a numeric ID string, an empty string
-    is returned so the event still dispatches (FR-006).
+    Returns ``campaign_id`` unchanged when it is a non-empty string (any
+    character content — numeric like ``"12345"`` or opaque like
+    ``"default-12345"``). Otherwise falls back to ``experiment_id`` (when it
+    is itself a non-empty string). If neither is a non-empty string, returns
+    an empty string so the event still dispatches (FR-006).
     """
-    if is_numeric_id_string(campaign_id):
+    if is_non_empty_string(campaign_id):
         return campaign_id  # type: ignore[no-any-return]
-    if is_numeric_id_string(experiment_id):
+    if is_non_empty_string(experiment_id):
         return experiment_id  # type: ignore[no-any-return]
     return ''
 
@@ -78,7 +90,7 @@ def normalize_variation_id(variation_id: Any) -> Optional[str]:
     """Normalize a decision-event ``variation_id`` (FR-003/FR-004).
 
     Returns the original value if it is a valid numeric ID string. Otherwise
-    returns ``None`` so the event payload omits/clears the field for the
+    returns ``None`` so the event payload carries an explicit null for the
     downstream consumer.
     """
     return variation_id if is_numeric_id_string(variation_id) else None
