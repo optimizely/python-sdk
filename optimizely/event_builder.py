@@ -18,6 +18,7 @@ import uuid
 from sys import version_info
 
 from . import version
+from .event import event_id_normalizer
 from .helpers import enums
 from .helpers import event_tag_utils
 from .helpers import validator
@@ -178,7 +179,7 @@ class EventBuilder:
 
     def _get_required_params_for_impression(
         self, experiment: Experiment, variation_id: str
-    ) -> dict[str, list[dict[str, str | int]]]:
+    ) -> dict[str, list[dict[str, Any]]]:
         """ Get parameters that are required for the impression event to register.
 
     Args:
@@ -188,19 +189,28 @@ class EventBuilder:
     Returns:
       Dict consisting of decisions and events info for impression event.
     """
-        snapshot: dict[str, list[dict[str, str | int]]] = {}
+        snapshot: dict[str, list[dict[str, Any]]] = {}
+
+        # FSSDK-12813: Normalize decision-event IDs uniformly across all
+        # decision types. campaign_id falls back to experiment_id when
+        # invalid; variation_id becomes None when invalid; entity_id mirrors
+        # the normalized campaign_id (FR-009).
+        normalized_campaign_id = event_id_normalizer.normalize_campaign_id(
+            experiment.layerId, experiment.id
+        )
+        normalized_variation_id = event_id_normalizer.normalize_variation_id(variation_id)
 
         snapshot[self.EventParams.DECISIONS] = [
             {
                 self.EventParams.EXPERIMENT_ID: experiment.id,
-                self.EventParams.VARIATION_ID: variation_id,
-                self.EventParams.CAMPAIGN_ID: experiment.layerId,
+                self.EventParams.VARIATION_ID: normalized_variation_id,
+                self.EventParams.CAMPAIGN_ID: normalized_campaign_id,
             }
         ]
 
         snapshot[self.EventParams.EVENTS] = [
             {
-                self.EventParams.EVENT_ID: experiment.layerId,
+                self.EventParams.EVENT_ID: normalized_campaign_id,
                 self.EventParams.TIME: self._get_time(),
                 self.EventParams.KEY: 'campaign_activated',
                 self.EventParams.UUID: str(uuid.uuid4()),

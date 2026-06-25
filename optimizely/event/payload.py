@@ -71,9 +71,18 @@ class EventBatch:
 class Decision:
     """ Class respresenting Decision. """
 
-    def __init__(self, campaign_id: str, experiment_id: str, variation_id: str, metadata: Metadata):
+    def __init__(
+        self,
+        campaign_id: str,
+        experiment_id: str,
+        variation_id: Optional[str],
+        metadata: Metadata,
+    ):
         self.campaign_id = campaign_id
         self.experiment_id = experiment_id
+        # FSSDK-12813: variation_id may be None when input is invalid /
+        # non-numeric (FR-003/FR-004). All other decision fields remain
+        # strings.
         self.variation_id = variation_id
         self.metadata = metadata
 

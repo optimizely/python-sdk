@@ -18,6 +18,7 @@ from optimizely import entities
 from optimizely.helpers import enums
 from optimizely.helpers import event_tag_utils
 from optimizely.helpers import validator
+from . import event_id_normalizer
 from . import log_event
 from . import payload
 from . import user_event
@@ -134,12 +135,25 @@ class EventFactory:
                 if isinstance(event.experiment, entities.Experiment):
                     experiment_layerId = event.experiment.layerId
 
+            # FSSDK-12813: Normalize decision-event IDs uniformly across all
+            # decision types (experiment, feature test, rollout, holdout).
+            # campaign_id falls back to experiment_id when invalid.
+            # variation_id becomes None when invalid.
+            # entity_id on the impression event mirrors campaign_id (FR-009)
+            # so the two fields are byte-equivalent for the same event.
+            normalized_campaign_id = event_id_normalizer.normalize_campaign_id(
+                experiment_layerId, experiment_id
+            )
+            normalized_variation_id = event_id_normalizer.normalize_variation_id(variation_id)
+
             metadata = payload.Metadata(event.flag_key, event.rule_key,
                                         event.rule_type, variation_key,
                                         event.enabled, event.cmab_uuid)
-            decision = payload.Decision(experiment_layerId, experiment_id, variation_id, metadata)
+            decision = payload.Decision(
+                normalized_campaign_id, experiment_id, normalized_variation_id, metadata
+            )
             snapshot_event = payload.SnapshotEvent(
-                experiment_layerId, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,
+                normalized_campaign_id, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,
             )
 
             snapshot = payload.Snapshot([snapshot_event], [decision])
