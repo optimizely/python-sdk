@@ -38,10 +38,16 @@ defer event dispatch.
 
 from __future__ import annotations
 
+from sys import version_info
 from typing import Any, Optional
 
+if version_info < (3, 10):
+    from typing_extensions import TypeGuard
+else:
+    from typing import TypeGuard
 
-def is_non_empty_string(value: Any) -> bool:
+
+def is_non_empty_string(value: Any) -> TypeGuard[str]:
     """Return ``True`` if ``value`` is a non-empty :class:`str`.
 
     Used for ``campaign_id`` and ``entity_id`` validation per the relaxed
@@ -51,7 +57,7 @@ def is_non_empty_string(value: Any) -> bool:
     return isinstance(value, str) and value != ''
 
 
-def is_numeric_id_string(value: Any) -> bool:
+def is_numeric_id_string(value: Any) -> TypeGuard[str]:
     """Return ``True`` if ``value`` is a non-empty decimal-digit string.
 
     Used for ``variation_id`` validation per FR-003 (the only field that
@@ -80,9 +86,9 @@ def normalize_campaign_id(campaign_id: Any, experiment_id: Any) -> str:
     an empty string so the event still dispatches (FR-006).
     """
     if is_non_empty_string(campaign_id):
-        return campaign_id  # type: ignore[no-any-return]
+        return campaign_id
     if is_non_empty_string(experiment_id):
-        return experiment_id  # type: ignore[no-any-return]
+        return experiment_id
     return ''
 
 
