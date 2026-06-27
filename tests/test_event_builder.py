@@ -1,4 +1,4 @@
-# Copyright 2016-2019, Optimizely
+# Copyright 2016-2019, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from unittest import mock
 import unittest
 from operator import itemgetter
@@ -1015,3 +1016,123 @@ class EventBuilderTest(base.BaseTest):
             event_builder.EventBuilder.HTTP_VERB,
             event_builder.EventBuilder.HTTP_HEADERS,
         )
+
+
+class ImpressionEventIdNormalizationTest(base.BaseTest):
+    """Impression-event normalization rules for campaign_id, variation_id, and entity_id."""
+
+    def setUp(self, *args, **kwargs):
+        base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
+        self.event_builder = self.optimizely.event_builder
+        self.experiment = self.project_config.get_experiment_from_key('test_experiment')
+
+    def _build_impression(self, experiment, variation_id):
+        return self.event_builder._get_required_params_for_impression(experiment, variation_id)
+
+    def _with_layer_id(self, layer_id):
+        experiment = copy.deepcopy(self.experiment)
+        experiment.layerId = layer_id
+        return experiment
+
+    def _decision(self, snapshot):
+        return snapshot[event_builder.EventBuilder.EventParams.DECISIONS][0]
+
+    def _event(self, snapshot):
+        return snapshot[event_builder.EventBuilder.EventParams.EVENTS][0]
+
+    # campaign_id normalization (US1) ----------------------------------------------
+
+    def test_campaign_id_valid_numeric_layer_id_passes_through(self):
+        experiment = self._with_layer_id('111182')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['campaign_id'], '111182')
+
+    def test_campaign_id_empty_string_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id('')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+
+    def test_campaign_id_none_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id(None)
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+
+    def test_campaign_id_non_numeric_string_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id('abc')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+
+    def test_campaign_id_whitespace_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id('   ')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+
+    def test_campaign_id_integer_value_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id(111182)
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+
+    # variation_id normalization (US2) ---------------------------------------------
+
+    def test_variation_id_valid_numeric_passes_through(self):
+        snapshot = self._build_impression(self.experiment, '111129')
+        self.assertEqual(self._decision(snapshot)['variation_id'], '111129')
+
+    def test_variation_id_empty_string_becomes_none(self):
+        snapshot = self._build_impression(self.experiment, '')
+        self.assertIsNone(self._decision(snapshot)['variation_id'])
+
+    def test_variation_id_non_numeric_string_becomes_none(self):
+        snapshot = self._build_impression(self.experiment, 'variation_a')
+        self.assertIsNone(self._decision(snapshot)['variation_id'])
+
+    def test_variation_id_none_stays_none(self):
+        snapshot = self._build_impression(self.experiment, None)
+        self.assertIsNone(self._decision(snapshot)['variation_id'])
+
+    # entity_id normalization (US3) and US3 acceptance #5: byte-equality with campaign_id
+
+    def test_entity_id_valid_layer_id_passes_through(self):
+        experiment = self._with_layer_id('111182')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._event(snapshot)['entity_id'], '111182')
+
+    def test_entity_id_empty_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id('')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._event(snapshot)['entity_id'], experiment.id)
+
+    def test_entity_id_non_numeric_falls_back_to_experiment_id(self):
+        experiment = self._with_layer_id('abc')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(self._event(snapshot)['entity_id'], experiment.id)
+
+    def test_entity_id_equals_campaign_id_when_layer_invalid(self):
+        experiment = self._with_layer_id('')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(
+            self._event(snapshot)['entity_id'],
+            self._decision(snapshot)['campaign_id'],
+        )
+
+    def test_entity_id_equals_campaign_id_when_layer_valid(self):
+        experiment = self._with_layer_id('111182')
+        snapshot = self._build_impression(experiment, '111129')
+        self.assertEqual(
+            self._event(snapshot)['entity_id'],
+            self._decision(snapshot)['campaign_id'],
+        )
+
+    # Negative regression: conversion events are out of scope (FR-010).
+
+    def test_conversion_event_entity_id_uses_event_id_unchanged(self):
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            event_obj = self.event_builder.create_conversion_event(
+                self.project_config, 'test_event', 'test_user', None, None,
+            )
+
+        snapshot = event_obj.params['visitors'][0]['snapshots'][0]
+        event = snapshot['events'][0]
+        self.assertEqual(event['entity_id'], self.project_config.get_event('test_event').id)

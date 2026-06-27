@@ -228,6 +228,27 @@ def is_non_empty_string(input_id_key: str) -> bool:
     return False
 
 
+def is_numeric_string_id(value: Any) -> bool:
+    """ Determine if value is a non-empty string consisting entirely of decimal digits.
+
+  Booleans are rejected even though they are technically instances of int in Python; the
+  field contract is "string of decimal digits", and a bool is neither a string nor a digit.
+
+  Args:
+    value: Variable which needs to be validated.
+
+  Returns:
+    True if value is a non-empty string of decimal digits [0-9]. False otherwise
+    (including for None, empty string, whitespace, non-string types, or strings
+    containing any non-digit character such as a sign, decimal point, or letter).
+  """
+    if not isinstance(value, str) or isinstance(value, bool):
+        return False
+    if not value:
+        return False
+    return value.isdigit() and value.isascii()
+
+
 def is_attribute_valid(attribute_key: str, attribute_value: Any) -> bool:
     """ Determine if given attribute is valid.
 

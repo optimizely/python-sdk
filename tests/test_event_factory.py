@@ -1,4 +1,4 @@
-# Copyright 2019, Optimizely
+# Copyright 2019, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from unittest import mock
 import time
 import unittest
@@ -1237,3 +1238,91 @@ class EventFactoryTest(base.BaseTest):
             EventFactory.HTTP_VERB,
             EventFactory.HTTP_HEADERS,
         )
+
+
+class ImpressionEventIdNormalizationFactoryTest(base.BaseTest):
+    """Impression-event normalization rules in EventFactory._create_visitor."""
+
+    def setUp(self, *args, **kwargs):
+        base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
+        self.logger = logger.NoOpLogger()
+        self.experiment = self.project_config.get_experiment_from_key('test_experiment')
+
+    def _build_visitor(self, layer_id, variation_id):
+        from optimizely.event import user_event
+
+        experiment = copy.deepcopy(self.experiment)
+        experiment.layerId = layer_id
+
+        variation_payload = {'id': variation_id, 'key': 'whatever'} if variation_id is not None else None
+
+        ctx = user_event.EventContext(
+            self.project_config.get_account_id(),
+            self.project_config.get_project_id(),
+            self.project_config.get_revision(),
+            self.project_config.get_anonymize_ip_value(),
+            'US',
+        )
+        impression = user_event.ImpressionEvent(
+            event_context=ctx,
+            user_id='test_user',
+            experiment=experiment,
+            visitor_attributes=[],
+            variation=variation_payload,
+            flag_key='flag_a',
+            rule_key=experiment.key,
+            rule_type='experiment',
+            enabled=True,
+        )
+        visitor = EventFactory._create_visitor(impression, self.logger)
+        self.assertIsNotNone(visitor)
+        snapshot = visitor.snapshots[0]
+        decision = snapshot.decisions[0]
+        snapshot_event = snapshot.events[0]
+        return decision, snapshot_event, experiment
+
+    def test_campaign_id_valid_layer_id_passes_through(self):
+        decision, _event, _exp = self._build_visitor('111182', '111129')
+        self.assertEqual(decision.campaign_id, '111182')
+
+    def test_campaign_id_empty_layer_id_falls_back_to_experiment_id(self):
+        decision, _event, experiment = self._build_visitor('', '111129')
+        self.assertEqual(decision.campaign_id, experiment.id)
+
+    def test_campaign_id_non_numeric_layer_id_falls_back_to_experiment_id(self):
+        decision, _event, experiment = self._build_visitor('abc', '111129')
+        self.assertEqual(decision.campaign_id, experiment.id)
+
+    def test_variation_id_empty_becomes_none(self):
+        decision, _event, _exp = self._build_visitor('111182', '')
+        self.assertIsNone(decision.variation_id)
+
+    def test_variation_id_non_numeric_becomes_none(self):
+        decision, _event, _exp = self._build_visitor('111182', 'variation_a')
+        self.assertIsNone(decision.variation_id)
+
+    def test_variation_id_valid_passes_through(self):
+        decision, _event, _exp = self._build_visitor('111182', '111129')
+        self.assertEqual(decision.variation_id, '111129')
+
+    def test_entity_id_matches_campaign_id_when_layer_invalid(self):
+        decision, snapshot_event, _exp = self._build_visitor('', '111129')
+        self.assertEqual(snapshot_event.entity_id, decision.campaign_id)
+
+    def test_entity_id_matches_campaign_id_when_layer_valid(self):
+        decision, snapshot_event, _exp = self._build_visitor('111182', '111129')
+        self.assertEqual(snapshot_event.entity_id, decision.campaign_id)
+
+    def test_variation_id_serializes_to_json_null(self):
+        decision, _event, _exp = self._build_visitor('111182', 'not_numeric')
+        # The EventBatch serializer renders the variation_id field as JSON null,
+        # which is the wire contract this fix exists to honor.
+        from optimizely.event.payload import EventBatch, Snapshot, Visitor
+        batch = EventBatch('acc', 'proj', 'rev', 'python-sdk', '1.0', False, True)
+        snapshot = Snapshot([], [decision])
+        visitor = Visitor([snapshot], [], 'u')
+        batch.visitors = [visitor]
+        params = batch.get_event_params()
+        rendered = params['visitors'][0]['snapshots'][0]['decisions'][0]
+        self.assertIn('variation_id', rendered)
+        self.assertIsNone(rendered['variation_id'])

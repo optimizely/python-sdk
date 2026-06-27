@@ -1,4 +1,4 @@
-# Copyright 2016-2019, 2022, Optimizely
+# Copyright 2016-2019, 2022, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -178,7 +178,7 @@ class EventBuilder:
 
     def _get_required_params_for_impression(
         self, experiment: Experiment, variation_id: str
-    ) -> dict[str, list[dict[str, str | int]]]:
+    ) -> dict[str, list[dict[str, Any]]]:
         """ Get parameters that are required for the impression event to register.
 
     Args:
@@ -188,19 +188,26 @@ class EventBuilder:
     Returns:
       Dict consisting of decisions and events info for impression event.
     """
-        snapshot: dict[str, list[dict[str, str | int]]] = {}
+        campaign_id: str = (
+            experiment.layerId if validator.is_numeric_string_id(experiment.layerId) else experiment.id
+        )
+        normalized_variation_id: Optional[str] = (
+            variation_id if validator.is_numeric_string_id(variation_id) else None
+        )
+
+        snapshot: dict[str, list[dict[str, Any]]] = {}
 
         snapshot[self.EventParams.DECISIONS] = [
             {
                 self.EventParams.EXPERIMENT_ID: experiment.id,
-                self.EventParams.VARIATION_ID: variation_id,
-                self.EventParams.CAMPAIGN_ID: experiment.layerId,
+                self.EventParams.VARIATION_ID: normalized_variation_id,
+                self.EventParams.CAMPAIGN_ID: campaign_id,
             }
         ]
 
         snapshot[self.EventParams.EVENTS] = [
             {
-                self.EventParams.EVENT_ID: experiment.layerId,
+                self.EventParams.EVENT_ID: campaign_id,
                 self.EventParams.TIME: self._get_time(),
                 self.EventParams.KEY: 'campaign_activated',
                 self.EventParams.UUID: str(uuid.uuid4()),
