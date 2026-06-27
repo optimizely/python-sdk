@@ -136,7 +136,7 @@ class EventFactory:
 
             campaign_id: str = (
                 experiment_layerId
-                if validator.is_numeric_string_id(experiment_layerId)
+                if validator.is_non_empty_string(experiment_layerId)
                 else experiment_id
             )
             normalized_variation_id: Optional[str] = (

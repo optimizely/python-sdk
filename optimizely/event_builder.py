@@ -189,7 +189,7 @@ class EventBuilder:
       Dict consisting of decisions and events info for impression event.
     """
         campaign_id: str = (
-            experiment.layerId if validator.is_numeric_string_id(experiment.layerId) else experiment.id
+            experiment.layerId if validator.is_non_empty_string(experiment.layerId) else experiment.id
         )
         normalized_variation_id: Optional[str] = (
             variation_id if validator.is_numeric_string_id(variation_id) else None

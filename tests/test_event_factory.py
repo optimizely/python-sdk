@@ -1289,9 +1289,13 @@ class ImpressionEventIdNormalizationFactoryTest(base.BaseTest):
         decision, _event, experiment = self._build_visitor('', '111129')
         self.assertEqual(decision.campaign_id, experiment.id)
 
-    def test_campaign_id_non_numeric_layer_id_falls_back_to_experiment_id(self):
-        decision, _event, experiment = self._build_visitor('abc', '111129')
-        self.assertEqual(decision.campaign_id, experiment.id)
+    def test_campaign_id_opaque_layer_id_passes_through(self):
+        # Per FR-001: any non-empty string (numeric or opaque like
+        # "default-12345" / "layer_abc") is valid and passes through unchanged.
+        decision, snapshot_event, _exp = self._build_visitor('layer_abc', '111129')
+        self.assertEqual(decision.campaign_id, 'layer_abc')
+        # FR-009: entity_id MUST stay byte-equal to campaign_id even for opaque IDs.
+        self.assertEqual(snapshot_event.entity_id, 'layer_abc')
 
     def test_variation_id_empty_becomes_none(self):
         decision, _event, _exp = self._build_visitor('111182', '')

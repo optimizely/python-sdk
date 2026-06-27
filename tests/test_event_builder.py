@@ -1057,17 +1057,24 @@ class ImpressionEventIdNormalizationTest(base.BaseTest):
         snapshot = self._build_impression(experiment, '111129')
         self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
 
-    def test_campaign_id_non_numeric_string_falls_back_to_experiment_id(self):
-        experiment = self._with_layer_id('abc')
+    def test_campaign_id_opaque_string_passes_through(self):
+        # Per FR-001: any non-empty string (numeric or opaque like "default-12345"
+        # or "layer_abc") is valid and passes through unchanged.
+        experiment = self._with_layer_id('default-12345')
         snapshot = self._build_impression(experiment, '111129')
-        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+        self.assertEqual(self._decision(snapshot)['campaign_id'], 'default-12345')
 
-    def test_campaign_id_whitespace_falls_back_to_experiment_id(self):
+    def test_campaign_id_whitespace_string_passes_through(self):
+        # Per FR-001 / spec Assumptions: a non-empty string of any character
+        # content is valid; whitespace-only strings are non-empty and accepted.
         experiment = self._with_layer_id('   ')
         snapshot = self._build_impression(experiment, '111129')
-        self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
+        self.assertEqual(self._decision(snapshot)['campaign_id'], '   ')
 
     def test_campaign_id_integer_value_falls_back_to_experiment_id(self):
+        # Non-string types are out of scope per spec Assumptions; the
+        # is_non_empty_string predicate returns False for them, so the
+        # fallback to experiment_id fires.
         experiment = self._with_layer_id(111182)
         snapshot = self._build_impression(experiment, '111129')
         self.assertEqual(self._decision(snapshot)['campaign_id'], experiment.id)
@@ -1102,10 +1109,13 @@ class ImpressionEventIdNormalizationTest(base.BaseTest):
         snapshot = self._build_impression(experiment, '111129')
         self.assertEqual(self._event(snapshot)['entity_id'], experiment.id)
 
-    def test_entity_id_non_numeric_falls_back_to_experiment_id(self):
-        experiment = self._with_layer_id('abc')
+    def test_entity_id_opaque_layer_id_passes_through(self):
+        # Per FR-009: entity_id accepts any non-empty string (numeric or opaque
+        # like "layer_abc") and passes through unchanged. The fallback to
+        # experiment_id fires only when the value is empty, null, or missing.
+        experiment = self._with_layer_id('layer_abc')
         snapshot = self._build_impression(experiment, '111129')
-        self.assertEqual(self._event(snapshot)['entity_id'], experiment.id)
+        self.assertEqual(self._event(snapshot)['entity_id'], 'layer_abc')
 
     def test_entity_id_equals_campaign_id_when_layer_invalid(self):
         experiment = self._with_layer_id('')
