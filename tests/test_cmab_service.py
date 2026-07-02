@@ -51,7 +51,7 @@ class TestDefaultCmabService(unittest.TestCase):
 
     def test_returns_decision_from_cache_when_valid(self):
         expected_key = self.cmab_service._get_cache_key("user123", "exp1")
-        expected_attributes = {"age": 25, "location": "USA"}
+        expected_attributes = {"66": 25, "77": "USA"}
         expected_hash = self.cmab_service._hash_attributes(expected_attributes)
 
         self.mock_cmab_cache.lookup.return_value = {
@@ -70,7 +70,7 @@ class TestDefaultCmabService(unittest.TestCase):
 
     def test_ignores_cache_when_option_given(self):
         self.mock_cmab_client.fetch_decision.return_value = "varB"
-        expected_attributes = {"age": 25, "location": "USA"}
+        expected_attributes = {"66": 25, "77": "USA"}
 
         decision, _ = self.cmab_service.get_decision(
             self.mock_project_config,
@@ -124,7 +124,7 @@ class TestDefaultCmabService(unittest.TestCase):
         }
         self.mock_cmab_client.fetch_decision.return_value = "varE"
 
-        expected_attribute = {"age": 25, "location": "USA"}
+        expected_attribute = {"66": 25, "77": "USA"}
         expected_hash = self.cmab_service._hash_attributes(expected_attribute)
         expected_key = self.cmab_service._get_cache_key("user123", "exp1")
 
@@ -148,8 +148,8 @@ class TestDefaultCmabService(unittest.TestCase):
 
     def test_filter_attributes_returns_correct_subset(self):
         filtered = self.cmab_service._filter_attributes(self.mock_project_config, self.mock_user_context, "exp1")
-        self.assertEqual(filtered["age"], 25)
-        self.assertEqual(filtered["location"], "USA")
+        self.assertEqual(filtered["66"], 25)
+        self.assertEqual(filtered["77"], "USA")
 
     def test_filter_attributes_empty_when_no_cmab(self):
         self.mock_project_config.experiment_id_map["exp1"].cmab = None
@@ -178,11 +178,10 @@ class TestDefaultCmabService(unittest.TestCase):
             [OptimizelyDecideOption.IGNORE_CMAB_CACHE]
         )
 
-        # Verify only age and location are passed (attributes configured in setUp)
         self.mock_cmab_client.fetch_decision.assert_called_once_with(
             "exp1",
             self.mock_user_context.user_id,
-            {"age": 25, "location": "USA"},
+            {"66": 25, "77": "USA"},
             decision["cmab_uuid"]
         )
 

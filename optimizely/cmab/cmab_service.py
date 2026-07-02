@@ -163,7 +163,7 @@ class DefaultCmabService:
         for attribute_id in cmab_attribute_ids:
             attribute = project_config.attribute_id_map.get(attribute_id)
             if attribute and attribute.key in user_attributes:
-                filtered_user_attributes[attribute.key] = user_attributes[attribute.key]
+                filtered_user_attributes[attribute.id] = user_attributes[attribute.key]
 
         return filtered_user_attributes
 
