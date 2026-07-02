@@ -1,4 +1,4 @@
-# Copyright 2019, Optimizely
+# Copyright 2019, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -1236,4 +1236,215 @@ class EventFactoryTest(base.BaseTest):
             expected_params,
             EventFactory.HTTP_VERB,
             EventFactory.HTTP_HEADERS,
+        )
+
+
+class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
+    """End-to-end decision-event ID normalization.
+
+    These tests build real ``ImpressionEvent`` instances using crafted
+    Experiment/Variation objects, then call ``EventFactory.create_log_event``
+    and inspect the dispatched payload.
+    """
+
+    def setUp(self, *args, **kwargs):
+        base.BaseTest.setUp(self, 'config_dict_with_multiple_experiments')
+        self.logger = logger.NoOpLogger()
+
+    def _build_impression(
+        self,
+        experiment_id,
+        layer_id,
+        variation_id,
+        rule_type='experiment',
+    ):
+        """Build an ImpressionEvent with the provided raw ID values.
+
+        ``experiment_id``/``layer_id``/``variation_id`` are inserted verbatim
+        so tests can exercise empty/non-string/non-numeric inputs.
+        """
+        from optimizely.entities import Experiment, Variation
+        from optimizely.event.user_event import EventContext, ImpressionEvent
+
+        experiment = Experiment(
+            id=experiment_id,
+            key='exp_key',
+            status='Running',
+            audienceIds=[],
+            variations=[],
+            forcedVariations={},
+            trafficAllocation=[],
+            layerId=layer_id,
+        )
+        variation = Variation(
+            id=variation_id,
+            key='variation_key',
+            featureEnabled=True,
+        ) if isinstance(variation_id, str) else None
+
+        event_context = EventContext(
+            account_id='12001',
+            project_id='111001',
+            revision='42',
+            anonymize_ip=False,
+            region='US',
+        )
+        return ImpressionEvent(
+            event_context=event_context,
+            user_id='test_user',
+            experiment=experiment,
+            visitor_attributes=[],
+            variation=variation,
+            flag_key='flag_key',
+            rule_key='rule_key',
+            rule_type=rule_type,
+            enabled=True,
+        )
+
+    def _dispatched_decision(self, impression_event):
+        """Return (decision_dict, event_dict) for an impression event."""
+        log_event = EventFactory.create_log_event(impression_event, self.logger)
+        snapshot = log_event.params['visitors'][0]['snapshots'][0]
+        return snapshot['decisions'][0], snapshot['events'][0]
+
+    def test_valid_campaign_id_is_passed_through(self):
+        impression = self._build_impression('111127', '111182', '111129')
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('111182', decision['campaign_id'])
+        # entity_id mirrors campaign_id byte-for-byte.
+        self.assertEqual(decision['campaign_id'], event['entity_id'])
+
+    def test_empty_campaign_id_falls_back_to_experiment_id(self):
+        impression = self._build_impression('111127', '', '111129')
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('111127', decision['campaign_id'])
+        self.assertEqual('111127', event['entity_id'])
+
+    def test_opaque_string_campaign_id_passes_through(self):
+        impression = self._build_impression('111127', 'campaign_a', '111129')
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('campaign_a', decision['campaign_id'])
+        self.assertEqual('campaign_a', event['entity_id'])
+
+    def test_prefixed_opaque_campaign_id_passes_through(self):
+        # Holdout layer IDs are opaque strings like "default-12345".
+        impression = self._build_impression('111127', 'default-12345', '111129')
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('default-12345', decision['campaign_id'])
+        self.assertEqual('default-12345', event['entity_id'])
+
+    def test_whitespace_campaign_id_passes_through(self):
+        # Whitespace is a non-empty string; character-content validation is
+        # the upstream datafile producer's responsibility.
+        impression = self._build_impression('111127', ' ', '111129')
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual(' ', decision['campaign_id'])
+        self.assertEqual(' ', event['entity_id'])
+
+    def test_valid_variation_id_is_passed_through(self):
+        impression = self._build_impression('111127', '111182', '111129')
+        decision, _ = self._dispatched_decision(impression)
+        self.assertEqual('111129', decision['variation_id'])
+
+    def test_empty_variation_id_becomes_none(self):
+        impression = self._build_impression('111127', '111182', '')
+        decision, _ = self._dispatched_decision(impression)
+        self.assertIsNone(decision['variation_id'])
+
+    def test_non_numeric_variation_id_becomes_none(self):
+        impression = self._build_impression('111127', '111182', 'variation_a')
+        decision, _ = self._dispatched_decision(impression)
+        self.assertIsNone(decision['variation_id'])
+
+    def test_whitespace_variation_id_becomes_none(self):
+        impression = self._build_impression('111127', '111182', ' ')
+        decision, _ = self._dispatched_decision(impression)
+        self.assertIsNone(decision['variation_id'])
+
+    def test_normalization_applies_to_rollout_decisions(self):
+        impression = self._build_impression(
+            '111127', '', 'bad_var', rule_type='rollout'
+        )
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('111127', decision['campaign_id'])
+        self.assertIsNone(decision['variation_id'])
+        self.assertEqual('111127', event['entity_id'])
+
+    def test_normalization_applies_to_feature_test_decisions(self):
+        impression = self._build_impression(
+            '111127', '', '', rule_type='feature-test'
+        )
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('111127', decision['campaign_id'])
+        self.assertIsNone(decision['variation_id'])
+        self.assertEqual('111127', event['entity_id'])
+
+    def test_normalization_applies_to_holdout_decisions(self):
+        impression = self._build_impression(
+            '111127', '', '', rule_type='holdout'
+        )
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('111127', decision['campaign_id'])
+        self.assertIsNone(decision['variation_id'])
+        self.assertEqual('111127', event['entity_id'])
+
+    def test_holdout_with_opaque_layer_id_passes_through(self):
+        # Canonical holdout case: opaque layerId like "default-12345" is a
+        # valid campaign_id and must not be replaced.
+        impression = self._build_impression(
+            '111127', 'default-12345', '111129', rule_type='holdout'
+        )
+        decision, event = self._dispatched_decision(impression)
+        self.assertEqual('default-12345', decision['campaign_id'])
+        self.assertEqual('default-12345', event['entity_id'])
+
+    def test_event_still_dispatches_when_all_ids_invalid(self):
+        """Event must still dispatch even when all IDs are invalid."""
+        impression = self._build_impression('', '', '')
+        log_event = EventFactory.create_log_event(impression, self.logger)
+        self.assertIsNotNone(log_event)
+        decision, event = self._dispatched_decision(impression)
+        # campaign_id and entity_id end up as '' but the event still
+        # dispatches and the two fields remain byte-equivalent.
+        self.assertEqual('', decision['campaign_id'])
+        self.assertEqual('', event['entity_id'])
+        self.assertIsNone(decision['variation_id'])
+
+    def test_entity_id_equals_campaign_id_byte_for_byte(self):
+        """``events[].entity_id`` must equal ``decisions[].campaign_id``."""
+        for layer_id, exp_id, expected in [
+            ('111182', '111127', '111182'),         # numeric campaign_id wins
+            ('', '111127', '111127'),                # empty falls back to experiment_id
+            # Opaque non-numeric IDs pass through unchanged.
+            ('default-12345', '111127', 'default-12345'),
+            ('layer_abc', '111127', 'layer_abc'),
+            ('007', '111127', '007'),                # leading zeros preserved
+        ]:
+            with self.subTest(layer_id=layer_id, exp_id=exp_id):
+                impression = self._build_impression(exp_id, layer_id, '111129')
+                decision, event = self._dispatched_decision(impression)
+                self.assertEqual(expected, decision['campaign_id'])
+                self.assertEqual(decision['campaign_id'], event['entity_id'])
+
+    def test_conversion_event_entity_id_unchanged(self):
+        """Conversion events derive entity_id from event.id, not the normalizer."""
+        from optimizely.event.user_event_factory import UserEventFactory
+
+        with mock.patch('time.time', return_value=42.123), mock.patch(
+            'uuid.uuid4', return_value='a68cf1ad-0393-4e18-af87-efe8f01a7c9c'
+        ):
+            conversion_event = UserEventFactory.create_conversion_event(
+                self.project_config,
+                'test_event',
+                'test_user',
+                None,
+                None,
+            )
+        log_event = EventFactory.create_log_event(conversion_event, self.logger)
+        snapshot = log_event.params['visitors'][0]['snapshots'][0]
+        # Conversion entity_id comes from the event.id of the conversion event
+        # and must NOT pass through the campaign_id normalizer.
+        self.assertEqual(
+            self.project_config.get_event('test_event').id,
+            snapshot['events'][0]['entity_id'],
         )

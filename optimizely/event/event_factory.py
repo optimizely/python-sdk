@@ -1,4 +1,4 @@
-# Copyright 2019, 2022, Optimizely
+# Copyright 2019, 2022, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -18,6 +18,7 @@ from optimizely import entities
 from optimizely.helpers import enums
 from optimizely.helpers import event_tag_utils
 from optimizely.helpers import validator
+from . import event_id_normalizer
 from . import log_event
 from . import payload
 from . import user_event
@@ -134,12 +135,19 @@ class EventFactory:
                 if isinstance(event.experiment, entities.Experiment):
                     experiment_layerId = event.experiment.layerId
 
+            normalized_campaign_id = event_id_normalizer.normalize_campaign_id(
+                experiment_layerId, experiment_id
+            )
+            normalized_variation_id = event_id_normalizer.normalize_variation_id(variation_id)
+
             metadata = payload.Metadata(event.flag_key, event.rule_key,
                                         event.rule_type, variation_key,
                                         event.enabled, event.cmab_uuid)
-            decision = payload.Decision(experiment_layerId, experiment_id, variation_id, metadata)
+            decision = payload.Decision(
+                normalized_campaign_id, experiment_id, normalized_variation_id, metadata
+            )
             snapshot_event = payload.SnapshotEvent(
-                experiment_layerId, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,
+                normalized_campaign_id, event.uuid, cls.ACTIVATE_EVENT_KEY, event.timestamp,
             )
 
             snapshot = payload.Snapshot([snapshot_event], [decision])
