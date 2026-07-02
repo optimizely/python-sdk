@@ -22,21 +22,20 @@ Rules:
     string** (numeric like ``"12345"`` or opaque like ``"default-12345"`` /
     ``"layer_abc"``). The fallback to ``experiment_id`` fires ONLY when the
     value is the empty string, ``None``, or missing. Non-string types are
-    out of scope for this normalization path (per spec assumptions; the
-    upstream datafile producer delivers string or null values).
+    out of scope for this normalization path (the upstream datafile
+    producer delivers string or null values).
   * ``variation_id`` retains the stricter contract: it MUST be a non-empty
     string of decimal digits ``0-9`` (leading zeros allowed). Empty,
     whitespace, non-string, and non-numeric inputs are normalized to
     ``None`` so the wire payload carries an explicit null.
   * ``entity_id`` on impression events shares the campaign_id normalization
     and is therefore byte-equivalent to the normalized campaign_id for the
-    same impression (FR-009).
+    same impression.
 
 The normalization path MUST NOT log, warn, or raise. It must never drop or
 defer event dispatch.
 """
 
-from __future__ import annotations
 
 from sys import version_info
 from typing import Any, Optional
@@ -49,9 +48,7 @@ else:
 
 def is_non_empty_string(value: Any) -> TypeGuard[str]:
     """Return ``True`` if ``value`` is a non-empty :class:`str`.
-
-    Used for ``campaign_id`` and ``entity_id`` validation per the relaxed
-    FR-001 / FR-009 contract: any non-empty string is accepted regardless of
+    Any non-empty string is accepted regardless of
     character content (IDs may be opaque, e.g. ``"default-12345"``).
     """
     return isinstance(value, str) and value != ''
@@ -59,31 +56,25 @@ def is_non_empty_string(value: Any) -> TypeGuard[str]:
 
 def is_numeric_id_string(value: Any) -> TypeGuard[str]:
     """Return ``True`` if ``value`` is a non-empty decimal-digit string.
-
-    Used for ``variation_id`` validation per FR-003 (the only field that
-    retains the strict numeric-string contract). Whitespace, signs, decimal
-    points, exponents, and non-string types all return ``False``. Leading
+    Whitespace, signs, decimal points, exponents
+    and non-string types all return ``False``. Leading
     zeros are accepted.
     """
     if not isinstance(value, str):
         return False
     if value == '':
         return False
-    # ``str.isdigit`` rejects everything except [0-9] characters and the
-    # empty string. We've already excluded the empty case above. Note that
-    # ``isdigit`` also accepts some non-ASCII digit code points; ``isascii``
-    # combined with ``isdigit`` restricts us to plain decimal digits.
     return value.isascii() and value.isdigit()
 
 
 def normalize_campaign_id(campaign_id: Any, experiment_id: Any) -> str:
-    """Normalize a decision-event ``campaign_id`` (FR-001/FR-002, FR-009).
+    """Normalize a decision-event ``campaign_id``.
 
     Returns ``campaign_id`` unchanged when it is a non-empty string (any
     character content — numeric like ``"12345"`` or opaque like
     ``"default-12345"``). Otherwise falls back to ``experiment_id`` (when it
     is itself a non-empty string). If neither is a non-empty string, returns
-    an empty string so the event still dispatches (FR-006).
+    an empty string so the event still dispatches.
     """
     if is_non_empty_string(campaign_id):
         return campaign_id
@@ -93,7 +84,7 @@ def normalize_campaign_id(campaign_id: Any, experiment_id: Any) -> str:
 
 
 def normalize_variation_id(variation_id: Any) -> Optional[str]:
-    """Normalize a decision-event ``variation_id`` (FR-003/FR-004).
+    """Normalize a decision-event ``variation_id``.
 
     Returns the original value if it is a valid numeric ID string. Otherwise
     returns ``None`` so the event payload carries an explicit null for the

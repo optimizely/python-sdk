@@ -19,7 +19,7 @@ from optimizely.event import event_id_normalizer
 
 
 class IsNonEmptyStringTest(unittest.TestCase):
-    """Cover :func:`event_id_normalizer.is_non_empty_string` (FR-001/FR-009).
+    """Cover :func:`event_id_normalizer.is_non_empty_string`.
 
     Any non-empty string is valid for ``campaign_id`` / ``entity_id`` — IDs
     may be numeric like ``"12345"`` or opaque like ``"default-12345"``.
@@ -35,8 +35,8 @@ class IsNonEmptyStringTest(unittest.TestCase):
         self.assertTrue(event_id_normalizer.is_non_empty_string('abc'))
 
     def test_returns_true_for_whitespace_string(self):
-        # Whitespace is a non-empty string and so is accepted; the spec
-        # explicitly defers any character-content validation upstream.
+        # Whitespace is a non-empty string and so is accepted;
+        # character-content validation is deferred upstream.
         self.assertTrue(event_id_normalizer.is_non_empty_string(' '))
 
     def test_returns_false_for_empty_string(self):
@@ -46,8 +46,7 @@ class IsNonEmptyStringTest(unittest.TestCase):
         self.assertFalse(event_id_normalizer.is_non_empty_string(None))
 
     def test_returns_false_for_non_string_types(self):
-        # Non-string types are out of scope per the spec assumptions; the
-        # predicate rejects them so the fallback path fires.
+        # Non-string types are rejected so the fallback path fires.
         self.assertFalse(event_id_normalizer.is_non_empty_string(12345))
         self.assertFalse(event_id_normalizer.is_non_empty_string(123.0))
         self.assertFalse(event_id_normalizer.is_non_empty_string(True))
@@ -58,7 +57,7 @@ class IsNonEmptyStringTest(unittest.TestCase):
 class IsNumericIdStringTest(unittest.TestCase):
     """Cover :func:`event_id_normalizer.is_numeric_id_string` edge cases.
 
-    Used only for ``variation_id`` (FR-003), which retains the strict
+    Used only for ``variation_id``, which retains the strict
     decimal-digit contract.
     """
 
@@ -70,7 +69,7 @@ class IsNumericIdStringTest(unittest.TestCase):
         self.assertTrue(event_id_normalizer.is_numeric_id_string('9'))
 
     def test_returns_true_for_leading_zeros(self):
-        # FR-003 explicitly allows leading zeros.
+        # Leading zeros are explicitly allowed.
         self.assertTrue(event_id_normalizer.is_numeric_id_string('007'))
         self.assertTrue(event_id_normalizer.is_numeric_id_string('00000'))
 
@@ -81,7 +80,7 @@ class IsNumericIdStringTest(unittest.TestCase):
         self.assertFalse(event_id_normalizer.is_numeric_id_string(None))
 
     def test_returns_false_for_int(self):
-        # FR-003 requires the value to be a string.
+        # The value must be a string.
         self.assertFalse(event_id_normalizer.is_numeric_id_string(12345))
         self.assertFalse(event_id_normalizer.is_numeric_id_string(0))
 
@@ -130,10 +129,10 @@ class IsNumericIdStringTest(unittest.TestCase):
 
 
 class NormalizeCampaignIdTest(unittest.TestCase):
-    """Cover :func:`event_id_normalizer.normalize_campaign_id` per FR-001/002, FR-009.
+    """Cover :func:`event_id_normalizer.normalize_campaign_id`.
 
-    Per the relaxed spec, any non-empty string is valid for campaign_id —
-    fallback to ``experiment_id`` fires only on empty/None/missing.
+    Any non-empty string is valid for campaign_id — fallback to
+    ``experiment_id`` fires only on empty/None/missing.
     """
 
     def test_returns_campaign_id_when_numeric(self):
@@ -180,7 +179,7 @@ class NormalizeCampaignIdTest(unittest.TestCase):
         )
 
     def test_returns_empty_string_when_both_empty_or_none(self):
-        # Do not drop / fail dispatch (FR-006); return ''.
+        # Do not drop / fail dispatch; return ''.
         self.assertEqual('', event_id_normalizer.normalize_campaign_id(None, None))
         self.assertEqual('', event_id_normalizer.normalize_campaign_id('', ''))
         self.assertEqual('', event_id_normalizer.normalize_campaign_id(None, ''))
@@ -193,7 +192,7 @@ class NormalizeCampaignIdTest(unittest.TestCase):
 
 
 class NormalizeVariationIdTest(unittest.TestCase):
-    """Cover :func:`event_id_normalizer.normalize_variation_id` per FR-003/004.
+    """Cover :func:`event_id_normalizer.normalize_variation_id`.
 
     ``variation_id`` retains the strict numeric-string contract.
     """

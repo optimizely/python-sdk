@@ -471,7 +471,7 @@ class LocalHoldoutsSectionTest(unittest.TestCase):
         self.assertEqual(config.get_global_holdouts(), [])
 
     def test_local_holdouts_missing_included_rules_logged_and_excluded(self):
-        """Entries in 'localHoldouts' without 'includedRules' are invalid per spec.
+        """Entries in 'localHoldouts' without 'includedRules' are invalid.
 
         SDK must log an error and exclude the entry from evaluation. It must NOT
         fall back to global application (the partition between sections is hard).

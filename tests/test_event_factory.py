@@ -1244,7 +1244,7 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
 
     These tests build real ``ImpressionEvent`` instances using crafted
     Experiment/Variation objects, then call ``EventFactory.create_log_event``
-    and inspect the dispatched payload. They exercise FR-001..FR-009.
+    and inspect the dispatched payload.
     """
 
     def setUp(self, *args, **kwargs):
@@ -1307,15 +1307,13 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         snapshot = log_event.params['visitors'][0]['snapshots'][0]
         return snapshot['decisions'][0], snapshot['events'][0]
 
-    # ------------------------------------------------------------------ FR-001
     def test_valid_campaign_id_is_passed_through(self):
         impression = self._build_impression('111127', '111182', '111129')
         decision, event = self._dispatched_decision(impression)
         self.assertEqual('111182', decision['campaign_id'])
-        # FR-009: entity_id mirrors campaign_id byte-for-byte.
+        # entity_id mirrors campaign_id byte-for-byte.
         self.assertEqual(decision['campaign_id'], event['entity_id'])
 
-    # ------------------------------------------------------------------ FR-002
     def test_empty_campaign_id_falls_back_to_experiment_id(self):
         impression = self._build_impression('111127', '', '111129')
         decision, event = self._dispatched_decision(impression)
@@ -1343,13 +1341,11 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         self.assertEqual(' ', decision['campaign_id'])
         self.assertEqual(' ', event['entity_id'])
 
-    # ------------------------------------------------------------------ FR-003
     def test_valid_variation_id_is_passed_through(self):
         impression = self._build_impression('111127', '111182', '111129')
         decision, _ = self._dispatched_decision(impression)
         self.assertEqual('111129', decision['variation_id'])
 
-    # ------------------------------------------------------------------ FR-004
     def test_empty_variation_id_becomes_none(self):
         impression = self._build_impression('111127', '111182', '')
         decision, _ = self._dispatched_decision(impression)
@@ -1365,7 +1361,6 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         decision, _ = self._dispatched_decision(impression)
         self.assertIsNone(decision['variation_id'])
 
-    # ------------------------------------------------------------------ FR-005
     def test_normalization_applies_to_rollout_decisions(self):
         impression = self._build_impression(
             '111127', '', 'bad_var', rule_type='rollout'
@@ -1403,9 +1398,8 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         self.assertEqual('default-12345', decision['campaign_id'])
         self.assertEqual('default-12345', event['entity_id'])
 
-    # ------------------------------------------------------------------ FR-006
     def test_event_still_dispatches_when_all_ids_invalid(self):
-        """FR-006: never drop / fail dispatch."""
+        """Event must still dispatch even when all IDs are invalid."""
         impression = self._build_impression('', '', '')
         log_event = EventFactory.create_log_event(impression, self.logger)
         self.assertIsNotNone(log_event)
@@ -1416,9 +1410,8 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
         self.assertEqual('', event['entity_id'])
         self.assertIsNone(decision['variation_id'])
 
-    # ------------------------------------------------------------------ FR-009
     def test_entity_id_equals_campaign_id_byte_for_byte(self):
-        """FR-009: ``events[].entity_id`` must equal ``decisions[].campaign_id``."""
+        """``events[].entity_id`` must equal ``decisions[].campaign_id``."""
         for layer_id, exp_id, expected in [
             ('111182', '111127', '111182'),         # numeric campaign_id wins
             ('', '111127', '111127'),                # empty falls back to experiment_id
@@ -1433,11 +1426,8 @@ class EventFactoryIdNormalizationIntegrationTest(base.BaseTest):
                 self.assertEqual(expected, decision['campaign_id'])
                 self.assertEqual(decision['campaign_id'], event['entity_id'])
 
-    # ----------------------------------------------------------------- FR-010
     def test_conversion_event_entity_id_unchanged(self):
-        """FR-010: conversion events derive entity_id from event.id, not the
-        normalizer.
-        """
+        """Conversion events derive entity_id from event.id, not the normalizer."""
         from optimizely.event.user_event_factory import UserEventFactory
 
         with mock.patch('time.time', return_value=42.123), mock.patch(
