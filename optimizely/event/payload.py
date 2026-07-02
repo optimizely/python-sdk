@@ -1,4 +1,4 @@
-# Copyright 2019, 2022, Optimizely
+# Copyright 2019, 2022, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -71,7 +71,13 @@ class EventBatch:
 class Decision:
     """ Class respresenting Decision. """
 
-    def __init__(self, campaign_id: str, experiment_id: str, variation_id: str, metadata: Metadata):
+    def __init__(
+        self,
+        campaign_id: str,
+        experiment_id: str,
+        variation_id: Optional[str],
+        metadata: Metadata,
+    ):
         self.campaign_id = campaign_id
         self.experiment_id = experiment_id
         self.variation_id = variation_id

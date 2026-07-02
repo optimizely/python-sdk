@@ -122,7 +122,7 @@ class ProjectConfig:
             self.global_holdouts.append(holdout)
 
         # Process local holdouts: every entry must carry 'includedRules' (list of rule IDs).
-        # Entries without 'includedRules' are invalid per spec — log an error and exclude
+        # Entries without 'includedRules' are invalid — log an error and exclude
         # them from evaluation (do NOT fall back to global application).
         for holdout_data in local_holdouts_data:
             if 'includedRules' not in holdout_data or holdout_data.get('includedRules') is None:
