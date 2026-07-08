@@ -780,6 +780,16 @@ class DecisionService:
                 experiment = project_config.get_experiment_from_id(experiment_id)
 
                 if experiment:
+                    # Skip experiments with unsupported types.
+                    # If the experiment type is None (not set in datafile), we still evaluate it.
+                    # If the experiment type is set but not in the supported list, we skip it.
+                    if experiment.type is not None and experiment.type not in entities.ExperimentTypes.SUPPORTED_TYPES:
+                        self.logger.debug(
+                            f'Skipping experiment "{experiment.key}" with unsupported type '
+                            f'"{experiment.type}" for feature "{feature_flag.key}".'
+                        )
+                        continue
+
                     # Check for forced decision
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
                         feature_flag.key, experiment.key)

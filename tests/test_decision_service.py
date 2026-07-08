@@ -2008,3 +2008,102 @@ class FeatureFlagDecisionTests(base.BaseTest):
         mock_config_logging.debug.assert_called_with(
             'Assigned bucket 4000 to user with bucketing ID "test_user".')
         mock_generate_bucket_value.assert_called_with("test_user211147")
+
+    def test_get_decision_for_flag_skips_unsupported_experiment_type(self):
+        """Test that experiments with unsupported types are skipped during flag decisions."""
+
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None, logger=None, user_id="test_user", user_attributes={}
+        )
+        feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
+
+        # Get the experiment and set an unsupported type
+        experiment = self.project_config.get_experiment_from_key("test_experiment")
+        original_type = experiment.type
+        experiment.type = "unsupported_type"
+
+        try:
+            with mock.patch(
+                "optimizely.decision_service.DecisionService.get_variation"
+            ) as mock_get_variation:
+                result = self.decision_service.get_variation_for_feature(
+                    self.project_config, feature, user, options=None
+                )
+                # get_variation should NOT have been called since the experiment type is unsupported
+                mock_get_variation.assert_not_called()
+        finally:
+            experiment.type = original_type
+
+    def test_get_decision_for_flag_evaluates_experiment_with_none_type(self):
+        """Test that experiments with None type (not set in datafile) are still evaluated."""
+
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None, logger=None, user_id="test_user", user_attributes={}
+        )
+        feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
+
+        # Make sure the experiment type is None
+        experiment = self.project_config.get_experiment_from_key("test_experiment")
+        original_type = experiment.type
+        experiment.type = None
+
+        expected_variation = self.project_config.get_variation_from_id("test_experiment", "111129")
+        try:
+            with mock.patch(
+                "optimizely.decision_service.DecisionService.get_variation",
+                return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
+            ) as mock_get_variation:
+                result = self.decision_service.get_variation_for_feature(
+                    self.project_config, feature, user, options=None
+                )
+                # get_variation SHOULD be called since the experiment type is None
+                mock_get_variation.assert_called_once()
+        finally:
+            experiment.type = original_type
+
+    def test_get_decision_for_flag_evaluates_supported_experiment_types(self):
+        """Test that experiments with supported types are evaluated."""
+
+        user = optimizely_user_context.OptimizelyUserContext(
+            optimizely_client=None, logger=None, user_id="test_user", user_attributes={}
+        )
+        feature = self.project_config.get_feature_from_key("test_feature_in_experiment")
+        experiment = self.project_config.get_experiment_from_key("test_experiment")
+        expected_variation = self.project_config.get_variation_from_id("test_experiment", "111129")
+        original_type = experiment.type
+
+        for exp_type in entities.ExperimentTypes.SUPPORTED_TYPES:
+            experiment.type = exp_type
+            with mock.patch(
+                "optimizely.decision_service.DecisionService.get_variation",
+                return_value={'variation': expected_variation, 'cmab_uuid': None, 'reasons': [], 'error': False},
+            ) as mock_get_variation:
+                result = self.decision_service.get_variation_for_feature(
+                    self.project_config, feature, user, options=None
+                )
+                mock_get_variation.assert_called_once()
+
+        experiment.type = original_type
+
+    def test_experiment_type_field_parsed_from_datafile(self):
+        """Test that the type field is correctly parsed when constructing Experiment entities."""
+        # Test with type set
+        exp_with_type = entities.Experiment(
+            id="123", key="test", status="Running", audienceIds=[],
+            variations=[], forcedVariations={}, trafficAllocation=[],
+            layerId="1", type="a/b"
+        )
+        self.assertEqual("a/b", exp_with_type.type)
+
+        # Test with type not set (default is None)
+        exp_without_type = entities.Experiment(
+            id="456", key="test2", status="Running", audienceIds=[],
+            variations=[], forcedVariations={}, trafficAllocation=[],
+            layerId="1"
+        )
+        self.assertIsNone(exp_without_type.type)
+
+    def test_supported_experiment_types_values(self):
+        """Test that the supported experiment types contain the expected values."""
+        expected_types = {'a/b', 'mab', 'cmab', 'feature_rollouts'}
+        self.assertEqual(expected_types, entities.ExperimentTypes.SUPPORTED_TYPES)
