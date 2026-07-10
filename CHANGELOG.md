@@ -1,5 +1,26 @@
 # Optimizely Python SDK Changelog
 
+## 5.6.0
+July 10th, 2026
+
+### New Features
+
+#### **Local Holdouts Support**
+
+- Added local holdouts support to the Python SDK, enabling flag-level traffic exclusion from experiments. ([#512](https://github.com/optimizely/python-sdk/pull/512))
+- Added `localHoldouts` datafile section parsing for backward compatibility with older datafile formats. ([#517](https://github.com/optimizely/python-sdk/pull/517))
+
+---
+
+### Bug Fixes
+
+- Fixed invalid IDs in holdout decision events by normalizing `campaign_id`, `variation_id`, and `entity_id` fields. ([#518](https://github.com/optimizely/python-sdk/pull/518))
+- Fixed CMAB prediction requests to use attribute ID instead of attribute key. ([#520](https://github.com/optimizely/python-sdk/pull/520))
+- Fixed ODP identify events being sent with a single identifier, which is a no-op. ([#513](https://github.com/optimizely/python-sdk/pull/513))
+
+---
+
+
 ## 5.5.0
 April 30th, 2026
 
