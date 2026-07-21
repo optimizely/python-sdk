@@ -610,9 +610,11 @@ class DecisionService:
                 return Decision(experiment=rule, variation=forced_decision_variation,
                                 source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
-            # Check local holdouts targeting this specific delivery rule (FSSDK-12369)
             local_holdouts = project_config.get_holdouts_for_rule(rule.id)
             for holdout in local_holdouts:
+                if holdout.exclude_targeted_deliveries:
+                    continue
+
                 local_holdout_decision = self.get_variation_for_holdout(
                     holdout, user_context, project_config
                 )
@@ -751,6 +753,8 @@ class DecisionService:
         reasons = decide_reasons.copy() if decide_reasons else []
         user_id = user_context.user_id
 
+        global_holdout_result: DecisionResult | None = None
+
         # Check global holdouts (flag level — before any rules are evaluated)
         global_holdouts = project_config.get_global_holdouts()
         for holdout in global_holdouts:
@@ -758,7 +762,6 @@ class DecisionService:
             reasons.extend(holdout_decision['reasons'])
 
             decision = holdout_decision['decision']
-            # Check if user was bucketed into holdout (has a variation)
             if decision.variation is None:
                 continue
 
@@ -768,18 +771,32 @@ class DecisionService:
             )
             self.logger.info(message)
             reasons.append(message)
-            return {
-                'decision': holdout_decision['decision'],
-                'error': False,
-                'reasons': reasons
-            }
 
-        # If no global holdout decision, check experiments then rollouts
+            if not holdout.exclude_targeted_deliveries:
+                return {
+                    'decision': holdout_decision['decision'],
+                    'error': False,
+                    'reasons': reasons
+                }
+
+            message = (
+                f"Holdout '{holdout.key}' excludes targeted deliveries. "
+                f"Targeted delivery rules will be evaluated."
+            )
+            self.logger.info(message)
+            reasons.append(message)
+            global_holdout_result = holdout_decision
+            break
+
+        # Check experiments then rollouts
         if feature_flag.experimentIds:
             for experiment_id in feature_flag.experimentIds:
                 experiment = project_config.get_experiment_from_id(experiment_id)
 
                 if experiment:
+                    if global_holdout_result is not None and experiment.type != enums.ExperimentTypes.td:
+                        continue
+
                     # Check for forced decision
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
                         feature_flag.key, experiment.key)
@@ -796,9 +813,11 @@ class DecisionService:
                             'reasons': reasons
                         }
 
-                    # Check local holdouts targeting this specific experiment rule (FSSDK-12369)
                     local_holdouts = project_config.get_holdouts_for_rule(experiment.id)
                     for holdout in local_holdouts:
+                        if holdout.exclude_targeted_deliveries and experiment.type == enums.ExperimentTypes.td:
+                            continue
+
                         local_holdout_decision = self.get_variation_for_holdout(
                             holdout, user_context, project_config
                         )
@@ -862,6 +881,13 @@ class DecisionService:
             self.logger.debug(f'User "{user_id}" bucketed into rollout for feature "{feature_flag.key}".')
         else:
             self.logger.debug(f'User "{user_id}" not bucketed into any rollout for feature "{feature_flag.key}".')
+
+        if global_holdout_result is not None and not has_variation:
+            return {
+                'decision': global_holdout_result['decision'],
+                'error': False,
+                'reasons': reasons
+            }
 
         return {
             'decision': rollout_decision,
