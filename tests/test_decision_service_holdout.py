@@ -1839,7 +1839,9 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
     # ------------------------------------------------------------------
 
     def test_global_holdout_exclude_td_true_blocks_ab_experiment(self):
-        """Global holdout with exclude_targeted_deliveries=True still blocks A/B rules."""
+        """Global holdout with exclude_targeted_deliveries=True still blocks A/B rules.
+        The A/B experiment is skipped and a non-holdout decision is returned,
+        with the holdout decision attached separately."""
         opt = self._make_opt_with_td(
             [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
             experiment_type='ab',
@@ -1854,18 +1856,17 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
             result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
         decision = result['decision']
-        # A/B experiment should be skipped; user stays in holdout
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
         mock_get_var.assert_not_called()
+        self.assertIsNotNone(result.get('holdout_decision'))
 
     # ------------------------------------------------------------------
     # Test 4: Global holdout with exclude_targeted_deliveries=True, no TD matches
     # ------------------------------------------------------------------
 
-    def test_global_holdout_exclude_td_true_no_td_falls_back_to_holdout(self):
+    def test_global_holdout_exclude_td_true_no_td_returns_non_holdout_decision(self):
         """When exclude_targeted_deliveries=True but no TD experiments match,
-        falls back to holdout decision."""
-        # No type set on experiment (defaults to None, not 'td')
+        returns a non-holdout decision with the bypassed holdout attached."""
         opt = self._make_opt_with_td(
             [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
         )
@@ -1877,16 +1878,16 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
         decision = result['decision']
-        # No TD experiment available, so holdout decision should be returned
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertIsNotNone(result.get('holdout_decision'))
 
     # ------------------------------------------------------------------
     # Test 5: Local holdout on delivery rule with exclude_targeted_deliveries=True
     # ------------------------------------------------------------------
 
-    def test_local_holdout_delivery_rule_exclude_td_true_skips_holdout(self):
+    def test_local_holdout_delivery_rule_exclude_td_true_still_applies(self):
         """Local holdout on delivery rule with exclude_targeted_deliveries=True
-        skips the holdout and evaluates the delivery rule."""
+        still applies because local holdouts ignore that flag."""
         delivery_rule_id = '211147'
         opt = self._make_opt_with_td(
             [_holdout_with_etd(
@@ -1903,16 +1904,15 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
         decision = result['decision']
-        # Delivery rules are targeted deliveries, so holdout should be skipped
-        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
 
     # ------------------------------------------------------------------
     # Test 6: Local holdout on experiment rule (TD type) with exclude_targeted_deliveries=True
     # ------------------------------------------------------------------
 
-    def test_local_holdout_td_experiment_exclude_td_true_skips_holdout(self):
+    def test_local_holdout_td_experiment_exclude_td_true_still_applies(self):
         """Local holdout on TD experiment with exclude_targeted_deliveries=True
-        skips the holdout."""
+        still applies because local holdouts ignore that flag."""
         experiment_rule_id = '111127'
         opt = self._make_opt_with_td(
             [_holdout_with_etd(
@@ -1930,8 +1930,7 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
         decision = result['decision']
-        # TD experiment should bypass the local holdout
-        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
 
     # ------------------------------------------------------------------
     # Test 7: Local holdout on experiment rule (A/B type) with exclude_targeted_deliveries=True
@@ -1990,3 +1989,70 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         holdout = config.holdouts[0] if config.holdouts else None
         self.assertIsNotNone(holdout)
         self.assertFalse(holdout.exclude_targeted_deliveries)
+
+    # ------------------------------------------------------------------
+    # Test 9: TD match returns holdout_decision in result
+    # ------------------------------------------------------------------
+
+    def test_global_holdout_exclude_td_true_td_match_has_holdout_decision(self):
+        """When exclude_targeted_deliveries=True and a TD experiment matches,
+        the result contains holdout_decision with the bypassed holdout."""
+        opt = self._make_opt_with_td(
+            [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
+            experiment_type='td',
+        )
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('testUserId', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        decision = result['decision']
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertIsNotNone(result.get('holdout_decision'))
+        self.assertEqual(result['holdout_decision'].source, enums.DecisionSources.HOLDOUT)
+
+    # ------------------------------------------------------------------
+    # Test 10: No TD match returns non-holdout with holdout_decision attached
+    # ------------------------------------------------------------------
+
+    def test_global_holdout_exclude_td_true_no_td_has_holdout_decision(self):
+        """When exclude_targeted_deliveries=True and no TD matches,
+        result is non-holdout but holdout_decision key is present."""
+        opt = self._make_opt_with_td(
+            [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
+        )
+        config = opt.config_manager.get_config()
+        feature_flag = config.get_feature_from_key('test_feature_in_experiment')
+
+        ds = self._decision_svc()
+        user_ctx = opt.create_user_context('user_no_td', {})
+        result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
+
+        decision = result['decision']
+        self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        holdout_dec = result.get('holdout_decision')
+        self.assertIsNotNone(holdout_dec)
+        self.assertEqual(holdout_dec.source, enums.DecisionSources.HOLDOUT)
+
+    # ------------------------------------------------------------------
+    # Test 11: Holdout impression event dispatched for bypassed holdout
+    # ------------------------------------------------------------------
+
+    def test_holdout_impression_sent_when_td_evaluated(self):
+        """When exclude_targeted_deliveries=True and TD matches,
+        two impression events are sent: one for holdout, one for TD."""
+        opt = self._make_opt_with_td(
+            [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
+            experiment_type='td',
+        )
+        with mock.patch.object(opt, '_send_impression_event') as mock_send:
+            user_ctx = opt.create_user_context('testUserId', {})
+            user_ctx.decide('test_feature_in_experiment')
+
+        self.assertEqual(mock_send.call_count, 2)
+        call_rule_types = [call.args[5] if len(call.args) > 5 else call.kwargs.get('rule_type')
+                           for call in mock_send.call_args_list]
+        self.assertIn(str(enums.DecisionSources.HOLDOUT), call_rule_types)
+        self.assertIn(str(enums.DecisionSources.FEATURE_TEST), call_rule_types)

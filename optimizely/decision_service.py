@@ -64,15 +64,11 @@ class VariationResult(TypedDict):
     variation: Optional[Union[entities.Variation, VariationDict]]
 
 
-class DecisionResult(TypedDict):
-    """
-    A TypedDict representing the result of a decision process.
+class _DecisionResultOptional(TypedDict, total=False):
+    holdout_decision: Decision
 
-    Attributes:
-        decision (Decision): The decision object containing the outcome of the evaluation.
-        error (bool): Indicates whether an error occurred during the decision process.
-        reasons (List[str]): A list of reasons explaining the decision or any errors encountered.
-    """
+
+class DecisionResult(_DecisionResultOptional):
     decision: Decision
     error: bool
     reasons: List[str]
@@ -612,9 +608,6 @@ class DecisionService:
 
             local_holdouts = project_config.get_holdouts_for_rule(rule.id)
             for holdout in local_holdouts:
-                if holdout.exclude_targeted_deliveries:
-                    continue
-
                 local_holdout_decision = self.get_variation_for_holdout(
                     holdout, user_context, project_config
                 )
@@ -807,17 +800,17 @@ class DecisionService:
                     if forced_decision_variation:
                         decision = Decision(experiment, forced_decision_variation,
                                             enums.DecisionSources.FEATURE_TEST, None)
-                        return {
+                        result: DecisionResult = {
                             'decision': decision,
                             'error': False,
                             'reasons': reasons
                         }
+                        if global_holdout_result is not None:
+                            result['holdout_decision'] = global_holdout_result['decision']
+                        return result
 
                     local_holdouts = project_config.get_holdouts_for_rule(experiment.id)
                     for holdout in local_holdouts:
-                        if holdout.exclude_targeted_deliveries and experiment.type == enums.ExperimentTypes.td:
-                            continue
-
                         local_holdout_decision = self.get_variation_for_holdout(
                             holdout, user_context, project_config
                         )
@@ -856,11 +849,14 @@ class DecisionService:
                         decision = Decision(experiment, variation_result['variation'],
                                             enums.DecisionSources.FEATURE_TEST,
                                             variation_result['cmab_uuid'])
-                        return {
+                        result: DecisionResult = {
                             'decision': decision,
                             'error': False,
                             'reasons': reasons
                         }
+                        if global_holdout_result is not None:
+                            result['holdout_decision'] = global_holdout_result['decision']
+                        return result
 
         # If no experiment decision, check rollouts
         rollout_decision, rollout_reasons = self.get_variation_for_rollout(
@@ -882,18 +878,14 @@ class DecisionService:
         else:
             self.logger.debug(f'User "{user_id}" not bucketed into any rollout for feature "{feature_flag.key}".')
 
-        if global_holdout_result is not None and not has_variation:
-            return {
-                'decision': global_holdout_result['decision'],
-                'error': False,
-                'reasons': reasons
-            }
-
-        return {
+        final_result: DecisionResult = {
             'decision': rollout_decision,
             'error': False,
             'reasons': reasons
         }
+        if global_holdout_result is not None:
+            final_result['holdout_decision'] = global_holdout_result['decision']
+        return final_result
 
     def get_variation_for_holdout(
         self,
