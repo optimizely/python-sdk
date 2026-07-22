@@ -747,6 +747,7 @@ class DecisionService:
         user_id = user_context.user_id
 
         global_holdout_result: DecisionResult | None = None
+        global_holdout_key: str | None = None
 
         # Check global holdouts (flag level — before any rules are evaluated)
         global_holdouts = project_config.get_global_holdouts()
@@ -779,6 +780,7 @@ class DecisionService:
             self.logger.info(message)
             reasons.append(message)
             global_holdout_result = holdout_decision
+            global_holdout_key = holdout.key
             break
 
         # Check experiments then rollouts
@@ -857,6 +859,14 @@ class DecisionService:
                         if global_holdout_result is not None:
                             result['holdout_decision'] = global_holdout_result['decision']
                         return result
+
+        if global_holdout_result is not None:
+            message = (
+                f"Holdout '{global_holdout_key}' has excludeTargetedDeliveries enabled, "
+                f"continuing to rollout evaluation."
+            )
+            self.logger.info(message)
+            reasons.append(message)
 
         # If no experiment decision, check rollouts
         rollout_decision, rollout_reasons = self.get_variation_for_rollout(

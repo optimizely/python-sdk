@@ -1866,7 +1866,8 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
 
     def test_global_holdout_exclude_td_true_no_td_returns_non_holdout_decision(self):
         """When exclude_targeted_deliveries=True but no TD experiments match,
-        returns a non-holdout decision with the bypassed holdout attached."""
+        returns a non-holdout decision with the bypassed holdout attached
+        and includes the rollout evaluation reason."""
         opt = self._make_opt_with_td(
             [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
         )
@@ -1880,6 +1881,12 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         decision = result['decision']
         self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
         self.assertIsNotNone(result.get('holdout_decision'))
+
+        expected_reason = (
+            "Holdout 'global_exclude_td' has excludeTargetedDeliveries enabled, "
+            "continuing to rollout evaluation."
+        )
+        self.assertIn(expected_reason, result['reasons'])
 
     # ------------------------------------------------------------------
     # Test 5: Local holdout on delivery rule with exclude_targeted_deliveries=True
@@ -2019,7 +2026,8 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
 
     def test_global_holdout_exclude_td_true_no_td_has_holdout_decision(self):
         """When exclude_targeted_deliveries=True and no TD matches,
-        result is non-holdout but holdout_decision key is present."""
+        result is non-holdout but holdout_decision key is present,
+        and reasons include the rollout evaluation continuation message."""
         opt = self._make_opt_with_td(
             [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
         )
@@ -2036,18 +2044,38 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         self.assertIsNotNone(holdout_dec)
         self.assertEqual(holdout_dec.source, enums.DecisionSources.HOLDOUT)
 
+        expected_reason = (
+            "Holdout 'global_exclude_td' has excludeTargetedDeliveries enabled, "
+            "continuing to rollout evaluation."
+        )
+        self.assertIn(expected_reason, result['reasons'])
+
     # ------------------------------------------------------------------
     # Test 11: Holdout impression event dispatched for bypassed holdout
     # ------------------------------------------------------------------
 
     def test_holdout_impression_sent_when_td_evaluated(self):
         """When exclude_targeted_deliveries=True and TD matches,
-        two impression events are sent: one for holdout, one for TD."""
+        two impression events are sent: one for holdout, one for TD,
+        and decision_event_dispatched is True in notification."""
         opt = self._make_opt_with_td(
             [_holdout_with_etd('gh1', 'global_exclude_td', exclude_targeted_deliveries=True)],
             experiment_type='td',
         )
-        with mock.patch.object(opt, '_send_impression_event') as mock_send:
+
+        captured_notifications: list[dict[str, object]] = []
+
+        def capture_notification(notification_type: str, user_id: str,
+                                 user_attributes: dict[str, object],
+                                 decision_info: dict[str, object]) -> None:
+            captured_notifications.append(decision_info.copy())
+
+        opt.notification_center.add_notification_listener(
+            enums.NotificationTypes.DECISION,
+            capture_notification
+        )
+
+        with mock.patch.object(opt, '_send_impression_event', wraps=opt._send_impression_event) as mock_send:
             user_ctx = opt.create_user_context('testUserId', {})
             user_ctx.decide('test_feature_in_experiment')
 
@@ -2056,3 +2084,9 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
                            for call in mock_send.call_args_list]
         self.assertIn(str(enums.DecisionSources.HOLDOUT), call_rule_types)
         self.assertIn(str(enums.DecisionSources.FEATURE_TEST), call_rule_types)
+
+        self.assertEqual(len(captured_notifications), 1)
+        self.assertTrue(
+            captured_notifications[0].get('decision_event_dispatched'),
+            'decision_event_dispatched should be True when holdout impression is sent'
+        )

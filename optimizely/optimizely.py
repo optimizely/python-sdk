@@ -1283,6 +1283,7 @@ class Optimizely:
                 attributes,
                 holdout_decision.cmab_uuid
             )
+            decision_event_dispatched = True
 
         # Send impression event if Decision came from a feature
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
