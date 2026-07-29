@@ -1883,7 +1883,7 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         self.assertIsNotNone(result.get('holdout_decision'))
 
         expected_reason = (
-            "Holdout 'global_exclude_td' has excludeTargetedDeliveries enabled, "
+            "Holdout \"global_exclude_td\" has excludeTargetedDeliveries enabled, "
             "continuing to rollout evaluation."
         )
         self.assertIn(expected_reason, result['reasons'])
@@ -2045,7 +2045,7 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         self.assertEqual(holdout_dec.source, enums.DecisionSources.HOLDOUT)
 
         expected_reason = (
-            "Holdout 'global_exclude_td' has excludeTargetedDeliveries enabled, "
+            "Holdout \"global_exclude_td\" has excludeTargetedDeliveries enabled, "
             "continuing to rollout evaluation."
         )
         self.assertIn(expected_reason, result['reasons'])

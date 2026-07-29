@@ -862,7 +862,7 @@ class DecisionService:
 
         if global_holdout_result is not None:
             message = (
-                f"Holdout '{global_holdout_key}' has excludeTargetedDeliveries enabled, "
+                f"Holdout \"{global_holdout_key}\" has excludeTargetedDeliveries enabled, "
                 f"continuing to rollout evaluation."
             )
             self.logger.info(message)
