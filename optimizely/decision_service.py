@@ -851,7 +851,7 @@ class DecisionService:
                         decision = Decision(experiment, variation_result['variation'],
                                             enums.DecisionSources.FEATURE_TEST,
                                             variation_result['cmab_uuid'])
-                        result: DecisionResult = {
+                        result = {
                             'decision': decision,
                             'error': False,
                             'reasons': reasons
