@@ -427,6 +427,37 @@ class HoldoutBackwardCompatibilityTest(unittest.TestCase):
         self.assertFalse(h_empty.is_global)
 
 
+class HoldoutEntityExcludeTargetedDeliveriesTest(unittest.TestCase):
+    """Tests for the Holdout.exclude_targeted_deliveries field storage."""
+
+    def test_exclude_targeted_deliveries_stored_true(self):
+        """exclude_targeted_deliveries=True should be stored correctly."""
+        holdout = entities.Holdout(
+            id='h1', key='etd_holdout', status='Running',
+            variations=HOLDOUT_VARIATION, trafficAllocation=FULL_TRAFFIC,
+            audienceIds=[], excludeTargetedDeliveries=True,
+        )
+        self.assertTrue(holdout.exclude_targeted_deliveries)
+
+    def test_exclude_targeted_deliveries_stored_false(self):
+        """exclude_targeted_deliveries=False should be stored correctly."""
+        holdout = entities.Holdout(
+            id='h1', key='etd_holdout', status='Running',
+            variations=HOLDOUT_VARIATION, trafficAllocation=FULL_TRAFFIC,
+            audienceIds=[], excludeTargetedDeliveries=False,
+        )
+        self.assertFalse(holdout.exclude_targeted_deliveries)
+
+    def test_exclude_targeted_deliveries_defaults_to_false(self):
+        """When not provided, exclude_targeted_deliveries defaults to False."""
+        holdout = entities.Holdout(
+            id='h1', key='default_holdout', status='Running',
+            variations=HOLDOUT_VARIATION, trafficAllocation=FULL_TRAFFIC,
+            audienceIds=[],
+        )
+        self.assertFalse(holdout.exclude_targeted_deliveries)
+
+
 class LocalHoldoutsSectionTest(unittest.TestCase):
     """Tests for the new top-level 'localHoldouts' datafile section (FSSDK-12760).
 

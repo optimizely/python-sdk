@@ -224,6 +224,7 @@ class Holdout(BaseEntity):
         audienceIds: list[str],
         audienceConditions: Optional[Sequence[str | list[str]]] = None,
         includedRules: Optional[list[str]] = None,
+        excludeTargetedDeliveries: bool = False,
         **kwargs: Any
     ):
         self.id = id
@@ -236,6 +237,7 @@ class Holdout(BaseEntity):
         # Per-rule targeting for local holdouts. Scope comes from the datafile
         # section, not this field; ProjectConfig strips it on 'holdouts' entries.
         self.included_rules: Optional[list[str]] = includedRules
+        self.exclude_targeted_deliveries: bool = excludeTargetedDeliveries
 
     def get_audience_conditions_or_ids(self) -> Sequence[str | list[str]]:
         """Returns audienceConditions if present, otherwise audienceIds.

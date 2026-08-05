@@ -64,15 +64,11 @@ class VariationResult(TypedDict):
     variation: Optional[Union[entities.Variation, VariationDict]]
 
 
-class DecisionResult(TypedDict):
-    """
-    A TypedDict representing the result of a decision process.
+class _DecisionResultOptional(TypedDict, total=False):
+    holdout_decision: Decision
 
-    Attributes:
-        decision (Decision): The decision object containing the outcome of the evaluation.
-        error (bool): Indicates whether an error occurred during the decision process.
-        reasons (List[str]): A list of reasons explaining the decision or any errors encountered.
-    """
+
+class DecisionResult(_DecisionResultOptional):
     decision: Decision
     error: bool
     reasons: List[str]
@@ -610,7 +606,6 @@ class DecisionService:
                 return Decision(experiment=rule, variation=forced_decision_variation,
                                 source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
-            # Check local holdouts targeting this specific delivery rule (FSSDK-12369)
             local_holdouts = project_config.get_holdouts_for_rule(rule.id)
             for holdout in local_holdouts:
                 local_holdout_decision = self.get_variation_for_holdout(
@@ -751,6 +746,9 @@ class DecisionService:
         reasons = decide_reasons.copy() if decide_reasons else []
         user_id = user_context.user_id
 
+        global_holdout_result: DecisionResult | None = None
+        global_holdout_key: str | None = None
+
         # Check global holdouts (flag level — before any rules are evaluated)
         global_holdouts = project_config.get_global_holdouts()
         for holdout in global_holdouts:
@@ -758,7 +756,6 @@ class DecisionService:
             reasons.extend(holdout_decision['reasons'])
 
             decision = holdout_decision['decision']
-            # Check if user was bucketed into holdout (has a variation)
             if decision.variation is None:
                 continue
 
@@ -768,18 +765,33 @@ class DecisionService:
             )
             self.logger.info(message)
             reasons.append(message)
-            return {
-                'decision': holdout_decision['decision'],
-                'error': False,
-                'reasons': reasons
-            }
 
-        # If no global holdout decision, check experiments then rollouts
+            if not holdout.exclude_targeted_deliveries:
+                return {
+                    'decision': holdout_decision['decision'],
+                    'error': False,
+                    'reasons': reasons
+                }
+
+            message = (
+                f"Holdout '{holdout.key}' excludes targeted deliveries. "
+                f"Targeted delivery rules will be evaluated."
+            )
+            self.logger.info(message)
+            reasons.append(message)
+            global_holdout_result = holdout_decision
+            global_holdout_key = holdout.key
+            break
+
+        # Check experiments then rollouts
         if feature_flag.experimentIds:
             for experiment_id in feature_flag.experimentIds:
                 experiment = project_config.get_experiment_from_id(experiment_id)
 
                 if experiment:
+                    if global_holdout_result is not None and experiment.type != enums.ExperimentTypes.td:
+                        continue
+
                     # Check for forced decision
                     optimizely_decision_context = OptimizelyUserContext.OptimizelyDecisionContext(
                         feature_flag.key, experiment.key)
@@ -790,13 +802,15 @@ class DecisionService:
                     if forced_decision_variation:
                         decision = Decision(experiment, forced_decision_variation,
                                             enums.DecisionSources.FEATURE_TEST, None)
-                        return {
+                        result: DecisionResult = {
                             'decision': decision,
                             'error': False,
                             'reasons': reasons
                         }
+                        if global_holdout_result is not None:
+                            result['holdout_decision'] = global_holdout_result['decision']
+                        return result
 
-                    # Check local holdouts targeting this specific experiment rule (FSSDK-12369)
                     local_holdouts = project_config.get_holdouts_for_rule(experiment.id)
                     for holdout in local_holdouts:
                         local_holdout_decision = self.get_variation_for_holdout(
@@ -837,11 +851,22 @@ class DecisionService:
                         decision = Decision(experiment, variation_result['variation'],
                                             enums.DecisionSources.FEATURE_TEST,
                                             variation_result['cmab_uuid'])
-                        return {
+                        result = {
                             'decision': decision,
                             'error': False,
                             'reasons': reasons
                         }
+                        if global_holdout_result is not None:
+                            result['holdout_decision'] = global_holdout_result['decision']
+                        return result
+
+        if global_holdout_result is not None:
+            message = (
+                f"Holdout \"{global_holdout_key}\" has excludeTargetedDeliveries enabled, "
+                f"continuing to rollout evaluation."
+            )
+            self.logger.info(message)
+            reasons.append(message)
 
         # If no experiment decision, check rollouts
         rollout_decision, rollout_reasons = self.get_variation_for_rollout(
@@ -863,11 +888,14 @@ class DecisionService:
         else:
             self.logger.debug(f'User "{user_id}" not bucketed into any rollout for feature "{feature_flag.key}".')
 
-        return {
+        final_result: DecisionResult = {
             'decision': rollout_decision,
             'error': False,
             'reasons': reasons
         }
+        if global_holdout_result is not None:
+            final_result['holdout_decision'] = global_holdout_result['decision']
+        return final_result
 
     def get_variation_for_holdout(
         self,

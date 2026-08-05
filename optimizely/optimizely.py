@@ -1245,7 +1245,8 @@ class Optimizely:
             flag_decision: Decision,
             decision_reasons: Optional[list[str]],
             decide_options: list[str],
-            project_config: ProjectConfig
+            project_config: ProjectConfig,
+            holdout_decision: Optional[Decision] = None
     ) -> OptimizelyDecision:
         user_id = user_context.user_id
         feature_enabled = False
@@ -1263,6 +1264,26 @@ class Optimizely:
         decision_event_dispatched = False
 
         feature_flag = project_config.feature_key_map.get(flag_key)
+
+        # Send holdout impression when user was bucketed into a holdout bypassed due to exclude_targeted_deliveries
+        if (holdout_decision is not None
+                and decision_source != DecisionSources.HOLDOUT
+                and OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options):
+            holdout_enabled = self._get_feature_enabled(holdout_decision.variation)
+            holdout_rule_key = holdout_decision.experiment.key if holdout_decision.experiment else ''
+            self._send_impression_event(
+                project_config,
+                holdout_decision.experiment,
+                holdout_decision.variation,
+                flag_key,
+                holdout_rule_key,
+                str(DecisionSources.HOLDOUT),
+                holdout_enabled,
+                user_id,
+                attributes,
+                holdout_decision.cmab_uuid
+            )
+            decision_event_dispatched = True
 
         # Send impression event if Decision came from a feature
         if OptimizelyDecideOption.DISABLE_DECISION_EVENT not in decide_options:
@@ -1448,11 +1469,13 @@ class Optimizely:
             user_context,
             merged_decide_options
         )
+        holdout_decisions: dict[str, Optional[Decision]] = {}
         for i in range(0, len(flags_without_forced_decision)):
             decision = decision_list[i]['decision']
             reasons = decision_list[i]['reasons']
             error = decision_list[i]['error']
             flag_key = flags_without_forced_decision[i].key
+            holdout_decisions[flag_key] = decision_list[i].get('holdout_decision')
             # store error decision against key and remove key from valid keys
             if error:
                 optimizely_decision = OptimizelyDecision.new_error_decision(flags_without_forced_decision[i].key,
@@ -1472,7 +1495,8 @@ class Optimizely:
                 flag_decision,
                 decision_reasons,
                 merged_decide_options,
-                project_config
+                project_config,
+                holdout_decision=holdout_decisions.get(key)
             )
             enabled_flags_only_missing = OptimizelyDecideOption.ENABLED_FLAGS_ONLY not in merged_decide_options
             is_enabled = optimizely_decision.enabled
