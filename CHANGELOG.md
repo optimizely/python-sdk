@@ -1,5 +1,16 @@
 # Optimizely Python SDK Changelog
 
+## 5.7.0
+September 2nd, 2026
+
+### New Features
+
+**Holdout Targeted Delivery Exclusion**: Holdouts can now be configured to exclude Targeted Delivery rules, so users held out of experiments still receive their Targeted Delivery experiences. This gives you a cleaner measure of experiment impact without holding users back from ongoing rollouts.
+
+- Add holdout exclusion logic for Targeted Delivery rules ([#522](https://github.com/optimizely/python-sdk/pull/522))
+
+---
+
 ## 5.6.0
 July 10th, 2026
 
