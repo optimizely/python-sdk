@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 from unittest import mock
 
@@ -1467,8 +1468,8 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
     # Branch 2: Local holdout hit — user bucketed into local holdout for rule X
     # ------------------------------------------------------------------
 
-    def test_local_holdout_hit_returns_holdout_decision_for_experiment_rule(self):
-        """User bucketed into local holdout for experiment rule X returns holdout decision.
+    def test_local_holdout_hit_skips_experiment_rule(self):
+        """User bucketed into local holdout for experiment rule X is excluded from rule X only.
 
         The experiment rule ID is '111127' (test_experiment linked to test_feature_in_experiment).
         The local holdout targets only this rule with full traffic.
@@ -1488,14 +1489,13 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
             user_ctx = opt.create_user_context('user_in_local_holdout', {})
             result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        decision = result['decision']
-        # User must be caught by local holdout
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
-        # Regular experiment evaluation (get_variation) must not have run
+        # Rule X is skipped and the hit is recorded; the decision does not come from the holdout
+        self.assertNotEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual([d.experiment.key for d in result['holdout_decisions']], ['local_for_exp'])
         mock_get_var.assert_not_called()
 
-    def test_local_holdout_hit_returns_holdout_decision_for_delivery_rule(self):
-        """User bucketed into local holdout for delivery/rollout rule returns holdout decision.
+    def test_local_holdout_hit_skips_delivery_rule(self):
+        """User bucketed into local holdout for the last delivery rule ends with no rule serving.
 
         Rule '211147' is the everyone-else rollout rule for 'test_feature_in_rollout'.
         The local holdout targets this delivery rule with full traffic.
@@ -1512,9 +1512,8 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         user_ctx = opt.create_user_context('user_delivery_holdout', {})
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        self.assertIsNotNone(result)
-        decision = result['decision']
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertIsNone(result['decision'].variation)
+        self.assertEqual([d.experiment.key for d in result['holdout_decisions']], ['local_for_delivery'])
 
     # ------------------------------------------------------------------
     # Branch 3: Local holdout miss — user falls through to regular rule evaluation
@@ -1607,7 +1606,8 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         user_ctx = opt.create_user_context('user_exp_holdout', {})
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        self.assertEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertNotEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(len(result['holdout_decisions']), 1)
 
     def test_local_holdout_applies_to_rollout_delivery_rule(self):
         """Local holdout check applies to rollout/delivery rules in get_decision_for_flag."""
@@ -1624,9 +1624,8 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         user_ctx = opt.create_user_context('user_delivery_holdout', {})
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        self.assertIsNotNone(result)
-        decision = result['decision']
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertNotEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(len(result['holdout_decisions']), 1)
 
     # ------------------------------------------------------------------
     # Precedence: Global → Forced → Local → Regular rule
@@ -1858,7 +1857,7 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         decision = result['decision']
         self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
         mock_get_var.assert_not_called()
-        self.assertIsNotNone(result.get('holdout_decision'))
+        self.assertEqual(len(result['holdout_decisions']), 1)
 
     # ------------------------------------------------------------------
     # Test 4: Global holdout with exclude_targeted_deliveries=True, no TD matches
@@ -1880,7 +1879,7 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
 
         decision = result['decision']
         self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
-        self.assertIsNotNone(result.get('holdout_decision'))
+        self.assertEqual(len(result['holdout_decisions']), 1)
 
         expected_reason = (
             "Holdout \"global_exclude_td\" has excludeTargetedDeliveries enabled, "
@@ -1910,8 +1909,8 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         user_ctx = opt.create_user_context('user_delivery_exclude', {})
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        decision = result['decision']
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertNotEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(len(result['holdout_decisions']), 1)
 
     # ------------------------------------------------------------------
     # Test 6: Local holdout on experiment rule (TD type) with exclude_targeted_deliveries=True
@@ -1936,8 +1935,8 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
         user_ctx = opt.create_user_context('testUserId', {})
         result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        decision = result['decision']
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        self.assertNotEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(len(result['holdout_decisions']), 1)
 
     # ------------------------------------------------------------------
     # Test 7: Local holdout on experiment rule (A/B type) with exclude_targeted_deliveries=True
@@ -1964,9 +1963,9 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
             user_ctx = opt.create_user_context('user_ab_holdout', {})
             result = ds.get_decision_for_flag(feature_flag, user_ctx, config)
 
-        decision = result['decision']
-        # A/B experiment should still be blocked by local holdout
-        self.assertEqual(decision.source, enums.DecisionSources.HOLDOUT)
+        # A/B experiment is still skipped by the local holdout
+        self.assertNotEqual(result['decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(len(result['holdout_decisions']), 1)
         mock_get_var.assert_not_called()
 
     # ------------------------------------------------------------------
@@ -2017,8 +2016,8 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
 
         decision = result['decision']
         self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
-        self.assertIsNotNone(result.get('holdout_decision'))
-        self.assertEqual(result['holdout_decision'].source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual(len(result['holdout_decisions']), 1)
+        self.assertEqual(result['holdout_decisions'][0].source, enums.DecisionSources.HOLDOUT)
 
     # ------------------------------------------------------------------
     # Test 10: No TD match returns non-holdout with holdout_decision attached
@@ -2040,9 +2039,7 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
 
         decision = result['decision']
         self.assertNotEqual(decision.source, enums.DecisionSources.HOLDOUT)
-        holdout_dec = result.get('holdout_decision')
-        self.assertIsNotNone(holdout_dec)
-        self.assertEqual(holdout_dec.source, enums.DecisionSources.HOLDOUT)
+        self.assertEqual([d.source for d in result['holdout_decisions']], [enums.DecisionSources.HOLDOUT])
 
         expected_reason = (
             "Holdout \"global_exclude_td\" has excludeTargetedDeliveries enabled, "
@@ -2090,3 +2087,101 @@ class ExcludeTargetedDeliveriesTest(base.BaseTest):
             captured_notifications[0].get('decision_event_dispatched'),
             'decision_event_dispatched should be True when holdout impression is sent'
         )
+
+
+class LocalHoldoutContinueEvaluationTest(base.BaseTest):
+    """A local holdout hit excludes the user from that rule only; evaluation continues."""
+
+    def tearDown(self):
+        if hasattr(self, 'opt_obj'):
+            self.opt_obj.close()
+
+    def _make_opt(self, local_holdouts, send_flag_decisions=True, experiment_flag_has_rollout=False):
+        cfg = copy.deepcopy(self.config_dict_with_features)
+        cfg['holdouts'] = []
+        cfg['localHoldouts'] = local_holdouts
+        cfg['sendFlagDecisions'] = send_flag_decisions
+        # Everyone Else rule '211147' takes all traffic so a later rule always serves.
+        for rollout in cfg['rollouts']:
+            for rule in rollout['experiments']:
+                if rule['id'] == '211147':
+                    rule['trafficAllocation'] = [{'entityId': '211149', 'endOfRange': 10000}]
+        if experiment_flag_has_rollout:
+            for flag in cfg['featureFlags']:
+                if flag['key'] == 'test_feature_in_experiment':
+                    flag['rolloutId'] = '211111'
+        self.opt_obj = optimizely_module.Optimizely(json.dumps(cfg))
+        return self.opt_obj
+
+    def _decide(self, opt, flag_key):
+        with mock.patch.object(opt, '_send_impression_event') as mock_send:
+            decision = opt.create_user_context('test_user', {}).decide(flag_key)
+        # (rule_key, rule_type) per impression
+        return decision, [(c.args[4], c.args[5]) for c in mock_send.call_args_list]
+
+    def test_holdout_hit_then_later_rule_serves(self):
+        opt = self._make_opt(
+            [_holdout('lh1', 'local_exp', included_rules=['111127'])],
+            experiment_flag_has_rollout=True,
+        )
+        decision, impressions = self._decide(opt, 'test_feature_in_experiment')
+
+        self.assertEqual(decision.rule_key, '211147')
+        self.assertEqual(impressions, [
+            ('local_exp', str(enums.DecisionSources.HOLDOUT)),
+            ('211147', str(enums.DecisionSources.ROLLOUT)),
+        ])
+
+    def test_holdout_hits_on_several_rules_send_several_holdout_events(self):
+        opt = self._make_opt(
+            [
+                _holdout('lh1', 'local_rule_1', included_rules=['211127']),
+                _holdout('lh2', 'local_rule_2', included_rules=['211137']),
+            ],
+            send_flag_decisions=False,
+        )
+        decision, impressions = self._decide(opt, 'test_feature_in_rollout')
+
+        self.assertEqual(decision.rule_key, '211147')
+        self.assertEqual(impressions, [
+            ('local_rule_1', str(enums.DecisionSources.HOLDOUT)),
+            ('local_rule_2', str(enums.DecisionSources.HOLDOUT)),
+        ])
+
+    def test_first_matching_holdout_per_rule_wins(self):
+        opt = self._make_opt(
+            [
+                _holdout('lh1', 'first', included_rules=['211127']),
+                _holdout('lh2', 'second', included_rules=['211127']),
+            ],
+            send_flag_decisions=False,
+        )
+        _, impressions = self._decide(opt, 'test_feature_in_rollout')
+
+        self.assertEqual(impressions, [('first', str(enums.DecisionSources.HOLDOUT))])
+
+    def test_holdout_hit_then_no_rule_serves(self):
+        opt = self._make_opt([_holdout('lh1', 'local_exp', included_rules=['111127'])], send_flag_decisions=False)
+        decision, impressions = self._decide(opt, 'test_feature_in_experiment')
+
+        self.assertIsNone(decision.variation_key)
+        self.assertFalse(decision.enabled)
+        self.assertEqual(impressions, [('local_exp', str(enums.DecisionSources.HOLDOUT))])
+
+    def test_delivery_holdout_hit_sends_event_with_send_flag_decisions_off(self):
+        opt = self._make_opt(
+            [_holdout('lh1', 'local_delivery', included_rules=['211147'])],
+            send_flag_decisions=False,
+        )
+        _, impressions = self._decide(opt, 'test_feature_in_rollout')
+
+        self.assertEqual(impressions, [('local_delivery', str(enums.DecisionSources.HOLDOUT))])
+
+    def test_disable_decision_event_suppresses_holdout_events(self):
+        opt = self._make_opt([_holdout('lh1', 'local_delivery', included_rules=['211147'])])
+        with mock.patch.object(opt, '_send_impression_event') as mock_send:
+            opt.create_user_context('test_user', {}).decide(
+                'test_feature_in_rollout', [OptimizelyDecideOption.DISABLE_DECISION_EVENT]
+            )
+
+        mock_send.assert_not_called()

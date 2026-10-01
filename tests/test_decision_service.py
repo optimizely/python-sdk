@@ -1510,7 +1510,7 @@ class FeatureFlagDecisionTests(base.BaseTest):
             )
 
         mock_get_variation_for_rollout.assert_called_once_with(
-            self.project_config, feature, user
+            self.project_config, feature, user, []
         )
 
         # Assert no log messages were generated
