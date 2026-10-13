@@ -1,4 +1,4 @@
-# Copyright 2017-2022, Optimizely
+# Copyright 2017-2022, 2026, Optimizely
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -65,7 +65,7 @@ class VariationResult(TypedDict):
 
 
 class _DecisionResultOptional(TypedDict, total=False):
-    holdout_decision: Decision
+    holdout_decisions: List[Decision]
 
 
 class DecisionResult(_DecisionResultOptional):
@@ -552,7 +552,11 @@ class DecisionService:
         }
 
     def get_variation_for_rollout(
-        self, project_config: ProjectConfig, feature: entities.FeatureFlag, user_context: OptimizelyUserContext
+        self,
+        project_config: ProjectConfig,
+        feature: entities.FeatureFlag,
+        user_context: OptimizelyUserContext,
+        holdout_decisions: Optional[list[Decision]] = None
     ) -> tuple[Decision, list[str]]:
         """ Determine which experiment/variation the user is in for a given rollout.
             Returns the variation of the first experiment the user qualifies for.
@@ -562,7 +566,7 @@ class DecisionService:
           flagKey: Feature key.
           rollout: Rollout for which we are getting the variation.
           user: ID and attributes for user.
-          options: Decide options.
+          holdout_decisions: If provided, local holdout decisions for skipped rules are appended to it.
 
         Returns:
           Decision namedtuple consisting of experiment and variation for the user and
@@ -606,22 +610,14 @@ class DecisionService:
                 return Decision(experiment=rule, variation=forced_decision_variation,
                                 source=enums.DecisionSources.ROLLOUT, cmab_uuid=None), decide_reasons
 
-            local_holdouts = project_config.get_holdouts_for_rule(rule.id)
-            for holdout in local_holdouts:
-                local_holdout_decision = self.get_variation_for_holdout(
-                    holdout, user_context, project_config
-                )
-                decide_reasons.extend(local_holdout_decision['reasons'])
-
-                local_decision = local_holdout_decision['decision']
-                if local_decision.variation is not None:
-                    message = (
-                        f"The user '{user_id}' is bucketed into local holdout '{holdout.key}' "
-                        f"for delivery rule '{rule.key}'."
-                    )
-                    self.logger.info(message)
-                    decide_reasons.append(message)
-                    return local_decision, decide_reasons
+            local_holdout = self._get_local_holdout_decision(
+                project_config, rule, user_context, 'delivery', decide_reasons
+            )
+            if local_holdout is not None:
+                if holdout_decisions is not None:
+                    holdout_decisions.append(local_holdout)
+                index += 1
+                continue
 
             bucketing_id, bucket_reasons = self._get_bucketing_id(user_id, attributes)
             decide_reasons += bucket_reasons
@@ -748,6 +744,7 @@ class DecisionService:
 
         global_holdout_result: DecisionResult | None = None
         global_holdout_key: str | None = None
+        holdout_decisions: list[Decision] = []
 
         # Check global holdouts (flag level — before any rules are evaluated)
         global_holdouts = project_config.get_global_holdouts()
@@ -781,6 +778,7 @@ class DecisionService:
             reasons.append(message)
             global_holdout_result = holdout_decision
             global_holdout_key = holdout.key
+            holdout_decisions.append(holdout_decision['decision'])
             break
 
         # Check experiments then rollouts
@@ -807,30 +805,16 @@ class DecisionService:
                             'error': False,
                             'reasons': reasons
                         }
-                        if global_holdout_result is not None:
-                            result['holdout_decision'] = global_holdout_result['decision']
+                        if holdout_decisions:
+                            result['holdout_decisions'] = holdout_decisions
                         return result
 
-                    local_holdouts = project_config.get_holdouts_for_rule(experiment.id)
-                    for holdout in local_holdouts:
-                        local_holdout_decision = self.get_variation_for_holdout(
-                            holdout, user_context, project_config
-                        )
-                        reasons.extend(local_holdout_decision['reasons'])
-
-                        local_decision = local_holdout_decision['decision']
-                        if local_decision.variation is not None:
-                            message = (
-                                f"The user '{user_id}' is bucketed into local holdout '{holdout.key}' "
-                                f"for experiment rule '{experiment.key}'."
-                            )
-                            self.logger.info(message)
-                            reasons.append(message)
-                            return {
-                                'decision': local_holdout_decision['decision'],
-                                'error': False,
-                                'reasons': reasons
-                            }
+                    local_holdout = self._get_local_holdout_decision(
+                        project_config, experiment, user_context, 'experiment', reasons
+                    )
+                    if local_holdout is not None:
+                        holdout_decisions.append(local_holdout)
+                        continue
 
                     # Get variation for experiment
                     variation_result = self.get_variation(
@@ -856,8 +840,8 @@ class DecisionService:
                             'error': False,
                             'reasons': reasons
                         }
-                        if global_holdout_result is not None:
-                            result['holdout_decision'] = global_holdout_result['decision']
+                        if holdout_decisions:
+                            result['holdout_decisions'] = holdout_decisions
                         return result
 
         if global_holdout_result is not None:
@@ -870,7 +854,7 @@ class DecisionService:
 
         # If no experiment decision, check rollouts
         rollout_decision, rollout_reasons = self.get_variation_for_rollout(
-            project_config, feature_flag, user_context
+            project_config, feature_flag, user_context, holdout_decisions
         )
         if rollout_reasons:
             reasons.extend(rollout_reasons)
@@ -893,9 +877,31 @@ class DecisionService:
             'error': False,
             'reasons': reasons
         }
-        if global_holdout_result is not None:
-            final_result['holdout_decision'] = global_holdout_result['decision']
+        if holdout_decisions:
+            final_result['holdout_decisions'] = holdout_decisions
         return final_result
+
+    def _get_local_holdout_decision(
+        self,
+        project_config: ProjectConfig,
+        rule: entities.Experiment,
+        user_context: OptimizelyUserContext,
+        rule_type: str,
+        reasons: list[str]
+    ) -> Optional[Decision]:
+        """Returns the first local holdout decision the user is bucketed into for the rule, if any."""
+        for holdout in project_config.get_holdouts_for_rule(rule.id):
+            holdout_result = self.get_variation_for_holdout(holdout, user_context, project_config)
+            reasons.extend(holdout_result['reasons'])
+            if holdout_result['decision'].variation is not None:
+                message = (
+                    f"The user '{user_context.user_id}' is bucketed into local holdout '{holdout.key}' "
+                    f"for {rule_type} rule '{rule.key}'. Skipping the rule."
+                )
+                self.logger.info(message)
+                reasons.append(message)
+                return holdout_result['decision']
+        return None
 
     def get_variation_for_holdout(
         self,
