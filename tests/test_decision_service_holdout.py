@@ -1818,6 +1818,55 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         self.assertEqual([(c.args[4], c.args[5]) for c in mock_send.call_args_list],
                          [('211147', str(enums.DecisionSources.ROLLOUT))])
 
+    def test_disable_decision_event_suppresses_local_holdout_event(self):
+        """DISABLE_DECISION_EVENT suppresses the holdout impression for a skipped rule."""
+        opt = self._make_opt_exp_with_rollout([_holdout('lh_exp', 'for_exp', included_rules=['111127'])])
+
+        with mock.patch.object(opt, '_send_impression_event', wraps=opt._send_impression_event) as mock_send:
+            decision = opt.create_user_context('test_user', {}).decide(
+                'test_feature_in_experiment', [OptimizelyDecideOption.DISABLE_DECISION_EVENT]
+            )
+
+        self.assertEqual(decision.rule_key, '211147')
+        mock_send.assert_not_called()
+
+    def test_local_holdout_hit_on_first_experiment_then_second_experiment_serves(self):
+        """Held out of the first experiment rule; the second experiment rule serves."""
+        cfg = copy.deepcopy(self.config_dict_with_features)
+        cfg['experiments'].append({
+            'key': 'second_experiment',
+            'status': 'Running',
+            'forcedVariations': {},
+            'layerId': '111183',
+            'audienceIds': [],
+            'trafficAllocation': [{'entityId': '111141', 'endOfRange': 10000}],
+            'id': '111140',
+            'variations': [{'key': 'second_variation', 'id': '111141', 'featureEnabled': True, 'variables': []}],
+        })
+        for flag in cfg['featureFlags']:
+            if flag['key'] == 'test_feature_in_experiment':
+                flag['experimentIds'] = ['111127', '111140']
+        cfg['holdouts'] = []
+        cfg['localHoldouts'] = [_holdout('lh_exp', 'for_exp', included_rules=['111127'])]
+        self.opt_obj = opt = optimizely_module.Optimizely(json.dumps(cfg))
+        config = opt.config_manager.get_config()
+
+        result = self._decision_svc().get_decision_for_flag(
+            config.get_feature_from_key('test_feature_in_experiment'), opt.create_user_context('test_user', {}), config
+        )
+        self.assertEqual(result['decision'].source, enums.DecisionSources.FEATURE_TEST)
+        self.assertEqual(result['decision'].experiment.id, '111140')
+        self.assertEqual([d.experiment.key for d in result['holdout_decisions']], ['for_exp'])
+
+        with mock.patch.object(opt, '_send_impression_event', wraps=opt._send_impression_event) as mock_send:
+            decision = opt.create_user_context('test_user', {}).decide('test_feature_in_experiment')
+
+        self.assertEqual(decision.rule_key, 'second_experiment')
+        self.assertEqual(decision.variation_key, 'second_variation')
+        self.assertEqual(self._holdout_impressions(mock_send), ['for_exp'])
+        self.assertEqual(mock_send.call_count, 2)
+        self.assertEqual(mock_send.call_args_list[1].args[5], str(enums.DecisionSources.FEATURE_TEST))
+
 
 # ---------------------------------------------------------------------------
 # Exclude Targeted Deliveries Tests
