@@ -1899,6 +1899,51 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         self.assertEqual(mock_send.call_count, 2)
         self.assertEqual(mock_send.call_args_list[1].args[5], str(enums.DecisionSources.FEATURE_TEST))
 
+    def test_local_holdout_hit_then_later_rule_error_sends_no_impressions(self):
+        """Held out of the first rule; a CMAB error on the later rule yields an error decision and no events."""
+        cfg = copy.deepcopy(self.config_dict_with_features)
+        cfg['experiments'].append({
+            'key': 'cmab_experiment',
+            'status': 'Running',
+            'forcedVariations': {},
+            'layerId': '111183',
+            'audienceIds': [],
+            'trafficAllocation': [{'entityId': '111141', 'endOfRange': 10000}],
+            'id': '111140',
+            'variations': [{'key': 'cmab_variation', 'id': '111141', 'featureEnabled': True, 'variables': []}],
+            'cmab': {'attributeIds': [], 'trafficAllocation': 10000},
+        })
+        for flag in cfg['featureFlags']:
+            if flag['key'] == 'test_feature_in_experiment':
+                flag['experimentIds'] = ['111127', '111140']
+        cfg['holdouts'] = []
+        cfg['localHoldouts'] = [_holdout('lh_exp', 'for_exp', included_rules=['111127'])]
+        self.opt_obj = opt = optimizely_module.Optimizely(json.dumps(cfg))
+        config = opt.config_manager.get_config()
+        holdout_hit = ("The user 'test_user' is bucketed into local holdout 'for_exp' "
+                       "for experiment rule 'test_experiment'.")
+        cmab_error = enums.Errors.CMAB_FETCH_FAILED_DETAILED.format('cmab_experiment')
+
+        with mock.patch.object(opt.decision_service.cmab_service, 'get_decision', side_effect=Exception('boom')):
+            result = opt.decision_service.get_decision_for_flag(
+                config.get_feature_from_key('test_feature_in_experiment'),
+                opt.create_user_context('test_user', {}), config
+            )
+            self.assertTrue(result['error'])
+            self.assertEqual(result['decision'].experiment.id, '111140')
+            self.assertNotIn('holdout_decisions', result)
+            self.assertTrue(any(r.startswith(holdout_hit) for r in result['reasons']))
+            self.assertIn(cmab_error, result['reasons'])
+
+            with mock.patch.object(opt, '_send_impression_event', wraps=opt._send_impression_event) as mock_send:
+                decision = opt.create_user_context('test_user', {}).decide('test_feature_in_experiment')
+
+        self.assertIsNone(decision.variation_key)
+        self.assertIsNone(decision.rule_key)
+        self.assertFalse(decision.enabled)
+        self.assertIn(cmab_error, decision.reasons)
+        mock_send.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # Exclude Targeted Deliveries Tests
