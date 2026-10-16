@@ -13,16 +13,9 @@
 from __future__ import annotations
 import time
 import uuid
-from typing import TYPE_CHECKING, Optional
-from sys import version_info
+from typing import TYPE_CHECKING, Optional, Final
 
 from optimizely import version
-
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 
 if TYPE_CHECKING:
