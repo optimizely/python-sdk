@@ -65,6 +65,7 @@ class VariationResult(TypedDict):
 
 
 class _DecisionResultOptional(TypedDict, total=False):
+    holdout_decision: Decision  # Deprecated: first entry of holdout_decisions.
     holdout_decisions: List[Decision]
 
 
@@ -807,6 +808,7 @@ class DecisionService:
                         }
                         if holdout_decisions:
                             result['holdout_decisions'] = holdout_decisions
+                            result['holdout_decision'] = holdout_decisions[0]
                         return result
 
                     local_holdout = self._get_local_holdout_decision(
@@ -842,6 +844,7 @@ class DecisionService:
                         }
                         if holdout_decisions:
                             result['holdout_decisions'] = holdout_decisions
+                            result['holdout_decision'] = holdout_decisions[0]
                         return result
 
         if global_holdout_result is not None:
@@ -879,6 +882,7 @@ class DecisionService:
         }
         if holdout_decisions:
             final_result['holdout_decisions'] = holdout_decisions
+            final_result['holdout_decision'] = holdout_decisions[0]
         return final_result
 
     def _get_local_holdout_decision(

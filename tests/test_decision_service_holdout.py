@@ -1774,6 +1774,19 @@ class LocalHoldoutDecisionServiceTest(base.BaseTest):
         self.assertEqual(final_call.args[5], str(enums.DecisionSources.ROLLOUT))
         self.assertIsNone(final_call.args[2])
 
+    def test_deprecated_holdout_decision_is_first_of_holdout_decisions(self):
+        opt = self._make_opt_exp_with_rollout([
+            _holdout('lh_exp', 'for_exp', included_rules=['111127']),
+            _holdout('lh_del', 'for_del', included_rules=['211147']),
+        ])
+        config = opt.config_manager.get_config()
+
+        result = self._decision_svc().get_decision_for_flag(
+            config.get_feature_from_key('test_feature_in_experiment'), opt.create_user_context('test_user', {}), config
+        )
+        self.assertEqual([d.experiment.key for d in result['holdout_decisions']], ['for_exp', 'for_del'])
+        self.assertIs(result['holdout_decision'], result['holdout_decisions'][0])
+
     def test_one_local_holdout_on_two_rules_sends_two_holdout_events(self):
         """A single local holdout targeting two rules is hit on each rule and sends an event per hit."""
         opt = self._make_opt_exp_with_rollout([
