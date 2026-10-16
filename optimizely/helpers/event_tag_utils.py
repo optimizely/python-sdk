@@ -12,16 +12,10 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Optional, NewType, Dict
+from typing import TYPE_CHECKING, Any, Optional, NewType, Dict, Final
 from . import enums
 import math
 import numbers
-from sys import version_info
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 
 if TYPE_CHECKING:

@@ -12,8 +12,7 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Sequence, cast, List
-from sys import version_info
+from typing import TYPE_CHECKING, Optional, Sequence, cast, List, Final
 from optimizely import entities
 from optimizely.helpers import enums
 from optimizely.helpers import event_tag_utils
@@ -22,11 +21,6 @@ from . import event_id_normalizer
 from . import log_event
 from . import payload
 from . import user_event
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime

@@ -11,16 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Final
 import warnings
-from sys import version_info
 
 from .helpers import enums
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 
 _DEFAULT_LOG_FORMAT: Final = '%(levelname)-8s %(asctime)s %(filename)s:%(lineno)s:%(message)s'

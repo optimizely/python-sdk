@@ -12,17 +12,10 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING, cast
+from typing import Optional, TYPE_CHECKING, cast, Final
 import math
-from sys import version_info
 
 from .lib import pymmh3 as mmh3
-
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 
 if TYPE_CHECKING:
