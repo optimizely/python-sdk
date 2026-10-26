@@ -12,12 +12,7 @@
 # limitations under the License.
 
 import logging
-from sys import version_info
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final
 
 
 class CommonAudienceEvaluationLogs:

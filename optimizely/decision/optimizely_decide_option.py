@@ -11,12 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from sys import version_info
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final
 
 
 class OptimizelyDecideOption:

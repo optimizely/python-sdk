@@ -12,14 +12,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import Literal, Optional, Any
-from sys import version_info
-
-
-if version_info < (3, 8):
-    from typing_extensions import TypedDict
-else:
-    from typing import TypedDict  # type: ignore
+from typing import Literal, Optional, Any, TypedDict
 
 
 # Intermediate types for type checking deserialized datafile json before actual class instantiation.

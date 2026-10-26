@@ -12,15 +12,8 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Optional, Any
-from sys import version_info
+from typing import Optional, Any, Literal
 from optimizely import event_builder
-
-
-if version_info < (3, 8):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
 
 
 class LogEvent(event_builder.Event):
