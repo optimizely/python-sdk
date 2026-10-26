@@ -17,10 +17,9 @@ import numbers
 import threading
 import time
 
-from typing import Optional
+from typing import Optional, Final
 from datetime import timedelta
 import queue
-from sys import version_info
 
 from optimizely import logger as _logging
 from optimizely import notification_center as _notification_center
@@ -29,12 +28,6 @@ from optimizely.helpers import enums
 from optimizely.helpers import validator
 from .event_factory import EventFactory
 from .user_event import UserEvent
-
-
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 
 class BaseEventProcessor(ABC):

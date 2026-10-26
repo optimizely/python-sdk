@@ -14,8 +14,7 @@
 from __future__ import annotations
 import json
 import numbers
-from typing import TYPE_CHECKING, Any, Callable, Optional
-from sys import version_info
+from typing import TYPE_CHECKING, Any, Callable, Optional, Literal, Final
 
 from . import validator
 from optimizely import optimizely_user_context
@@ -27,12 +26,6 @@ from .enums import VersionType
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime
     from optimizely.logger import Logger
-
-
-if version_info < (3, 8):
-    from typing_extensions import Literal, Final
-else:
-    from typing import Literal, Final
 
 
 class ConditionOperatorTypes:

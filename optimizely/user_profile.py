@@ -12,19 +12,13 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import Any, Optional
-from sys import version_info
+from typing import Any, Optional, Final, TYPE_CHECKING
 from . import logger as _logging
 
-if version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final, TYPE_CHECKING
-
-    if TYPE_CHECKING:
-        # prevent circular dependenacy by skipping import at runtime
-        from .entities import Experiment, Variation
-        from optimizely.error_handler import BaseErrorHandler
+if TYPE_CHECKING:
+    # prevent circular dependenacy by skipping import at runtime
+    from .entities import Experiment, Variation
+    from optimizely.error_handler import BaseErrorHandler
 
 
 class UserProfile:

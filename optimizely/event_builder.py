@@ -13,20 +13,14 @@
 
 from __future__ import annotations
 import time
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Final, Literal
 import uuid
-from sys import version_info
 
 from . import version
 from .event import event_id_normalizer
 from .helpers import enums
 from .helpers import event_tag_utils
 from .helpers import validator
-
-if version_info < (3, 8):
-    from typing_extensions import Final, Literal
-else:
-    from typing import Final, Literal
 
 if TYPE_CHECKING:
     # prevent circular dependenacy by skipping import at runtime

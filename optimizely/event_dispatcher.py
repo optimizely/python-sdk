@@ -13,7 +13,7 @@
 
 import json
 import logging
-from sys import version_info
+from typing import Protocol
 
 import requests
 from requests import exceptions as request_exception
@@ -22,11 +22,6 @@ from urllib3.util.retry import Retry
 
 from . import event_builder
 from .helpers.enums import HTTPVerbs, EventDispatchConfig
-
-if version_info < (3, 8):
-    from typing_extensions import Protocol
-else:
-    from typing import Protocol
 
 
 class CustomEventDispatcher(Protocol):
