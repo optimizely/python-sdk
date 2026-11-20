@@ -1,4 +1,6 @@
+import ast
 import os
+import re
 
 from setuptools import setup
 from setuptools import find_packages
@@ -6,9 +8,12 @@ from setuptools import find_packages
 here = os.path.join(os.path.dirname(__file__))
 
 
-__version__ = None
+# Read the version without executing version.py: parse the version_info tuple literal instead.
 with open(os.path.join(here, 'optimizely', 'version.py')) as _file:
-    exec(_file.read())
+    _version_match = re.search(r'^version_info\s*=\s*(\(.*\))\s*$', _file.read(), re.MULTILINE)
+if _version_match is None:
+    raise RuntimeError('Unable to find version_info in optimizely/version.py')
+__version__ = '.'.join(str(v) for v in ast.literal_eval(_version_match.group(1)))
 
 with open(os.path.join(here, 'requirements', 'core.txt')) as _file:
     REQUIREMENTS = _file.read().splitlines()
