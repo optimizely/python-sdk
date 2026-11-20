@@ -13,14 +13,16 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Optional, Sequence
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-def create_retry_session(retries: int, backoff_factor: float, status_forcelist: Sequence[int]) -> requests.Session:
+def create_retry_session(
+    retries: Optional[int], backoff_factor: float, status_forcelist: Sequence[int]
+) -> requests.Session:
     """ Create a requests session that retries failed requests.
 
     The same retry adapter is registered for both https:// and http:// URLs. The SDK defaults are all https://.
@@ -29,7 +31,7 @@ def create_retry_session(retries: int, backoff_factor: float, status_forcelist: 
     does not send anything over http://, it only configures how requests to that prefix are retried.
 
     Args:
-      retries: Total number of retries.
+      retries: Total number of retries. None means no total limit (same as urllib3's Retry).
       backoff_factor: Backoff factor between retries.
       status_forcelist: HTTP status codes that should trigger a retry.
 
