@@ -30,3 +30,9 @@ class CreateRetrySessionTest(unittest.TestCase):
             self.assertEqual(3, adapter.max_retries.total)
             self.assertEqual(0.2, adapter.max_retries.backoff_factor)
             self.assertEqual([500, 503], list(adapter.max_retries.status_forcelist))
+
+    def test_status_forcelist_defaults_to_server_error_codes(self):
+        session = create_retry_session(retries=3, backoff_factor=0.2)
+
+        adapter = session.get_adapter('https://example.com')
+        self.assertEqual([500, 502, 503, 504], list(adapter.max_retries.status_forcelist))

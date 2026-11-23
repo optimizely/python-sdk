@@ -392,8 +392,7 @@ class PollingConfigManager(StaticConfigManager):
 
         try:
             session = create_retry_session(retries=self.retries,
-                                           backoff_factor=0.1,
-                                           status_forcelist=[500, 502, 503, 504])
+                                           backoff_factor=0.1)
             response = session.get(self.datafile_url,
                                    headers=request_headers,
                                    timeout=enums.ConfigManager.REQUEST_TIMEOUT)
@@ -479,8 +478,7 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
 
         try:
             session = create_retry_session(retries=self.retries,
-                                           backoff_factor=0.1,
-                                           status_forcelist=[500, 502, 503, 504])
+                                           backoff_factor=0.1)
             response = session.get(self.datafile_url,
                                    headers=request_headers,
                                    timeout=enums.ConfigManager.REQUEST_TIMEOUT)

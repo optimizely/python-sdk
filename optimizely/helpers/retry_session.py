@@ -21,19 +21,16 @@ from urllib3.util.retry import Retry
 
 
 def create_retry_session(
-    retries: Optional[int], backoff_factor: float, status_forcelist: Sequence[int]
+    retries: Optional[int], backoff_factor: float, status_forcelist: Sequence[int] = (500, 502, 503, 504)
 ) -> requests.Session:
     """ Create a requests session that retries failed requests.
 
-    The same retry adapter is registered for both https:// and http:// URLs. The SDK defaults are all https://.
-    The http:// prefix is registered only so that retries also apply when a user configures a custom http://
-    datafile URL or event endpoint (for example an internal proxy or a local test server). Registering an adapter
-    does not send anything over http://, it only configures how requests to that prefix are retried.
+    The same retry adapter is registered for both https:// and http:// URLs.
 
     Args:
       retries: Total number of retries. None means no total limit (same as urllib3's Retry).
       backoff_factor: Backoff factor between retries.
-      status_forcelist: HTTP status codes that should trigger a retry.
+      status_forcelist: HTTP status codes that should trigger a retry. Defaults to 500, 502, 503 and 504.
 
     Returns:
       A configured requests.Session.
@@ -45,8 +42,7 @@ def create_retry_session(
                   status_forcelist=status_forcelist)
     adapter = HTTPAdapter(max_retries=retry)
 
-    # Intentional, see the docstring: this only registers the retry adapter, it does not send anything over http://.
-    # (Bare nosemgrep: the full rule id for request-session-with-http does not fit in the 120 character line limit.)
+    # http:// kept so retries still apply to user-configured http:// datafile URLs / event endpoints.
     # nosemgrep
     session.mount('http://', adapter)
     session.mount('https://', adapter)

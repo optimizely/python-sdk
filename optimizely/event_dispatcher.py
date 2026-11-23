@@ -40,8 +40,7 @@ class EventDispatcher:
     """
         try:
             session = create_retry_session(retries=EventDispatchConfig.RETRIES,
-                                           backoff_factor=0.2,
-                                           status_forcelist=[500, 502, 503, 504])
+                                           backoff_factor=0.2)
 
             if event.http_verb == HTTPVerbs.GET:
                 session.get(event.url, params=event.params,
