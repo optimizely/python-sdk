@@ -15,13 +15,11 @@ import json
 import logging
 from typing import Protocol
 
-import requests
 from requests import exceptions as request_exception
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from . import event_builder
 from .helpers.enums import HTTPVerbs, EventDispatchConfig
+from .helpers.retry_session import create_retry_session
 
 
 class CustomEventDispatcher(Protocol):
@@ -41,15 +39,8 @@ class EventDispatcher:
       event: Object holding information about the request to be dispatched to the Optimizely backend.
     """
         try:
-            session = requests.Session()
-
-            retries = Retry(total=EventDispatchConfig.RETRIES,
-                            backoff_factor=0.2,
-                            status_forcelist=[500, 502, 503, 504])
-            adapter = HTTPAdapter(max_retries=retries)
-
-            session.mount('http://', adapter)
-            session.mount("https://", adapter)
+            session = create_retry_session(retries=EventDispatchConfig.RETRIES,
+                                           backoff_factor=0.2)
 
             if event.http_verb == HTTPVerbs.GET:
                 session.get(event.url, params=event.params,

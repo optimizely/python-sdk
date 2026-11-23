@@ -19,8 +19,6 @@ import requests
 import threading
 from requests import codes as http_status_codes
 from requests import exceptions as requests_exceptions
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from . import exceptions as optimizely_exceptions
 from . import logger as optimizely_logger
@@ -30,6 +28,7 @@ from .notification_center import NotificationCenter
 from .notification_center_registry import _NotificationCenterRegistry
 from .helpers import enums
 from .helpers import validator
+from .helpers.retry_session import create_retry_session
 from .optimizely_config import OptimizelyConfig, OptimizelyConfigService
 
 
@@ -392,15 +391,8 @@ class PollingConfigManager(StaticConfigManager):
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
         try:
-            session = requests.Session()
-
-            retries = Retry(total=self.retries,
-                            backoff_factor=0.1,
-                            status_forcelist=[500, 502, 503, 504])
-            adapter = HTTPAdapter(max_retries=retries)
-
-            session.mount('http://', adapter)
-            session.mount("https://", adapter)
+            session = create_retry_session(retries=self.retries,
+                                           backoff_factor=0.1)
             response = session.get(self.datafile_url,
                                    headers=request_headers,
                                    timeout=enums.ConfigManager.REQUEST_TIMEOUT)
@@ -485,15 +477,8 @@ class AuthDatafilePollingConfigManager(PollingConfigManager):
             request_headers[enums.HTTPHeaders.IF_MODIFIED_SINCE] = self.last_modified
 
         try:
-            session = requests.Session()
-
-            retries = Retry(total=self.retries,
-                            backoff_factor=0.1,
-                            status_forcelist=[500, 502, 503, 504])
-            adapter = HTTPAdapter(max_retries=retries)
-
-            session.mount('http://', adapter)
-            session.mount("https://", adapter)
+            session = create_retry_session(retries=self.retries,
+                                           backoff_factor=0.1)
             response = session.get(self.datafile_url,
                                    headers=request_headers,
                                    timeout=enums.ConfigManager.REQUEST_TIMEOUT)
