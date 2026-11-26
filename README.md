@@ -17,8 +17,6 @@ Refer to the [Python SDK's developer documentation](https://docs.developers.opti
 
 ### Requirements
 
-Version `5.9+`: Python 3.10+, PyPy 3.10+
-
 Version `5.0+`: Python 3.8+, PyPy 3.8+
 
 Version `4.0+`: Python 3.7+, PyPy 3.7+
