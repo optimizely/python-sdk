@@ -25,7 +25,7 @@ Version `4.0+`: Python 3.7+, PyPy 3.7+
 
 Version `3.0+`: Python 2.7+, PyPy 3.4+
 
-Python versions that reach end-of-life upstream may continue to work, but support for them can be dropped in any minor release. When that happens, `python_requires` ensures pip keeps older Pythons on the last compatible release.
+Dropping support for an end-of-life Python version doesn't change the SDK's public API, so it ships in a minor release rather than a major one. Each release declares its minimum Python (`python_requires`), so pip on an older Python installs the last compatible release instead. For example, Python 3.8 and 3.9 stay on 5.8.x.
 
 ### Install the SDK
 
