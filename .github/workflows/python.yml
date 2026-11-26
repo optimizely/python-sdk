@@ -64,12 +64,15 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-            - "pypy-3.9"
             - "pypy-3.10"
-            - "3.9"
+            - "pypy-3.11"
+            - "pypy-3.12"
             - "3.10"
             - "3.11"
             - "3.12"
+            - "3.13"
+            - "3.14"
+            - "3.15"
     steps:
     - uses: actions/checkout@v3
       with:
@@ -92,13 +95,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-            # disabled due to librt is not available on this pypy version
-            # - "pypy-3.9"
-            # - "pypy-3.10"
-            # - "3.9"
-            # - "3.10"
+            # CPython only: mypy depends on librt, which publishes no PyPy wheels
+            - "3.10"
             - "3.11"
             - "3.12"
+            - "3.13"
+            - "3.14"
+            - "3.15"
     steps:
     - uses: actions/checkout@v3
       with:

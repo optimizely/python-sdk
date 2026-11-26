@@ -556,32 +556,24 @@ class PollingConfigManagerTest(base.BaseTest):
 
     def test_fetch_datafile__exception_polling_thread_failed(self, _):
         """ Test that exception is raised when polling thread stops. """
-        sdk_key = 'some_key'
         mock_logger = mock.Mock()
+        thread_exceptions = []
 
-        test_headers = {'Last-Modified': 'New Time'}
-        test_datafile = json.dumps(self.config_dict_with_features)
-        test_response = requests.Response()
-        test_response.status_code = 200
-        test_response.headers = test_headers
-        test_response._content = test_datafile
+        with (
+            mock.patch('optimizely.config_manager.PollingConfigManager.fetch_datafile',
+                       side_effect=Exception('boom')),
+            mock.patch('threading.excepthook', side_effect=thread_exceptions.append),
+        ):
+            project_config_manager = config_manager.PollingConfigManager(sdk_key='some_key', logger=mock_logger)
+            project_config_manager._polling_thread.join(timeout=2)
 
-        with mock.patch('requests.Session.get', return_value=test_response):
-            project_config_manager = config_manager.PollingConfigManager(sdk_key=sdk_key,
-                                                                         logger=mock_logger,
-                                                                         update_interval=12345678912345)
+        # the exception is raised out of the polling thread, which stops
+        self.assertFalse(project_config_manager.is_running)
+        self.assertEqual(1, len(thread_exceptions))
+        self.assertEqual('boom', str(thread_exceptions[0].exc_value))
 
-            project_config_manager.stop()
-
-            # verify the error log message
-            log_messages = [args[0] for args, _ in mock_logger.error.call_args_list]
-            for message in log_messages:
-                print(message)
-                # Check for key parts of the error message (version-agnostic for Python 3.11+)
-                if not ("Thread for background datafile polling failed" in message and
-                        "timestamp too large to convert to C" in message and
-                        "PyTime_t" in message):
-                    assert False
+        # and it is logged before being raised
+        mock_logger.error.assert_called_once_with('Thread for background datafile polling failed. Error: boom')
 
     def test_is_running(self, _):
         """ Test that polling thread is running after instance of PollingConfigManager is created. """
