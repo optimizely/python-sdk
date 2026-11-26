@@ -37,13 +37,7 @@ defer event dispatch.
 """
 
 
-from sys import version_info
-from typing import Any, Optional
-
-if version_info < (3, 10):
-    from typing_extensions import TypeGuard
-else:
-    from typing import TypeGuard
+from typing import Any, Optional, TypeGuard
 
 
 def is_non_empty_string(value: Any) -> TypeGuard[str]:
